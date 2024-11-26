@@ -7,11 +7,9 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ImageUpload } from "./ImageUpload";
 import { Trash2 } from "lucide-react";
+import { SiteOniTables } from "@/integrations/supabase/types";
 
-type ClientFormData = {
-  name: string;
-  logo_url: string;
-};
+type ClientFormData = SiteOniTables['clients']['Insert'];
 
 export const ClientForm = () => {
   const [isLoading, setIsLoading] = useState(false);

@@ -3,16 +3,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "./ui/button";
 import YouTube from "react-youtube";
+import { SiteOniTables } from "@/integrations/supabase/types";
 
-interface Banner {
-  id: string;
-  title: string;
-  description: string | null;
-  image_url: string | null;
-  video_url: string | null;
-  button_text: string | null;
-  button_url: string | null;
-}
+type Banner = SiteOniTables['banners']['Row'];
 
 export const Hero = () => {
   const [banners, setBanners] = useState<Banner[]>([]);

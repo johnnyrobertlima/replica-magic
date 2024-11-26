@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { SiteOniTables } from "@/integrations/supabase/types";
+
+type Client = SiteOniTables['clients']['Row'];
 
 export const Clients = () => {
   const [clients, setClients] = useState<any[]>([]);

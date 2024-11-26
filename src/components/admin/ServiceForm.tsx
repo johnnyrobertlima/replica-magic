@@ -9,30 +9,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Trash2 } from "lucide-react";
 import * as Icons from "lucide-react";
 import { LucideIcon } from "lucide-react";
+import { SiteOniTables } from "@/integrations/supabase/types";
 
-const availableIcons = [
-  "Monitor", "Globe", "Users", "Video", "Share2", "BarChart",
-  "Mail", "Phone", "MessageSquare", "Heart", "Star", "Settings",
-  "Camera", "Music", "Film", "FileText", "Database", "Cloud"
-];
-
-type ServiceFormData = {
-  title: string;
-  description: string;
-  icon: string;
-};
-
-interface Service {
-  id: string;
-  title: string;
-  description: string;
-  icon: string;
-}
+type ServiceFormData = SiteOniTables['services']['Insert'];
 
 export const ServiceForm = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [services, setServices] = useState<Service[]>([]);
-  const { register, handleSubmit, reset, setValue } = useForm<ServiceFormData>();
+  const [services, setServices] = useState<any[]>([]);
+  const { register, handleSubmit, reset } = useForm<ServiceFormData>();
 
   const fetchServices = async () => {
     const { data, error } = await supabase.from("site_oni.services").select("*");
@@ -95,7 +79,7 @@ export const ServiceForm = () => {
         <div className="space-y-2">
           <Label>Icon</Label>
           <div className="grid grid-cols-6 gap-2 p-2 border rounded-md">
-            {availableIcons.map((iconName) => {
+            {Object.keys(Icons).map((iconName) => {
               const IconComponent = (Icons[iconName as keyof typeof Icons] as LucideIcon) || Icons.HelpCircle;
               return (
                 <Button
@@ -103,7 +87,7 @@ export const ServiceForm = () => {
                   type="button"
                   variant="ghost"
                   className="p-2"
-                  onClick={() => setValue("icon", iconName)}
+                  onClick={() => register("icon").onChange(iconName)}
                 >
                   <IconComponent className="w-6 h-6" />
                 </Button>

@@ -9,16 +9,9 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ImageUpload } from "./ImageUpload";
 import { Trash2, ToggleLeft, ToggleRight } from "lucide-react";
+import { SiteOniTables } from "@/integrations/supabase/types";
 
-type BannerFormData = {
-  title: string;
-  description?: string;
-  image_url?: string;
-  video_url?: string;
-  button_text?: string;
-  button_url?: string;
-  is_active: boolean;
-};
+type BannerFormData = SiteOniTables['banners']['Insert'];
 
 export const BannerForm = () => {
   const [isLoading, setIsLoading] = useState(false);

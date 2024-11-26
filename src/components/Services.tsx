@@ -3,13 +3,9 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import * as Icons from "lucide-react";
 import { LucideIcon } from "lucide-react";
+import { SiteOniTables } from "@/integrations/supabase/types";
 
-interface Service {
-  id: string;
-  title: string;
-  description: string;
-  icon: string;
-}
+type Service = SiteOniTables['services']['Row'];
 
 export const Services = () => {
   const [services, setServices] = useState<Service[]>([]);
