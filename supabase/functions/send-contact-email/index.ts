@@ -11,6 +11,7 @@ const corsHeaders = {
 interface ContactMessage {
   name: string;
   email: string;
+  phone?: string;
   message: string;
 }
 
@@ -26,6 +27,7 @@ const handler = async (req: Request): Promise<Response> => {
       <h2>Nova mensagem de contato</h2>
       <p><strong>Nome:</strong> ${contactMessage.name}</p>
       <p><strong>Email:</strong> ${contactMessage.email}</p>
+      ${contactMessage.phone ? `<p><strong>Telefone:</strong> ${contactMessage.phone}</p>` : ''}
       <p><strong>Mensagem:</strong> ${contactMessage.message}</p>
     `;
 
@@ -36,7 +38,7 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Oni Agência <onboarding@resend.dev>",
+        from: "ONI Digital <comercial@oniagencia.com.br>",
         to: ["comercial@oniagencia.com.br"],
         subject: "Nova mensagem de contato - Site ONI",
         html: emailHtml,

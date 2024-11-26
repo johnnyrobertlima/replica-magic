@@ -15,19 +15,20 @@ export const ContactSection = () => {
     const formData = new FormData(e.currentTarget);
     const name = formData.get("name") as string;
     const email = formData.get("email") as string;
+    const phone = formData.get("phone") as string;
     const message = formData.get("message") as string;
 
     try {
       // First, save to database
       const { error: dbError } = await supabase
         .from("contact_messages")
-        .insert([{ name, email, message }]);
+        .insert([{ name, email, phone, message }]);
 
       if (dbError) throw dbError;
 
       // Then, send email notification
       const { error: emailError } = await supabase.functions.invoke("send-contact-email", {
-        body: { name, email, message },
+        body: { name, email, phone, message },
       });
 
       if (emailError) throw emailError;
@@ -78,6 +79,14 @@ export const ContactSection = () => {
                   name="email"
                   placeholder="Email"
                   required
+                  className="w-full px-4 py-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                />
+              </div>
+              <div>
+                <input
+                  type="tel"
+                  name="phone"
+                  placeholder="Telefone"
                   className="w-full px-4 py-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 />
               </div>
