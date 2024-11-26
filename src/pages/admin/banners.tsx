@@ -35,7 +35,7 @@ export const AdminBanners = () => {
     queryKey: ["banners"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("oni_site.banners")
+        .from("banners")
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -56,14 +56,14 @@ export const AdminBanners = () => {
         imageUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/oni-media/${uploadData.path}`;
       }
 
-      const { error } = await supabase.from("oni_site.banners").insert({
+      const { error } = await supabase.from("banners").insert([{
         title: formData.get("title"),
         description: formData.get("description"),
         button_text: formData.get("button_text"),
         button_link: formData.get("button_link"),
         youtube_url: formData.get("youtube_url"),
         image_url: imageUrl,
-      });
+      }]);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -83,7 +83,7 @@ export const AdminBanners = () => {
   const toggleBanner = useMutation({
     mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
       const { error } = await supabase
-        .from("oni_site.banners")
+        .from("banners")
         .update({ is_active: !is_active })
         .eq("id", id);
       if (error) throw error;
@@ -97,7 +97,7 @@ export const AdminBanners = () => {
   const deleteBanner = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from("oni_site.banners")
+        .from("banners")
         .delete()
         .eq("id", id);
       if (error) throw error;

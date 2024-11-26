@@ -42,11 +42,11 @@ export const AdminServices = () => {
 
   const createService = useMutation({
     mutationFn: async (formData: FormData) => {
-      const { error } = await supabase.from("services").insert({
+      const { error } = await supabase.from("services").insert([{
         title: formData.get("title"),
         description: formData.get("description"),
         icon: formData.get("icon"),
-      });
+      }]);
       if (error) throw error;
     },
     onSuccess: () => {
