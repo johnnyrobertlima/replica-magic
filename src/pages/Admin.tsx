@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { BannerForm } from "@/components/admin/BannerForm";
+import { ServiceForm } from "@/components/admin/ServiceForm";
+import { ClientForm } from "@/components/admin/ClientForm";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -28,6 +31,19 @@ const Admin = () => {
   const handleSectionClick = (section: string) => {
     setActiveSection(section);
     toast.info(`${section} management section opened`);
+  };
+
+  const renderForm = () => {
+    switch (activeSection) {
+      case 'Banners':
+        return <BannerForm />;
+      case 'Services':
+        return <ServiceForm />;
+      case 'Clients':
+        return <ClientForm />;
+      default:
+        return null;
+    }
   };
 
   return (
@@ -72,9 +88,7 @@ const Admin = () => {
       {activeSection && (
         <div className="mt-8 p-6 bg-white rounded-lg shadow">
           <h2 className="text-2xl font-semibold mb-4">{activeSection} Management</h2>
-          <p className="text-gray-600">
-            This section will contain the management interface for {activeSection.toLowerCase()}.
-          </p>
+          {renderForm()}
         </div>
       )}
     </div>
