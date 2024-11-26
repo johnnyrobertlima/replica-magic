@@ -37,16 +37,39 @@ export const Hero = () => {
     .getPublicUrl(banner.image_url)
     .data.publicUrl;
 
+  // Extract YouTube video ID from URL if present
+  const getYouTubeVideoId = (url: string | null) => {
+    if (!url) return null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return match && match[2].length === 11 ? match[2] : null;
+  };
+
+  const videoId = getYouTubeVideoId(banner.youtube_url);
+
   return (
     <div className="relative h-[80vh] min-h-[600px] w-full overflow-hidden">
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: `url('${imageUrl}')`,
-        }}
-      >
-        <div className="absolute inset-0 bg-black/50" />
-      </div>
+      {videoId ? (
+        <div className="absolute inset-0">
+          <div className="relative w-full h-full">
+            <iframe
+              src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&rel=0`}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-black/50" />
+          </div>
+        </div>
+      ) : (
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: `url('${imageUrl}')`,
+          }}
+        >
+          <div className="absolute inset-0 bg-black/50" />
+        </div>
+      )}
       
       <div className="relative container-custom h-full flex items-center">
         <motion.div
