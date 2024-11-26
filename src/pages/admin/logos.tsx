@@ -44,7 +44,7 @@ export const AdminLogos = () => {
           .from("oni-media")
           .upload(`logos/${Date.now()}-${file.name}`, file);
         if (uploadError) throw uploadError;
-        logoUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/oni-media/${uploadData.path}`;
+        logoUrl = uploadData.path; // Store only the path, not the full URL
       }
 
       const logoData = {
@@ -126,7 +126,6 @@ export const AdminLogos = () => {
 
       {isCreating && (
         <form onSubmit={handleSubmit} className="space-y-4 border p-4 rounded-lg">
-          {/* ... keep existing form fields but add defaultValue from editingLogo */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Nome</label>

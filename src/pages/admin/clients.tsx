@@ -51,7 +51,9 @@ export const AdminClients = () => {
           .from("oni-media")
           .upload(`clients/${Date.now()}-${file.name}`, file);
         if (uploadError) throw uploadError;
-        logoUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/oni-media/${uploadData.path}`;
+        
+        // Store only the path, not the full URL
+        logoUrl = uploadData.path;
       }
 
       const clientData = {
@@ -87,7 +89,7 @@ export const AdminClients = () => {
           name: client.name,
           website_url: client.website_url,
           logo_url: client.logo_url,
-          is_active: client.is_active, // Add this line
+          is_active: client.is_active,
         })
         .eq("id", client.id);
       if (error) throw error;

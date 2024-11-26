@@ -16,5 +16,12 @@ export const validateImage = (file: File) => {
 export const getStorageUrl = (path: string | null) => {
   if (!path) return '';
   if (path.startsWith('http')) return path;
-  return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/oni-media/${path}`;
+  
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  if (!supabaseUrl) {
+    console.error('VITE_SUPABASE_URL environment variable is not set');
+    return '';
+  }
+  
+  return `${supabaseUrl}/storage/v1/object/public/oni-media/${path}`;
 };
