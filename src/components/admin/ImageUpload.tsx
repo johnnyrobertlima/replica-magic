@@ -23,7 +23,10 @@ export const ImageUpload = ({ onImageUploaded, label = "Image" }: ImageUploadPro
 
       const { error: uploadError, data } = await supabase.storage
         .from('website-images')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          contentType: file.type,
+          upsert: false
+        });
 
       if (uploadError) throw uploadError;
 

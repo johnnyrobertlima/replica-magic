@@ -6,13 +6,14 @@ import { SiteOniTables } from "@/integrations/supabase/types";
 type Client = SiteOniTables['clients']['Row'];
 
 export const Clients = () => {
-  const [clients, setClients] = useState<any[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
 
   useEffect(() => {
     const fetchClients = async () => {
       const { data } = await supabase
-        .from("site_oni.clients")
-        .select("*");
+        .from("clients")
+        .select("*")
+        .schema("site_oni");
       if (data) {
         setClients(data);
       }

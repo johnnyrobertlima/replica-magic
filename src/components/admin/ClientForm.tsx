@@ -17,7 +17,10 @@ export const ClientForm = () => {
   const { register, handleSubmit, reset, setValue } = useForm<ClientFormData>();
 
   const fetchClients = async () => {
-    const { data, error } = await supabase.from("site_oni.clients").select("*");
+    const { data, error } = await supabase
+      .from("clients")
+      .select("*")
+      .schema("site_oni");
     if (error) {
       toast.error("Error fetching clients");
     } else {
@@ -32,7 +35,10 @@ export const ClientForm = () => {
   const onSubmit = async (data: ClientFormData) => {
     try {
       setIsLoading(true);
-      const { error } = await supabase.from("site_oni.clients").insert(data);
+      const { error } = await supabase
+        .from("clients")
+        .insert(data)
+        .schema("site_oni");
       
       if (error) throw error;
       
@@ -50,7 +56,11 @@ export const ClientForm = () => {
 
   const handleDelete = async (id: string) => {
     try {
-      const { error } = await supabase.from("site_oni.clients").delete().eq("id", id);
+      const { error } = await supabase
+        .from("clients")
+        .delete()
+        .eq("id", id)
+        .schema("site_oni");
       
       if (error) throw error;
       
