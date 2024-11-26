@@ -37,9 +37,12 @@ export const Clients = () => {
           CLIENTES
         </motion.h2>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
           {clients?.map((client, index) => {
-            const imageUrl = client.logo_url ? `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/oni-media/${client.logo_url}` : '';
+            // Construct the full URL for the logo
+            const imageUrl = client.logo_url 
+              ? `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/oni-media/${client.logo_url}`
+              : '';
 
             return (
               <motion.div
@@ -48,14 +51,30 @@ export const Clients = () => {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: index * 0.1 }}
-                className="flex items-center justify-center p-6 bg-surface rounded-lg hover:bg-surface-hover transition-colors"
+                className="flex items-center justify-center p-8 bg-surface rounded-lg hover:bg-surface-hover transition-colors min-h-[120px]"
               >
-                <img
-                  src={imageUrl}
-                  alt={client.name}
-                  className="max-h-12 w-auto grayscale hover:grayscale-0 transition-all object-contain"
-                  loading="lazy"
-                />
+                {client.website_url ? (
+                  <a
+                    href={client.website_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full h-full flex items-center justify-center"
+                  >
+                    <img
+                      src={imageUrl}
+                      alt={client.name}
+                      className="max-h-16 w-auto grayscale hover:grayscale-0 transition-all object-contain"
+                      loading="lazy"
+                    />
+                  </a>
+                ) : (
+                  <img
+                    src={imageUrl}
+                    alt={client.name}
+                    className="max-h-16 w-auto grayscale hover:grayscale-0 transition-all object-contain"
+                    loading="lazy"
+                  />
+                )}
               </motion.div>
             );
           })}
