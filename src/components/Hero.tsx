@@ -32,10 +32,7 @@ export const Hero = () => {
     return null;
   }
 
-  const imageUrl = supabase.storage
-    .from("oni-media")
-    .getPublicUrl(banner.image_url)
-    .data.publicUrl;
+  const imageUrl = banner.image_url ? `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/oni-media/${banner.image_url}` : '';
 
   // Extract YouTube video ID from URL if present
   const getYouTubeVideoId = (url: string | null) => {
