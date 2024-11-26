@@ -6,6 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -13,7 +20,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, Plus, Trash2, Power } from "lucide-react";
+import { Loader2, Plus, Trash2, Power, Server, Settings, Cog, List } from "lucide-react";
+
+const icons = [
+  { name: "Server", icon: <Server className="w-4 h-4" /> },
+  { name: "Settings", icon: <Settings className="w-4 h-4" /> },
+  { name: "Cog", icon: <Cog className="w-4 h-4" /> },
+  { name: "List", icon: <List className="w-4 h-4" /> },
+];
 
 interface Service {
   id: string;
@@ -123,7 +137,21 @@ export const AdminServices = () => {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Ícone</label>
-              <Input name="icon" required />
+              <Select name="icon" required>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um ícone" />
+                </SelectTrigger>
+                <SelectContent>
+                  {icons.map((icon) => (
+                    <SelectItem key={icon.name} value={icon.name}>
+                      <div className="flex items-center gap-2">
+                        {icon.icon}
+                        <span>{icon.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <div className="space-y-2">
@@ -153,6 +181,7 @@ export const AdminServices = () => {
           <TableRow>
             <TableHead>Título</TableHead>
             <TableHead>Descrição</TableHead>
+            <TableHead>Ícone</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="w-[100px]">Ações</TableHead>
           </TableRow>
@@ -162,6 +191,12 @@ export const AdminServices = () => {
             <TableRow key={service.id}>
               <TableCell>{service.title}</TableCell>
               <TableCell>{service.description}</TableCell>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  {icons.find(i => i.name === service.icon)?.icon}
+                  <span>{service.icon}</span>
+                </div>
+              </TableCell>
               <TableCell>
                 {service.is_active ? "Ativo" : "Inativo"}
               </TableCell>

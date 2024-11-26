@@ -1,40 +1,39 @@
-import { Monitor, Globe, Users, Video, Share2, BarChart } from "lucide-react";
+import { Monitor, Globe, Users, Video, Share2, BarChart, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-const services = [
-  {
-    icon: <Monitor className="w-8 h-8" />,
-    title: "Planejamento Digital",
-    description: "Estratégias personalizadas para sua presença online"
-  },
-  {
-    icon: <Globe className="w-8 h-8" />,
-    title: "Web Development",
-    description: "Desenvolvimento de sites e aplicações web modernas"
-  },
-  {
-    icon: <Users className="w-8 h-8" />,
-    title: "Assessoria De Imprensa",
-    description: "Gestão completa da sua comunicação"
-  },
-  {
-    icon: <Video className="w-8 h-8" />,
-    title: "Web Video",
-    description: "Produção de conteúdo audiovisual"
-  },
-  {
-    icon: <Share2 className="w-8 h-8" />,
-    title: "Social Network",
-    description: "Gestão de redes sociais e engajamento"
-  },
-  {
-    icon: <BarChart className="w-8 h-8" />,
-    title: "Social Compliance",
-    description: "Monitoramento e análise de resultados"
-  }
-];
+const iconMap: Record<string, React.ReactNode> = {
+  Monitor: <Monitor className="w-8 h-8" />,
+  Globe: <Globe className="w-8 h-8" />,
+  Users: <Users className="w-8 h-8" />,
+  Video: <Video className="w-8 h-8" />,
+  Share2: <Share2 className="w-8 h-8" />,
+  BarChart: <BarChart className="w-8 h-8" />,
+};
 
 export const Services = () => {
+  const { data: services, isLoading } = useQuery({
+    queryKey: ["active-services"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("services")
+        .select("*")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <section className="section bg-surface" id="services">
       <div className="container-custom">
@@ -52,16 +51,18 @@ export const Services = () => {
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {services.map((service, index) => (
+          {services?.map((service, index) => (
             <motion.div
-              key={index}
+              key={service.id}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
               className="bg-white p-8 rounded-lg shadow-sm hover:shadow-md transition-shadow"
             >
-              <div className="text-primary mb-4">{service.icon}</div>
+              <div className="text-primary mb-4">
+                {iconMap[service.icon]}
+              </div>
               <h3 className="text-xl font-semibold mb-2">{service.title}</h3>
               <p className="text-gray-600">{service.description}</p>
             </motion.div>
