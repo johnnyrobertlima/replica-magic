@@ -2,9 +2,9 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 import { env } from '@/config/env';
 
-// Validate environment variables before creating the client
-if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) {
-  console.error('Supabase configuration is incomplete. Please check your environment variables.');
+// Only validate in production to allow development without env vars
+if (import.meta.env.PROD && (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY)) {
+  console.error('Supabase configuration is incomplete in production. Please check your deployment configuration.');
   throw new Error('Supabase URL and Anon Key are required');
 }
 
