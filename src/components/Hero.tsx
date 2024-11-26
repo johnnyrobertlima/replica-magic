@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "./ui/button";
 import YouTube from "react-youtube";
 
 interface Banner {
@@ -9,6 +10,8 @@ interface Banner {
   description: string | null;
   image_url: string | null;
   video_url: string | null;
+  button_text: string | null;
+  button_url: string | null;
 }
 
 export const Hero = () => {
@@ -36,7 +39,7 @@ export const Hero = () => {
         setCurrentBannerIndex((current) => 
           current === banners.length - 1 ? 0 : current + 1
         );
-      }, 5000); // Muda a cada 5 segundos
+      }, 5000);
 
       return () => clearInterval(interval);
     }
@@ -96,12 +99,12 @@ export const Hero = () => {
           <div className="absolute inset-0 bg-black/50" />
 
           <div className="relative h-full flex items-center justify-center text-center">
-            <div className="max-w-4xl px-4">
+            <div className="max-w-4xl px-4 space-y-8">
               <motion.h1
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="text-4xl md:text-6xl font-bold text-white mb-6"
+                className="text-4xl md:text-6xl font-bold text-white leading-tight"
               >
                 {currentBanner.title}
               </motion.h1>
@@ -110,10 +113,25 @@ export const Hero = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 }}
-                  className="text-xl text-white/90"
+                  className="text-xl text-white/90 leading-relaxed"
                 >
                   {currentBanner.description}
                 </motion.p>
+              )}
+              {currentBanner.button_text && currentBanner.button_url && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6 }}
+                >
+                  <Button
+                    size="lg"
+                    onClick={() => window.open(currentBanner.button_url!, '_blank')}
+                    className="bg-primary hover:bg-primary/90 text-white px-8 py-3 text-lg"
+                  >
+                    {currentBanner.button_text}
+                  </Button>
+                </motion.div>
               )}
             </div>
           </div>

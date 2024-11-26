@@ -11,6 +11,8 @@ export type Database = {
     Tables: {
       banners: {
         Row: {
+          button_text: string | null
+          button_url: string | null
           created_at: string
           description: string | null
           id: string
@@ -21,6 +23,8 @@ export type Database = {
           video_url: string | null
         }
         Insert: {
+          button_text?: string | null
+          button_url?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -31,6 +35,8 @@ export type Database = {
           video_url?: string | null
         }
         Update: {
+          button_text?: string | null
+          button_url?: string | null
           created_at?: string
           description?: string | null
           id?: string

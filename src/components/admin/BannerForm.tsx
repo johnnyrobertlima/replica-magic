@@ -15,6 +15,8 @@ type BannerFormData = {
   description?: string;
   image_url?: string;
   video_url?: string;
+  button_text?: string;
+  button_url?: string;
   is_active: boolean;
 };
 
@@ -105,6 +107,16 @@ export const BannerForm = () => {
         <div className="space-y-2">
           <Label htmlFor="video_url">Video URL</Label>
           <Input id="video_url" {...register("video_url")} />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="button_text">Button Text</Label>
+          <Input id="button_text" {...register("button_text")} />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="button_url">Button URL</Label>
+          <Input id="button_url" {...register("button_url")} />
         </div>
 
         <div className="flex items-center space-x-2">
