@@ -7,10 +7,10 @@ export const Dashboard = () => {
     queryKey: ["admin-stats"],
     queryFn: async () => {
       const [banners, services, clients, messages] = await Promise.all([
-        supabase.schema("oni_site").from("banners").select("*", { count: "exact" }),
-        supabase.schema("oni_site").from("services").select("*", { count: "exact" }),
-        supabase.schema("oni_site").from("clients").select("*", { count: "exact" }),
-        supabase.schema("oni_site").from("contact_submissions").select("*", { count: "exact" }),
+        supabase.from("oni_site.banners").select("*", { count: "exact" }),
+        supabase.from("oni_site.services").select("*", { count: "exact" }),
+        supabase.from("oni_site.clients").select("*", { count: "exact" }),
+        supabase.from("oni_site.contact_submissions").select("*", { count: "exact" }),
       ]);
 
       return {

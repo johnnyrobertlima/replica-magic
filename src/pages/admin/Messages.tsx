@@ -15,8 +15,7 @@ export const Messages = () => {
     queryKey: ["contact-messages"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .schema("oni_site")
-        .from("contact_submissions")
+        .from("oni_site.contact_submissions")
         .select("*")
         .order("created_at", { ascending: false });
 

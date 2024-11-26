@@ -1,5 +1,9 @@
-import type { Database } from "./types/public";
+import type { Database as PublicDatabase } from "./types/public";
 import type { OniSiteSchema } from "./types/oni-site";
 
-export type { Database, OniSiteSchema };
+export interface Database extends PublicDatabase {
+  oni_site: OniSiteSchema;
+}
+
+export type { OniSiteSchema };
 export type { PublicSchema } from "./types/public";

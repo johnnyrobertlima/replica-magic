@@ -18,8 +18,7 @@ export const Services = () => {
     queryKey: ["services"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .schema("oni_site")
-        .from("services")
+        .from("oni_site.services")
         .select("*")
         .order("created_at", { ascending: false });
 
