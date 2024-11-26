@@ -18,7 +18,8 @@ export const Clients = () => {
     queryKey: ["clients"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("oni_site.clients")
+        .schema("oni_site")
+        .from("clients")
         .select("*")
         .order("created_at", { ascending: false });
 
