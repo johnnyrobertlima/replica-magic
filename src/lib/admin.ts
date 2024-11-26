@@ -11,15 +11,15 @@ export const createAdminUser = async () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
         },
       }
     );
     
     if (!response.ok) {
-      const error = await response.json();
-      console.error('Error creating admin user:', error);
-      return { error };
+      const errorData = await response.json();
+      console.error('Error creating admin user:', errorData);
+      return { error: errorData };
     }
     
     return await response.json();
