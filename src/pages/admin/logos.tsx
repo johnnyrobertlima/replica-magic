@@ -33,13 +33,17 @@ export const AdminLogos = () => {
       const file = formData.get("logo") as File;
       let logoUrl = "";
 
-      if (file.size > 0) {
+      if (file && file.size > 0) {
         const filePath = `logos/${Date.now()}-${file.name}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from("oni-media")
           .upload(filePath, file);
+          
         if (uploadError) throw uploadError;
+        
+        // Get the complete URL using getStorageUrl
         logoUrl = getStorageUrl(filePath);
+        console.log('Logo URL being saved:', logoUrl); // Debug log
       }
 
       const logoData = {
