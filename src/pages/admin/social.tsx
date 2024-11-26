@@ -29,12 +29,11 @@ import {
   Youtube,
   Github,
   Twitch,
-  TikTok,
+  Share2,
   Mail,
   Phone,
   MapPin,
   Rss,
-  Share,
   Globe
 } from "lucide-react";
 import { ActionButtons } from "@/components/admin/ActionButtons";
@@ -164,12 +163,11 @@ export const AdminSocial = () => {
     { name: "YouTube", icon: <Youtube className="w-4 h-4" /> },
     { name: "GitHub", icon: <Github className="w-4 h-4" /> },
     { name: "Twitch", icon: <Twitch className="w-4 h-4" /> },
-    { name: "TikTok", icon: <TikTok className="w-4 h-4" /> },
+    { name: "Share", icon: <Share2 className="w-4 h-4" /> },
     { name: "Email", icon: <Mail className="w-4 h-4" /> },
     { name: "Phone", icon: <Phone className="w-4 h-4" /> },
     { name: "Location", icon: <MapPin className="w-4 h-4" /> },
     { name: "RSS", icon: <Rss className="w-4 h-4" /> },
-    { name: "Share", icon: <Share className="w-4 h-4" /> },
     { name: "Website", icon: <Globe className="w-4 h-4" /> },
   ];
 
@@ -287,4 +285,3 @@ export const AdminSocial = () => {
     </div>
   );
 };
-
