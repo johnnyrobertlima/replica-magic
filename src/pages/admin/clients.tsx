@@ -7,6 +7,7 @@ import { Loader2, Plus } from "lucide-react";
 import { ClientForm } from "@/components/admin/clients/ClientForm";
 import { ClientList } from "@/components/admin/clients/ClientList";
 import { Client } from "@/types/client";
+import { getStorageUrl } from "@/utils/imageUtils";
 
 export const AdminClients = () => {
   const [isCreating, setIsCreating] = useState(false);
@@ -32,11 +33,12 @@ export const AdminClients = () => {
       let logoUrl = "";
 
       if (file.size > 0) {
+        const filePath = `clients/${Date.now()}-${file.name}`;
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from("oni-media")
-          .upload(`clients/${Date.now()}-${file.name}`, file);
+          .upload(filePath, file);
         if (uploadError) throw uploadError;
-        logoUrl = uploadData.path;
+        logoUrl = getStorageUrl(filePath);
       }
 
       const clientData = {

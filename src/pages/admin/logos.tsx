@@ -4,17 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, Plus } from "lucide-react";
 import { ActionButtons } from "@/components/admin/ActionButtons";
 import { Logo } from "@/types/logo";
+import { getStorageUrl } from "@/utils/imageUtils";
 
 export const AdminLogos = () => {
   const [isCreating, setIsCreating] = useState(false);
@@ -40,11 +34,12 @@ export const AdminLogos = () => {
       let logoUrl = "";
 
       if (file.size > 0) {
+        const filePath = `logos/${Date.now()}-${file.name}`;
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from("oni-media")
-          .upload(`logos/${Date.now()}-${file.name}`, file);
+          .upload(filePath, file);
         if (uploadError) throw uploadError;
-        logoUrl = uploadData.path; // Store only the path, not the full URL
+        logoUrl = getStorageUrl(filePath);
       }
 
       const logoData = {
@@ -181,6 +176,10 @@ export const AdminLogos = () => {
                   src={logo.url}
                   alt={logo.name}
                   className="h-16 w-24 object-contain rounded"
+                  onError={(e) => {
+                    const img = e.target as HTMLImageElement;
+                    img.src = '/placeholder.svg';
+                  }}
                 />
               </TableCell>
               <TableCell>{logo.type}</TableCell>
