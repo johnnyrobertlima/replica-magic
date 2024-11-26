@@ -12,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, Plus, Trash2, Power } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { ActionButtons } from "@/components/admin/ActionButtons";
 
 interface Client {
@@ -58,6 +58,7 @@ export const AdminClients = () => {
         name: String(formData.get("name")),
         website_url: formData.get("website_url") ? String(formData.get("website_url")) : null,
         logo_url: logoUrl,
+        is_active: true, // Assume newly created clients are active by default
       };
 
       const { error } = await supabase.from("clients").insert([clientData]);
@@ -86,6 +87,7 @@ export const AdminClients = () => {
           name: client.name,
           website_url: client.website_url,
           logo_url: client.logo_url,
+          is_active: client.is_active, // Add this line
         })
         .eq("id", client.id);
       if (error) throw error;
@@ -134,7 +136,8 @@ export const AdminClients = () => {
         id: editingClient.id, 
         name: String(formData.get("name")),
         website_url: formData.get("website_url") ? String(formData.get("website_url")) : null,
-        logo_url: editingClient.logo_url // Assume logo_url doesn't change
+        logo_url: editingClient.logo_url, // Assume logo_url doesn't change
+        is_active: editingClient.is_active,
       });
     } else {
       createClient.mutate(formData);

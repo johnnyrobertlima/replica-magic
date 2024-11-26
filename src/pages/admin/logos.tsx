@@ -12,8 +12,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, Plus, Trash2, Power } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { ActionButtons } from "@/components/admin/ActionButtons";
+import { Logo } from "@/types/logo";
 
 export const AdminLogos = () => {
   const [isCreating, setIsCreating] = useState(false);
