@@ -52,7 +52,8 @@ export const Hero = () => {
             <iframe
               src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&rel=0`}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              className="absolute inset-0 w-full h-full object-cover"
+              className="absolute w-full h-full object-cover"
+              style={{ width: '100%', height: '100%' }}
             />
             <div className="absolute inset-0 bg-black/50" />
           </div>
