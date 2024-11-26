@@ -1,3 +1,4 @@
+import React from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -5,9 +6,9 @@ const showDetailedError = (error: any) => {
   const details = JSON.stringify(error, null, 2);
   toast("Detailed Error Log", {
     description: (
-      <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-        <code className="text-white text-xs">{details}</code>
-      </pre>
+      <div className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
+        <code className="text-white text-xs whitespace-pre-wrap">{details}</code>
+      </div>
     ),
     duration: 10000,
   });
@@ -28,7 +29,10 @@ export const createAdminUser = async () => {
         const errorMessage = response.error.message || 'Failed to create admin user';
         toast.error(errorMessage, {
           description: "Click here to see detailed error log",
-          onClick: () => showDetailedError(response.error),
+          action: {
+            label: "View Details",
+            onClick: () => showDetailedError(response.error)
+          }
         });
         return { 
           error: {
@@ -43,7 +47,10 @@ export const createAdminUser = async () => {
         const errorMessage = response.data.error;
         toast.error(errorMessage, {
           description: "Click here to see detailed error log",
-          onClick: () => showDetailedError(response.data),
+          action: {
+            label: "View Details",
+            onClick: () => showDetailedError(response.data)
+          }
         });
         return {
           error: {
@@ -59,7 +66,10 @@ export const createAdminUser = async () => {
       const errorMessage = 'Failed to create admin user';
       toast.error(errorMessage, {
         description: "Click here to see detailed error log",
-        onClick: () => showDetailedError(error),
+        action: {
+          label: "View Details",
+          onClick: () => showDetailedError(error)
+        }
       });
       return { 
         error: {
