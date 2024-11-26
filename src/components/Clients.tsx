@@ -55,7 +55,7 @@ export const Clients = () => {
                 <img
                   src={publicUrl}
                   alt={client.name}
-                  className="max-h-12 w-auto grayscale hover:grayscale-0 transition-all"
+                  className="max-h-12 w-auto grayscale hover:grayscale-0 transition-all object-contain"
                 />
               </motion.div>
             );

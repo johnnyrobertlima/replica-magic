@@ -32,7 +32,6 @@ export const Hero = () => {
     return null;
   }
 
-  // Get the public URL for the image
   const { data: { publicUrl } } = supabase.storage
     .from("oni-media")
     .getPublicUrl(banner.image_url);
@@ -40,7 +39,7 @@ export const Hero = () => {
   return (
     <div className="relative h-[80vh] min-h-[600px] w-full overflow-hidden">
       <div
-        className="absolute inset-0 bg-cover bg-center"
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
           backgroundImage: `url('${publicUrl}')`,
         }}

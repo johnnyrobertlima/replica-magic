@@ -51,15 +51,15 @@ export const ContactSection = () => {
             <div className="space-y-6">
               <div className="flex items-center space-x-4">
                 <Phone className="w-6 h-6 text-primary" />
-                <span>(11) 1234-5678</span>
+                <span>(11) 2692-9073</span>
               </div>
               <div className="flex items-center space-x-4">
                 <Mail className="w-6 h-6 text-primary" />
-                <span>contato@oni.com.br</span>
+                <span>comercial@oniagencia.com.br</span>
               </div>
               <div className="flex items-center space-x-4">
                 <MapPin className="w-6 h-6 text-primary" />
-                <span>São Paulo, SP</span>
+                <span>Av. Rangel Pestana 1988 - Conj. 12</span>
               </div>
             </div>
           </motion.div>
