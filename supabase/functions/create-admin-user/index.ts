@@ -18,7 +18,9 @@ Deno.serve(async (req) => {
 
     // First check if admin user already exists
     const { data: existingUsers, error: getUserError } = await supabaseClient.auth.admin.listUsers()
+    
     if (getUserError) {
+      console.error('Error listing users:', getUserError)
       throw getUserError
     }
 
@@ -38,7 +40,21 @@ Deno.serve(async (req) => {
       user_metadata: { role: 'admin' }
     })
 
-    if (error) throw error
+    if (error) {
+      console.error('Error creating admin user:', error)
+      throw error
+    }
+
+    // Update user role to be an admin
+    const { error: updateError } = await supabaseClient.auth.admin.updateUserById(
+      data.user.id,
+      { app_metadata: { role: 'admin' } }
+    )
+
+    if (updateError) {
+      console.error('Error updating user role:', updateError)
+      throw updateError
+    }
 
     return new Response(
       JSON.stringify({ message: 'Admin user created successfully', data }),
@@ -47,8 +63,14 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('Error in create-admin-user function:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      JSON.stringify({ 
+        error: error.message,
+        details: error.details || 'No additional details available'
+      }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
+        status: 400 
+      }
     )
   }
 })
