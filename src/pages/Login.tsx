@@ -24,12 +24,13 @@ const Login = () => {
     try {
       const result = await createAdminUser();
       if (result.error) {
-        toast.error(result.error);
+        toast.error(result.error.message || "Failed to create admin user");
       } else {
         toast.success("Admin user created successfully. You can now login with admin@onipresenca.com.br / Admin@123456");
       }
     } catch (error) {
       toast.error("Failed to create admin user");
+      console.error("Error creating admin user:", error);
     }
   };
 
