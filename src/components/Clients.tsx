@@ -49,19 +49,19 @@ export const Clients = () => {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: index * 0.1 }}
-                className="flex items-center justify-center p-8 bg-surface rounded-lg hover:bg-surface-hover transition-colors min-h-[120px]"
+                className="flex items-center justify-center p-4 bg-surface rounded-lg hover:bg-surface-hover transition-colors min-h-[160px]"
               >
                 {client.website_url ? (
                   <a
                     href={client.website_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full h-full flex items-center justify-center"
+                    className="w-full h-full flex items-center justify-center px-8"
                   >
                     <img
                       src={imageUrl}
                       alt={client.name}
-                      className="max-h-16 w-auto grayscale hover:grayscale-0 transition-all object-contain"
+                      className="w-full h-auto max-h-24 grayscale hover:grayscale-0 transition-all object-contain"
                       loading="lazy"
                       onError={(e) => {
                         const img = e.target as HTMLImageElement;
@@ -70,16 +70,18 @@ export const Clients = () => {
                     />
                   </a>
                 ) : (
-                  <img
-                    src={imageUrl}
-                    alt={client.name}
-                    className="max-h-16 w-auto grayscale hover:grayscale-0 transition-all object-contain"
-                    loading="lazy"
-                    onError={(e) => {
-                      const img = e.target as HTMLImageElement;
-                      img.src = '/placeholder.svg';
-                    }}
-                  />
+                  <div className="w-full h-full flex items-center justify-center px-8">
+                    <img
+                      src={imageUrl}
+                      alt={client.name}
+                      className="w-full h-auto max-h-24 grayscale hover:grayscale-0 transition-all object-contain"
+                      loading="lazy"
+                      onError={(e) => {
+                        const img = e.target as HTMLImageElement;
+                        img.src = '/placeholder.svg';
+                      }}
+                    />
+                  </div>
                 )}
               </motion.div>
             );
