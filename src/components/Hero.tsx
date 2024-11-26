@@ -32,15 +32,17 @@ export const Hero = () => {
     return null;
   }
 
-  // Construct the full URL for the banner image using the direct URL from the Supabase project
-  const imageUrl = `https://iaegdxxxlastfujboajm.supabase.co/storage/v1/object/public/oni-media/${banner.image_url}`;
+  // Get the public URL for the image
+  const { data: { publicUrl } } = supabase.storage
+    .from("oni-media")
+    .getPublicUrl(banner.image_url);
 
   return (
     <div className="relative h-[80vh] min-h-[600px] w-full overflow-hidden">
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage: `url('${imageUrl}')`,
+          backgroundImage: `url('${publicUrl}')`,
         }}
       >
         <div className="absolute inset-0 bg-black/50" />

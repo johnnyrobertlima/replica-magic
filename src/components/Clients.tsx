@@ -1,17 +1,30 @@
 import { motion } from "framer-motion";
-
-const clients = [
-  { name: "Shoppinho Santo André", logo: "/placeholder.svg" },
-  { name: "Luiz Construtor", logo: "/placeholder.svg" },
-  { name: "Galeria Page Brás", logo: "/placeholder.svg" },
-  { name: "Studio Ark", logo: "/placeholder.svg" },
-  { name: "Casa das Crianças", logo: "/placeholder.svg" },
-  { name: "Lojão do Brás", logo: "/placeholder.svg" },
-  { name: "Feirinha da Concórdia", logo: "/placeholder.svg" },
-  { name: "Crawling", logo: "/placeholder.svg" },
-];
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
 
 export const Clients = () => {
+  const { data: clients, isLoading } = useQuery({
+    queryKey: ["active-clients"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("clients")
+        .select("*")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <section className="section bg-white" id="clients">
       <div className="container-custom">
@@ -25,22 +38,28 @@ export const Clients = () => {
         </motion.h2>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-          {clients.map((client, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: index * 0.1 }}
-              className="flex items-center justify-center p-6 bg-surface rounded-lg hover:bg-surface-hover transition-colors"
-            >
-              <img
-                src={client.logo}
-                alt={client.name}
-                className="max-h-12 w-auto grayscale hover:grayscale-0 transition-all"
-              />
-            </motion.div>
-          ))}
+          {clients?.map((client, index) => {
+            const { data: { publicUrl } } = supabase.storage
+              .from("oni-media")
+              .getPublicUrl(client.logo_url);
+
+            return (
+              <motion.div
+                key={client.id}
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: index * 0.1 }}
+                className="flex items-center justify-center p-6 bg-surface rounded-lg hover:bg-surface-hover transition-colors"
+              >
+                <img
+                  src={publicUrl}
+                  alt={client.name}
+                  className="max-h-12 w-auto grayscale hover:grayscale-0 transition-all"
+                />
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>
