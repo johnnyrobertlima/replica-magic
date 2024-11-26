@@ -6,36 +6,37 @@ export const createAdminUser = async () => {
   // Only proceed if no user is logged in
   if (!user) {
     try {
-      const response = await fetch(
-        'https://iaegdxxxlastfujboajm.functions.supabase.co/create-admin-user',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlhZWdkeHh4bGFzdGZ1amJvYWptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzE0MTE0MjIsImV4cCI6MjA0Njk4NzQyMn0.cgRu9S27kOPJ1wsuY6wUXhrZPLXXbnnv3cGNcEHMMsU`,
-          },
-        }
-      );
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        console.error('Error response from server:', data);
+      const response = await supabase.functions.invoke('create-admin-user', {
+        method: 'POST',
+      });
+
+      if (response.error) {
+        console.error('Error response from server:', response.error);
         return { 
           error: {
-            message: data.error || 'Failed to create admin user',
-            details: data.details
+            message: response.error.message || 'Failed to create admin user',
+            details: response.error.details || 'No additional details available'
           }
         };
       }
-      
-      return data;
+
+      if (response.data.error) {
+        console.error('Error in response data:', response.data.error);
+        return {
+          error: {
+            message: response.data.error,
+            details: response.data.details || 'No additional details available'
+          }
+        };
+      }
+
+      return response.data;
     } catch (error) {
       console.error('Error creating admin user:', error);
       return { 
         error: {
           message: 'Failed to create admin user',
-          details: error.message
+          details: error.message || 'No additional details available'
         }
       };
     }

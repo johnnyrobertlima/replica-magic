@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
     
     if (getUserError) {
       console.error('Error listing users:', getUserError)
-      throw getUserError
+      throw new Error(`Error listing users: ${getUserError.message}`)
     }
 
     const adminExists = existingUsers.users.some(user => user.email === 'admin@onipresenca.com.br')
@@ -33,43 +33,47 @@ Deno.serve(async (req) => {
     }
 
     // Create admin user if it doesn't exist
-    const { data, error } = await supabaseClient.auth.admin.createUser({
+    const { data: newUser, error: createError } = await supabaseClient.auth.admin.createUser({
       email: 'admin@onipresenca.com.br',
       password: 'Admin@123456',
       email_confirm: true,
       user_metadata: { role: 'admin' }
     })
 
-    if (error) {
-      console.error('Error creating admin user:', error)
-      throw error
+    if (createError) {
+      console.error('Error creating admin user:', createError)
+      throw new Error(`Error creating admin user: ${createError.message}`)
     }
 
-    // Update user role to be an admin
+    // Update user role to admin
     const { error: updateError } = await supabaseClient.auth.admin.updateUserById(
-      data.user.id,
+      newUser.user.id,
       { app_metadata: { role: 'admin' } }
     )
 
     if (updateError) {
       console.error('Error updating user role:', updateError)
-      throw updateError
+      throw new Error(`Error updating user role: ${updateError.message}`)
     }
 
     return new Response(
-      JSON.stringify({ message: 'Admin user created successfully', data }),
+      JSON.stringify({ 
+        message: 'Admin user created successfully',
+        data: newUser
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
+
   } catch (error) {
     console.error('Error in create-admin-user function:', error)
     return new Response(
       JSON.stringify({ 
-        error: error.message,
-        details: error.details || 'No additional details available'
+        error: 'Database error creating new user',
+        details: error.message || 'No additional details available'
       }),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
-        status: 400 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400
       }
     )
   }
