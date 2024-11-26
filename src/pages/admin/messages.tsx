@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Loader2, Mail, MailOpen } from "lucide-react";
+import { ActionButtons } from "@/components/admin/ActionButtons";
 
 interface Message {
   id: string;
@@ -89,22 +90,15 @@ export const AdminMessages = () => {
                 {message.read ? "Lida" : "Não lida"}
               </TableCell>
               <TableCell>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() =>
+                <ActionButtons
+                  isActive={message.read}
+                  onToggle={() =>
                     toggleRead.mutate({
                       id: message.id,
                       read: message.read,
                     })
                   }
-                >
-                  {message.read ? (
-                    <MailOpen className="h-4 w-4" />
-                  ) : (
-                    <Mail className="h-4 w-4" />
-                  )}
-                </Button>
+                />
               </TableCell>
             </TableRow>
           ))}

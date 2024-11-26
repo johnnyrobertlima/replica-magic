@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
+import { ActionButtons } from "@/components/admin/ActionButtons";
 import {
   Table,
   TableBody,
@@ -13,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, Plus, Trash2, Power } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 
 interface Banner {
   id: string;
@@ -28,6 +29,7 @@ interface Banner {
 
 export const AdminBanners = () => {
   const [isCreating, setIsCreating] = useState(false);
+  const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -110,10 +112,41 @@ export const AdminBanners = () => {
     },
   });
 
+  const handleEdit = (banner: Banner) => {
+    setEditingBanner(banner);
+    setIsCreating(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
-    createBanner.mutate(new FormData(form));
+    const formData = new FormData(form);
+
+    if (editingBanner) {
+      // Handle update
+      const updatedData = {
+        title: String(formData.get("title")),
+        description: String(formData.get("description")),
+        button_text: String(formData.get("button_text")),
+        button_link: String(formData.get("button_link")),
+        youtube_url: formData.get("youtube_url") ? String(formData.get("youtube_url")) : null,
+      };
+
+      const { error } = await supabase
+        .from("banners")
+        .update(updatedData)
+        .eq("id", editingBanner.id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ["banners"] });
+      setIsCreating(false);
+      setEditingBanner(null);
+      toast({ title: "Banner atualizado com sucesso!" });
+    } else {
+      // Handle create
+      createBanner.mutate(formData);
+    }
   };
 
   if (isLoading) {
@@ -128,7 +161,10 @@ export const AdminBanners = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Banners</h1>
-        <Button onClick={() => setIsCreating(!isCreating)}>
+        <Button onClick={() => {
+          setEditingBanner(null);
+          setIsCreating(!isCreating);
+        }}>
           <Plus className="h-4 w-4 mr-2" />
           Novo Banner
         </Button>
@@ -139,34 +175,60 @@ export const AdminBanners = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Título</label>
-              <Input name="title" required />
+              <Input 
+                name="title" 
+                required 
+                defaultValue={editingBanner?.title}
+              />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Texto do Botão</label>
-              <Input name="button_text" required />
+              <Input 
+                name="button_text" 
+                required 
+                defaultValue={editingBanner?.button_text}
+              />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Link do Botão</label>
-              <Input name="button_link" type="url" required />
+              <Input 
+                name="button_link" 
+                type="url" 
+                required 
+                defaultValue={editingBanner?.button_link}
+              />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Link do YouTube</label>
-              <Input name="youtube_url" type="url" />
+              <Input 
+                name="youtube_url" 
+                type="url" 
+                defaultValue={editingBanner?.youtube_url || ''}
+              />
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Imagem</label>
-              <Input name="image" type="file" accept="image/*" required />
-            </div>
+            {!editingBanner && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Imagem</label>
+                <Input name="image" type="file" accept="image/*" required />
+              </div>
+            )}
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Descrição</label>
-            <Textarea name="description" required />
+            <Textarea 
+              name="description" 
+              required 
+              defaultValue={editingBanner?.description}
+            />
           </div>
           <div className="flex justify-end gap-2">
             <Button
               type="button"
               variant="outline"
-              onClick={() => setIsCreating(false)}
+              onClick={() => {
+                setIsCreating(false);
+                setEditingBanner(null);
+              }}
             >
               Cancelar
             </Button>
@@ -174,7 +236,7 @@ export const AdminBanners = () => {
               {createBanner.isPending && (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               )}
-              Salvar
+              {editingBanner ? 'Salvar' : 'Criar'}
             </Button>
           </div>
         </form>
@@ -204,27 +266,15 @@ export const AdminBanners = () => {
                 {banner.is_active ? "Ativo" : "Inativo"}
               </TableCell>
               <TableCell>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() =>
-                      toggleBanner.mutate({
-                        id: banner.id,
-                        is_active: banner.is_active,
-                      })
-                    }
-                  >
-                    <Power className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    onClick={() => deleteBanner.mutate(banner.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+                <ActionButtons
+                  isActive={banner.is_active}
+                  onToggle={() => toggleBanner.mutate({
+                    id: banner.id,
+                    is_active: banner.is_active,
+                  })}
+                  onEdit={() => handleEdit(banner)}
+                  onDelete={() => deleteBanner.mutate(banner.id)}
+                />
               </TableCell>
             </TableRow>
           ))}

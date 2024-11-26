@@ -13,17 +13,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Loader2, Plus, Trash2, Power } from "lucide-react";
-
-interface Logo {
-  id: string;
-  name: string;
-  url: string;
-  type: string;
-  is_active: boolean;
-}
+import { ActionButtons } from "@/components/admin/ActionButtons";
 
 export const AdminLogos = () => {
   const [isCreating, setIsCreating] = useState(false);
+  const [editingLogo, setEditingLogo] = useState<Logo | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -100,6 +94,11 @@ export const AdminLogos = () => {
     },
   });
 
+  const handleEdit = (logo: Logo) => {
+    setEditingLogo(logo);
+    setIsCreating(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
@@ -126,10 +125,15 @@ export const AdminLogos = () => {
 
       {isCreating && (
         <form onSubmit={handleSubmit} className="space-y-4 border p-4 rounded-lg">
+          {/* ... keep existing form fields but add defaultValue from editingLogo */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Nome</label>
-              <Input name="name" required />
+              <Input 
+                name="name" 
+                required 
+                defaultValue={editingLogo?.name}
+              />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Tipo</label>
@@ -144,15 +148,15 @@ export const AdminLogos = () => {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setIsCreating(false)}
+              onClick={() => {
+                setIsCreating(false);
+                setEditingLogo(null);
+              }}
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={createLogo.isPending}>
-              {createLogo.isPending && (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              )}
-              Salvar
+            <Button type="submit">
+              {editingLogo ? 'Salvar' : 'Criar'}
             </Button>
           </div>
         </form>
@@ -184,27 +188,15 @@ export const AdminLogos = () => {
                 {logo.is_active ? "Ativo" : "Inativo"}
               </TableCell>
               <TableCell>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() =>
-                      toggleLogo.mutate({
-                        id: logo.id,
-                        is_active: logo.is_active,
-                      })
-                    }
-                  >
-                    <Power className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    onClick={() => deleteLogo.mutate(logo.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+                <ActionButtons
+                  isActive={logo.is_active}
+                  onToggle={() => toggleLogo.mutate({
+                    id: logo.id,
+                    is_active: logo.is_active,
+                  })}
+                  onEdit={() => handleEdit(logo)}
+                  onDelete={() => deleteLogo.mutate(logo.id)}
+                />
               </TableCell>
             </TableRow>
           ))}

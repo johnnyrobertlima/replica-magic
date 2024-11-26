@@ -13,6 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Loader2, Plus, Trash2, Power } from "lucide-react";
+import { ActionButtons } from "@/components/admin/ActionButtons";
 
 interface SocialMedia {
   id: string;
@@ -24,6 +25,7 @@ interface SocialMedia {
 
 export const AdminSocial = () => {
   const [isCreating, setIsCreating] = useState(false);
+  const [editingSocial, setEditingSocial] = useState<SocialMedia | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -89,10 +91,39 @@ export const AdminSocial = () => {
     },
   });
 
+  const handleEdit = (social: SocialMedia) => {
+    setEditingSocial(social);
+    setIsCreating(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
-    createSocialMedia.mutate(new FormData(form));
+    const formData = new FormData(form);
+
+    if (editingSocial) {
+      // Handle update
+      const updatedData = {
+        platform: String(formData.get("platform")),
+        url: String(formData.get("url")),
+        icon: String(formData.get("icon")),
+      };
+
+      const { error } = await supabase
+        .from("social_media")
+        .update(updatedData)
+        .eq("id", editingSocial.id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ["social-media"] });
+      setIsCreating(false);
+      setEditingSocial(null);
+      toast({ title: "Rede social atualizada com sucesso!" });
+    } else {
+      // Handle create
+      createSocialMedia.mutate(formData);
+    }
   };
 
   if (isLoading) {
@@ -107,7 +138,10 @@ export const AdminSocial = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Redes Sociais</h1>
-        <Button onClick={() => setIsCreating(!isCreating)}>
+        <Button onClick={() => {
+          setEditingSocial(null);
+          setIsCreating(!isCreating);
+        }}>
           <Plus className="h-4 w-4 mr-2" />
           Nova Rede Social
         </Button>
@@ -118,30 +152,43 @@ export const AdminSocial = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Plataforma</label>
-              <Input name="platform" required />
+              <Input 
+                name="platform" 
+                required 
+                defaultValue={editingSocial?.platform}
+              />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">URL</label>
-              <Input name="url" type="url" required />
+              <Input 
+                name="url" 
+                type="url" 
+                required 
+                defaultValue={editingSocial?.url}
+              />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Ícone</label>
-              <Input name="icon" required />
+              <Input 
+                name="icon" 
+                required 
+                defaultValue={editingSocial?.icon}
+              />
             </div>
           </div>
           <div className="flex justify-end gap-2">
             <Button
               type="button"
               variant="outline"
-              onClick={() => setIsCreating(false)}
+              onClick={() => {
+                setIsCreating(false);
+                setEditingSocial(null);
+              }}
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={createSocialMedia.isPending}>
-              {createSocialMedia.isPending && (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              )}
-              Salvar
+            <Button type="submit">
+              {editingSocial ? 'Salvar' : 'Criar'}
             </Button>
           </div>
         </form>
@@ -174,27 +221,15 @@ export const AdminSocial = () => {
                 {social.is_active ? "Ativo" : "Inativo"}
               </TableCell>
               <TableCell>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() =>
-                      toggleSocialMedia.mutate({
-                        id: social.id,
-                        is_active: social.is_active,
-                      })
-                    }
-                  >
-                    <Power className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    onClick={() => deleteSocialMedia.mutate(social.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+                <ActionButtons
+                  isActive={social.is_active}
+                  onToggle={() => toggleSocialMedia.mutate({
+                    id: social.id,
+                    is_active: social.is_active,
+                  })}
+                  onEdit={() => handleEdit(social)}
+                  onDelete={() => deleteSocialMedia.mutate(social.id)}
+                />
               </TableCell>
             </TableRow>
           ))}

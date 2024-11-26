@@ -13,6 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Loader2, Plus, Trash2, Power } from "lucide-react";
+import { ActionButtons } from "@/components/admin/ActionButtons";
 
 interface Client {
   id: string;
@@ -24,6 +25,7 @@ interface Client {
 
 export const AdminClients = () => {
   const [isCreating, setIsCreating] = useState(false);
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -64,6 +66,7 @@ export const AdminClients = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       setIsCreating(false);
+      setEditingClient(null);
       toast({ title: "Cliente criado com sucesso!" });
     },
     onError: (error: Error) => {
@@ -72,6 +75,26 @@ export const AdminClients = () => {
         description: error.message,
         variant: "destructive",
       });
+    },
+  });
+
+  const updateClient = useMutation({
+    mutationFn: async (client: Client) => {
+      const { error } = await supabase
+        .from("clients")
+        .update({
+          name: client.name,
+          website_url: client.website_url,
+          logo_url: client.logo_url,
+        })
+        .eq("id", client.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      setIsCreating(false);
+      setEditingClient(null);
+      toast({ title: "Cliente atualizado com sucesso!" });
     },
   });
 
@@ -103,7 +126,24 @@ export const AdminClients = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
-    createClient.mutate(new FormData(form));
+    const formData = new FormData(form);
+
+    if (editingClient) {
+      // Update client
+      updateClient.mutate({ 
+        id: editingClient.id, 
+        name: String(formData.get("name")),
+        website_url: formData.get("website_url") ? String(formData.get("website_url")) : null,
+        logo_url: editingClient.logo_url // Assume logo_url doesn't change
+      });
+    } else {
+      createClient.mutate(formData);
+    }
+  };
+
+  const handleEdit = (client: Client) => {
+    setEditingClient(client);
+    setIsCreating(true);
   };
 
   if (isLoading) {
@@ -129,11 +169,19 @@ export const AdminClients = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Nome</label>
-              <Input name="name" required />
+              <Input 
+                name="name" 
+                required 
+                defaultValue={editingClient?.name}
+              />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Website</label>
-              <Input name="website_url" type="url" />
+              <Input 
+                name="website_url" 
+                type="url" 
+                defaultValue={editingClient?.website_url}
+              />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Logo</label>
@@ -144,15 +192,19 @@ export const AdminClients = () => {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setIsCreating(false)}
+              onClick={() => {
+                setIsCreating(false);
+                setEditingClient(null);
+              }}
             >
               Cancelar
             </Button>
             <Button type="submit" disabled={createClient.isPending}>
-              {createClient.isPending && (
+              {createClient.isPending ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                editingClient ? 'Salvar' : 'Criar'
               )}
-              Salvar
             </Button>
           </div>
         </form>
@@ -195,27 +247,15 @@ export const AdminClients = () => {
                 {client.is_active ? "Ativo" : "Inativo"}
               </TableCell>
               <TableCell>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() =>
-                      toggleClient.mutate({
-                        id: client.id,
-                        is_active: client.is_active,
-                      })
-                    }
-                  >
-                    <Power className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    onClick={() => deleteClient.mutate(client.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+                <ActionButtons
+                  isActive={client.is_active}
+                  onToggle={() => toggleClient.mutate({
+                    id: client.id,
+                    is_active: client.is_active,
+                  })}
+                  onEdit={() => handleEdit(client)}
+                  onDelete={() => deleteClient.mutate(client.id)}
+                />
               </TableCell>
             </TableRow>
           ))}

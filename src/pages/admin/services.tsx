@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
+import { ActionButtons } from "@/components/admin/ActionButtons";
 import {
   Select,
   SelectContent,
@@ -39,6 +40,7 @@ interface Service {
 
 export const AdminServices = () => {
   const [isCreating, setIsCreating] = useState(false);
+  const [editingService, setEditingService] = useState<Service | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -79,6 +81,26 @@ export const AdminServices = () => {
     },
   });
 
+  const updateService = async (service: Service, formData: FormData) => {
+    const updatedData = {
+      title: String(formData.get("title")),
+      description: String(formData.get("description")),
+      icon: String(formData.get("icon")),
+    };
+
+    const { error } = await supabase
+      .from("services")
+      .update(updatedData)
+      .eq("id", service.id);
+
+    if (error) throw error;
+
+    queryClient.invalidateQueries({ queryKey: ["services"] });
+    setIsCreating(false);
+    setEditingService(null);
+    toast({ title: "Serviço atualizado com sucesso!" });
+  };
+
   const toggleService = useMutation({
     mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
       const { error } = await supabase
@@ -104,10 +126,21 @@ export const AdminServices = () => {
     },
   });
 
+  const handleEdit = (service: Service) => {
+    setEditingService(service);
+    setIsCreating(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
-    createService.mutate(new FormData(form));
+    const formData = new FormData(form);
+
+    if (editingService) {
+      await updateService(editingService, formData);
+    } else {
+      createService.mutate(formData);
+    }
   };
 
   if (isLoading) {
@@ -133,11 +166,15 @@ export const AdminServices = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Título</label>
-              <Input name="title" required />
+              <Input 
+                name="title" 
+                required 
+                defaultValue={editingService?.title}
+              />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Ícone</label>
-              <Select name="icon" required>
+              <Select name="icon" required defaultValue={editingService?.icon}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione um ícone" />
                 </SelectTrigger>
@@ -156,21 +193,25 @@ export const AdminServices = () => {
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Descrição</label>
-            <Textarea name="description" required />
+            <Textarea 
+              name="description" 
+              required 
+              defaultValue={editingService?.description}
+            />
           </div>
           <div className="flex justify-end gap-2">
             <Button
               type="button"
               variant="outline"
-              onClick={() => setIsCreating(false)}
+              onClick={() => {
+                setIsCreating(false);
+                setEditingService(null);
+              }}
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={createService.isPending}>
-              {createService.isPending && (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              )}
-              Salvar
+            <Button type="submit">
+              {editingService ? 'Salvar' : 'Criar'}
             </Button>
           </div>
         </form>
@@ -201,27 +242,15 @@ export const AdminServices = () => {
                 {service.is_active ? "Ativo" : "Inativo"}
               </TableCell>
               <TableCell>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() =>
-                      toggleService.mutate({
-                        id: service.id,
-                        is_active: service.is_active,
-                      })
-                    }
-                  >
-                    <Power className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    onClick={() => deleteService.mutate(service.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+                <ActionButtons
+                  isActive={service.is_active}
+                  onToggle={() => toggleService.mutate({
+                    id: service.id,
+                    is_active: service.is_active,
+                  })}
+                  onEdit={() => handleEdit(service)}
+                  onDelete={() => deleteService.mutate(service.id)}
+                />
               </TableCell>
             </TableRow>
           ))}
