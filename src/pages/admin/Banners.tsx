@@ -20,7 +20,6 @@ export const Banners = () => {
     queryKey: ["banners"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .schema("oni_site")
         .from("banners")
         .select("*")
         .order("created_at", { ascending: false });
