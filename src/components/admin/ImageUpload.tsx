@@ -43,6 +43,7 @@ export const ImageUpload = ({ name, currentImage, onChange }: ImageUploadProps) 
   };
 
   const currentImageUrl = currentImage ? getStorageUrl(currentImage) : null;
+  console.log('Current image URL:', currentImageUrl); // Debug log
 
   return (
     <div className="space-y-2">
@@ -59,6 +60,7 @@ export const ImageUpload = ({ name, currentImage, onChange }: ImageUploadProps) 
             alt="Preview"
             className="h-20 w-32 object-cover rounded"
             onError={(e) => {
+              console.log('Image load error:', e); // Debug log
               const img = e.target as HTMLImageElement;
               img.src = '/placeholder.svg';
             }}
