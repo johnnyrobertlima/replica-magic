@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { getStorageUrl } from "@/utils/imageUtils";
 
 export const Clients = () => {
   const { data: clients, isLoading } = useQuery({
@@ -39,10 +40,7 @@ export const Clients = () => {
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
           {clients?.map((client, index) => {
-            // Construct the full URL for the logo
-            const imageUrl = client.logo_url 
-              ? `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/oni-media/${client.logo_url}`
-              : '';
+            const imageUrl = getStorageUrl(client.logo_url);
 
             return (
               <motion.div
@@ -65,6 +63,10 @@ export const Clients = () => {
                       alt={client.name}
                       className="max-h-16 w-auto grayscale hover:grayscale-0 transition-all object-contain"
                       loading="lazy"
+                      onError={(e) => {
+                        const img = e.target as HTMLImageElement;
+                        img.src = '/placeholder.svg';
+                      }}
                     />
                   </a>
                 ) : (
@@ -73,6 +75,10 @@ export const Clients = () => {
                     alt={client.name}
                     className="max-h-16 w-auto grayscale hover:grayscale-0 transition-all object-contain"
                     loading="lazy"
+                    onError={(e) => {
+                      const img = e.target as HTMLImageElement;
+                      img.src = '/placeholder.svg';
+                    }}
                   />
                 )}
               </motion.div>

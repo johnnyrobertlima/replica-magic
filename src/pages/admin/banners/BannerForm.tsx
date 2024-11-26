@@ -1,8 +1,9 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
+import { ImageUpload } from "@/components/admin/ImageUpload";
+import { getStorageUrl } from "@/utils/imageUtils";
 
 interface Banner {
   id: string;
@@ -73,14 +74,10 @@ export const BannerForm = ({
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium">Imagem</label>
-          <Input name="image" type="file" accept="image/*" />
-          {editingBanner && (
-            <img 
-              src={editingBanner.image_url} 
-              alt="Current banner" 
-              className="h-20 w-32 object-cover rounded mt-2"
-            />
-          )}
+          <ImageUpload
+            name="image"
+            currentImage={editingBanner ? getStorageUrl(editingBanner.image_url) : undefined}
+          />
         </div>
       </div>
       <div className="space-y-2">
