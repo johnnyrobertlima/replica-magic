@@ -54,7 +54,7 @@ export const Footer = () => {
           <img
             src={logoUrl}
             alt="ONI Digital"
-            className="h-12 w-auto object-contain"
+            className="h-60 w-auto object-contain" // Changed from h-12 to h-60
             onError={(e) => {
               console.error('Logo load error:', e); // Debug log
               const img = e.target as HTMLImageElement;
