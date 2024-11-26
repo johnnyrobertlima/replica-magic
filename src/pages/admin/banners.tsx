@@ -2,19 +2,10 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
-import { ActionButtons } from "@/components/admin/ActionButtons";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Loader2, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
+import { BannerForm } from "./banners/BannerForm";
+import { BannerList } from "./banners/BannerList";
 
 interface Banner {
   id: string;
@@ -40,7 +31,10 @@ export const AdminBanners = () => {
         .from("banners")
         .select("*")
         .order("created_at", { ascending: false });
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching banners:", error);
+        throw error;
+      }
       return data as Banner[];
     },
   });
@@ -54,8 +48,14 @@ export const AdminBanners = () => {
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from("oni-media")
           .upload(`banners/${Date.now()}-${file.name}`, file);
-        if (uploadError) throw uploadError;
-        imageUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/oni-media/${uploadData.path}`;
+        if (uploadError) {
+          console.error("Error uploading image:", uploadError);
+          throw new Error(`Erro ao fazer upload da imagem: ${uploadError.message}`);
+        }
+        const { data: { publicUrl } } = supabase.storage
+          .from("oni-media")
+          .getPublicUrl(uploadData.path);
+        imageUrl = publicUrl;
       }
 
       const bannerData = {
@@ -68,7 +68,10 @@ export const AdminBanners = () => {
       };
 
       const { error } = await supabase.from("banners").insert([bannerData]);
-      if (error) throw error;
+      if (error) {
+        console.error("Error creating banner:", error);
+        throw new Error(`Erro ao criar banner: ${error.message}`);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["banners"] });
@@ -76,6 +79,7 @@ export const AdminBanners = () => {
       toast({ title: "Banner criado com sucesso!" });
     },
     onError: (error: Error) => {
+      console.error("Error in createBanner mutation:", error);
       toast({
         title: "Erro ao criar banner",
         description: error.message,
@@ -90,11 +94,22 @@ export const AdminBanners = () => {
         .from("banners")
         .update({ is_active: !is_active })
         .eq("id", id);
-      if (error) throw error;
+      if (error) {
+        console.error("Error toggling banner:", error);
+        throw new Error(`Erro ao atualizar banner: ${error.message}`);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["banners"] });
       toast({ title: "Banner atualizado com sucesso!" });
+    },
+    onError: (error: Error) => {
+      console.error("Error in toggleBanner mutation:", error);
+      toast({
+        title: "Erro ao atualizar banner",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
@@ -104,11 +119,22 @@ export const AdminBanners = () => {
         .from("banners")
         .delete()
         .eq("id", id);
-      if (error) throw error;
+      if (error) {
+        console.error("Error deleting banner:", error);
+        throw new Error(`Erro ao excluir banner: ${error.message}`);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["banners"] });
       toast({ title: "Banner excluído com sucesso!" });
+    },
+    onError: (error: Error) => {
+      console.error("Error in deleteBanner mutation:", error);
+      toast({
+        title: "Erro ao excluir banner",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
@@ -117,13 +143,10 @@ export const AdminBanners = () => {
     setIsCreating(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const form = e.currentTarget;
-    const formData = new FormData(form);
-
+  const handleSubmit = async (formData: FormData) => {
     if (editingBanner) {
-      const updatedData = {
+      // Handle edit
+      const updatedData: any = {
         title: String(formData.get("title")),
         description: String(formData.get("description")),
         button_text: String(formData.get("button_text")),
@@ -131,29 +154,52 @@ export const AdminBanners = () => {
         youtube_url: formData.get("youtube_url") ? String(formData.get("youtube_url")) : null,
       };
 
+      const file = formData.get("image") as File;
+      if (file?.size > 0) {
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from("oni-media")
+          .upload(`banners/${Date.now()}-${file.name}`, file);
+        
+        if (uploadError) {
+          console.error("Error uploading image:", uploadError);
+          toast({
+            title: "Erro ao fazer upload da imagem",
+            description: uploadError.message,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from("oni-media")
+          .getPublicUrl(uploadData.path);
+        updatedData.image_url = publicUrl;
+      }
+
       const { error } = await supabase
         .from("banners")
         .update(updatedData)
         .eq("id", editingBanner.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating banner:", error);
+        toast({
+          title: "Erro ao atualizar banner",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
 
       queryClient.invalidateQueries({ queryKey: ["banners"] });
       setIsCreating(false);
       setEditingBanner(null);
       toast({ title: "Banner atualizado com sucesso!" });
     } else {
+      // Handle create
       createBanner.mutate(formData);
     }
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -169,120 +215,24 @@ export const AdminBanners = () => {
       </div>
 
       {isCreating && (
-        <form onSubmit={handleSubmit} className="space-y-4 border p-4 rounded-lg">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Título</label>
-              <Input 
-                name="title" 
-                required 
-                defaultValue={editingBanner?.title}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Texto do Botão</label>
-              <Input 
-                name="button_text" 
-                required 
-                defaultValue={editingBanner?.button_text}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Link do Botão</label>
-              <Input 
-                name="button_link" 
-                type="url" 
-                required 
-                defaultValue={editingBanner?.button_link}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Link do YouTube</label>
-              <Input 
-                name="youtube_url" 
-                type="url" 
-                defaultValue={editingBanner?.youtube_url || ''}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Imagem</label>
-              <Input name="image" type="file" accept="image/*" />
-              {editingBanner && (
-                <img 
-                  src={editingBanner.image_url} 
-                  alt="Current banner" 
-                  className="h-20 w-32 object-cover rounded mt-2"
-                />
-              )}
-            </div>
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Descrição</label>
-            <Textarea 
-              name="description" 
-              required 
-              defaultValue={editingBanner?.description}
-            />
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setIsCreating(false);
-                setEditingBanner(null);
-              }}
-            >
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={createBanner.isPending}>
-              {createBanner.isPending && (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              )}
-              {editingBanner ? 'Salvar' : 'Criar'}
-            </Button>
-          </div>
-        </form>
+        <BannerForm
+          onSubmit={handleSubmit}
+          editingBanner={editingBanner}
+          isSubmitting={createBanner.isPending}
+          onCancel={() => {
+            setIsCreating(false);
+            setEditingBanner(null);
+          }}
+        />
       )}
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Título</TableHead>
-            <TableHead>Imagem</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="w-[100px]">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {banners?.map((banner) => (
-            <TableRow key={banner.id}>
-              <TableCell>{banner.title}</TableCell>
-              <TableCell>
-                <img
-                  src={banner.image_url}
-                  alt={banner.title}
-                  className="h-16 w-24 object-cover rounded"
-                />
-              </TableCell>
-              <TableCell>
-                {banner.is_active ? "Ativo" : "Inativo"}
-              </TableCell>
-              <TableCell>
-                <ActionButtons
-                  isActive={banner.is_active}
-                  onToggle={() => toggleBanner.mutate({
-                    id: banner.id,
-                    is_active: banner.is_active,
-                  })}
-                  onEdit={() => handleEdit(banner)}
-                  onDelete={() => deleteBanner.mutate(banner.id)}
-                />
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <BannerList
+        banners={banners}
+        isLoading={isLoading}
+        onEdit={handleEdit}
+        onToggle={(id, is_active) => toggleBanner.mutate({ id, is_active })}
+        onDelete={(id) => deleteBanner.mutate(id)}
+      />
     </div>
   );
 };
