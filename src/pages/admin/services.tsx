@@ -42,11 +42,13 @@ export const AdminServices = () => {
 
   const createService = useMutation({
     mutationFn: async (formData: FormData) => {
-      const { error } = await supabase.from("services").insert([{
-        title: formData.get("title"),
-        description: formData.get("description"),
-        icon: formData.get("icon"),
-      }]);
+      const serviceData = {
+        title: String(formData.get("title")),
+        description: String(formData.get("description")),
+        icon: String(formData.get("icon")),
+      };
+
+      const { error } = await supabase.from("services").insert([serviceData]);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -192,4 +194,4 @@ export const AdminServices = () => {
       </Table>
     </div>
   );
-};
+});

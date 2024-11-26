@@ -56,14 +56,16 @@ export const AdminBanners = () => {
         imageUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/oni-media/${uploadData.path}`;
       }
 
-      const { error } = await supabase.from("banners").insert([{
-        title: formData.get("title"),
-        description: formData.get("description"),
-        button_text: formData.get("button_text"),
-        button_link: formData.get("button_link"),
-        youtube_url: formData.get("youtube_url"),
+      const bannerData = {
+        title: String(formData.get("title")),
+        description: String(formData.get("description")),
+        button_text: String(formData.get("button_text")),
+        button_link: String(formData.get("button_link")),
+        youtube_url: formData.get("youtube_url") ? String(formData.get("youtube_url")) : null,
         image_url: imageUrl,
-      }]);
+      };
+
+      const { error } = await supabase.from("banners").insert([bannerData]);
       if (error) throw error;
     },
     onSuccess: () => {
