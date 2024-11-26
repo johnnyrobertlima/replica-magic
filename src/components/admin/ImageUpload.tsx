@@ -36,7 +36,7 @@ export const ImageUpload = ({ onImageUploaded, label = "Image" }: ImageUploadPro
 
       onImageUploaded(publicUrl);
       toast.success("Image uploaded successfully");
-    } catch (error) {
+    } catch (error: any) {
       toast.error("Error uploading image", {
         description: error.message
       });
