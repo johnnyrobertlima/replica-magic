@@ -20,8 +20,9 @@ export const BannerForm = () => {
 
   const fetchBanners = async () => {
     const { data, error } = await supabase
-      .from('site_oni.banners')
-      .select("*");
+      .from('banners')
+      .select("*")
+      .schema('site_oni');
     if (error) {
       toast.error("Error fetching banners");
     } else {
@@ -37,8 +38,9 @@ export const BannerForm = () => {
     try {
       setIsLoading(true);
       const { error } = await supabase
-        .from('site_oni.banners')
-        .insert(data);
+        .from('banners')
+        .insert(data)
+        .schema('site_oni');
       
       if (error) throw error;
       
@@ -57,9 +59,10 @@ export const BannerForm = () => {
   const handleToggleActive = async (id: string, currentStatus: boolean) => {
     try {
       const { error } = await supabase
-        .from('site_oni.banners')
+        .from('banners')
         .update({ is_active: !currentStatus })
-        .eq("id", id);
+        .eq("id", id)
+        .schema('site_oni');
 
       if (error) throw error;
       
@@ -73,9 +76,10 @@ export const BannerForm = () => {
   const handleDelete = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('site_oni.banners')
+        .from('banners')
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .schema('site_oni');
       
       if (error) throw error;
       
