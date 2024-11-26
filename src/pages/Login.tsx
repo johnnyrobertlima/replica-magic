@@ -3,6 +3,9 @@ import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { createAdminUser } from "@/lib/admin";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -16,6 +19,19 @@ const Login = () => {
 
     return () => subscription.unsubscribe();
   }, [navigate]);
+
+  const handleCreateAdmin = async () => {
+    try {
+      const result = await createAdminUser();
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success("Admin user created successfully. You can now login with admin@onipresenca.com.br / Admin@123456");
+      }
+    } catch (error) {
+      toast.error("Failed to create admin user");
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -31,6 +47,15 @@ const Login = () => {
           theme="light"
           providers={[]}
         />
+        <div className="mt-4 text-center">
+          <Button
+            variant="outline"
+            onClick={handleCreateAdmin}
+            className="w-full"
+          >
+            Create Admin User
+          </Button>
+        </div>
       </div>
     </div>
   );

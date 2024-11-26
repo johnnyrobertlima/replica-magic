@@ -1,45 +1,49 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
-
-const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-
-const supabase = createClient(supabaseUrl, serviceRoleKey)
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Content-Type': 'application/json'
 }
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const { data: user, error: createUserError } = await supabase.auth.admin.createUser({
-      email: 'admin@onipresenca.com.br',
-      password: 'Admin@123456',
-      email_confirm: true,
-      user_metadata: { full_name: 'Admin' },
-    })
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
 
-    if (createUserError) {
+    const { data: existingUser, error: getUserError } = await supabaseClient.auth.admin.listUsers()
+    if (getUserError) throw getUserError
+
+    // Check if admin user already exists
+    const adminExists = existingUser.users.some(user => user.email === 'admin@onipresenca.com.br')
+    if (adminExists) {
       return new Response(
-        JSON.stringify({ error: createUserError.message }), 
-        { status: 400, headers: corsHeaders }
+        JSON.stringify({ message: 'Admin user already exists' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
+    const { data, error } = await supabaseClient.auth.admin.createUser({
+      email: 'admin@onipresenca.com.br',
+      password: 'Admin@123456',
+      email_confirm: true,
+    })
+
+    if (error) throw error
+
     return new Response(
-      JSON.stringify({ user }), 
-      { status: 200, headers: corsHeaders }
+      JSON.stringify({ message: 'Admin user created successfully', data }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
     return new Response(
-      JSON.stringify({ error: error.message }), 
-      { status: 500, headers: corsHeaders }
+      JSON.stringify({ error: error.message }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
     )
   }
 })
