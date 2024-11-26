@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { validateImage } from "@/utils/imageUtils";
 import { useToast } from "@/components/ui/use-toast";
+import { getStorageUrl } from "@/utils/imageUtils";
 
 interface ImageUploadProps {
   name: string;
@@ -41,6 +42,8 @@ export const ImageUpload = ({ name, currentImage, onChange }: ImageUploadProps) 
     }
   };
 
+  const currentImageUrl = currentImage ? getStorageUrl(currentImage) : null;
+
   return (
     <div className="space-y-2">
       <Input
@@ -49,10 +52,10 @@ export const ImageUpload = ({ name, currentImage, onChange }: ImageUploadProps) 
         accept="image/jpeg,image/png,image/webp"
         onChange={handleFileChange}
       />
-      {(preview || currentImage) && (
+      {(preview || currentImageUrl) && (
         <div className="mt-2">
           <img
-            src={preview || currentImage}
+            src={preview || currentImageUrl || ''}
             alt="Preview"
             className="h-20 w-32 object-cover rounded"
             onError={(e) => {
