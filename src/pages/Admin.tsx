@@ -9,11 +9,18 @@ const Admin = () => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        navigate("/");
+        navigate("/login");
       }
     };
 
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!session) {
+        navigate("/login");
+      }
+    });
+
     checkUser();
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
   return (
