@@ -32,16 +32,17 @@ export const Hero = () => {
     return null;
   }
 
-  const { data: { publicUrl } } = supabase.storage
+  const imageUrl = supabase.storage
     .from("oni-media")
-    .getPublicUrl(banner.image_url);
+    .getPublicUrl(banner.image_url)
+    .data.publicUrl;
 
   return (
     <div className="relative h-[80vh] min-h-[600px] w-full overflow-hidden">
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `url('${publicUrl}')`,
+          backgroundImage: `url('${imageUrl}')`,
         }}
       >
         <div className="absolute inset-0 bg-black/50" />

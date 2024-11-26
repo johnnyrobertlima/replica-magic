@@ -39,9 +39,10 @@ export const Clients = () => {
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
           {clients?.map((client, index) => {
-            const { data: { publicUrl } } = supabase.storage
+            const imageUrl = supabase.storage
               .from("oni-media")
-              .getPublicUrl(client.logo_url);
+              .getPublicUrl(client.logo_url)
+              .data.publicUrl;
 
             return (
               <motion.div
@@ -53,9 +54,10 @@ export const Clients = () => {
                 className="flex items-center justify-center p-6 bg-surface rounded-lg hover:bg-surface-hover transition-colors"
               >
                 <img
-                  src={publicUrl}
+                  src={imageUrl}
                   alt={client.name}
                   className="max-h-12 w-auto grayscale hover:grayscale-0 transition-all object-contain"
+                  loading="lazy"
                 />
               </motion.div>
             );
