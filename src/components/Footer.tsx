@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Facebook, Twitter, Instagram, Linkedin, Youtube } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { getStorageUrl } from "@/utils/imageUtils";
 
 const iconMap = {
   Facebook: Facebook,
@@ -23,14 +24,42 @@ export const Footer = () => {
     },
   });
 
+  const { data: oniLogo } = useQuery({
+    queryKey: ["oni-logo"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("logos")
+        .select("*")
+        .eq("type", "oni")
+        .eq("is_active", true)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Get the full URL for the logo
+  const logoUrl = oniLogo?.url ? (
+    oniLogo.url.startsWith('http') 
+      ? oniLogo.url 
+      : getStorageUrl(oniLogo.url)
+  ) : "/placeholder.svg";
+
+  console.log('ONI Logo URL:', logoUrl); // Debug log
+
   return (
     <footer className="bg-primary text-white py-12">
       <div className="container-custom">
         <div className="flex flex-col items-center space-y-6">
           <img
-            src="/placeholder.svg"
+            src={logoUrl}
             alt="ONI Digital"
-            className="h-12 w-auto"
+            className="h-12 w-auto object-contain"
+            onError={(e) => {
+              console.error('Logo load error:', e); // Debug log
+              const img = e.target as HTMLImageElement;
+              img.src = '/placeholder.svg';
+            }}
           />
           <div className="flex space-x-6">
             {socialMedia?.map((social) => {
