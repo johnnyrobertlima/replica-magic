@@ -3,7 +3,7 @@ import type { Database } from './types';
 import type { OniSiteSchema } from './types/oni-site';
 
 type CombinedSchema = Database & {
-  public: OniSiteSchema['Tables'] & Database['public']['Tables']
+  oni_site: OniSiteSchema['Tables']
 };
 
 const supabaseUrl = "https://iaegdxxxlastfujboajm.supabase.co";
