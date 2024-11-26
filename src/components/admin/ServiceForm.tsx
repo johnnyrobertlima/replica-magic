@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Trash2 } from "lucide-react";
+import * as Icons from "lucide-react";
+
+const availableIcons = [
+  "Monitor", "Globe", "Users", "Video", "Share2", "BarChart",
+  "Mail", "Phone", "MessageSquare", "Heart", "Star", "Settings",
+  "Camera", "Music", "Film", "FileText", "Database", "Cloud"
+];
 
 type ServiceFormData = {
   title: string;
@@ -15,7 +23,21 @@ type ServiceFormData = {
 
 export const ServiceForm = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const { register, handleSubmit, reset } = useForm<ServiceFormData>();
+  const [services, setServices] = useState<any[]>([]);
+  const { register, handleSubmit, reset, setValue } = useForm<ServiceFormData>();
+
+  const fetchServices = async () => {
+    const { data, error } = await supabase.from("services").select("*");
+    if (error) {
+      toast.error("Error fetching services");
+    } else {
+      setServices(data);
+    }
+  };
+
+  useEffect(() => {
+    fetchServices();
+  }, []);
 
   const onSubmit = async (data: ServiceFormData) => {
     try {
@@ -26,6 +48,7 @@ export const ServiceForm = () => {
       
       toast.success("Service created successfully!");
       reset();
+      fetchServices();
     } catch (error) {
       toast.error("Error creating service", {
         description: error.message
@@ -35,26 +58,83 @@ export const ServiceForm = () => {
     }
   };
 
+  const handleDelete = async (id: string) => {
+    try {
+      const { error } = await supabase.from("services").delete().eq("id", id);
+      
+      if (error) throw error;
+      
+      toast.success("Service deleted successfully");
+      fetchServices();
+    } catch (error) {
+      toast.error("Error deleting service");
+    }
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div className="space-y-2">
-        <Label htmlFor="title">Title</Label>
-        <Input id="title" {...register("title", { required: true })} />
-      </div>
+    <div className="space-y-8">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <div className="space-y-2">
+          <Label htmlFor="title">Title</Label>
+          <Input id="title" {...register("title", { required: true })} />
+        </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
-        <Textarea id="description" {...register("description", { required: true })} />
-      </div>
+        <div className="space-y-2">
+          <Label htmlFor="description">Description</Label>
+          <Textarea id="description" {...register("description", { required: true })} />
+        </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="icon">Icon</Label>
-        <Input id="icon" {...register("icon", { required: true })} />
-      </div>
+        <div className="space-y-2">
+          <Label>Icon</Label>
+          <div className="grid grid-cols-6 gap-2 p-2 border rounded-md">
+            {availableIcons.map((iconName) => {
+              const IconComponent = Icons[iconName as keyof typeof Icons];
+              return (
+                <Button
+                  key={iconName}
+                  type="button"
+                  variant="ghost"
+                  className="p-2"
+                  onClick={() => setValue("icon", iconName)}
+                >
+                  <IconComponent className="w-6 h-6" />
+                </Button>
+              );
+            })}
+          </div>
+        </div>
 
-      <Button type="submit" disabled={isLoading}>
-        {isLoading ? "Creating..." : "Create Service"}
-      </Button>
-    </form>
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? "Creating..." : "Create Service"}
+        </Button>
+      </form>
+
+      <div className="grid gap-4">
+        <h3 className="text-lg font-semibold">Existing Services</h3>
+        <div className="grid gap-4">
+          {services.map((service) => {
+            const IconComponent = Icons[service.icon as keyof typeof Icons];
+            return (
+              <div key={service.id} className="flex items-center justify-between p-4 bg-white rounded-lg shadow">
+                <div className="flex items-center gap-4">
+                  {IconComponent && <IconComponent className="w-6 h-6" />}
+                  <div>
+                    <h4 className="font-medium">{service.title}</h4>
+                    <p className="text-sm text-gray-500">{service.description}</p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleDelete(service.id)}
+                >
+                  <Trash2 className="h-5 w-5" />
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 };
