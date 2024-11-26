@@ -15,15 +15,17 @@ type ServiceFormData = SiteOniTables['services']['Insert'];
 
 export const ServiceForm = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [services, setServices] = useState<any[]>([]);
+  const [services, setServices] = useState<SiteOniTables['services']['Row'][]>([]);
   const { register, handleSubmit, reset } = useForm<ServiceFormData>();
 
   const fetchServices = async () => {
-    const { data, error } = await supabase.from("site_oni.services").select("*");
+    const { data, error } = await supabase
+      .from("site_oni.services")
+      .select("*");
     if (error) {
       toast.error("Error fetching services");
     } else {
-      setServices(data);
+      setServices(data || []);
     }
   };
 
@@ -34,7 +36,9 @@ export const ServiceForm = () => {
   const onSubmit = async (data: ServiceFormData) => {
     try {
       setIsLoading(true);
-      const { error } = await supabase.from("site_oni.services").insert(data);
+      const { error } = await supabase
+        .from("site_oni.services")
+        .insert(data);
       
       if (error) throw error;
       
@@ -52,7 +56,10 @@ export const ServiceForm = () => {
 
   const handleDelete = async (id: string) => {
     try {
-      const { error } = await supabase.from("site_oni.services").delete().eq("id", id);
+      const { error } = await supabase
+        .from("site_oni.services")
+        .delete()
+        .eq("id", id);
       
       if (error) throw error;
       

@@ -1,6 +1,5 @@
-import { Database, Json, PublicFunctions, PublicEnums } from './base';
+import { Database, Json, PublicFunctions, PublicEnums, SiteOniTables } from './base';
 import { PublicTables } from './public';
-import { SiteOniTables } from './site-oni';
 
 export type { Database, Json, PublicFunctions, PublicEnums, PublicTables, SiteOniTables };
 
