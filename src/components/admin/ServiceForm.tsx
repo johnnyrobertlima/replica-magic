@@ -20,9 +20,8 @@ export const ServiceForm = () => {
 
   const fetchServices = async () => {
     const { data, error } = await supabase
-      .from('services')
-      .select("*")
-      .schema('site_oni');
+      .from('site_oni.services')
+      .select("*");
     if (error) {
       toast.error("Error fetching services");
     } else {
@@ -38,9 +37,8 @@ export const ServiceForm = () => {
     try {
       setIsLoading(true);
       const { error } = await supabase
-        .from('services')
-        .insert(data)
-        .schema('site_oni');
+        .from('site_oni.services')
+        .insert(data);
       
       if (error) throw error;
       
@@ -59,10 +57,9 @@ export const ServiceForm = () => {
   const handleDelete = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('services')
+        .from('site_oni.services')
         .delete()
-        .eq("id", id)
-        .schema('site_oni');
+        .eq("id", id);
       
       if (error) throw error;
       
