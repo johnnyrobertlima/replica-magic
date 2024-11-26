@@ -24,10 +24,20 @@ import {
 import { Loader2, Plus, Trash2, Power, Server, Settings, Cog, List } from "lucide-react";
 
 const icons = [
-  { name: "Server", icon: <Server className="w-4 h-4" /> },
+  { name: "Monitor", icon: <Monitor className="w-4 h-4" /> },
+  { name: "Globe", icon: <Globe className="w-4 h-4" /> },
+  { name: "Users", icon: <Users className="w-4 h-4" /> },
+  { name: "Video", icon: <Video className="w-4 h-4" /> },
+  { name: "Share2", icon: <Share2 className="w-4 h-4" /> },
+  { name: "BarChart", icon: <BarChart className="w-4 h-4" /> },
+  { name: "Camera", icon: <Camera className="w-4 h-4" /> },
+  { name: "Image", icon: <Image className="w-4 h-4" /> },
+  { name: "Mic", icon: <Mic className="w-4 h-4" /> },
+  { name: "Music", icon: <Music className="w-4 h-4" /> },
+  { name: "PaintBrush", icon: <Paintbrush className="w-4 h-4" /> },
   { name: "Settings", icon: <Settings className="w-4 h-4" /> },
-  { name: "Cog", icon: <Cog className="w-4 h-4" /> },
-  { name: "List", icon: <List className="w-4 h-4" /> },
+  { name: "Tool", icon: <Tool className="w-4 h-4" /> },
+  { name: "Wrench", icon: <Wrench className="w-4 h-4" /> },
 ];
 
 interface Service {
@@ -178,7 +188,7 @@ export const AdminServices = () => {
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione um ícone" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white">
                   {icons.map((icon) => (
                     <SelectItem key={icon.name} value={icon.name}>
                       <div className="flex items-center gap-2">

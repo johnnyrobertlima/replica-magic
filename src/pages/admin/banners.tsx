@@ -123,7 +123,6 @@ export const AdminBanners = () => {
     const formData = new FormData(form);
 
     if (editingBanner) {
-      // Handle update
       const updatedData = {
         title: String(formData.get("title")),
         description: String(formData.get("description")),
@@ -144,7 +143,6 @@ export const AdminBanners = () => {
       setEditingBanner(null);
       toast({ title: "Banner atualizado com sucesso!" });
     } else {
-      // Handle create
       createBanner.mutate(formData);
     }
   };
@@ -206,12 +204,17 @@ export const AdminBanners = () => {
                 defaultValue={editingBanner?.youtube_url || ''}
               />
             </div>
-            {!editingBanner && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Imagem</label>
-                <Input name="image" type="file" accept="image/*" required />
-              </div>
-            )}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Imagem</label>
+              <Input name="image" type="file" accept="image/*" />
+              {editingBanner && (
+                <img 
+                  src={editingBanner.image_url} 
+                  alt="Current banner" 
+                  className="h-20 w-32 object-cover rounded mt-2"
+                />
+              )}
+            </div>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Descrição</label>

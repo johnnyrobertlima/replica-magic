@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, Mail, MailOpen } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { ActionButtons } from "@/components/admin/ActionButtons";
 
 interface Message {
@@ -48,7 +48,7 @@ export const AdminMessages = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["messages"] });
-      toast({ title: "Mensagem atualizada com sucesso!" });
+      toast({ title: "Status da mensagem atualizado com sucesso!" });
     },
   });
 

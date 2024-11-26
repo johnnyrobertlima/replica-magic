@@ -12,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, Plus, Trash2, Power } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { ActionButtons } from "@/components/admin/ActionButtons";
 
 interface SocialMedia {
@@ -102,7 +102,6 @@ export const AdminSocial = () => {
     const formData = new FormData(form);
 
     if (editingSocial) {
-      // Handle update
       const updatedData = {
         platform: String(formData.get("platform")),
         url: String(formData.get("url")),
@@ -121,7 +120,6 @@ export const AdminSocial = () => {
       setEditingSocial(null);
       toast({ title: "Rede social atualizada com sucesso!" });
     } else {
-      // Handle create
       createSocialMedia.mutate(formData);
     }
   };
@@ -133,6 +131,14 @@ export const AdminSocial = () => {
       </div>
     );
   }
+
+  const socialIcons = [
+    { name: "Facebook", icon: <Facebook className="w-4 h-4" /> },
+    { name: "Twitter", icon: <Twitter className="w-4 h-4" /> },
+    { name: "Instagram", icon: <Instagram className="w-4 h-4" /> },
+    { name: "LinkedIn", icon: <Linkedin className="w-4 h-4" /> },
+    { name: "YouTube", icon: <Youtube className="w-4 h-4" /> },
+  ];
 
   return (
     <div className="space-y-6">
@@ -169,11 +175,21 @@ export const AdminSocial = () => {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Ícone</label>
-              <Input 
-                name="icon" 
-                required 
-                defaultValue={editingSocial?.icon}
-              />
+              <Select name="icon" required defaultValue={editingSocial?.icon}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um ícone" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  {socialIcons.map((icon) => (
+                    <SelectItem key={icon.name} value={icon.name}>
+                      <div className="flex items-center gap-2">
+                        {icon.icon}
+                        <span>{icon.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <div className="flex justify-end gap-2">
