@@ -32,8 +32,8 @@ export const Hero = () => {
     return null;
   }
 
-  // Construct the full URL for the banner image
-  const imageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/oni-media/${banner.image_url}`;
+  // Construct the full URL for the banner image using Supabase URL from the client
+  const imageUrl = `${supabase.supabaseUrl}/storage/v1/object/public/oni-media/${banner.image_url}`;
 
   return (
     <div className="relative h-[80vh] min-h-[600px] w-full overflow-hidden">
