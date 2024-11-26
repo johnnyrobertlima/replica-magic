@@ -11,19 +11,22 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Plus } from "lucide-react";
-import type { SocialMedia } from "@/types/oni-site";
+import type { OniSiteSchema } from "@/integrations/supabase/types/oni-site";
+
+type SocialMedia = OniSiteSchema['Tables']['social_media']['Row'];
 
 export const Social = () => {
   const { data: socialLinks } = useQuery({
     queryKey: ["social-links"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("oni_site.social_media")
+        .schema("oni_site")
+        .from("social_media")
         .select("*")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as SocialMedia[];
+      return data;
     },
   });
 

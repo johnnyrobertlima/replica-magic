@@ -8,19 +8,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { ContactSubmission } from "@/types/oni-site";
+import type { OniSiteSchema } from "@/integrations/supabase/types/oni-site";
+
+type ContactSubmission = OniSiteSchema['Tables']['contact_submissions']['Row'];
 
 export const Messages = () => {
   const { data: messages } = useQuery({
     queryKey: ["contact-messages"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("oni_site.contact_submissions")
+        .schema("oni_site")
+        .from("contact_submissions")
         .select("*")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as ContactSubmission[];
+      return data;
     },
   });
 

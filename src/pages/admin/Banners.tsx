@@ -11,19 +11,22 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Plus } from "lucide-react";
-import type { Banner } from "@/types/oni-site";
+import type { OniSiteSchema } from "@/integrations/supabase/types/oni-site";
+
+type Banner = OniSiteSchema['Tables']['banners']['Row'];
 
 export const Banners = () => {
   const { data: banners } = useQuery({
     queryKey: ["banners"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("oni_site.banners")
+        .schema("oni_site")
+        .from("banners")
         .select("*")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as Banner[];
+      return data;
     },
   });
 
