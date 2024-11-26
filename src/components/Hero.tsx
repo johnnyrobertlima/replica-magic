@@ -32,12 +32,15 @@ export const Hero = () => {
     return null;
   }
 
+  // Construct the full URL for the banner image
+  const imageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/oni-media/${banner.image_url}`;
+
   return (
     <div className="relative h-[80vh] min-h-[600px] w-full overflow-hidden">
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage: `url('${banner.image_url}')`,
+          backgroundImage: `url('${imageUrl}')`,
         }}
       >
         <div className="absolute inset-0 bg-black/50" />
