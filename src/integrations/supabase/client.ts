@@ -7,5 +7,5 @@ import { env } from '@/config/env';
 
 export const supabase = createClient<Database>(
   env.SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
+  env.SUPABASE_ANON_KEY
 );
