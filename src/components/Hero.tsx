@@ -2,7 +2,6 @@ import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
-import { env } from "@/config/env";
 
 export const Hero = () => {
   const { data: banners, isLoading } = useQuery({
@@ -33,8 +32,12 @@ export const Hero = () => {
     return null;
   }
 
-  const imageUrl = `${env.SUPABASE_URL}/storage/v1/object/public/oni-media/${banner.image_url}`;
+  const imageUrl = supabase.storage
+    .from("oni-media")
+    .getPublicUrl(banner.image_url)
+    .data.publicUrl;
 
+  // Extract YouTube video ID from URL if present
   const getYouTubeVideoId = (url: string | null) => {
     if (!url) return null;
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;

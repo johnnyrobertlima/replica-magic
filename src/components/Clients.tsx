@@ -2,7 +2,6 @@ import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
-import { env } from "@/config/env";
 
 export const Clients = () => {
   const { data: clients, isLoading } = useQuery({
@@ -40,7 +39,10 @@ export const Clients = () => {
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
           {clients?.map((client, index) => {
-            const imageUrl = `${env.SUPABASE_URL}/storage/v1/object/public/oni-media/${client.logo_url}`;
+            const imageUrl = supabase.storage
+              .from("oni-media")
+              .getPublicUrl(client.logo_url)
+              .data.publicUrl;
 
             return (
               <motion.div
