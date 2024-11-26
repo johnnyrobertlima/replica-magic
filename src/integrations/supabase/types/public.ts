@@ -6,7 +6,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type Database = {
+export interface Database {
   public: {
     Tables: {
       event_items: {
@@ -30,7 +30,7 @@ export type Database = {
           item_id?: string | null
           needs_maintenance?: boolean | null
           provided_quantity?: number | null
-          requested_quantity?: number
+          requested_quantity: number
           returned_quantity?: number | null
           updated_at?: string
         }
@@ -60,7 +60,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "items"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
       events: {
@@ -584,7 +584,7 @@ export type Database = {
   }
 }
 
-type PublicSchema = Database[Extract<keyof Database, "public">]
+export type PublicSchema = Database["public"]
 
 export type Tables<
   PublicTableNameOrOptions extends
@@ -680,4 +680,3 @@ export type CompositeTypes<
   : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
     ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
-
