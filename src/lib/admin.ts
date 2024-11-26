@@ -1,4 +1,17 @@
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+const showDetailedError = (error: any) => {
+  const details = JSON.stringify(error, null, 2);
+  toast("Detailed Error Log", {
+    description: (
+      <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
+        <code className="text-white text-xs">{details}</code>
+      </pre>
+    ),
+    duration: 10000,
+  });
+};
 
 export const createAdminUser = async () => {
   const { data: { user } } = await supabase.auth.getUser();
@@ -12,9 +25,14 @@ export const createAdminUser = async () => {
 
       if (response.error) {
         console.error('Error response from server:', response.error);
+        const errorMessage = response.error.message || 'Failed to create admin user';
+        toast.error(errorMessage, {
+          description: "Click here to see detailed error log",
+          onClick: () => showDetailedError(response.error),
+        });
         return { 
           error: {
-            message: response.error.message || 'Failed to create admin user',
+            message: errorMessage,
             details: response.error.details || 'No additional details available'
           }
         };
@@ -22,9 +40,14 @@ export const createAdminUser = async () => {
 
       if (response.data.error) {
         console.error('Error in response data:', response.data.error);
+        const errorMessage = response.data.error;
+        toast.error(errorMessage, {
+          description: "Click here to see detailed error log",
+          onClick: () => showDetailedError(response.data),
+        });
         return {
           error: {
-            message: response.data.error,
+            message: errorMessage,
             details: response.data.details || 'No additional details available'
           }
         };
@@ -33,9 +56,14 @@ export const createAdminUser = async () => {
       return response.data;
     } catch (error) {
       console.error('Error creating admin user:', error);
+      const errorMessage = 'Failed to create admin user';
+      toast.error(errorMessage, {
+        description: "Click here to see detailed error log",
+        onClick: () => showDetailedError(error),
+      });
       return { 
         error: {
-          message: 'Failed to create admin user',
+          message: errorMessage,
           details: error.message || 'No additional details available'
         }
       };
