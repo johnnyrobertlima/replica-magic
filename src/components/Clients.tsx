@@ -39,10 +39,7 @@ export const Clients = () => {
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
           {clients?.map((client, index) => {
-            const imageUrl = supabase.storage
-              .from("oni-media")
-              .getPublicUrl(client.logo_url)
-              .data.publicUrl;
+            const imageUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/oni-media/${client.logo_url}`;
 
             return (
               <motion.div

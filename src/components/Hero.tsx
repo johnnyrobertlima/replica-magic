@@ -32,12 +32,8 @@ export const Hero = () => {
     return null;
   }
 
-  const imageUrl = supabase.storage
-    .from("oni-media")
-    .getPublicUrl(banner.image_url)
-    .data.publicUrl;
+  const imageUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/oni-media/${banner.image_url}`;
 
-  // Extract YouTube video ID from URL if present
   const getYouTubeVideoId = (url: string | null) => {
     if (!url) return null;
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;

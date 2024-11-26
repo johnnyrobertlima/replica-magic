@@ -1,7 +1,58 @@
 import { motion } from "framer-motion";
 import { Phone, Mail, MapPin } from "lucide-react";
+import { useState } from "react";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export const ContactSection = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const formData = new FormData(e.currentTarget);
+      const contactData = {
+        name: formData.get("name"),
+        email: formData.get("email"),
+        message: formData.get("message"),
+      };
+
+      // Save to database
+      const { error: dbError } = await supabase
+        .from("contact_messages")
+        .insert([contactData]);
+
+      if (dbError) throw dbError;
+
+      // Send email notification
+      const { error: emailError } = await supabase.functions.invoke("send-contact-email", {
+        body: contactData,
+      });
+
+      if (emailError) throw emailError;
+
+      toast({
+        title: "Mensagem enviada com sucesso!",
+        description: "Entraremos em contato em breve.",
+      });
+
+      // Reset form
+      e.currentTarget.reset();
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast({
+        title: "Erro ao enviar mensagem",
+        description: "Por favor, tente novamente mais tarde.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <section className="section bg-surface" id="contact">
       <div className="container-custom">
@@ -13,30 +64,40 @@ export const ContactSection = () => {
             className="space-y-8"
           >
             <h2 className="text-4xl font-bold">PEÇA SEU ORÇAMENTO</h2>
-            <form className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <input
+                  name="name"
                   type="text"
                   placeholder="Nome"
+                  required
                   className="w-full px-4 py-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 />
               </div>
               <div>
                 <input
+                  name="email"
                   type="email"
                   placeholder="Email"
+                  required
                   className="w-full px-4 py-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 />
               </div>
               <div>
                 <textarea
+                  name="message"
                   placeholder="Mensagem"
+                  required
                   rows={4}
                   className="w-full px-4 py-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 />
               </div>
-              <button type="submit" className="btn-primary w-full">
-                Enviar
+              <button 
+                type="submit" 
+                className="btn-primary w-full"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Enviando..." : "Enviar"}
               </button>
             </form>
           </motion.div>
