@@ -2,9 +2,17 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import * as Icons from "lucide-react";
+import { LucideIcon } from "lucide-react";
+
+interface Service {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+}
 
 export const Services = () => {
-  const [services, setServices] = useState<any[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -37,7 +45,7 @@ export const Services = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {services.map((service, index) => {
-            const IconComponent = Icons[service.icon as keyof typeof Icons];
+            const IconComponent = (Icons[service.icon as keyof typeof Icons] as LucideIcon) || Icons.HelpCircle;
             return (
               <motion.div
                 key={service.id}
@@ -48,12 +56,12 @@ export const Services = () => {
                 className="bg-white p-8 rounded-lg shadow-sm hover:shadow-md transition-shadow"
               >
                 <div className="text-primary mb-4">
-                  {IconComponent && <IconComponent className="w-8 h-8" />}
+                  <IconComponent className="w-8 h-8" />
                 </div>
                 <h3 className="text-xl font-semibold mb-2">{service.title}</h3>
                 <p className="text-gray-600">{service.description}</p>
               </motion.div>
-            )
+            );
           })}
         </div>
       </div>

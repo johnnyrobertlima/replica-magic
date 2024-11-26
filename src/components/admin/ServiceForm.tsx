@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Trash2 } from "lucide-react";
 import * as Icons from "lucide-react";
+import { LucideIcon } from "lucide-react";
 
 const availableIcons = [
   "Monitor", "Globe", "Users", "Video", "Share2", "BarChart",
@@ -21,9 +22,16 @@ type ServiceFormData = {
   icon: string;
 };
 
+interface Service {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+}
+
 export const ServiceForm = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [services, setServices] = useState<any[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
   const { register, handleSubmit, reset, setValue } = useForm<ServiceFormData>();
 
   const fetchServices = async () => {
@@ -88,7 +96,7 @@ export const ServiceForm = () => {
           <Label>Icon</Label>
           <div className="grid grid-cols-6 gap-2 p-2 border rounded-md">
             {availableIcons.map((iconName) => {
-              const IconComponent = Icons[iconName as keyof typeof Icons];
+              const IconComponent = (Icons[iconName as keyof typeof Icons] as LucideIcon) || Icons.HelpCircle;
               return (
                 <Button
                   key={iconName}
@@ -113,11 +121,11 @@ export const ServiceForm = () => {
         <h3 className="text-lg font-semibold">Existing Services</h3>
         <div className="grid gap-4">
           {services.map((service) => {
-            const IconComponent = Icons[service.icon as keyof typeof Icons];
+            const IconComponent = (Icons[service.icon as keyof typeof Icons] as LucideIcon) || Icons.HelpCircle;
             return (
               <div key={service.id} className="flex items-center justify-between p-4 bg-white rounded-lg shadow">
                 <div className="flex items-center gap-4">
-                  {IconComponent && <IconComponent className="w-6 h-6" />}
+                  <IconComponent className="w-6 h-6" />
                   <div>
                     <h4 className="font-medium">{service.title}</h4>
                     <p className="text-sm text-gray-500">{service.description}</p>
