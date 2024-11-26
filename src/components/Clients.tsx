@@ -40,7 +40,12 @@ export const Clients = () => {
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
           {clients?.map((client, index) => {
-            const imageUrl = getStorageUrl(client.logo_url);
+            // Make sure we're getting the full URL for the logo
+            const imageUrl = client.logo_url.startsWith('http') 
+              ? client.logo_url 
+              : getStorageUrl(client.logo_url);
+
+            console.log('Client logo URL:', imageUrl); // Debug log
 
             return (
               <motion.div
@@ -49,34 +54,36 @@ export const Clients = () => {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: index * 0.1 }}
-                className="flex items-center justify-center p-4 bg-surface rounded-lg hover:bg-surface-hover transition-colors min-h-[160px]"
+                className="flex items-center justify-center bg-surface rounded-lg hover:bg-surface-hover transition-colors aspect-[4/3]"
               >
                 {client.website_url ? (
                   <a
                     href={client.website_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full h-full flex items-center justify-center px-8"
+                    className="w-full h-full flex items-center justify-center p-6"
                   >
                     <img
                       src={imageUrl}
                       alt={client.name}
-                      className="w-full h-auto max-h-24 grayscale hover:grayscale-0 transition-all object-contain"
+                      className="w-full h-full grayscale hover:grayscale-0 transition-all object-contain"
                       loading="lazy"
                       onError={(e) => {
+                        console.error('Image load error:', e); // Debug log
                         const img = e.target as HTMLImageElement;
                         img.src = '/placeholder.svg';
                       }}
                     />
                   </a>
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center px-8">
+                  <div className="w-full h-full flex items-center justify-center p-6">
                     <img
                       src={imageUrl}
                       alt={client.name}
-                      className="w-full h-auto max-h-24 grayscale hover:grayscale-0 transition-all object-contain"
+                      className="w-full h-full grayscale hover:grayscale-0 transition-all object-contain"
                       loading="lazy"
                       onError={(e) => {
+                        console.error('Image load error:', e); // Debug log
                         const img = e.target as HTMLImageElement;
                         img.src = '/placeholder.svg';
                       }}
