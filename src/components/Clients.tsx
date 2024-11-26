@@ -61,7 +61,7 @@ export const Clients = () => {
                     href={client.website_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full h-full flex items-center justify-center p-6"
+                    className="w-full h-full flex items-center justify-center p-4"
                   >
                     <img
                       src={imageUrl}
@@ -76,7 +76,7 @@ export const Clients = () => {
                     />
                   </a>
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center p-6">
+                  <div className="w-full h-full flex items-center justify-center p-4">
                     <img
                       src={imageUrl}
                       alt={client.name}
