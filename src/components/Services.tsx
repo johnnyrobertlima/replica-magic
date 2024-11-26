@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import * as Icons from "lucide-react";
 import { LucideIcon } from "lucide-react";
-import { SiteOniTables } from "@/integrations/supabase/types";
+import { SiteOniTables } from "@/integrations/supabase/types/site-oni";
 
 type Service = SiteOniTables['services']['Row'];
 
@@ -13,9 +13,8 @@ export const Services = () => {
   useEffect(() => {
     const fetchServices = async () => {
       const { data } = await supabase
-        .from("services")
-        .select("*")
-        .schema("site_oni");
+        .from('services')
+        .select("*");
       if (data) {
         setServices(data);
       }

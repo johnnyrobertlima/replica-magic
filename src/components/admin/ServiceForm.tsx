@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Trash2 } from "lucide-react";
 import * as Icons from "lucide-react";
 import { LucideIcon } from "lucide-react";
-import { SiteOniTables } from "@/integrations/supabase/types";
+import { SiteOniTables } from "@/integrations/supabase/types/site-oni";
 
 type ServiceFormData = SiteOniTables['services']['Insert'];
 
@@ -20,9 +20,8 @@ export const ServiceForm = () => {
 
   const fetchServices = async () => {
     const { data, error } = await supabase
-      .from("services")
-      .select("*")
-      .schema("site_oni");
+      .from('services')
+      .select("*");
     if (error) {
       toast.error("Error fetching services");
     } else {
@@ -38,16 +37,15 @@ export const ServiceForm = () => {
     try {
       setIsLoading(true);
       const { error } = await supabase
-        .from("services")
-        .insert(data)
-        .schema("site_oni");
+        .from('services')
+        .insert(data);
       
       if (error) throw error;
       
       toast.success("Service created successfully!");
       reset();
       fetchServices();
-    } catch (error) {
+    } catch (error: any) {
       toast.error("Error creating service", {
         description: error.message
       });
@@ -59,16 +57,15 @@ export const ServiceForm = () => {
   const handleDelete = async (id: string) => {
     try {
       const { error } = await supabase
-        .from("services")
+        .from('services')
         .delete()
-        .eq("id", id)
-        .schema("site_oni");
+        .eq("id", id);
       
       if (error) throw error;
       
       toast.success("Service deleted successfully");
       fetchServices();
-    } catch (error) {
+    } catch (error: any) {
       toast.error("Error deleting service");
     }
   };

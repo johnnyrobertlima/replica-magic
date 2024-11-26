@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "./ui/button";
 import YouTube from "react-youtube";
-import { SiteOniTables } from "@/integrations/supabase/types";
+import { SiteOniTables } from "@/integrations/supabase/types/site-oni";
 
 type Banner = SiteOniTables['banners']['Row'];
 
@@ -14,10 +14,9 @@ export const Hero = () => {
   useEffect(() => {
     const fetchBanners = async () => {
       const { data } = await supabase
-        .from("banners")
+        .from('banners')
         .select("*")
-        .eq("is_active", true)
-        .schema("site_oni");
+        .eq("is_active", true);
       
       if (data && data.length > 0) {
         setBanners(data);

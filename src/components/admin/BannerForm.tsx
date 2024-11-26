@@ -9,24 +9,23 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ImageUpload } from "./ImageUpload";
 import { Trash2, ToggleLeft, ToggleRight } from "lucide-react";
-import { SiteOniTables } from "@/integrations/supabase/types";
+import { SiteOniTables } from "@/integrations/supabase/types/site-oni";
 
 type BannerFormData = SiteOniTables['banners']['Insert'];
 
 export const BannerForm = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [banners, setBanners] = useState<any[]>([]);
+  const [banners, setBanners] = useState<SiteOniTables['banners']['Row'][]>([]);
   const { register, handleSubmit, reset, setValue } = useForm<BannerFormData>();
 
   const fetchBanners = async () => {
     const { data, error } = await supabase
-      .from("banners")
-      .select("*")
-      .schema("site_oni");
+      .from('banners')
+      .select("*");
     if (error) {
       toast.error("Error fetching banners");
     } else {
-      setBanners(data);
+      setBanners(data || []);
     }
   };
 
@@ -38,16 +37,15 @@ export const BannerForm = () => {
     try {
       setIsLoading(true);
       const { error } = await supabase
-        .from("banners")
-        .insert(data)
-        .schema("site_oni");
+        .from('banners')
+        .insert(data);
       
       if (error) throw error;
       
       toast.success("Banner created successfully!");
       reset();
       fetchBanners();
-    } catch (error) {
+    } catch (error: any) {
       toast.error("Error creating banner", {
         description: error.message
       });
@@ -59,16 +57,15 @@ export const BannerForm = () => {
   const handleToggleActive = async (id: string, currentStatus: boolean) => {
     try {
       const { error } = await supabase
-        .from("banners")
+        .from('banners')
         .update({ is_active: !currentStatus })
-        .eq("id", id)
-        .schema("site_oni");
+        .eq("id", id);
 
       if (error) throw error;
       
       toast.success("Banner status updated");
       fetchBanners();
-    } catch (error) {
+    } catch (error: any) {
       toast.error("Error updating banner status");
     }
   };
@@ -76,16 +73,15 @@ export const BannerForm = () => {
   const handleDelete = async (id: string) => {
     try {
       const { error } = await supabase
-        .from("banners")
+        .from('banners')
         .delete()
-        .eq("id", id)
-        .schema("site_oni");
+        .eq("id", id);
       
       if (error) throw error;
       
       toast.success("Banner deleted successfully");
       fetchBanners();
-    } catch (error) {
+    } catch (error: any) {
       toast.error("Error deleting banner");
     }
   };

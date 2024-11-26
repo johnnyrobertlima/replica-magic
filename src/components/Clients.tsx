@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { SiteOniTables } from "@/integrations/supabase/types";
+import { SiteOniTables } from "@/integrations/supabase/types/site-oni";
 
 type Client = SiteOniTables['clients']['Row'];
 
@@ -12,8 +12,7 @@ export const Clients = () => {
     const fetchClients = async () => {
       const { data } = await supabase
         .from("clients")
-        .select("*")
-        .schema("site_oni");
+        .select("*");
       if (data) {
         setClients(data);
       }

@@ -7,24 +7,23 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ImageUpload } from "./ImageUpload";
 import { Trash2 } from "lucide-react";
-import { SiteOniTables } from "@/integrations/supabase/types";
+import { SiteOniTables } from "@/integrations/supabase/types/site-oni";
 
 type ClientFormData = SiteOniTables['clients']['Insert'];
 
 export const ClientForm = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [clients, setClients] = useState<any[]>([]);
+  const [clients, setClients] = useState<SiteOniTables['clients']['Row'][]>([]);
   const { register, handleSubmit, reset, setValue } = useForm<ClientFormData>();
 
   const fetchClients = async () => {
     const { data, error } = await supabase
-      .from("clients")
-      .select("*")
-      .schema("site_oni");
+      .from('clients')
+      .select("*");
     if (error) {
       toast.error("Error fetching clients");
     } else {
-      setClients(data);
+      setClients(data || []);
     }
   };
 
@@ -36,16 +35,15 @@ export const ClientForm = () => {
     try {
       setIsLoading(true);
       const { error } = await supabase
-        .from("clients")
-        .insert(data)
-        .schema("site_oni");
+        .from('clients')
+        .insert(data);
       
       if (error) throw error;
       
       toast.success("Client created successfully!");
       reset();
       fetchClients();
-    } catch (error) {
+    } catch (error: any) {
       toast.error("Error creating client", {
         description: error.message
       });
@@ -57,16 +55,15 @@ export const ClientForm = () => {
   const handleDelete = async (id: string) => {
     try {
       const { error } = await supabase
-        .from("clients")
+        .from('clients')
         .delete()
-        .eq("id", id)
-        .schema("site_oni");
+        .eq("id", id);
       
       if (error) throw error;
       
       toast.success("Client deleted successfully");
       fetchClients();
-    } catch (error) {
+    } catch (error: any) {
       toast.error("Error deleting client");
     }
   };
