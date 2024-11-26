@@ -5,6 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -12,7 +19,24 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, Plus } from "lucide-react";
+import { 
+  Loader2, 
+  Plus,
+  Facebook,
+  Twitter,
+  Instagram,
+  Linkedin,
+  Youtube,
+  Github,
+  Twitch,
+  TikTok,
+  Mail,
+  Phone,
+  MapPin,
+  Rss,
+  Share,
+  Globe
+} from "lucide-react";
 import { ActionButtons } from "@/components/admin/ActionButtons";
 
 interface SocialMedia {
@@ -138,6 +162,15 @@ export const AdminSocial = () => {
     { name: "Instagram", icon: <Instagram className="w-4 h-4" /> },
     { name: "LinkedIn", icon: <Linkedin className="w-4 h-4" /> },
     { name: "YouTube", icon: <Youtube className="w-4 h-4" /> },
+    { name: "GitHub", icon: <Github className="w-4 h-4" /> },
+    { name: "Twitch", icon: <Twitch className="w-4 h-4" /> },
+    { name: "TikTok", icon: <TikTok className="w-4 h-4" /> },
+    { name: "Email", icon: <Mail className="w-4 h-4" /> },
+    { name: "Phone", icon: <Phone className="w-4 h-4" /> },
+    { name: "Location", icon: <MapPin className="w-4 h-4" /> },
+    { name: "RSS", icon: <Rss className="w-4 h-4" /> },
+    { name: "Share", icon: <Share className="w-4 h-4" /> },
+    { name: "Website", icon: <Globe className="w-4 h-4" /> },
   ];
 
   return (
@@ -254,3 +287,4 @@ export const AdminSocial = () => {
     </div>
   );
 };
+
