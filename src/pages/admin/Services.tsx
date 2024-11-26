@@ -20,12 +20,13 @@ export const Services = () => {
     queryKey: ["services"],
     queryFn: async () => {
       const { data, error } = await supabase
+        .schema("oni_site")
         .from("services")
         .select("*")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data as Service[];
     },
   });
 
