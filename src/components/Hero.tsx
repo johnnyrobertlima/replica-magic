@@ -14,10 +14,9 @@ export const Hero = () => {
   useEffect(() => {
     const fetchBanners = async () => {
       const { data } = await supabase
-        .from('banners')
+        .from('site_oni.banners')
         .select("*")
-        .eq("is_active", true)
-        .schema('site_oni');
+        .eq("is_active", true);
       
       if (data && data.length > 0) {
         setBanners(data);

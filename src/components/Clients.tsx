@@ -11,9 +11,8 @@ export const Clients = () => {
   useEffect(() => {
     const fetchClients = async () => {
       const { data } = await supabase
-        .from('clients')
-        .select("*")
-        .schema('site_oni');
+        .from('site_oni.clients')
+        .select("*");
       if (data) {
         setClients(data);
       }

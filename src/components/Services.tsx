@@ -13,9 +13,8 @@ export const Services = () => {
   useEffect(() => {
     const fetchServices = async () => {
       const { data } = await supabase
-        .from('services')
-        .select("*")
-        .schema('site_oni');
+        .from('site_oni.services')
+        .select("*");
       if (data) {
         setServices(data);
       }
