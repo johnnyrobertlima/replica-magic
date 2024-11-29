@@ -35,6 +35,15 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+type SeoSettingsRow = {
+  id: string;
+  page_path: string;
+  title: string;
+  description: string;
+  keywords: string[];
+  og_image?: string;
+};
+
 export const AdminSEO = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const { toast } = useToast();
@@ -59,7 +68,7 @@ export const AdminSEO = () => {
         .select("*")
         .order("page_path");
       if (error) throw error;
-      return data;
+      return data as SeoSettingsRow[];
     },
   });
 
@@ -67,8 +76,11 @@ export const AdminSEO = () => {
     mutationFn: async (values: FormValues) => {
       const keywordsArray = values.keywords.split(",").map((k) => k.trim());
       const payload = {
-        ...values,
+        page_path: values.page_path,
+        title: values.title,
+        description: values.description,
         keywords: keywordsArray,
+        og_image: values.og_image || null,
       };
 
       if (editingId) {
@@ -104,7 +116,7 @@ export const AdminSEO = () => {
     },
   });
 
-  const handleEdit = (setting: any) => {
+  const handleEdit = (setting: SeoSettingsRow) => {
     setEditingId(setting.id);
     form.reset({
       ...setting,
