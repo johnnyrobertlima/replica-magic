@@ -14,6 +14,7 @@ import { AdminClients } from "./pages/admin/clients";
 import { AdminSocial } from "./pages/admin/social";
 import { AdminLogos } from "./pages/admin/logos";
 import { AdminMessages } from "./pages/admin/messages";
+import { AdminSEO } from "./pages/admin/seo";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="social" element={<AdminSocial />} />
             <Route path="logos" element={<AdminLogos />} />
             <Route path="messages" element={<AdminMessages />} />
+            <Route path="seo" element={<AdminSEO />} />
           </Route>
         </Routes>
       </BrowserRouter>

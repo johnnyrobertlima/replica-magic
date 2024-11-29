@@ -35,6 +35,7 @@ export const AdminLayout = ({ children }: { children: React.ReactNode }) => {
     { label: "Redes Sociais", path: "/admin/social" },
     { label: "Logos", path: "/admin/logos" },
     { label: "Mensagens", path: "/admin/messages" },
+    { label: "SEO", path: "/admin/seo" },
   ];
 
   return (

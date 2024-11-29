@@ -488,6 +488,39 @@ export type Database = {
         }
         Relationships: []
       }
+      seo_settings: {
+        Row: {
+          created_at: string | null
+          description: string
+          id: string
+          keywords: string[]
+          og_image: string | null
+          page_path: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          id?: string
+          keywords?: string[]
+          og_image?: string | null
+          page_path: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          id?: string
+          keywords?: string[]
+          og_image?: string | null
+          page_path?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       services: {
         Row: {
           cover_image_url: string | null
