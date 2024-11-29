@@ -1,6 +1,6 @@
 import {
   Monitor,
-  Globe,
+  Laptop,
   Users,
   Video,
   Share2,
@@ -22,7 +22,6 @@ import {
   Fingerprint,
   Gauge,
   HeartHandshake,
-  Laptop,
   LayoutDashboard,
   LineChart,
   MessageSquare,
@@ -40,7 +39,7 @@ import {
 
 export const icons = [
   { name: "Monitor", icon: <Monitor className="w-4 h-4" /> },
-  { name: "Globe", icon: <Globe className="w-4 h-4" /> },
+  { name: "Laptop", icon: <Laptop className="w-4 h-4" /> },
   { name: "Users", icon: <Users className="w-4 h-4" /> },
   { name: "Video", icon: <Video className="w-4 h-4" /> },
   { name: "Share2", icon: <Share2 className="w-4 h-4" /> },
@@ -62,7 +61,6 @@ export const icons = [
   { name: "Fingerprint", icon: <Fingerprint className="w-4 h-4" /> },
   { name: "Gauge", icon: <Gauge className="w-4 h-4" /> },
   { name: "HeartHandshake", icon: <HeartHandshake className="w-4 h-4" /> },
-  { name: "Laptop", icon: <Laptop className="w-4 h-4" /> },
   { name: "LayoutDashboard", icon: <LayoutDashboard className="w-4 h-4" /> },
   { name: "LineChart", icon: <LineChart className="w-4 h-4" /> },
   { name: "MessageSquare", icon: <MessageSquare className="w-4 h-4" /> },

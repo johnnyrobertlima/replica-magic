@@ -1,4 +1,4 @@
-import { Monitor, Globe, Users, Video, Share2, BarChart, Loader2 } from "lucide-react";
+import { Monitor, Laptop, Users, Video, Share2, BarChart, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,7 +7,7 @@ import { ServiceDialog } from "./ServiceDialog";
 
 const iconMap: Record<string, React.ReactNode> = {
   Monitor: <Monitor className="w-8 h-8" />,
-  Globe: <Globe className="w-8 h-8" />,
+  Laptop: <Laptop className="w-8 h-8" />,
   Users: <Users className="w-8 h-8" />,
   Video: <Video className="w-8 h-8" />,
   Share2: <Share2 className="w-8 h-8" />,
