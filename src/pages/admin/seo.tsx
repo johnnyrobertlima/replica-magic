@@ -31,6 +31,7 @@ const formSchema = z.object({
   description: z.string().min(1, "Descrição é obrigatória"),
   keywords: z.string().min(1, "Palavras-chave são obrigatórias"),
   og_image: z.string().optional(),
+  favicon_url: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -42,6 +43,7 @@ type SeoSettingsRow = {
   description: string;
   keywords: string[];
   og_image?: string;
+  favicon_url?: string;
 };
 
 export const AdminSEO = () => {
@@ -57,6 +59,7 @@ export const AdminSEO = () => {
       description: "",
       keywords: "",
       og_image: "",
+      favicon_url: "",
     },
   });
 
@@ -81,6 +84,7 @@ export const AdminSEO = () => {
         description: values.description,
         keywords: keywordsArray,
         og_image: values.og_image || null,
+        favicon_url: values.favicon_url || null,
       };
 
       if (editingId) {
@@ -248,6 +252,22 @@ export const AdminSEO = () => {
                   </FormItem>
                 )}
               />
+              <FormField
+                control={form.control}
+                name="favicon_url"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>URL do Favicon</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="URL do favicon (formato .ico recomendado)"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <div className="flex gap-2">
                 <Button type="submit">
                   {editingId ? "Atualizar" : "Adicionar"}
@@ -292,6 +312,16 @@ export const AdminSEO = () => {
                     </span>
                   ))}
                 </div>
+                {setting.favicon_url && (
+                  <div className="mt-2">
+                    <p className="text-sm font-medium">Favicon:</p>
+                    <img
+                      src={setting.favicon_url}
+                      alt="Favicon"
+                      className="w-6 h-6 mt-1"
+                    />
+                  </div>
+                )}
                 <div className="flex gap-2 mt-4">
                   <Button
                     variant="outline"

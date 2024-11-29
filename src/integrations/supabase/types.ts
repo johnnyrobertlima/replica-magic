@@ -492,6 +492,7 @@ export type Database = {
         Row: {
           created_at: string | null
           description: string
+          favicon_url: string | null
           id: string
           keywords: string[]
           og_image: string | null
@@ -502,6 +503,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           description: string
+          favicon_url?: string | null
           id?: string
           keywords?: string[]
           og_image?: string | null
@@ -512,6 +514,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           description?: string
+          favicon_url?: string | null
           id?: string
           keywords?: string[]
           og_image?: string | null
