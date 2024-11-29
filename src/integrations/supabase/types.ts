@@ -490,6 +490,7 @@ export type Database = {
       }
       services: {
         Row: {
+          cover_image_url: string | null
           created_at: string | null
           description: string
           detailed_description: string | null
@@ -501,6 +502,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          cover_image_url?: string | null
           created_at?: string | null
           description: string
           detailed_description?: string | null
@@ -512,6 +514,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          cover_image_url?: string | null
           created_at?: string | null
           description?: string
           detailed_description?: string | null

@@ -5,6 +5,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Monitor, Globe, Users, Video, Share2, BarChart } from "lucide-react";
+import { getStorageUrl } from "@/utils/imageUtils";
 
 const iconMap: Record<string, React.ReactNode> = {
   Monitor: <Monitor className="w-8 h-8" />,
@@ -23,14 +24,26 @@ interface ServiceDialogProps {
     description: string;
     detailed_description?: string;
     icon: string;
+    cover_image_url?: string | null;
     sub_services?: { title: string; description: string }[];
   };
 }
 
 export const ServiceDialog = ({ isOpen, onClose, service }: ServiceDialogProps) => {
+  const coverImageUrl = service.cover_image_url ? getStorageUrl(service.cover_image_url) : null;
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
+        {coverImageUrl && (
+          <div className="relative w-full h-48 mb-6 rounded-lg overflow-hidden">
+            <img
+              src={coverImageUrl}
+              alt={service.title}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
         <DialogHeader>
           <div className="flex items-center gap-4">
             <div className="text-primary">

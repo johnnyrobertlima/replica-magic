@@ -3,8 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { getStorageUrl } from "@/utils/imageUtils";
+import { useEffect, useState } from "react";
 
 export const Hero = () => {
+  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+
   const { data: banners, isLoading } = useQuery({
     queryKey: ["active-banners"],
     queryFn: async () => {
@@ -12,12 +15,24 @@ export const Hero = () => {
         .from("banners")
         .select("*")
         .eq("is_active", true)
-        .order("created_at", { ascending: false })
-        .limit(1);
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
   });
+
+  useEffect(() => {
+    if (!banners || banners.length <= 1) return;
+
+    const currentBanner = banners[currentBannerIndex];
+    const duration = currentBanner?.duration || 5000;
+
+    const timer = setTimeout(() => {
+      setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
+    }, duration);
+
+    return () => clearTimeout(timer);
+  }, [currentBannerIndex, banners]);
 
   if (isLoading) {
     return (
@@ -27,12 +42,11 @@ export const Hero = () => {
     );
   }
 
-  const banner = banners?.[0];
-
-  if (!banner) {
+  if (!banners || banners.length === 0) {
     return null;
   }
 
+  const banner = banners[currentBannerIndex];
   const imageUrl = getStorageUrl(banner.image_url);
 
   // Extract YouTube video ID from URL if present

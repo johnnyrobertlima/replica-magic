@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/select";
 import { SubServiceForm } from "./SubServiceForm";
 import { icons } from "./icons";
+import { ImageUpload } from "../ImageUpload";
 
 interface ServiceFormProps {
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
@@ -47,6 +48,14 @@ export const ServiceForm = ({ onSubmit, editingService, onCancel }: ServiceFormP
             </SelectContent>
           </Select>
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Imagem de Capa</label>
+        <ImageUpload
+          name="cover_image"
+          currentImage={editingService?.cover_image_url}
+        />
       </div>
 
       <div className="space-y-2">
