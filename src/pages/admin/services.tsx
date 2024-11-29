@@ -15,10 +15,13 @@ import {
 } from "@/components/ui/table";
 import { ServiceForm } from "@/components/admin/services/ServiceForm";
 import { icons } from "@/components/admin/services/icons";
+import { Database } from "@/integrations/supabase/types";
+
+type Service = Database["public"]["Tables"]["services"]["Row"];
 
 export const AdminServices = () => {
   const [isCreating, setIsCreating] = useState(false);
-  const [editingService, setEditingService] = useState<any>(null);
+  const [editingService, setEditingService] = useState<Service | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -39,7 +42,7 @@ export const AdminServices = () => {
       const serviceData = {
         title: String(formData.get("title")),
         description: String(formData.get("description")),
-        detailed_description: formData.get("detailed_description"),
+        detailed_description: formData.get("detailed_description") ? String(formData.get("detailed_description")) : null,
         icon: String(formData.get("icon")),
         sub_services: JSON.parse(String(formData.get("sub_services") || "[]")),
       };
@@ -61,27 +64,37 @@ export const AdminServices = () => {
     },
   });
 
-  const updateService = async (service: any, formData: FormData) => {
-    const updatedData = {
-      title: String(formData.get("title")),
-      description: String(formData.get("description")),
-      detailed_description: formData.get("detailed_description"),
-      icon: String(formData.get("icon")),
-      sub_services: JSON.parse(String(formData.get("sub_services") || "[]")),
-    };
+  const updateService = useMutation({
+    mutationFn: async ({ id, formData }: { id: string; formData: FormData }) => {
+      const updatedData = {
+        title: String(formData.get("title")),
+        description: String(formData.get("description")),
+        detailed_description: formData.get("detailed_description") ? String(formData.get("detailed_description")) : null,
+        icon: String(formData.get("icon")),
+        sub_services: JSON.parse(String(formData.get("sub_services") || "[]")),
+      };
 
-    const { error } = await supabase
-      .from("services")
-      .update(updatedData)
-      .eq("id", service.id);
+      const { error } = await supabase
+        .from("services")
+        .update(updatedData)
+        .eq("id", id);
 
-    if (error) throw error;
-
-    queryClient.invalidateQueries({ queryKey: ["services"] });
-    setIsCreating(false);
-    setEditingService(null);
-    toast({ title: "Serviço atualizado com sucesso!" });
-  };
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["services"] });
+      setIsCreating(false);
+      setEditingService(null);
+      toast({ title: "Serviço atualizado com sucesso!" });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao atualizar serviço",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   const toggleService = useMutation({
     mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
@@ -108,7 +121,7 @@ export const AdminServices = () => {
     },
   });
 
-  const handleEdit = (service: any) => {
+  const handleEdit = (service: Service) => {
     setEditingService(service);
     setIsCreating(true);
   };
@@ -119,9 +132,9 @@ export const AdminServices = () => {
     const formData = new FormData(form);
 
     if (editingService) {
-      await updateService(editingService, formData);
+      await updateService.mutateAsync({ id: editingService.id, formData });
     } else {
-      createService.mutate(formData);
+      await createService.mutateAsync(formData);
     }
   };
 
