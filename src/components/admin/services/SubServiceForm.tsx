@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, X } from "lucide-react";
+import { useState, useEffect } from "react";
 
 interface SubService {
   title: string;
@@ -9,28 +10,37 @@ interface SubService {
 }
 
 interface SubServiceFormProps {
-  subServices: SubService[];
+  subServices?: SubService[];
   onChange: (subServices: SubService[]) => void;
 }
 
 export const SubServiceForm = ({ subServices = [], onChange }: SubServiceFormProps) => {
+  const [localSubServices, setLocalSubServices] = useState<SubService[]>(subServices);
+
+  useEffect(() => {
+    setLocalSubServices(subServices);
+  }, [subServices]);
+
   const addSubService = () => {
-    const newSubServices = [...subServices, { title: "", description: "" }];
+    const newSubServices = [...localSubServices, { title: "", description: "" }];
+    setLocalSubServices(newSubServices);
     onChange(newSubServices);
   };
 
   const removeSubService = (index: number) => {
-    const newSubServices = subServices.filter((_, i) => i !== index);
+    const newSubServices = localSubServices.filter((_, i) => i !== index);
+    setLocalSubServices(newSubServices);
     onChange(newSubServices);
   };
 
   const updateSubService = (index: number, field: keyof SubService, value: string) => {
-    const newSubServices = subServices.map((service, i) => {
+    const newSubServices = localSubServices.map((service, i) => {
       if (i === index) {
         return { ...service, [field]: value };
       }
       return service;
     });
+    setLocalSubServices(newSubServices);
     onChange(newSubServices);
   };
 
@@ -49,7 +59,7 @@ export const SubServiceForm = ({ subServices = [], onChange }: SubServiceFormPro
         </Button>
       </div>
 
-      {subServices && subServices.map((service, index) => (
+      {localSubServices.map((service, index) => (
         <div key={index} className="space-y-4 p-4 border rounded-lg relative">
           <Button
             type="button"

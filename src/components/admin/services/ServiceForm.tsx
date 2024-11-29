@@ -11,6 +11,7 @@ import {
 import { SubServiceForm } from "./SubServiceForm";
 import { icons } from "./icons";
 import { ImageUpload } from "../ImageUpload";
+import { useState, useEffect } from "react";
 
 interface ServiceFormProps {
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
@@ -19,6 +20,27 @@ interface ServiceFormProps {
 }
 
 export const ServiceForm = ({ onSubmit, editingService, onCancel }: ServiceFormProps) => {
+  const [subServices, setSubServices] = useState(editingService?.sub_services || []);
+
+  useEffect(() => {
+    if (editingService?.sub_services) {
+      setSubServices(editingService.sub_services);
+    }
+  }, [editingService]);
+
+  const handleSubServicesChange = (newSubServices: any[]) => {
+    setSubServices(newSubServices);
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'sub_services';
+    input.value = JSON.stringify(newSubServices);
+    const oldInput = document.querySelector('input[name="sub_services"]');
+    if (oldInput) {
+      oldInput.remove();
+    }
+    document.forms[0].appendChild(input);
+  };
+
   return (
     <form onSubmit={onSubmit} className="space-y-4 border p-4 rounded-lg">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -77,18 +99,8 @@ export const ServiceForm = ({ onSubmit, editingService, onCancel }: ServiceFormP
       </div>
 
       <SubServiceForm
-        subServices={editingService?.sub_services || []}
-        onChange={(subServices) => {
-          const input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = 'sub_services';
-          input.value = JSON.stringify(subServices);
-          const oldInput = document.querySelector('input[name="sub_services"]');
-          if (oldInput) {
-            oldInput.remove();
-          }
-          document.forms[0].appendChild(input);
-        }}
+        subServices={subServices}
+        onChange={handleSubServicesChange}
       />
 
       <div className="flex justify-end gap-2">
