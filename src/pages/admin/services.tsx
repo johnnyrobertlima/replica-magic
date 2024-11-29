@@ -14,7 +14,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ServiceForm } from "@/components/admin/services/ServiceForm";
-import { icons } from "@/components/admin/services/icons";
+import { ServiceList } from "@/components/admin/services/ServiceList";
+import { handleServiceMutation } from "@/components/admin/services/serviceUtils";
 import { Database } from "@/integrations/supabase/types";
 
 type Service = Database["public"]["Tables"]["services"]["Row"];
@@ -39,16 +40,7 @@ export const AdminServices = () => {
 
   const createService = useMutation({
     mutationFn: async (formData: FormData) => {
-      const serviceData = {
-        title: String(formData.get("title")),
-        description: String(formData.get("description")),
-        detailed_description: formData.get("detailed_description") ? String(formData.get("detailed_description")) : null,
-        icon: String(formData.get("icon")),
-        sub_services: JSON.parse(String(formData.get("sub_services") || "[]")),
-      };
-
-      const { error } = await supabase.from("services").insert([serviceData]);
-      if (error) throw error;
+      return handleServiceMutation(formData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["services"] });
@@ -66,20 +58,7 @@ export const AdminServices = () => {
 
   const updateService = useMutation({
     mutationFn: async ({ id, formData }: { id: string; formData: FormData }) => {
-      const updatedData = {
-        title: String(formData.get("title")),
-        description: String(formData.get("description")),
-        detailed_description: formData.get("detailed_description") ? String(formData.get("detailed_description")) : null,
-        icon: String(formData.get("icon")),
-        sub_services: JSON.parse(String(formData.get("sub_services") || "[]")),
-      };
-
-      const { error } = await supabase
-        .from("services")
-        .update(updatedData)
-        .eq("id", id);
-
-      if (error) throw error;
+      return handleServiceMutation(formData, id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["services"] });
@@ -95,36 +74,6 @@ export const AdminServices = () => {
       });
     },
   });
-
-  const toggleService = useMutation({
-    mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
-      const { error } = await supabase
-        .from("services")
-        .update({ is_active: !is_active })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["services"] });
-      toast({ title: "Serviço atualizado com sucesso!" });
-    },
-  });
-
-  const deleteService = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("services").delete().eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["services"] });
-      toast({ title: "Serviço excluído com sucesso!" });
-    },
-  });
-
-  const handleEdit = (service: Service) => {
-    setEditingService(service);
-    setIsCreating(true);
-  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -167,45 +116,13 @@ export const AdminServices = () => {
         />
       )}
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Título</TableHead>
-            <TableHead>Descrição</TableHead>
-            <TableHead>Ícone</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="w-[100px]">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {services?.map((service) => (
-            <TableRow key={service.id}>
-              <TableCell>{service.title}</TableCell>
-              <TableCell>{service.description}</TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  {icons.find(i => i.name === service.icon)?.icon}
-                  <span>{service.icon}</span>
-                </div>
-              </TableCell>
-              <TableCell>
-                {service.is_active ? "Ativo" : "Inativo"}
-              </TableCell>
-              <TableCell>
-                <ActionButtons
-                  isActive={service.is_active}
-                  onToggle={() => toggleService.mutate({
-                    id: service.id,
-                    is_active: service.is_active,
-                  })}
-                  onEdit={() => handleEdit(service)}
-                  onDelete={() => deleteService.mutate(service.id)}
-                />
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <ServiceList
+        services={services}
+        onEdit={(service) => {
+          setEditingService(service);
+          setIsCreating(true);
+        }}
+      />
     </div>
   );
 };
