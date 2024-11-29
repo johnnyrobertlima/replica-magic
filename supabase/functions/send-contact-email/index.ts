@@ -42,6 +42,7 @@ const handler = async (req: Request): Promise<Response> => {
         to: ["comercial@oniagencia.com.br"],
         subject: "Nova mensagem de contato - Site ONI",
         html: emailHtml,
+        reply_to: contactMessage.email
       }),
     });
 

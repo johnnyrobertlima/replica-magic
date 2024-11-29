@@ -1,4 +1,4 @@
-import { useForm } from "react-hook-form";
+import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
@@ -19,7 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ImageUpload } from "@/components/admin/ImageUpload"; // Importing ImageUpload component
+import { FaviconUpload } from "@/components/admin/seo/FaviconUpload";
 
 const formSchema = z.object({
   id: z.string().optional(),
@@ -58,10 +58,6 @@ export const SeoForm = ({
     },
   });
 
-  const handleFaviconUpload = (url: string) => {
-    form.setValue("favicon_url", url);
-  };
-
   return (
     <Card>
       <CardHeader>
@@ -71,115 +67,100 @@ export const SeoForm = ({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="page_path"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Caminho da Página</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: /sobre" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Título</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Título da página para SEO"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Descrição</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Descrição da página para SEO"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="keywords"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Palavras-chave</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Palavras-chave separadas por vírgula"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="og_image"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Imagem Open Graph</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="URL da imagem para compartilhamento"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="favicon_url"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Favicon</FormLabel>
-                  <FormControl>
-                    <ImageUpload
-                      name="favicon"
-                      currentImage={field.value}
-                      onUrlChange={handleFaviconUpload}
-                      accept="image/x-icon,image/png,image/ico"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="flex gap-2">
-              <Button type="submit">
-                {isEditing ? "Atualizar" : "Adicionar"}
-              </Button>
-              {isEditing && onCancel && (
-                <Button type="button" variant="outline" onClick={onCancel}>
-                  Cancelar
+        <FormProvider {...form}>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="page_path"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Caminho da Página</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ex: /sobre" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Título</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Título da página para SEO"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Descrição</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Descrição da página para SEO"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="keywords"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Palavras-chave</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Palavras-chave separadas por vírgula"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="og_image"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Imagem Open Graph</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="URL da imagem para compartilhamento"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FaviconUpload />
+              <div className="flex gap-2">
+                <Button type="submit">
+                  {isEditing ? "Atualizar" : "Adicionar"}
                 </Button>
-              )}
-            </div>
-          </form>
-        </Form>
+                {isEditing && onCancel && (
+                  <Button type="button" variant="outline" onClick={onCancel}>
+                    Cancelar
+                  </Button>
+                )}
+              </div>
+            </form>
+          </Form>
+        </FormProvider>
       </CardContent>
     </Card>
   );
