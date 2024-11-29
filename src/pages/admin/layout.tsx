@@ -8,23 +8,65 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { useToast } from "@/components/ui/use-toast";
 
 export const AdminLayout = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Auth error:", error);
+          throw error;
+        }
+        
+        if (!session) {
+          navigate("/admin/login");
+          return;
+        }
+
+        // Set up real-time auth state listener
+        const {
+          data: { subscription },
+        } = supabase.auth.onAuthStateChange((_event, session) => {
+          if (!session) {
+            navigate("/admin/login");
+          }
+        });
+
+        // Cleanup subscription on unmount
+        return () => subscription.unsubscribe();
+      } catch (error: any) {
+        console.error("Session error:", error);
+        toast({
+          title: "Erro de autenticação",
+          description: "Por favor, faça login novamente.",
+          variant: "destructive",
+        });
         navigate("/admin/login");
       }
     };
+
     checkAuth();
-  }, [navigate]);
+  }, [navigate, toast]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/admin/login");
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      navigate("/admin/login");
+    } catch (error: any) {
+      console.error("Logout error:", error);
+      toast({
+        title: "Erro ao fazer logout",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   const menuItems = [
