@@ -2,6 +2,8 @@ import { Monitor, Globe, Users, Video, Share2, BarChart, Loader2 } from "lucide-
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { ServiceDialog } from "./ServiceDialog";
 
 const iconMap: Record<string, React.ReactNode> = {
   Monitor: <Monitor className="w-8 h-8" />,
@@ -13,6 +15,8 @@ const iconMap: Record<string, React.ReactNode> = {
 };
 
 export const Services = () => {
+  const [selectedService, setSelectedService] = useState<any>(null);
+
   const { data: services, isLoading } = useQuery({
     queryKey: ["active-services"],
     queryFn: async () => {
@@ -44,7 +48,7 @@ export const Services = () => {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl font-bold mb-4">BEM VINDO À ONI</h2>
+          <h2 className="text-4xl font-bold mb-4">BEM VINDO À ONI AGÊNCIA</h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             Oferecemos soluções digitais completas para sua empresa
           </p>
@@ -58,7 +62,8 @@ export const Services = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
-              className="bg-white p-8 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+              className="bg-white p-8 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => setSelectedService(service)}
             >
               <div className="text-primary mb-4">
                 {iconMap[service.icon]}
@@ -69,6 +74,14 @@ export const Services = () => {
           ))}
         </div>
       </div>
+
+      {selectedService && (
+        <ServiceDialog
+          isOpen={!!selectedService}
+          onClose={() => setSelectedService(null)}
+          service={selectedService}
+        />
+      )}
     </section>
   );
 };

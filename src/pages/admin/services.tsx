@@ -2,17 +2,9 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Plus, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { ActionButtons } from "@/components/admin/ActionButtons";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -21,99 +13,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { 
-  Loader2, 
-  Plus,
-  Monitor,
-  Globe,
-  Users,
-  Video,
-  Share2,
-  BarChart,
-  Camera,
-  ImageIcon,
-  Mic,
-  Music,
-  Paintbrush,
-  Settings,
-  Wrench,
-  BookOpen,
-  Brain,
-  Briefcase,
-  Building,
-  CircleDollarSign,
-  Cog,
-  FileText,
-  Fingerprint,
-  Gauge,
-  HeartHandshake,
-  Laptop,
-  LayoutDashboard,
-  LineChart,
-  MessageSquare,
-  Microscope,
-  PenTool,
-  Presentation,
-  Rocket,
-  Search,
-  ShieldCheck,
-  Smartphone,
-  Sparkles,
-  Target,
-  Zap
-} from "lucide-react";
-
-interface Service {
-  id: string;
-  title: string;
-  description: string;
-  icon: string;
-  is_active: boolean;
-}
-
-const icons = [
-  { name: "Monitor", icon: <Monitor className="w-4 h-4" /> },
-  { name: "Globe", icon: <Globe className="w-4 h-4" /> },
-  { name: "Users", icon: <Users className="w-4 h-4" /> },
-  { name: "Video", icon: <Video className="w-4 h-4" /> },
-  { name: "Share2", icon: <Share2 className="w-4 h-4" /> },
-  { name: "BarChart", icon: <BarChart className="w-4 h-4" /> },
-  { name: "Camera", icon: <Camera className="w-4 h-4" /> },
-  { name: "Image", icon: <ImageIcon className="w-4 h-4" /> },
-  { name: "Mic", icon: <Mic className="w-4 h-4" /> },
-  { name: "Music", icon: <Music className="w-4 h-4" /> },
-  { name: "Paintbrush", icon: <Paintbrush className="w-4 h-4" /> },
-  { name: "Settings", icon: <Settings className="w-4 h-4" /> },
-  { name: "Wrench", icon: <Wrench className="w-4 h-4" /> },
-  { name: "BookOpen", icon: <BookOpen className="w-4 h-4" /> },
-  { name: "Brain", icon: <Brain className="w-4 h-4" /> },
-  { name: "Briefcase", icon: <Briefcase className="w-4 h-4" /> },
-  { name: "Building", icon: <Building className="w-4 h-4" /> },
-  { name: "CircleDollarSign", icon: <CircleDollarSign className="w-4 h-4" /> },
-  { name: "Cog", icon: <Cog className="w-4 h-4" /> },
-  { name: "FileText", icon: <FileText className="w-4 h-4" /> },
-  { name: "Fingerprint", icon: <Fingerprint className="w-4 h-4" /> },
-  { name: "Gauge", icon: <Gauge className="w-4 h-4" /> },
-  { name: "HeartHandshake", icon: <HeartHandshake className="w-4 h-4" /> },
-  { name: "Laptop", icon: <Laptop className="w-4 h-4" /> },
-  { name: "LayoutDashboard", icon: <LayoutDashboard className="w-4 h-4" /> },
-  { name: "LineChart", icon: <LineChart className="w-4 h-4" /> },
-  { name: "MessageSquare", icon: <MessageSquare className="w-4 h-4" /> },
-  { name: "Microscope", icon: <Microscope className="w-4 h-4" /> },
-  { name: "PenTool", icon: <PenTool className="w-4 h-4" /> },
-  { name: "Presentation", icon: <Presentation className="w-4 h-4" /> },
-  { name: "Rocket", icon: <Rocket className="w-4 h-4" /> },
-  { name: "Search", icon: <Search className="w-4 h-4" /> },
-  { name: "ShieldCheck", icon: <ShieldCheck className="w-4 h-4" /> },
-  { name: "Smartphone", icon: <Smartphone className="w-4 h-4" /> },
-  { name: "Sparkles", icon: <Sparkles className="w-4 h-4" /> },
-  { name: "Target", icon: <Target className="w-4 h-4" /> },
-  { name: "Zap", icon: <Zap className="w-4 h-4" /> },
-];
+import { ServiceForm } from "@/components/admin/services/ServiceForm";
+import { icons } from "@/components/admin/services/icons";
 
 export const AdminServices = () => {
   const [isCreating, setIsCreating] = useState(false);
-  const [editingService, setEditingService] = useState<Service | null>(null);
+  const [editingService, setEditingService] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -125,7 +30,7 @@ export const AdminServices = () => {
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data as Service[];
+      return data;
     },
   });
 
@@ -134,7 +39,9 @@ export const AdminServices = () => {
       const serviceData = {
         title: String(formData.get("title")),
         description: String(formData.get("description")),
+        detailed_description: formData.get("detailed_description"),
         icon: String(formData.get("icon")),
+        sub_services: JSON.parse(String(formData.get("sub_services") || "[]")),
       };
 
       const { error } = await supabase.from("services").insert([serviceData]);
@@ -154,11 +61,13 @@ export const AdminServices = () => {
     },
   });
 
-  const updateService = async (service: Service, formData: FormData) => {
+  const updateService = async (service: any, formData: FormData) => {
     const updatedData = {
       title: String(formData.get("title")),
       description: String(formData.get("description")),
+      detailed_description: formData.get("detailed_description"),
       icon: String(formData.get("icon")),
+      sub_services: JSON.parse(String(formData.get("sub_services") || "[]")),
     };
 
     const { error } = await supabase
@@ -199,7 +108,7 @@ export const AdminServices = () => {
     },
   });
 
-  const handleEdit = (service: Service) => {
+  const handleEdit = (service: any) => {
     setEditingService(service);
     setIsCreating(true);
   };
@@ -235,59 +144,14 @@ export const AdminServices = () => {
       </div>
 
       {isCreating && (
-        <form onSubmit={handleSubmit} className="space-y-4 border p-4 rounded-lg">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Título</label>
-              <Input 
-                name="title" 
-                required 
-                defaultValue={editingService?.title}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Ícone</label>
-              <Select name="icon" required defaultValue={editingService?.icon}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um ícone" />
-                </SelectTrigger>
-                <SelectContent className="bg-white">
-                  {icons.map((icon) => (
-                    <SelectItem key={icon.name} value={icon.name}>
-                      <div className="flex items-center gap-2">
-                        {icon.icon}
-                        <span>{icon.name}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Descrição</label>
-            <Textarea 
-              name="description" 
-              required 
-              defaultValue={editingService?.description}
-            />
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setIsCreating(false);
-                setEditingService(null);
-              }}
-            >
-              Cancelar
-            </Button>
-            <Button type="submit">
-              {editingService ? 'Salvar' : 'Criar'}
-            </Button>
-          </div>
-        </form>
+        <ServiceForm
+          onSubmit={handleSubmit}
+          editingService={editingService}
+          onCancel={() => {
+            setIsCreating(false);
+            setEditingService(null);
+          }}
+        />
       )}
 
       <Table>

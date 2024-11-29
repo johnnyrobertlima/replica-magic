@@ -1,0 +1,69 @@
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Monitor, Globe, Users, Video, Share2, BarChart } from "lucide-react";
+
+const iconMap: Record<string, React.ReactNode> = {
+  Monitor: <Monitor className="w-8 h-8" />,
+  Globe: <Globe className="w-8 h-8" />,
+  Users: <Users className="w-8 h-8" />,
+  Video: <Video className="w-8 h-8" />,
+  Share2: <Share2 className="w-8 h-8" />,
+  BarChart: <BarChart className="w-8 h-8" />,
+};
+
+interface ServiceDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  service: {
+    title: string;
+    description: string;
+    detailed_description?: string;
+    icon: string;
+    sub_services?: { title: string; description: string }[];
+  };
+}
+
+export const ServiceDialog = ({ isOpen, onClose, service }: ServiceDialogProps) => {
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <div className="flex items-center gap-4">
+            <div className="text-primary">
+              {iconMap[service.icon]}
+            </div>
+            <DialogTitle className="text-2xl font-bold">{service.title}</DialogTitle>
+          </div>
+        </DialogHeader>
+        <div className="space-y-6">
+          <p className="text-gray-600">{service.description}</p>
+          
+          {service.detailed_description && (
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold">Detalhes do Serviço</h3>
+              <p className="text-gray-600">{service.detailed_description}</p>
+            </div>
+          )}
+
+          {service.sub_services && service.sub_services.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Serviços Inclusos</h3>
+              <div className="grid gap-4">
+                {service.sub_services.map((subService, index) => (
+                  <div key={index} className="bg-gray-50 p-4 rounded-lg">
+                    <h4 className="font-medium mb-2">{subService.title}</h4>
+                    <p className="text-gray-600 text-sm">{subService.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
