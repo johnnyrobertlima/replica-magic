@@ -6,17 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Plus } from "lucide-react";
 import { BannerForm } from "./banners/BannerForm";
 import { BannerList } from "./banners/BannerList";
-
-interface Banner {
-  id: string;
-  title: string;
-  description: string;
-  button_text: string;
-  button_link: string;
-  image_url: string;
-  youtube_url: string | null;
-  is_active: boolean;
-}
+import { Banner } from "@/types/banner";
 
 export const AdminBanners = () => {
   const [isCreating, setIsCreating] = useState(false);
@@ -58,6 +48,8 @@ export const AdminBanners = () => {
         imageUrl = publicUrl;
       }
 
+      const duration = Number(formData.get("duration")) * 1000; // Convert seconds to milliseconds
+
       const bannerData = {
         title: String(formData.get("title")),
         description: String(formData.get("description")),
@@ -65,6 +57,7 @@ export const AdminBanners = () => {
         button_link: String(formData.get("button_link")),
         youtube_url: formData.get("youtube_url") ? String(formData.get("youtube_url")) : null,
         image_url: imageUrl,
+        duration: duration,
       };
 
       const { error } = await supabase.from("banners").insert([bannerData]);
@@ -145,13 +138,13 @@ export const AdminBanners = () => {
 
   const handleSubmit = async (formData: FormData) => {
     if (editingBanner) {
-      // Handle edit
       const updatedData: any = {
         title: String(formData.get("title")),
         description: String(formData.get("description")),
         button_text: String(formData.get("button_text")),
         button_link: String(formData.get("button_link")),
         youtube_url: formData.get("youtube_url") ? String(formData.get("youtube_url")) : null,
+        duration: Number(formData.get("duration")) * 1000, // Convert seconds to milliseconds
       };
 
       const file = formData.get("image") as File;
@@ -196,7 +189,6 @@ export const AdminBanners = () => {
       setEditingBanner(null);
       toast({ title: "Banner atualizado com sucesso!" });
     } else {
-      // Handle create
       createBanner.mutate(formData);
     }
   };

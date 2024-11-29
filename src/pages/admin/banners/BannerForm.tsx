@@ -14,6 +14,7 @@ interface Banner {
   image_url: string;
   youtube_url: string | null;
   is_active: boolean;
+  duration: number;
 }
 
 interface BannerFormProps {
@@ -70,6 +71,16 @@ export const BannerForm = ({
             name="youtube_url" 
             type="url" 
             defaultValue={editingBanner?.youtube_url || ''}
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Duração (segundos)</label>
+          <Input 
+            name="duration" 
+            type="number" 
+            min="1"
+            required
+            defaultValue={editingBanner?.duration ? editingBanner.duration / 1000 : 5}
           />
         </div>
         <div className="space-y-2">
