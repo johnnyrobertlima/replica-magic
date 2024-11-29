@@ -19,6 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ImageUpload } from "@/components/admin/ImageUpload"; // Importing ImageUpload component
 
 const formSchema = z.object({
   id: z.string().optional(),
@@ -57,6 +58,10 @@ export const SeoForm = ({
     },
   });
 
+  const handleFaviconUpload = (url: string) => {
+    form.setValue("favicon_url", url);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -81,80 +86,82 @@ export const SeoForm = ({
                 </FormItem>
               )}
             />
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Título</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Título da página para SEO"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Descrição</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Descrição da página para SEO"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="keywords"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Palavras-chave</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Palavras-chave separadas por vírgula"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="og_image"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Imagem Open Graph</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="URL da imagem para compartilhamento"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Título</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Título da página para SEO"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Descrição</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Descrição da página para SEO"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="keywords"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Palavras-chave</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Palavras-chave separadas por vírgula"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="og_image"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Imagem Open Graph</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="URL da imagem para compartilhamento"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="favicon_url"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>URL do Favicon</FormLabel>
+                  <FormLabel>Favicon</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="URL do favicon (formato .ico recomendado)"
-                      {...field}
+                    <ImageUpload
+                      name="favicon"
+                      currentImage={field.value}
+                      onUrlChange={handleFaviconUpload}
+                      accept="image/x-icon,image/png,image/ico"
                     />
                   </FormControl>
                   <FormMessage />

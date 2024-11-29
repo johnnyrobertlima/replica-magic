@@ -3,18 +3,30 @@ import { Input } from "@/components/ui/input";
 import { validateImage } from "@/utils/imageUtils";
 import { useToast } from "@/components/ui/use-toast";
 import { getStorageUrl } from "@/utils/imageUtils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ImageUploadProps {
   name: string;
   currentImage?: string;
   onChange?: (file: File | null) => void;
+  onUrlChange?: (url: string) => void;
+  accept?: string;
+  bucket?: string;
 }
 
-export const ImageUpload = ({ name, currentImage, onChange }: ImageUploadProps) => {
+export const ImageUpload = ({ 
+  name, 
+  currentImage, 
+  onChange,
+  onUrlChange,
+  accept = "image/jpeg,image/png,image/webp",
+  bucket = "oni-media"
+}: ImageUploadProps) => {
   const { toast } = useToast();
   const [preview, setPreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     
     if (file) {
@@ -28,8 +40,25 @@ export const ImageUpload = ({ name, currentImage, onChange }: ImageUploadProps) 
         };
         reader.readAsDataURL(file);
         
-        // Notify parent component
+        // Upload file to Supabase Storage
+        setIsUploading(true);
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
+        
+        const { data, error } = await supabase.storage
+          .from(bucket)
+          .upload(fileName, file);
+
+        if (error) throw error;
+
+        const fileUrl = getStorageUrl(`${fileName}`);
+        onUrlChange?.(fileUrl);
         onChange?.(file);
+        
+        toast({
+          title: "Sucesso",
+          description: "Arquivo enviado com sucesso",
+        });
       } catch (error) {
         toast({
           title: "Erro ao carregar imagem",
@@ -38,20 +67,22 @@ export const ImageUpload = ({ name, currentImage, onChange }: ImageUploadProps) 
         });
         event.target.value = '';
         onChange?.(null);
+      } finally {
+        setIsUploading(false);
       }
     }
   };
 
   const currentImageUrl = currentImage ? getStorageUrl(currentImage) : null;
-  console.log('Current image URL:', currentImageUrl); // Debug log
 
   return (
     <div className="space-y-2">
       <Input
         name={name}
         type="file"
-        accept="image/jpeg,image/png,image/webp"
+        accept={accept}
         onChange={handleFileChange}
+        disabled={isUploading}
       />
       {(preview || currentImageUrl) && (
         <div className="mt-2">
@@ -60,7 +91,6 @@ export const ImageUpload = ({ name, currentImage, onChange }: ImageUploadProps) 
             alt="Preview"
             className="h-20 w-32 object-cover rounded"
             onError={(e) => {
-              console.log('Image load error:', e); // Debug log
               const img = e.target as HTMLImageElement;
               img.src = '/placeholder.svg';
             }}

@@ -1,9 +1,9 @@
 export const validateImage = (file: File) => {
   const MAX_SIZE = 5 * 1024 * 1024; // 5MB
-  const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+  const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/x-icon', 'image/ico'];
 
   if (!ALLOWED_TYPES.includes(file.type)) {
-    throw new Error('Tipo de arquivo não permitido. Use JPEG, PNG ou WEBP.');
+    throw new Error('Tipo de arquivo não permitido. Use JPEG, PNG, WEBP ou ICO.');
   }
 
   if (file.size > MAX_SIZE) {
