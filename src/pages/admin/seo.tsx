@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import {
   Card,
   CardContent,
@@ -33,12 +33,14 @@ const formSchema = z.object({
   og_image: z.string().optional(),
 });
 
+type FormValues = z.infer<typeof formSchema>;
+
 export const AdminSEO = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       page_path: "",
@@ -62,7 +64,7 @@ export const AdminSEO = () => {
   });
 
   const mutation = useMutation({
-    mutationFn: async (values: z.infer<typeof formSchema>) => {
+    mutationFn: async (values: FormValues) => {
       const keywordsArray = values.keywords.split(",").map((k) => k.trim());
       const payload = {
         ...values,
@@ -76,7 +78,9 @@ export const AdminSEO = () => {
           .eq("id", editingId);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("seo_settings").insert([payload]);
+        const { error } = await supabase
+          .from("seo_settings")
+          .insert([payload]);
         if (error) throw error;
       }
     },
@@ -126,7 +130,7 @@ export const AdminSEO = () => {
     }
   };
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
+  const onSubmit = (values: FormValues) => {
     mutation.mutate(values);
   };
 
