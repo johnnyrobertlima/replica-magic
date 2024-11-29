@@ -13,23 +13,25 @@ interface SubServiceFormProps {
   onChange: (subServices: SubService[]) => void;
 }
 
-export const SubServiceForm = ({ subServices, onChange }: SubServiceFormProps) => {
+export const SubServiceForm = ({ subServices = [], onChange }: SubServiceFormProps) => {
   const addSubService = () => {
-    onChange([...subServices, { title: "", description: "" }]);
+    const newSubServices = [...subServices, { title: "", description: "" }];
+    onChange(newSubServices);
   };
 
   const removeSubService = (index: number) => {
-    onChange(subServices.filter((_, i) => i !== index));
+    const newSubServices = subServices.filter((_, i) => i !== index);
+    onChange(newSubServices);
   };
 
   const updateSubService = (index: number, field: keyof SubService, value: string) => {
-    const updated = subServices.map((service, i) => {
+    const newSubServices = subServices.map((service, i) => {
       if (i === index) {
         return { ...service, [field]: value };
       }
       return service;
     });
-    onChange(updated);
+    onChange(newSubServices);
   };
 
   return (
@@ -47,7 +49,7 @@ export const SubServiceForm = ({ subServices, onChange }: SubServiceFormProps) =
         </Button>
       </div>
 
-      {subServices.map((service, index) => (
+      {subServices && subServices.map((service, index) => (
         <div key={index} className="space-y-4 p-4 border rounded-lg relative">
           <Button
             type="button"
