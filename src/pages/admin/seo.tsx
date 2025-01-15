@@ -2,76 +2,25 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-
-const formSchema = z.object({
-  id: z.string().optional(),
-  page_path: z.string().min(1, "Caminho da página é obrigatório"),
-  title: z.string().min(1, "Título é obrigatório"),
-  description: z.string().min(1, "Descrição é obrigatória"),
-  keywords: z.string().min(1, "Palavras-chave são obrigatórias"),
-  og_image: z.string().optional(),
-  favicon_url: z.string().optional(),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
-type SeoSettingsRow = {
-  id: string;
-  page_path: string;
-  title: string;
-  description: string;
-  keywords: string;
-  og_image?: string;
-  favicon_url?: string;
-  created_at: string;
-  updated_at: string;
-};
+import { useToast } from "@/components/ui/use-toast";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Loader2, Plus } from "lucide-react";
+import { SeoForm, FormValues } from "@/components/admin/seo/SeoForm";
+import { SeoList, SeoSettingsRow } from "@/components/admin/seo/SeoList";
 
 export const AdminSEO = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      page_path: "",
-      title: "",
-      description: "",
-      keywords: "",
-      og_image: "",
-      favicon_url: "",
-    },
-  });
-
-  const { data: seoSettings, isLoading } = useQuery({
+  const { data: settings, isLoading } = useQuery({
     queryKey: ["seo-settings"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("seo_settings")
         .select("*")
-        .order("page_path");
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data as SeoSettingsRow[];
     },
@@ -95,27 +44,37 @@ export const AdminSEO = () => {
           .eq("id", editingId);
         if (error) throw error;
       } else {
-        const { error } = await supabase
-          .from("seo_settings")
-          .insert([payload]);
+        const { error } = await supabase.from("seo_settings").insert([payload]);
         if (error) throw error;
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["seo-settings"] });
-      toast({
-        title: "Sucesso",
-        description: editingId
-          ? "Configurações de SEO atualizadas"
-          : "Configurações de SEO criadas",
-      });
-      form.reset();
-      setEditingId(null);
+      toast({ title: `SEO settings ${editingId ? "updated" : "created"} successfully!` });
+      handleCancel();
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
-        title: "Erro",
-        description: "Erro ao salvar as configurações de SEO",
+        title: "Error saving SEO settings",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("seo_settings").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["seo-settings"] });
+      toast({ title: "SEO settings deleted successfully!" });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error deleting SEO settings",
+        description: error.message,
         variant: "destructive",
       });
     },
@@ -123,227 +82,86 @@ export const AdminSEO = () => {
 
   const handleEdit = (setting: SeoSettingsRow) => {
     setEditingId(setting.id);
-    form.reset({
-      ...setting,
-      keywords: setting.keywords,
-    });
+    setShowForm(true);
   };
 
-  const handleDelete = async (id: string) => {
-    try {
-      const { error } = await supabase.from("seo_settings").delete().eq("id", id);
-      if (error) throw error;
-      queryClient.invalidateQueries({ queryKey: ["seo-settings"] });
-      toast({
-        title: "Sucesso",
-        description: "Configurações de SEO excluídas",
-      });
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Erro ao excluir as configurações de SEO",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const onSubmit = (values: FormValues) => {
-    mutation.mutate(values);
+  const handleCancel = () => {
+    setEditingId(null);
+    setShowForm(false);
   };
 
   if (isLoading) {
-    return <div>Carregando...</div>;
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold">Configurações de SEO</h2>
-        <p className="text-muted-foreground">
-          Gerencie as configurações de SEO para cada página do site
-        </p>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">SEO Settings</h1>
+        {!showForm && (
+          <Button onClick={() => setShowForm(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add SEO Settings
+          </Button>
+        )}
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {editingId ? "Editar Configurações" : "Adicionar Configurações"}
-          </CardTitle>
-          <CardDescription>
-            Preencha os campos abaixo para configurar o SEO da página
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="page_path"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Caminho da Página</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ex: /sobre" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Título</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Título da página para SEO"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Descrição</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Descrição da página para SEO"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="keywords"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Palavras-chave</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Palavras-chave separadas por vírgula"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="og_image"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Imagem Open Graph</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="URL da imagem para compartilhamento"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="favicon_url"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>URL do Favicon</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="URL do favicon (formato .ico recomendado)"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="flex gap-2">
-                <Button type="submit">
-                  {editingId ? "Atualizar" : "Adicionar"}
-                </Button>
-                {editingId && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setEditingId(null);
-                      form.reset();
-                    }}
-                  >
-                    Cancelar
-                  </Button>
-                )}
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+      {showForm ? (
+        <SeoForm
+          initialValues={
+            editingId
+              ? settings?.find((s) => s.id === editingId)
+              : undefined
+          }
+          onSubmit={(values) => mutation.mutate(values)}
+          isSubmitting={mutation.isPending}
+          onCancel={handleCancel}
+        />
+      ) : (
+        <div className="space-y-4">
+          {settings && settings.length > 0 ? (
+            <SeoList
+              settings={settings}
+              onEdit={handleEdit}
+              onDelete={(id) => {
+                const setting = settings.find((s) => s.id === id);
+                if (!setting) return;
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {seoSettings?.map((setting) => (
-          <Card key={setting.id}>
-            <CardHeader>
-              <CardTitle>{setting.page_path}</CardTitle>
-              <CardDescription>{setting.title}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">
-                  {setting.description}
-                </p>
-                <div className="flex flex-wrap gap-1">
-                  {setting.keywords.split(',').map((keyword: string, index: number) => (
-                    <span
-                      key={index}
-                      className="bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-xs"
-                    >
-                      {keyword.trim()}
-                    </span>
-                  ))}
-                </div>
-                {setting.favicon_url && (
-                  <div className="mt-2">
-                    <p className="text-sm font-medium">Favicon:</p>
-                    <img
-                      src={setting.favicon_url}
-                      alt="Favicon"
-                      className="w-6 h-6 mt-1"
-                    />
-                  </div>
-                )}
-                <div className="flex gap-2 mt-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEdit(setting)}
-                  >
-                    Editar
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDelete(setting.id)}
-                  >
-                    Excluir
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                const dialog = document.createElement("div");
+                dialog.innerHTML = `
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive">Delete</Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will permanently delete the SEO settings for "${setting.page_path}".
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => deleteMutation.mutate(id)}>
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                `;
+              }}
+            />
+          ) : (
+            <p className="text-center text-muted-foreground">
+              No SEO settings found. Click the button above to add one.
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 };
