@@ -11,39 +11,39 @@ export type Database = {
     Tables: {
       banners: {
         Row: {
-          button_link: string
-          button_text: string
+          button_link: string | null
+          button_text: string | null
           created_at: string | null
-          description: string
+          description: string | null
           duration: number | null
-          id: string
-          image_url: string
+          id: string | null
+          image_url: string | null
           is_active: boolean | null
           title: string
           updated_at: string | null
           youtube_url: string | null
         }
         Insert: {
-          button_link: string
-          button_text: string
+          button_link?: string | null
+          button_text?: string | null
           created_at?: string | null
-          description: string
+          description?: string | null
           duration?: number | null
-          id?: string
-          image_url: string
+          id?: string | null
+          image_url?: string | null
           is_active?: boolean | null
           title: string
           updated_at?: string | null
           youtube_url?: string | null
         }
         Update: {
-          button_link?: string
-          button_text?: string
+          button_link?: string | null
+          button_text?: string | null
           created_at?: string | null
-          description?: string
+          description?: string | null
           duration?: number | null
-          id?: string
-          image_url?: string
+          id?: string | null
+          image_url?: string | null
           is_active?: boolean | null
           title?: string
           updated_at?: string | null
@@ -51,30 +51,54 @@ export type Database = {
         }
         Relationships: []
       }
+      categories: {
+        Row: {
+          created_at: string | null
+          icon: string | null
+          id: string | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          icon?: string | null
+          id?: string | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          icon?: string | null
+          id?: string | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           created_at: string | null
-          id: string
+          id: string | null
           is_active: boolean | null
-          logo_url: string
+          logo_url: string | null
           name: string
           updated_at: string | null
           website_url: string | null
         }
         Insert: {
           created_at?: string | null
-          id?: string
+          id?: string | null
           is_active?: boolean | null
-          logo_url: string
+          logo_url?: string | null
           name: string
           updated_at?: string | null
           website_url?: string | null
         }
         Update: {
           created_at?: string | null
-          id?: string
+          id?: string | null
           is_active?: boolean | null
-          logo_url?: string
+          logo_url?: string | null
           name?: string
           updated_at?: string | null
           website_url?: string | null
@@ -85,7 +109,7 @@ export type Database = {
         Row: {
           created_at: string | null
           email: string
-          id: string
+          id: string | null
           message: string
           name: string
           read: boolean | null
@@ -94,7 +118,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           email: string
-          id?: string
+          id?: string | null
           message: string
           name: string
           read?: boolean | null
@@ -103,7 +127,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           email?: string
-          id?: string
+          id?: string | null
           message?: string
           name?: string
           read?: boolean | null
@@ -111,390 +135,43 @@ export type Database = {
         }
         Relationships: []
       }
-      event_items: {
-        Row: {
-          box_number: string | null
-          created_at: string
-          event_id: string | null
-          id: string
-          item_id: string | null
-          needs_maintenance: boolean | null
-          provided_quantity: number | null
-          requested_quantity: number
-          returned_quantity: number | null
-          updated_at: string
-        }
-        Insert: {
-          box_number?: string | null
-          created_at?: string
-          event_id?: string | null
-          id?: string
-          item_id?: string | null
-          needs_maintenance?: boolean | null
-          provided_quantity?: number | null
-          requested_quantity?: number
-          returned_quantity?: number | null
-          updated_at?: string
-        }
-        Update: {
-          box_number?: string | null
-          created_at?: string
-          event_id?: string | null
-          id?: string
-          item_id?: string | null
-          needs_maintenance?: boolean | null
-          provided_quantity?: number | null
-          requested_quantity?: number
-          returned_quantity?: number | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "event_items_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "event_items_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "items"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      events: {
-        Row: {
-          address: string
-          children_count: number
-          city: string
-          created_at: string
-          edition_number: number
-          event_date: string
-          id: string
-          id_sympla: string | null
-          leader_id: string | null
-          postal_code: string
-          statistics: Json | null
-          status: string | null
-          team_id: string | null
-          type: string
-          updated_at: string
-          volunteer_count: number
-        }
-        Insert: {
-          address: string
-          children_count: number
-          city: string
-          created_at?: string
-          edition_number?: number
-          event_date?: string
-          id?: string
-          id_sympla?: string | null
-          leader_id?: string | null
-          postal_code: string
-          statistics?: Json | null
-          status?: string | null
-          team_id?: string | null
-          type?: string
-          updated_at?: string
-          volunteer_count: number
-        }
-        Update: {
-          address?: string
-          children_count?: number
-          city?: string
-          created_at?: string
-          edition_number?: number
-          event_date?: string
-          id?: string
-          id_sympla?: string | null
-          leader_id?: string | null
-          postal_code?: string
-          statistics?: Json | null
-          status?: string | null
-          team_id?: string | null
-          type?: string
-          updated_at?: string
-          volunteer_count?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "events_leader_id_fkey"
-            columns: ["leader_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "events_team_id_fkey"
-            columns: ["team_id"]
-            isOneToOne: false
-            referencedRelation: "teams"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      items: {
-        Row: {
-          asset_type: string
-          category: Database["public"]["Enums"]["user_category"]
-          created_at: string
-          created_by: string | null
-          current_stock: number | null
-          description: string | null
-          id: string
-          last_purchase_value: number | null
-          name: string
-          patrimony_code: string | null
-          photo_url: string | null
-          teams: string[]
-          updated_at: string
-        }
-        Insert: {
-          asset_type?: string
-          category: Database["public"]["Enums"]["user_category"]
-          created_at?: string
-          created_by?: string | null
-          current_stock?: number | null
-          description?: string | null
-          id?: string
-          last_purchase_value?: number | null
-          name: string
-          patrimony_code?: string | null
-          photo_url?: string | null
-          teams?: string[]
-          updated_at?: string
-        }
-        Update: {
-          asset_type?: string
-          category?: Database["public"]["Enums"]["user_category"]
-          created_at?: string
-          created_by?: string | null
-          current_stock?: number | null
-          description?: string | null
-          id?: string
-          last_purchase_value?: number | null
-          name?: string
-          patrimony_code?: string | null
-          photo_url?: string | null
-          teams?: string[]
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "items_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       logos: {
         Row: {
           created_at: string | null
-          id: string
+          id: string | null
           is_active: boolean | null
           name: string
-          type: string
+          type: string | null
           updated_at: string | null
           url: string
         }
         Insert: {
           created_at?: string | null
-          id?: string
+          id?: string | null
           is_active?: boolean | null
           name: string
-          type: string
+          type?: string | null
           updated_at?: string | null
           url: string
         }
         Update: {
           created_at?: string | null
-          id?: string
+          id?: string | null
           is_active?: boolean | null
           name?: string
-          type?: string
+          type?: string | null
           updated_at?: string | null
           url?: string
-        }
-        Relationships: []
-      }
-      packing_list_items: {
-        Row: {
-          box_number: number | null
-          created_at: string
-          id: string
-          item_id: string
-          packing_list_id: string
-          provided_quantity: number | null
-          requested_quantity: number
-          updated_at: string
-        }
-        Insert: {
-          box_number?: number | null
-          created_at?: string
-          id?: string
-          item_id: string
-          packing_list_id: string
-          provided_quantity?: number | null
-          requested_quantity: number
-          updated_at?: string
-        }
-        Update: {
-          box_number?: number | null
-          created_at?: string
-          id?: string
-          item_id?: string
-          packing_list_id?: string
-          provided_quantity?: number | null
-          requested_quantity?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "packing_list_items_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "packing_list_items_packing_list_id_fkey"
-            columns: ["packing_list_id"]
-            isOneToOne: false
-            referencedRelation: "packing_lists"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      packing_lists: {
-        Row: {
-          created_at: string
-          created_by: string
-          event_id: string
-          id: string
-          status: Database["public"]["Enums"]["packing_list_status"] | null
-          team_category: Database["public"]["Enums"]["user_category"]
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          created_by: string
-          event_id: string
-          id?: string
-          status?: Database["public"]["Enums"]["packing_list_status"] | null
-          team_category: Database["public"]["Enums"]["user_category"]
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string
-          event_id?: string
-          id?: string
-          status?: Database["public"]["Enums"]["packing_list_status"] | null
-          team_category?: Database["public"]["Enums"]["user_category"]
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "packing_lists_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "packing_lists_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      page_permissions: {
-        Row: {
-          can_create: boolean | null
-          can_edit: boolean | null
-          can_read: boolean | null
-          created_at: string
-          id: string
-          page_id: string
-          role: Database["public"]["Enums"]["user_role"]
-          updated_at: string
-        }
-        Insert: {
-          can_create?: boolean | null
-          can_edit?: boolean | null
-          can_read?: boolean | null
-          created_at?: string
-          id?: string
-          page_id: string
-          role: Database["public"]["Enums"]["user_role"]
-          updated_at?: string
-        }
-        Update: {
-          can_create?: boolean | null
-          can_edit?: boolean | null
-          can_read?: boolean | null
-          created_at?: string
-          id?: string
-          page_id?: string
-          role?: Database["public"]["Enums"]["user_role"]
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      profiles: {
-        Row: {
-          access_level: Database["public"]["Enums"]["access_level"]
-          category: Database["public"]["Enums"]["user_category"] | null
-          cpf: string | null
-          created_at: string
-          email: string | null
-          full_name: string
-          id: string
-          phone: string | null
-          role: Database["public"]["Enums"]["user_role"]
-          updated_at: string
-        }
-        Insert: {
-          access_level?: Database["public"]["Enums"]["access_level"]
-          category?: Database["public"]["Enums"]["user_category"] | null
-          cpf?: string | null
-          created_at?: string
-          email?: string | null
-          full_name: string
-          id: string
-          phone?: string | null
-          role?: Database["public"]["Enums"]["user_role"]
-          updated_at?: string
-        }
-        Update: {
-          access_level?: Database["public"]["Enums"]["access_level"]
-          category?: Database["public"]["Enums"]["user_category"] | null
-          cpf?: string | null
-          created_at?: string
-          email?: string | null
-          full_name?: string
-          id?: string
-          phone?: string | null
-          role?: Database["public"]["Enums"]["user_role"]
-          updated_at?: string
         }
         Relationships: []
       }
       seo_settings: {
         Row: {
           created_at: string | null
-          description: string
+          description: string | null
           favicon_url: string | null
-          id: string
-          keywords: string[]
+          id: string | null
+          keywords: string | null
           og_image: string | null
           page_path: string
           title: string
@@ -502,10 +179,10 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
-          description: string
+          description?: string | null
           favicon_url?: string | null
-          id?: string
-          keywords?: string[]
+          id?: string | null
+          keywords?: string | null
           og_image?: string | null
           page_path: string
           title: string
@@ -513,10 +190,10 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
-          description?: string
+          description?: string | null
           favicon_url?: string | null
-          id?: string
-          keywords?: string[]
+          id?: string | null
+          keywords?: string | null
           og_image?: string | null
           page_path?: string
           title?: string
@@ -530,8 +207,8 @@ export type Database = {
           created_at: string | null
           description: string
           detailed_description: string | null
-          icon: string
-          id: string
+          icon: string | null
+          id: string | null
           is_active: boolean | null
           sub_services: Json | null
           title: string
@@ -542,8 +219,8 @@ export type Database = {
           created_at?: string | null
           description: string
           detailed_description?: string | null
-          icon: string
-          id?: string
+          icon?: string | null
+          id?: string | null
           is_active?: boolean | null
           sub_services?: Json | null
           title: string
@@ -554,8 +231,8 @@ export type Database = {
           created_at?: string | null
           description?: string
           detailed_description?: string | null
-          icon?: string
-          id?: string
+          icon?: string | null
+          id?: string | null
           is_active?: boolean | null
           sub_services?: Json | null
           title?: string
@@ -566,8 +243,8 @@ export type Database = {
       social_media: {
         Row: {
           created_at: string | null
-          icon: string
-          id: string
+          icon: string | null
+          id: string | null
           is_active: boolean | null
           platform: string
           updated_at: string | null
@@ -575,8 +252,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
-          icon: string
-          id?: string
+          icon?: string | null
+          id?: string | null
           is_active?: boolean | null
           platform: string
           updated_at?: string | null
@@ -584,8 +261,8 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
-          icon?: string
-          id?: string
+          icon?: string | null
+          id?: string | null
           is_active?: boolean | null
           platform?: string
           updated_at?: string | null
@@ -593,227 +270,15 @@ export type Database = {
         }
         Relationships: []
       }
-      stock_movements: {
-        Row: {
-          created_at: string
-          created_by: string
-          id: string
-          item_id: string
-          movement_type: string
-          purchase_value: number | null
-          quantity: number
-          reason: string | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          created_by: string
-          id?: string
-          item_id: string
-          movement_type: string
-          purchase_value?: number | null
-          quantity: number
-          reason?: string | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string
-          id?: string
-          item_id?: string
-          movement_type?: string
-          purchase_value?: number | null
-          quantity?: number
-          reason?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "stock_movements_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stock_movements_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "items"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      team_categories: {
-        Row: {
-          created_at: string
-          id: string
-          name: string
-          status: Database["public"]["Enums"]["team_category_status"] | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          name: string
-          status?: Database["public"]["Enums"]["team_category_status"] | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          name?: string
-          status?: Database["public"]["Enums"]["team_category_status"] | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      team_members: {
-        Row: {
-          created_at: string
-          profile_id: string
-          team_id: string
-        }
-        Insert: {
-          created_at?: string
-          profile_id: string
-          team_id: string
-        }
-        Update: {
-          created_at?: string
-          profile_id?: string
-          team_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "team_members_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "team_members_team_id_fkey"
-            columns: ["team_id"]
-            isOneToOne: false
-            referencedRelation: "teams"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      teams: {
-        Row: {
-          created_at: string
-          id: string
-          name: string
-          region: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          name: string
-          region: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          name?: string
-          region?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      user_activities: {
-        Row: {
-          activity_type: string
-          created_at: string
-          description: string
-          event_id: string | null
-          id: string
-          user_id: string
-        }
-        Insert: {
-          activity_type: string
-          created_at?: string
-          description: string
-          event_id?: string | null
-          id?: string
-          user_id: string
-        }
-        Update: {
-          activity_type?: string
-          created_at?: string
-          description?: string
-          event_id?: string | null
-          id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_user_activities_user"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_activities_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_activities_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      set_events_status_to_open: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      [_ in never]: never
     }
     Enums: {
-      access_level: "full" | "team_only"
-      packing_list_status:
-        | "draft"
-        | "in_review"
-        | "sent_to_event"
-        | "conferencia_lider"
-        | "na_edicao"
-        | "fim_edicao"
-        | "recebida"
-        | "conferido_pelo_lider"
-        | "finalizado"
-      team_category_status: "active" | "inactive"
-      user_category:
-        | "all"
-        | "kitchen"
-        | "recreation"
-        | "support"
-        | "photography"
-        | "sorriso_de_amor"
-        | "fabrica_de_sonhos"
-        | "interaction"
-        | "store"
-      user_role:
-        | "admin"
-        | "event_leader"
-        | "organizer"
-        | "coordinator"
-        | "hq_team"
-        | "consultant"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
