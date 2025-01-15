@@ -41,9 +41,11 @@ type SeoSettingsRow = {
   page_path: string;
   title: string;
   description: string;
-  keywords: string[];
+  keywords: string;
   og_image?: string;
   favicon_url?: string;
+  created_at: string;
+  updated_at: string;
 };
 
 export const AdminSEO = () => {
@@ -77,12 +79,11 @@ export const AdminSEO = () => {
 
   const mutation = useMutation({
     mutationFn: async (values: FormValues) => {
-      const keywordsArray = values.keywords.split(",").map((k) => k.trim());
       const payload = {
         page_path: values.page_path,
         title: values.title,
         description: values.description,
-        keywords: keywordsArray,
+        keywords: values.keywords,
         og_image: values.og_image || null,
         favicon_url: values.favicon_url || null,
       };
@@ -124,7 +125,7 @@ export const AdminSEO = () => {
     setEditingId(setting.id);
     form.reset({
       ...setting,
-      keywords: setting.keywords.join(", "),
+      keywords: setting.keywords,
     });
   };
 
@@ -303,12 +304,12 @@ export const AdminSEO = () => {
                   {setting.description}
                 </p>
                 <div className="flex flex-wrap gap-1">
-                  {setting.keywords.map((keyword: string, index: number) => (
+                  {setting.keywords.split(',').map((keyword: string, index: number) => (
                     <span
                       key={index}
                       className="bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-xs"
                     >
-                      {keyword}
+                      {keyword.trim()}
                     </span>
                   ))}
                 </div>
