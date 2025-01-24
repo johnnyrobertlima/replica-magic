@@ -135,6 +135,33 @@ export type Database = {
         }
         Relationships: []
       }
+      Disparos: {
+        Row: {
+          cidade: string | null
+          cliente: string | null
+          id: string
+          msg: string | null
+          nome: string | null
+          status: string | null
+        }
+        Insert: {
+          cidade?: string | null
+          cliente?: string | null
+          id: string
+          msg?: string | null
+          nome?: string | null
+          status?: string | null
+        }
+        Update: {
+          cidade?: string | null
+          cliente?: string | null
+          id?: string
+          msg?: string | null
+          nome?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       logos: {
         Row: {
           created_at: string | null
