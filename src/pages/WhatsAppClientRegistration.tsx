@@ -9,6 +9,9 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import type { Database } from "@/integrations/supabase/types";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ActionButtons } from "@/components/admin/ActionButtons";
+import { Loader2 } from "lucide-react";
 
 type ClientesWhats = Database["public"]["Tables"]["Clientes_Whats"]["Insert"];
 
@@ -23,11 +26,26 @@ const formSchema = z.object({
 export default function WhatsAppClientRegistration() {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  
   const form = useForm<ClientesWhats>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       enviar_sabado: false,
       enviar_domingo: false,
+    },
+  });
+
+  const { data: clients, isLoading } = useQuery({
+    queryKey: ["whatsapp-clients"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("Clientes_Whats")
+        .select("*")
+        .order("created_at", { ascending: false });
+      
+      if (error) throw error;
+      return data;
     },
   });
 
@@ -44,7 +62,9 @@ export default function WhatsAppClientRegistration() {
         description: "O cliente foi adicionado à lista de disparos do WhatsApp.",
       });
 
-      navigate("/client-area");
+      // Reset form and refresh client list
+      form.reset();
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-clients"] });
     } catch (error) {
       console.error("Error:", error);
       toast({
@@ -54,6 +74,40 @@ export default function WhatsAppClientRegistration() {
       });
     }
   }
+
+  const handleDelete = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("Clientes_Whats")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Cliente excluído com sucesso!",
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-clients"] });
+    } catch (error) {
+      console.error("Error:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao excluir cliente",
+        description: "Ocorreu um erro ao tentar excluir o cliente. Tente novamente.",
+      });
+    }
+  };
+
+  const handleEdit = (client: any) => {
+    form.reset({
+      nome: client.nome,
+      horario_inicial: client.horario_inicial,
+      horario_final: client.horario_final,
+      enviar_sabado: client.enviar_sabado,
+      enviar_domingo: client.enviar_domingo,
+    });
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -138,6 +192,41 @@ export default function WhatsAppClientRegistration() {
           <Button type="submit">Cadastrar Cliente</Button>
         </form>
       </Form>
+
+      <div className="mt-12">
+        <h2 className="text-xl font-semibold mb-4">Clientes Cadastrados</h2>
+        
+        {isLoading ? (
+          <div className="flex items-center justify-center h-32">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {clients?.map((client) => (
+              <div
+                key={client.id}
+                className="p-4 border rounded-lg bg-white shadow-sm flex justify-between items-center"
+              >
+                <div>
+                  <h3 className="font-medium">{client.nome}</h3>
+                  <p className="text-sm text-gray-600">
+                    Horário: {client.horario_inicial} - {client.horario_final}
+                  </p>
+                  <div className="text-sm text-gray-600">
+                    {client.enviar_sabado && "Envia sábado"}
+                    {client.enviar_sabado && client.enviar_domingo && " • "}
+                    {client.enviar_domingo && "Envia domingo"}
+                  </div>
+                </div>
+                <ActionButtons
+                  onEdit={() => handleEdit(client)}
+                  onDelete={() => handleDelete(client.id)}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
