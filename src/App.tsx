@@ -1,53 +1,34 @@
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import Home from "@/pages/Home";
+import About from "@/pages/About";
+import Services from "@/pages/Services";
+import Contact from "@/pages/Contact";
+import ClientArea from "@/pages/ClientArea";
+import WhatsAppClients from "@/pages/WhatsAppClients";
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
-import { GoogleAnalytics } from "@/components/GoogleAnalytics";
-import Index from "./pages/Index";
-import { AdminLayout } from "./pages/admin/layout";
-import { AdminLogin } from "./pages/admin/login";
-import { AdminDashboard } from "./pages/admin/dashboard";
-import { AdminBanners } from "./pages/admin/banners";
-import { AdminServices } from "./pages/admin/services";
-import { AdminClients } from "./pages/admin/clients";
-import { AdminSocial } from "./pages/admin/social";
-import { AdminLogos } from "./pages/admin/logos";
-import { AdminMessages } from "./pages/admin/messages";
-import { AdminSEO } from "./pages/admin/seo";
-import ClientArea from "./pages/ClientArea";
-import WhatsAppService from "./pages/WhatsAppService";
-import TokenManagement from "./pages/TokenManagement";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 
-const queryClient = new QueryClient();
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
+function App() {
+  return (
+    <Router>
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <div className="flex-grow">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/services" element={<Services />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/client-area" element={<ClientArea />} />
+            <Route path="/client-area/whatsapp-clients" element={<WhatsAppClients />} />
+          </Routes>
+        </div>
+        <Footer />
+      </div>
       <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <GoogleAnalytics />
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/client-area" element={<ClientArea />} />
-          <Route path="/client-area/whatsapp" element={<WhatsAppService />} />
-          <Route path="/client-area/tokens" element={<TokenManagement />} />
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin" element={<AdminLayout><Outlet /></AdminLayout>}>
-            <Route index element={<AdminDashboard />} />
-            <Route path="banners" element={<AdminBanners />} />
-            <Route path="services" element={<AdminServices />} />
-            <Route path="clients" element={<AdminClients />} />
-            <Route path="social" element={<AdminSocial />} />
-            <Route path="logos" element={<AdminLogos />} />
-            <Route path="messages" element={<AdminMessages />} />
-            <Route path="seo" element={<AdminSEO />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+    </Router>
+  );
+}
 
 export default App;
