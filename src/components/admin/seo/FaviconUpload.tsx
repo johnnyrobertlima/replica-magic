@@ -8,10 +8,18 @@ import {
 } from "@/components/ui/form";
 import { useFormContext } from "react-hook-form";
 
-export const FaviconUpload = () => {
+interface FaviconUploadProps {
+  value?: string;
+  onChange?: (value: string) => void;
+}
+
+export const FaviconUpload = ({ value, onChange }: FaviconUploadProps) => {
   const form = useFormContext();
 
   const handleFaviconUpload = (url: string) => {
+    if (onChange) {
+      onChange(url);
+    }
     form.setValue("favicon_url", url);
   };
 
@@ -25,7 +33,7 @@ export const FaviconUpload = () => {
           <FormControl>
             <ImageUpload
               name="favicon"
-              currentImage={field.value}
+              currentImage={value || field.value}
               onUrlChange={handleFaviconUpload}
               accept="image/x-icon,image/png,image/ico"
               bucket="oni-media"
