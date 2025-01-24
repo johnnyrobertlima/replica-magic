@@ -1,10 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ActionButtons } from "@/components/admin/ActionButtons";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link as LinkIcon } from "lucide-react";
 import { Campaign } from "@/types/campaign";
 import { useToast } from "@/components/ui/use-toast";
+import { CampaignStatusSelect } from "./CampaignStatusSelect";
 
 type CampaignStatus = "Pausado" | "Em Andamento" | "Finalizado" | "Erro";
 
@@ -47,22 +47,10 @@ export const CampaignTable = ({
           <TableRow key={campaign.id}>
             <TableCell>{campaign.name}</TableCell>
             <TableCell>
-              <Select
-                value={campaign.Status || "Pausado"}
-                onValueChange={(value: CampaignStatus) =>
-                  onStatusChange(campaign.id, value)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Pausado">Pausado</SelectItem>
-                  <SelectItem value="Em Andamento">Em Andamento</SelectItem>
-                  <SelectItem value="Finalizado">Finalizado</SelectItem>
-                  <SelectItem value="Erro">Erro</SelectItem>
-                </SelectContent>
-              </Select>
+              <CampaignStatusSelect
+                status={campaign.Status || "Pausado"}
+                onStatusChange={(value) => onStatusChange(campaign.id, value)}
+              />
             </TableCell>
             <TableCell>
               {campaign.created_at
@@ -95,4 +83,4 @@ export const CampaignTable = ({
       </TableBody>
     </Table>
   );
-};
+}
