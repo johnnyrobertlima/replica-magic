@@ -57,10 +57,15 @@ export const ImageUpload = ({
           throw error;
         }
 
-        // Construct the complete URL using the helper function
-        const fileUrl = getStorageUrl(fileName);
-        console.log('Uploaded file URL:', fileUrl);
-        onUrlChange?.(fileUrl);
+        // Get the complete public URL using Supabase's getPublicUrl method
+        const { data: { publicUrl } } = supabase.storage
+          .from(bucket)
+          .getPublicUrl(fileName);
+
+        console.log('Uploaded file public URL:', publicUrl);
+        
+        // Pass the complete public URL to the parent component
+        onUrlChange?.(publicUrl);
         onChange?.(file);
         
         toast({
@@ -82,9 +87,6 @@ export const ImageUpload = ({
     }
   };
 
-  const currentImageUrl = currentImage ? getStorageUrl(currentImage) : null;
-  console.log('Current image URL:', currentImageUrl);
-
   return (
     <div className="space-y-2">
       <Input
@@ -94,10 +96,10 @@ export const ImageUpload = ({
         onChange={handleFileChange}
         disabled={isUploading}
       />
-      {(preview || currentImageUrl) && (
+      {(preview || currentImage) && (
         <div className="mt-2">
           <img
-            src={preview || currentImageUrl || ''}
+            src={preview || currentImage || ''}
             alt="Preview"
             className="h-20 w-32 object-cover rounded"
             onError={(e) => {
