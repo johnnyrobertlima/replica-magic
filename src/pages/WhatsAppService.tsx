@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, ImageIcon } from "lucide-react";
+import { ArrowLeft, ImageIcon, Link as LinkIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -150,6 +150,14 @@ const WhatsAppService = () => {
       });
     },
   });
+
+  const handleCopyImageUrl = (url: string) => {
+    navigator.clipboard.writeText(url);
+    toast({
+      title: "URL copiada!",
+      description: "A URL da imagem foi copiada para sua área de transferência.",
+    });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -301,6 +309,7 @@ const WhatsAppService = () => {
                   <TableHead>Nome</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Data de Criação</TableHead>
+                  <TableHead>URL Imagem</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -330,6 +339,21 @@ const WhatsAppService = () => {
                       {campaign.created_at
                         ? new Date(campaign.created_at).toLocaleDateString("pt-BR")
                         : "-"}
+                    </TableCell>
+                    <TableCell>
+                      {campaign.image_url ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="gap-2"
+                          onClick={() => handleCopyImageUrl(campaign.image_url!)}
+                        >
+                          <LinkIcon className="h-4 w-4" />
+                          Copiar URL
+                        </Button>
+                      ) : (
+                        "-"
+                      )}
                     </TableCell>
                     <TableCell className="text-right">
                       <ActionButtons
