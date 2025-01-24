@@ -5,11 +5,24 @@ import { Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useState } from "react";
 import { ImageUpload } from "@/components/admin/ImageUpload";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ActionButtons } from "@/components/admin/ActionButtons";
+
+type CampaignStatus = "Pausado" | "Em Andamento" | "Finalizado" | "Erro";
+
+interface Campaign {
+  id: string;
+  name: string;
+  message: string;
+  image_url?: string;
+  status?: CampaignStatus;
+  created_at?: string;
+}
 
 const WhatsAppService = () => {
   const [campaignName, setCampaignName] = useState("");
@@ -17,6 +30,7 @@ const WhatsAppService = () => {
   const [message, setMessage] = useState("");
   const [imageUrl, setImageUrl] = useState<string>("");
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: clients } = useQuery({
     queryKey: ["clients"],
@@ -30,6 +44,18 @@ const WhatsAppService = () => {
     },
   });
 
+  const { data: campaigns } = useQuery({
+    queryKey: ["campaigns"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("campaigns")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as Campaign[];
+    },
+  });
+
   const createCampaign = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("campaigns").insert([
@@ -37,6 +63,7 @@ const WhatsAppService = () => {
           name: campaignName,
           message: message,
           image_url: imageUrl,
+          status: "Pausado" as CampaignStatus,
         },
       ]);
       if (error) throw error;
@@ -47,10 +74,53 @@ const WhatsAppService = () => {
       setSelectedClient("");
       setMessage("");
       setImageUrl("");
+      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
     },
     onError: (error: Error) => {
       toast({
         title: "Erro ao criar campanha",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateCampaignStatus = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: CampaignStatus }) => {
+      const { error } = await supabase
+        .from("campaigns")
+        .update({ status })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+      toast({ title: "Status atualizado com sucesso!" });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao atualizar status",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteCampaign = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("campaigns")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+      toast({ title: "Campanha excluída com sucesso!" });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao excluir campanha",
         description: error.message,
         variant: "destructive",
       });
@@ -83,7 +153,7 @@ const WhatsAppService = () => {
           Configure sua campanha de WhatsApp preenchendo os campos abaixo.
         </p>
 
-        <Card>
+        <Card className="mb-8">
           <CardContent className="pt-6">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -151,6 +221,64 @@ const WhatsAppService = () => {
                 {createCampaign.isPending ? "Criando..." : "Inserir Campanha"}
               </Button>
             </form>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <h2 className="text-2xl font-bold mb-4">Campanhas Cadastradas</h2>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Data de Criação</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {campaigns?.map((campaign) => (
+                  <TableRow key={campaign.id}>
+                    <TableCell>{campaign.name}</TableCell>
+                    <TableCell>
+                      <Select
+                        value={campaign.status || "Pausado"}
+                        onValueChange={(value: CampaignStatus) =>
+                          updateCampaignStatus.mutate({ id: campaign.id, status: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Pausado">Pausado</SelectItem>
+                          <SelectItem value="Em Andamento">Em Andamento</SelectItem>
+                          <SelectItem value="Finalizado">Finalizado</SelectItem>
+                          <SelectItem value="Erro">Erro</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      {campaign.created_at
+                        ? new Date(campaign.created_at).toLocaleDateString("pt-BR")
+                        : "-"}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <ActionButtons
+                        onEdit={() => {
+                          // TODO: Implement edit functionality
+                          toast({
+                            title: "Em desenvolvimento",
+                            description: "Funcionalidade de edição em desenvolvimento",
+                          });
+                        }}
+                        onDelete={() => deleteCampaign.mutate(campaign.id)}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>
