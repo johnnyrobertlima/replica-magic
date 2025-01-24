@@ -19,7 +19,15 @@ const WhatsAppService = () => {
   const { data: campaigns } = useCampaigns();
   const { createCampaign, updateCampaign, updateCampaignStatus, deleteCampaign } = useCampaignMutations();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const resetForm = () => {
+    setCampaignName("");
+    setSelectedClient("");
+    setMessage("");
+    setImageUrl("");
+    setEditingCampaign(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!campaignName || !selectedClient || !message) {
       toast({
@@ -31,20 +39,23 @@ const WhatsAppService = () => {
     }
 
     if (editingCampaign) {
-      updateCampaign.mutate({
+      await updateCampaign.mutateAsync({
         ...editingCampaign,
         name: campaignName,
         message: message,
         image_url: imageUrl,
       });
     } else {
-      createCampaign.mutate({
+      await createCampaign.mutateAsync({
         name: campaignName,
         message: message,
         image_url: imageUrl,
         Status: "Pausado",
       });
     }
+    
+    // Reset form after successful submission
+    resetForm();
   };
 
   const handleEdit = (campaign: Campaign) => {
@@ -53,14 +64,6 @@ const WhatsAppService = () => {
     setMessage(campaign.message);
     setImageUrl(campaign.image_url || "");
     window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const resetForm = () => {
-    setCampaignName("");
-    setSelectedClient("");
-    setMessage("");
-    setImageUrl("");
-    setEditingCampaign(null);
   };
 
   return (
