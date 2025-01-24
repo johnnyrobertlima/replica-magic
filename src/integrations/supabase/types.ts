@@ -285,6 +285,41 @@ export type Database = {
         }
         Relationships: []
       }
+      mailing_contacts: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          mailing_id: string | null
+          nome: string
+          telefone: string
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          mailing_id?: string | null
+          nome: string
+          telefone: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          mailing_id?: string | null
+          nome?: string
+          telefone?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mailing_contacts_mailing_id_fkey"
+            columns: ["mailing_id"]
+            isOneToOne: false
+            referencedRelation: "mailing"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seo_settings: {
         Row: {
           created_at: string | null

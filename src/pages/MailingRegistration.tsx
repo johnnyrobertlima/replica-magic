@@ -4,13 +4,15 @@ import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ActionButtons } from "@/components/admin/ActionButtons";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { ContactRegistrationDialog } from "@/components/mailing/ContactRegistrationDialog";
+import { useState } from "react";
 
 const formSchema = z.object({
   nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
@@ -19,6 +21,7 @@ const formSchema = z.object({
 const MailingRegistration = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [selectedMailing, setSelectedMailing] = useState<{ id: string; nome: string } | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -43,9 +46,9 @@ const MailingRegistration = () => {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       const { error } = await supabase.from("mailing").insert({
-        id: `${values.nome}_${Date.now()}`, // Using timestamp to ensure unique ID
+        id: `${values.nome}_${Date.now()}`,
         nome: values.nome,
-        telefone: "", // Setting empty defaults for required fields
+        telefone: "",
         nome_mailing: values.nome,
         cidade: "",
       });
@@ -101,11 +104,6 @@ const MailingRegistration = () => {
   const handleEdit = (mailing: any) => {
     // TODO: Implement edit functionality
     console.log("Edit mailing:", mailing);
-  };
-
-  const handleContactRegistration = (mailing: any) => {
-    // TODO: Navigate to contact registration page
-    console.log("Register contacts for mailing:", mailing);
   };
 
   if (isLoading) {
@@ -171,7 +169,7 @@ const MailingRegistration = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleContactRegistration(mailing)}
+                        onClick={() => setSelectedMailing({ id: mailing.id, nome: mailing.nome })}
                       >
                         Cadastrar Contatos
                       </Button>
@@ -187,6 +185,13 @@ const MailingRegistration = () => {
           </Table>
         </div>
       </div>
+
+      <ContactRegistrationDialog
+        mailingId={selectedMailing?.id || ''}
+        mailingName={selectedMailing?.nome || ''}
+        isOpen={!!selectedMailing}
+        onClose={() => setSelectedMailing(null)}
+      />
     </main>
   );
 };
