@@ -54,10 +54,10 @@ export function CampaignForm({
       <div>
         <Label htmlFor="client">Cliente</Label>
         <Select value={selectedClient} onValueChange={setSelectedClient}>
-          <SelectTrigger>
+          <SelectTrigger className="bg-white">
             <SelectValue placeholder="Selecione um cliente" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-white">
             {clients.map((client) => (
               <SelectItem key={client.id} value={client.id || ""}>
                 {client.nome}
