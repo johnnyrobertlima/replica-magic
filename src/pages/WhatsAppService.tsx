@@ -7,6 +7,8 @@ import { CampaignHeader } from "@/components/whatsapp/CampaignHeader";
 import { useCampaigns } from "@/components/whatsapp/useCampaigns";
 import { useCampaignMutations } from "@/components/whatsapp/useCampaignMutations";
 import { useToast } from "@/components/ui/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const WhatsAppService = () => {
   const [campaignName, setCampaignName] = useState("");
@@ -18,6 +20,20 @@ const WhatsAppService = () => {
 
   const { data: campaigns } = useCampaigns();
   const { createCampaign, updateCampaign, updateCampaignStatus, deleteCampaign } = useCampaignMutations();
+
+  // Fetch clients from Clientes_Whats table
+  const { data: clients } = useQuery({
+    queryKey: ["whatsapp-clients"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("Clientes_Whats")
+        .select("*")
+        .order("nome");
+      
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const resetForm = () => {
     setCampaignName("");
@@ -54,7 +70,6 @@ const WhatsAppService = () => {
       });
     }
     
-    // Reset form after successful submission
     resetForm();
   };
 
@@ -86,6 +101,7 @@ const WhatsAppService = () => {
               onSubmit={handleSubmit}
               isSubmitting={createCampaign.isPending || updateCampaign.isPending}
               resetForm={resetForm}
+              clients={clients || []}
             />
           </CardContent>
         </Card>

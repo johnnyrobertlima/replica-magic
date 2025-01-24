@@ -1,30 +1,30 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ImageUpload } from "@/components/admin/ImageUpload";
-import { useToast } from "@/components/ui/use-toast";
 import { Campaign } from "@/types/campaign";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Image } from "lucide-react";
+import { Database } from "@/integrations/supabase/types";
+
+type ClientesWhats = Database["public"]["Tables"]["Clientes_Whats"]["Row"];
 
 interface CampaignFormProps {
   campaignName: string;
-  setCampaignName: (name: string) => void;
+  setCampaignName: (value: string) => void;
   selectedClient: string;
-  setSelectedClient: (client: string) => void;
+  setSelectedClient: (value: string) => void;
   message: string;
-  setMessage: (message: string) => void;
+  setMessage: (value: string) => void;
   imageUrl: string;
-  setImageUrl: (url: string) => void;
+  setImageUrl: (value: string) => void;
   editingCampaign: Campaign | null;
   onSubmit: (e: React.FormEvent) => void;
   isSubmitting: boolean;
   resetForm: () => void;
+  clients: ClientesWhats[];
 }
 
-export const CampaignForm = ({
+export function CampaignForm({
   campaignName,
   setCampaignName,
   selectedClient,
@@ -37,104 +37,67 @@ export const CampaignForm = ({
   onSubmit,
   isSubmitting,
   resetForm,
-}: CampaignFormProps) => {
-  const { toast } = useToast();
-
-  const { data: clients } = useQuery({
-    queryKey: ["clients"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("clients")
-        .select("*")
-        .eq("is_active", true);
-      if (error) throw error;
-      return data;
-    },
-  });
-
+  clients,
+}: CampaignFormProps) {
   return (
     <form onSubmit={onSubmit} className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <label htmlFor="campaign-name" className="text-sm font-medium">
-            Nome da Campanha
-          </label>
-          <Input
-            id="campaign-name"
-            value={campaignName}
-            onChange={(e) => setCampaignName(e.target.value)}
-            placeholder="Digite o nome da campanha"
-          />
-        </div>
-        <div className="space-y-2">
-          <label htmlFor="client" className="text-sm font-medium">
-            Cliente
-          </label>
-          <Select value={selectedClient} onValueChange={setSelectedClient}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione um cliente" />
-            </SelectTrigger>
-            <SelectContent>
-              {clients?.map((client) => (
-                <SelectItem key={client.id} value={client.id}>
-                  {client.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      <div>
+        <Label htmlFor="name">Nome da Campanha</Label>
+        <Input
+          id="name"
+          value={campaignName}
+          onChange={(e) => setCampaignName(e.target.value)}
+          placeholder="Digite o nome da campanha"
+        />
       </div>
 
-      <div className="space-y-2">
-        <label htmlFor="message" className="text-sm font-medium">
-          Mensagem da Campanha
-        </label>
+      <div>
+        <Label htmlFor="client">Cliente</Label>
+        <Select value={selectedClient} onValueChange={setSelectedClient}>
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione um cliente" />
+          </SelectTrigger>
+          <SelectContent>
+            {clients.map((client) => (
+              <SelectItem key={client.id} value={client.id || ""}>
+                {client.nome}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label htmlFor="message">Mensagem</Label>
         <Textarea
           id="message"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Digite a mensagem da campanha"
-          className="min-h-[200px]"
+          className="h-32"
         />
       </div>
 
-      <div className="space-y-2">
-        <label className="text-sm font-medium flex items-center gap-2">
-          <Image className="h-4 w-4" />
-          Imagem da Campanha (Opcional)
-        </label>
-        <ImageUpload
-          name="campaign-image"
-          bucket="campaign-images"
-          onUrlChange={setImageUrl}
-          currentImage={imageUrl}
+      <div>
+        <Label htmlFor="imageUrl">URL da Imagem (opcional)</Label>
+        <Input
+          id="imageUrl"
+          value={imageUrl}
+          onChange={(e) => setImageUrl(e.target.value)}
+          placeholder="Cole a URL da imagem"
         />
       </div>
 
       <div className="flex gap-4">
-        <Button
-          type="submit"
-          className="flex-1"
-          disabled={isSubmitting}
-        >
-          {editingCampaign
-            ? isSubmitting
-              ? "Atualizando..."
-              : "Atualizar Campanha"
-            : isSubmitting
-            ? "Criando..."
-            : "Inserir Campanha"}
+        <Button type="submit" disabled={isSubmitting}>
+          {editingCampaign ? "Atualizar" : "Criar"} Campanha
         </Button>
         {editingCampaign && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={resetForm}
-          >
-            Cancelar
+          <Button type="button" variant="outline" onClick={resetForm}>
+            Cancelar Edição
           </Button>
         )}
       </div>
     </form>
   );
-};
+}
