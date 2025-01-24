@@ -258,6 +258,33 @@ export type Database = {
         }
         Relationships: []
       }
+      mailing: {
+        Row: {
+          cidade: string
+          created_at: string | null
+          id: string
+          nome: string
+          nome_mailing: string
+          telefone: string
+        }
+        Insert: {
+          cidade: string
+          created_at?: string | null
+          id: string
+          nome: string
+          nome_mailing: string
+          telefone: string
+        }
+        Update: {
+          cidade?: string
+          created_at?: string | null
+          id?: string
+          nome?: string
+          nome_mailing?: string
+          telefone?: string
+        }
+        Relationships: []
+      }
       seo_settings: {
         Row: {
           created_at: string | null

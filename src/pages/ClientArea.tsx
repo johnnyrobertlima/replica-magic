@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare, Key, UserPlus } from "lucide-react";
+import { MessageSquare, Key, UserPlus, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const ClientArea = () => {
@@ -60,6 +60,25 @@ const ClientArea = () => {
             <Link to="/client-area/whatsapp-registration">
               <Button className="w-full">
                 Cadastrar Cliente
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Mail className="h-6 w-6" />
+              Cadastro de Mailing
+            </CardTitle>
+            <CardDescription>
+              Cadastre novos contatos para sua lista de mailing
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link to="/client-area/mailing-registration">
+              <Button className="w-full">
+                Cadastrar Mailing
               </Button>
             </Link>
           </CardContent>

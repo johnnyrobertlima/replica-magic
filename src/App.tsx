@@ -19,6 +19,7 @@ import ClientArea from "./pages/ClientArea";
 import WhatsAppService from "./pages/WhatsAppService";
 import TokenManagement from "./pages/TokenManagement";
 import WhatsAppClientRegistration from "./pages/WhatsAppClientRegistration";
+import MailingRegistration from "./pages/MailingRegistration";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,7 @@ const App = () => (
           <Route path="/client-area/whatsapp" element={<WhatsAppService />} />
           <Route path="/client-area/tokens" element={<TokenManagement />} />
           <Route path="/client-area/whatsapp-registration" element={<WhatsAppClientRegistration />} />
+          <Route path="/client-area/mailing-registration" element={<MailingRegistration />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminLayout><Outlet /></AdminLayout>}>
             <Route index element={<AdminDashboard />} />
