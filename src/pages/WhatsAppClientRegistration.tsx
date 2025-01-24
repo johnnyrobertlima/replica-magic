@@ -8,6 +8,9 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import type { Database } from "@/integrations/supabase/types";
+
+type ClientesWhats = Database["public"]["Tables"]["Clientes_Whats"]["Insert"];
 
 const formSchema = z.object({
   nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
@@ -17,12 +20,10 @@ const formSchema = z.object({
   enviar_domingo: z.boolean().default(false),
 });
 
-type FormValues = z.infer<typeof formSchema>;
-
 export default function WhatsAppClientRegistration() {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const form = useForm<FormValues>({
+  const form = useForm<ClientesWhats>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       enviar_sabado: false,
@@ -30,7 +31,7 @@ export default function WhatsAppClientRegistration() {
     },
   });
 
-  async function onSubmit(values: FormValues) {
+  async function onSubmit(values: ClientesWhats) {
     try {
       const { error } = await supabase
         .from("Clientes_Whats")
