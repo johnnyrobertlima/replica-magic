@@ -327,6 +327,33 @@ export type Database = {
         }
         Relationships: []
       }
+      Token_Whats: {
+        Row: {
+          cliente: string | null
+          id: string
+          "limite por dia": number | null
+          NomedoChip: string | null
+          Status: string | null
+          Telefone: number | null
+        }
+        Insert: {
+          cliente?: string | null
+          id: string
+          "limite por dia"?: number | null
+          NomedoChip?: string | null
+          Status?: string | null
+          Telefone?: number | null
+        }
+        Update: {
+          cliente?: string | null
+          id?: string
+          "limite por dia"?: number | null
+          NomedoChip?: string | null
+          Status?: string | null
+          Telefone?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

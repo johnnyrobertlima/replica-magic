@@ -17,6 +17,7 @@ import { AdminMessages } from "./pages/admin/messages";
 import { AdminSEO } from "./pages/admin/seo";
 import ClientArea from "./pages/ClientArea";
 import WhatsAppService from "./pages/WhatsAppService";
+import TokenManagement from "./pages/TokenManagement";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/client-area" element={<ClientArea />} />
           <Route path="/client-area/whatsapp" element={<WhatsAppService />} />
+          <Route path="/client-area/tokens" element={<TokenManagement />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminLayout><Outlet /></AdminLayout>}>
             <Route index element={<AdminDashboard />} />
