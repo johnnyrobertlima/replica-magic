@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ImageIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,11 +9,13 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useState } from "react";
+import { ImageUpload } from "@/components/admin/ImageUpload";
 
 const WhatsAppService = () => {
   const [campaignName, setCampaignName] = useState("");
   const [selectedClient, setSelectedClient] = useState("");
   const [message, setMessage] = useState("");
+  const [imageUrl, setImageUrl] = useState<string>("");
   const { toast } = useToast();
 
   const { data: clients } = useQuery({
@@ -33,8 +35,8 @@ const WhatsAppService = () => {
       const { error } = await supabase.from("campaigns").insert([
         {
           name: campaignName,
-          client_id: selectedClient,
           message: message,
+          image_url: imageUrl,
         },
       ]);
       if (error) throw error;
@@ -44,6 +46,7 @@ const WhatsAppService = () => {
       setCampaignName("");
       setSelectedClient("");
       setMessage("");
+      setImageUrl("");
     },
     onError: (error: Error) => {
       toast({
@@ -59,7 +62,7 @@ const WhatsAppService = () => {
     if (!campaignName || !selectedClient || !message) {
       toast({
         title: "Erro ao criar campanha",
-        description: "Todos os campos são obrigatórios",
+        description: "Nome da campanha, cliente e mensagem são obrigatórios",
         variant: "destructive",
       });
       return;
@@ -124,6 +127,19 @@ const WhatsAppService = () => {
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Digite a mensagem da campanha"
                   className="min-h-[200px]"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <ImageIcon className="h-4 w-4" />
+                  Imagem da Campanha (Opcional)
+                </label>
+                <ImageUpload
+                  name="campaign-image"
+                  bucket="campaign-images"
+                  onUrlChange={setImageUrl}
+                  currentImage={imageUrl}
                 />
               </div>
 
