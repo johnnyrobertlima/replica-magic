@@ -31,6 +31,7 @@ const TokenManagement = () => {
   const navigate = useNavigate();
   const [editingToken, setEditingToken] = useState<Token | null>(null);
   const [formData, setFormData] = useState({
+    id: "",
     NomedoChip: "",
     limitePorDia: "",
     Telefone: "",
@@ -74,13 +75,11 @@ const TokenManagement = () => {
     mutationFn: async (tokenData: Omit<Token, "id">) => {
       const isAuthenticated = await checkAuth();
       if (!isAuthenticated) return;
-
-      const newId = crypto.randomUUID();
       
       const { error } = await supabase
         .from("Token_Whats")
         .insert({
-          id: newId,
+          id: formData.id,
           NomedoChip: tokenData.NomedoChip,
           "limite por dia": tokenData["limite por dia"],
           Telefone: tokenData.Telefone,
@@ -178,6 +177,7 @@ const TokenManagement = () => {
   const handleEdit = (token: Token) => {
     setEditingToken(token);
     setFormData({
+      id: token.id,
       NomedoChip: token.NomedoChip || "",
       limitePorDia: token["limite por dia"]?.toString() || "",
       Telefone: token.Telefone?.toString() || "",
@@ -189,6 +189,7 @@ const TokenManagement = () => {
 
   const resetForm = () => {
     setFormData({
+      id: "",
       NomedoChip: "",
       limitePorDia: "",
       Telefone: "",
@@ -208,6 +209,18 @@ const TokenManagement = () => {
 
       <form onSubmit={handleSubmit} className="space-y-4 mb-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="id">ID do Token</Label>
+            <Input
+              id="id"
+              value={formData.id}
+              onChange={(e) =>
+                setFormData({ ...formData, id: e.target.value })
+              }
+              required
+            />
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="NomedoChip">Nome do Chip</Label>
             <Input
@@ -275,6 +288,7 @@ const TokenManagement = () => {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>ID</TableHead>
               <TableHead>Nome do Chip</TableHead>
               <TableHead>Limite por Dia</TableHead>
               <TableHead>Telefone</TableHead>
@@ -286,6 +300,7 @@ const TokenManagement = () => {
           <TableBody>
             {tokens?.map((token) => (
               <TableRow key={token.id}>
+                <TableCell>{token.id}</TableCell>
                 <TableCell>{token.NomedoChip}</TableCell>
                 <TableCell>{token["limite por dia"]}</TableCell>
                 <TableCell>{token.Telefone}</TableCell>
