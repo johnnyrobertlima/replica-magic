@@ -145,29 +145,37 @@ export const ContactRegistrationDialog = ({
     const successfulContacts: any[] = [];
 
     for (const contact of contacts) {
-      const { error } = await supabase
-        .from("mailing_contacts")
-        .insert({
-          ...contact,
-          mailing_id: mailingId,
-        });
+      try {
+        const { error } = await supabase
+          .from("mailing_contacts")
+          .insert({
+            ...contact,
+            mailing_id: mailingId,
+          });
 
-      if (error && error.code === '23505') {
-        failedContacts.push(contact);
-      } else if (!error) {
-        successfulContacts.push(contact);
+        if (error) {
+          if (error.code === '23505') {
+            failedContacts.push(contact);
+          } else {
+            console.error("Error importing contact:", error);
+          }
+        } else {
+          successfulContacts.push(contact);
+        }
+      } catch (error) {
+        console.error("Error importing contact:", error);
       }
     }
 
     if (failedContacts.length > 0) {
       const duplicatesList = failedContacts
         .map(c => `${c.nome} (${c.telefone}${c.email ? `, ${c.email}` : ''})`)
-        .join(', ');
+        .join('\n');
 
       toast({
         variant: "destructive",
         title: `${failedContacts.length} contatos não foram importados`,
-        description: `Os seguintes contatos já existem: ${duplicatesList}`,
+        description: `Os seguintes contatos já existem:\n${duplicatesList}`,
       });
     }
 
@@ -176,9 +184,8 @@ export const ContactRegistrationDialog = ({
         title: "Sucesso!",
         description: `${successfulContacts.length} contatos importados com sucesso`,
       });
+      refetch();
     }
-
-    refetch();
   };
 
   return (
