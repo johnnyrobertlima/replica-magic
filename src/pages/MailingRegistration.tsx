@@ -65,7 +65,7 @@ const MailingRegistration = () => {
       if (error) throw error;
       return data;
     },
-    enabled: !!session, // Only fetch if user is authenticated
+    enabled: !!session,
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
@@ -124,19 +124,45 @@ const MailingRegistration = () => {
     }
 
     try {
-      const { error } = await supabase
+      // First, delete associated campaigns
+      const { error: campaignsError } = await supabase
+        .from('campaigns')
+        .delete()
+        .eq('mailing_id', id);
+
+      if (campaignsError) {
+        console.error("Error deleting associated campaigns:", campaignsError);
+        toast({
+          variant: "destructive",
+          title: "Erro ao excluir",
+          description: "Ocorreu um erro ao excluir as campanhas associadas",
+        });
+        return;
+      }
+
+      // Then delete the mailing
+      const { error: mailingError } = await supabase
         .from('mailing')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (mailingError) {
+        console.error("Error deleting mailing:", mailingError);
+        toast({
+          variant: "destructive",
+          title: "Erro ao excluir",
+          description: "Ocorreu um erro ao excluir o mailing",
+        });
+        return;
+      }
 
       toast({
         title: "Sucesso!",
-        description: "Mailing excluído com sucesso",
+        description: "Mailing e campanhas associadas excluídos com sucesso",
       });
       refetch();
     } catch (error) {
+      console.error("Error in delete operation:", error);
       toast({
         variant: "destructive",
         title: "Erro ao excluir",
