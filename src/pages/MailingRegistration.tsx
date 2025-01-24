@@ -12,7 +12,7 @@ import { ActionButtons } from "@/components/admin/ActionButtons";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { ContactRegistrationDialog } from "@/components/mailing/ContactRegistrationDialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const formSchema = z.object({
   nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
@@ -22,6 +22,30 @@ const MailingRegistration = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [selectedMailing, setSelectedMailing] = useState<{ id: string; nome: string } | null>(null);
+  const [session, setSession] = useState<any>(null);
+
+  // Check for authentication status
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (!session) {
+        toast({
+          variant: "destructive",
+          title: "Acesso Negado",
+          description: "Você precisa estar logado para acessar esta página",
+        });
+        navigate("/admin/login");
+      }
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate, toast]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -40,10 +64,20 @@ const MailingRegistration = () => {
       
       if (error) throw error;
       return data;
-    }
+    },
+    enabled: !!session, // Only fetch if user is authenticated
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!session) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao cadastrar",
+        description: "Você precisa estar logado para cadastrar um mailing",
+      });
+      return;
+    }
+
     try {
       const { error } = await supabase.from("mailing").insert({
         id: `${values.nome}_${Date.now()}`,
@@ -54,6 +88,7 @@ const MailingRegistration = () => {
       });
 
       if (error) {
+        console.error("Error details:", error);
         toast({
           variant: "destructive",
           title: "Erro ao cadastrar",
@@ -79,6 +114,15 @@ const MailingRegistration = () => {
   };
 
   const handleDelete = async (id: string) => {
+    if (!session) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao excluir",
+        description: "Você precisa estar logado para excluir um mailing",
+      });
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('mailing')
