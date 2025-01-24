@@ -121,7 +121,7 @@ const WhatsAppService = () => {
             {campaigns && (
               <CampaignTable
                 campaigns={campaigns}
-                onStatusChange={(id, Status) => updateCampaignStatus.mutate({ id, Status })}
+                onStatusChange={(id, status) => updateCampaignStatus.mutate({ id, Status: status as CampaignStatus })}
                 onEdit={handleEdit}
                 onDelete={(id) => deleteCampaign.mutate(id)}
               />

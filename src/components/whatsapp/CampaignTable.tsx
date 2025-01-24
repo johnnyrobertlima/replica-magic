@@ -1,5 +1,5 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Campaign } from "@/types/campaign";
+import { Campaign, CampaignStatus } from "@/types/campaign";
 import { CampaignStatusSelect } from "./CampaignStatusSelect";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, Play } from "lucide-react";
@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface CampaignTableProps {
   campaigns: Campaign[];
-  onStatusChange: (id: string, status: string) => void;
+  onStatusChange: (id: string, status: CampaignStatus) => void;
   onEdit: (campaign: Campaign) => void;
   onDelete: (id: string) => void;
 }
