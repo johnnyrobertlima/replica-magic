@@ -1,28 +1,13 @@
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, ImageIcon, Link as LinkIcon } from "lucide-react";
+import { ArrowLeft, ImageIcon } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useState } from "react";
-import { ImageUpload } from "@/components/admin/ImageUpload";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ActionButtons } from "@/components/admin/ActionButtons";
-
-type CampaignStatus = "Pausado" | "Em Andamento" | "Finalizado" | "Erro";
-
-interface Campaign {
-  id: string;
-  name: string;
-  message: string;
-  image_url?: string;
-  Status?: CampaignStatus;
-  created_at?: string;
-}
+import { CampaignForm } from "@/components/whatsapp/CampaignForm";
+import { CampaignTable } from "@/components/whatsapp/CampaignTable";
+import { Campaign, CampaignStatus } from "@/types/campaign";
 
 const WhatsAppService = () => {
   const [campaignName, setCampaignName] = useState("");
@@ -32,18 +17,6 @@ const WhatsAppService = () => {
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-  const { data: clients } = useQuery({
-    queryKey: ["clients"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("clients")
-        .select("*")
-        .eq("is_active", true);
-      if (error) throw error;
-      return data;
-    },
-  });
 
   const { data: campaigns } = useQuery({
     queryKey: ["campaigns"],
@@ -151,14 +124,6 @@ const WhatsAppService = () => {
     },
   });
 
-  const handleCopyImageUrl = (url: string) => {
-    navigator.clipboard.writeText(url);
-    toast({
-      title: "URL copiada!",
-      description: "A URL da imagem foi copiada para sua área de transferência.",
-    });
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!campaignName || !selectedClient || !message) {
@@ -187,7 +152,6 @@ const WhatsAppService = () => {
     setCampaignName(campaign.name);
     setMessage(campaign.message);
     setImageUrl(campaign.image_url || "");
-    // Scroll to form
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -214,157 +178,34 @@ const WhatsAppService = () => {
 
         <Card className="mb-8">
           <CardContent className="pt-6">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label htmlFor="campaign-name" className="text-sm font-medium">
-                    Nome da Campanha
-                  </label>
-                  <Input
-                    id="campaign-name"
-                    value={campaignName}
-                    onChange={(e) => setCampaignName(e.target.value)}
-                    placeholder="Digite o nome da campanha"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="client" className="text-sm font-medium">
-                    Cliente
-                  </label>
-                  <Select value={selectedClient} onValueChange={setSelectedClient}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um cliente" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {clients?.map((client) => (
-                        <SelectItem key={client.id} value={client.id}>
-                          {client.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label htmlFor="message" className="text-sm font-medium">
-                  Mensagem da Campanha
-                </label>
-                <Textarea
-                  id="message"
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Digite a mensagem da campanha"
-                  className="min-h-[200px]"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium flex items-center gap-2">
-                  <ImageIcon className="h-4 w-4" />
-                  Imagem da Campanha (Opcional)
-                </label>
-                <ImageUpload
-                  name="campaign-image"
-                  bucket="campaign-images"
-                  onUrlChange={setImageUrl}
-                  currentImage={imageUrl}
-                />
-              </div>
-
-              <div className="flex gap-4">
-                <Button
-                  type="submit"
-                  className="flex-1"
-                  disabled={createCampaign.isPending || updateCampaign.isPending}
-                >
-                  {editingCampaign
-                    ? updateCampaign.isPending
-                      ? "Atualizando..."
-                      : "Atualizar Campanha"
-                    : createCampaign.isPending
-                    ? "Criando..."
-                    : "Inserir Campanha"}
-                </Button>
-                {editingCampaign && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={resetForm}
-                  >
-                    Cancelar
-                  </Button>
-                )}
-              </div>
-            </form>
+            <CampaignForm
+              campaignName={campaignName}
+              setCampaignName={setCampaignName}
+              selectedClient={selectedClient}
+              setSelectedClient={setSelectedClient}
+              message={message}
+              setMessage={setMessage}
+              imageUrl={imageUrl}
+              setImageUrl={setImageUrl}
+              editingCampaign={editingCampaign}
+              onSubmit={handleSubmit}
+              isSubmitting={createCampaign.isPending || updateCampaign.isPending}
+              resetForm={resetForm}
+            />
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="pt-6">
             <h2 className="text-2xl font-bold mb-4">Campanhas Cadastradas</h2>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Data de Criação</TableHead>
-                  <TableHead>URL Imagem</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {campaigns?.map((campaign) => (
-                  <TableRow key={campaign.id}>
-                    <TableCell>{campaign.name}</TableCell>
-                    <TableCell>
-                      <Select
-                        value={campaign.Status || "Pausado"}
-                        onValueChange={(value: CampaignStatus) =>
-                          updateCampaignStatus.mutate({ id: campaign.id, Status: value })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Pausado">Pausado</SelectItem>
-                          <SelectItem value="Em Andamento">Em Andamento</SelectItem>
-                          <SelectItem value="Finalizado">Finalizado</SelectItem>
-                          <SelectItem value="Erro">Erro</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      {campaign.created_at
-                        ? new Date(campaign.created_at).toLocaleDateString("pt-BR")
-                        : "-"}
-                    </TableCell>
-                    <TableCell>
-                      {campaign.image_url ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="gap-2"
-                          onClick={() => handleCopyImageUrl(campaign.image_url!)}
-                        >
-                          <LinkIcon className="h-4 w-4" />
-                          Copiar URL
-                        </Button>
-                      ) : (
-                        "-"
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <ActionButtons
-                        onEdit={() => handleEdit(campaign)}
-                        onDelete={() => deleteCampaign.mutate(campaign.id)}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            {campaigns && (
+              <CampaignTable
+                campaigns={campaigns}
+                onStatusChange={(id, Status) => updateCampaignStatus.mutate({ id, Status })}
+                onEdit={handleEdit}
+                onDelete={(id) => deleteCampaign.mutate(id)}
+              />
+            )}
           </CardContent>
         </Card>
       </div>
