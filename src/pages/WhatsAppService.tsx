@@ -20,7 +20,7 @@ interface Campaign {
   name: string;
   message: string;
   image_url?: string;
-  status?: CampaignStatus;
+  Status?: CampaignStatus;
   created_at?: string;
 }
 
@@ -29,6 +29,7 @@ const WhatsAppService = () => {
   const [selectedClient, setSelectedClient] = useState("");
   const [message, setMessage] = useState("");
   const [imageUrl, setImageUrl] = useState<string>("");
+  const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -63,17 +64,14 @@ const WhatsAppService = () => {
           name: campaignName,
           message: message,
           image_url: imageUrl,
-          status: "Pausado" as CampaignStatus,
+          Status: "Pausado" as CampaignStatus,
         },
       ]);
       if (error) throw error;
     },
     onSuccess: () => {
       toast({ title: "Campanha criada com sucesso!" });
-      setCampaignName("");
-      setSelectedClient("");
-      setMessage("");
-      setImageUrl("");
+      resetForm();
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
     },
     onError: (error: Error) => {
@@ -85,11 +83,37 @@ const WhatsAppService = () => {
     },
   });
 
-  const updateCampaignStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: CampaignStatus }) => {
+  const updateCampaign = useMutation({
+    mutationFn: async (campaign: Campaign) => {
       const { error } = await supabase
         .from("campaigns")
-        .update({ status })
+        .update({
+          name: campaign.name,
+          message: campaign.message,
+          image_url: campaign.image_url,
+        })
+        .eq("id", campaign.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Campanha atualizada com sucesso!" });
+      resetForm();
+      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao atualizar campanha",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateCampaignStatus = useMutation({
+    mutationFn: async ({ id, Status }: { id: string; Status: CampaignStatus }) => {
+      const { error } = await supabase
+        .from("campaigns")
+        .update({ Status })
         .eq("id", id);
       if (error) throw error;
     },
@@ -137,7 +161,34 @@ const WhatsAppService = () => {
       });
       return;
     }
-    createCampaign.mutate();
+
+    if (editingCampaign) {
+      updateCampaign.mutate({
+        ...editingCampaign,
+        name: campaignName,
+        message: message,
+        image_url: imageUrl,
+      });
+    } else {
+      createCampaign.mutate();
+    }
+  };
+
+  const handleEdit = (campaign: Campaign) => {
+    setEditingCampaign(campaign);
+    setCampaignName(campaign.name);
+    setMessage(campaign.message);
+    setImageUrl(campaign.image_url || "");
+    // Scroll to form
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const resetForm = () => {
+    setCampaignName("");
+    setSelectedClient("");
+    setMessage("");
+    setImageUrl("");
+    setEditingCampaign(null);
   };
 
   return (
@@ -213,13 +264,30 @@ const WhatsAppService = () => {
                 />
               </div>
 
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={createCampaign.isPending}
-              >
-                {createCampaign.isPending ? "Criando..." : "Inserir Campanha"}
-              </Button>
+              <div className="flex gap-4">
+                <Button
+                  type="submit"
+                  className="flex-1"
+                  disabled={createCampaign.isPending || updateCampaign.isPending}
+                >
+                  {editingCampaign
+                    ? updateCampaign.isPending
+                      ? "Atualizando..."
+                      : "Atualizar Campanha"
+                    : createCampaign.isPending
+                    ? "Criando..."
+                    : "Inserir Campanha"}
+                </Button>
+                {editingCampaign && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={resetForm}
+                  >
+                    Cancelar
+                  </Button>
+                )}
+              </div>
             </form>
           </CardContent>
         </Card>
@@ -242,9 +310,9 @@ const WhatsAppService = () => {
                     <TableCell>{campaign.name}</TableCell>
                     <TableCell>
                       <Select
-                        value={campaign.status || "Pausado"}
+                        value={campaign.Status || "Pausado"}
                         onValueChange={(value: CampaignStatus) =>
-                          updateCampaignStatus.mutate({ id: campaign.id, status: value })
+                          updateCampaignStatus.mutate({ id: campaign.id, Status: value })
                         }
                       >
                         <SelectTrigger>
@@ -265,13 +333,7 @@ const WhatsAppService = () => {
                     </TableCell>
                     <TableCell className="text-right">
                       <ActionButtons
-                        onEdit={() => {
-                          // TODO: Implement edit functionality
-                          toast({
-                            title: "Em desenvolvimento",
-                            description: "Funcionalidade de edição em desenvolvimento",
-                          });
-                        }}
+                        onEdit={() => handleEdit(campaign)}
                         onDelete={() => deleteCampaign.mutate(campaign.id)}
                       />
                     </TableCell>
