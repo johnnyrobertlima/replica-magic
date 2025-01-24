@@ -7,5 +7,6 @@ export interface Campaign {
   image_url?: string;
   Status?: CampaignStatus;
   created_at?: string;
+  client_id?: string;
   mailing_id?: string;
 }

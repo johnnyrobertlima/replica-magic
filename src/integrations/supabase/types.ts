@@ -53,33 +53,54 @@ export type Database = {
       }
       campaigns: {
         Row: {
+          client_id: string | null
           created_at: string | null
           id: string
           image_url: string | null
+          mailing_id: string | null
           message: string
           name: string
           Status: string | null
           updated_at: string | null
         }
         Insert: {
+          client_id?: string | null
           created_at?: string | null
           id?: string
           image_url?: string | null
+          mailing_id?: string | null
           message: string
           name: string
           Status?: string | null
           updated_at?: string | null
         }
         Update: {
+          client_id?: string | null
           created_at?: string | null
           id?: string
           image_url?: string | null
+          mailing_id?: string | null
           message?: string
           name?: string
           Status?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "Clientes_Whats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaigns_mailing_id_fkey"
+            columns: ["mailing_id"]
+            isOneToOne: false
+            referencedRelation: "mailing"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       categories: {
         Row: {
