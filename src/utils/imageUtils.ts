@@ -17,5 +17,5 @@ export const getStorageUrl = (path: string | null) => {
   if (!path) return '';
   if (path.startsWith('http')) return path;
   
-  return `https://iaegdxxxlastfujboajm.supabase.co/storage/v1/object/public/oni-media/${path}`;
+  return `https://mwvrxtvlqkttylfzzxas.supabase.co/storage/v1/object/public/oni-media/${path}`;
 };
