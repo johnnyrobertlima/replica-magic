@@ -10,6 +10,8 @@ interface CampaignFormProps {
   setCampaignName: (value: string) => void;
   selectedClient: string;
   setSelectedClient: (value: string) => void;
+  selectedMailing: string;
+  setSelectedMailing: (value: string) => void;
   message: string;
   setMessage: (value: string) => void;
   imageUrl: string;
@@ -26,6 +28,8 @@ export function CampaignForm({
   setCampaignName,
   selectedClient,
   setSelectedClient,
+  selectedMailing,
+  setSelectedMailing,
   message,
   setMessage,
   imageUrl,
@@ -43,6 +47,8 @@ export function CampaignForm({
         setCampaignName={setCampaignName}
         selectedClient={selectedClient}
         setSelectedClient={setSelectedClient}
+        selectedMailing={selectedMailing}
+        setSelectedMailing={setSelectedMailing}
         message={message}
         setMessage={setMessage}
         imageUrl={imageUrl}

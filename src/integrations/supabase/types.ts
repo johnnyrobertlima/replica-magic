@@ -292,6 +292,7 @@ export type Database = {
           id: string
           mailing_id: string | null
           nome: string
+          Status: string | null
           telefone: string
         }
         Insert: {
@@ -300,6 +301,7 @@ export type Database = {
           id?: string
           mailing_id?: string | null
           nome: string
+          Status?: string | null
           telefone: string
         }
         Update: {
@@ -308,6 +310,7 @@ export type Database = {
           id?: string
           mailing_id?: string | null
           nome?: string
+          Status?: string | null
           telefone?: string
         }
         Relationships: [

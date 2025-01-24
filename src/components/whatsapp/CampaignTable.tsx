@@ -1,34 +1,84 @@
-import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ActionButtons } from "@/components/admin/ActionButtons";
-import { Link as LinkIcon } from "lucide-react";
 import { Campaign } from "@/types/campaign";
-import { useToast } from "@/components/ui/use-toast";
 import { CampaignStatusSelect } from "./CampaignStatusSelect";
-
-type CampaignStatus = "Pausado" | "Em Andamento" | "Finalizado" | "Erro";
+import { Button } from "@/components/ui/button";
+import { Pencil, Trash2, Play } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CampaignTableProps {
   campaigns: Campaign[];
-  onStatusChange: (id: string, status: CampaignStatus) => void;
+  onStatusChange: (id: string, status: string) => void;
   onEdit: (campaign: Campaign) => void;
   onDelete: (id: string) => void;
 }
 
-export const CampaignTable = ({
+export function CampaignTable({
   campaigns,
   onStatusChange,
   onEdit,
   onDelete,
-}: CampaignTableProps) => {
+}: CampaignTableProps) {
   const { toast } = useToast();
 
-  const handleCopyImageUrl = (url: string) => {
-    navigator.clipboard.writeText(url);
-    toast({
-      title: "URL copiada!",
-      description: "A URL da imagem foi copiada para sua área de transferência.",
-    });
+  const handlePlayClick = async (campaign: Campaign) => {
+    try {
+      // Get client webhook URL
+      const { data: client } = await supabase
+        .from('Clientes_Whats')
+        .select('webhook_url')
+        .eq('id', campaign.client_id)
+        .single();
+
+      if (!client?.webhook_url) {
+        toast({
+          variant: "destructive",
+          title: "Erro",
+          description: "URL do webhook não configurada para este cliente",
+        });
+        return;
+      }
+
+      // Get mailing information
+      const { data: mailing } = await supabase
+        .from('mailing')
+        .select('*')
+        .eq('id', campaign.mailing_id)
+        .single();
+
+      const webhookData = {
+        campaign_name: campaign.name,
+        client_id: campaign.client_id,
+        mailing_id: campaign.mailing_id,
+        mailing_name: mailing?.nome,
+        message: campaign.message,
+        image_url: campaign.image_url,
+      };
+
+      const response = await fetch(client.webhook_url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(webhookData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Falha ao acionar webhook');
+      }
+
+      toast({
+        title: "Sucesso",
+        description: "Campanha iniciada com sucesso",
+      });
+    } catch (error) {
+      console.error('Error triggering webhook:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Erro ao iniciar a campanha",
+      });
+    }
   };
 
   return (
@@ -38,18 +88,17 @@ export const CampaignTable = ({
           <TableHead>Nome</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>Data de Criação</TableHead>
-          <TableHead>URL Imagem</TableHead>
           <TableHead className="text-right">Ações</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {campaigns?.map((campaign) => (
+        {campaigns.map((campaign) => (
           <TableRow key={campaign.id}>
             <TableCell>{campaign.name}</TableCell>
             <TableCell>
               <CampaignStatusSelect
                 status={campaign.Status || "Pausado"}
-                onStatusChange={(value) => onStatusChange(campaign.id, value)}
+                onStatusChange={(status) => onStatusChange(campaign.id, status)}
               />
             </TableCell>
             <TableCell>
@@ -57,26 +106,30 @@ export const CampaignTable = ({
                 ? new Date(campaign.created_at).toLocaleDateString("pt-BR")
                 : "-"}
             </TableCell>
-            <TableCell>
-              {campaign.image_url ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="gap-2"
-                  onClick={() => handleCopyImageUrl(campaign.image_url!)}
-                >
-                  <LinkIcon className="h-4 w-4" />
-                  Copiar URL
-                </Button>
-              ) : (
-                "-"
-              )}
-            </TableCell>
             <TableCell className="text-right">
-              <ActionButtons
-                onEdit={() => onEdit(campaign)}
-                onDelete={() => onDelete(campaign.id)}
-              />
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handlePlayClick(campaign)}
+                >
+                  <Play className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => onEdit(campaign)}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => onDelete(campaign.id)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </TableCell>
           </TableRow>
         ))}

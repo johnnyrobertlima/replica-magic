@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 const WhatsAppService = () => {
   const [campaignName, setCampaignName] = useState("");
   const [selectedClient, setSelectedClient] = useState("");
+  const [selectedMailing, setSelectedMailing] = useState("");
   const [message, setMessage] = useState("");
   const [imageUrl, setImageUrl] = useState<string>("");
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
@@ -21,7 +22,6 @@ const WhatsAppService = () => {
   const { data: campaigns } = useCampaigns();
   const { createCampaign, updateCampaign, updateCampaignStatus, deleteCampaign } = useCampaignMutations();
 
-  // Fetch clients from Clientes_Whats table
   const { data: clients } = useQuery({
     queryKey: ["whatsapp-clients"],
     queryFn: async () => {
@@ -38,6 +38,7 @@ const WhatsAppService = () => {
   const resetForm = () => {
     setCampaignName("");
     setSelectedClient("");
+    setSelectedMailing("");
     setMessage("");
     setImageUrl("");
     setEditingCampaign(null);
@@ -45,10 +46,10 @@ const WhatsAppService = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!campaignName || !selectedClient || !message) {
+    if (!campaignName || !selectedClient || !selectedMailing || !message) {
       toast({
         title: "Erro ao criar campanha",
-        description: "Nome da campanha, cliente e mensagem são obrigatórios",
+        description: "Nome da campanha, cliente, mailing e mensagem são obrigatórios",
         variant: "destructive",
       });
       return;
@@ -60,6 +61,8 @@ const WhatsAppService = () => {
         name: campaignName,
         message: message,
         image_url: imageUrl,
+        client_id: selectedClient,
+        mailing_id: selectedMailing,
       });
     } else {
       await createCampaign.mutateAsync({
@@ -67,6 +70,8 @@ const WhatsAppService = () => {
         message: message,
         image_url: imageUrl,
         Status: "Pausado",
+        client_id: selectedClient,
+        mailing_id: selectedMailing,
       });
     }
     
@@ -78,6 +83,8 @@ const WhatsAppService = () => {
     setCampaignName(campaign.name);
     setMessage(campaign.message);
     setImageUrl(campaign.image_url || "");
+    setSelectedClient(campaign.client_id || "");
+    setSelectedMailing(campaign.mailing_id || "");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -93,6 +100,8 @@ const WhatsAppService = () => {
               setCampaignName={setCampaignName}
               selectedClient={selectedClient}
               setSelectedClient={setSelectedClient}
+              selectedMailing={selectedMailing}
+              setSelectedMailing={setSelectedMailing}
               message={message}
               setMessage={setMessage}
               imageUrl={imageUrl}

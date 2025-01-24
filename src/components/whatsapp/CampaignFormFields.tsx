@@ -3,6 +3,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Database } from "@/integrations/supabase/types";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 type ClientesWhats = Database["public"]["Tables"]["Clientes_Whats"]["Row"];
 
@@ -11,6 +13,8 @@ interface CampaignFormFieldsProps {
   setCampaignName: (value: string) => void;
   selectedClient: string;
   setSelectedClient: (value: string) => void;
+  selectedMailing: string;
+  setSelectedMailing: (value: string) => void;
   message: string;
   setMessage: (value: string) => void;
   imageUrl: string;
@@ -23,12 +27,27 @@ export function CampaignFormFields({
   setCampaignName,
   selectedClient,
   setSelectedClient,
+  selectedMailing,
+  setSelectedMailing,
   message,
   setMessage,
   imageUrl,
   setImageUrl,
   clients,
 }: CampaignFormFieldsProps) {
+  const { data: mailings } = useQuery({
+    queryKey: ['mailings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('mailing')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
   return (
     <>
       <div>
@@ -51,6 +70,22 @@ export function CampaignFormFields({
             {clients.map((client) => (
               <SelectItem key={client.id} value={client.id || ""}>
                 {client.nome}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label htmlFor="mailing">Mailing</Label>
+        <Select value={selectedMailing} onValueChange={setSelectedMailing}>
+          <SelectTrigger className="bg-white">
+            <SelectValue placeholder="Selecione um mailing" />
+          </SelectTrigger>
+          <SelectContent className="bg-white">
+            {mailings?.map((mailing) => (
+              <SelectItem key={mailing.id} value={mailing.id}>
+                {mailing.nome}
               </SelectItem>
             ))}
           </SelectContent>

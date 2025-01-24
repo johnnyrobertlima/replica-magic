@@ -14,6 +14,8 @@ export const useCampaignMutations = () => {
         message: campaign.message,
         image_url: campaign.image_url,
         Status: "Pausado" as CampaignStatus,
+        client_id: campaign.client_id,
+        mailing_id: campaign.mailing_id,
       }]);
       if (error) throw error;
     },
@@ -38,6 +40,8 @@ export const useCampaignMutations = () => {
           name: campaign.name,
           message: campaign.message,
           image_url: campaign.image_url,
+          client_id: campaign.client_id,
+          mailing_id: campaign.mailing_id,
         })
         .eq("id", campaign.id);
       if (error) throw error;
