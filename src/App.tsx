@@ -15,6 +15,8 @@ import { AdminSocial } from "./pages/admin/social";
 import { AdminLogos } from "./pages/admin/logos";
 import { AdminMessages } from "./pages/admin/messages";
 import { AdminSEO } from "./pages/admin/seo";
+import ClientArea from "./pages/ClientArea";
+import WhatsAppService from "./pages/WhatsAppService";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +29,8 @@ const App = () => (
         <GoogleAnalytics />
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/client-area" element={<ClientArea />} />
+          <Route path="/client-area/whatsapp" element={<WhatsAppService />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminLayout><Outlet /></AdminLayout>}>
             <Route index element={<AdminDashboard />} />
