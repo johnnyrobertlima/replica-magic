@@ -17,10 +17,12 @@ const formSchema = z.object({
   enviar_domingo: z.boolean().default(false),
 });
 
+type FormValues = z.infer<typeof formSchema>;
+
 export default function WhatsAppClientRegistration() {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       enviar_sabado: false,
@@ -28,11 +30,11 @@ export default function WhatsAppClientRegistration() {
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: FormValues) {
     try {
       const { error } = await supabase
         .from("Clientes_Whats")
-        .insert([values]);
+        .insert(values);
 
       if (error) throw error;
 
