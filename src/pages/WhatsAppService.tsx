@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useState } from "react";
 import { CampaignForm } from "@/components/whatsapp/CampaignForm";
 import { CampaignTable } from "@/components/whatsapp/CampaignTable";
-import { Campaign } from "@/types/campaign";
+import { Campaign, CampaignStatus } from "@/types/campaign";
 import { CampaignHeader } from "@/components/whatsapp/CampaignHeader";
 import { useCampaigns } from "@/components/whatsapp/useCampaigns";
 import { useCampaignMutations } from "@/components/whatsapp/useCampaignMutations";
@@ -69,7 +69,7 @@ const WhatsAppService = () => {
         name: campaignName,
         message: message,
         image_url: imageUrl,
-        Status: "Pausado",
+        Status: "Pausado" as CampaignStatus,
         client_id: selectedClient,
         mailing_id: selectedMailing,
       });

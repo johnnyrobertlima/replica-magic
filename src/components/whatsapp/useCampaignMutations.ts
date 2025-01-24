@@ -13,7 +13,7 @@ export const useCampaignMutations = () => {
         name: campaign.name,
         message: campaign.message,
         image_url: campaign.image_url,
-        Status: "Pausado" as CampaignStatus,
+        Status: campaign.Status || "Pausado",
         client_id: campaign.client_id,
         mailing_id: campaign.mailing_id,
       }]);
