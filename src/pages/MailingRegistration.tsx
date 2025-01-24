@@ -32,12 +32,13 @@ const MailingRegistration = () => {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       const id = `${values.nome}_${values.telefone}`;
-      const { error } = await supabase.from("mailing").insert([
-        {
-          id,
-          ...values,
-        },
-      ]);
+      const { error } = await supabase.from("mailing").insert({
+        id,
+        nome: values.nome,
+        telefone: values.telefone,
+        nome_mailing: values.nome_mailing,
+        cidade: values.cidade,
+      });
 
       if (error) {
         if (error.code === "23505") {
