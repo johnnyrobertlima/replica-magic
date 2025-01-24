@@ -186,12 +186,18 @@ export const ContactRegistrationDialog = ({
 
     Papa.parse(file, {
       complete: async (results) => {
-        const contacts = results.data.slice(1).map((row: any) => ({
-          mailing_id: mailingId,
-          nome: row[0],
-          telefone: row[1].startsWith('55') ? row[1] : `55${row[1]}`,
-          email: row[2] || null,
-        }));
+        const contacts = results.data.slice(1).map((row: any) => {
+          // Skip empty rows and ensure phone number is a string
+          if (!row[0] || !row[1]) return null;
+          
+          const phoneNumber = String(row[1]);
+          return {
+            mailing_id: mailingId,
+            nome: row[0],
+            telefone: phoneNumber.startsWith('55') ? phoneNumber : `55${phoneNumber}`,
+            email: row[2] || null,
+          };
+        }).filter(contact => contact !== null); // Remove null entries
 
         const failedContacts: any[] = [];
         const successfulContacts: any[] = [];
