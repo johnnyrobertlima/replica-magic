@@ -16,6 +16,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, Upload } from "lucide-react";
 import Papa from 'papaparse';
+import { ActionButtons } from "@/components/admin/ActionButtons";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useState } from "react";
 
 const formSchema = z.object({
   nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
@@ -37,6 +40,7 @@ export const ContactRegistrationDialog = ({
   onClose,
 }: ContactRegistrationDialogProps) => {
   const { toast } = useToast();
+  const [editingContact, setEditingContact] = useState<any>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -63,42 +67,76 @@ export const ContactRegistrationDialog = ({
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      // Format phone number
       const formattedPhone = values.telefone.startsWith('55') 
         ? values.telefone 
         : `55${values.telefone}`;
 
-      const { error } = await supabase
-        .from("mailing_contacts")
-        .insert({
-          mailing_id: mailingId,
-          nome: values.nome,
-          telefone: formattedPhone,
-          email: values.email || null,
-        });
+      if (editingContact) {
+        const { error } = await supabase
+          .from("mailing_contacts")
+          .update({
+            nome: values.nome,
+            telefone: formattedPhone,
+            email: values.email || null,
+          })
+          .eq('id', editingContact.id);
 
-      if (error) {
-        if (error.code === '23505') { // Unique constraint violation
-          toast({
-            variant: "destructive",
-            title: "Erro ao cadastrar",
-            description: "Este email ou telefone já está cadastrado neste mailing",
-          });
-        } else {
-          toast({
-            variant: "destructive",
-            title: "Erro ao cadastrar",
-            description: "Ocorreu um erro ao cadastrar o contato",
-          });
+        if (error) {
+          if (error.code === '23505') {
+            toast({
+              variant: "destructive",
+              title: "Erro ao atualizar",
+              description: "Este email ou telefone já está cadastrado neste mailing",
+            });
+          } else {
+            toast({
+              variant: "destructive",
+              title: "Erro ao atualizar",
+              description: "Ocorreu um erro ao atualizar o contato",
+            });
+          }
+          return;
         }
-        return;
+
+        toast({
+          title: "Sucesso!",
+          description: "Contato atualizado com sucesso",
+        });
+      } else {
+        const { error } = await supabase
+          .from("mailing_contacts")
+          .insert({
+            mailing_id: mailingId,
+            nome: values.nome,
+            telefone: formattedPhone,
+            email: values.email || null,
+          });
+
+        if (error) {
+          if (error.code === '23505') {
+            toast({
+              variant: "destructive",
+              title: "Erro ao cadastrar",
+              description: "Este email ou telefone já está cadastrado neste mailing",
+            });
+          } else {
+            toast({
+              variant: "destructive",
+              title: "Erro ao cadastrar",
+              description: "Ocorreu um erro ao cadastrar o contato",
+            });
+          }
+          return;
+        }
+
+        toast({
+          title: "Sucesso!",
+          description: "Contato cadastrado com sucesso",
+        });
       }
 
-      toast({
-        title: "Sucesso!",
-        description: "Contato cadastrado com sucesso",
-      });
       form.reset();
+      setEditingContact(null);
       refetch();
     } catch (error) {
       console.error("Error submitting form:", error);
@@ -108,6 +146,38 @@ export const ContactRegistrationDialog = ({
         description: "Ocorreu um erro ao cadastrar o contato",
       });
     }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('mailing_contacts')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso!",
+        description: "Contato excluído com sucesso",
+      });
+      refetch();
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao excluir",
+        description: "Ocorreu um erro ao excluir o contato",
+      });
+    }
+  };
+
+  const handleEdit = (contact: any) => {
+    setEditingContact(contact);
+    form.reset({
+      nome: contact.nome,
+      telefone: contact.telefone.startsWith('55') ? contact.telefone.slice(2) : contact.telefone,
+      email: contact.email || '',
+    });
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -123,23 +193,41 @@ export const ContactRegistrationDialog = ({
           email: row[2] || null,
         }));
 
-        const { error } = await supabase
-          .from("mailing_contacts")
-          .insert(contacts);
+        const failedContacts: any[] = [];
+        const successfulContacts: any[] = [];
 
-        if (error) {
+        for (const contact of contacts) {
+          const { error } = await supabase
+            .from("mailing_contacts")
+            .insert(contact);
+
+          if (error && error.code === '23505') {
+            failedContacts.push(contact);
+          } else if (!error) {
+            successfulContacts.push(contact);
+          }
+        }
+
+        if (failedContacts.length > 0) {
+          const duplicatesList = failedContacts
+            .map(c => `${c.nome} (${c.telefone}${c.email ? `, ${c.email}` : ''})`)
+            .join(', ');
+
           toast({
             variant: "destructive",
-            title: "Erro ao importar",
-            description: "Alguns contatos podem já estar cadastrados neste mailing",
+            title: `${failedContacts.length} contatos não foram importados`,
+            description: `Os seguintes contatos já existem: ${duplicatesList}`,
           });
-        } else {
+        }
+
+        if (successfulContacts.length > 0) {
           toast({
             title: "Sucesso!",
-            description: "Contatos importados com sucesso",
+            description: `${successfulContacts.length} contatos importados com sucesso`,
           });
-          refetch();
         }
+
+        refetch();
       },
       header: true,
     });
@@ -207,7 +295,26 @@ export const ContactRegistrationDialog = ({
                   </FormItem>
                 )}
               />
-              <Button type="submit">Cadastrar</Button>
+              <Button type="submit">
+                {editingContact ? 'Atualizar' : 'Cadastrar'}
+              </Button>
+              {editingContact && (
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => {
+                    setEditingContact(null);
+                    form.reset({
+                      nome: "",
+                      telefone: "",
+                      email: "",
+                    });
+                  }}
+                  className="ml-2"
+                >
+                  Cancelar
+                </Button>
+              )}
             </form>
           </Form>
 
@@ -229,30 +336,39 @@ export const ContactRegistrationDialog = ({
               <Loader2 className="h-8 w-8 animate-spin" />
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Telefone</TableHead>
-                  <TableHead>E-mail</TableHead>
-                  <TableHead>Data de Cadastro</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {contacts?.map((contact) => (
-                  <TableRow key={contact.id}>
-                    <TableCell>{contact.nome}</TableCell>
-                    <TableCell>{contact.telefone}</TableCell>
-                    <TableCell>{contact.email || '-'}</TableCell>
-                    <TableCell>
-                      {contact.created_at
-                        ? new Date(contact.created_at).toLocaleDateString("pt-BR")
-                        : "-"}
-                    </TableCell>
+            <ScrollArea className="h-[400px] rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Telefone</TableHead>
+                    <TableHead>E-mail</TableHead>
+                    <TableHead>Data de Cadastro</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {contacts?.map((contact) => (
+                    <TableRow key={contact.id}>
+                      <TableCell>{contact.nome}</TableCell>
+                      <TableCell>{contact.telefone}</TableCell>
+                      <TableCell>{contact.email || '-'}</TableCell>
+                      <TableCell>
+                        {contact.created_at
+                          ? new Date(contact.created_at).toLocaleDateString("pt-BR")
+                          : "-"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <ActionButtons
+                          onEdit={() => handleEdit(contact)}
+                          onDelete={() => handleDelete(contact.id)}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </ScrollArea>
           )}
         </div>
       </DialogContent>
