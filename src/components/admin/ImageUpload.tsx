@@ -57,9 +57,9 @@ export const ImageUpload = ({
           throw error;
         }
 
-        // Construct the URL using the helper function
-        const fileUrl = fileName;
-        console.log('Uploaded file path:', fileUrl);
+        // Construct the complete URL using the helper function
+        const fileUrl = getStorageUrl(fileName);
+        console.log('Uploaded file URL:', fileUrl);
         onUrlChange?.(fileUrl);
         onChange?.(file);
         
