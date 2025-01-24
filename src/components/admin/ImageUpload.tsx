@@ -47,11 +47,19 @@ export const ImageUpload = ({
         
         const { data, error } = await supabase.storage
           .from(bucket)
-          .upload(fileName, file);
+          .upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Upload error:', error);
+          throw error;
+        }
 
-        const fileUrl = getStorageUrl(`${fileName}`);
+        // Construct the URL using the helper function
+        const fileUrl = fileName;
+        console.log('Uploaded file path:', fileUrl);
         onUrlChange?.(fileUrl);
         onChange?.(file);
         
@@ -60,6 +68,7 @@ export const ImageUpload = ({
           description: "Arquivo enviado com sucesso",
         });
       } catch (error) {
+        console.error('Error handling file:', error);
         toast({
           title: "Erro ao carregar imagem",
           description: error instanceof Error ? error.message : "Erro desconhecido",
@@ -74,6 +83,7 @@ export const ImageUpload = ({
   };
 
   const currentImageUrl = currentImage ? getStorageUrl(currentImage) : null;
+  console.log('Current image URL:', currentImageUrl);
 
   return (
     <div className="space-y-2">

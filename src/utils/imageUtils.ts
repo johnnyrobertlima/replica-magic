@@ -17,8 +17,11 @@ export const getStorageUrl = (path: string | null) => {
   if (!path) return '';
   if (path.startsWith('http')) return path;
   
+  // Remove qualquer barra inicial se existir
+  const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+  
   // Verifica se o path já contém o nome do bucket
-  const bucketPath = path.startsWith('oni-media/') ? path : `oni-media/${path}`;
+  const bucketPath = cleanPath.startsWith('oni-media/') ? cleanPath : `oni-media/${cleanPath}`;
   
   return `https://mwvrxtvlqkttylfzzxas.supabase.co/storage/v1/object/public/${bucketPath}`;
 };
