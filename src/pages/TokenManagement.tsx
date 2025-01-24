@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Edit2, Trash2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface Token {
   id: string;
@@ -27,6 +28,7 @@ interface Token {
 const TokenManagement = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [editingToken, setEditingToken] = useState<Token | null>(null);
   const [formData, setFormData] = useState({
     NomedoChip: "",
@@ -36,9 +38,25 @@ const TokenManagement = () => {
     Status: "Ativo",
   });
 
+  // Check authentication status
+  const checkAuth = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast({
+        title: "Não autorizado",
+        description: "Você precisa estar logado para acessar esta página",
+        variant: "destructive",
+      });
+      navigate("/login");
+      return false;
+    }
+    return true;
+  };
+
   const { data: tokens, isLoading } = useQuery({
     queryKey: ["tokens"],
     queryFn: async () => {
+      await checkAuth();
       const { data, error } = await supabase
         .from("Token_Whats")
         .select("*");
@@ -54,7 +72,9 @@ const TokenManagement = () => {
 
   const createToken = useMutation({
     mutationFn: async (tokenData: Omit<Token, "id">) => {
-      // Generate a unique ID for the new token
+      const isAuthenticated = await checkAuth();
+      if (!isAuthenticated) return;
+
       const newId = crypto.randomUUID();
       
       const { error } = await supabase
@@ -85,6 +105,9 @@ const TokenManagement = () => {
 
   const updateToken = useMutation({
     mutationFn: async (token: Token) => {
+      const isAuthenticated = await checkAuth();
+      if (!isAuthenticated) return;
+
       const { error } = await supabase
         .from("Token_Whats")
         .update({
@@ -113,6 +136,9 @@ const TokenManagement = () => {
 
   const deleteToken = useMutation({
     mutationFn: async (id: string) => {
+      const isAuthenticated = await checkAuth();
+      if (!isAuthenticated) return;
+
       const { error } = await supabase
         .from("Token_Whats")
         .delete()
