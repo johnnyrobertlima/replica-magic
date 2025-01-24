@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Campaign } from "@/types/campaign";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Image } from "lucide-react";
 
 interface CampaignFormProps {
   campaignName: string;
@@ -99,7 +100,7 @@ export const CampaignForm = ({
 
       <div className="space-y-2">
         <label className="text-sm font-medium flex items-center gap-2">
-          <ImageIcon className="h-4 w-4" />
+          <Image className="h-4 w-4" />
           Imagem da Campanha (Opcional)
         </label>
         <ImageUpload
