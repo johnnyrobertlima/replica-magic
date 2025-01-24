@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { edit, trash } from "lucide-react";
+import { Edit2, Trash2 } from "lucide-react";
 
 interface Token {
   id: string;
@@ -36,22 +36,33 @@ const TokenManagement = () => {
     Status: "Ativo",
   });
 
-  const { data: tokens } = useQuery({
+  const { data: tokens, isLoading } = useQuery({
     queryKey: ["tokens"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("Token_Whats")
         .select("*");
-      if (error) throw error;
-      return data;
+      
+      if (error) {
+        console.error("Error fetching tokens:", error);
+        throw error;
+      }
+      
+      return data as Token[];
     },
   });
 
   const createToken = useMutation({
-    mutationFn: async (token: Omit<Token, "id">) => {
+    mutationFn: async (tokenData: Omit<Token, "id">) => {
       const { error } = await supabase
         .from("Token_Whats")
-        .insert([token]);
+        .insert([{
+          NomedoChip: tokenData.NomedoChip,
+          "limite por dia": Number(tokenData["limite por dia"]),
+          Telefone: Number(tokenData.Telefone),
+          cliente: tokenData.cliente,
+          Status: tokenData.Status,
+        }]);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -157,6 +168,10 @@ const TokenManagement = () => {
     setEditingToken(null);
   };
 
+  if (isLoading) {
+    return <div>Carregando...</div>;
+  }
+
   return (
     <main className="container mx-auto px-4 py-8">
       <h1 className="text-4xl font-bold mb-8">Cadastro de Tokens</h1>
@@ -253,14 +268,14 @@ const TokenManagement = () => {
                       size="icon"
                       onClick={() => handleEdit(token)}
                     >
-                      <edit className="h-4 w-4" />
+                      <Edit2 className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="outline"
                       size="icon"
                       onClick={() => deleteToken.mutate(token.id)}
                     >
-                      <trash className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </TableCell>
