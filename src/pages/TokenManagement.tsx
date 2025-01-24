@@ -17,11 +17,11 @@ import { Edit2, Trash2 } from "lucide-react";
 
 interface Token {
   id: string;
-  NomedoChip: string;
-  "limite por dia": number;
-  Telefone: number;
-  cliente: string;
-  Status: string;
+  NomedoChip: string | null;
+  "limite por dia": number | null;
+  Telefone: number | null;
+  cliente: string | null;
+  Status: string | null;
 }
 
 const TokenManagement = () => {
@@ -56,13 +56,13 @@ const TokenManagement = () => {
     mutationFn: async (tokenData: Omit<Token, "id">) => {
       const { error } = await supabase
         .from("Token_Whats")
-        .insert([{
+        .insert({
           NomedoChip: tokenData.NomedoChip,
-          "limite por dia": Number(tokenData["limite por dia"]),
-          Telefone: Number(tokenData.Telefone),
+          "limite por dia": tokenData["limite por dia"],
+          Telefone: tokenData.Telefone,
           cliente: tokenData.cliente,
           Status: tokenData.Status,
-        }]);
+        });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -131,11 +131,11 @@ const TokenManagement = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const tokenData = {
-      NomedoChip: formData.NomedoChip,
-      "limite por dia": Number(formData.limitePorDia),
-      Telefone: Number(formData.Telefone),
-      cliente: formData.cliente,
-      Status: formData.Status,
+      NomedoChip: formData.NomedoChip || null,
+      "limite por dia": formData.limitePorDia ? Number(formData.limitePorDia) : null,
+      Telefone: formData.Telefone ? Number(formData.Telefone) : null,
+      cliente: formData.cliente || null,
+      Status: formData.Status || null,
     };
 
     if (editingToken) {
@@ -148,11 +148,11 @@ const TokenManagement = () => {
   const handleEdit = (token: Token) => {
     setEditingToken(token);
     setFormData({
-      NomedoChip: token.NomedoChip,
-      limitePorDia: token["limite por dia"].toString(),
-      Telefone: token.Telefone.toString(),
-      cliente: token.cliente,
-      Status: token.Status,
+      NomedoChip: token.NomedoChip || "",
+      limitePorDia: token["limite por dia"]?.toString() || "",
+      Telefone: token.Telefone?.toString() || "",
+      cliente: token.cliente || "",
+      Status: token.Status || "Ativo",
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
