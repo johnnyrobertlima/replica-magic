@@ -105,6 +105,39 @@ export type Database = {
         }
         Relationships: []
       }
+      Clientes_Whats: {
+        Row: {
+          created_at: string | null
+          enviar_domingo: boolean | null
+          enviar_sabado: boolean | null
+          horario_final: string
+          horario_inicial: string
+          id: string
+          nome: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          enviar_domingo?: boolean | null
+          enviar_sabado?: boolean | null
+          horario_final: string
+          horario_inicial: string
+          id?: string
+          nome: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          enviar_domingo?: boolean | null
+          enviar_sabado?: boolean | null
+          horario_final?: string
+          horario_inicial?: string
+          id?: string
+          nome?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           created_at: string | null

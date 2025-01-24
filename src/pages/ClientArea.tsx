@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare, Key } from "lucide-react";
+import { MessageSquare, Key, UserPlus } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const ClientArea = () => {
@@ -41,6 +41,25 @@ const ClientArea = () => {
             <Link to="/client-area/tokens">
               <Button className="w-full">
                 Gerenciar Tokens
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UserPlus className="h-6 w-6" />
+              Cadastro de Cliente WhatsApp
+            </CardTitle>
+            <CardDescription>
+              Cadastre novos clientes para disparo de WhatsApp
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link to="/client-area/whatsapp-registration">
+              <Button className="w-full">
+                Cadastrar Cliente
               </Button>
             </Link>
           </CardContent>
