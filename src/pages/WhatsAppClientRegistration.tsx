@@ -21,6 +21,7 @@ const formSchema = z.object({
   horario_final: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Formato inválido. Use HH:MM"),
   enviar_sabado: z.boolean().default(false),
   enviar_domingo: z.boolean().default(false),
+  webhook_url: z.string().url("URL inválida").optional().or(z.literal("")),
 });
 
 export default function WhatsAppClientRegistration() {
@@ -33,6 +34,7 @@ export default function WhatsAppClientRegistration() {
     defaultValues: {
       enviar_sabado: false,
       enviar_domingo: false,
+      webhook_url: "",
     },
   });
 
@@ -62,7 +64,6 @@ export default function WhatsAppClientRegistration() {
         description: "O cliente foi adicionado à lista de disparos do WhatsApp.",
       });
 
-      // Reset form and refresh client list
       form.reset();
       queryClient.invalidateQueries({ queryKey: ["whatsapp-clients"] });
     } catch (error) {
@@ -106,6 +107,7 @@ export default function WhatsAppClientRegistration() {
       horario_final: client.horario_final,
       enviar_sabado: client.enviar_sabado,
       enviar_domingo: client.enviar_domingo,
+      webhook_url: client.webhook_url || "",
     });
   };
 
@@ -151,6 +153,24 @@ export default function WhatsAppClientRegistration() {
                 <FormLabel>Horário Final</FormLabel>
                 <FormControl>
                   <Input type="time" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="webhook_url"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>URL do Webhook</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="url" 
+                    placeholder="https://seu-webhook.com/endpoint" 
+                    {...field} 
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -217,6 +237,11 @@ export default function WhatsAppClientRegistration() {
                     {client.enviar_sabado && client.enviar_domingo && " • "}
                     {client.enviar_domingo && "Envia domingo"}
                   </div>
+                  {client.webhook_url && (
+                    <p className="text-sm text-gray-600">
+                      Webhook: {client.webhook_url}
+                    </p>
+                  )}
                 </div>
                 <ActionButtons
                   onEdit={() => handleEdit(client)}
