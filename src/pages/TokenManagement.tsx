@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import {
   Table,
   TableBody,
@@ -54,9 +54,13 @@ const TokenManagement = () => {
 
   const createToken = useMutation({
     mutationFn: async (tokenData: Omit<Token, "id">) => {
+      // Generate a unique ID for the new token
+      const newId = crypto.randomUUID();
+      
       const { error } = await supabase
         .from("Token_Whats")
         .insert({
+          id: newId,
           NomedoChip: tokenData.NomedoChip,
           "limite por dia": tokenData["limite por dia"],
           Telefone: tokenData.Telefone,
