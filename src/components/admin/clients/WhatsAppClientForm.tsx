@@ -16,9 +16,9 @@ export const WhatsAppClientForm = () => {
 
     const formData = new FormData(e.currentTarget);
     const data = {
-      nome: formData.get('nome'),
-      horario_inicial: formData.get('horario_inicial'),
-      horario_final: formData.get('horario_final'),
+      nome: String(formData.get('nome')),
+      horario_inicial: String(formData.get('horario_inicial')),
+      horario_final: String(formData.get('horario_final')),
       enviar_sabado: formData.get('enviar_sabado') === 'on',
       enviar_domingo: formData.get('enviar_domingo') === 'on',
     };
@@ -26,7 +26,7 @@ export const WhatsAppClientForm = () => {
     try {
       const { error } = await supabase
         .from('Clientes_Whats')
-        .insert([data]);
+        .insert(data);
 
       if (error) throw error;
 
