@@ -68,7 +68,7 @@ export function CampaignFormFields({
           </SelectTrigger>
           <SelectContent className="bg-white">
             {clients.map((client) => (
-              <SelectItem key={client.id} value={client.id || ""}>
+              <SelectItem key={client.id} value={client.id}>
                 {client.nome}
               </SelectItem>
             ))}
@@ -85,7 +85,7 @@ export function CampaignFormFields({
           <SelectContent className="bg-white">
             {mailings?.map((mailing) => (
               <SelectItem key={mailing.id} value={mailing.id}>
-                {mailing.nome}
+                {mailing.nome_mailing}
               </SelectItem>
             ))}
           </SelectContent>
