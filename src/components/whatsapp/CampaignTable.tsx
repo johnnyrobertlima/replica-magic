@@ -56,25 +56,15 @@ export function CampaignTable({
       };
 
       // Call our Edge Function to trigger the webhook
-      const response = await fetch(
-        `${process.env.SUPABASE_URL}/functions/v1/trigger-webhook`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
-          },
-          body: JSON.stringify({
-            webhookUrl: client.webhook_url,
-            data: webhookData,
-          }),
-        }
-      );
+      const { data: response, error } = await supabase.functions.invoke('trigger-webhook', {
+        body: {
+          webhookUrl: client.webhook_url,
+          data: webhookData,
+        },
+      });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Falha ao acionar webhook');
+      if (error) {
+        throw error;
       }
 
       toast({

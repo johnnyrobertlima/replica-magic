@@ -224,28 +224,31 @@ export type Database = {
       }
       Disparos: {
         Row: {
-          cidade: string | null
           cliente: string | null
           id: string
+          Mailing: string | null
           msg: string | null
           nome: string | null
           status: string | null
+          Token: string | null
         }
         Insert: {
-          cidade?: string | null
           cliente?: string | null
           id: string
+          Mailing?: string | null
           msg?: string | null
           nome?: string | null
           status?: string | null
+          Token?: string | null
         }
         Update: {
-          cidade?: string | null
           cliente?: string | null
           id?: string
+          Mailing?: string | null
           msg?: string | null
           nome?: string | null
           status?: string | null
+          Token?: string | null
         }
         Relationships: []
       }
@@ -308,6 +311,7 @@ export type Database = {
       }
       mailing_contacts: {
         Row: {
+          Cont_erro: number | null
           created_at: string | null
           email: string | null
           id: string
@@ -317,6 +321,7 @@ export type Database = {
           telefone: string
         }
         Insert: {
+          Cont_erro?: number | null
           created_at?: string | null
           email?: string | null
           id?: string
@@ -326,6 +331,7 @@ export type Database = {
           telefone: string
         }
         Update: {
+          Cont_erro?: number | null
           created_at?: string | null
           email?: string | null
           id?: string
