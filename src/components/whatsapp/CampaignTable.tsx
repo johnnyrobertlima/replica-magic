@@ -55,24 +55,26 @@ export function CampaignTable({
         image_url: campaign.image_url,
       };
 
-      // First try with GET request
-      let response = await fetch(`${client.webhook_url}?${new URLSearchParams(webhookData)}`, {
-        method: 'GET',
-      });
-
-      // If GET fails, try POST as fallback
-      if (!response.ok && response.status === 404) {
-        response = await fetch(client.webhook_url, {
+      // Call our Edge Function to trigger the webhook
+      const response = await fetch(
+        `${process.env.SUPABASE_URL}/functions/v1/trigger-webhook`,
+        {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
           },
-          body: JSON.stringify(webhookData),
-        });
-      }
+          body: JSON.stringify({
+            webhookUrl: client.webhook_url,
+            data: webhookData,
+          }),
+        }
+      );
+
+      const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(`Falha ao acionar webhook: ${response.statusText}`);
+        throw new Error(result.error || 'Falha ao acionar webhook');
       }
 
       toast({
