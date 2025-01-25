@@ -1,10 +1,9 @@
 import { Campaign } from "@/types/campaign";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "@/components/ui/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export const useUpdateCampaign = () => {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -22,7 +21,9 @@ export const useUpdateCampaign = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ title: "Campanha atualizada com sucesso!" });
+      toast({
+        title: "Campanha atualizada com sucesso!"
+      });
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
     },
     onError: (error: Error) => {
