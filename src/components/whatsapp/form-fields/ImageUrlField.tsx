@@ -1,5 +1,5 @@
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ImageUpload } from "@/components/admin/ImageUpload";
 
 interface ImageUrlFieldProps {
   value: string;
@@ -9,12 +9,12 @@ interface ImageUrlFieldProps {
 export function ImageUrlField({ value, onChange }: ImageUrlFieldProps) {
   return (
     <div>
-      <Label htmlFor="imageUrl">URL da Imagem (opcional)</Label>
-      <Input
-        id="imageUrl"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="Cole a URL da imagem"
+      <Label htmlFor="imageUrl">Imagem da Campanha (opcional)</Label>
+      <ImageUpload
+        name="imageUrl"
+        currentImage={value}
+        onUrlChange={onChange}
+        bucket="campaign-images"
       />
     </div>
   );
