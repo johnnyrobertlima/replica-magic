@@ -55,16 +55,24 @@ export function CampaignTable({
         image_url: campaign.image_url,
       };
 
-      const response = await fetch(client.webhook_url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(webhookData),
+      // First try with GET request
+      let response = await fetch(`${client.webhook_url}?${new URLSearchParams(webhookData)}`, {
+        method: 'GET',
       });
 
+      // If GET fails, try POST as fallback
+      if (!response.ok && response.status === 404) {
+        response = await fetch(client.webhook_url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(webhookData),
+        });
+      }
+
       if (!response.ok) {
-        throw new Error('Falha ao acionar webhook');
+        throw new Error(`Falha ao acionar webhook: ${response.statusText}`);
       }
 
       toast({
