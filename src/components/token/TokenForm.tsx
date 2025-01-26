@@ -9,6 +9,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TokenFormData } from "@/types/token";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TokenFormProps {
   formData: TokenFormData;
@@ -25,6 +27,19 @@ export const TokenForm = ({
   isEditing,
   onCancel,
 }: TokenFormProps) => {
+  const { data: clients } = useQuery({
+    queryKey: ["clients-whats"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("Clientes_Whats")
+        .select("id, nome")
+        .order("nome");
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
   return (
     <form onSubmit={onSubmit} className="space-y-4 mb-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -72,12 +87,22 @@ export const TokenForm = ({
 
         <div className="space-y-2">
           <Label htmlFor="cliente">Cliente</Label>
-          <Input
-            id="cliente"
+          <Select
             value={formData.cliente}
-            onChange={(e) => setFormData({ ...formData, cliente: e.target.value })}
+            onValueChange={(value) => setFormData({ ...formData, cliente: value })}
             required
-          />
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o cliente" />
+            </SelectTrigger>
+            <SelectContent>
+              {clients?.map((client) => (
+                <SelectItem key={client.id} value={client.nome}>
+                  {client.nome}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="space-y-2">
