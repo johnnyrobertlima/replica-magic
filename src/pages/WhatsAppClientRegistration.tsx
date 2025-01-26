@@ -78,6 +78,24 @@ export default function WhatsAppClientRegistration() {
 
   const handleDelete = async (id: string) => {
     try {
+      // First, check if there are any campaigns associated with this client
+      const { data: campaigns, error: campaignsError } = await supabase
+        .from("campaigns")
+        .select("id")
+        .eq("client_id", id);
+
+      if (campaignsError) throw campaignsError;
+
+      if (campaigns && campaigns.length > 0) {
+        toast({
+          variant: "destructive",
+          title: "Não é possível excluir o cliente",
+          description: "Existem campanhas associadas a este cliente. Por favor, exclua as campanhas primeiro.",
+        });
+        return;
+      }
+
+      // If no campaigns exist, proceed with deletion
       const { error } = await supabase
         .from("Clientes_Whats")
         .delete()
