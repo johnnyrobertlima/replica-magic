@@ -1,16 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { TokenFormData } from "@/types/token";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { TokenIdField } from "./form-fields/TokenIdField";
+import { ChipNameField } from "./form-fields/ChipNameField";
+import { DailyLimitField } from "./form-fields/DailyLimitField";
+import { PhoneField } from "./form-fields/PhoneField";
+import { ClientSelectField } from "./form-fields/ClientSelectField";
+import { StatusSelectField } from "./form-fields/StatusSelectField";
 
 interface TokenFormProps {
   formData: TokenFormData;
@@ -27,101 +22,38 @@ export const TokenForm = ({
   isEditing,
   onCancel,
 }: TokenFormProps) => {
-  const { data: clients } = useQuery({
-    queryKey: ["clients-whats"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("Clientes_Whats")
-        .select("id, nome")
-        .order("nome");
-      
-      if (error) throw error;
-      return data;
-    },
-  });
-
   return (
     <form onSubmit={onSubmit} className="space-y-4 mb-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="id">ID do Token</Label>
-          <Input
-            id="id"
-            value={formData.id}
-            onChange={(e) => setFormData({ ...formData, id: e.target.value })}
-            required
-          />
-        </div>
+        <TokenIdField
+          value={formData.id}
+          onChange={(value) => setFormData({ ...formData, id: value })}
+        />
 
-        <div className="space-y-2">
-          <Label htmlFor="NomedoChip">Nome do Chip</Label>
-          <Input
-            id="NomedoChip"
-            value={formData.NomedoChip}
-            onChange={(e) => setFormData({ ...formData, NomedoChip: e.target.value })}
-            required
-          />
-        </div>
+        <ChipNameField
+          value={formData.NomedoChip}
+          onChange={(value) => setFormData({ ...formData, NomedoChip: value })}
+        />
 
-        <div className="space-y-2">
-          <Label htmlFor="limitePorDia">Limite por Dia</Label>
-          <Input
-            id="limitePorDia"
-            type="number"
-            value={formData.limitePorDia}
-            onChange={(e) => setFormData({ ...formData, limitePorDia: e.target.value })}
-            required
-          />
-        </div>
+        <DailyLimitField
+          value={formData.limitePorDia}
+          onChange={(value) => setFormData({ ...formData, limitePorDia: value })}
+        />
 
-        <div className="space-y-2">
-          <Label htmlFor="Telefone">Telefone</Label>
-          <Input
-            id="Telefone"
-            type="number"
-            value={formData.Telefone}
-            onChange={(e) => setFormData({ ...formData, Telefone: e.target.value })}
-            required
-          />
-        </div>
+        <PhoneField
+          value={formData.Telefone}
+          onChange={(value) => setFormData({ ...formData, Telefone: value })}
+        />
 
-        <div className="space-y-2">
-          <Label htmlFor="cliente">Cliente</Label>
-          <Select
-            value={formData.cliente}
-            onValueChange={(value) => setFormData({ ...formData, cliente: value })}
-            required
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione o cliente" />
-            </SelectTrigger>
-            <SelectContent>
-              {clients?.map((client) => (
-                <SelectItem key={client.id} value={client.nome}>
-                  {client.nome}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <ClientSelectField
+          value={formData.cliente}
+          onChange={(value) => setFormData({ ...formData, cliente: value })}
+        />
 
-        <div className="space-y-2">
-          <Label htmlFor="Status">Status</Label>
-          <Select
-            value={formData.Status}
-            onValueChange={(value) => setFormData({ ...formData, Status: value })}
-            required
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione o status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Ban">Ban</SelectItem>
-              <SelectItem value="Ativo">Ativo</SelectItem>
-              <SelectItem value="Desativado">Desativado</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <StatusSelectField
+          value={formData.Status}
+          onChange={(value) => setFormData({ ...formData, Status: value })}
+        />
       </div>
 
       <div className="flex gap-2">
