@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import type { Database } from "@/integrations/supabase/types";
+import { useEffect } from "react";
 
 type ClientesWhats = Database["public"]["Tables"]["Clientes_Whats"]["Insert"];
 type ClientesWhatsRow = Database["public"]["Tables"]["Clientes_Whats"]["Row"];
@@ -30,14 +31,28 @@ export const ClientForm = ({ onSubmit, initialData, isEditing, onCancel }: Clien
   const form = useForm<ClientesWhats>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      nome: initialData?.nome || "",
-      horario_inicial: initialData?.horario_inicial || "",
-      horario_final: initialData?.horario_final || "",
-      enviar_sabado: initialData?.enviar_sabado || false,
-      enviar_domingo: initialData?.enviar_domingo || false,
-      webhook_url: initialData?.webhook_url || "",
+      nome: "",
+      horario_inicial: "",
+      horario_final: "",
+      enviar_sabado: false,
+      enviar_domingo: false,
+      webhook_url: "",
     },
   });
+
+  // Reset form with initial data when editing
+  useEffect(() => {
+    if (initialData) {
+      form.reset({
+        nome: initialData.nome,
+        horario_inicial: initialData.horario_inicial,
+        horario_final: initialData.horario_final,
+        enviar_sabado: initialData.enviar_sabado || false,
+        enviar_domingo: initialData.enviar_domingo || false,
+        webhook_url: initialData.webhook_url || "",
+      });
+    }
+  }, [initialData, form]);
 
   return (
     <Form {...form}>
