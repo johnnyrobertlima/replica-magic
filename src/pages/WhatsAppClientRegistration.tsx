@@ -1,43 +1,16 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
-import type { Database } from "@/integrations/supabase/types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ActionButtons } from "@/components/admin/ActionButtons";
-import { Loader2 } from "lucide-react";
+import { ClientForm } from "@/components/whatsapp/client/ClientForm";
+import { ClientList } from "@/components/whatsapp/client/ClientList";
+import type { Database } from "@/integrations/supabase/types";
 
 type ClientesWhats = Database["public"]["Tables"]["Clientes_Whats"]["Insert"];
 
-const formSchema = z.object({
-  nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-  horario_inicial: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Formato inválido. Use HH:MM"),
-  horario_final: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Formato inválido. Use HH:MM"),
-  enviar_sabado: z.boolean().default(false),
-  enviar_domingo: z.boolean().default(false),
-  webhook_url: z.string().url("URL inválida").optional().or(z.literal("")),
-});
-
 export default function WhatsAppClientRegistration() {
   const { toast } = useToast();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   
-  const form = useForm<ClientesWhats>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      enviar_sabado: false,
-      enviar_domingo: false,
-      webhook_url: "",
-    },
-  });
-
   const { data: clients, isLoading } = useQuery({
     queryKey: ["whatsapp-clients"],
     queryFn: async () => {
@@ -51,7 +24,7 @@ export default function WhatsAppClientRegistration() {
     },
   });
 
-  async function onSubmit(values: ClientesWhats) {
+  const handleSubmit = async (values: ClientesWhats) => {
     try {
       const { error } = await supabase
         .from("Clientes_Whats")
@@ -64,7 +37,6 @@ export default function WhatsAppClientRegistration() {
         description: "O cliente foi adicionado à lista de disparos do WhatsApp.",
       });
 
-      form.reset();
       queryClient.invalidateQueries({ queryKey: ["whatsapp-clients"] });
     } catch (error) {
       console.error("Error:", error);
@@ -74,7 +46,7 @@ export default function WhatsAppClientRegistration() {
         description: "Ocorreu um erro ao tentar cadastrar o cliente. Tente novamente.",
       });
     }
-  }
+  };
 
   const handleDelete = async (id: string) => {
     try {
@@ -119,156 +91,24 @@ export default function WhatsAppClientRegistration() {
   };
 
   const handleEdit = (client: any) => {
-    form.reset({
-      nome: client.nome,
-      horario_inicial: client.horario_inicial,
-      horario_final: client.horario_final,
-      enviar_sabado: client.enviar_sabado,
-      enviar_domingo: client.enviar_domingo,
-      webhook_url: client.webhook_url || "",
-    });
+    // TODO: Implement edit functionality
+    console.log("Edit client:", client);
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Cadastro de Cliente para Disparo de WhatsApp</h1>
       
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-w-md">
-          <FormField
-            control={form.control}
-            name="nome"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nome do Cliente</FormLabel>
-                <FormControl>
-                  <Input placeholder="Digite o nome do cliente" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="horario_inicial"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Horário Inicial</FormLabel>
-                <FormControl>
-                  <Input type="time" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="horario_final"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Horário Final</FormLabel>
-                <FormControl>
-                  <Input type="time" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="webhook_url"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>URL do Webhook</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="url" 
-                    placeholder="https://seu-webhook.com/endpoint" 
-                    {...field} 
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="enviar_sabado"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <FormLabel>Pode enviar no Sábado</FormLabel>
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="enviar_domingo"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <FormLabel>Pode enviar no Domingo</FormLabel>
-              </FormItem>
-            )}
-          />
-
-          <Button type="submit">Cadastrar Cliente</Button>
-        </form>
-      </Form>
+      <ClientForm onSubmit={handleSubmit} />
 
       <div className="mt-12">
         <h2 className="text-xl font-semibold mb-4">Clientes Cadastrados</h2>
-        
-        {isLoading ? (
-          <div className="flex items-center justify-center h-32">
-            <Loader2 className="h-8 w-8 animate-spin" />
-          </div>
-        ) : (
-          <div className="grid gap-4">
-            {clients?.map((client) => (
-              <div
-                key={client.id}
-                className="p-4 border rounded-lg bg-white shadow-sm flex justify-between items-center"
-              >
-                <div>
-                  <h3 className="font-medium">{client.nome}</h3>
-                  <p className="text-sm text-gray-600">
-                    Horário: {client.horario_inicial} - {client.horario_final}
-                  </p>
-                  <div className="text-sm text-gray-600">
-                    {client.enviar_sabado && "Envia sábado"}
-                    {client.enviar_sabado && client.enviar_domingo && " • "}
-                    {client.enviar_domingo && "Envia domingo"}
-                  </div>
-                  {client.webhook_url && (
-                    <p className="text-sm text-gray-600">
-                      Webhook: {client.webhook_url}
-                    </p>
-                  )}
-                </div>
-                <ActionButtons
-                  onEdit={() => handleEdit(client)}
-                  onDelete={() => handleDelete(client.id)}
-                />
-              </div>
-            ))}
-          </div>
-        )}
+        <ClientList 
+          clients={clients}
+          isLoading={isLoading}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
       </div>
     </div>
   );
