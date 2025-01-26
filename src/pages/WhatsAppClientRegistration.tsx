@@ -7,10 +7,12 @@ import { ClientList } from "@/components/whatsapp/client/ClientList";
 import type { Database } from "@/integrations/supabase/types";
 
 type ClientesWhats = Database["public"]["Tables"]["Clientes_Whats"]["Insert"];
+type ClientesWhatsRow = Database["public"]["Tables"]["Clientes_Whats"]["Row"];
 
 export default function WhatsAppClientRegistration() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [editingClient, setEditingClient] = useState<ClientesWhatsRow | null>(null);
   
   const { data: clients, isLoading } = useQuery({
     queryKey: ["whatsapp-clients"],
@@ -27,31 +29,48 @@ export default function WhatsAppClientRegistration() {
 
   const handleSubmit = async (values: ClientesWhats) => {
     try {
-      const { error } = await supabase
-        .from("Clientes_Whats")
-        .insert(values);
+      if (editingClient) {
+        // Update existing client
+        const { error } = await supabase
+          .from("Clientes_Whats")
+          .update(values)
+          .eq("id", editingClient.id);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        title: "Cliente cadastrado com sucesso!",
-        description: "O cliente foi adicionado à lista de disparos do WhatsApp.",
-      });
+        toast({
+          title: "Cliente atualizado com sucesso!",
+          description: "As alterações foram salvas.",
+        });
+
+        setEditingClient(null);
+      } else {
+        // Create new client
+        const { error } = await supabase
+          .from("Clientes_Whats")
+          .insert(values);
+
+        if (error) throw error;
+
+        toast({
+          title: "Cliente cadastrado com sucesso!",
+          description: "O cliente foi adicionado à lista de disparos do WhatsApp.",
+        });
+      }
 
       queryClient.invalidateQueries({ queryKey: ["whatsapp-clients"] });
     } catch (error) {
       console.error("Error:", error);
       toast({
         variant: "destructive",
-        title: "Erro ao cadastrar cliente",
-        description: "Ocorreu um erro ao tentar cadastrar o cliente. Tente novamente.",
+        title: editingClient ? "Erro ao atualizar cliente" : "Erro ao cadastrar cliente",
+        description: "Ocorreu um erro. Tente novamente.",
       });
     }
   };
 
   const handleDelete = async (id: string) => {
     try {
-      // First, check if there are any campaigns associated with this client
       const { data: campaigns, error: campaignsError } = await supabase
         .from("campaigns")
         .select("id")
@@ -68,7 +87,6 @@ export default function WhatsAppClientRegistration() {
         return;
       }
 
-      // If no campaigns exist, proceed with deletion
       const { error } = await supabase
         .from("Clientes_Whats")
         .delete()
@@ -91,16 +109,24 @@ export default function WhatsAppClientRegistration() {
     }
   };
 
-  const handleEdit = (client: any) => {
-    // TODO: Implement edit functionality
-    console.log("Edit client:", client);
+  const handleEdit = (client: ClientesWhatsRow) => {
+    setEditingClient(client);
+  };
+
+  const handleCancel = () => {
+    setEditingClient(null);
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Cadastro de Cliente para Disparo de WhatsApp</h1>
       
-      <ClientForm onSubmit={handleSubmit} />
+      <ClientForm 
+        onSubmit={handleSubmit}
+        initialData={editingClient}
+        isEditing={!!editingClient}
+        onCancel={handleCancel}
+      />
 
       <div className="mt-12">
         <h2 className="text-xl font-semibold mb-4">Clientes Cadastrados</h2>
