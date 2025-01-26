@@ -8,6 +8,7 @@ import * as z from "zod";
 import type { Database } from "@/integrations/supabase/types";
 
 type ClientesWhats = Database["public"]["Tables"]["Clientes_Whats"]["Insert"];
+type ClientesWhatsRow = Database["public"]["Tables"]["Clientes_Whats"]["Row"];
 
 const formSchema = z.object({
   nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
@@ -20,15 +21,21 @@ const formSchema = z.object({
 
 interface ClientFormProps {
   onSubmit: (values: ClientesWhats) => Promise<void>;
+  initialData?: ClientesWhatsRow;
+  isEditing?: boolean;
+  onCancel?: () => void;
 }
 
-export const ClientForm = ({ onSubmit }: ClientFormProps) => {
+export const ClientForm = ({ onSubmit, initialData, isEditing, onCancel }: ClientFormProps) => {
   const form = useForm<ClientesWhats>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      enviar_sabado: false,
-      enviar_domingo: false,
-      webhook_url: "",
+      nome: initialData?.nome || "",
+      horario_inicial: initialData?.horario_inicial || "",
+      horario_final: initialData?.horario_final || "",
+      enviar_sabado: initialData?.enviar_sabado || false,
+      enviar_domingo: initialData?.enviar_domingo || false,
+      webhook_url: initialData?.webhook_url || "",
     },
   });
 
@@ -127,7 +134,14 @@ export const ClientForm = ({ onSubmit }: ClientFormProps) => {
           )}
         />
 
-        <Button type="submit">Cadastrar Cliente</Button>
+        <div className="flex gap-2">
+          <Button type="submit">{isEditing ? "Salvar Alterações" : "Cadastrar Cliente"}</Button>
+          {isEditing && onCancel && (
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancelar
+            </Button>
+          )}
+        </div>
       </form>
     </Form>
   );
