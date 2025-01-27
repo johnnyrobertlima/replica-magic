@@ -2,9 +2,12 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import Index from "./pages/Index";
+import ClientLogin from "./pages/ClientLogin";
 import { AdminLayout } from "./pages/admin/layout";
 import { AdminLogin } from "./pages/admin/login";
 import { AdminDashboard } from "./pages/admin/dashboard";
@@ -23,6 +26,36 @@ import MailingRegistration from "./pages/MailingRegistration";
 
 const queryClient = new QueryClient();
 
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const location = useLocation();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+    };
+
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  if (isAuthenticated === null) {
+    return null; // or a loading spinner
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/client-login" state={{ from: location }} replace />;
+  }
+
+  return <>{children}</>;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -32,11 +65,16 @@ const App = () => (
         <GoogleAnalytics />
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/client-area" element={<ClientArea />} />
-          <Route path="/client-area/whatsapp" element={<WhatsAppService />} />
-          <Route path="/client-area/tokens" element={<TokenManagement />} />
-          <Route path="/client-area/whatsapp-registration" element={<WhatsAppClientRegistration />} />
-          <Route path="/client-area/mailing-registration" element={<MailingRegistration />} />
+          <Route path="/client-login" element={<ClientLogin />} />
+          
+          {/* Protected Client Routes */}
+          <Route path="/client-area" element={<ProtectedRoute><ClientArea /></ProtectedRoute>} />
+          <Route path="/client-area/whatsapp" element={<ProtectedRoute><WhatsAppService /></ProtectedRoute>} />
+          <Route path="/client-area/tokens" element={<ProtectedRoute><TokenManagement /></ProtectedRoute>} />
+          <Route path="/client-area/whatsapp-registration" element={<ProtectedRoute><WhatsAppClientRegistration /></ProtectedRoute>} />
+          <Route path="/client-area/mailing-registration" element={<ProtectedRoute><MailingRegistration /></ProtectedRoute>} />
+          
+          {/* Admin Routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminLayout><Outlet /></AdminLayout>}>
             <Route index element={<AdminDashboard />} />

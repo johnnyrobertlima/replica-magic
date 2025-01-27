@@ -225,6 +225,7 @@ export type Database = {
       Disparos: {
         Row: {
           cliente: string | null
+          Data: string | null
           id: string
           Mailing: string | null
           msg: string | null
@@ -234,6 +235,7 @@ export type Database = {
         }
         Insert: {
           cliente?: string | null
+          Data?: string | null
           id: string
           Mailing?: string | null
           msg?: string | null
@@ -243,6 +245,7 @@ export type Database = {
         }
         Update: {
           cliente?: string | null
+          Data?: string | null
           id?: string
           Mailing?: string | null
           msg?: string | null
@@ -349,6 +352,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      maior_valor: {
+        Row: {
+          atualizado_em: string | null
+          id: number
+          valor: number
+        }
+        Insert: {
+          atualizado_em?: string | null
+          id?: number
+          valor: number
+        }
+        Update: {
+          atualizado_em?: string | null
+          id?: number
+          valor?: number
+        }
+        Relationships: []
       }
       seo_settings: {
         Row: {
@@ -458,27 +479,33 @@ export type Database = {
       Token_Whats: {
         Row: {
           cliente: string | null
+          contador: number | null
           id: string
           "limite por dia": number | null
           NomedoChip: string | null
           Status: string | null
           Telefone: number | null
+          Ultima_utilizacao: string | null
         }
         Insert: {
           cliente?: string | null
+          contador?: number | null
           id: string
           "limite por dia"?: number | null
           NomedoChip?: string | null
           Status?: string | null
           Telefone?: number | null
+          Ultima_utilizacao?: string | null
         }
         Update: {
           cliente?: string | null
+          contador?: number | null
           id?: string
           "limite por dia"?: number | null
           NomedoChip?: string | null
           Status?: string | null
           Telefone?: number | null
+          Ultima_utilizacao?: string | null
         }
         Relationships: []
       }
