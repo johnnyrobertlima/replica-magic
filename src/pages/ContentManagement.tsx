@@ -32,6 +32,30 @@ import {
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8"];
 
+const chartConfig = {
+  reach: {
+    theme: {
+      light: "#8884d8",
+      dark: "#8884d8",
+    },
+    label: "Alcance",
+  },
+  engajamento: {
+    theme: {
+      light: "#82ca9d",
+      dark: "#82ca9d",
+    },
+    label: "Engajamento Médio",
+  },
+  impressoes: {
+    theme: {
+      light: "#0088FE",
+      dark: "#0088FE",
+    },
+    label: "Impressões",
+  },
+};
+
 const ContentManagement = () => {
   const { data: insights, isLoading } = useQuery({
     queryKey: ["social-insights"],
@@ -101,7 +125,7 @@ const ContentManagement = () => {
               <CardTitle>Alcance ao Longo do Tempo</CardTitle>
             </CardHeader>
             <CardContent className="h-[400px]">
-              <ChartContainer>
+              <ChartContainer config={chartConfig}>
                 <LineChart data={reachData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
@@ -124,7 +148,7 @@ const ContentManagement = () => {
               <CardTitle>Engajamento Médio por Canal</CardTitle>
             </CardHeader>
             <CardContent className="h-[400px]">
-              <ChartContainer>
+              <ChartContainer config={chartConfig}>
                 <BarChart data={engagementData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="canal" />
@@ -146,7 +170,7 @@ const ContentManagement = () => {
               <CardTitle>Distribuição de Impressões por Cliente</CardTitle>
             </CardHeader>
             <CardContent className="h-[400px]">
-              <ChartContainer>
+              <ChartContainer config={chartConfig}>
                 <PieChart>
                   <Pie
                     data={impressionsData}
