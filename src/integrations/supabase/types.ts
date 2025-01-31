@@ -9,6 +9,90 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ADs: {
+        Row: {
+          account_id: string | null
+          action_values_json: Json | null
+          actions_json: Json | null
+          ad_id: string | null
+          ad_name: string | null
+          adset_id: string | null
+          adset_name: string | null
+          campaign_id: string | null
+          campaign_name: string | null
+          clicks: number | null
+          conversion_values_json: Json | null
+          cpc: number | null
+          cpp: number | null
+          ctr: number | null
+          date_start: string | null
+          date_stop: string | null
+          frequency: number | null
+          impressions: number | null
+          inline_link_clicks: number | null
+          inline_post_engagement: number | null
+          objective: string | null
+          optimization_goal: string | null
+          reach: number | null
+          spend: number | null
+          unique_actions_json: Json | null
+        }
+        Insert: {
+          account_id?: string | null
+          action_values_json?: Json | null
+          actions_json?: Json | null
+          ad_id?: string | null
+          ad_name?: string | null
+          adset_id?: string | null
+          adset_name?: string | null
+          campaign_id?: string | null
+          campaign_name?: string | null
+          clicks?: number | null
+          conversion_values_json?: Json | null
+          cpc?: number | null
+          cpp?: number | null
+          ctr?: number | null
+          date_start?: string | null
+          date_stop?: string | null
+          frequency?: number | null
+          impressions?: number | null
+          inline_link_clicks?: number | null
+          inline_post_engagement?: number | null
+          objective?: string | null
+          optimization_goal?: string | null
+          reach?: number | null
+          spend?: number | null
+          unique_actions_json?: Json | null
+        }
+        Update: {
+          account_id?: string | null
+          action_values_json?: Json | null
+          actions_json?: Json | null
+          ad_id?: string | null
+          ad_name?: string | null
+          adset_id?: string | null
+          adset_name?: string | null
+          campaign_id?: string | null
+          campaign_name?: string | null
+          clicks?: number | null
+          conversion_values_json?: Json | null
+          cpc?: number | null
+          cpp?: number | null
+          ctr?: number | null
+          date_start?: string | null
+          date_stop?: string | null
+          frequency?: number | null
+          impressions?: number | null
+          inline_link_clicks?: number | null
+          inline_post_engagement?: number | null
+          objective?: string | null
+          optimization_goal?: string | null
+          reach?: number | null
+          spend?: number | null
+          unique_actions_json?: Json | null
+        }
+        Relationships: []
+      }
       banners: {
         Row: {
           button_link: string | null
@@ -48,6 +132,267 @@ export type Database = {
           title?: string
           updated_at?: string | null
           youtube_url?: string | null
+        }
+        Relationships: []
+      }
+      BLUEBAY_ESTOQUE: {
+        Row: {
+          COMPRADO: number | null
+          DISPONIVEL: number | null
+          FILIAL: number
+          FISICO: number | null
+          ITEM_CODIGO: string
+          LIMITE: number | null
+          LOCAL: number | null
+          MATRIZ: number
+          RESERVADO: number | null
+        }
+        Insert: {
+          COMPRADO?: number | null
+          DISPONIVEL?: number | null
+          FILIAL: number
+          FISICO?: number | null
+          ITEM_CODIGO: string
+          LIMITE?: number | null
+          LOCAL?: number | null
+          MATRIZ: number
+          RESERVADO?: number | null
+        }
+        Update: {
+          COMPRADO?: number | null
+          DISPONIVEL?: number | null
+          FILIAL?: number
+          FISICO?: number | null
+          ITEM_CODIGO?: string
+          LIMITE?: number | null
+          LOCAL?: number | null
+          MATRIZ?: number
+          RESERVADO?: number | null
+        }
+        Relationships: []
+      }
+      BLUEBAY_FATURAMENTO: {
+        Row: {
+          DATA_EMISSAO: string | null
+          FILIAL: number
+          ID_EF_DOCFISCAL: number
+          ID_EF_DOCFISCAL_ITEM: number
+          ITEM_CODIGO: string | null
+          MATRIZ: number
+          MPED_NUMORDEM: number | null
+          NOTA: string | null
+          PED_ANOBASE: number | null
+          PED_NUMPEDIDO: string | null
+          PES_CODIGO: number | null
+          QUANTIDADE: number | null
+          STATUS: string | null
+          TIPO: string | null
+          TRANSACAO: number | null
+          VALOR_DESCONTO: number | null
+          VALOR_NOTA: number | null
+          VALOR_UNITARIO: number | null
+        }
+        Insert: {
+          DATA_EMISSAO?: string | null
+          FILIAL: number
+          ID_EF_DOCFISCAL: number
+          ID_EF_DOCFISCAL_ITEM: number
+          ITEM_CODIGO?: string | null
+          MATRIZ: number
+          MPED_NUMORDEM?: number | null
+          NOTA?: string | null
+          PED_ANOBASE?: number | null
+          PED_NUMPEDIDO?: string | null
+          PES_CODIGO?: number | null
+          QUANTIDADE?: number | null
+          STATUS?: string | null
+          TIPO?: string | null
+          TRANSACAO?: number | null
+          VALOR_DESCONTO?: number | null
+          VALOR_NOTA?: number | null
+          VALOR_UNITARIO?: number | null
+        }
+        Update: {
+          DATA_EMISSAO?: string | null
+          FILIAL?: number
+          ID_EF_DOCFISCAL?: number
+          ID_EF_DOCFISCAL_ITEM?: number
+          ITEM_CODIGO?: string | null
+          MATRIZ?: number
+          MPED_NUMORDEM?: number | null
+          NOTA?: string | null
+          PED_ANOBASE?: number | null
+          PED_NUMPEDIDO?: string | null
+          PES_CODIGO?: number | null
+          QUANTIDADE?: number | null
+          STATUS?: string | null
+          TIPO?: string | null
+          TRANSACAO?: number | null
+          VALOR_DESCONTO?: number | null
+          VALOR_NOTA?: number | null
+          VALOR_UNITARIO?: number | null
+        }
+        Relationships: []
+      }
+      BLUEBAY_ITEM: {
+        Row: {
+          CODIGOAUX: string | null
+          DESCRICAO: string | null
+          FILIAL: number
+          GRU_CODIGO: string | null
+          GRU_DESCRICAO: string | null
+          ITEM_CODIGO: string
+          MATRIZ: number
+        }
+        Insert: {
+          CODIGOAUX?: string | null
+          DESCRICAO?: string | null
+          FILIAL: number
+          GRU_CODIGO?: string | null
+          GRU_DESCRICAO?: string | null
+          ITEM_CODIGO: string
+          MATRIZ: number
+        }
+        Update: {
+          CODIGOAUX?: string | null
+          DESCRICAO?: string | null
+          FILIAL?: number
+          GRU_CODIGO?: string | null
+          GRU_DESCRICAO?: string | null
+          ITEM_CODIGO?: string
+          MATRIZ?: number
+        }
+        Relationships: []
+      }
+      BLUEBAY_PEDIDO: {
+        Row: {
+          CENTROCUSTO: string | null
+          DATA_PEDIDO: string | null
+          FILIAL: number
+          ITEM_CODIGO: string | null
+          MATRIZ: number
+          MPED_NUMORDEM: number | null
+          PED_ANOBASE: number
+          PED_NUMPEDIDO: string
+          PEDIDO: string | null
+          PEDIDO_CLIENTE: string | null
+          PEDIDO_OUTRO: string | null
+          PES_CODIGO: number | null
+          QTDE_ENTREGUE: number | null
+          QTDE_PEDIDA: number | null
+          QTDE_SALDO: number | null
+          REPRESENTANTE: number | null
+          STATUS: string | null
+        }
+        Insert: {
+          CENTROCUSTO?: string | null
+          DATA_PEDIDO?: string | null
+          FILIAL: number
+          ITEM_CODIGO?: string | null
+          MATRIZ: number
+          MPED_NUMORDEM?: number | null
+          PED_ANOBASE: number
+          PED_NUMPEDIDO: string
+          PEDIDO?: string | null
+          PEDIDO_CLIENTE?: string | null
+          PEDIDO_OUTRO?: string | null
+          PES_CODIGO?: number | null
+          QTDE_ENTREGUE?: number | null
+          QTDE_PEDIDA?: number | null
+          QTDE_SALDO?: number | null
+          REPRESENTANTE?: number | null
+          STATUS?: string | null
+        }
+        Update: {
+          CENTROCUSTO?: string | null
+          DATA_PEDIDO?: string | null
+          FILIAL?: number
+          ITEM_CODIGO?: string | null
+          MATRIZ?: number
+          MPED_NUMORDEM?: number | null
+          PED_ANOBASE?: number
+          PED_NUMPEDIDO?: string
+          PEDIDO?: string | null
+          PEDIDO_CLIENTE?: string | null
+          PEDIDO_OUTRO?: string | null
+          PES_CODIGO?: number | null
+          QTDE_ENTREGUE?: number | null
+          QTDE_PEDIDA?: number | null
+          QTDE_SALDO?: number | null
+          REPRESENTANTE?: number | null
+          STATUS?: string | null
+        }
+        Relationships: []
+      }
+      BLUEBAY_PESSOA: {
+        Row: {
+          APELIDO: string | null
+          BAIRRO: string | null
+          CATEGORIA: string | null
+          CEP: string | null
+          CIDADE: string | null
+          CNPJCPF: string | null
+          COMPLEMENTO: string | null
+          DATACADASTRO: string | null
+          EMAIL: string | null
+          ENDERECO: string | null
+          INSCRICAO_ESTADUAL: string | null
+          NOME_CATEGORIA: string | null
+          NUMERO: string | null
+          PES_CODIGO: number
+          RAZAOSOCIAL: string | null
+          TELEFONE: string | null
+          UF: string | null
+        }
+        Insert: {
+          APELIDO?: string | null
+          BAIRRO?: string | null
+          CATEGORIA?: string | null
+          CEP?: string | null
+          CIDADE?: string | null
+          CNPJCPF?: string | null
+          COMPLEMENTO?: string | null
+          DATACADASTRO?: string | null
+          EMAIL?: string | null
+          ENDERECO?: string | null
+          INSCRICAO_ESTADUAL?: string | null
+          NOME_CATEGORIA?: string | null
+          NUMERO?: string | null
+          PES_CODIGO: number
+          RAZAOSOCIAL?: string | null
+          TELEFONE?: string | null
+          UF?: string | null
+        }
+        Update: {
+          APELIDO?: string | null
+          BAIRRO?: string | null
+          CATEGORIA?: string | null
+          CEP?: string | null
+          CIDADE?: string | null
+          CNPJCPF?: string | null
+          COMPLEMENTO?: string | null
+          DATACADASTRO?: string | null
+          EMAIL?: string | null
+          ENDERECO?: string | null
+          INSCRICAO_ESTADUAL?: string | null
+          NOME_CATEGORIA?: string | null
+          NUMERO?: string | null
+          PES_CODIGO?: number
+          RAZAOSOCIAL?: string | null
+          TELEFONE?: string | null
+          UF?: string | null
+        }
+        Relationships: []
+      }
+      BLUEBAY_REPRESENTANTE: {
+        Row: {
+          PES_CODIGO: number
+        }
+        Insert: {
+          PES_CODIGO: number
+        }
+        Update: {
+          PES_CODIGO?: number
         }
         Relationships: []
       }
@@ -255,6 +600,123 @@ export type Database = {
         }
         Relationships: []
       }
+      insights_social: {
+        Row: {
+          Canal: string
+          clicks: number | null
+          Cliente: string
+          created_time: string | null
+          creative_id: string | null
+          date_start: string | null
+          date_stop: string | null
+          effective_object_story_id: string | null
+          follows: number | null
+          id: string | null
+          ig_reels_avg_watch_time: number | null
+          ig_reels_video_view_total_time: number | null
+          impressions: number | null
+          likes: number | null
+          media_url: string | null
+          message: string | null
+          permalink: string | null
+          permalink_url: string | null
+          post_clicks: number | null
+          post_id: string
+          post_impressions: number | null
+          post_impressions_organic: number | null
+          post_impressions_paid: number | null
+          post_reactions_like_total: number | null
+          post_video_views: number | null
+          post_video_views_organic: number | null
+          post_video_views_paid: number | null
+          profile_visits: number | null
+          reach: number | null
+          saved: number | null
+          shares: number | null
+          spend: number | null
+          status_type: string | null
+          total_comments: number | null
+          total_interactions: number | null
+          views: number | null
+        }
+        Insert: {
+          Canal: string
+          clicks?: number | null
+          Cliente: string
+          created_time?: string | null
+          creative_id?: string | null
+          date_start?: string | null
+          date_stop?: string | null
+          effective_object_story_id?: string | null
+          follows?: number | null
+          id?: string | null
+          ig_reels_avg_watch_time?: number | null
+          ig_reels_video_view_total_time?: number | null
+          impressions?: number | null
+          likes?: number | null
+          media_url?: string | null
+          message?: string | null
+          permalink?: string | null
+          permalink_url?: string | null
+          post_clicks?: number | null
+          post_id: string
+          post_impressions?: number | null
+          post_impressions_organic?: number | null
+          post_impressions_paid?: number | null
+          post_reactions_like_total?: number | null
+          post_video_views?: number | null
+          post_video_views_organic?: number | null
+          post_video_views_paid?: number | null
+          profile_visits?: number | null
+          reach?: number | null
+          saved?: number | null
+          shares?: number | null
+          spend?: number | null
+          status_type?: string | null
+          total_comments?: number | null
+          total_interactions?: number | null
+          views?: number | null
+        }
+        Update: {
+          Canal?: string
+          clicks?: number | null
+          Cliente?: string
+          created_time?: string | null
+          creative_id?: string | null
+          date_start?: string | null
+          date_stop?: string | null
+          effective_object_story_id?: string | null
+          follows?: number | null
+          id?: string | null
+          ig_reels_avg_watch_time?: number | null
+          ig_reels_video_view_total_time?: number | null
+          impressions?: number | null
+          likes?: number | null
+          media_url?: string | null
+          message?: string | null
+          permalink?: string | null
+          permalink_url?: string | null
+          post_clicks?: number | null
+          post_id?: string
+          post_impressions?: number | null
+          post_impressions_organic?: number | null
+          post_impressions_paid?: number | null
+          post_reactions_like_total?: number | null
+          post_video_views?: number | null
+          post_video_views_organic?: number | null
+          post_video_views_paid?: number | null
+          profile_visits?: number | null
+          reach?: number | null
+          saved?: number | null
+          shares?: number | null
+          spend?: number | null
+          status_type?: string | null
+          total_comments?: number | null
+          total_interactions?: number | null
+          views?: number | null
+        }
+        Relationships: []
+      }
       logos: {
         Row: {
           created_at: string | null
@@ -368,6 +830,24 @@ export type Database = {
           atualizado_em?: string | null
           id?: number
           valor?: number
+        }
+        Relationships: []
+      }
+      Seguidores_Clientes: {
+        Row: {
+          cliente: string
+          data: string
+          seguidores: number
+        }
+        Insert: {
+          cliente: string
+          data: string
+          seguidores: number
+        }
+        Update: {
+          cliente?: string
+          data?: string
+          seguidores?: number
         }
         Relationships: []
       }

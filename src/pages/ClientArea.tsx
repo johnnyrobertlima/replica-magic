@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare, Key, UserPlus, Mail } from "lucide-react";
+import { MessageSquare, Key, UserPlus, Mail, Database } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const ClientArea = () => {
@@ -79,6 +79,25 @@ const ClientArea = () => {
             <Link to="/client-area/mailing-registration">
               <Button className="w-full">
                 Cadastrar Mailing
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Database className="h-6 w-6" />
+              Gestão de Conteúdo
+            </CardTitle>
+            <CardDescription>
+              Visualize relatórios e insights das suas redes sociais
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link to="/client-area/content-management">
+              <Button className="w-full">
+                Ver Relatórios
               </Button>
             </Link>
           </CardContent>
