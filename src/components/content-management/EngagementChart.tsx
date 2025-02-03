@@ -8,7 +8,7 @@ import { BarChart, CartesianGrid, XAxis, YAxis, Legend, Bar } from "recharts";
 
 interface EngagementChartProps {
   data: Array<{
-    canal: string;
+    Canal: string;  // Changed from canal to Canal
     engajamento: number;
     count: number;
   }>;
@@ -25,7 +25,7 @@ export const EngagementChart = ({ data, chartConfig }: EngagementChartProps) => 
         <ChartContainer config={chartConfig}>
           <BarChart data={data}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="canal" />
+            <XAxis dataKey="Canal" />
             <YAxis />
             <ChartTooltip content={<ChartTooltipContent />} />
             <Legend />

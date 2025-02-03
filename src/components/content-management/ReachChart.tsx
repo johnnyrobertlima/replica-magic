@@ -10,7 +10,7 @@ interface ReachChartProps {
   data: Array<{
     date: string;
     reach: number;
-    canal: string;
+    Canal: string;  // Changed from canal to Canal
   }>;
   chartConfig: any;
 }
