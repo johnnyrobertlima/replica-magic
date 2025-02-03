@@ -143,9 +143,10 @@ export type Database = {
           FISICO: number | null
           ITEM_CODIGO: string
           LIMITE: number | null
-          LOCAL: number | null
+          LOCAL: number
           MATRIZ: number
           RESERVADO: number | null
+          SUBLOCAL: string
         }
         Insert: {
           COMPRADO?: number | null
@@ -154,9 +155,10 @@ export type Database = {
           FISICO?: number | null
           ITEM_CODIGO: string
           LIMITE?: number | null
-          LOCAL?: number | null
+          LOCAL: number
           MATRIZ: number
           RESERVADO?: number | null
+          SUBLOCAL: string
         }
         Update: {
           COMPRADO?: number | null
@@ -165,9 +167,10 @@ export type Database = {
           FISICO?: number | null
           ITEM_CODIGO?: string
           LIMITE?: number | null
-          LOCAL?: number | null
+          LOCAL?: number
           MATRIZ?: number
           RESERVADO?: number | null
+          SUBLOCAL?: string
         }
         Relationships: []
       }
@@ -271,7 +274,7 @@ export type Database = {
           FILIAL: number
           ITEM_CODIGO: string | null
           MATRIZ: number
-          MPED_NUMORDEM: number | null
+          MPED_NUMORDEM: number
           PED_ANOBASE: number
           PED_NUMPEDIDO: string
           PEDIDO: string | null
@@ -283,6 +286,8 @@ export type Database = {
           QTDE_SALDO: number | null
           REPRESENTANTE: number | null
           STATUS: string | null
+          TOTAL_PRODUTO: number | null
+          VALOR_UNITARIO: number | null
         }
         Insert: {
           CENTROCUSTO?: string | null
@@ -290,7 +295,7 @@ export type Database = {
           FILIAL: number
           ITEM_CODIGO?: string | null
           MATRIZ: number
-          MPED_NUMORDEM?: number | null
+          MPED_NUMORDEM: number
           PED_ANOBASE: number
           PED_NUMPEDIDO: string
           PEDIDO?: string | null
@@ -302,6 +307,8 @@ export type Database = {
           QTDE_SALDO?: number | null
           REPRESENTANTE?: number | null
           STATUS?: string | null
+          TOTAL_PRODUTO?: number | null
+          VALOR_UNITARIO?: number | null
         }
         Update: {
           CENTROCUSTO?: string | null
@@ -309,7 +316,7 @@ export type Database = {
           FILIAL?: number
           ITEM_CODIGO?: string | null
           MATRIZ?: number
-          MPED_NUMORDEM?: number | null
+          MPED_NUMORDEM?: number
           PED_ANOBASE?: number
           PED_NUMPEDIDO?: string
           PEDIDO?: string | null
@@ -321,6 +328,8 @@ export type Database = {
           QTDE_SALDO?: number | null
           REPRESENTANTE?: number | null
           STATUS?: string | null
+          TOTAL_PRODUTO?: number | null
+          VALOR_UNITARIO?: number | null
         }
         Relationships: []
       }
@@ -602,115 +611,91 @@ export type Database = {
       }
       insights_social: {
         Row: {
-          Canal: string
-          clicks: number | null
-          Cliente: string
+          canal: string | null
+          Canal: string | null
+          Cliente: string | null
+          comments: number | null
           created_time: string | null
-          creative_id: string | null
-          date_start: string | null
-          date_stop: string | null
-          effective_object_story_id: string | null
           follows: number | null
           id: string | null
-          ig_reels_avg_watch_time: number | null
-          ig_reels_video_view_total_time: number | null
-          impressions: number | null
           likes: number | null
-          media_url: string | null
+          media_type: string | null
           message: string | null
-          permalink: string | null
           permalink_url: string | null
           post_clicks: number | null
           post_id: string
-          post_impressions: number | null
           post_impressions_organic: number | null
           post_impressions_paid: number | null
-          post_reactions_like_total: number | null
           post_video_views: number | null
           post_video_views_organic: number | null
           post_video_views_paid: number | null
           profile_visits: number | null
           reach: number | null
+          reelid: string | null
+          reelId: string | null
           saved: number | null
           shares: number | null
-          spend: number | null
-          status_type: string | null
+          timestamp: string | null
           total_comments: number | null
           total_interactions: number | null
           views: number | null
         }
         Insert: {
-          Canal: string
-          clicks?: number | null
-          Cliente: string
+          canal?: string | null
+          Canal?: string | null
+          Cliente?: string | null
+          comments?: number | null
           created_time?: string | null
-          creative_id?: string | null
-          date_start?: string | null
-          date_stop?: string | null
-          effective_object_story_id?: string | null
           follows?: number | null
           id?: string | null
-          ig_reels_avg_watch_time?: number | null
-          ig_reels_video_view_total_time?: number | null
-          impressions?: number | null
           likes?: number | null
-          media_url?: string | null
+          media_type?: string | null
           message?: string | null
-          permalink?: string | null
           permalink_url?: string | null
           post_clicks?: number | null
           post_id: string
-          post_impressions?: number | null
           post_impressions_organic?: number | null
           post_impressions_paid?: number | null
-          post_reactions_like_total?: number | null
           post_video_views?: number | null
           post_video_views_organic?: number | null
           post_video_views_paid?: number | null
           profile_visits?: number | null
           reach?: number | null
+          reelid?: string | null
+          reelId?: string | null
           saved?: number | null
           shares?: number | null
-          spend?: number | null
-          status_type?: string | null
+          timestamp?: string | null
           total_comments?: number | null
           total_interactions?: number | null
           views?: number | null
         }
         Update: {
-          Canal?: string
-          clicks?: number | null
-          Cliente?: string
+          canal?: string | null
+          Canal?: string | null
+          Cliente?: string | null
+          comments?: number | null
           created_time?: string | null
-          creative_id?: string | null
-          date_start?: string | null
-          date_stop?: string | null
-          effective_object_story_id?: string | null
           follows?: number | null
           id?: string | null
-          ig_reels_avg_watch_time?: number | null
-          ig_reels_video_view_total_time?: number | null
-          impressions?: number | null
           likes?: number | null
-          media_url?: string | null
+          media_type?: string | null
           message?: string | null
-          permalink?: string | null
           permalink_url?: string | null
           post_clicks?: number | null
           post_id?: string
-          post_impressions?: number | null
           post_impressions_organic?: number | null
           post_impressions_paid?: number | null
-          post_reactions_like_total?: number | null
           post_video_views?: number | null
           post_video_views_organic?: number | null
           post_video_views_paid?: number | null
           profile_visits?: number | null
           reach?: number | null
+          reelid?: string | null
+          reelId?: string | null
           saved?: number | null
           shares?: number | null
-          spend?: number | null
-          status_type?: string | null
+          timestamp?: string | null
           total_comments?: number | null
           total_interactions?: number | null
           views?: number | null

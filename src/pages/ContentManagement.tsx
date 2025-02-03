@@ -57,7 +57,7 @@ const chartConfig = {
 };
 
 const ContentManagement = () => {
-  const { data: insights, isLoading } = useQuery({
+  const { data: insights, isLoading, error } = useQuery({
     queryKey: ["social-insights"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -66,53 +66,59 @@ const ContentManagement = () => {
         .order("created_time", { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data || []; // Ensure we always return an array
     },
   });
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div className="flex justify-center items-center h-screen">Carregando...</div>;
+  }
+
+  if (error) {
+    return <div className="flex justify-center items-center h-screen text-red-500">Erro ao carregar dados</div>;
   }
 
   // Prepare data for reach over time chart
   const reachData = insights?.map((insight) => ({
-    date: new Date(insight.created_time).toLocaleDateString(),
+    date: new Date(insight.created_time || '').toLocaleDateString(),
     reach: insight.reach || 0,
-    canal: insight.Canal,
-  }));
+    canal: insight.Canal || '',
+  })) || [];
 
   // Prepare data for engagement by channel
   const engagementByChannel = insights?.reduce((acc, insight) => {
-    if (!acc[insight.Canal]) {
-      acc[insight.Canal] = {
-        canal: insight.Canal,
+    const canal = insight.Canal || 'Desconhecido';
+    if (!acc[canal]) {
+      acc[canal] = {
+        canal,
         engajamento: 0,
         count: 0,
       };
     }
-    acc[insight.Canal].engajamento += insight.total_interactions || 0;
-    acc[insight.Canal].count += 1;
+    acc[canal].engajamento += insight.total_interactions || 0;
+    acc[canal].count += 1;
     return acc;
-  }, {});
+  }, {} as Record<string, { canal: string; engajamento: number; count: number }>) || {};
 
-  const engagementData = Object.values(engagementByChannel || {}).map((item: any) => ({
+  const engagementData = Object.values(engagementByChannel).map((item) => ({
     ...item,
-    engajamento: item.engajamento / item.count, // Calculate average
+    engajamento: item.count > 0 ? item.engajamento / item.count : 0,
   }));
 
   // Prepare data for impressions by client
   const impressionsByClient = insights?.reduce((acc, insight) => {
-    if (!acc[insight.Cliente]) {
-      acc[insight.Cliente] = {
-        cliente: insight.Cliente,
+    const cliente = insight.Cliente || 'Desconhecido';
+    if (!acc[cliente]) {
+      acc[cliente] = {
+        cliente,
         impressoes: 0,
       };
     }
-    acc[insight.Cliente].impressoes += insight.post_impressions || 0;
+    acc[cliente].impressoes += insight.post_impressions || 0;
     return acc;
-  }, {});
+  }, {} as Record<string, { cliente: string; impressoes: number }>) || {};
 
-  const impressionsData = Object.values(impressionsByClient || {});
+  const impressionsData = Object.values(impressionsByClient);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -130,13 +136,13 @@ const ContentManagement = () => {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
                   <YAxis />
-                  <Tooltip />
+                  <Tooltip content={<ChartTooltipContent />} />
                   <Legend />
                   <Line 
                     type="monotone" 
                     dataKey="reach" 
-                    stroke="#8884d8" 
                     name="Alcance"
+                    stroke={chartConfig.reach.theme.light}
                   />
                 </LineChart>
               </ChartContainer>
@@ -153,11 +159,11 @@ const ContentManagement = () => {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="canal" />
                   <YAxis />
-                  <Tooltip />
+                  <Tooltip content={<ChartTooltipContent />} />
                   <Legend />
                   <Bar 
                     dataKey="engajamento" 
-                    fill="#82ca9d"
+                    fill={chartConfig.engajamento.theme.light}
                     name="Engajamento Médio"
                   />
                 </BarChart>
@@ -188,7 +194,7 @@ const ContentManagement = () => {
                       />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip content={<ChartTooltipContent />} />
                   <Legend />
                 </PieChart>
               </ChartContainer>
@@ -215,13 +221,13 @@ const ContentManagement = () => {
               <TableBody>
                 {insights?.map((insight) => (
                   <TableRow key={insight.id}>
-                    <TableCell>{insight.Canal}</TableCell>
-                    <TableCell>{insight.Cliente}</TableCell>
-                    <TableCell>{insight.post_impressions?.toLocaleString()}</TableCell>
-                    <TableCell>{insight.reach?.toLocaleString()}</TableCell>
-                    <TableCell>{insight.total_interactions?.toLocaleString()}</TableCell>
+                    <TableCell>{insight.Canal || '-'}</TableCell>
+                    <TableCell>{insight.Cliente || '-'}</TableCell>
+                    <TableCell>{insight.post_impressions?.toLocaleString() || '0'}</TableCell>
+                    <TableCell>{insight.reach?.toLocaleString() || '0'}</TableCell>
+                    <TableCell>{insight.total_interactions?.toLocaleString() || '0'}</TableCell>
                     <TableCell>
-                      {insight.created_time && new Date(insight.created_time).toLocaleDateString()}
+                      {insight.created_time ? new Date(insight.created_time).toLocaleDateString() : '-'}
                     </TableCell>
                   </TableRow>
                 ))}
