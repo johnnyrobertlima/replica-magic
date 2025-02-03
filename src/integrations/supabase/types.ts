@@ -612,7 +612,6 @@ export type Database = {
       insights_social: {
         Row: {
           canal: string | null
-          Canal: string | null
           Cliente: string | null
           comments: number | null
           created_time: string | null
@@ -642,7 +641,6 @@ export type Database = {
         }
         Insert: {
           canal?: string | null
-          Canal?: string | null
           Cliente?: string | null
           comments?: number | null
           created_time?: string | null
@@ -672,7 +670,6 @@ export type Database = {
         }
         Update: {
           canal?: string | null
-          Canal?: string | null
           Cliente?: string | null
           comments?: number | null
           created_time?: string | null
