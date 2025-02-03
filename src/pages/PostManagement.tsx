@@ -42,7 +42,7 @@ const PostManagement = () => {
       const { data, error } = await supabase
         .from('insights_social')
         .select('*')
-        .is('linked_post_id', null) // Only fetch posts that aren't linked to others
+        .is('linked_post_id', null)
         .order('created_time', { ascending: false });
       
       if (error) throw error;
@@ -86,6 +86,8 @@ const PostManagement = () => {
         .eq('id', sourceId);
 
       if (linkError) throw linkError;
+
+      return { sourceId, targetId };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
