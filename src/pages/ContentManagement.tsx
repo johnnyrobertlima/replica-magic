@@ -62,7 +62,36 @@ const ContentManagement = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("insights_social")
-        .select("*")
+        .select(`
+          id,
+          post_id,
+          Cliente,
+          message,
+          permalink_url,
+          created_time,
+          post_impressions_paid,
+          post_impressions_organic,
+          post_clicks,
+          post_video_views,
+          post_video_views_organic,
+          post_video_views_paid,
+          total_comments,
+          shares,
+          views,
+          likes,
+          reelId,
+          media_type,
+          canal,
+          Canal,
+          comments,
+          reelid,
+          follows,
+          profile_visits,
+          reach,
+          saved,
+          total_interactions,
+          timestamp
+        `)
         .order("created_time", { ascending: false });
 
       if (error) throw error;
@@ -111,7 +140,6 @@ const ContentManagement = () => {
         impressoes: 0,
       };
     }
-    // Sum both organic and paid impressions
     acc[cliente].impressoes += (insight.post_impressions_organic || 0) + (insight.post_impressions_paid || 0);
     return acc;
   }, {} as Record<string, { cliente: string; impressoes: number }>) || {};
