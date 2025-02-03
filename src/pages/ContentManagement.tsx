@@ -56,7 +56,6 @@ const ContentManagement = () => {
           reelId,
           media_type,
           canal,
-          Canal,
           comments,
           reelid,
           follows,
@@ -84,11 +83,11 @@ const ContentManagement = () => {
   const reachData = insights?.map((insight) => ({
     date: new Date(insight.created_time || '').toLocaleDateString(),
     reach: insight.reach || 0,
-    canal: insight.Canal || '',
+    canal: insight.canal || '',
   })) || [];
 
   const engagementByChannel = insights?.reduce((acc, insight) => {
-    const canal = insight.Canal || 'Desconhecido';
+    const canal = insight.canal || 'Desconhecido';
     if (!acc[canal]) {
       acc[canal] = {
         canal,
