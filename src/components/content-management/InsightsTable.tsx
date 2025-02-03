@@ -9,7 +9,7 @@ import {
 
 interface InsightsTableProps {
   insights: Array<{
-    Canal: string | null;
+    canal: string | null;  // Changed from Canal to canal to match database
     Cliente: string | null;
     post_impressions_organic: number | null;
     post_impressions_paid: number | null;
@@ -35,7 +35,7 @@ export const InsightsTable = ({ insights }: InsightsTableProps) => {
       <TableBody>
         {insights?.map((insight, index) => (
           <TableRow key={index}>
-            <TableCell>{insight.Canal || '-'}</TableCell>
+            <TableCell>{insight.canal || '-'}</TableCell>
             <TableCell>{insight.Cliente || '-'}</TableCell>
             <TableCell>
               {((insight.post_impressions_organic || 0) + (insight.post_impressions_paid || 0)).toLocaleString()}
