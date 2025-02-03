@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import { DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface Post {
   id: string;
@@ -33,6 +33,7 @@ const PostManagement = () => {
       const { data, error } = await supabase
         .from('insights_social')
         .select('*')
+        .is('linked_post_id', null) // Only fetch posts that aren't linked to others
         .order('created_time', { ascending: false });
       
       if (error) throw error;
@@ -42,18 +43,46 @@ const PostManagement = () => {
 
   const linkPostMutation = useMutation({
     mutationFn: async ({ sourceId, targetId }: { sourceId: string, targetId: string }) => {
-      const { error } = await supabase
+      // First, get both posts to sum their metrics
+      const { data: sourcePosts, error: sourceError } = await supabase
+        .from('insights_social')
+        .select('*')
+        .in('id', [sourceId, targetId]);
+
+      if (sourceError) throw sourceError;
+      if (!sourcePosts || sourcePosts.length !== 2) throw new Error("Posts not found");
+
+      const sourcePost = sourcePosts.find(p => p.id === sourceId)!;
+      const targetPost = sourcePosts.find(p => p.id === targetId)!;
+
+      // Sum the metrics
+      const updatedMetrics = {
+        post_impressions_organic: (sourcePost.post_impressions_organic || 0) + (targetPost.post_impressions_organic || 0),
+        post_impressions_paid: (sourcePost.post_impressions_paid || 0) + (targetPost.post_impressions_paid || 0),
+        views: (sourcePost.views || 0) + (targetPost.views || 0),
+      };
+
+      // Update the target post with summed metrics
+      const { error: updateError } = await supabase
+        .from('insights_social')
+        .update(updatedMetrics)
+        .eq('id', targetId);
+
+      if (updateError) throw updateError;
+
+      // Link the source post to the target
+      const { error: linkError } = await supabase
         .from('insights_social')
         .update({ linked_post_id: targetId })
         .eq('id', sourceId);
 
-      if (error) throw error;
+      if (linkError) throw linkError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       toast({
         title: "Posts vinculados",
-        description: "Os posts foram vinculados com sucesso!",
+        description: "Os posts foram vinculados e os dados somados com sucesso!",
       });
     },
     onError: (error) => {
@@ -116,7 +145,7 @@ const PostManagement = () => {
                 <TableHead className="text-right">Impressões Pagas</TableHead>
                 <TableHead className="text-right">Visualizações</TableHead>
                 <TableHead>Link</TableHead>
-                <TableHead>Vinculado a</TableHead>
+                <TableHead>Posts Vinculados</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
