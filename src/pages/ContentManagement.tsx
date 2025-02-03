@@ -83,14 +83,14 @@ const ContentManagement = () => {
   const reachData = insights?.map((insight) => ({
     date: new Date(insight.created_time || '').toLocaleDateString(),
     reach: insight.reach || 0,
-    canal: insight.canal || '',
+    Canal: insight.canal || 'Desconhecido',
   })) || [];
 
   const engagementByChannel = insights?.reduce((acc, insight) => {
     const canal = insight.canal || 'Desconhecido';
     if (!acc[canal]) {
       acc[canal] = {
-        canal,
+        Canal: canal,
         engajamento: 0,
         count: 0,
       };
@@ -98,7 +98,7 @@ const ContentManagement = () => {
     acc[canal].engajamento += insight.total_interactions || 0;
     acc[canal].count += 1;
     return acc;
-  }, {} as Record<string, { canal: string; engajamento: number; count: number }>) || {};
+  }, {} as Record<string, { Canal: string; engajamento: number; count: number }>) || {};
 
   const engagementData = Object.values(engagementByChannel).map((item) => ({
     ...item,

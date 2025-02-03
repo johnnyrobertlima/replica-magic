@@ -618,6 +618,7 @@ export type Database = {
           follows: number | null
           id: string | null
           likes: number | null
+          linked_post_id: string | null
           media_type: string | null
           message: string | null
           permalink_url: string | null
@@ -647,6 +648,7 @@ export type Database = {
           follows?: number | null
           id?: string | null
           likes?: number | null
+          linked_post_id?: string | null
           media_type?: string | null
           message?: string | null
           permalink_url?: string | null
@@ -676,6 +678,7 @@ export type Database = {
           follows?: number | null
           id?: string | null
           likes?: number | null
+          linked_post_id?: string | null
           media_type?: string | null
           message?: string | null
           permalink_url?: string | null
@@ -697,7 +700,15 @@ export type Database = {
           total_interactions?: number | null
           views?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "insights_social_linked_post_id_fkey"
+            columns: ["linked_post_id"]
+            isOneToOne: false
+            referencedRelation: "insights_social"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       logos: {
         Row: {
