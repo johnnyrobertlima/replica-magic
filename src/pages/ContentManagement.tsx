@@ -1,36 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import {
-  Line,
-  LineChart,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-} from "recharts";
-
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8"];
+import { ReachChart } from "@/components/content-management/ReachChart";
+import { EngagementChart } from "@/components/content-management/EngagementChart";
+import { ImpressionsChart } from "@/components/content-management/ImpressionsChart";
+import { InsightsTable } from "@/components/content-management/InsightsTable";
 
 const chartConfig = {
   reach: {
@@ -152,80 +126,9 @@ const ContentManagement = () => {
       
       <div className="grid gap-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Alcance ao Longo do Tempo</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[400px]">
-              <ChartContainer config={chartConfig}>
-                <LineChart data={reachData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip content={<ChartTooltipContent />} />
-                  <Legend />
-                  <Line 
-                    type="monotone" 
-                    dataKey="reach" 
-                    name="Alcance"
-                    stroke={chartConfig.reach.theme.light}
-                  />
-                </LineChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Engajamento Médio por Canal</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[400px]">
-              <ChartContainer config={chartConfig}>
-                <BarChart data={engagementData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="canal" />
-                  <YAxis />
-                  <Tooltip content={<ChartTooltipContent />} />
-                  <Legend />
-                  <Bar 
-                    dataKey="engajamento" 
-                    fill={chartConfig.engajamento.theme.light}
-                    name="Engajamento Médio"
-                  />
-                </BarChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Distribuição de Impressões por Cliente</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[400px]">
-              <ChartContainer config={chartConfig}>
-                <PieChart>
-                  <Pie
-                    data={impressionsData}
-                    dataKey="impressoes"
-                    nameKey="cliente"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={100}
-                    label
-                  >
-                    {impressionsData.map((entry, index) => (
-                      <Cell 
-                        key={`cell-${index}`} 
-                        fill={COLORS[index % COLORS.length]}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip content={<ChartTooltipContent />} />
-                  <Legend />
-                </PieChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
+          <ReachChart data={reachData} chartConfig={chartConfig} />
+          <EngagementChart data={engagementData} chartConfig={chartConfig} />
+          <ImpressionsChart data={impressionsData} chartConfig={chartConfig} />
         </div>
 
         <Card>
@@ -233,32 +136,7 @@ const ContentManagement = () => {
             <CardTitle>Relatório de Desempenho nas Redes Sociais</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Canal</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Impressões</TableHead>
-                  <TableHead>Alcance</TableHead>
-                  <TableHead>Engajamento</TableHead>
-                  <TableHead>Data</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {insights?.map((insight) => (
-                  <TableRow key={insight.id}>
-                    <TableCell>{insight.Canal || '-'}</TableCell>
-                    <TableCell>{insight.Cliente || '-'}</TableCell>
-                    <TableCell>{((insight.post_impressions_organic || 0) + (insight.post_impressions_paid || 0)).toLocaleString()}</TableCell>
-                    <TableCell>{insight.reach?.toLocaleString() || '0'}</TableCell>
-                    <TableCell>{insight.total_interactions?.toLocaleString() || '0'}</TableCell>
-                    <TableCell>
-                      {insight.created_time ? new Date(insight.created_time).toLocaleDateString() : '-'}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <InsightsTable insights={insights} />
           </CardContent>
         </Card>
       </div>
