@@ -66,7 +66,7 @@ const ContentManagement = () => {
         .order("created_time", { ascending: false });
 
       if (error) throw error;
-      return data || []; // Ensure we always return an array
+      return data || [];
     },
   });
 
@@ -78,14 +78,12 @@ const ContentManagement = () => {
     return <div className="flex justify-center items-center h-screen text-red-500">Erro ao carregar dados</div>;
   }
 
-  // Prepare data for reach over time chart
   const reachData = insights?.map((insight) => ({
     date: new Date(insight.created_time || '').toLocaleDateString(),
     reach: insight.reach || 0,
     canal: insight.Canal || '',
   })) || [];
 
-  // Prepare data for engagement by channel
   const engagementByChannel = insights?.reduce((acc, insight) => {
     const canal = insight.Canal || 'Desconhecido';
     if (!acc[canal]) {
@@ -105,7 +103,6 @@ const ContentManagement = () => {
     engajamento: item.count > 0 ? item.engajamento / item.count : 0,
   }));
 
-  // Prepare data for impressions by client
   const impressionsByClient = insights?.reduce((acc, insight) => {
     const cliente = insight.Cliente || 'Desconhecido';
     if (!acc[cliente]) {
@@ -114,7 +111,8 @@ const ContentManagement = () => {
         impressoes: 0,
       };
     }
-    acc[cliente].impressoes += insight.post_impressions || 0;
+    // Sum both organic and paid impressions
+    acc[cliente].impressoes += (insight.post_impressions_organic || 0) + (insight.post_impressions_paid || 0);
     return acc;
   }, {} as Record<string, { cliente: string; impressoes: number }>) || {};
 
@@ -223,7 +221,7 @@ const ContentManagement = () => {
                   <TableRow key={insight.id}>
                     <TableCell>{insight.Canal || '-'}</TableCell>
                     <TableCell>{insight.Cliente || '-'}</TableCell>
-                    <TableCell>{insight.post_impressions?.toLocaleString() || '0'}</TableCell>
+                    <TableCell>{((insight.post_impressions_organic || 0) + (insight.post_impressions_paid || 0)).toLocaleString()}</TableCell>
                     <TableCell>{insight.reach?.toLocaleString() || '0'}</TableCell>
                     <TableCell>{insight.total_interactions?.toLocaleString() || '0'}</TableCell>
                     <TableCell>
