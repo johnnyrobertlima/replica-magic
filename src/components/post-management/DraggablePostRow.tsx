@@ -3,6 +3,7 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { Post } from "./types";
 import { getChannelIcon } from "./utils";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
 
 interface DraggablePostRowProps {
   post: Post;
@@ -10,11 +11,31 @@ interface DraggablePostRowProps {
 }
 
 export const DraggablePostRow = ({ post, allPosts }: DraggablePostRowProps) => {
+  const {attributes, listeners, setNodeRef: setDraggableRef, isDragging} = useDraggable({
+    id: post.id,
+    data: post
+  });
+
+  const {setNodeRef: setDroppableRef, isOver} = useDroppable({
+    id: post.id,
+    data: post
+  });
+
+  const ref = (node: any) => {
+    setDraggableRef(node);
+    setDroppableRef(node);
+  };
+
   return (
     <TableRow 
-      className="cursor-move hover:bg-gray-100 transition-opacity duration-200"
+      ref={ref}
+      {...attributes}
+      {...listeners}
+      className={`cursor-move transition-colors duration-200
+        ${isDragging ? 'opacity-50' : ''}
+        ${isOver ? 'bg-blue-100' : 'hover:bg-gray-100'}
+      `}
       data-id={post.id}
-      draggable="true"
     >
       <TableCell>{getChannelIcon(post.canal)} {post.canal}</TableCell>
       <TableCell>
@@ -46,3 +67,4 @@ export const DraggablePostRow = ({ post, allPosts }: DraggablePostRowProps) => {
     </TableRow>
   );
 };
+

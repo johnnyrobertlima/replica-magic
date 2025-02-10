@@ -11,33 +11,19 @@ const PostManagement = () => {
   const sensors = useSensors(
     useSensor(MouseSensor, {
       activationConstraint: {
-        distance: 10,
+        distance: 5, // Reduzido para facilitar o início do drag
       },
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 250,
+        delay: 150, // Reduzido o delay para melhor resposta
         tolerance: 5,
       },
     })
   );
 
-  const handleDragStart = (event: DragStartEvent) => {
-    const { active } = event;
-    const element = document.querySelector(`[data-id="${active.id}"]`);
-    if (element) {
-      element.classList.add('opacity-50');
-    }
-  };
-
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    
-    // Remove drag styling
-    const element = document.querySelector(`[data-id="${active.id}"]`);
-    if (element) {
-      element.classList.remove('opacity-50');
-    }
 
     if (!over || active.id === over.id) return;
 
@@ -60,8 +46,7 @@ const PostManagement = () => {
       <h1 className="text-3xl font-bold mb-8">Gestão de Posts</h1>
       
       <DndContext 
-        sensors={sensors} 
-        onDragStart={handleDragStart}
+        sensors={sensors}
         onDragEnd={handleDragEnd}
       >
         <ScrollArea className="h-[600px] rounded-md border">
@@ -73,3 +58,4 @@ const PostManagement = () => {
 };
 
 export default PostManagement;
+
