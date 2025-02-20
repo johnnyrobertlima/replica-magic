@@ -28,13 +28,16 @@ export function useJabOrders(selectedDate?: Date) {
           PED_ANOBASE,
           QTDE_SALDO,
           VALOR_UNITARIO,
-          pessoa:BLUEBAY_PESSOA!PES_CODIGO(APELIDO)
+          BLUEBAY_PESSOA:BLUEBAY_PESSOA(APELIDO)
         `)
-        .in('STATUS', ['0', '1', '2'])
+        .eq('STATUS', '0')
         .gte('DATA_PEDIDO', startOfDay(selectedDate).toISOString())
         .lte('DATA_PEDIDO', endOfDay(selectedDate).toISOString());
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching orders:', error);
+        throw error;
+      }
 
       console.log('Dados brutos do banco:', data);
 
@@ -51,7 +54,7 @@ export function useJabOrders(selectedDate?: Date) {
             PED_ANOBASE: curr.PED_ANOBASE,
             total_saldo: 0,
             valor_total: 0,
-            APELIDO: curr.pessoa?.APELIDO || null
+            APELIDO: curr.BLUEBAY_PESSOA?.APELIDO || null
           };
         }
         
