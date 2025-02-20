@@ -32,35 +32,48 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
 
       console.log('Buscando pedidos para o período:', { from: dateRange.from, to: dateRange.to });
 
-      // Primeiro, buscamos os pedidos
-      const { data: pedidos, error: errorPedidos } = await supabase
-        .from('BLUEBAY_PEDIDO')
-        .select(`
-          MATRIZ,
-          FILIAL,
-          PED_NUMPEDIDO,
-          PED_ANOBASE,
-          QTDE_SALDO,
-          QTDE_PEDIDA,
-          QTDE_ENTREGUE,
-          VALOR_UNITARIO,
-          PES_CODIGO,
-          ITEM_CODIGO,
-          STATUS,
-          PEDIDO_CLIENTE
-        `)
-        .eq('CENTROCUSTO', 'JAB')
-        .gte('DATA_PEDIDO', startOfDay(dateRange.from).toISOString())
-        .lte('DATA_PEDIDO', endOfDay(dateRange.to).toISOString());
+      // Primeiro, buscamos os pedidos com paginação para garantir todos os resultados
+      let allPedidos = [];
+      let page = 0;
+      const pageSize = 1000;
+      
+      while (true) {
+        const { data: pedidosPage, error: errorPedidos, count } = await supabase
+          .from('BLUEBAY_PEDIDO')
+          .select(`
+            MATRIZ,
+            FILIAL,
+            PED_NUMPEDIDO,
+            PED_ANOBASE,
+            QTDE_SALDO,
+            QTDE_PEDIDA,
+            QTDE_ENTREGUE,
+            VALOR_UNITARIO,
+            PES_CODIGO,
+            ITEM_CODIGO,
+            STATUS,
+            PEDIDO_CLIENTE
+          `, { count: 'exact' })
+          .eq('CENTROCUSTO', 'JAB')
+          .gte('DATA_PEDIDO', startOfDay(dateRange.from).toISOString())
+          .lte('DATA_PEDIDO', endOfDay(dateRange.to).toISOString())
+          .range(page * pageSize, (page + 1) * pageSize - 1);
 
-      if (errorPedidos) throw errorPedidos;
-      if (!pedidos) return [];
+        if (errorPedidos) throw errorPedidos;
+        if (!pedidosPage || pedidosPage.length === 0) break;
 
-      console.log('Pedidos encontrados:', pedidos.length);
-      console.log('Amostra de pedidos:', pedidos.slice(0, 2));
+        allPedidos = [...allPedidos, ...pedidosPage];
+        if (!count || allPedidos.length >= count) break;
+        
+        page++;
+      }
+
+      console.log('Total de pedidos encontrados:', allPedidos.length);
+
+      if (allPedidos.length === 0) return [];
 
       // Buscamos os apelidos das pessoas
-      const pessoasIds = [...new Set(pedidos.map(p => p.PES_CODIGO))];
+      const pessoasIds = [...new Set(allPedidos.map(p => p.PES_CODIGO))];
       const { data: pessoas, error: errorPessoas } = await supabase
         .from('BLUEBAY_PESSOA')
         .select('PES_CODIGO, APELIDO')
@@ -69,7 +82,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
       if (errorPessoas) throw errorPessoas;
 
       // Buscamos as descrições dos itens
-      const itemCodigos = [...new Set(pedidos.map(p => p.ITEM_CODIGO))];
+      const itemCodigos = [...new Set(allPedidos.map(p => p.ITEM_CODIGO))];
       const { data: itens, error: errorItens } = await supabase
         .from('BLUEBAY_ITEM')
         .select('ITEM_CODIGO, DESCRICAO')
@@ -86,8 +99,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
       );
 
       // Agrupamos os pedidos primeiro por PED_NUMPEDIDO, PED_ANOBASE e FILIAL
-      const groupedOrders = pedidos.reduce((acc: { [key: string]: JabOrder }, curr) => {
-        // Incluímos FILIAL na chave para garantir que pedidos de filiais diferentes não se misturem
+      const groupedOrders = allPedidos.reduce((acc: { [key: string]: JabOrder }, curr) => {
         const key = `${curr.FILIAL}-${curr.PED_NUMPEDIDO}-${curr.PED_ANOBASE}`;
         
         if (!acc[key]) {
@@ -111,24 +123,33 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
         acc[key].total_saldo += saldo;
         acc[key].valor_total += saldo * valorUnitario;
         
-        // Adiciona o item ao array de items apenas se ainda não existir
-        if (curr.ITEM_CODIGO && !acc[key].items.some(item => item.ITEM_CODIGO === curr.ITEM_CODIGO)) {
-          acc[key].items.push({
-            ITEM_CODIGO: curr.ITEM_CODIGO,
-            DESCRICAO: itemMap.get(curr.ITEM_CODIGO) || null,
-            QTDE_SALDO: saldo,
-            QTDE_PEDIDA: curr.QTDE_PEDIDA || 0,
-            QTDE_ENTREGUE: curr.QTDE_ENTREGUE || 0,
-            VALOR_UNITARIO: valorUnitario
-          });
+        // Adiciona o item ao array de items
+        if (curr.ITEM_CODIGO) {
+          const existingItemIndex = acc[key].items.findIndex(item => item.ITEM_CODIGO === curr.ITEM_CODIGO);
+          if (existingItemIndex === -1) {
+            acc[key].items.push({
+              ITEM_CODIGO: curr.ITEM_CODIGO,
+              DESCRICAO: itemMap.get(curr.ITEM_CODIGO) || null,
+              QTDE_SALDO: saldo,
+              QTDE_PEDIDA: curr.QTDE_PEDIDA || 0,
+              QTDE_ENTREGUE: curr.QTDE_ENTREGUE || 0,
+              VALOR_UNITARIO: valorUnitario
+            });
+          }
         }
         
         return acc;
       }, {});
 
-      console.log('Pedidos agrupados:', Object.keys(groupedOrders).length, 'pedidos únicos');
+      console.log('Número de pedidos agrupados:', Object.keys(groupedOrders).length);
       const amostraAgrupada = Object.values(groupedOrders)[0];
-      console.log('Amostra de pedido agrupado:', amostraAgrupada);
+      if (amostraAgrupada) {
+        console.log('Exemplo de pedido agrupado:', {
+          numero: amostraAgrupada.PED_NUMPEDIDO,
+          quantidadeItens: amostraAgrupada.items.length,
+          primeiroItem: amostraAgrupada.items[0]
+        });
+      }
       
       return Object.values(groupedOrders);
     },
