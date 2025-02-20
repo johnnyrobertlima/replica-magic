@@ -44,10 +44,16 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
         toDate: dateRange.to
       });
 
-      // Primeiro, buscamos os pedidos sem limit
+      // Fazemos o JOIN entre BLUEBAY_PEDIDO e BLUEBAY_PESSOA
       const { data: pedidosData, error: errorPedidos } = await supabase
         .from('BLUEBAY_PEDIDO')
-        .select()
+        .select(`
+          *,
+          pessoa:BLUEBAY_PESSOA!PES_CODIGO(
+            PES_CODIGO,
+            APELIDO
+          )
+        `)
         .eq('CENTROCUSTO', 'JAB')
         .gte('DATA_PEDIDO', dataInicial)
         .lte('DATA_PEDIDO', dataFinal)
@@ -69,24 +75,14 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
 
       console.log('Total de pedidos encontrados:', pedidosData.length);
 
-      // Buscamos os apelidos das pessoas sem limit
-      const pessoasIds = [...new Set(pedidosData.map(p => p.PES_CODIGO).filter(Boolean))];
-      const { data: pessoas } = await supabase
-        .from('BLUEBAY_PESSOA')
-        .select('PES_CODIGO, APELIDO')
-        .in('PES_CODIGO', pessoasIds);
-
-      // Buscamos as descrições dos itens sem limit
+      // Buscamos as descrições dos itens
       const itemCodigos = [...new Set(pedidosData.map(p => p.ITEM_CODIGO).filter(Boolean))];
       const { data: itens } = await supabase
         .from('BLUEBAY_ITEM')
         .select('ITEM_CODIGO, DESCRICAO')
         .in('ITEM_CODIGO', itemCodigos);
 
-      // Criamos os mapas para lookup rápido
-      const apelidoMap = new Map(
-        pessoas?.map(p => [p.PES_CODIGO, p.APELIDO]) || []
-      );
+      // Criamos o mapa para lookup rápido dos itens
       const itemMap = new Map(
         itens?.map(i => [i.ITEM_CODIGO, i.DESCRICAO]) || []
       );
@@ -96,7 +92,9 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
 
       // Processamos os pedidos em um único loop
       pedidosData.forEach(pedido => {
-        if (!pedido.PES_CODIGO || !apelidoMap.get(pedido.PES_CODIGO)) return;
+        // @ts-ignore - o tipo do pedido.pessoa vem do JOIN
+        const apelido = pedido.pessoa?.APELIDO;
+        if (!apelido) return;
 
         const key = `${pedido.FILIAL ?? 0}-${pedido.PED_NUMPEDIDO}-${pedido.PED_ANOBASE}`;
         const saldo = pedido.QTDE_SALDO || 0;
@@ -110,7 +108,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
             PED_ANOBASE: pedido.PED_ANOBASE || 0,
             total_saldo: saldo,
             valor_total: saldo * valorUnitario,
-            APELIDO: pedido.PES_CODIGO ? apelidoMap.get(pedido.PES_CODIGO) || null : null,
+            APELIDO: apelido,
             PEDIDO_CLIENTE: pedido.PEDIDO_CLIENTE || null,
             STATUS: pedido.STATUS || '',
             items: []
