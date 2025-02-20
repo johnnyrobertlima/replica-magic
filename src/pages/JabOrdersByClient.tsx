@@ -4,9 +4,19 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useJabOrders } from "@/hooks/useJabOrders";
 import type { DateRange } from "react-day-picker";
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious 
+} from "@/components/ui/pagination";
 import SearchFilters from "@/components/jab-orders/SearchFilters";
 import ClientOrderCard from "@/components/jab-orders-by-client/ClientOrderCard";
 import type { ClientOrder } from "@/components/jab-orders-by-client/types";
+
+const ITEMS_PER_PAGE = 12; // 3x4 grid
 
 const JabOrdersByClient = () => {
   const [date, setDate] = useState<DateRange | undefined>({
@@ -17,12 +27,14 @@ const JabOrdersByClient = () => {
   const [expandedClient, setExpandedClient] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const { data: orders = [], isLoading } = useJabOrders(searchDate);
 
   const handleSearch = () => {
     setIsSearching(true);
     setSearchDate(date);
+    setCurrentPage(1); // Reset to first page on new search
   };
 
   // Agrupar pedidos por cliente
@@ -62,6 +74,12 @@ const JabOrdersByClient = () => {
     return true;
   });
 
+  const totalPages = Math.ceil(filteredClients.length / ITEMS_PER_PAGE);
+  const paginatedClients = filteredClients.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -78,7 +96,12 @@ const JabOrdersByClient = () => {
       </Link>
 
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Separação de Pedidos por Cliente</h1>
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold">Separação de Pedidos por Cliente</h1>
+          <p className="text-sm text-muted-foreground">
+            Total de clientes: {filteredClients.length}
+          </p>
+        </div>
         <SearchFilters
           searchQuery={searchQuery}
           onSearchQueryChange={setSearchQuery}
@@ -89,7 +112,7 @@ const JabOrdersByClient = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filteredClients.map((client) => (
+        {paginatedClients.map((client) => (
           <ClientOrderCard
             key={client.APELIDO}
             client={client}
@@ -98,6 +121,49 @@ const JabOrdersByClient = () => {
           />
         ))}
       </div>
+
+      {totalPages > 1 && (
+        <div className="mt-8 flex justify-center">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  href="#" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (currentPage > 1) setCurrentPage(currentPage - 1);
+                  }}
+                />
+              </PaginationItem>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    href="#"
+                    isActive={currentPage === page}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setCurrentPage(page);
+                    }}
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+
+              <PaginationItem>
+                <PaginationNext 
+                  href="#" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+                  }}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
     </main>
   );
 };
