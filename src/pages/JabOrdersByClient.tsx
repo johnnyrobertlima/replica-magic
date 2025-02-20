@@ -22,6 +22,7 @@ interface ClientOrder {
     QTDE_PEDIDA: number;
     QTDE_ENTREGUE: number;
     VALOR_UNITARIO: number;
+    PED_NUMPEDIDO: string;
   }>;
 }
 
@@ -75,14 +76,10 @@ const JabOrdersByClient = () => {
 
     // Consolidar itens
     order.items.forEach(item => {
-      const existingItem = clientOrder.items.find(i => i.ITEM_CODIGO === item.ITEM_CODIGO);
-      if (existingItem) {
-        existingItem.QTDE_SALDO += item.QTDE_SALDO;
-        existingItem.QTDE_PEDIDA += item.QTDE_PEDIDA;
-        existingItem.QTDE_ENTREGUE += item.QTDE_ENTREGUE;
-      } else {
-        clientOrder.items.push({ ...item });
-      }
+      clientOrder.items.push({ 
+        ...item,
+        PED_NUMPEDIDO: order.PED_NUMPEDIDO 
+      });
     });
 
     return acc;
@@ -121,17 +118,18 @@ const JabOrdersByClient = () => {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filteredClients.map((client) => {
           const isExpanded = expandedClient === client.APELIDO;
           const showZeroBalance = showZeroBalanceMap[client.APELIDO] || false;
+          const uniquePedidos = new Set(client.pedidos.map(p => p.PED_NUMPEDIDO));
 
           return (
             <Card 
               key={client.APELIDO}
               className={cn(
-                "hover:shadow-lg transition-all cursor-pointer",
-                isExpanded && "ring-2 ring-primary"
+                "hover:shadow-lg transition-all cursor-pointer aspect-square",
+                isExpanded && "ring-2 ring-primary col-span-full aspect-auto"
               )}
               onClick={() => toggleExpand(client.APELIDO)}
             >
@@ -146,6 +144,10 @@ const JabOrdersByClient = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Quantidade de Pedidos:</span>
+                    <span className="font-medium">{uniquePedidos.size}</span>
+                  </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Total Saldo:</span>
                     <span className="font-medium">{client.total_saldo.toLocaleString()}</span>
@@ -184,6 +186,7 @@ const JabOrdersByClient = () => {
                           <Table>
                             <TableHeader>
                               <TableRow>
+                                <TableHead>Nº Pedido</TableHead>
                                 <TableHead>SKU</TableHead>
                                 <TableHead>Descrição</TableHead>
                                 <TableHead className="text-right">QT Pedido</TableHead>
@@ -198,6 +201,7 @@ const JabOrdersByClient = () => {
                                 .filter(item => showZeroBalance || item.QTDE_SALDO > 0)
                                 .map((item, index) => (
                                 <TableRow key={`${item.ITEM_CODIGO}-${index}`}>
+                                  <TableCell>{item.PED_NUMPEDIDO}</TableCell>
                                   <TableCell className="font-medium">{item.ITEM_CODIGO}</TableCell>
                                   <TableCell>{item.DESCRICAO || '-'}</TableCell>
                                   <TableCell className="text-right">{item.QTDE_PEDIDA.toLocaleString()}</TableCell>
