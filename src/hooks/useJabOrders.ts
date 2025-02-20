@@ -1,39 +1,15 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { startOfDay, endOfDay } from "date-fns";
 import type { DateRange as DayPickerDateRange } from "react-day-picker";
-import type { Database } from "@/integrations/supabase/types";
-
-type BluebayPedido = Database["public"]["Tables"]["BLUEBAY_PEDIDO"]["Row"];
-type SupabasePedido = Partial<BluebayPedido>;
-
-export interface JabOrder {
-  MATRIZ: number;
-  FILIAL: number;
-  PED_NUMPEDIDO: string;
-  PED_ANOBASE: number;
-  QTDE_SALDO: number;
-  QTDE_PEDIDA: number;
-  QTDE_ENTREGUE: number;
-  VALOR_UNITARIO: number;
-  total_saldo: number;
-  valor_total: number;
-  PES_CODIGO: number;
-  APELIDO: string | null;
-  PEDIDO_CLIENTE: string | null;
-  STATUS: string;
-  ITEM_CODIGO: string;
-  DESCRICAO: string | null;
-  items: Array<{
-    ITEM_CODIGO: string;
-    DESCRICAO: string | null;
-    QTDE_SALDO: number;
-    QTDE_PEDIDA: number;
-    QTDE_ENTREGUE: number;
-    VALOR_UNITARIO: number;
-  }>;
-}
+import type { JabOrder } from "@/types/jabOrders";
+import { 
+  fetchPessoasCodigos, 
+  fetchPessoasData, 
+  fetchPedidos,
+  fetchItensDescricoes,
+  processOrders 
+} from "@/services/jabOrdersService";
 
 export function useJabOrders(dateRange?: DayPickerDateRange) {
   return useQuery({
@@ -51,129 +27,45 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
         toDate: dateRange.to
       });
 
-      // Primeiro, buscamos os PES_CODIGO distintos para o período
-      const { data: pessoasCodigos, error: errorPessoas } = await supabase
-        .from('BLUEBAY_PEDIDO')
-        .select('PES_CODIGO')
-        .eq('CENTROCUSTO', 'JAB')
-        .gte('DATA_PEDIDO', dataInicial)
-        .lte('DATA_PEDIDO', dataFinal)
-        .not('PES_CODIGO', 'is', null);
-
-      if (errorPessoas) {
-        console.error('Erro ao buscar códigos de pessoas:', errorPessoas);
-        throw errorPessoas;
-      }
-
-      if (!pessoasCodigos || pessoasCodigos.length === 0) {
+      // Fetch PES_CODIGO list
+      const pessoasCodigos = await fetchPessoasCodigos(dataInicial, dataFinal);
+      if (pessoasCodigos.length === 0) {
         console.log('Nenhum código de pessoa encontrado para o período');
         return [];
       }
 
-      // Obtemos os códigos únicos
+      // Get unique PES_CODIGO values
       const uniquePesCodigos = [...new Set(pessoasCodigos.map(p => p.PES_CODIGO))];
-
       console.log('Códigos de pessoas únicos encontrados:', uniquePesCodigos.length);
 
-      // Buscamos os dados das pessoas
-      const { data: pessoas, error: errorPessoas2 } = await supabase
-        .from('BLUEBAY_PESSOA')
-        .select('PES_CODIGO, APELIDO')
-        .in('PES_CODIGO', uniquePesCodigos);
-
-      if (errorPessoas2) {
-        console.error('Erro ao buscar dados das pessoas:', errorPessoas2);
-        throw errorPessoas2;
-      }
-
-      // Criamos um mapa de PES_CODIGO para APELIDO
+      // Fetch pessoas data
+      const pessoas = await fetchPessoasData(uniquePesCodigos);
       const pessoasMap = new Map(
         pessoas?.map(p => [p.PES_CODIGO, p.APELIDO]) || []
       );
 
-      // Agora buscamos os pedidos
-      const { data: pedidosData, error: errorPedidos } = await supabase
-        .from('BLUEBAY_PEDIDO')
-        .select(`
-          MATRIZ,
-          FILIAL,
-          PED_NUMPEDIDO,
-          PED_ANOBASE,
-          QTDE_SALDO,
-          QTDE_PEDIDA,
-          QTDE_ENTREGUE,
-          VALOR_UNITARIO,
-          PEDIDO_CLIENTE,
-          STATUS,
-          ITEM_CODIGO,
-          DATA_PEDIDO,
-          PES_CODIGO
-        `)
-        .eq('CENTROCUSTO', 'JAB')
-        .gte('DATA_PEDIDO', dataInicial)
-        .lte('DATA_PEDIDO', dataFinal)
-        .in('PES_CODIGO', uniquePesCodigos)
-        .order('DATA_PEDIDO', { ascending: false });
-
-      if (errorPedidos) {
-        console.error('Erro ao buscar pedidos:', errorPedidos);
-        throw errorPedidos;
-      }
-      
-      if (!pedidosData || pedidosData.length === 0) {
-        console.log('Nenhum pedido encontrado para o período:', {
-          centrocusto: 'JAB',
-          dataInicial,
-          dataFinal
-        });
+      // Fetch pedidos
+      const pedidosData = await fetchPedidos(dataInicial, dataFinal, uniquePesCodigos);
+      if (pedidosData.length === 0) {
+        console.log('Nenhum pedido encontrado para o período');
         return [];
       }
-
       console.log('Total de pedidos encontrados:', pedidosData.length);
 
-      // Buscamos as descrições dos itens
+      // Fetch item descriptions
       const itemCodigos = [...new Set(pedidosData.map(p => p.ITEM_CODIGO).filter(Boolean))];
-      const { data: itens } = await supabase
-        .from('BLUEBAY_ITEM')
-        .select('ITEM_CODIGO, DESCRICAO')
-        .in('ITEM_CODIGO', itemCodigos);
-
-      // Criamos o mapa para lookup rápido dos itens
+      const itens = await fetchItensDescricoes(itemCodigos);
       const itemMap = new Map(
         itens?.map(i => [i.ITEM_CODIGO, i.DESCRICAO]) || []
       );
 
-      // Processamos os pedidos em um único loop
-      const processedOrders: JabOrder[] = pedidosData.map(pedido => {
-        const apelido = pessoasMap.get(pedido.PES_CODIGO);
-        const saldo = pedido.QTDE_SALDO || 0;
-        const valorUnitario = pedido.VALOR_UNITARIO || 0;
-
-        return {
-          MATRIZ: pedido.MATRIZ || 0,
-          FILIAL: pedido.FILIAL ?? 0,
-          PED_NUMPEDIDO: pedido.PED_NUMPEDIDO || '',
-          PED_ANOBASE: pedido.PED_ANOBASE || 0,
-          QTDE_SALDO: saldo,
-          QTDE_PEDIDA: pedido.QTDE_PEDIDA || 0,
-          QTDE_ENTREGUE: pedido.QTDE_ENTREGUE || 0,
-          VALOR_UNITARIO: valorUnitario,
-          total_saldo: saldo,
-          valor_total: saldo * valorUnitario,
-          PES_CODIGO: pedido.PES_CODIGO || 0,
-          APELIDO: apelido || null,
-          PEDIDO_CLIENTE: pedido.PEDIDO_CLIENTE || null,
-          STATUS: pedido.STATUS || '',
-          ITEM_CODIGO: pedido.ITEM_CODIGO || '',
-          DESCRICAO: itemMap.get(pedido.ITEM_CODIGO || '') || null,
-          items: []
-        };
-      });
-
-      return processedOrders;
+      // Process orders
+      return processOrders(pedidosData, pessoasMap, itemMap);
     },
     enabled: !!dateRange?.from && !!dateRange?.to,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
 }
+
+export type { JabOrder };
