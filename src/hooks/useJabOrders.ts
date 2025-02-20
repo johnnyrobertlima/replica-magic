@@ -28,8 +28,7 @@ export function useJabOrders(selectedDate?: Date) {
           PED_ANOBASE,
           QTDE_SALDO,
           VALOR_UNITARIO,
-          PES_CODIGO,
-          BLUEBAY_PESSOA!BLUEBAY_PEDIDO_PES_CODIGO_fkey (
+          BLUEBAY_PESSOA (
             APELIDO
           )
         `)
