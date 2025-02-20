@@ -20,7 +20,8 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
     queryFn: async () => {
       if (!dateRange?.from || !dateRange?.to) return [];
 
-      const { data, error } = await supabase
+      // Primeiro, buscamos os pedidos
+      const { data: pedidos, error: errorPedidos } = await supabase
         .from('BLUEBAY_PEDIDO')
         .select(`
           MATRIZ,
@@ -29,17 +30,32 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
           PED_ANOBASE,
           QTDE_SALDO,
           VALOR_UNITARIO,
-          PES_CODIGO,
-          APELIDO:BLUEBAY_PESSOA!inner(APELIDO)
+          PES_CODIGO
         `)
         .in('STATUS', ['1', '2'])
         .eq('CENTROCUSTO', 'JAB')
         .gte('DATA_PEDIDO', startOfDay(dateRange.from).toISOString())
         .lte('DATA_PEDIDO', endOfDay(dateRange.to).toISOString());
 
-      if (error) throw error;
+      if (errorPedidos) throw errorPedidos;
+      if (!pedidos) return [];
 
-      const groupedOrders = data.reduce((acc: { [key: string]: JabOrder }, curr) => {
+      // Em seguida, buscamos os apelidos das pessoas
+      const pessoasIds = [...new Set(pedidos.map(p => p.PES_CODIGO))];
+      const { data: pessoas, error: errorPessoas } = await supabase
+        .from('BLUEBAY_PESSOA')
+        .select('PES_CODIGO, APELIDO')
+        .in('PES_CODIGO', pessoasIds);
+
+      if (errorPessoas) throw errorPessoas;
+
+      // Criamos um mapa de PES_CODIGO para APELIDO
+      const apelidoMap = new Map(
+        pessoas?.map(p => [p.PES_CODIGO, p.APELIDO]) || []
+      );
+
+      // Agora processamos os dados combinando as informações
+      const groupedOrders = pedidos.reduce((acc: { [key: string]: JabOrder }, curr) => {
         const key = `${curr.PED_NUMPEDIDO}-${curr.PED_ANOBASE}`;
         
         if (!acc[key]) {
@@ -50,7 +66,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
             PED_ANOBASE: curr.PED_ANOBASE,
             total_saldo: 0,
             valor_total: 0,
-            APELIDO: curr.APELIDO?.APELIDO || null
+            APELIDO: apelidoMap.get(curr.PES_CODIGO) || null
           };
         }
         
