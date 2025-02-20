@@ -1,7 +1,16 @@
 
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious 
+} from "@/components/ui/pagination";
 import { OrderItem } from "./types";
+import { useState } from "react";
 
 interface ClientOrderItemsProps {
   items: OrderItem[];
@@ -10,7 +19,23 @@ interface ClientOrderItemsProps {
   clientId: string;
 }
 
+const ITEMS_PER_PAGE = 10;
+
 const ClientOrderItems = ({ items, showZeroBalance, onToggleZeroBalance, clientId }: ClientOrderItemsProps) => {
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const filteredItems = items.filter(item => showZeroBalance || item.QTDE_SALDO > 0);
+  const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE);
+  
+  const paginatedItems = filteredItems.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   return (
     <div className="mt-6 space-y-4">
       <div className="flex justify-between items-center border-b pb-2">
@@ -27,6 +52,9 @@ const ClientOrderItems = ({ items, showZeroBalance, onToggleZeroBalance, clientI
             Mostrar itens com saldo zero
           </label>
         </div>
+        <span className="text-sm text-muted-foreground">
+          Total de itens: {filteredItems.length}
+        </span>
       </div>
       
       <div className="bg-muted p-4 rounded-lg">
@@ -46,10 +74,8 @@ const ClientOrderItems = ({ items, showZeroBalance, onToggleZeroBalance, clientI
               </TableRow>
             </TableHeader>
             <TableBody>
-              {items
-                .filter(item => showZeroBalance || item.QTDE_SALDO > 0)
-                .map((item, index) => (
-                <TableRow key={`${item.ITEM_CODIGO}-${index}`}>
+              {paginatedItems.map((item, index) => (
+                <TableRow key={`${item.ITEM_CODIGO}-${item.PED_NUMPEDIDO}-${index}`}>
                   <TableCell>{item.PED_NUMPEDIDO}</TableCell>
                   <TableCell className="font-medium">{item.ITEM_CODIGO}</TableCell>
                   <TableCell>{item.DESCRICAO || '-'}</TableCell>
@@ -73,6 +99,49 @@ const ClientOrderItems = ({ items, showZeroBalance, onToggleZeroBalance, clientI
             </TableBody>
           </Table>
         </div>
+
+        {totalPages > 1 && (
+          <div className="mt-4" onClick={e => e.stopPropagation()}>
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    href="#" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (currentPage > 1) handlePageChange(currentPage - 1);
+                    }}
+                  />
+                </PaginationItem>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <PaginationItem key={page}>
+                    <PaginationLink
+                      href="#"
+                      isActive={currentPage === page}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handlePageChange(page);
+                      }}
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+
+                <PaginationItem>
+                  <PaginationNext 
+                    href="#" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (currentPage < totalPages) handlePageChange(currentPage + 1);
+                    }}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </div>
     </div>
   );
