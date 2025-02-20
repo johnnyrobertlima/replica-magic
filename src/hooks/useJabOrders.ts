@@ -15,7 +15,7 @@ export interface JabOrder {
   PED_ANOBASE: number;
   total_saldo: number;
   valor_total: number;
-  PES_CODIGO: string;
+  PES_CODIGO: number; // Mudado de string para number
   APELIDO: string | null;
   PEDIDO_CLIENTE: string | null;
   STATUS: string;
@@ -138,12 +138,12 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
       );
 
       // Criamos um Map para armazenar os pedidos agrupados por PES_CODIGO
-      const ordersByPessoaMap = new Map<string, JabOrder>();
+      const ordersByPessoaMap = new Map<number, JabOrder>(); // Mudado de string para number
 
       // Processamos os pedidos em um único loop
       pedidosData.forEach(pedido => {
         const apelido = pessoasMap.get(pedido.PES_CODIGO);
-        const key = pedido.PES_CODIGO;
+        const key = pedido.PES_CODIGO || 0; // Garantimos que seja um número
         const saldo = pedido.QTDE_SALDO || 0;
         const valorUnitario = pedido.VALOR_UNITARIO || 0;
 
