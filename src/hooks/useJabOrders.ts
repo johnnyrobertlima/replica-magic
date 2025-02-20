@@ -68,7 +68,23 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
 
       console.log('Códigos de pessoas únicos encontrados:', uniquePesCodigos.length);
 
-      // Agora buscamos os pedidos com o JOIN para as pessoas encontradas
+      // Buscamos os dados das pessoas
+      const { data: pessoas, error: errorPessoas2 } = await supabase
+        .from('BLUEBAY_PESSOA')
+        .select('PES_CODIGO, APELIDO')
+        .in('PES_CODIGO', uniquePesCodigos);
+
+      if (errorPessoas2) {
+        console.error('Erro ao buscar dados das pessoas:', errorPessoas2);
+        throw errorPessoas2;
+      }
+
+      // Criamos um mapa de PES_CODIGO para APELIDO
+      const pessoasMap = new Map(
+        pessoas?.map(p => [p.PES_CODIGO, p.APELIDO]) || []
+      );
+
+      // Agora buscamos os pedidos
       const { data: pedidosData, error: errorPedidos } = await supabase
         .from('BLUEBAY_PEDIDO')
         .select(`
@@ -84,10 +100,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
           STATUS,
           ITEM_CODIGO,
           DATA_PEDIDO,
-          BLUEBAY_PESSOA!inner (
-            PES_CODIGO,
-            APELIDO
-          )
+          PES_CODIGO
         `)
         .eq('CENTROCUSTO', 'JAB')
         .gte('DATA_PEDIDO', dataInicial)
@@ -128,8 +141,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
 
       // Processamos os pedidos em um único loop
       pedidosData.forEach(pedido => {
-        // @ts-ignore - o tipo do pedido.BLUEBAY_PESSOA vem do JOIN
-        const apelido = pedido.BLUEBAY_PESSOA?.APELIDO;
+        const apelido = pessoasMap.get(pedido.PES_CODIGO);
         if (!apelido) return;
 
         const key = `${pedido.FILIAL ?? 0}-${pedido.PED_NUMPEDIDO}-${pedido.PED_ANOBASE}`;
