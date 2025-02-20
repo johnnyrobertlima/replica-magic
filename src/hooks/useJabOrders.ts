@@ -29,7 +29,8 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
           PED_ANOBASE,
           QTDE_SALDO,
           VALOR_UNITARIO,
-          BLUEBAY_PESSOA!BLUEBAY_PEDIDO_PES_CODIGO_fkey (
+          PES_CODIGO,
+          BLUEBAY_PESSOA (
             APELIDO
           )
         `)
