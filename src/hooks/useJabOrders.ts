@@ -30,6 +30,8 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
     queryFn: async () => {
       if (!dateRange?.from || !dateRange?.to) return [];
 
+      console.log('Buscando pedidos para o período:', { from: dateRange.from, to: dateRange.to });
+
       // Primeiro, buscamos os pedidos
       const { data: pedidos, error: errorPedidos } = await supabase
         .from('BLUEBAY_PEDIDO')
@@ -53,6 +55,9 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
 
       if (errorPedidos) throw errorPedidos;
       if (!pedidos) return [];
+
+      console.log('Pedidos encontrados:', pedidos.length);
+      console.log('Amostra de pedidos:', pedidos.slice(0, 2));
 
       // Buscamos os apelidos das pessoas
       const pessoasIds = [...new Set(pedidos.map(p => p.PES_CODIGO))];
@@ -80,9 +85,10 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
         itens?.map(i => [i.ITEM_CODIGO, i.DESCRICAO]) || []
       );
 
-      // Agrupamos os pedidos por PED_NUMPEDIDO e PED_ANOBASE
+      // Agrupamos os pedidos primeiro por PED_NUMPEDIDO, PED_ANOBASE e FILIAL
       const groupedOrders = pedidos.reduce((acc: { [key: string]: JabOrder }, curr) => {
-        const key = `${curr.PED_NUMPEDIDO}-${curr.PED_ANOBASE}`;
+        // Incluímos FILIAL na chave para garantir que pedidos de filiais diferentes não se misturem
+        const key = `${curr.FILIAL}-${curr.PED_NUMPEDIDO}-${curr.PED_ANOBASE}`;
         
         if (!acc[key]) {
           acc[key] = {
@@ -105,8 +111,8 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
         acc[key].total_saldo += saldo;
         acc[key].valor_total += saldo * valorUnitario;
         
-        // Adiciona o item ao array de items
-        if (curr.ITEM_CODIGO) {
+        // Adiciona o item ao array de items apenas se ainda não existir
+        if (curr.ITEM_CODIGO && !acc[key].items.some(item => item.ITEM_CODIGO === curr.ITEM_CODIGO)) {
           acc[key].items.push({
             ITEM_CODIGO: curr.ITEM_CODIGO,
             DESCRICAO: itemMap.get(curr.ITEM_CODIGO) || null,
@@ -120,7 +126,10 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
         return acc;
       }, {});
 
-      console.log('Pedidos agrupados:', groupedOrders);
+      console.log('Pedidos agrupados:', Object.keys(groupedOrders).length, 'pedidos únicos');
+      const amostraAgrupada = Object.values(groupedOrders)[0];
+      console.log('Amostra de pedido agrupado:', amostraAgrupada);
+      
       return Object.values(groupedOrders);
     },
     enabled: !!dateRange?.from && !!dateRange?.to
