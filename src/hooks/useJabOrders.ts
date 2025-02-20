@@ -36,18 +36,10 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
 
       console.log('Buscando pedidos para o período:', { from: dateRange.from, to: dateRange.to });
 
-      // Fazendo uma única consulta que já traz os dados relacionados
+      // Primeiro, buscamos os pedidos
       const { data: pedidosData, error: errorPedidos } = await supabase
         .from('BLUEBAY_PEDIDO')
-        .select(`
-          *,
-          pessoa:BLUEBAY_PESSOA!BLUEBAY_PEDIDO_PES_CODIGO_fkey(
-            APELIDO
-          ),
-          item:BLUEBAY_ITEM!BLUEBAY_PEDIDO_ITEM_CODIGO_fkey(
-            DESCRICAO
-          )
-        `)
+        .select()
         .eq('CENTROCUSTO', 'JAB')
         .in('STATUS', ['1', '2'])
         .gte('DATA_PEDIDO', startOfDay(dateRange.from).toISOString())
@@ -57,6 +49,28 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
       if (!pedidosData || pedidosData.length === 0) return [];
 
       console.log('Total de pedidos encontrados:', pedidosData.length);
+
+      // Buscamos os apelidos das pessoas
+      const pessoasIds = [...new Set(pedidosData.map(p => p.PES_CODIGO).filter(Boolean))];
+      const { data: pessoas } = await supabase
+        .from('BLUEBAY_PESSOA')
+        .select('PES_CODIGO, APELIDO')
+        .in('PES_CODIGO', pessoasIds);
+
+      // Buscamos as descrições dos itens
+      const itemCodigos = [...new Set(pedidosData.map(p => p.ITEM_CODIGO).filter(Boolean))];
+      const { data: itens } = await supabase
+        .from('BLUEBAY_ITEM')
+        .select('ITEM_CODIGO, DESCRICAO')
+        .in('ITEM_CODIGO', itemCodigos);
+
+      // Criamos os mapas para lookup rápido
+      const apelidoMap = new Map(
+        pessoas?.map(p => [p.PES_CODIGO, p.APELIDO]) || []
+      );
+      const itemMap = new Map(
+        itens?.map(i => [i.ITEM_CODIGO, i.DESCRICAO]) || []
+      );
 
       // Criamos um Map para armazenar os pedidos agrupados
       const ordersMap = new Map<string, JabOrder>();
@@ -79,7 +93,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
             PED_ANOBASE: pedido.PED_ANOBASE,
             total_saldo: saldo,
             valor_total: saldo * valorUnitario,
-            APELIDO: pedido.pessoa?.APELIDO || null,
+            APELIDO: pedido.PES_CODIGO ? apelidoMap.get(pedido.PES_CODIGO) || null : null,
             PEDIDO_CLIENTE: pedido.PEDIDO_CLIENTE || null,
             STATUS: pedido.STATUS || '',
             items: []
@@ -97,7 +111,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
           if (existingItemIndex === -1) {
             order.items.push({
               ITEM_CODIGO: pedido.ITEM_CODIGO,
-              DESCRICAO: pedido.item?.DESCRICAO || null,
+              DESCRICAO: itemMap.get(pedido.ITEM_CODIGO) || null,
               QTDE_SALDO: saldo,
               QTDE_PEDIDA: pedido.QTDE_PEDIDA || 0,
               QTDE_ENTREGUE: pedido.QTDE_ENTREGUE || 0,
@@ -122,6 +136,6 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
     },
     enabled: !!dateRange?.from && !!dateRange?.to,
     staleTime: 5 * 60 * 1000, // Cache por 5 minutos
-    cacheTime: 10 * 60 * 1000, // Mantém no cache por 10 minutos
+    gcTime: 10 * 60 * 1000, // Mantém no cache por 10 minutos (anteriormente cacheTime)
   });
 }
