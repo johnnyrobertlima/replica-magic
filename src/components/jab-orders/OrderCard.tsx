@@ -20,7 +20,6 @@ interface OrderCardProps {
     PED_ANOBASE: number;
     STATUS: string;
     APELIDO: string | null;
-    PEDIDO_CLIENTE?: string | null;
     total_saldo: number;
     valor_total: number;
     items?: Array<{
@@ -93,11 +92,6 @@ const OrderCard: React.FC<OrderCardProps> = ({
         {order.APELIDO && (
           <p className="text-sm text-muted-foreground">
             Cliente: {order.APELIDO}
-          </p>
-        )}
-        {order.PEDIDO_CLIENTE && (
-          <p className="text-sm text-muted-foreground">
-            Pedido do Cliente: {order.PEDIDO_CLIENTE}
           </p>
         )}
       </CardHeader>
