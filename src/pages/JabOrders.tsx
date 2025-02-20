@@ -9,15 +9,15 @@ import { useJabOrders } from "@/hooks/useJabOrders";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { DateRange } from "react-day-picker";
+import type { DateRange as DayPickerDateRange } from "react-day-picker";
 
 const JabOrders = () => {
-  const [date, setDate] = useState<DateRange | undefined>({
+  const [date, setDate] = useState<DayPickerDateRange | undefined>({
     from: new Date(),
     to: new Date(),
   });
   
-  const { data: orders = [], isLoading } = useJabOrders(date);
+  const { data: orders = [], isLoading } = useJabOrders(date?.from && date?.to ? date : undefined);
 
   if (isLoading) {
     return (

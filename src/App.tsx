@@ -12,16 +12,16 @@ import WhatsAppService from "@/pages/WhatsAppService";
 import ClientLogin from "@/pages/ClientLogin";
 
 // Admin imports
-import AdminLayout from "@/pages/admin/layout";
-import AdminDashboard from "@/pages/admin/dashboard";
-import AdminBanners from "@/pages/admin/banners";
-import AdminClients from "@/pages/admin/clients";
-import AdminLogos from "@/pages/admin/logos";
-import AdminMessages from "@/pages/admin/messages";
-import AdminSEO from "@/pages/admin/seo";
-import AdminServices from "@/pages/admin/services";
-import AdminSocial from "@/pages/admin/social";
-import AdminLogin from "@/pages/admin/login";
+import { AdminLayout } from "@/pages/admin/layout";
+import { AdminDashboard } from "@/pages/admin/dashboard";
+import { AdminBanners } from "@/pages/admin/banners";
+import { AdminClients } from "@/pages/admin/clients";
+import { AdminLogos } from "@/pages/admin/logos";
+import { AdminMessages } from "@/pages/admin/messages";
+import { AdminSEO } from "@/pages/admin/seo";
+import { AdminServices } from "@/pages/admin/services";
+import { AdminSocial } from "@/pages/admin/social";
+import { AdminLogin } from "@/pages/admin/login";
 
 function App() {
   return (
@@ -56,4 +56,3 @@ function App() {
 }
 
 export default App;
-

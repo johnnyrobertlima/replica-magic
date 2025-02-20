@@ -13,11 +13,11 @@ interface JabOrder {
 }
 
 interface DateRange {
-  from: Date | undefined;
-  to: Date | undefined;
+  from: Date;
+  to: Date;
 }
 
-export function useJabOrders(dateRange?: DateRange) {
+export function useJabOrders(dateRange?: DateRange | undefined) {
   return useQuery({
     queryKey: ['jab-orders', dateRange?.from?.toISOString(), dateRange?.to?.toISOString()],
     queryFn: async () => {
@@ -40,7 +40,6 @@ export function useJabOrders(dateRange?: DateRange) {
 
       if (error) throw error;
 
-      // Agrupa os pedidos apenas por PED_NUMPEDIDO e PED_ANOBASE
       const groupedOrders = data.reduce((acc: { [key: string]: JabOrder }, curr) => {
         const key = `${curr.PED_NUMPEDIDO}-${curr.PED_ANOBASE}`;
         
@@ -55,7 +54,6 @@ export function useJabOrders(dateRange?: DateRange) {
           };
         }
         
-        // Soma o saldo e o valor total
         const saldo = curr.QTDE_SALDO || 0;
         const valorUnitario = curr.VALOR_UNITARIO || 0;
         
@@ -65,7 +63,6 @@ export function useJabOrders(dateRange?: DateRange) {
         return acc;
       }, {});
 
-      // Converte o objeto agrupado em um array
       return Object.values(groupedOrders);
     },
     enabled: !!dateRange?.from && !!dateRange?.to
