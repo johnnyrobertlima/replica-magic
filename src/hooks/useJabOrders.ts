@@ -44,13 +44,23 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
         toDate: dateRange.to
       });
 
-      // Fazemos o JOIN entre BLUEBAY_PEDIDO e BLUEBAY_PESSOA
+      // Fazemos o JOIN entre BLUEBAY_PEDIDO e BLUEBAY_PESSOA de forma explícita
       const { data: pedidosData, error: errorPedidos } = await supabase
         .from('BLUEBAY_PEDIDO')
         .select(`
-          *,
-          pessoa:BLUEBAY_PESSOA!PES_CODIGO(
-            PES_CODIGO,
+          MATRIZ,
+          FILIAL,
+          PED_NUMPEDIDO,
+          PED_ANOBASE,
+          QTDE_SALDO,
+          QTDE_PEDIDA,
+          QTDE_ENTREGUE,
+          VALOR_UNITARIO,
+          PEDIDO_CLIENTE,
+          STATUS,
+          ITEM_CODIGO,
+          DATA_PEDIDO,
+          BLUEBAY_PESSOA (
             APELIDO
           )
         `)
@@ -92,8 +102,8 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
 
       // Processamos os pedidos em um único loop
       pedidosData.forEach(pedido => {
-        // @ts-ignore - o tipo do pedido.pessoa vem do JOIN
-        const apelido = pedido.pessoa?.APELIDO;
+        // @ts-ignore - o tipo do pedido.BLUEBAY_PESSOA vem do JOIN
+        const apelido = pedido.BLUEBAY_PESSOA?.APELIDO;
         if (!apelido) return;
 
         const key = `${pedido.FILIAL ?? 0}-${pedido.PED_NUMPEDIDO}-${pedido.PED_ANOBASE}`;
