@@ -12,11 +12,16 @@ interface JabOrder {
   valor_total: number;
 }
 
-export function useJabOrders(selectedDate?: Date) {
+interface DateRange {
+  from: Date | undefined;
+  to: Date | undefined;
+}
+
+export function useJabOrders(dateRange?: DateRange) {
   return useQuery({
-    queryKey: ['jab-orders', selectedDate?.toISOString()],
+    queryKey: ['jab-orders', dateRange?.from?.toISOString(), dateRange?.to?.toISOString()],
     queryFn: async () => {
-      if (!selectedDate) return [];
+      if (!dateRange?.from || !dateRange?.to) return [];
 
       const { data, error } = await supabase
         .from('BLUEBAY_PEDIDO')
@@ -28,9 +33,10 @@ export function useJabOrders(selectedDate?: Date) {
           QTDE_SALDO,
           VALOR_UNITARIO
         `)
-        .in('STATUS', ['0', '1', '2'])
-        .gte('DATA_PEDIDO', startOfDay(selectedDate).toISOString())
-        .lte('DATA_PEDIDO', endOfDay(selectedDate).toISOString());
+        .in('STATUS', ['1', '2'])
+        .eq('CENTROCUSTO', 'JAB')
+        .gte('DATA_PEDIDO', startOfDay(dateRange.from).toISOString())
+        .lte('DATA_PEDIDO', endOfDay(dateRange.to).toISOString());
 
       if (error) throw error;
 
@@ -62,6 +68,6 @@ export function useJabOrders(selectedDate?: Date) {
       // Converte o objeto agrupado em um array
       return Object.values(groupedOrders);
     },
-    enabled: !!selectedDate
+    enabled: !!dateRange?.from && !!dateRange?.to
   });
 }

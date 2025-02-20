@@ -3,16 +3,21 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft, Calendar as CalendarIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useJabOrders } from "@/hooks/useJabOrders";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { DateRange } from "react-day-picker";
 
 const JabOrders = () => {
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const { data: orders = [], isLoading } = useJabOrders(selectedDate);
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: new Date(),
+    to: new Date(),
+  });
+  
+  const { data: orders = [], isLoading } = useJabOrders(date);
 
   if (isLoading) {
     return (
@@ -37,23 +42,32 @@ const JabOrders = () => {
             <Button
               variant={"outline"}
               className={cn(
-                "justify-start text-left font-normal w-[240px]",
-                !selectedDate && "text-muted-foreground"
+                "justify-start text-left font-normal w-[300px]",
+                !date && "text-muted-foreground"
               )}
             >
-              {selectedDate ? (
-                format(selectedDate, "dd/MM/yyyy")
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {date?.from ? (
+                date.to ? (
+                  <>
+                    {format(date.from, "dd/MM/yyyy")} - {format(date.to, "dd/MM/yyyy")}
+                  </>
+                ) : (
+                  format(date.from, "dd/MM/yyyy")
+                )
               ) : (
-                <span>Selecione uma data</span>
+                <span>Selecione um período</span>
               )}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="end">
             <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={setSelectedDate}
               initialFocus
+              mode="range"
+              defaultMonth={date?.from}
+              selected={date}
+              onSelect={setDate}
+              numberOfMonths={2}
             />
           </PopoverContent>
         </Popover>
