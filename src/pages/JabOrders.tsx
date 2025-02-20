@@ -62,7 +62,7 @@ const JabOrders = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {orders.map((order) => (
           <Card 
-            key={`${order.MATRIZ}-${order.FILIAL}-${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}-${order.MPED_NUMORDEM}`}
+            key={`${order.MATRIZ}-${order.FILIAL}-${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`}
             className="hover:shadow-lg transition-shadow"
           >
             <CardHeader>
