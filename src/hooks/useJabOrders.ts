@@ -41,28 +41,42 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
         .from('BLUEBAY_PEDIDO')
         .select()
         .eq('CENTROCUSTO', 'JAB')
-        .in('STATUS', ['1', '2'])
         .gte('DATA_PEDIDO', startOfDay(dateRange.from).toISOString())
         .lte('DATA_PEDIDO', endOfDay(dateRange.to).toISOString());
 
-      if (errorPedidos) throw errorPedidos;
-      if (!pedidosData || pedidosData.length === 0) return [];
+      if (errorPedidos) {
+        console.error('Erro ao buscar pedidos:', errorPedidos);
+        throw errorPedidos;
+      }
+      
+      if (!pedidosData || pedidosData.length === 0) {
+        console.log('Nenhum pedido encontrado para o período');
+        return [];
+      }
 
       console.log('Total de pedidos encontrados:', pedidosData.length);
 
       // Buscamos os apelidos das pessoas
       const pessoasIds = [...new Set(pedidosData.map(p => p.PES_CODIGO).filter(Boolean))];
-      const { data: pessoas } = await supabase
+      const { data: pessoas, error: errorPessoas } = await supabase
         .from('BLUEBAY_PESSOA')
         .select('PES_CODIGO, APELIDO')
         .in('PES_CODIGO', pessoasIds);
 
+      if (errorPessoas) {
+        console.error('Erro ao buscar pessoas:', errorPessoas);
+      }
+
       // Buscamos as descrições dos itens
       const itemCodigos = [...new Set(pedidosData.map(p => p.ITEM_CODIGO).filter(Boolean))];
-      const { data: itens } = await supabase
+      const { data: itens, error: errorItens } = await supabase
         .from('BLUEBAY_ITEM')
         .select('ITEM_CODIGO, DESCRICAO')
         .in('ITEM_CODIGO', itemCodigos);
+
+      if (errorItens) {
+        console.error('Erro ao buscar itens:', errorItens);
+      }
 
       // Criamos os mapas para lookup rápido
       const apelidoMap = new Map(
@@ -78,6 +92,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
       // Processamos os pedidos em um único loop
       for (const pedido of pedidosData) {
         if (!pedido.FILIAL || !pedido.PED_NUMPEDIDO || !pedido.PED_ANOBASE || !pedido.MATRIZ) {
+          console.log('Pedido inválido:', pedido);
           continue;
         }
 
