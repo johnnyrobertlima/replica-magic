@@ -12,6 +12,7 @@ export interface OrderItem {
 }
 
 export interface ClientOrder {
+  PES_CODIGO: number;
   APELIDO: string;
   total_saldo: number;
   valor_total: number;
