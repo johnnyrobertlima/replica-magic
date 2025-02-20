@@ -11,6 +11,7 @@ interface JabOrder {
   PED_ANOBASE: number;
   total_saldo: number;
   valor_total: number;
+  APELIDO: string | null;
 }
 
 export function useJabOrders(dateRange?: DayPickerDateRange) {
@@ -27,7 +28,10 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
           PED_NUMPEDIDO,
           PED_ANOBASE,
           QTDE_SALDO,
-          VALOR_UNITARIO
+          VALOR_UNITARIO,
+          BLUEBAY_PESSOA!BLUEBAY_PEDIDO_PES_CODIGO_fkey (
+            APELIDO
+          )
         `)
         .in('STATUS', ['1', '2'])
         .eq('CENTROCUSTO', 'JAB')
@@ -46,7 +50,8 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
             PED_NUMPEDIDO: curr.PED_NUMPEDIDO,
             PED_ANOBASE: curr.PED_ANOBASE,
             total_saldo: 0,
-            valor_total: 0
+            valor_total: 0,
+            APELIDO: curr.BLUEBAY_PESSOA?.APELIDO || null
           };
         }
         
