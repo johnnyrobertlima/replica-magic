@@ -28,8 +28,7 @@ export function useJabOrders(selectedDate?: Date) {
           PED_ANOBASE,
           QTDE_SALDO,
           VALOR_UNITARIO,
-          PES_CODIGO,
-          pessoa:BLUEBAY_PESSOA(APELIDO)
+          pessoa:BLUEBAY_PESSOA!PES_CODIGO(APELIDO)
         `)
         .in('STATUS', ['0', '1', '2'])
         .gte('DATA_PEDIDO', startOfDay(selectedDate).toISOString())
