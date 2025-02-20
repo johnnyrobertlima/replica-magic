@@ -8,7 +8,6 @@ interface JabOrder {
   FILIAL: number;
   PED_NUMPEDIDO: string;
   PED_ANOBASE: number;
-  MPED_NUMORDEM: number;
   total_saldo: number;
   valor_total: number;
 }
@@ -26,7 +25,6 @@ export function useJabOrders(selectedDate?: Date) {
           FILIAL,
           PED_NUMPEDIDO,
           PED_ANOBASE,
-          MPED_NUMORDEM,
           QTDE_SALDO,
           VALOR_UNITARIO
         `)
@@ -36,9 +34,9 @@ export function useJabOrders(selectedDate?: Date) {
 
       if (error) throw error;
 
-      // Agrupa os pedidos e calcula os totais
+      // Agrupa os pedidos apenas por PED_NUMPEDIDO e PED_ANOBASE
       const groupedOrders = data.reduce((acc: { [key: string]: JabOrder }, curr) => {
-        const key = `${curr.MATRIZ}-${curr.FILIAL}-${curr.PED_NUMPEDIDO}-${curr.PED_ANOBASE}-${curr.MPED_NUMORDEM}`;
+        const key = `${curr.PED_NUMPEDIDO}-${curr.PED_ANOBASE}`;
         
         if (!acc[key]) {
           acc[key] = {
@@ -46,7 +44,6 @@ export function useJabOrders(selectedDate?: Date) {
             FILIAL: curr.FILIAL,
             PED_NUMPEDIDO: curr.PED_NUMPEDIDO,
             PED_ANOBASE: curr.PED_ANOBASE,
-            MPED_NUMORDEM: curr.MPED_NUMORDEM,
             total_saldo: 0,
             valor_total: 0
           };
