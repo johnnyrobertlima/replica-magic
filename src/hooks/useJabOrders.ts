@@ -34,9 +34,12 @@ export function useJabOrders(selectedDate?: Date) {
 
       if (error) throw error;
 
+      console.log('Dados brutos do banco:', data);
+
       // Agrupa os pedidos apenas por PED_NUMPEDIDO e PED_ANOBASE
       const groupedOrders = data.reduce((acc: { [key: string]: JabOrder }, curr) => {
         const key = `${curr.PED_NUMPEDIDO}-${curr.PED_ANOBASE}`;
+        console.log('Processando pedido:', key, curr);
         
         if (!acc[key]) {
           acc[key] = {
@@ -56,11 +59,15 @@ export function useJabOrders(selectedDate?: Date) {
         acc[key].total_saldo += saldo;
         acc[key].valor_total += saldo * valorUnitario;
         
+        console.log('Acumulado para o pedido:', key, acc[key]);
+        
         return acc;
       }, {});
 
-      // Converte o objeto agrupado em um array
-      return Object.values(groupedOrders);
+      const result = Object.values(groupedOrders);
+      console.log('Resultado final agrupado:', result);
+
+      return result;
     },
     enabled: !!selectedDate
   });
