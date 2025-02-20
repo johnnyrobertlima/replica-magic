@@ -34,15 +34,24 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
     queryFn: async () => {
       if (!dateRange?.from || !dateRange?.to) return [];
 
-      console.log('Buscando pedidos para o período:', { from: dateRange.from, to: dateRange.to });
+      const dataInicial = startOfDay(dateRange.from).toISOString();
+      const dataFinal = endOfDay(dateRange.to).toISOString();
+
+      console.log('Buscando pedidos para o período:', { 
+        dataInicial,
+        dataFinal,
+        fromDate: dateRange.from,
+        toDate: dateRange.to
+      });
 
       // Primeiro, buscamos os pedidos
       const { data: pedidosData, error: errorPedidos } = await supabase
         .from('BLUEBAY_PEDIDO')
-        .select()
+        .select('*, BLUEBAY_PESSOA(APELIDO), BLUEBAY_ITEM(DESCRICAO)')
         .eq('CENTROCUSTO', 'JAB')
-        .gte('DATA_PEDIDO', startOfDay(dateRange.from).toISOString())
-        .lte('DATA_PEDIDO', endOfDay(dateRange.to).toISOString());
+        .gte('DATA_PEDIDO', dataInicial)
+        .lte('DATA_PEDIDO', dataFinal)
+        .order('DATA_PEDIDO', { ascending: false });
 
       if (errorPedidos) {
         console.error('Erro ao buscar pedidos:', errorPedidos);
@@ -50,41 +59,16 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
       }
       
       if (!pedidosData || pedidosData.length === 0) {
-        console.log('Nenhum pedido encontrado para o período');
+        console.log('Nenhum pedido encontrado para o período:', {
+          centrocusto: 'JAB',
+          dataInicial,
+          dataFinal
+        });
         return [];
       }
 
       console.log('Total de pedidos encontrados:', pedidosData.length);
-
-      // Buscamos os apelidos das pessoas
-      const pessoasIds = [...new Set(pedidosData.map(p => p.PES_CODIGO).filter(Boolean))];
-      const { data: pessoas, error: errorPessoas } = await supabase
-        .from('BLUEBAY_PESSOA')
-        .select('PES_CODIGO, APELIDO')
-        .in('PES_CODIGO', pessoasIds);
-
-      if (errorPessoas) {
-        console.error('Erro ao buscar pessoas:', errorPessoas);
-      }
-
-      // Buscamos as descrições dos itens
-      const itemCodigos = [...new Set(pedidosData.map(p => p.ITEM_CODIGO).filter(Boolean))];
-      const { data: itens, error: errorItens } = await supabase
-        .from('BLUEBAY_ITEM')
-        .select('ITEM_CODIGO, DESCRICAO')
-        .in('ITEM_CODIGO', itemCodigos);
-
-      if (errorItens) {
-        console.error('Erro ao buscar itens:', errorItens);
-      }
-
-      // Criamos os mapas para lookup rápido
-      const apelidoMap = new Map(
-        pessoas?.map(p => [p.PES_CODIGO, p.APELIDO]) || []
-      );
-      const itemMap = new Map(
-        itens?.map(i => [i.ITEM_CODIGO, i.DESCRICAO]) || []
-      );
+      console.log('Exemplo de pedido:', pedidosData[0]);
 
       // Criamos um Map para armazenar os pedidos agrupados
       const ordersMap = new Map<string, JabOrder>();
@@ -108,7 +92,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
             PED_ANOBASE: pedido.PED_ANOBASE,
             total_saldo: saldo,
             valor_total: saldo * valorUnitario,
-            APELIDO: pedido.PES_CODIGO ? apelidoMap.get(pedido.PES_CODIGO) || null : null,
+            APELIDO: pedido.BLUEBAY_PESSOA?.APELIDO || null,
             PEDIDO_CLIENTE: pedido.PEDIDO_CLIENTE || null,
             STATUS: pedido.STATUS || '',
             items: []
@@ -126,7 +110,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
           if (existingItemIndex === -1) {
             order.items.push({
               ITEM_CODIGO: pedido.ITEM_CODIGO,
-              DESCRICAO: itemMap.get(pedido.ITEM_CODIGO) || null,
+              DESCRICAO: pedido.BLUEBAY_ITEM?.DESCRICAO || null,
               QTDE_SALDO: saldo,
               QTDE_PEDIDA: pedido.QTDE_PEDIDA || 0,
               QTDE_ENTREGUE: pedido.QTDE_ENTREGUE || 0,
@@ -150,7 +134,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
       return ordersArray;
     },
     enabled: !!dateRange?.from && !!dateRange?.to,
-    staleTime: 5 * 60 * 1000, // Cache por 5 minutos
-    gcTime: 10 * 60 * 1000, // Mantém no cache por 10 minutos (anteriormente cacheTime)
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 }
