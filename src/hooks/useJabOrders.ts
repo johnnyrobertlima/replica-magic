@@ -45,7 +45,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
           ITEM_CODIGO,
           STATUS
         `)
-        .in('STATUS', ['1', '2'])
+        .in('STATUS', ['0', '1'])
         .eq('CENTROCUSTO', 'JAB')
         .gte('DATA_PEDIDO', startOfDay(dateRange.from).toISOString())
         .lte('DATA_PEDIDO', endOfDay(dateRange.to).toISOString());
