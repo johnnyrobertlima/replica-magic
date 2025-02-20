@@ -19,9 +19,14 @@ import type { ClientOrder } from "@/components/jab-orders-by-client/types";
 const ITEMS_PER_PAGE = 12; // 3x4 grid
 
 const JabOrdersByClient = () => {
+  // Definir um intervalo padrão de 7 dias
+  const hoje = new Date();
+  const seteDiasAtras = new Date();
+  seteDiasAtras.setDate(hoje.getDate() - 7);
+
   const [date, setDate] = useState<DateRange | undefined>({
-    from: new Date(),
-    to: new Date(),
+    from: seteDiasAtras,
+    to: hoje,
   });
   const [searchDate, setSearchDate] = useState<DateRange | undefined>(date);
   const [expandedClient, setExpandedClient] = useState<string | null>(null);
@@ -34,19 +39,25 @@ const JabOrdersByClient = () => {
   const handleSearch = () => {
     setIsSearching(true);
     setSearchDate(date);
-    setCurrentPage(1); // Reset to first page on new search
+    setCurrentPage(1);
   };
 
-  // Agrupar pedidos por cliente
+  console.log("Total de pedidos recebidos:", orders.length); // Debug log
+
+  // Agrupar pedidos por cliente usando PES_CODIGO
   const clientOrders = orders.reduce<Record<string, ClientOrder>>((acc, order) => {
-    if (!order.PES_CODIGO) return acc;
+    // Garantir que temos um PES_CODIGO válido
+    if (!order.PES_CODIGO) {
+      console.log("Pedido sem PES_CODIGO:", order); // Debug log
+      return acc;
+    }
 
     const pesCodigoKey = order.PES_CODIGO.toString();
 
     if (!acc[pesCodigoKey]) {
       acc[pesCodigoKey] = {
         PES_CODIGO: order.PES_CODIGO,
-        APELIDO: pesCodigoKey, // Usando PES_CODIGO como APELIDO
+        APELIDO: pesCodigoKey,
         total_saldo: 0,
         valor_total: 0,
         pedidos: [],
@@ -55,20 +66,32 @@ const JabOrdersByClient = () => {
     }
 
     const clientOrder = acc[pesCodigoKey];
+    
+    // Acumular valores
+    const saldo = order.QTDE_SALDO || 0;
+    const valorUnitario = order.VALOR_UNITARIO || 0;
+    
     clientOrder.pedidos.push(order);
-    clientOrder.total_saldo += order.total_saldo;
-    clientOrder.valor_total += order.valor_total;
+    clientOrder.total_saldo += saldo;
+    clientOrder.valor_total += (saldo * valorUnitario);
 
-    // Consolidar itens
-    order.items.forEach(item => {
-      clientOrder.items.push({ 
-        ...item,
-        PED_NUMPEDIDO: order.PED_NUMPEDIDO 
+    // Adicionar item apenas se houver ITEM_CODIGO
+    if (order.ITEM_CODIGO) {
+      clientOrder.items.push({
+        ITEM_CODIGO: order.ITEM_CODIGO,
+        DESCRICAO: order.DESCRICAO || null,
+        QTDE_SALDO: saldo,
+        QTDE_PEDIDA: order.QTDE_PEDIDA || 0,
+        QTDE_ENTREGUE: order.QTDE_ENTREGUE || 0,
+        VALOR_UNITARIO: valorUnitario,
+        PED_NUMPEDIDO: order.PED_NUMPEDIDO
       });
-    });
+    }
 
     return acc;
   }, {});
+
+  console.log("Total de clientes agrupados:", Object.keys(clientOrders).length); // Debug log
 
   const filteredClients = Object.values(clientOrders).filter(client => {
     if (searchQuery) {
@@ -77,7 +100,7 @@ const JabOrdersByClient = () => {
     return true;
   });
 
-  console.log("Total de clientes:", filteredClients.length); // Debug log
+  console.log("Total de clientes filtrados:", filteredClients.length); // Debug log
 
   const totalPages = Math.ceil(filteredClients.length / ITEMS_PER_PAGE);
   const paginatedClients = filteredClients.slice(
@@ -148,7 +171,6 @@ const JabOrdersByClient = () => {
 
               {Array.from({ length: totalPages }, (_, i) => i + 1)
                 .filter(page => {
-                  // Mostrar primeira página, última página, página atual e páginas adjacentes
                   return page === 1 || 
                          page === totalPages || 
                          Math.abs(page - currentPage) <= 1;
