@@ -28,6 +28,7 @@ const JabOrders = () => {
   
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
   const { data: orders = [], isLoading } = useJabOrders(date);
 
   const toggleExpand = (orderId: string) => {
@@ -45,9 +46,25 @@ const JabOrders = () => {
     }
   };
 
-  const filteredOrders = orders.filter(order => 
-    searchQuery ? order.PED_NUMPEDIDO.toLowerCase().includes(searchQuery.toLowerCase()) : true
-  );
+  const handleSearch = () => {
+    setIsSearching(true);
+  };
+
+  const removeLeadingZeros = (str: string) => {
+    return str.replace(/^0+/, '');
+  };
+
+  const filteredOrders = orders.filter(order => {
+    if (!isSearching) return true;
+    
+    if (searchQuery) {
+      const normalizedOrderNumber = removeLeadingZeros(order.PED_NUMPEDIDO);
+      const normalizedSearchQuery = removeLeadingZeros(searchQuery);
+      return normalizedOrderNumber.includes(normalizedSearchQuery);
+    }
+    
+    return true;
+  });
 
   if (isLoading) {
     return (
@@ -112,6 +129,11 @@ const JabOrders = () => {
               />
             </PopoverContent>
           </Popover>
+
+          <Button onClick={handleSearch} className="gap-2">
+            <Search className="h-4 w-4" />
+            Pesquisar
+          </Button>
         </div>
       </div>
 
