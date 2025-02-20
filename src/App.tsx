@@ -22,6 +22,7 @@ import { AdminSEO } from "@/pages/admin/seo";
 import { AdminServices } from "@/pages/admin/services";
 import { AdminSocial } from "@/pages/admin/social";
 import { AdminLogin } from "@/pages/admin/login";
+import { Outlet } from "react-router-dom";
 
 function App() {
   return (
@@ -40,7 +41,7 @@ function App() {
 
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin" element={<AdminLayout />}>
+        <Route path="/admin" element={<AdminLayout><Outlet /></AdminLayout>}>
           <Route index element={<AdminDashboard />} />
           <Route path="banners" element={<AdminBanners />} />
           <Route path="clients" element={<AdminClients />} />

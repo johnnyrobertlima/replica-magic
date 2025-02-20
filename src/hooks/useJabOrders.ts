@@ -2,6 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfDay, endOfDay } from "date-fns";
+import type { DateRange as DayPickerDateRange } from "react-day-picker";
 
 interface JabOrder {
   MATRIZ: number;
@@ -12,12 +13,7 @@ interface JabOrder {
   valor_total: number;
 }
 
-interface DateRange {
-  from: Date;
-  to: Date;
-}
-
-export function useJabOrders(dateRange?: DateRange | undefined) {
+export function useJabOrders(dateRange?: DayPickerDateRange) {
   return useQuery({
     queryKey: ['jab-orders', dateRange?.from?.toISOString(), dateRange?.to?.toISOString()],
     queryFn: async () => {
