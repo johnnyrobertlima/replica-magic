@@ -28,7 +28,7 @@ export function useJabOrders(selectedDate?: Date) {
           PED_ANOBASE,
           QTDE_SALDO,
           VALOR_UNITARIO,
-          BLUEBAY_PESSOA:BLUEBAY_PESSOA(APELIDO)
+          pessoa:BLUEBAY_PESSOA(*)
         `)
         .eq('STATUS', '0')
         .gte('DATA_PEDIDO', startOfDay(selectedDate).toISOString())
@@ -42,7 +42,7 @@ export function useJabOrders(selectedDate?: Date) {
       console.log('Dados brutos do banco:', data);
 
       // Agrupa os pedidos apenas por PED_NUMPEDIDO e PED_ANOBASE
-      const groupedOrders = data.reduce((acc: { [key: string]: JabOrder }, curr) => {
+      const groupedOrders = data.reduce((acc: { [key: string]: JabOrder }, curr: any) => {
         const key = `${curr.PED_NUMPEDIDO}-${curr.PED_ANOBASE}`;
         console.log('Processando pedido:', key, curr);
         
@@ -54,7 +54,7 @@ export function useJabOrders(selectedDate?: Date) {
             PED_ANOBASE: curr.PED_ANOBASE,
             total_saldo: 0,
             valor_total: 0,
-            APELIDO: curr.BLUEBAY_PESSOA?.APELIDO || null
+            APELIDO: curr.pessoa?.APELIDO || null
           };
         }
         
