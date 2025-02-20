@@ -68,7 +68,6 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
       }
 
       console.log('Total de pedidos encontrados:', pedidosData.length);
-      console.log('Exemplo de pedido:', pedidosData[0]);
 
       // Buscamos os apelidos das pessoas
       const pessoasIds = [...new Set(pedidosData.map(p => p.PES_CODIGO).filter(Boolean))];
@@ -97,21 +96,16 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
 
       // Processamos os pedidos em um único loop
       for (const pedido of pedidosData) {
-        if (!pedido.FILIAL || !pedido.PED_NUMPEDIDO || !pedido.PED_ANOBASE || !pedido.MATRIZ) {
-          console.log('Pedido inválido:', pedido);
-          continue;
-        }
-
-        const key = `${pedido.FILIAL}-${pedido.PED_NUMPEDIDO}-${pedido.PED_ANOBASE}`;
+        const key = `${pedido.FILIAL ?? 0}-${pedido.PED_NUMPEDIDO}-${pedido.PED_ANOBASE}`;
         const saldo = pedido.QTDE_SALDO || 0;
         const valorUnitario = pedido.VALOR_UNITARIO || 0;
 
         if (!ordersMap.has(key)) {
           ordersMap.set(key, {
-            MATRIZ: pedido.MATRIZ,
-            FILIAL: pedido.FILIAL,
-            PED_NUMPEDIDO: pedido.PED_NUMPEDIDO,
-            PED_ANOBASE: pedido.PED_ANOBASE,
+            MATRIZ: pedido.MATRIZ || 0,
+            FILIAL: pedido.FILIAL ?? 0,
+            PED_NUMPEDIDO: pedido.PED_NUMPEDIDO || '',
+            PED_ANOBASE: pedido.PED_ANOBASE || 0,
             total_saldo: saldo,
             valor_total: saldo * valorUnitario,
             APELIDO: pedido.PES_CODIGO ? apelidoMap.get(pedido.PES_CODIGO) || null : null,
@@ -146,11 +140,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
 
       console.log('Número de pedidos agrupados:', ordersArray.length);
       if (ordersArray.length > 0) {
-        console.log('Exemplo de pedido agrupado:', {
-          numero: ordersArray[0].PED_NUMPEDIDO,
-          quantidadeItens: ordersArray[0].items.length,
-          primeiroItem: ordersArray[0].items[0]
-        });
+        console.log('Exemplo de pedido agrupado:', ordersArray[0]);
       }
 
       return ordersArray;
