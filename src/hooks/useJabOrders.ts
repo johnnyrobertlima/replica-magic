@@ -44,7 +44,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
         toDate: dateRange.to
       });
 
-      // Primeiro, buscamos os pedidos
+      // Primeiro, buscamos os pedidos sem limit
       const { data: pedidosData, error: errorPedidos } = await supabase
         .from('BLUEBAY_PEDIDO')
         .select()
@@ -69,14 +69,14 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
 
       console.log('Total de pedidos encontrados:', pedidosData.length);
 
-      // Buscamos os apelidos das pessoas
+      // Buscamos os apelidos das pessoas sem limit
       const pessoasIds = [...new Set(pedidosData.map(p => p.PES_CODIGO).filter(Boolean))];
       const { data: pessoas } = await supabase
         .from('BLUEBAY_PESSOA')
         .select('PES_CODIGO, APELIDO')
         .in('PES_CODIGO', pessoasIds);
 
-      // Buscamos as descrições dos itens
+      // Buscamos as descrições dos itens sem limit
       const itemCodigos = [...new Set(pedidosData.map(p => p.ITEM_CODIGO).filter(Boolean))];
       const { data: itens } = await supabase
         .from('BLUEBAY_ITEM')
@@ -95,7 +95,9 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
       const ordersMap = new Map<string, JabOrder>();
 
       // Processamos os pedidos em um único loop
-      for (const pedido of pedidosData) {
+      pedidosData.forEach(pedido => {
+        if (!pedido.PES_CODIGO || !apelidoMap.get(pedido.PES_CODIGO)) return;
+
         const key = `${pedido.FILIAL ?? 0}-${pedido.PED_NUMPEDIDO}-${pedido.PED_ANOBASE}`;
         const saldo = pedido.QTDE_SALDO || 0;
         const valorUnitario = pedido.VALOR_UNITARIO || 0;
@@ -134,7 +136,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
             });
           }
         }
-      }
+      });
 
       const ordersArray = Array.from(ordersMap.values());
 
