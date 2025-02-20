@@ -27,7 +27,7 @@ const ClientOrderCard = ({ client, isExpanded, onToggleExpand }: ClientOrderCard
         <div className="flex justify-between items-center">
           <div className="flex flex-col gap-1">
             <CardTitle className="text-lg">
-              {client.APELIDO}
+              PES_CODIGO: {client.PES_CODIGO}
             </CardTitle>
           </div>
         </div>
@@ -57,7 +57,7 @@ const ClientOrderCard = ({ client, isExpanded, onToggleExpand }: ClientOrderCard
               items={client.items}
               showZeroBalance={showZeroBalance}
               onToggleZeroBalance={() => setShowZeroBalance(!showZeroBalance)}
-              clientId={client.APELIDO}
+              clientId={client.PES_CODIGO.toString()}
             />
           )}
         </div>
