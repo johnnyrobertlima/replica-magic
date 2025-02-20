@@ -138,7 +138,7 @@ const JabOrders = () => {
                       <div className="bg-muted p-4 rounded-lg">
                         <h4 className="font-semibold mb-4">Itens do Pedido</h4>
                         <div className="space-y-4">
-                          {order.items.map((item, index) => (
+                          {order.items?.map((item, index) => (
                             <div 
                               key={`${item.ITEM_CODIGO}-${index}`}
                               className="bg-background p-4 rounded-md shadow-sm"
