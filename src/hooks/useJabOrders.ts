@@ -12,6 +12,7 @@ interface JabOrder {
   total_saldo: number;
   valor_total: number;
   APELIDO: string | null;
+  STATUS: string;  // Added STATUS property to the interface
   items: Array<{
     ITEM_CODIGO: string;
     DESCRICAO: string | null;
@@ -41,9 +42,9 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
           QTDE_ENTREGUE,
           VALOR_UNITARIO,
           PES_CODIGO,
-          ITEM_CODIGO
+          ITEM_CODIGO,
+          STATUS
         `)
-        .in('STATUS', ['1', '2'])
         .eq('CENTROCUSTO', 'JAB')
         .gte('DATA_PEDIDO', startOfDay(dateRange.from).toISOString())
         .lte('DATA_PEDIDO', endOfDay(dateRange.to).toISOString());
@@ -90,6 +91,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
             total_saldo: 0,
             valor_total: 0,
             APELIDO: apelidoMap.get(curr.PES_CODIGO) || null,
+            STATUS: curr.STATUS, // Make sure we include the STATUS in the grouped order
             items: []
           };
         }
