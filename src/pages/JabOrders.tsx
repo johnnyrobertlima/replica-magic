@@ -30,11 +30,18 @@ const JabOrders = () => {
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const [showZeroBalance, setShowZeroBalance] = useState(false);
+  const [showZeroBalanceMap, setShowZeroBalanceMap] = useState<Record<string, boolean>>({});
   const { data: orders = [], isLoading } = useJabOrders(date);
 
   const toggleExpand = (orderId: string) => {
     setExpandedOrder(expandedOrder === orderId ? null : orderId);
+  };
+
+  const toggleShowZeroBalance = (orderId: string) => {
+    setShowZeroBalanceMap(prev => ({
+      ...prev,
+      [orderId]: !prev[orderId]
+    }));
   };
 
   const getStatusText = (status: string) => {
@@ -149,6 +156,7 @@ const JabOrders = () => {
         {filteredOrders.map((order) => {
           const orderId = `${order.MATRIZ}-${order.FILIAL}-${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`;
           const isExpanded = expandedOrder === orderId;
+          const showZeroBalance = showZeroBalanceMap[orderId] || false;
 
           return (
             <Card 
@@ -206,10 +214,15 @@ const JabOrders = () => {
                         <div className="flex items-center gap-2">
                           <Switch
                             checked={showZeroBalance}
-                            onCheckedChange={setShowZeroBalance}
-                            id="show-zero-balance"
+                            onCheckedChange={(checked) => {
+                              toggleShowZeroBalance(orderId);
+                            }}
+                            id={`show-zero-balance-${orderId}`}
                           />
-                          <label htmlFor="show-zero-balance" className="text-sm text-muted-foreground cursor-pointer">
+                          <label 
+                            htmlFor={`show-zero-balance-${orderId}`} 
+                            className="text-sm text-muted-foreground cursor-pointer"
+                          >
                             Mostrar itens com saldo zero
                           </label>
                         </div>
