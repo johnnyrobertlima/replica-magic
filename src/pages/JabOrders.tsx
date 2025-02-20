@@ -37,7 +37,7 @@ const JabOrders = () => {
   };
 
   const getStatusText = (status: string) => {
-    return status === "0" ? "Aberto" : "Parcial";
+    return status === "1" ? "Aberto" : "Parcial";
   };
 
   if (isLoading) {
