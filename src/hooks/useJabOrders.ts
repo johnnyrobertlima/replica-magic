@@ -6,6 +6,7 @@ import type { DateRange as DayPickerDateRange } from "react-day-picker";
 import type { Database } from "@/integrations/supabase/types";
 
 type BluebayPedido = Database["public"]["Tables"]["BLUEBAY_PEDIDO"]["Row"];
+type SupabasePedido = Partial<BluebayPedido>;
 
 export interface JabOrder {
   MATRIZ: number;
@@ -36,7 +37,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
       console.log('Buscando pedidos para o período:', { from: dateRange.from, to: dateRange.to });
 
       // Primeiro, buscamos os pedidos com paginação para garantir todos os resultados
-      let allPedidos: BluebayPedido[] = [];
+      let allPedidos: SupabasePedido[] = [];
       let page = 0;
       const pageSize = 1000;
       
@@ -76,7 +77,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
       if (allPedidos.length === 0) return [];
 
       // Buscamos os apelidos das pessoas
-      const pessoasIds = [...new Set(allPedidos.map(p => p.PES_CODIGO))];
+      const pessoasIds = [...new Set(allPedidos.map(p => p.PES_CODIGO).filter(Boolean))];
       const { data: pessoas, error: errorPessoas } = await supabase
         .from('BLUEBAY_PESSOA')
         .select('PES_CODIGO, APELIDO')
@@ -85,7 +86,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
       if (errorPessoas) throw errorPessoas;
 
       // Buscamos as descrições dos itens
-      const itemCodigos = [...new Set(allPedidos.map(p => p.ITEM_CODIGO))];
+      const itemCodigos = [...new Set(allPedidos.map(p => p.ITEM_CODIGO).filter(Boolean))];
       const { data: itens, error: errorItens } = await supabase
         .from('BLUEBAY_ITEM')
         .select('ITEM_CODIGO, DESCRICAO')
@@ -105,6 +106,10 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
       const groupedOrders: Record<string, JabOrder> = {};
 
       for (const pedido of allPedidos) {
+        if (!pedido.FILIAL || !pedido.PED_NUMPEDIDO || !pedido.PED_ANOBASE || !pedido.MATRIZ) {
+          continue; // Skip invalid orders
+        }
+
         const key = `${pedido.FILIAL}-${pedido.PED_NUMPEDIDO}-${pedido.PED_ANOBASE}`;
         
         if (!groupedOrders[key]) {
@@ -115,8 +120,8 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
             PED_ANOBASE: pedido.PED_ANOBASE,
             total_saldo: 0,
             valor_total: 0,
-            APELIDO: apelidoMap.get(pedido.PES_CODIGO) || null,
-            PEDIDO_CLIENTE: pedido.PEDIDO_CLIENTE,
+            APELIDO: pedido.PES_CODIGO ? apelidoMap.get(pedido.PES_CODIGO) || null : null,
+            PEDIDO_CLIENTE: pedido.PEDIDO_CLIENTE || null,
             STATUS: pedido.STATUS || '',
             items: []
           };
