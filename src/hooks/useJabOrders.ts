@@ -49,12 +49,17 @@ export function useJabOrders(selectedDate?: Date) {
           };
         }
         
-        acc[key].total_saldo += curr.QTDE_SALDO || 0;
-        acc[key].valor_total += (curr.QTDE_SALDO || 0) * (curr.VALOR_UNITARIO || 0);
+        // Soma o saldo e o valor total
+        const saldo = curr.QTDE_SALDO || 0;
+        const valorUnitario = curr.VALOR_UNITARIO || 0;
+        
+        acc[key].total_saldo += saldo;
+        acc[key].valor_total += saldo * valorUnitario;
         
         return acc;
       }, {});
 
+      // Converte o objeto agrupado em um array
       return Object.values(groupedOrders);
     },
     enabled: !!selectedDate
