@@ -100,6 +100,9 @@ const JabOrdersByClient = () => {
           <h1 className="text-3xl font-bold">Separação de Pedidos por Cliente</h1>
           <p className="text-sm text-muted-foreground">
             Total de clientes: {filteredClients.length}
+            {filteredClients.length > ITEMS_PER_PAGE && 
+              ` (Mostrando ${((currentPage - 1) * ITEMS_PER_PAGE) + 1} - ${Math.min(currentPage * ITEMS_PER_PAGE, filteredClients.length)})`
+            }
           </p>
         </div>
         <SearchFilters
@@ -122,7 +125,7 @@ const JabOrdersByClient = () => {
         ))}
       </div>
 
-      {totalPages > 1 && (
+      {filteredClients.length > ITEMS_PER_PAGE && (
         <div className="mt-8 flex justify-center">
           <Pagination>
             <PaginationContent>
