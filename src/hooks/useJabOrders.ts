@@ -47,7 +47,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
       // Primeiro, buscamos os pedidos
       const { data: pedidosData, error: errorPedidos } = await supabase
         .from('BLUEBAY_PEDIDO')
-        .select('*, BLUEBAY_PESSOA(APELIDO), BLUEBAY_ITEM(DESCRICAO)')
+        .select()
         .eq('CENTROCUSTO', 'JAB')
         .gte('DATA_PEDIDO', dataInicial)
         .lte('DATA_PEDIDO', dataFinal)
@@ -69,6 +69,28 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
 
       console.log('Total de pedidos encontrados:', pedidosData.length);
       console.log('Exemplo de pedido:', pedidosData[0]);
+
+      // Buscamos os apelidos das pessoas
+      const pessoasIds = [...new Set(pedidosData.map(p => p.PES_CODIGO).filter(Boolean))];
+      const { data: pessoas } = await supabase
+        .from('BLUEBAY_PESSOA')
+        .select('PES_CODIGO, APELIDO')
+        .in('PES_CODIGO', pessoasIds);
+
+      // Buscamos as descrições dos itens
+      const itemCodigos = [...new Set(pedidosData.map(p => p.ITEM_CODIGO).filter(Boolean))];
+      const { data: itens } = await supabase
+        .from('BLUEBAY_ITEM')
+        .select('ITEM_CODIGO, DESCRICAO')
+        .in('ITEM_CODIGO', itemCodigos);
+
+      // Criamos os mapas para lookup rápido
+      const apelidoMap = new Map(
+        pessoas?.map(p => [p.PES_CODIGO, p.APELIDO]) || []
+      );
+      const itemMap = new Map(
+        itens?.map(i => [i.ITEM_CODIGO, i.DESCRICAO]) || []
+      );
 
       // Criamos um Map para armazenar os pedidos agrupados
       const ordersMap = new Map<string, JabOrder>();
@@ -92,7 +114,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
             PED_ANOBASE: pedido.PED_ANOBASE,
             total_saldo: saldo,
             valor_total: saldo * valorUnitario,
-            APELIDO: pedido.BLUEBAY_PESSOA?.APELIDO || null,
+            APELIDO: pedido.PES_CODIGO ? apelidoMap.get(pedido.PES_CODIGO) || null : null,
             PEDIDO_CLIENTE: pedido.PEDIDO_CLIENTE || null,
             STATUS: pedido.STATUS || '',
             items: []
@@ -110,7 +132,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
           if (existingItemIndex === -1) {
             order.items.push({
               ITEM_CODIGO: pedido.ITEM_CODIGO,
-              DESCRICAO: pedido.BLUEBAY_ITEM?.DESCRICAO || null,
+              DESCRICAO: itemMap.get(pedido.ITEM_CODIGO) || null,
               QTDE_SALDO: saldo,
               QTDE_PEDIDA: pedido.QTDE_PEDIDA || 0,
               QTDE_ENTREGUE: pedido.QTDE_ENTREGUE || 0,
