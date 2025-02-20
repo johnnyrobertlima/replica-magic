@@ -12,12 +12,13 @@ const JabOrders = () => {
     from: new Date(),
     to: new Date(),
   });
+  const [searchDate, setSearchDate] = useState<DateRange | undefined>(date);
   
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [showZeroBalanceMap, setShowZeroBalanceMap] = useState<Record<string, boolean>>({});
-  const { data: orders = [], isLoading } = useJabOrders(date);
+  const { data: orders = [], isLoading } = useJabOrders(searchDate);
 
   const toggleExpand = (orderId: string) => {
     setExpandedOrder(expandedOrder === orderId ? null : orderId);
@@ -32,6 +33,7 @@ const JabOrders = () => {
 
   const handleSearch = () => {
     setIsSearching(true);
+    setSearchDate(date);
   };
 
   const removeLeadingZeros = (str: string) => {
