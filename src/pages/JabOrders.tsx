@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -29,6 +30,7 @@ const JabOrders = () => {
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [showZeroBalance, setShowZeroBalance] = useState(false);
   const { data: orders = [], isLoading } = useJabOrders(date);
 
   const toggleExpand = (orderId: string) => {
@@ -200,7 +202,17 @@ const JabOrders = () => {
                   
                   {isExpanded && (
                     <div className="mt-6 space-y-4">
-                      <div className="flex justify-end items-center border-b pb-2">
+                      <div className="flex justify-between items-center border-b pb-2">
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={showZeroBalance}
+                            onCheckedChange={setShowZeroBalance}
+                            id="show-zero-balance"
+                          />
+                          <label htmlFor="show-zero-balance" className="text-sm text-muted-foreground cursor-pointer">
+                            Mostrar itens com saldo zero
+                          </label>
+                        </div>
                         <span className="text-sm font-semibold">Filial: {order.FILIAL}</span>
                       </div>
                       
@@ -220,7 +232,8 @@ const JabOrders = () => {
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {order.items?.map((item, index) => (
+                              {order.items?.filter(item => showZeroBalance || item.QTDE_SALDO > 0)
+                                .map((item, index) => (
                                 <TableRow key={`${item.ITEM_CODIGO}-${index}`}>
                                   <TableCell className="font-medium">{item.ITEM_CODIGO}</TableCell>
                                   <TableCell>{item.DESCRICAO || '-'}</TableCell>
