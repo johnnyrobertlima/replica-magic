@@ -1,6 +1,6 @@
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import ClientArea from "./pages/ClientArea";
+import ClientArea from "@/pages/ClientArea";
 import PostManagement from "@/pages/PostManagement";
 import JabOrders from "@/pages/JabOrders";
 
