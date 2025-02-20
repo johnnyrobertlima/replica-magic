@@ -57,6 +57,11 @@ const OrderCard: React.FC<OrderCardProps> = ({
 
   const orderId = `${order.MATRIZ}-${order.FILIAL}-${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`;
 
+  const handleSwitchClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Impede que o clique se propague para o Card
+    onToggleZeroBalance();
+  };
+
   return (
     <Card 
       className={cn(
@@ -109,7 +114,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
           {isExpanded && (
             <div className="mt-6 space-y-4">
               <div className="flex justify-between items-center border-b pb-2">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
                   <Switch
                     checked={showZeroBalance}
                     onCheckedChange={onToggleZeroBalance}
