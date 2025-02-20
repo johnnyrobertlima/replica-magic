@@ -28,9 +28,8 @@ export function useJabOrders(selectedDate?: Date) {
           PED_ANOBASE,
           QTDE_SALDO,
           VALOR_UNITARIO,
-          BLUEBAY_PESSOA (
-            APELIDO
-          )
+          PES_CODIGO,
+          pessoa:BLUEBAY_PESSOA(APELIDO)
         `)
         .in('STATUS', ['0', '1', '2'])
         .gte('DATA_PEDIDO', startOfDay(selectedDate).toISOString())
@@ -53,7 +52,7 @@ export function useJabOrders(selectedDate?: Date) {
             PED_ANOBASE: curr.PED_ANOBASE,
             total_saldo: 0,
             valor_total: 0,
-            APELIDO: curr.BLUEBAY_PESSOA?.APELIDO || null
+            APELIDO: curr.pessoa?.APELIDO || null
           };
         }
         
