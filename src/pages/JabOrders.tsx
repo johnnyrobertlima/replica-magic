@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
@@ -35,6 +34,10 @@ const JabOrders = () => {
 
   const toggleShowZeroBalance = () => {
     setShowZeroBalance(!showZeroBalance);
+  };
+
+  const getStatusText = (status: string) => {
+    return status === "0" ? "Aberto" : "Parcial";
   };
 
   if (isLoading) {
@@ -112,9 +115,14 @@ const JabOrders = () => {
             >
               <CardHeader>
                 <div className="flex justify-between items-center">
-                  <CardTitle className="text-lg">
-                    Pedido #{order.PED_NUMPEDIDO}
-                  </CardTitle>
+                  <div className="space-y-1">
+                    <CardTitle className="text-lg">
+                      Pedido #{order.PED_NUMPEDIDO}
+                    </CardTitle>
+                    <span className="text-sm font-medium text-primary">
+                      Status: {getStatusText(order.STATUS)}
+                    </span>
+                  </div>
                   {isExpanded ? (
                     <ChevronUp className="h-5 w-5 text-muted-foreground" />
                   ) : (
