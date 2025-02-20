@@ -3,12 +3,13 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, ArrowLeft, Calendar as CalendarIcon, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, ArrowLeft, Calendar as CalendarIcon, ChevronDown, ChevronUp, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useJabOrders } from "@/hooks/useJabOrders";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -26,6 +27,7 @@ const JabOrders = () => {
   });
   
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const { data: orders = [], isLoading } = useJabOrders(date);
 
   const toggleExpand = (orderId: string) => {
@@ -42,6 +44,10 @@ const JabOrders = () => {
         return "ERRO";
     }
   };
+
+  const filteredOrders = orders.filter(order => 
+    searchQuery ? order.PED_NUMPEDIDO.toLowerCase().includes(searchQuery.toLowerCase()) : true
+  );
 
   if (isLoading) {
     return (
@@ -61,44 +67,56 @@ const JabOrders = () => {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Separação de Pedidos JAB</h1>
         
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant={"outline"}
-              className={cn(
-                "justify-start text-left font-normal w-[300px]",
-                !date && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {date?.from ? (
-                date.to ? (
-                  <>
-                    {format(date.from, "dd/MM/yyyy")} - {format(date.to, "dd/MM/yyyy")}
-                  </>
-                ) : (
-                  format(date.from, "dd/MM/yyyy")
-                )
-              ) : (
-                <span>Selecione um período</span>
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="end">
-            <Calendar
-              initialFocus
-              mode="range"
-              defaultMonth={date?.from}
-              selected={date}
-              onSelect={setDate}
-              numberOfMonths={2}
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por número do pedido"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 w-[250px]"
             />
-          </PopoverContent>
-        </Popover>
+          </div>
+          
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant={"outline"}
+                className={cn(
+                  "justify-start text-left font-normal w-[300px]",
+                  !date && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {date?.from ? (
+                  date.to ? (
+                    <>
+                      {format(date.from, "dd/MM/yyyy")} - {format(date.to, "dd/MM/yyyy")}
+                    </>
+                  ) : (
+                    format(date.from, "dd/MM/yyyy")
+                  )
+                ) : (
+                  <span>Selecione um período</span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <Calendar
+                initialFocus
+                mode="range"
+                defaultMonth={date?.from}
+                selected={date}
+                onSelect={setDate}
+                numberOfMonths={2}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {orders.map((order) => {
+        {filteredOrders.map((order) => {
           const orderId = `${order.MATRIZ}-${order.FILIAL}-${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`;
           const isExpanded = expandedOrder === orderId;
 
