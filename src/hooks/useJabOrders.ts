@@ -7,7 +7,7 @@ import type { Database } from "@/integrations/supabase/types";
 
 type BluebayPedido = Database["public"]["Tables"]["BLUEBAY_PEDIDO"]["Row"];
 
-interface JabOrder {
+export interface JabOrder {
   MATRIZ: number;
   FILIAL: number;
   PED_NUMPEDIDO: string;
@@ -102,62 +102,61 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
       );
 
       // Agrupamos os pedidos primeiro por PED_NUMPEDIDO, PED_ANOBASE e FILIAL
-      const groupedOrders = allPedidos.reduce((acc: { [key: string]: JabOrder }, curr) => {
-        const key = `${curr.FILIAL}-${curr.PED_NUMPEDIDO}-${curr.PED_ANOBASE}`;
+      const groupedOrders: Record<string, JabOrder> = {};
+
+      for (const pedido of allPedidos) {
+        const key = `${pedido.FILIAL}-${pedido.PED_NUMPEDIDO}-${pedido.PED_ANOBASE}`;
         
-        if (!acc[key]) {
-          acc[key] = {
-            MATRIZ: curr.MATRIZ,
-            FILIAL: curr.FILIAL,
-            PED_NUMPEDIDO: curr.PED_NUMPEDIDO,
-            PED_ANOBASE: curr.PED_ANOBASE,
+        if (!groupedOrders[key]) {
+          groupedOrders[key] = {
+            MATRIZ: pedido.MATRIZ,
+            FILIAL: pedido.FILIAL,
+            PED_NUMPEDIDO: pedido.PED_NUMPEDIDO,
+            PED_ANOBASE: pedido.PED_ANOBASE,
             total_saldo: 0,
             valor_total: 0,
-            APELIDO: apelidoMap.get(curr.PES_CODIGO) || null,
-            PEDIDO_CLIENTE: curr.PEDIDO_CLIENTE,
-            STATUS: curr.STATUS || '',
+            APELIDO: apelidoMap.get(pedido.PES_CODIGO) || null,
+            PEDIDO_CLIENTE: pedido.PEDIDO_CLIENTE,
+            STATUS: pedido.STATUS || '',
             items: []
           };
         }
         
-        const saldo = curr.QTDE_SALDO || 0;
-        const valorUnitario = curr.VALOR_UNITARIO || 0;
+        const saldo = pedido.QTDE_SALDO || 0;
+        const valorUnitario = pedido.VALOR_UNITARIO || 0;
         
-        acc[key].total_saldo += saldo;
-        acc[key].valor_total += saldo * valorUnitario;
+        groupedOrders[key].total_saldo += saldo;
+        groupedOrders[key].valor_total += saldo * valorUnitario;
         
         // Adiciona o item ao array de items
-        if (curr.ITEM_CODIGO) {
-          const existingItemIndex = acc[key].items.findIndex(item => item.ITEM_CODIGO === curr.ITEM_CODIGO);
+        if (pedido.ITEM_CODIGO) {
+          const existingItemIndex = groupedOrders[key].items.findIndex(item => item.ITEM_CODIGO === pedido.ITEM_CODIGO);
           if (existingItemIndex === -1) {
-            acc[key].items.push({
-              ITEM_CODIGO: curr.ITEM_CODIGO,
-              DESCRICAO: itemMap.get(curr.ITEM_CODIGO) || null,
+            groupedOrders[key].items.push({
+              ITEM_CODIGO: pedido.ITEM_CODIGO,
+              DESCRICAO: itemMap.get(pedido.ITEM_CODIGO) || null,
               QTDE_SALDO: saldo,
-              QTDE_PEDIDA: curr.QTDE_PEDIDA || 0,
-              QTDE_ENTREGUE: curr.QTDE_ENTREGUE || 0,
+              QTDE_PEDIDA: pedido.QTDE_PEDIDA || 0,
+              QTDE_ENTREGUE: pedido.QTDE_ENTREGUE || 0,
               VALOR_UNITARIO: valorUnitario
             });
           }
         }
-        
-        return acc;
-      }, {});
+      }
 
-      console.log('Número de pedidos agrupados:', Object.keys(groupedOrders).length);
-      const amostraAgrupada = Object.values(groupedOrders)[0];
-      if (amostraAgrupada) {
+      const ordersArray = Object.values(groupedOrders);
+
+      console.log('Número de pedidos agrupados:', ordersArray.length);
+      if (ordersArray.length > 0) {
         console.log('Exemplo de pedido agrupado:', {
-          numero: amostraAgrupada.PED_NUMPEDIDO,
-          quantidadeItens: amostraAgrupada.items.length,
-          primeiroItem: amostraAgrupada.items[0]
+          numero: ordersArray[0].PED_NUMPEDIDO,
+          quantidadeItens: ordersArray[0].items.length,
+          primeiroItem: ordersArray[0].items[0]
         });
       }
       
-      return Object.values(groupedOrders) as JabOrder[];
+      return ordersArray;
     },
     enabled: !!dateRange?.from && !!dateRange?.to
   });
 }
-
-export type { JabOrder };
