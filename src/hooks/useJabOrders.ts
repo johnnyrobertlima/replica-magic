@@ -10,6 +10,7 @@ interface JabOrder {
   PED_ANOBASE: number;
   total_saldo: number;
   valor_total: number;
+  APELIDO: string | null;
 }
 
 export function useJabOrders(selectedDate?: Date) {
@@ -26,7 +27,11 @@ export function useJabOrders(selectedDate?: Date) {
           PED_NUMPEDIDO,
           PED_ANOBASE,
           QTDE_SALDO,
-          VALOR_UNITARIO
+          VALOR_UNITARIO,
+          PES_CODIGO,
+          BLUEBAY_PESSOA!BLUEBAY_PEDIDO_PES_CODIGO_fkey (
+            APELIDO
+          )
         `)
         .in('STATUS', ['0', '1', '2'])
         .gte('DATA_PEDIDO', startOfDay(selectedDate).toISOString())
@@ -48,7 +53,8 @@ export function useJabOrders(selectedDate?: Date) {
             PED_NUMPEDIDO: curr.PED_NUMPEDIDO,
             PED_ANOBASE: curr.PED_ANOBASE,
             total_saldo: 0,
-            valor_total: 0
+            valor_total: 0,
+            APELIDO: curr.BLUEBAY_PESSOA?.APELIDO || null
           };
         }
         
