@@ -57,7 +57,6 @@ const JabOrdersByClient = () => {
     if (!acc[pesCodigoKey]) {
       acc[pesCodigoKey] = {
         PES_CODIGO: order.PES_CODIGO,
-        APELIDO: pesCodigoKey,
         total_saldo: 0,
         valor_total: 0,
         pedidos: [],
