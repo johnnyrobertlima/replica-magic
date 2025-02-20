@@ -9,6 +9,14 @@ import { useJabOrders } from "@/hooks/useJabOrders";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import type { DateRange } from "react-day-picker";
 
 const JabOrders = () => {
@@ -130,38 +138,49 @@ const JabOrders = () => {
                   
                   {isExpanded && (
                     <div className="mt-6 space-y-4">
-                      <div className="flex justify-between items-center border-b pb-2">
-                        <span className="text-sm font-semibold">Matriz: {order.MATRIZ}</span>
+                      <div className="flex justify-end items-center border-b pb-2">
                         <span className="text-sm font-semibold">Filial: {order.FILIAL}</span>
                       </div>
                       
                       <div className="bg-muted p-4 rounded-lg">
                         <h4 className="font-semibold mb-4">Itens do Pedido</h4>
-                        <div className="space-y-4">
-                          {order.items?.map((item, index) => (
-                            <div 
-                              key={`${item.ITEM_CODIGO}-${index}`}
-                              className="bg-background p-4 rounded-md shadow-sm"
-                            >
-                              <div className="flex justify-between items-start mb-2">
-                                <span className="font-medium">{item.ITEM_CODIGO}</span>
-                                <span className="text-sm text-muted-foreground">
-                                  Saldo: {item.QTDE_SALDO.toLocaleString()}
-                                </span>
-                              </div>
-                              {item.DESCRICAO && (
-                                <p className="text-sm text-muted-foreground mb-2">
-                                  {item.DESCRICAO}
-                                </p>
-                              )}
-                              <div className="text-sm text-right">
-                                R$ {item.VALOR_UNITARIO.toLocaleString(undefined, {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                })}
-                              </div>
-                            </div>
-                          ))}
+                        <div className="overflow-x-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>SKU</TableHead>
+                                <TableHead>Descrição</TableHead>
+                                <TableHead className="text-right">QT Pedido</TableHead>
+                                <TableHead className="text-right">QT Faturada</TableHead>
+                                <TableHead className="text-right">QT Saldo</TableHead>
+                                <TableHead className="text-right">VL Uni</TableHead>
+                                <TableHead className="text-right">VL Total Saldo</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {order.items?.map((item, index) => (
+                                <TableRow key={`${item.ITEM_CODIGO}-${index}`}>
+                                  <TableCell className="font-medium">{item.ITEM_CODIGO}</TableCell>
+                                  <TableCell>{item.DESCRICAO || '-'}</TableCell>
+                                  <TableCell className="text-right">{item.QTDE_PEDIDA.toLocaleString()}</TableCell>
+                                  <TableCell className="text-right">{item.QTDE_ENTREGUE.toLocaleString()}</TableCell>
+                                  <TableCell className="text-right">{item.QTDE_SALDO.toLocaleString()}</TableCell>
+                                  <TableCell className="text-right">
+                                    {item.VALOR_UNITARIO.toLocaleString(undefined, {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    })}
+                                  </TableCell>
+                                  <TableCell className="text-right">
+                                    {(item.QTDE_SALDO * item.VALOR_UNITARIO).toLocaleString(undefined, {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    })}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
                         </div>
                       </div>
                     </div>

@@ -16,6 +16,8 @@ interface JabOrder {
     ITEM_CODIGO: string;
     DESCRICAO: string | null;
     QTDE_SALDO: number;
+    QTDE_PEDIDA: number;
+    QTDE_ENTREGUE: number;
     VALOR_UNITARIO: number;
   }>;
 }
@@ -35,6 +37,8 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
           PED_NUMPEDIDO,
           PED_ANOBASE,
           QTDE_SALDO,
+          QTDE_PEDIDA,
+          QTDE_ENTREGUE,
           VALOR_UNITARIO,
           PES_CODIGO,
           ITEM_CODIGO
@@ -102,6 +106,8 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
             ITEM_CODIGO: curr.ITEM_CODIGO,
             DESCRICAO: itemMap.get(curr.ITEM_CODIGO) || null,
             QTDE_SALDO: saldo,
+            QTDE_PEDIDA: curr.QTDE_PEDIDA || 0,
+            QTDE_ENTREGUE: curr.QTDE_ENTREGUE || 0,
             VALOR_UNITARIO: valorUnitario
           });
         }
