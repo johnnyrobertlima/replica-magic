@@ -15,6 +15,7 @@ export interface JabOrder {
   PED_ANOBASE: number;
   total_saldo: number;
   valor_total: number;
+  PES_CODIGO: string;
   APELIDO: string | null;
   PEDIDO_CLIENTE: string | null;
   STATUS: string;
@@ -136,39 +137,38 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
         itens?.map(i => [i.ITEM_CODIGO, i.DESCRICAO]) || []
       );
 
-      // Criamos um Map para armazenar os pedidos agrupados
-      const ordersMap = new Map<string, JabOrder>();
+      // Criamos um Map para armazenar os pedidos agrupados por PES_CODIGO
+      const ordersByPessoaMap = new Map<string, JabOrder>();
 
       // Processamos os pedidos em um único loop
       pedidosData.forEach(pedido => {
         const apelido = pessoasMap.get(pedido.PES_CODIGO);
-        if (!apelido) return;
-
-        const key = `${pedido.FILIAL ?? 0}-${pedido.PED_NUMPEDIDO}-${pedido.PED_ANOBASE}`;
+        const key = pedido.PES_CODIGO;
         const saldo = pedido.QTDE_SALDO || 0;
         const valorUnitario = pedido.VALOR_UNITARIO || 0;
 
-        if (!ordersMap.has(key)) {
-          ordersMap.set(key, {
+        if (!ordersByPessoaMap.has(key)) {
+          ordersByPessoaMap.set(key, {
             MATRIZ: pedido.MATRIZ || 0,
             FILIAL: pedido.FILIAL ?? 0,
             PED_NUMPEDIDO: pedido.PED_NUMPEDIDO || '',
             PED_ANOBASE: pedido.PED_ANOBASE || 0,
             total_saldo: saldo,
             valor_total: saldo * valorUnitario,
-            APELIDO: apelido,
+            PES_CODIGO: key,
+            APELIDO: apelido || null,
             PEDIDO_CLIENTE: pedido.PEDIDO_CLIENTE || null,
             STATUS: pedido.STATUS || '',
             items: []
           });
         } else {
-          const order = ordersMap.get(key)!;
+          const order = ordersByPessoaMap.get(key)!;
           order.total_saldo += saldo;
           order.valor_total += saldo * valorUnitario;
         }
 
         if (pedido.ITEM_CODIGO) {
-          const order = ordersMap.get(key)!;
+          const order = ordersByPessoaMap.get(key)!;
           const existingItemIndex = order.items.findIndex(item => item.ITEM_CODIGO === pedido.ITEM_CODIGO);
           
           if (existingItemIndex === -1) {
@@ -184,7 +184,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
         }
       });
 
-      const ordersArray = Array.from(ordersMap.values());
+      const ordersArray = Array.from(ordersByPessoaMap.values());
 
       console.log('Número de pedidos agrupados:', ordersArray.length);
       if (ordersArray.length > 0) {
