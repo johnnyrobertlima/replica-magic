@@ -72,11 +72,6 @@ const JabOrders = () => {
               <p className="text-sm text-muted-foreground">
                 Ano Base: {order.PED_ANOBASE}
               </p>
-              {order.APELIDO && (
-                <p className="text-sm text-muted-foreground">
-                  Cliente: {order.APELIDO}
-                </p>
-              )}
             </CardHeader>
             <CardContent>
               <div className="space-y-2">

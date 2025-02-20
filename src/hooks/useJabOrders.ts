@@ -10,7 +10,6 @@ interface JabOrder {
   PED_ANOBASE: number;
   total_saldo: number;
   valor_total: number;
-  APELIDO: string | null;
 }
 
 export function useJabOrders(selectedDate?: Date) {
@@ -19,8 +18,7 @@ export function useJabOrders(selectedDate?: Date) {
     queryFn: async () => {
       if (!selectedDate) return [];
 
-      // First, get orders
-      const { data: orders, error } = await supabase
+      const { data, error } = await supabase
         .from('BLUEBAY_PEDIDO')
         .select(`
           MATRIZ,
@@ -28,47 +26,18 @@ export function useJabOrders(selectedDate?: Date) {
           PED_NUMPEDIDO,
           PED_ANOBASE,
           QTDE_SALDO,
-          VALOR_UNITARIO,
-          PES_CODIGO
+          VALOR_UNITARIO
         `)
-        .eq('STATUS', '0')
+        .in('STATUS', ['0', '1', '2'])
         .gte('DATA_PEDIDO', startOfDay(selectedDate).toISOString())
         .lte('DATA_PEDIDO', endOfDay(selectedDate).toISOString());
 
-      if (error) {
-        console.error('Error fetching orders:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      console.log('Pedidos encontrados:', orders);
-
-      if (!orders || orders.length === 0) {
-        return [];
-      }
-
-      // Get unique PES_CODIGO values
-      const pessoaCodigos = [...new Set(orders.map(order => order.PES_CODIGO))];
-
-      // Get pessoas data
-      const { data: pessoas, error: pessoasError } = await supabase
-        .from('BLUEBAY_PESSOA')
-        .select('PES_CODIGO, APELIDO')
-        .in('PES_CODIGO', pessoaCodigos);
-
-      if (pessoasError) {
-        console.error('Error fetching pessoas:', pessoasError);
-        throw pessoasError;
-      }
-
-      console.log('Pessoas encontradas:', pessoas);
-
-      // Create a lookup map for pessoas
-      const pessoaMap = new Map(
-        pessoas?.map(p => [p.PES_CODIGO, p.APELIDO]) || []
-      );
+      console.log('Dados brutos do banco:', data);
 
       // Agrupa os pedidos apenas por PED_NUMPEDIDO e PED_ANOBASE
-      const groupedOrders = orders.reduce((acc: { [key: string]: JabOrder }, curr) => {
+      const groupedOrders = data.reduce((acc: { [key: string]: JabOrder }, curr) => {
         const key = `${curr.PED_NUMPEDIDO}-${curr.PED_ANOBASE}`;
         console.log('Processando pedido:', key, curr);
         
@@ -79,8 +48,7 @@ export function useJabOrders(selectedDate?: Date) {
             PED_NUMPEDIDO: curr.PED_NUMPEDIDO,
             PED_ANOBASE: curr.PED_ANOBASE,
             total_saldo: 0,
-            valor_total: 0,
-            APELIDO: pessoaMap.get(curr.PES_CODIGO) || null
+            valor_total: 0
           };
         }
         
