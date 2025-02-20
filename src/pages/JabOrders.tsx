@@ -32,6 +32,17 @@ const JabOrders = () => {
     setExpandedOrder(expandedOrder === orderId ? null : orderId);
   };
 
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "1":
+        return "Aberto";
+      case "2":
+        return "Parcial";
+      default:
+        return "ERRO";
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -102,9 +113,14 @@ const JabOrders = () => {
             >
               <CardHeader>
                 <div className="flex justify-between items-center">
-                  <CardTitle className="text-lg">
-                    Pedido #{order.PED_NUMPEDIDO}
-                  </CardTitle>
+                  <div className="flex flex-col gap-1">
+                    <CardTitle className="text-lg">
+                      Pedido #{order.PED_NUMPEDIDO}
+                    </CardTitle>
+                    <span className="text-sm text-muted-foreground">
+                      Status: {getStatusText(order.STATUS)}
+                    </span>
+                  </div>
                   {isExpanded ? (
                     <ChevronUp className="h-5 w-5 text-muted-foreground" />
                   ) : (
