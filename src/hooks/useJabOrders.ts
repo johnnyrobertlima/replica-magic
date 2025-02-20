@@ -30,9 +30,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
           QTDE_SALDO,
           VALOR_UNITARIO,
           PES_CODIGO,
-          BLUEBAY_PESSOA (
-            APELIDO
-          )
+          APELIDO:BLUEBAY_PESSOA!inner(APELIDO)
         `)
         .in('STATUS', ['1', '2'])
         .eq('CENTROCUSTO', 'JAB')
@@ -52,7 +50,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
             PED_ANOBASE: curr.PED_ANOBASE,
             total_saldo: 0,
             valor_total: 0,
-            APELIDO: curr.BLUEBAY_PESSOA?.APELIDO || null
+            APELIDO: curr.APELIDO?.APELIDO || null
           };
         }
         
