@@ -12,7 +12,8 @@ interface JabOrder {
   total_saldo: number;
   valor_total: number;
   APELIDO: string | null;
-  STATUS: string;  // Added STATUS property to the interface
+  PEDIDO_CLIENTE: string | null;
+  STATUS: string;
   items: Array<{
     ITEM_CODIGO: string;
     DESCRICAO: string | null;
@@ -43,7 +44,8 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
           VALOR_UNITARIO,
           PES_CODIGO,
           ITEM_CODIGO,
-          STATUS
+          STATUS,
+          PEDIDO_CLIENTE
         `)
         .eq('CENTROCUSTO', 'JAB')
         .gte('DATA_PEDIDO', startOfDay(dateRange.from).toISOString())
@@ -78,7 +80,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
         itens?.map(i => [i.ITEM_CODIGO, i.DESCRICAO]) || []
       );
 
-      // Agora processamos os dados combinando as informações
+      // Agrupamos os pedidos por PED_NUMPEDIDO e PED_ANOBASE
       const groupedOrders = pedidos.reduce((acc: { [key: string]: JabOrder }, curr) => {
         const key = `${curr.PED_NUMPEDIDO}-${curr.PED_ANOBASE}`;
         
@@ -91,7 +93,8 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
             total_saldo: 0,
             valor_total: 0,
             APELIDO: apelidoMap.get(curr.PES_CODIGO) || null,
-            STATUS: curr.STATUS, // Make sure we include the STATUS in the grouped order
+            PEDIDO_CLIENTE: curr.PEDIDO_CLIENTE,
+            STATUS: curr.STATUS,
             items: []
           };
         }
@@ -117,6 +120,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
         return acc;
       }, {});
 
+      console.log('Pedidos agrupados:', groupedOrders);
       return Object.values(groupedOrders);
     },
     enabled: !!dateRange?.from && !!dateRange?.to
