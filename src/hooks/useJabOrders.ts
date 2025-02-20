@@ -12,6 +12,12 @@ interface JabOrder {
   total_saldo: number;
   valor_total: number;
   APELIDO: string | null;
+  items: Array<{
+    ITEM_CODIGO: string;
+    DESCRICAO: string | null;
+    QTDE_SALDO: number;
+    VALOR_UNITARIO: number;
+  }>;
 }
 
 export function useJabOrders(dateRange?: DayPickerDateRange) {
@@ -30,7 +36,8 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
           PED_ANOBASE,
           QTDE_SALDO,
           VALOR_UNITARIO,
-          PES_CODIGO
+          PES_CODIGO,
+          ITEM_CODIGO
         `)
         .in('STATUS', ['1', '2'])
         .eq('CENTROCUSTO', 'JAB')
@@ -40,7 +47,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
       if (errorPedidos) throw errorPedidos;
       if (!pedidos) return [];
 
-      // Em seguida, buscamos os apelidos das pessoas
+      // Buscamos os apelidos das pessoas
       const pessoasIds = [...new Set(pedidos.map(p => p.PES_CODIGO))];
       const { data: pessoas, error: errorPessoas } = await supabase
         .from('BLUEBAY_PESSOA')
@@ -49,9 +56,21 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
 
       if (errorPessoas) throw errorPessoas;
 
-      // Criamos um mapa de PES_CODIGO para APELIDO
+      // Buscamos as descrições dos itens
+      const itemCodigos = [...new Set(pedidos.map(p => p.ITEM_CODIGO))];
+      const { data: itens, error: errorItens } = await supabase
+        .from('BLUEBAY_ITEM')
+        .select('ITEM_CODIGO, DESCRICAO')
+        .in('ITEM_CODIGO', itemCodigos);
+
+      if (errorItens) throw errorItens;
+
+      // Criamos os mapas para lookup rápido
       const apelidoMap = new Map(
         pessoas?.map(p => [p.PES_CODIGO, p.APELIDO]) || []
+      );
+      const itemMap = new Map(
+        itens?.map(i => [i.ITEM_CODIGO, i.DESCRICAO]) || []
       );
 
       // Agora processamos os dados combinando as informações
@@ -66,7 +85,8 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
             PED_ANOBASE: curr.PED_ANOBASE,
             total_saldo: 0,
             valor_total: 0,
-            APELIDO: apelidoMap.get(curr.PES_CODIGO) || null
+            APELIDO: apelidoMap.get(curr.PES_CODIGO) || null,
+            items: []
           };
         }
         
@@ -75,6 +95,16 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
         
         acc[key].total_saldo += saldo;
         acc[key].valor_total += saldo * valorUnitario;
+        
+        // Adiciona o item ao array de items
+        if (curr.ITEM_CODIGO) {
+          acc[key].items.push({
+            ITEM_CODIGO: curr.ITEM_CODIGO,
+            DESCRICAO: itemMap.get(curr.ITEM_CODIGO) || null,
+            QTDE_SALDO: saldo,
+            VALOR_UNITARIO: valorUnitario
+          });
+        }
         
         return acc;
       }, {});

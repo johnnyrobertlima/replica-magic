@@ -78,7 +78,7 @@ const JabOrders = () => {
         </Popover>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {orders.map((order) => {
           const orderId = `${order.MATRIZ}-${order.FILIAL}-${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`;
           const isExpanded = expandedOrder === orderId;
@@ -88,7 +88,7 @@ const JabOrders = () => {
               key={orderId}
               className={cn(
                 "hover:shadow-lg transition-all cursor-pointer",
-                isExpanded && "ring-2 ring-primary"
+                isExpanded && "ring-2 ring-primary col-span-full"
               )}
               onClick={() => toggleExpand(orderId)}
             >
@@ -129,14 +129,40 @@ const JabOrders = () => {
                   </div>
                   
                   {isExpanded && (
-                    <div className="mt-4 pt-4 border-t space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Matriz:</span>
-                        <span className="font-medium">{order.MATRIZ}</span>
+                    <div className="mt-6 space-y-4">
+                      <div className="flex justify-between items-center border-b pb-2">
+                        <span className="text-sm font-semibold">Matriz: {order.MATRIZ}</span>
+                        <span className="text-sm font-semibold">Filial: {order.FILIAL}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Filial:</span>
-                        <span className="font-medium">{order.FILIAL}</span>
+                      
+                      <div className="bg-muted p-4 rounded-lg">
+                        <h4 className="font-semibold mb-4">Itens do Pedido</h4>
+                        <div className="space-y-4">
+                          {order.items.map((item, index) => (
+                            <div 
+                              key={`${item.ITEM_CODIGO}-${index}`}
+                              className="bg-background p-4 rounded-md shadow-sm"
+                            >
+                              <div className="flex justify-between items-start mb-2">
+                                <span className="font-medium">{item.ITEM_CODIGO}</span>
+                                <span className="text-sm text-muted-foreground">
+                                  Saldo: {item.QTDE_SALDO.toLocaleString()}
+                                </span>
+                              </div>
+                              {item.DESCRICAO && (
+                                <p className="text-sm text-muted-foreground mb-2">
+                                  {item.DESCRICAO}
+                                </p>
+                              )}
+                              <div className="text-sm text-right">
+                                R$ {item.VALOR_UNITARIO.toLocaleString(undefined, {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   )}
