@@ -55,6 +55,12 @@ const JabOrders = () => {
   };
 
   const filteredOrders = orders.filter(order => {
+    // Primeiro filtra por status
+    if (!["1", "2"].includes(order.STATUS)) {
+      return false;
+    }
+
+    // Depois aplica o filtro de pesquisa se necessário
     if (!isSearching) return true;
     
     if (searchQuery) {
