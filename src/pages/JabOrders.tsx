@@ -3,7 +3,7 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, ArrowLeft, Calendar as CalendarIcon, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, ArrowLeft, Calendar as CalendarIcon, ChevronDown, ChevronUp, ToggleLeft, ToggleRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useJabOrders } from "@/hooks/useJabOrders";
 import { Button } from "@/components/ui/button";
@@ -26,10 +26,15 @@ const JabOrders = () => {
   });
   
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+  const [showZeroBalance, setShowZeroBalance] = useState(false);
   const { data: orders = [], isLoading } = useJabOrders(date);
 
   const toggleExpand = (orderId: string) => {
     setExpandedOrder(expandedOrder === orderId ? null : orderId);
+  };
+
+  const toggleShowZeroBalance = () => {
+    setShowZeroBalance(!showZeroBalance);
   };
 
   if (isLoading) {
@@ -39,6 +44,11 @@ const JabOrders = () => {
       </div>
     );
   }
+
+  const filterItems = (items: any[]) => {
+    if (showZeroBalance) return items;
+    return items.filter(item => item.QTDE_SALDO > 0);
+  };
 
   return (
     <main className="container mx-auto px-4 py-8">
@@ -138,7 +148,28 @@ const JabOrders = () => {
                   
                   {isExpanded && (
                     <div className="mt-6 space-y-4">
-                      <div className="flex justify-end items-center border-b pb-2">
+                      <div className="flex justify-between items-center border-b pb-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleShowZeroBalance();
+                          }}
+                          className="flex items-center gap-2"
+                        >
+                          {showZeroBalance ? (
+                            <>
+                              <ToggleRight className="h-4 w-4" />
+                              Ocultar Itens Zerados
+                            </>
+                          ) : (
+                            <>
+                              <ToggleLeft className="h-4 w-4" />
+                              Mostrar Itens Zerados
+                            </>
+                          )}
+                        </Button>
                         <span className="text-sm font-semibold">Filial: {order.FILIAL}</span>
                       </div>
                       
@@ -158,7 +189,7 @@ const JabOrders = () => {
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {order.items?.map((item, index) => (
+                              {filterItems(order.items || []).map((item, index) => (
                                 <TableRow key={`${item.ITEM_CODIGO}-${index}`}>
                                   <TableCell className="font-medium">{item.ITEM_CODIGO}</TableCell>
                                   <TableCell>{item.DESCRICAO || '-'}</TableCell>
