@@ -39,11 +39,14 @@ const JabOrdersByClient = () => {
 
   // Agrupar pedidos por cliente
   const clientOrders = orders.reduce<Record<string, ClientOrder>>((acc, order) => {
-    if (!order.APELIDO) return acc;
+    if (!order.PES_CODIGO) return acc;
 
-    if (!acc[order.APELIDO]) {
-      acc[order.APELIDO] = {
-        APELIDO: order.APELIDO,
+    const pesCodigoKey = order.PES_CODIGO.toString();
+
+    if (!acc[pesCodigoKey]) {
+      acc[pesCodigoKey] = {
+        PES_CODIGO: order.PES_CODIGO,
+        APELIDO: pesCodigoKey, // Usando PES_CODIGO como APELIDO
         total_saldo: 0,
         valor_total: 0,
         pedidos: [],
@@ -51,7 +54,7 @@ const JabOrdersByClient = () => {
       };
     }
 
-    const clientOrder = acc[order.APELIDO];
+    const clientOrder = acc[pesCodigoKey];
     clientOrder.pedidos.push(order);
     clientOrder.total_saldo += order.total_saldo;
     clientOrder.valor_total += order.valor_total;
@@ -69,7 +72,7 @@ const JabOrdersByClient = () => {
 
   const filteredClients = Object.values(clientOrders).filter(client => {
     if (searchQuery) {
-      return client.APELIDO.toLowerCase().includes(searchQuery.toLowerCase());
+      return client.PES_CODIGO.toString().includes(searchQuery);
     }
     return true;
   });
@@ -119,10 +122,10 @@ const JabOrdersByClient = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {paginatedClients.map((client) => (
           <ClientOrderCard
-            key={client.APELIDO}
+            key={client.PES_CODIGO}
             client={client}
-            isExpanded={expandedClient === client.APELIDO}
-            onToggleExpand={() => setExpandedClient(expandedClient === client.APELIDO ? null : client.APELIDO)}
+            isExpanded={expandedClient === client.PES_CODIGO.toString()}
+            onToggleExpand={() => setExpandedClient(expandedClient === client.PES_CODIGO.toString() ? null : client.PES_CODIGO.toString())}
           />
         ))}
       </div>
