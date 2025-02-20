@@ -611,16 +611,36 @@ export type Database = {
       }
       insights_social: {
         Row: {
+          account_id: string | null
+          actor_id: string | null
+          ad_id: string | null
+          body: string | null
+          Campanha: string | null
           canal: string | null
           Cliente: string | null
+          cliques: number | null
           comments: number | null
+          cpc: number | null
+          cpm: number | null
           created_time: string | null
+          creative_id: string | null
+          Custo_por_Mensagens: number | null
+          Data: string | null
+          effective_status: string | null
           follows: number | null
+          Frequência: number | null
+          Gasto: number | null
           id: string | null
+          Impressões: number | null
+          instagram_permalink_url: string | null
+          instagram_user_id: string | null
           likes: number | null
           linked_post_id: string | null
           media_type: string | null
+          mensagens: number | null
           message: string | null
+          name: string | null
+          object_type: string | null
           permalink_url: string | null
           post_clicks: number | null
           post_id: string
@@ -638,19 +658,40 @@ export type Database = {
           timestamp: string | null
           total_comments: number | null
           total_interactions: number | null
+          updated_time: string | null
           views: number | null
         }
         Insert: {
+          account_id?: string | null
+          actor_id?: string | null
+          ad_id?: string | null
+          body?: string | null
+          Campanha?: string | null
           canal?: string | null
           Cliente?: string | null
+          cliques?: number | null
           comments?: number | null
+          cpc?: number | null
+          cpm?: number | null
           created_time?: string | null
+          creative_id?: string | null
+          Custo_por_Mensagens?: number | null
+          Data?: string | null
+          effective_status?: string | null
           follows?: number | null
+          Frequência?: number | null
+          Gasto?: number | null
           id?: string | null
+          Impressões?: number | null
+          instagram_permalink_url?: string | null
+          instagram_user_id?: string | null
           likes?: number | null
           linked_post_id?: string | null
           media_type?: string | null
+          mensagens?: number | null
           message?: string | null
+          name?: string | null
+          object_type?: string | null
           permalink_url?: string | null
           post_clicks?: number | null
           post_id: string
@@ -668,19 +709,40 @@ export type Database = {
           timestamp?: string | null
           total_comments?: number | null
           total_interactions?: number | null
+          updated_time?: string | null
           views?: number | null
         }
         Update: {
+          account_id?: string | null
+          actor_id?: string | null
+          ad_id?: string | null
+          body?: string | null
+          Campanha?: string | null
           canal?: string | null
           Cliente?: string | null
+          cliques?: number | null
           comments?: number | null
+          cpc?: number | null
+          cpm?: number | null
           created_time?: string | null
+          creative_id?: string | null
+          Custo_por_Mensagens?: number | null
+          Data?: string | null
+          effective_status?: string | null
           follows?: number | null
+          Frequência?: number | null
+          Gasto?: number | null
           id?: string | null
+          Impressões?: number | null
+          instagram_permalink_url?: string | null
+          instagram_user_id?: string | null
           likes?: number | null
           linked_post_id?: string | null
           media_type?: string | null
+          mensagens?: number | null
           message?: string | null
+          name?: string | null
+          object_type?: string | null
           permalink_url?: string | null
           post_clicks?: number | null
           post_id?: string
@@ -698,6 +760,7 @@ export type Database = {
           timestamp?: string | null
           total_comments?: number | null
           total_interactions?: number | null
+          updated_time?: string | null
           views?: number | null
         }
         Relationships: [

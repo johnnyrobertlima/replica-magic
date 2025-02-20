@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare, Key, UserPlus, Mail, Database } from "lucide-react";
+import { MessageSquare, Key, UserPlus, Mail, Database, Package2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const ClientArea = () => {
@@ -98,6 +98,25 @@ const ClientArea = () => {
             <Link to="/client-area/content-management">
               <Button className="w-full">
                 Ver Relatórios
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package2 className="h-6 w-6" />
+              Área da Bluebay
+            </CardTitle>
+            <CardDescription>
+              Gerencie pedidos e separação de itens
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link to="/client-area/bluebay/jab-orders">
+              <Button className="w-full">
+                Separação de pedidos JAB
               </Button>
             </Link>
           </CardContent>
