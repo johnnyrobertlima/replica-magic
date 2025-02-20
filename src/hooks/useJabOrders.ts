@@ -13,12 +13,18 @@ export interface JabOrder {
   FILIAL: number;
   PED_NUMPEDIDO: string;
   PED_ANOBASE: number;
+  QTDE_SALDO: number;
+  QTDE_PEDIDA: number;
+  QTDE_ENTREGUE: number;
+  VALOR_UNITARIO: number;
   total_saldo: number;
   valor_total: number;
-  PES_CODIGO: number; // Mudado de string para number
+  PES_CODIGO: number;
   APELIDO: string | null;
   PEDIDO_CLIENTE: string | null;
   STATUS: string;
+  ITEM_CODIGO: string;
+  DESCRICAO: string | null;
   items: Array<{
     ITEM_CODIGO: string;
     DESCRICAO: string | null;
@@ -137,61 +143,34 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
         itens?.map(i => [i.ITEM_CODIGO, i.DESCRICAO]) || []
       );
 
-      // Criamos um Map para armazenar os pedidos agrupados por PES_CODIGO
-      const ordersByPessoaMap = new Map<number, JabOrder>(); // Mudado de string para number
-
       // Processamos os pedidos em um único loop
-      pedidosData.forEach(pedido => {
+      const processedOrders: JabOrder[] = pedidosData.map(pedido => {
         const apelido = pessoasMap.get(pedido.PES_CODIGO);
-        const key = pedido.PES_CODIGO || 0; // Garantimos que seja um número
         const saldo = pedido.QTDE_SALDO || 0;
         const valorUnitario = pedido.VALOR_UNITARIO || 0;
 
-        if (!ordersByPessoaMap.has(key)) {
-          ordersByPessoaMap.set(key, {
-            MATRIZ: pedido.MATRIZ || 0,
-            FILIAL: pedido.FILIAL ?? 0,
-            PED_NUMPEDIDO: pedido.PED_NUMPEDIDO || '',
-            PED_ANOBASE: pedido.PED_ANOBASE || 0,
-            total_saldo: saldo,
-            valor_total: saldo * valorUnitario,
-            PES_CODIGO: key,
-            APELIDO: apelido || null,
-            PEDIDO_CLIENTE: pedido.PEDIDO_CLIENTE || null,
-            STATUS: pedido.STATUS || '',
-            items: []
-          });
-        } else {
-          const order = ordersByPessoaMap.get(key)!;
-          order.total_saldo += saldo;
-          order.valor_total += saldo * valorUnitario;
-        }
-
-        if (pedido.ITEM_CODIGO) {
-          const order = ordersByPessoaMap.get(key)!;
-          const existingItemIndex = order.items.findIndex(item => item.ITEM_CODIGO === pedido.ITEM_CODIGO);
-          
-          if (existingItemIndex === -1) {
-            order.items.push({
-              ITEM_CODIGO: pedido.ITEM_CODIGO,
-              DESCRICAO: itemMap.get(pedido.ITEM_CODIGO) || null,
-              QTDE_SALDO: saldo,
-              QTDE_PEDIDA: pedido.QTDE_PEDIDA || 0,
-              QTDE_ENTREGUE: pedido.QTDE_ENTREGUE || 0,
-              VALOR_UNITARIO: valorUnitario
-            });
-          }
-        }
+        return {
+          MATRIZ: pedido.MATRIZ || 0,
+          FILIAL: pedido.FILIAL ?? 0,
+          PED_NUMPEDIDO: pedido.PED_NUMPEDIDO || '',
+          PED_ANOBASE: pedido.PED_ANOBASE || 0,
+          QTDE_SALDO: saldo,
+          QTDE_PEDIDA: pedido.QTDE_PEDIDA || 0,
+          QTDE_ENTREGUE: pedido.QTDE_ENTREGUE || 0,
+          VALOR_UNITARIO: valorUnitario,
+          total_saldo: saldo,
+          valor_total: saldo * valorUnitario,
+          PES_CODIGO: pedido.PES_CODIGO || 0,
+          APELIDO: apelido || null,
+          PEDIDO_CLIENTE: pedido.PEDIDO_CLIENTE || null,
+          STATUS: pedido.STATUS || '',
+          ITEM_CODIGO: pedido.ITEM_CODIGO || '',
+          DESCRICAO: itemMap.get(pedido.ITEM_CODIGO || '') || null,
+          items: []
+        };
       });
 
-      const ordersArray = Array.from(ordersByPessoaMap.values());
-
-      console.log('Número de pedidos agrupados:', ordersArray.length);
-      if (ordersArray.length > 0) {
-        console.log('Exemplo de pedido agrupado:', ordersArray[0]);
-      }
-
-      return ordersArray;
+      return processedOrders;
     },
     enabled: !!dateRange?.from && !!dateRange?.to,
     staleTime: 5 * 60 * 1000,
