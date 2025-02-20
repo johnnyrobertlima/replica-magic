@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import ClientArea from "./pages/ClientArea";
 import WhatsAppCampaign from "./pages/WhatsAppCampaign";
@@ -5,7 +6,7 @@ import TokenRegistration from "./pages/TokenRegistration";
 import WhatsAppRegistration from "./pages/WhatsAppRegistration";
 import MailingRegistration from "./pages/MailingRegistration";
 import ContentManagement from "./pages/ContentManagement";
-import PostManagement from "./pages/PostManagement";
+import PostManagement from "@/pages/PostManagement";
 import JabOrders from "@/pages/JabOrders";
 
 function App() {

@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 
 const JabOrders = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const { orders, isLoading } = useJabOrders(selectedDate);
+  const { data: orders = [], isLoading } = useJabOrders(selectedDate);
 
   if (isLoading) {
     return (
