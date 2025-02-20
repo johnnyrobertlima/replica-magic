@@ -44,7 +44,31 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
         toDate: dateRange.to
       });
 
-      // Fazemos o JOIN entre BLUEBAY_PEDIDO e BLUEBAY_PESSOA de forma explícita
+      // Primeiro, buscamos os PES_CODIGO distintos para o período
+      const { data: pessoasCodigos, error: errorPessoas } = await supabase
+        .from('BLUEBAY_PEDIDO')
+        .select('PES_CODIGO')
+        .eq('CENTROCUSTO', 'JAB')
+        .gte('DATA_PEDIDO', dataInicial)
+        .lte('DATA_PEDIDO', dataFinal)
+        .not('PES_CODIGO', 'is', null);
+
+      if (errorPessoas) {
+        console.error('Erro ao buscar códigos de pessoas:', errorPessoas);
+        throw errorPessoas;
+      }
+
+      if (!pessoasCodigos || pessoasCodigos.length === 0) {
+        console.log('Nenhum código de pessoa encontrado para o período');
+        return [];
+      }
+
+      // Obtemos os códigos únicos
+      const uniquePesCodigos = [...new Set(pessoasCodigos.map(p => p.PES_CODIGO))];
+
+      console.log('Códigos de pessoas únicos encontrados:', uniquePesCodigos.length);
+
+      // Agora buscamos os pedidos com o JOIN para as pessoas encontradas
       const { data: pedidosData, error: errorPedidos } = await supabase
         .from('BLUEBAY_PEDIDO')
         .select(`
@@ -60,13 +84,15 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
           STATUS,
           ITEM_CODIGO,
           DATA_PEDIDO,
-          BLUEBAY_PESSOA (
+          BLUEBAY_PESSOA!inner (
+            PES_CODIGO,
             APELIDO
           )
         `)
         .eq('CENTROCUSTO', 'JAB')
         .gte('DATA_PEDIDO', dataInicial)
         .lte('DATA_PEDIDO', dataFinal)
+        .in('PES_CODIGO', uniquePesCodigos)
         .order('DATA_PEDIDO', { ascending: false });
 
       if (errorPedidos) {
