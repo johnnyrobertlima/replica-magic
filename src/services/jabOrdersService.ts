@@ -15,16 +15,6 @@ export async function fetchPessoasCodigos(dataInicial: string, dataFinal: string
   return data || [];
 }
 
-export async function fetchPessoasData(pesCodigos: number[]) {
-  const { data, error } = await supabase
-    .from('BLUEBAY_PESSOA')
-    .select('PES_CODIGO, APELIDO')
-    .in('PES_CODIGO', pesCodigos);
-
-  if (error) throw error;
-  return data || [];
-}
-
 export async function fetchPedidos(dataInicial: string, dataFinal: string, pesCodigos: number[]) {
   const { data, error } = await supabase
     .from('BLUEBAY_PEDIDO')
@@ -65,11 +55,9 @@ export async function fetchItensDescricoes(itemCodigos: string[]) {
 
 export function processOrders(
   pedidosData: any[], 
-  pessoasMap: Map<number, string>, 
   itemMap: Map<string, string>
 ): JabOrder[] {
   return pedidosData.map(pedido => {
-    const apelido = pessoasMap.get(pedido.PES_CODIGO);
     const saldo = pedido.QTDE_SALDO || 0;
     const valorUnitario = pedido.VALOR_UNITARIO || 0;
 
@@ -85,7 +73,6 @@ export function processOrders(
       total_saldo: saldo,
       valor_total: saldo * valorUnitario,
       PES_CODIGO: pedido.PES_CODIGO || 0,
-      APELIDO: apelido || null,
       PEDIDO_CLIENTE: pedido.PEDIDO_CLIENTE || null,
       STATUS: pedido.STATUS || '',
       ITEM_CODIGO: pedido.ITEM_CODIGO || '',

@@ -5,7 +5,6 @@ import type { DateRange as DayPickerDateRange } from "react-day-picker";
 import type { JabOrder } from "@/types/jabOrders";
 import { 
   fetchPessoasCodigos, 
-  fetchPessoasData, 
   fetchPedidos,
   fetchItensDescricoes,
   processOrders 
@@ -38,12 +37,6 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
       const uniquePesCodigos = [...new Set(pessoasCodigos.map(p => p.PES_CODIGO))];
       console.log('Códigos de pessoas únicos encontrados:', uniquePesCodigos.length);
 
-      // Fetch pessoas data
-      const pessoas = await fetchPessoasData(uniquePesCodigos);
-      const pessoasMap = new Map(
-        pessoas?.map(p => [p.PES_CODIGO, p.APELIDO]) || []
-      );
-
       // Fetch pedidos
       const pedidosData = await fetchPedidos(dataInicial, dataFinal, uniquePesCodigos);
       if (pedidosData.length === 0) {
@@ -60,7 +53,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
       );
 
       // Process orders
-      return processOrders(pedidosData, pessoasMap, itemMap);
+      return processOrders(pedidosData, itemMap);
     },
     enabled: !!dateRange?.from && !!dateRange?.to,
     staleTime: 5 * 60 * 1000,

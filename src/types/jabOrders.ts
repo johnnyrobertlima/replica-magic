@@ -25,7 +25,6 @@ export interface JabOrder {
   total_saldo: number;
   valor_total: number;
   PES_CODIGO: number;
-  APELIDO: string | null;
   PEDIDO_CLIENTE: string | null;
   STATUS: string;
   ITEM_CODIGO: string;
