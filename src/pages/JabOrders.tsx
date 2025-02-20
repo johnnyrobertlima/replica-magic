@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Loader2 } from "lucide-react";
-import { useJabOrders } from "@/hooks/useJabOrders";
+import { useJabOrders, type JabOrder } from "@/hooks/useJabOrders";
 import type { DateRange } from "react-day-picker";
 import OrderCard from "@/components/jab-orders/OrderCard";
 import SearchFilters from "@/components/jab-orders/SearchFilters";
@@ -38,7 +38,7 @@ const JabOrders = () => {
     return str.replace(/^0+/, '');
   };
 
-  const filteredOrders = orders.filter(order => {
+  const filteredOrders = orders.filter((order: JabOrder) => {
     // Primeiro filtra por status
     if (!["1", "2"].includes(order.STATUS)) {
       return false;
@@ -83,7 +83,7 @@ const JabOrders = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {filteredOrders.map((order) => {
+        {filteredOrders.map((order: JabOrder) => {
           const orderId = `${order.MATRIZ}-${order.FILIAL}-${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`;
           const isExpanded = expandedOrder === orderId;
           const showZeroBalance = showZeroBalanceMap[orderId] || false;

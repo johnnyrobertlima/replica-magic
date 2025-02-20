@@ -3,6 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfDay, endOfDay } from "date-fns";
 import type { DateRange as DayPickerDateRange } from "react-day-picker";
+import type { Database } from "@/integrations/supabase/types";
+
+type BluebayPedido = Database["public"]["Tables"]["BLUEBAY_PEDIDO"]["Row"];
 
 interface JabOrder {
   MATRIZ: number;
@@ -33,7 +36,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
       console.log('Buscando pedidos para o período:', { from: dateRange.from, to: dateRange.to });
 
       // Primeiro, buscamos os pedidos com paginação para garantir todos os resultados
-      let allPedidos = [];
+      let allPedidos: BluebayPedido[] = [];
       let page = 0;
       const pageSize = 1000;
       
@@ -112,7 +115,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
             valor_total: 0,
             APELIDO: apelidoMap.get(curr.PES_CODIGO) || null,
             PEDIDO_CLIENTE: curr.PEDIDO_CLIENTE,
-            STATUS: curr.STATUS,
+            STATUS: curr.STATUS || '',
             items: []
           };
         }
@@ -151,8 +154,10 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
         });
       }
       
-      return Object.values(groupedOrders);
+      return Object.values(groupedOrders) as JabOrder[];
     },
     enabled: !!dateRange?.from && !!dateRange?.to
   });
 }
+
+export type { JabOrder };
