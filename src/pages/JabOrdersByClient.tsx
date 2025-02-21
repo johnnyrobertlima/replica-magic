@@ -178,8 +178,13 @@ const JabOrdersByClient = () => {
     });
   };
 
-  const handleEnviarParaSeparacao = async (clientName: string, clienteCode: number, items: any[]) => {
+  const handleEnviarParaSeparacao = async (clientName: string, clienteCode: number | null, items: any[]) => {
     try {
+      if (!clienteCode) {
+        toast.error('Código do cliente não encontrado');
+        return;
+      }
+
       const selectedItemsArray = items.filter(item => 
         selectedItems.has(`${item.pedido}-${item.ITEM_CODIGO}`)
       ).map(item => ({
@@ -410,7 +415,11 @@ const JabOrdersByClient = () => {
 
                         <div className="mt-4 flex justify-end">
                           <Button 
-                            onClick={() => handleEnviarParaSeparacao(clientName, data.pedidos[0]?.PES_CODIGO || 0, data.allItems)}
+                            onClick={() => handleEnviarParaSeparacao(
+                              clientName, 
+                              data.pedidos[0]?.PES_CODIGO || null,
+                              data.allItems
+                            )}
                             disabled={selectedItems.size === 0}
                           >
                             Enviar para Separação
