@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { DateRange as DayPickerDateRange } from "react-day-picker";
@@ -211,24 +212,58 @@ export function useTotals() {
   return useQuery({
     queryKey: ['jab-totals'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .rpc('calcular_valor_total_jab');
+      // Primeiro, buscamos todos os pedidos com seus itens
+      const { data: pedidos, error: errorPedidos } = await supabase
+        .from('BLUEBAY_PEDIDO')
+        .select('QTDE_SALDO, VALOR_UNITARIO, ITEM_CODIGO')
+        .eq('CENTROCUSTO', 'JAB')
+        .in('STATUS', ['1', '2']);
 
-      if (error) {
-        console.error('Erro ao calcular totais:', error);
-        throw error;
+      if (errorPedidos) {
+        console.error('Erro ao buscar pedidos:', errorPedidos);
+        throw errorPedidos;
       }
 
-      // Extraímos o valor do resultado
-      const valor = (data?.[0]?.valor_total_saldo || 0) as number;
+      // Buscamos o estoque físico de todos os itens
+      const itemCodigos = [...new Set(pedidos?.map(p => p.ITEM_CODIGO).filter(Boolean))];
+      const { data: estoqueData, error: errorEstoque } = await supabase
+        .from('BLUEBAY_ESTOQUE')
+        .select('ITEM_CODIGO, FISICO')
+        .in('ITEM_CODIGO', itemCodigos);
 
-      console.log('Valor total calculado:', valor);
+      if (errorEstoque) {
+        console.error('Erro ao buscar estoque:', errorEstoque);
+        throw errorEstoque;
+      }
 
-      // Por enquanto retornamos o mesmo valor para ambos os campos
-      // até implementarmos a lógica específica para valorFaturarComEstoque
+      // Criamos um mapa para consulta rápida do estoque físico
+      const estoqueMap = new Map(estoqueData?.map(e => [e.ITEM_CODIGO, e.FISICO]) || []);
+
+      // Calculamos os totais
+      let valorTotalSaldo = 0;
+      let valorFaturarComEstoque = 0;
+
+      pedidos?.forEach(pedido => {
+        const valorPedido = (pedido.QTDE_SALDO || 0) * (pedido.VALOR_UNITARIO || 0);
+        valorTotalSaldo += valorPedido;
+
+        // Para o Faturar com Estoque, só consideramos se houver estoque físico
+        const estoqueFisico = estoqueMap.get(pedido.ITEM_CODIGO || '') || 0;
+        if (estoqueFisico > 0) {
+          // Consideramos o menor valor entre o saldo do pedido e o estoque físico
+          const qtdeFaturavel = Math.min(pedido.QTDE_SALDO || 0, estoqueFisico);
+          valorFaturarComEstoque += qtdeFaturavel * (pedido.VALOR_UNITARIO || 0);
+        }
+      });
+
+      console.log('Valores calculados:', {
+        valorTotalSaldo,
+        valorFaturarComEstoque
+      });
+
       return {
-        valorTotalSaldo: valor,
-        valorFaturarComEstoque: valor
+        valorTotalSaldo,
+        valorFaturarComEstoque
       };
     },
     staleTime: 5 * 60 * 1000,
