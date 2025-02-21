@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import type { 
   PedidoUnicoResult, 
@@ -36,6 +37,8 @@ async function fetchPedidosUnicos(
 }
 
 async function fetchPedidosDetalhados(numeroPedidos: string[]) {
+  console.log('Buscando detalhes dos pedidos:', numeroPedidos);
+  
   const { data, error } = await supabase
     .from('BLUEBAY_PEDIDO')
     .select(`
@@ -63,10 +66,13 @@ async function fetchPedidosDetalhados(numeroPedidos: string[]) {
     throw error;
   }
 
+  console.log('Dados retornados dos pedidos:', data?.slice(0, 2)); // Log dos primeiros 2 pedidos para debug
   return data || [];
 }
 
 async function fetchRelatedData(pessoasIds: number[], itemCodigos: string[], representantesIds: number[]) {
+  console.log('Buscando dados relacionados para:', { pessoasIds, itemCodigos: itemCodigos.slice(0, 5) }); // Log limitado para não sobrecarregar
+
   const [pessoasResponse, itensResponse, estoqueResponse, representantesResponse] = await Promise.all([
     supabase
       .from('BLUEBAY_PESSOA')
@@ -85,6 +91,21 @@ async function fetchRelatedData(pessoasIds: number[], itemCodigos: string[], rep
       .select('PES_CODIGO, APELIDO')
       .in('PES_CODIGO', representantesIds)
   ]);
+
+  if (pessoasResponse.error) {
+    console.error('Erro ao buscar pessoas:', pessoasResponse.error);
+  }
+  if (itensResponse.error) {
+    console.error('Erro ao buscar itens:', itensResponse.error);
+  }
+  if (estoqueResponse.error) {
+    console.error('Erro ao buscar estoque:', estoqueResponse.error);
+  }
+  if (representantesResponse.error) {
+    console.error('Erro ao buscar representantes:', representantesResponse.error);
+  }
+
+  console.log('Dados de pessoas encontrados:', pessoasResponse.data?.slice(0, 2)); // Log dos primeiros 2 registros
 
   return {
     pessoas: pessoasResponse.data || [],
@@ -125,6 +146,12 @@ export async function fetchJabOrders({
   const itemCodigos = [...new Set(pedidosDetalhados.map(p => p.ITEM_CODIGO).filter(Boolean))];
   const representantesIds = [...new Set(pedidosDetalhados.map(p => p.REPRESENTANTE).filter(Boolean))];
 
+  console.log('IDs encontrados:', {
+    pessoasIds: pessoasIds.slice(0, 5),
+    totalPessoas: pessoasIds.length,
+    primeirosPedidos: pedidosDetalhados.slice(0, 2)
+  });
+
   const { pessoas, itens, estoque, representantes } = await fetchRelatedData(pessoasIds, itemCodigos, representantesIds);
 
   // Criamos os mapas para lookup rápido
@@ -152,6 +179,12 @@ export async function fetchJabOrders({
       console.log('Pedido não encontrado:', numPedido);
       return null;
     }
+
+    console.log('Processando pedido:', {
+      numPedido,
+      pesCode: primeiroPedido.PES_CODIGO,
+      apelido: primeiroPedido.PES_CODIGO ? apelidoMap.get(primeiroPedido.PES_CODIGO) : null
+    });
 
     let total_saldo = 0;
     let valor_total = 0;
@@ -184,6 +217,7 @@ export async function fetchJabOrders({
       PED_ANOBASE: primeiroPedido.PED_ANOBASE || 0,
       total_saldo,
       valor_total,
+      PES_CODIGO: primeiroPedido.PES_CODIGO,
       APELIDO: primeiroPedido.PES_CODIGO ? apelidoMap.get(primeiroPedido.PES_CODIGO) || null : null,
       PEDIDO_CLIENTE: primeiroPedido.PEDIDO_CLIENTE || null,
       STATUS: primeiroPedido.STATUS || '',
@@ -191,6 +225,8 @@ export async function fetchJabOrders({
       items: Array.from(items.values())
     };
   }).filter(Boolean) as JabOrder[];
+
+  console.log('Pedidos processados:', orders.slice(0, 2)); // Log dos primeiros 2 pedidos processados
 
   return {
     orders,
