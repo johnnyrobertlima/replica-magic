@@ -70,7 +70,7 @@ export function useClientOrders() {
   }, {});
 
   const filteredClients = Object.values(clientOrders).filter(client => {
-    if (!isSearching) return false; // Only show results after search button is clicked
+    if (!isSearching) return true; // Changed back to true to show initial results
     
     if (searchQuery) {
       return (
