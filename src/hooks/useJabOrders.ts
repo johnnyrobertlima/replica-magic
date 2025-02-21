@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { DateRange as DayPickerDateRange } from "react-day-picker";
@@ -17,7 +16,6 @@ export interface JabOrder {
   APELIDO: string | null;
   PEDIDO_CLIENTE: string | null;
   STATUS: string;
-  REPRESENTANTE_NOME: string | null;
   items: Array<{
     ITEM_CODIGO: string;
     DESCRICAO: string | null;
@@ -53,6 +51,7 @@ export function useJabOrders({ dateRange, page = 1, pageSize = 15 }: UseJabOrder
         pageSize
       });
 
+      // Primeiro, buscamos todos os números de pedido únicos para o período
       const { data: todosPedidos, error: errorPedidos } = await supabase.rpc('get_pedidos_unicos', {
         data_inicial: dataInicial,
         data_final: `${dataFinal} 23:59:59.999`,
@@ -92,7 +91,7 @@ export function useJabOrders({ dateRange, page = 1, pageSize = 15 }: UseJabOrder
           ITEM_CODIGO,
           QTDE_PEDIDA,
           QTDE_ENTREGUE,
-          REPRESENTANTE
+          DATA_PEDIDO
         `)
         .eq('CENTROCUSTO', 'JAB')
         .in('STATUS', ['1', '2'])
@@ -111,18 +110,13 @@ export function useJabOrders({ dateRange, page = 1, pageSize = 15 }: UseJabOrder
 
       // Buscamos informações adicionais em paralelo
       const pessoasIds = [...new Set(pedidosDetalhados?.map(p => p.PES_CODIGO).filter(Boolean))];
-      const representantesIds = [...new Set(pedidosDetalhados?.map(p => p.REPRESENTANTE).filter(Boolean))];
       const itemCodigos = [...new Set(pedidosDetalhados?.map(p => p.ITEM_CODIGO).filter(Boolean))];
 
-      const [pessoasResponse, representantesResponse, itensResponse, estoqueResponse] = await Promise.all([
+      const [pessoasResponse, itensResponse, estoqueResponse] = await Promise.all([
         supabase
           .from('BLUEBAY_PESSOA')
           .select('PES_CODIGO, APELIDO')
           .in('PES_CODIGO', pessoasIds),
-        supabase
-          .from('BLUEBAY_PESSOA')
-          .select('PES_CODIGO, APELIDO')
-          .in('PES_CODIGO', representantesIds),
         supabase
           .from('BLUEBAY_ITEM')
           .select('ITEM_CODIGO, DESCRICAO')
@@ -135,7 +129,6 @@ export function useJabOrders({ dateRange, page = 1, pageSize = 15 }: UseJabOrder
 
       // Criamos os mapas para lookup rápido
       const apelidoMap = new Map(pessoasResponse.data?.map(p => [p.PES_CODIGO, p.APELIDO]) || []);
-      const representanteMap = new Map(representantesResponse.data?.map(p => [p.PES_CODIGO, p.APELIDO]) || []);
       const itemMap = new Map(itensResponse.data?.map(i => [i.ITEM_CODIGO, i.DESCRICAO]) || []);
       const estoqueMap = new Map(estoqueResponse.data?.map(e => [e.ITEM_CODIGO, e.FISICO]) || []);
 
@@ -193,7 +186,6 @@ export function useJabOrders({ dateRange, page = 1, pageSize = 15 }: UseJabOrder
           APELIDO: primeiroPedido.PES_CODIGO ? apelidoMap.get(primeiroPedido.PES_CODIGO) || null : null,
           PEDIDO_CLIENTE: primeiroPedido.PEDIDO_CLIENTE || null,
           STATUS: primeiroPedido.STATUS || '',
-          REPRESENTANTE_NOME: primeiroPedido.REPRESENTANTE ? representanteMap.get(primeiroPedido.REPRESENTANTE) || null : null,
           items: Array.from(items.values())
         };
       }).filter(Boolean) as JabOrder[];
@@ -212,6 +204,9 @@ export function useJabOrders({ dateRange, page = 1, pageSize = 15 }: UseJabOrder
     gcTime: 10 * 60 * 1000,
   });
 }
+
+type ValorTotalJabResult = Database['public']['Functions']['calcular_valor_total_jab']['Returns'][0];
+type ValorFaturarEstoqueResult = Database['public']['Functions']['calcular_valor_faturar_com_estoque']['Returns'][0];
 
 export function useTotals() {
   return useQuery({
