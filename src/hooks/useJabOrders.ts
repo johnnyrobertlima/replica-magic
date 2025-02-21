@@ -25,6 +25,7 @@ export interface JabOrder {
     QTDE_PEDIDA: number;
     QTDE_ENTREGUE: number;
     VALOR_UNITARIO: number;
+    FISICO: number | null;
   }>;
 }
 
@@ -83,12 +84,21 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
         .select('ITEM_CODIGO, DESCRICAO')
         .in('ITEM_CODIGO', itemCodigos);
 
+      // Buscamos o estoque físico dos itens
+      const { data: estoque } = await supabase
+        .from('BLUEBAY_ESTOQUE')
+        .select('ITEM_CODIGO, FISICO')
+        .in('ITEM_CODIGO', itemCodigos);
+
       // Criamos os mapas para lookup rápido
       const apelidoMap = new Map(
         pessoas?.map(p => [p.PES_CODIGO, p.APELIDO]) || []
       );
       const itemMap = new Map(
         itens?.map(i => [i.ITEM_CODIGO, i.DESCRICAO]) || []
+      );
+      const estoqueMap = new Map(
+        estoque?.map(e => [e.ITEM_CODIGO, e.FISICO]) || []
       );
 
       // Criamos um Map para armazenar os pedidos agrupados
@@ -130,7 +140,8 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
               QTDE_SALDO: saldo,
               QTDE_PEDIDA: pedido.QTDE_PEDIDA || 0,
               QTDE_ENTREGUE: pedido.QTDE_ENTREGUE || 0,
-              VALOR_UNITARIO: valorUnitario
+              VALOR_UNITARIO: valorUnitario,
+              FISICO: estoqueMap.get(pedido.ITEM_CODIGO) || null
             });
           }
         }

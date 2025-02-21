@@ -30,6 +30,7 @@ interface OrderCardProps {
       QTDE_ENTREGUE: number;
       QTDE_SALDO: number;
       VALOR_UNITARIO: number;
+      FISICO: number | null;
     }>;
   };
   isExpanded: boolean;
@@ -142,6 +143,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
                         <TableHead className="text-right">QT Pedido</TableHead>
                         <TableHead className="text-right">QT Faturada</TableHead>
                         <TableHead className="text-right">QT Saldo</TableHead>
+                        <TableHead className="text-right">QT Físico</TableHead>
                         <TableHead className="text-right">VL Uni</TableHead>
                         <TableHead className="text-right">VL Total Saldo</TableHead>
                       </TableRow>
@@ -155,6 +157,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
                           <TableCell className="text-right">{item.QTDE_PEDIDA.toLocaleString()}</TableCell>
                           <TableCell className="text-right">{item.QTDE_ENTREGUE.toLocaleString()}</TableCell>
                           <TableCell className="text-right">{item.QTDE_SALDO.toLocaleString()}</TableCell>
+                          <TableCell className="text-right">{item.FISICO?.toLocaleString() || '-'}</TableCell>
                           <TableCell className="text-right">
                             {item.VALOR_UNITARIO.toLocaleString(undefined, {
                               minimumFractionDigits: 2,
