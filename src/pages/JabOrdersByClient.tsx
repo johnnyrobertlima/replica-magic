@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Loader2, ChevronDown, ChevronUp } from "lucide-react";
@@ -149,23 +150,6 @@ const JabOrdersByClient = () => {
     return filteredGroups;
   }, [groupedOrders, isSearching, searchQuery, searchType]);
 
-  const totalPages = Math.ceil(ordersData.totalCount / ITEMS_PER_PAGE);
-
-  if (isLoadingOrders || isLoadingTotals) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
-  const formatCurrency = (value: number) => {
-    return value.toLocaleString('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    });
-  };
-
   const handleItemSelect = (itemId: string) => {
     setSelectedItems(prev => {
       const newSet = new Set(prev);
@@ -208,11 +192,33 @@ const JabOrdersByClient = () => {
       });
 
       setSelectedItems(new Set());
+      setExpandedClients(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(clientName);
+        return newSet;
+      });
       toast.success('Itens enviados para separação com sucesso!');
     } catch (error) {
       toast.error('Erro ao enviar itens para separação');
     }
   };
+
+  if (isLoadingOrders || isLoadingTotals) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  const formatCurrency = (value: number) => {
+    return value.toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    });
+  };
+
+  const totalPages = Math.ceil(ordersData.totalCount / ITEMS_PER_PAGE);
 
   return (
     <main className="container mx-auto px-4 py-8">
