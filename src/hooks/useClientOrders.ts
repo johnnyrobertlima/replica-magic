@@ -47,22 +47,30 @@ export function useClientOrders() {
     clientOrder.valor_total += order.valor_total || 0;
 
     if (order.ITEM_CODIGO) {
-      clientOrder.items.push({
-        ITEM_CODIGO: order.ITEM_CODIGO,
-        DESCRICAO: order.DESCRICAO || null,
-        QTDE_SALDO: order.QTDE_SALDO || 0,
-        QTDE_PEDIDA: order.QTDE_PEDIDA || 0,
-        QTDE_ENTREGUE: order.QTDE_ENTREGUE || 0,
-        VALOR_UNITARIO: order.VALOR_UNITARIO || 0,
-        PED_NUMPEDIDO: order.PED_NUMPEDIDO
-      });
+      // Check if the item already exists to avoid duplicates
+      const existingItemIndex = clientOrder.items.findIndex(
+        item => item.ITEM_CODIGO === order.ITEM_CODIGO && 
+                item.PED_NUMPEDIDO === order.PED_NUMPEDIDO
+      );
+
+      if (existingItemIndex === -1) {
+        clientOrder.items.push({
+          ITEM_CODIGO: order.ITEM_CODIGO,
+          DESCRICAO: order.DESCRICAO || null,
+          QTDE_SALDO: order.QTDE_SALDO || 0,
+          QTDE_PEDIDA: order.QTDE_PEDIDA || 0,
+          QTDE_ENTREGUE: order.QTDE_ENTREGUE || 0,
+          VALOR_UNITARIO: order.VALOR_UNITARIO || 0,
+          PED_NUMPEDIDO: order.PED_NUMPEDIDO
+        });
+      }
     }
 
     return acc;
   }, {});
 
   const filteredClients = Object.values(clientOrders).filter(client => {
-    if (!isSearching) return true;
+    if (!isSearching) return false; // Only show results after search button is clicked
     
     if (searchQuery) {
       return (
