@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { DateRange as DayPickerDateRange } from "react-day-picker";
@@ -203,5 +202,57 @@ export function useJabOrders({ dateRange, page = 1, pageSize = 15 }: UseJabOrder
     enabled: !!dateRange?.from && !!dateRange?.to,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
+  });
+}
+
+export function useTotals() {
+  return useQuery({
+    queryKey: ['jab-totals'],
+    queryFn: async () => {
+      const { data: pedidos, error } = await supabase
+        .from('BLUEBAY_PEDIDO')
+        .select(`
+          QTDE_SALDO,
+          VALOR_UNITARIO,
+          ITEM_CODIGO
+        `)
+        .eq('CENTROCUSTO', 'JAB')
+        .in('STATUS', ['1', '2']);
+
+      if (error) throw error;
+
+      if (!pedidos?.length) return { valorTotalSaldo: 0, valorFaturarComEstoque: 0 };
+
+      const itemCodigos = [...new Set(pedidos.map(p => p.ITEM_CODIGO).filter(Boolean))];
+      
+      const { data: estoque } = await supabase
+        .from('BLUEBAY_ESTOQUE')
+        .select('ITEM_CODIGO, FISICO')
+        .in('ITEM_CODIGO', itemCodigos);
+
+      const estoqueMap = new Map(estoque?.map(e => [e.ITEM_CODIGO, e.FISICO]) || []);
+
+      let valorTotalSaldo = 0;
+      let valorFaturarComEstoque = 0;
+
+      pedidos.forEach(pedido => {
+        if (!pedido.ITEM_CODIGO) return;
+        const saldo = pedido.QTDE_SALDO || 0;
+        const valorUnitario = pedido.VALOR_UNITARIO || 0;
+        const valorSaldo = saldo * valorUnitario;
+        
+        valorTotalSaldo += valorSaldo;
+
+        const estoqueFisico = estoqueMap.get(pedido.ITEM_CODIGO) || 0;
+        if (estoqueFisico > 0) {
+          valorFaturarComEstoque += valorSaldo;
+        }
+      });
+
+      return {
+        valorTotalSaldo,
+        valorFaturarComEstoque
+      };
+    }
   });
 }
