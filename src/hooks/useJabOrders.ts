@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { DateRange as DayPickerDateRange } from "react-day-picker";
@@ -213,10 +212,8 @@ export function useTotals() {
   return useQuery({
     queryKey: ['jab-totals'],
     queryFn: async () => {
-      const [valorTotalResponse, valorFaturarResponse] = await Promise.all([
-        supabase.rpc('calcular_valor_total_jab'),
-        supabase.rpc('calcular_valor_faturar_com_estoque')
-      ]);
+      const valorTotalResponse = await supabase.rpc('calcular_valor_total_jab');
+      const valorFaturarResponse = await supabase.rpc('calcular_valor_faturar_com_estoque');
 
       if (valorTotalResponse.error) {
         console.error('Erro ao calcular valor total:', valorTotalResponse.error);
@@ -229,7 +226,7 @@ export function useTotals() {
       }
 
       const valorTotalSaldo = valorTotalResponse.data?.[0]?.valor_total_saldo || 0;
-      const valorFaturarComEstoque = valorFaturarResponse.data?.[0]?.valor_total_faturavel || 0;
+      const valorFaturarComEstoque = Number(valorFaturarResponse.data?.[0]?.valor_total_faturavel || 0);
 
       console.log('Valores calculados:', {
         valorTotalSaldo,

@@ -1050,6 +1050,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calcular_valor_faturar_com_estoque: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          valor_total_faturavel: number
+        }[]
+      }
       calcular_valor_total_jab: {
         Args: Record<PropertyKey, never>
         Returns: {
