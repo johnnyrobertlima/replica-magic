@@ -16,7 +16,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 
-const ITEMS_PER_PAGE = 12;
+const ITEMS_PER_PAGE = 100;
 
 const JabOrders = () => {
   const [date, setDate] = useState<DateRange | undefined>({
@@ -30,7 +30,12 @@ const JabOrders = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [showZeroBalanceMap, setShowZeroBalanceMap] = useState<Record<string, boolean>>({});
-  const { data: orders = [], isLoading } = useJabOrders(searchDate);
+
+  const { data: ordersData = { orders: [], totalCount: 0 }, isLoading } = useJabOrders({
+    dateRange: searchDate,
+    page: currentPage,
+    pageSize: ITEMS_PER_PAGE
+  });
 
   const toggleExpand = (orderId: string) => {
     setExpandedOrder(expandedOrder === orderId ? null : orderId);
@@ -46,20 +51,18 @@ const JabOrders = () => {
   const handleSearch = () => {
     setIsSearching(true);
     setSearchDate(date);
-    setCurrentPage(1); // Reset para primeira página ao pesquisar
+    setCurrentPage(1);
   };
 
   const removeLeadingZeros = (str: string) => {
     return str.replace(/^0+/, '');
   };
 
-  const filteredOrders = orders.filter((order: JabOrder) => {
-    // Primeiro filtra por status
+  const filteredOrders = ordersData.orders.filter((order: JabOrder) => {
     if (!["1", "2"].includes(order.STATUS)) {
       return false;
     }
 
-    // Depois aplica o filtro de pesquisa se necessário
     if (!isSearching) return true;
     
     if (searchQuery) {
@@ -71,10 +74,7 @@ const JabOrders = () => {
     return true;
   });
 
-  // Paginação
-  const totalPages = Math.ceil(filteredOrders.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedOrders = filteredOrders.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(ordersData.totalCount / ITEMS_PER_PAGE);
 
   const renderPaginationLinks = () => {
     const pages = [];
@@ -138,12 +138,8 @@ const JabOrders = () => {
         <div className="space-y-2">
           <h1 className="text-3xl font-bold">Separação de Pedidos JAB</h1>
           <p className="text-muted-foreground">
-            {filteredOrders.length > 0 ? (
-              totalPages > 1 ? (
-                `Exibindo ${startIndex + 1}-${Math.min(startIndex + ITEMS_PER_PAGE, filteredOrders.length)} de ${filteredOrders.length} pedidos`
-              ) : (
-                `Total de ${filteredOrders.length} pedidos`
-              )
+            {ordersData.totalCount > 0 ? (
+              `Exibindo página ${currentPage} de ${totalPages} (Total: ${ordersData.totalCount} pedidos)`
             ) : (
               "Nenhum pedido encontrado"
             )}
@@ -159,7 +155,7 @@ const JabOrders = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {paginatedOrders.map((order: JabOrder) => {
+        {filteredOrders.map((order: JabOrder) => {
           const orderId = `${order.MATRIZ}-${order.FILIAL}-${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`;
           const isExpanded = expandedOrder === orderId;
           const showZeroBalance = showZeroBalanceMap[orderId] || false;

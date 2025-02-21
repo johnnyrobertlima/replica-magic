@@ -28,31 +28,47 @@ export interface JabOrder {
   }>;
 }
 
-export function useJabOrders(dateRange?: DayPickerDateRange) {
-  return useQuery({
-    queryKey: ['jab-orders', dateRange?.from?.toISOString(), dateRange?.to?.toISOString()],
-    queryFn: async () => {
-      if (!dateRange?.from || !dateRange?.to) return [];
+interface UseJabOrdersOptions {
+  dateRange?: DayPickerDateRange;
+  page?: number;
+  pageSize?: number;
+}
 
-      // Formatando as datas para o formato YYYY-MM-DD
+export function useJabOrders({ dateRange, page = 1, pageSize = 100 }: UseJabOrdersOptions = {}) {
+  return useQuery({
+    queryKey: ['jab-orders', dateRange?.from?.toISOString(), dateRange?.to?.toISOString(), page, pageSize],
+    queryFn: async () => {
+      if (!dateRange?.from || !dateRange?.to) return { orders: [], totalCount: 0 };
+
       const dataInicial = dateRange.from.toISOString().split('T')[0];
       const dataFinal = dateRange.to.toISOString().split('T')[0];
 
       console.log('Buscando pedidos para o período:', { 
         dataInicial,
         dataFinal,
-        fromDate: dateRange.from,
-        toDate: dateRange.to
+        page,
+        pageSize
       });
 
-      // Primeiro fazemos uma query otimizada para pegar apenas os números dos pedidos
+      // Primeiro fazemos uma contagem dos pedidos distintos
+      const { count: totalCount } = await supabase
+        .from('BLUEBAY_PEDIDO')
+        .select('PED_NUMPEDIDO', { count: 'exact', head: true })
+        .eq('CENTROCUSTO', 'JAB')
+        .in('STATUS', ['1', '2'])
+        .gte('DATA_PEDIDO', dataInicial)
+        .lte('DATA_PEDIDO', `${dataFinal} 23:59:59.999`);
+
+      // Buscamos os números dos pedidos com paginação
+      const start = (page - 1) * pageSize;
       const { data: todosPedidos, error: errorTodosPedidos } = await supabase
         .from('BLUEBAY_PEDIDO')
         .select('PED_NUMPEDIDO')
         .eq('CENTROCUSTO', 'JAB')
         .in('STATUS', ['1', '2'])
         .gte('DATA_PEDIDO', dataInicial)
-        .lte('DATA_PEDIDO', `${dataFinal} 23:59:59.999`);
+        .lte('DATA_PEDIDO', `${dataFinal} 23:59:59.999`)
+        .range(start, start + pageSize - 1);
 
       if (errorTodosPedidos) {
         console.error('Erro ao buscar todos os pedidos:', errorTodosPedidos);
@@ -63,53 +79,37 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
         return parseInt(a.replace(/^0+/, '')) - parseInt(b.replace(/^0+/, ''));
       });
       
-      console.log('Total de pedidos distintos encontrados:', numeroPedidosDistintos.length);
-      console.log('Lista de pedidos distintos:', numeroPedidosDistintos);
+      console.log('Pedidos desta página:', numeroPedidosDistintos.length);
 
-      // Vamos buscar os pedidos em lotes de 50 para melhor performance
-      const BATCH_SIZE = 50;
-      let allPedidosData: any[] = [];
+      // Buscamos os detalhes apenas dos pedidos desta página
+      const { data: pedidosDetalhados, error: errorPedidos } = await supabase
+        .from('BLUEBAY_PEDIDO')
+        .select(`
+          MATRIZ,
+          FILIAL,
+          PED_NUMPEDIDO,
+          PED_ANOBASE,
+          QTDE_SALDO,
+          VALOR_UNITARIO,
+          PES_CODIGO,
+          PEDIDO_CLIENTE,
+          STATUS,
+          ITEM_CODIGO,
+          QTDE_PEDIDA,
+          QTDE_ENTREGUE
+        `)
+        .eq('CENTROCUSTO', 'JAB')
+        .in('STATUS', ['1', '2'])
+        .in('PED_NUMPEDIDO', numeroPedidosDistintos);
 
-      for (let i = 0; i < numeroPedidosDistintos.length; i += BATCH_SIZE) {
-        const batch = numeroPedidosDistintos.slice(i, i + BATCH_SIZE);
-        const { data: batchData, error: errorPedidos } = await supabase
-          .from('BLUEBAY_PEDIDO')
-          .select(`
-            MATRIZ,
-            FILIAL,
-            PED_NUMPEDIDO,
-            PED_ANOBASE,
-            QTDE_SALDO,
-            VALOR_UNITARIO,
-            PES_CODIGO,
-            PEDIDO_CLIENTE,
-            STATUS,
-            ITEM_CODIGO,
-            QTDE_PEDIDA,
-            QTDE_ENTREGUE
-          `)
-          .eq('CENTROCUSTO', 'JAB')
-          .in('STATUS', ['1', '2'])
-          .in('PED_NUMPEDIDO', batch);
-
-        if (errorPedidos) {
-          console.error('Erro ao buscar lote de pedidos:', errorPedidos);
-          throw errorPedidos;
-        }
-
-        if (batchData) {
-          allPedidosData = [...allPedidosData, ...batchData];
-        }
+      if (errorPedidos) {
+        console.error('Erro ao buscar detalhes dos pedidos:', errorPedidos);
+        throw errorPedidos;
       }
 
-      if (allPedidosData.length === 0) {
-        console.log('Nenhum pedido encontrado para o período');
-        return [];
-      }
-
-      // Buscamos os apelidos das pessoas e items em paralelo
-      const pessoasIds = [...new Set(allPedidosData.map(p => p.PES_CODIGO).filter(Boolean))];
-      const itemCodigos = [...new Set(allPedidosData.map(p => p.ITEM_CODIGO).filter(Boolean))];
+      // Buscamos informações adicionais em paralelo
+      const pessoasIds = [...new Set(pedidosDetalhados?.map(p => p.PES_CODIGO).filter(Boolean))];
+      const itemCodigos = [...new Set(pedidosDetalhados?.map(p => p.ITEM_CODIGO).filter(Boolean))];
 
       const [pessoasResponse, itensResponse, estoqueResponse] = await Promise.all([
         supabase
@@ -126,28 +126,24 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
           .in('ITEM_CODIGO', itemCodigos)
       ]);
 
-      const pessoas = pessoasResponse.data || [];
-      const itens = itensResponse.data || [];
-      const estoque = estoqueResponse.data || [];
-
       // Criamos os mapas para lookup rápido
-      const apelidoMap = new Map(pessoas.map(p => [p.PES_CODIGO, p.APELIDO]));
-      const itemMap = new Map(itens.map(i => [i.ITEM_CODIGO, i.DESCRICAO]));
-      const estoqueMap = new Map(estoque.map(e => [e.ITEM_CODIGO, e.FISICO]));
+      const apelidoMap = new Map(pessoasResponse.data?.map(p => [p.PES_CODIGO, p.APELIDO]) || []);
+      const itemMap = new Map(itensResponse.data?.map(i => [i.ITEM_CODIGO, i.DESCRICAO]) || []);
+      const estoqueMap = new Map(estoqueResponse.data?.map(e => [e.ITEM_CODIGO, e.FISICO]) || []);
 
-      // Pré-organizamos os pedidos por número
-      const pedidosOrganizados = new Map<string, any[]>();
-      allPedidosData.forEach(pedido => {
+      // Agrupamos os pedidos
+      const pedidosAgrupados = new Map<string, any[]>();
+      pedidosDetalhados?.forEach(pedido => {
         const key = pedido.PED_NUMPEDIDO;
-        if (!pedidosOrganizados.has(key)) {
-          pedidosOrganizados.set(key, []);
+        if (!pedidosAgrupados.has(key)) {
+          pedidosAgrupados.set(key, []);
         }
-        pedidosOrganizados.get(key)!.push(pedido);
+        pedidosAgrupados.get(key)!.push(pedido);
       });
 
-      // Agora processamos os pedidos organizados
-      const ordersArray: JabOrder[] = numeroPedidosDistintos.map(numPedido => {
-        const pedidos = pedidosOrganizados.get(numPedido) || [];
+      // Processamos os pedidos agrupados
+      const orders: JabOrder[] = numeroPedidosDistintos.map(numPedido => {
+        const pedidos = pedidosAgrupados.get(numPedido) || [];
         const primeiroPedido = pedidos[0];
         
         let total_saldo = 0;
@@ -188,13 +184,15 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
         };
       });
 
-      console.log('Número de pedidos agrupados:', ordersArray.length);
-      console.log('Lista final de pedidos:', ordersArray.map(o => o.PED_NUMPEDIDO));
-
-      return ordersArray;
+      return {
+        orders,
+        totalCount: totalCount || 0,
+        currentPage: page,
+        pageSize
+      };
     },
     enabled: !!dateRange?.from && !!dateRange?.to,
-    staleTime: 5 * 60 * 1000, // Cache por 5 minutos
-    gcTime: 10 * 60 * 1000, // Garbage collection após 10 minutos
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 }
