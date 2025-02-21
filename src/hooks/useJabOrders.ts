@@ -1,7 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { startOfDay, endOfDay, formatISO } from "date-fns";
+import { startOfDay, endOfDay } from "date-fns";
 import type { DateRange as DayPickerDateRange } from "react-day-picker";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -35,9 +35,9 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
     queryFn: async () => {
       if (!dateRange?.from || !dateRange?.to) return [];
 
-      // Ajustando o formato das datas para considerar o timezone corretamente
-      const dataInicial = formatISO(startOfDay(dateRange.from), { format: 'extended' });
-      const dataFinal = formatISO(endOfDay(dateRange.to), { format: 'extended' });
+      // Formatando as datas para o formato YYYY-MM-DD
+      const dataInicial = dateRange.from.toISOString().split('T')[0];
+      const dataFinal = dateRange.to.toISOString().split('T')[0];
 
       console.log('Buscando pedidos para o período:', { 
         dataInicial,
@@ -53,7 +53,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
         .eq('CENTROCUSTO', 'JAB')
         .in('STATUS', ['1', '2'])
         .gte('DATA_PEDIDO', dataInicial)
-        .lte('DATA_PEDIDO', dataFinal);
+        .lte('DATA_PEDIDO', `${dataFinal} 23:59:59.999`);
 
       if (errorTodosPedidos) {
         console.error('Erro ao buscar todos os pedidos:', errorTodosPedidos);
@@ -131,7 +131,6 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
       const ordersMap = new Map<string, JabOrder>();
 
       for (const pedido of pedidosData) {
-        // Alterado para agrupar apenas por PED_NUMPEDIDO
         const key = `${pedido.PED_NUMPEDIDO}`;
         const saldo = pedido.QTDE_SALDO || 0;
         const valorUnitario = pedido.VALOR_UNITARIO || 0;
