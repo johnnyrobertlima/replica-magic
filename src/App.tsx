@@ -2,9 +2,9 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
-import { routes } from "./lib/routes";
-import { GoogleAnalytics } from "./components/GoogleAnalytics";
-import { Toaster } from "./components/ui/sonner";
+import { routes } from "@/lib/routes";
+import { GoogleAnalytics } from "@/components/GoogleAnalytics";
+import { Toaster } from "@/components/ui/sonner";
 
 const queryClient = new QueryClient();
 
