@@ -34,7 +34,7 @@ interface UseJabOrdersOptions {
   pageSize?: number;
 }
 
-export function useJabOrders({ dateRange, page = 1, pageSize = 100 }: UseJabOrdersOptions = {}) {
+export function useJabOrders({ dateRange, page = 1, pageSize = 15 }: UseJabOrdersOptions = {}) {
   return useQuery({
     queryKey: ['jab-orders', dateRange?.from?.toISOString(), dateRange?.to?.toISOString(), page, pageSize],
     queryFn: async () => {
@@ -50,38 +50,37 @@ export function useJabOrders({ dateRange, page = 1, pageSize = 100 }: UseJabOrde
         pageSize
       });
 
-      // Primeiro fazemos uma contagem dos pedidos distintos
-      const { count: totalCount } = await supabase
-        .from('BLUEBAY_PEDIDO')
-        .select('PED_NUMPEDIDO', { count: 'exact', head: true })
-        .eq('CENTROCUSTO', 'JAB')
-        .in('STATUS', ['1', '2'])
-        .gte('DATA_PEDIDO', dataInicial)
-        .lte('DATA_PEDIDO', `${dataFinal} 23:59:59.999`);
-
-      // Buscamos os números dos pedidos com paginação
-      const start = (page - 1) * pageSize;
-      const { data: todosPedidos, error: errorTodosPedidos } = await supabase
+      // Primeiro buscamos todos os números de pedidos distintos para o período
+      const { data: todosPedidosDistintos, error: errorDistintos } = await supabase
         .from('BLUEBAY_PEDIDO')
         .select('PED_NUMPEDIDO')
         .eq('CENTROCUSTO', 'JAB')
         .in('STATUS', ['1', '2'])
         .gte('DATA_PEDIDO', dataInicial)
         .lte('DATA_PEDIDO', `${dataFinal} 23:59:59.999`)
-        .range(start, start + pageSize - 1);
+        .order('PED_NUMPEDIDO');
 
-      if (errorTodosPedidos) {
-        console.error('Erro ao buscar todos os pedidos:', errorTodosPedidos);
-        throw errorTodosPedidos;
+      if (errorDistintos) {
+        console.error('Erro ao buscar pedidos distintos:', errorDistintos);
+        throw errorDistintos;
       }
 
-      const numeroPedidosDistintos = [...new Set(todosPedidos?.map(p => p.PED_NUMPEDIDO))].sort((a, b) => {
-        return parseInt(a.replace(/^0+/, '')) - parseInt(b.replace(/^0+/, ''));
-      });
-      
-      console.log('Pedidos desta página:', numeroPedidosDistintos.length);
+      // Remove duplicatas e ordena
+      const numeroPedidosUnicos = [...new Set(todosPedidosDistintos?.map(p => p.PED_NUMPEDIDO))];
+      const totalCount = numeroPedidosUnicos.length;
 
-      // Buscamos os detalhes apenas dos pedidos desta página
+      // Calcula o slice para a página atual
+      const start = (page - 1) * pageSize;
+      const end = start + pageSize;
+      const pedidosDaPagina = numeroPedidosUnicos.slice(start, end);
+
+      console.log('Pedidos selecionados para esta página:', pedidosDaPagina.length);
+
+      if (pedidosDaPagina.length === 0) {
+        return { orders: [], totalCount };
+      }
+
+      // Busca os detalhes apenas dos pedidos desta página
       const { data: pedidosDetalhados, error: errorPedidos } = await supabase
         .from('BLUEBAY_PEDIDO')
         .select(`
@@ -100,7 +99,7 @@ export function useJabOrders({ dateRange, page = 1, pageSize = 100 }: UseJabOrde
         `)
         .eq('CENTROCUSTO', 'JAB')
         .in('STATUS', ['1', '2'])
-        .in('PED_NUMPEDIDO', numeroPedidosDistintos);
+        .in('PED_NUMPEDIDO', pedidosDaPagina);
 
       if (errorPedidos) {
         console.error('Erro ao buscar detalhes dos pedidos:', errorPedidos);
@@ -141,8 +140,8 @@ export function useJabOrders({ dateRange, page = 1, pageSize = 100 }: UseJabOrde
         pedidosAgrupados.get(key)!.push(pedido);
       });
 
-      // Processamos os pedidos agrupados
-      const orders: JabOrder[] = numeroPedidosDistintos.map(numPedido => {
+      // Processamos os pedidos agrupados mantendo a ordem original
+      const orders: JabOrder[] = pedidosDaPagina.map(numPedido => {
         const pedidos = pedidosAgrupados.get(numPedido) || [];
         const primeiroPedido = pedidos[0];
         
@@ -186,7 +185,7 @@ export function useJabOrders({ dateRange, page = 1, pageSize = 100 }: UseJabOrde
 
       return {
         orders,
-        totalCount: totalCount || 0,
+        totalCount,
         currentPage: page,
         pageSize
       };
