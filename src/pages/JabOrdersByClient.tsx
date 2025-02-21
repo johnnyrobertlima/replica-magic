@@ -19,13 +19,13 @@ import type { ClientOrder } from "@/components/jab-orders-by-client/types";
 const ITEMS_PER_PAGE = 12; // 3x4 grid
 
 const JabOrdersByClient = () => {
-  // Definir um intervalo padrão de 7 dias
+  // Definir um intervalo padrão de 30 dias
   const hoje = new Date();
-  const seteDiasAtras = new Date();
-  seteDiasAtras.setDate(hoje.getDate() - 7);
+  const trintaDiasAtras = new Date();
+  trintaDiasAtras.setDate(hoje.getDate() - 30);
 
   const [date, setDate] = useState<DateRange | undefined>({
-    from: seteDiasAtras,
+    from: trintaDiasAtras,
     to: hoje,
   });
   const [searchDate, setSearchDate] = useState<DateRange | undefined>(date);
@@ -46,17 +46,12 @@ const JabOrdersByClient = () => {
 
   // Agrupar pedidos por cliente usando PES_CODIGO
   const clientOrders = orders.reduce<Record<string, ClientOrder>>((acc, order) => {
-    // Garantir que temos um PES_CODIGO válido
-    if (!order.PES_CODIGO) {
-      console.log("Pedido sem PES_CODIGO:", order); // Debug log
-      return acc;
-    }
-
-    const pesCodigoKey = order.PES_CODIGO.toString();
+    // Garantir que temos um identificador válido para o cliente
+    const pesCodigoKey = order.PES_CODIGO ? order.PES_CODIGO.toString() : 'NAO_IDENTIFICADO';
 
     if (!acc[pesCodigoKey]) {
       acc[pesCodigoKey] = {
-        PES_CODIGO: order.PES_CODIGO,
+        PES_CODIGO: order.PES_CODIGO || 0,
         total_saldo: 0,
         valor_total: 0,
         pedidos: [],
@@ -94,7 +89,14 @@ const JabOrdersByClient = () => {
 
   const filteredClients = Object.values(clientOrders).filter(client => {
     if (searchQuery) {
-      return client.PES_CODIGO.toString().includes(searchQuery);
+      // Busca por PES_CODIGO ou por itens do pedido
+      return (
+        client.PES_CODIGO.toString().includes(searchQuery) ||
+        client.items.some(item => 
+          item.ITEM_CODIGO.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (item.DESCRICAO && item.DESCRICAO.toLowerCase().includes(searchQuery.toLowerCase()))
+        )
+      );
     }
     return true;
   });

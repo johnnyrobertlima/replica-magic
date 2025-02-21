@@ -26,7 +26,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
         toDate: dateRange.to
       });
 
-      // Fetch PES_CODIGO list
+      // Fetch PES_CODIGO list without any additional filters
       const pessoasCodigos = await fetchPessoasCodigos(dataInicial, dataFinal);
       if (pessoasCodigos.length === 0) {
         console.log('Nenhum código de pessoa encontrado para o período');
@@ -52,12 +52,12 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
         itens?.map(i => [i.ITEM_CODIGO, i.DESCRICAO]) || []
       );
 
-      // Process orders
+      // Process orders without any filtering
       return processOrders(pedidosData, itemMap);
     },
     enabled: !!dateRange?.from && !!dateRange?.to,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000,   // 10 minutes
   });
 }
 
