@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Loader2 } from "lucide-react";
@@ -113,6 +112,25 @@ const JabOrdersByClient = () => {
           valorTotalSaldo={totals.valorTotalSaldo}
           valorFaturarComEstoque={totals.valorFaturarComEstoque}
         />
+
+        <div className="flex justify-between items-center mb-8">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold">Separação de Pedido por Cliente</h1>
+            <p className="text-muted-foreground">
+              {ordersData.totalCount > 0 ? (
+                `Exibindo página ${currentPage} de ${totalPages} (Total: ${ordersData.totalCount} pedidos)`
+              ) : (
+                "Nenhum pedido encontrado"
+              )}
+            </p>
+          </div>
+          <Link 
+            to="/client-area/bluebay/jab-orders"
+            className="text-primary hover:underline"
+          >
+            Ver por Pedido
+          </Link>
+        </div>
 
         <OrdersHeader
           currentPage={currentPage}
