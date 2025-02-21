@@ -1,6 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { startOfDay, endOfDay } from "date-fns";
+import { startOfDay, endOfDay, format } from "date-fns";
 import type { DateRange as DayPickerDateRange } from "react-day-picker";
 import type { JabOrder } from "@/types/jabOrders";
 import { 
@@ -16,8 +16,9 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
     queryFn: async () => {
       if (!dateRange?.from || !dateRange?.to) return [];
 
-      const dataInicial = startOfDay(dateRange.from).toISOString();
-      const dataFinal = endOfDay(dateRange.to).toISOString(); // Changed to use dateRange.to instead of from
+      // Formatando as datas para YYYY-MM-DD sem componente de tempo
+      const dataInicial = format(startOfDay(dateRange.from), 'yyyy-MM-dd');
+      const dataFinal = format(endOfDay(dateRange.to), 'yyyy-MM-dd');
 
       console.log('Buscando pedidos para o período:', { 
         dataInicial,

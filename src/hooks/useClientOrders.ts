@@ -5,15 +5,14 @@ import { useJabOrders } from "./useJabOrders";
 import type { ClientOrder } from "@/components/jab-orders-by-client/types";
 
 export function useClientOrders() {
-  const hoje = new Date();
-  const trintaDiasAtras = new Date();
-  trintaDiasAtras.setDate(hoje.getDate() - 30);
+  // Inicialização com datas fixas para teste
+  const initialDateRange = {
+    from: new Date('2025-02-02'),
+    to: new Date('2025-02-08'),
+  };
 
-  const [date, setDate] = useState<DateRange | undefined>({
-    from: trintaDiasAtras,
-    to: hoje,
-  });
-  const [searchDate, setSearchDate] = useState<DateRange | undefined>(date);
+  const [date, setDate] = useState<DateRange | undefined>(initialDateRange);
+  const [searchDate, setSearchDate] = useState<DateRange | undefined>(initialDateRange);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -70,18 +69,15 @@ export function useClientOrders() {
   }, {});
 
   const filteredClients = Object.values(clientOrders).filter(client => {
-    if (!isSearching) return true; // Changed back to true to show initial results
+    if (!searchQuery) return true;
     
-    if (searchQuery) {
-      return (
-        client.PES_CODIGO.toString().includes(searchQuery) ||
-        client.items.some(item => 
-          item.ITEM_CODIGO.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (item.DESCRICAO && item.DESCRICAO.toLowerCase().includes(searchQuery.toLowerCase()))
-        )
-      );
-    }
-    return true;
+    return (
+      client.PES_CODIGO.toString().includes(searchQuery) ||
+      client.items.some(item => 
+        item.ITEM_CODIGO.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (item.DESCRICAO && item.DESCRICAO.toLowerCase().includes(searchQuery.toLowerCase()))
+      )
+    );
   });
 
   return {
