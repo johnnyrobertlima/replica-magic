@@ -12,20 +12,11 @@ interface PedidoAgrupado {
 export async function fetchPessoasCodigos(dataInicial: string, dataFinal: string) {
   console.log('Buscando pessoas no período:', {dataInicial, dataFinal});
   
-  // Using direct query instead of rpc to debug
   const { data, error } = await supabase
-    .from('BLUEBAY_PEDIDO')
-    .select(`
-      PES_CODIGO,
-      COUNT(DISTINCT PED_NUMPEDIDO)::bigint as quantidade_pedidos,
-      SUM(QTDE_SALDO)::numeric as quantidade_itens_com_saldo,
-      SUM(QTDE_SALDO * VALOR_UNITARIO)::numeric as valor_do_saldo
-    `)
-    .eq('CENTROCUSTO', 'JAB')
-    .gte('DATA_PEDIDO', dataInicial.split('T')[0])
-    .lte('DATA_PEDIDO', dataFinal.split('T')[0])
-    .not('PES_CODIGO', 'is', null)
-    .groupBy('PES_CODIGO');
+    .rpc('get_pedidos_agrupados', {
+      data_inicial: dataInicial.split('T')[0],
+      data_final: dataFinal.split('T')[0]
+    });
 
   if (error) {
     console.error('Erro ao buscar PES_CODIGO:', error);
