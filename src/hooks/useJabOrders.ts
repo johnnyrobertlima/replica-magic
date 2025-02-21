@@ -50,36 +50,29 @@ export function useJabOrders({ dateRange, page = 1, pageSize = 15 }: UseJabOrder
         pageSize
       });
 
-      // Consulta com paginação direta no banco
-      const from = (page - 1) * pageSize;
-      const to = from + pageSize - 1;
+      // Primeiro, buscamos todos os números de pedido únicos para o período
+      const { data: todosPedidos, error: errorPedidos, count } = await supabase
+        .rpc('get_pedidos_unicos', {
+          data_inicial: dataInicial,
+          data_final: `${dataFinal} 23:59:59.999`,
+          offset: (page - 1) * pageSize,
+          limit: pageSize
+        });
 
-      // Usando uma subquery para garantir pedidos únicos
-      const { data: pedidosDistintos, error: errorDistintos, count } = await supabase
-        .from('BLUEBAY_PEDIDO')
-        .select('*', { count: 'exact' })
-        .eq('CENTROCUSTO', 'JAB')
-        .in('STATUS', ['1', '2'])
-        .gte('DATA_PEDIDO', dataInicial)
-        .lte('DATA_PEDIDO', `${dataFinal} 23:59:59.999`)
-        .order('PED_NUMPEDIDO')
-        .range(from, to);
-
-      if (errorDistintos) {
-        console.error('Erro ao buscar pedidos distintos:', errorDistintos);
-        throw errorDistintos;
+      if (errorPedidos) {
+        console.error('Erro ao buscar pedidos:', errorPedidos);
+        throw errorPedidos;
       }
 
-      if (!pedidosDistintos?.length) {
+      if (!todosPedidos?.length) {
         return { orders: [], totalCount: count || 0 };
       }
 
-      // Extraímos os números de pedido únicos
-      const numeroPedidos = [...new Set(pedidosDistintos.map(p => p.PED_NUMPEDIDO))];
+      const numeroPedidos = todosPedidos.map(p => p.ped_numpedido);
       console.log('Pedidos selecionados para esta página:', numeroPedidos.length);
 
       // Busca os detalhes dos pedidos
-      const { data: pedidosDetalhados, error: errorPedidos } = await supabase
+      const { data: pedidosDetalhados, error: errorDetalhes } = await supabase
         .from('BLUEBAY_PEDIDO')
         .select(`
           MATRIZ,
@@ -99,9 +92,9 @@ export function useJabOrders({ dateRange, page = 1, pageSize = 15 }: UseJabOrder
         .in('STATUS', ['1', '2'])
         .in('PED_NUMPEDIDO', numeroPedidos);
 
-      if (errorPedidos) {
-        console.error('Erro ao buscar detalhes dos pedidos:', errorPedidos);
-        throw errorPedidos;
+      if (errorDetalhes) {
+        console.error('Erro ao buscar detalhes dos pedidos:', errorDetalhes);
+        throw errorDetalhes;
       }
 
       // Buscamos informações adicionais em paralelo
