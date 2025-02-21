@@ -3,7 +3,7 @@ import { useSeparacoes } from "@/hooks/useSeparacoes";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, ArrowLeft, CheckCircle, XCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle, XCircle, ChevronDown, ChevronUp, Eye, EyeOff } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -11,6 +11,8 @@ import { useState } from "react";
 const AprovacaoFinanceira = () => {
   const { separacoes, isLoading, updateSeparacaoStatus } = useSeparacoes();
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
+  const [showApproved, setShowApproved] = useState(false);
+  const [showRejected, setShowRejected] = useState(false);
 
   const handleAprovar = async (id: string) => {
     try {
@@ -49,6 +51,13 @@ const AprovacaoFinanceira = () => {
     });
   };
 
+  const filteredSeparacoes = separacoes.filter(separacao => {
+    if (separacao.status === 'pendente') return true;
+    if (separacao.status === 'aprovado' && showApproved) return true;
+    if (separacao.status === 'reprovado' && showRejected) return true;
+    return false;
+  });
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -72,8 +81,27 @@ const AprovacaoFinanceira = () => {
           </p>
         </div>
 
+        <div className="flex gap-4 mb-4">
+          <Button
+            variant={showApproved ? "default" : "outline"}
+            onClick={() => setShowApproved(!showApproved)}
+            className="gap-2"
+          >
+            {showApproved ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            {showApproved ? "Ocultar Aprovados" : "Exibir Aprovados"}
+          </Button>
+          <Button
+            variant={showRejected ? "default" : "outline"}
+            onClick={() => setShowRejected(!showRejected)}
+            className="gap-2"
+          >
+            {showRejected ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            {showRejected ? "Ocultar Reprovados" : "Exibir Reprovados"}
+          </Button>
+        </div>
+
         <div className="grid grid-cols-1 gap-4">
-          {separacoes.map((separacao) => (
+          {filteredSeparacoes.map((separacao) => (
             <Card key={separacao.id}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-lg">
@@ -174,7 +202,7 @@ const AprovacaoFinanceira = () => {
             </Card>
           ))}
 
-          {separacoes.length === 0 && (
+          {filteredSeparacoes.length === 0 && (
             <Card className="col-span-full">
               <CardContent className="p-6 text-center text-muted-foreground">
                 Nenhuma separação encontrada
