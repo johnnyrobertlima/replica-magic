@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { DateRange as DayPickerDateRange } from "react-day-picker";
@@ -90,7 +91,8 @@ export function useJabOrders({ dateRange, page = 1, pageSize = 15 }: UseJabOrder
           STATUS,
           ITEM_CODIGO,
           QTDE_PEDIDA,
-          QTDE_ENTREGUE
+          QTDE_ENTREGUE,
+          DATA_PEDIDO
         `)
         .eq('CENTROCUSTO', 'JAB')
         .in('STATUS', ['1', '2'])
@@ -99,6 +101,12 @@ export function useJabOrders({ dateRange, page = 1, pageSize = 15 }: UseJabOrder
       if (errorDetalhes) {
         console.error('Erro ao buscar detalhes dos pedidos:', errorDetalhes);
         throw errorDetalhes;
+      }
+
+      console.log('Pedidos detalhados:', pedidosDetalhados);
+
+      if (!pedidosDetalhados?.length) {
+        return { orders: [], totalCount };
       }
 
       // Buscamos informações adicionais em paralelo
@@ -140,28 +148,33 @@ export function useJabOrders({ dateRange, page = 1, pageSize = 15 }: UseJabOrder
         const pedidos = pedidosAgrupados.get(numPedido) || [];
         const primeiroPedido = pedidos[0];
         
+        if (!primeiroPedido) {
+          console.log('Pedido não encontrado:', numPedido);
+          return null;
+        }
+
         let total_saldo = 0;
         let valor_total = 0;
         const items = new Map<string, any>();
 
         pedidos.forEach(pedido => {
+          if (!pedido.ITEM_CODIGO) return;
+
           const saldo = pedido.QTDE_SALDO || 0;
           const valorUnitario = pedido.VALOR_UNITARIO || 0;
           
           total_saldo += saldo;
           valor_total += saldo * valorUnitario;
 
-          if (pedido.ITEM_CODIGO && !items.has(pedido.ITEM_CODIGO)) {
-            items.set(pedido.ITEM_CODIGO, {
-              ITEM_CODIGO: pedido.ITEM_CODIGO,
-              DESCRICAO: itemMap.get(pedido.ITEM_CODIGO) || null,
-              QTDE_SALDO: saldo,
-              QTDE_PEDIDA: pedido.QTDE_PEDIDA || 0,
-              QTDE_ENTREGUE: pedido.QTDE_ENTREGUE || 0,
-              VALOR_UNITARIO: valorUnitario,
-              FISICO: estoqueMap.get(pedido.ITEM_CODIGO) || null
-            });
-          }
+          items.set(pedido.ITEM_CODIGO, {
+            ITEM_CODIGO: pedido.ITEM_CODIGO,
+            DESCRICAO: itemMap.get(pedido.ITEM_CODIGO) || null,
+            QTDE_SALDO: saldo,
+            QTDE_PEDIDA: pedido.QTDE_PEDIDA || 0,
+            QTDE_ENTREGUE: pedido.QTDE_ENTREGUE || 0,
+            VALOR_UNITARIO: valorUnitario,
+            FISICO: estoqueMap.get(pedido.ITEM_CODIGO) || null
+          });
         });
 
         return {
@@ -176,7 +189,9 @@ export function useJabOrders({ dateRange, page = 1, pageSize = 15 }: UseJabOrder
           STATUS: primeiroPedido.STATUS || '',
           items: Array.from(items.values())
         };
-      });
+      }).filter(Boolean) as JabOrder[];
+
+      console.log('Orders processadas:', orders);
 
       return {
         orders,
