@@ -10,23 +10,39 @@ interface PedidoAgrupado {
 }
 
 export async function fetchPessoasCodigos(dataInicial: string, dataFinal: string) {
-  // Using the database function that already exists
+  console.log('Buscando pessoas no período:', {dataInicial, dataFinal});
+  
+  // Using direct query instead of rpc to debug
   const { data, error } = await supabase
-    .rpc('get_pedidos_agrupados', {
-      data_inicial: dataInicial.split('T')[0],
-      data_final: dataFinal.split('T')[0]
-    });
+    .from('BLUEBAY_PEDIDO')
+    .select(`
+      PES_CODIGO,
+      COUNT(DISTINCT PED_NUMPEDIDO)::bigint as quantidade_pedidos,
+      SUM(QTDE_SALDO)::numeric as quantidade_itens_com_saldo,
+      SUM(QTDE_SALDO * VALOR_UNITARIO)::numeric as valor_do_saldo
+    `)
+    .eq('CENTROCUSTO', 'JAB')
+    .gte('DATA_PEDIDO', dataInicial.split('T')[0])
+    .lte('DATA_PEDIDO', dataFinal.split('T')[0])
+    .not('PES_CODIGO', 'is', null)
+    .groupBy('PES_CODIGO');
 
   if (error) {
     console.error('Erro ao buscar PES_CODIGO:', error);
     throw error;
   }
 
-  console.log('Dados agrupados por PES_CODIGO:', data);
+  console.log('Resultado da busca de pessoas:', data);
   return (data || []) as PedidoAgrupado[];
 }
 
 export async function fetchPedidos(dataInicial: string, dataFinal: string, pesCodigos: number[]) {
+  console.log('Buscando pedidos com params:', {
+    dataInicial,
+    dataFinal,
+    totalPesCodigos: pesCodigos.length
+  });
+
   const { data, error } = await supabase
     .from('BLUEBAY_PEDIDO')
     .select(`
@@ -55,6 +71,7 @@ export async function fetchPedidos(dataInicial: string, dataFinal: string, pesCo
     throw error;
   }
 
+  console.log('Total de pedidos encontrados:', data?.length || 0);
   return data || [];
 }
 
