@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { DateRange as DayPickerDateRange } from "react-day-picker";
@@ -214,7 +215,7 @@ export function useTotals() {
     queryKey: ['jab-totals'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .rpc<ValorTotalJabResult>('calcular_valor_total_jab');
+        .rpc<ValorTotalJabResult, undefined>('calcular_valor_total_jab');
 
       if (error) {
         console.error('Erro ao calcular totais:', error);
