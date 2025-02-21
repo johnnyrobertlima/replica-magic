@@ -139,28 +139,30 @@ const OrderCard: React.FC<OrderCardProps> = ({
             <div className="mt-6 space-y-4">
               <div className="flex justify-between items-center border-b pb-2">
                 <div className="flex items-center gap-4" onClick={e => e.stopPropagation()}>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 bg-slate-100 p-2 rounded-lg">
                     <Switch
                       checked={showZeroBalance}
                       onCheckedChange={onToggleZeroBalance}
                       id={`show-zero-balance-${orderId}`}
+                      className="data-[state=checked]:bg-blue-600"
                     />
                     <label 
                       htmlFor={`show-zero-balance-${orderId}`} 
-                      className="text-sm text-muted-foreground cursor-pointer"
+                      className="text-sm text-secondary font-medium cursor-pointer"
                     >
                       Mostrar itens com saldo zero
                     </label>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 bg-slate-100 p-2 rounded-lg">
                     <Switch
                       checked={showOnlyWithStock}
                       onCheckedChange={setShowOnlyWithStock}
                       id={`show-only-with-stock-${orderId}`}
+                      className="data-[state=checked]:bg-blue-600"
                     />
                     <label 
                       htmlFor={`show-only-with-stock-${orderId}`} 
-                      className="text-sm text-muted-foreground cursor-pointer"
+                      className="text-sm text-secondary font-medium cursor-pointer"
                     >
                       Somente com estoque
                     </label>
