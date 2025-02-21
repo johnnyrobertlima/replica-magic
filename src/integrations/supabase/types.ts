@@ -943,6 +943,83 @@ export type Database = {
         }
         Relationships: []
       }
+      separacao_itens: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          id: string
+          item_codigo: string
+          pedido: string
+          quantidade_pedida: number
+          separacao_id: string
+          valor_total: number
+          valor_unitario: number
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          item_codigo: string
+          pedido: string
+          quantidade_pedida: number
+          separacao_id: string
+          valor_total: number
+          valor_unitario: number
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          item_codigo?: string
+          pedido?: string
+          quantidade_pedida?: number
+          separacao_id?: string
+          valor_total?: number
+          valor_unitario?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "separacao_itens_separacao_id_fkey"
+            columns: ["separacao_id"]
+            isOneToOne: false
+            referencedRelation: "separacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      separacoes: {
+        Row: {
+          cliente_codigo: number
+          cliente_nome: string
+          created_at: string
+          id: string
+          quantidade_itens: number
+          status: string
+          updated_at: string
+          valor_total: number
+        }
+        Insert: {
+          cliente_codigo: number
+          cliente_nome: string
+          created_at?: string
+          id?: string
+          quantidade_itens?: number
+          status?: string
+          updated_at?: string
+          valor_total?: number
+        }
+        Update: {
+          cliente_codigo?: number
+          cliente_nome?: string
+          created_at?: string
+          id?: string
+          quantidade_itens?: number
+          status?: string
+          updated_at?: string
+          valor_total?: number
+        }
+        Relationships: []
+      }
       services: {
         Row: {
           cover_image_url: string | null

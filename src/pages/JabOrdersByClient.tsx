@@ -2,15 +2,19 @@ import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import { useJabOrders, useTotals } from "@/hooks/useJabOrders";
+import { useSeparacoes } from "@/hooks/useSeparacoes";
 import type { DateRange } from "react-day-picker";
+import type { SearchType } from "@/components/jab-orders/SearchFilters";
 import { TotalCards } from "@/components/jab-orders/TotalCards";
 import { OrdersHeader } from "@/components/jab-orders/OrdersHeader";
 import { OrdersPagination } from "@/components/jab-orders/OrdersPagination";
-import type { SearchType } from "@/components/jab-orders/SearchFilters";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const ITEMS_PER_PAGE = 15;
 
@@ -27,14 +31,14 @@ const JabOrdersByClient = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [showZeroBalance, setShowZeroBalance] = useState(false);
   const [showOnlyWithStock, setShowOnlyWithStock] = useState(false);
-
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const { data: ordersData = { orders: [], totalCount: 0 }, isLoading: isLoadingOrders } = useJabOrders({
     dateRange: searchDate,
     page: currentPage,
     pageSize: ITEMS_PER_PAGE
   });
-
   const { data: totals = { valorTotalSaldo: 0, valorFaturarComEstoque: 0 }, isLoading: isLoadingTotals } = useTotals();
+  const { createSeparacao } = useSeparacoes();
 
   const toggleExpand = (clientName: string) => {
     setExpandedClients(prev => {
@@ -160,6 +164,49 @@ const JabOrdersByClient = () => {
       style: 'currency',
       currency: 'BRL'
     });
+  };
+
+  const handleItemSelect = (itemId: string) => {
+    setSelectedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(itemId)) {
+        newSet.delete(itemId);
+      } else {
+        newSet.add(itemId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleEnviarParaSeparacao = async (clientName: string, clienteCode: number, items: any[]) => {
+    try {
+      const selectedItemsArray = items.filter(item => 
+        selectedItems.has(`${item.pedido}-${item.ITEM_CODIGO}`)
+      ).map(item => ({
+        pedido: item.pedido,
+        item_codigo: item.ITEM_CODIGO,
+        descricao: item.DESCRICAO,
+        quantidade_pedida: item.QTDE_SALDO,
+        valor_unitario: item.VALOR_UNITARIO,
+        valor_total: item.QTDE_SALDO * item.VALOR_UNITARIO
+      }));
+
+      if (selectedItemsArray.length === 0) {
+        toast.error('Selecione pelo menos um item para enviar para separação');
+        return;
+      }
+
+      await createSeparacao.mutateAsync({
+        cliente_nome: clientName,
+        cliente_codigo: clienteCode,
+        itens: selectedItemsArray
+      });
+
+      setSelectedItems(new Set());
+      toast.success('Itens enviados para separação com sucesso!');
+    } catch (error) {
+      toast.error('Erro ao enviar itens para separação');
+    }
   };
 
   return (
@@ -309,6 +356,7 @@ const JabOrdersByClient = () => {
                           <table className="w-full">
                             <thead className="bg-muted">
                               <tr>
+                                <th className="text-left p-2">Selecionar</th>
                                 <th className="text-left p-2">Pedido</th>
                                 <th className="text-left p-2">SKU</th>
                                 <th className="text-left p-2">Descrição</th>
@@ -329,6 +377,12 @@ const JabOrdersByClient = () => {
                                 })
                                 .map((item, index) => (
                                 <tr key={`${item.pedido}-${item.ITEM_CODIGO}-${index}`} className="border-t">
+                                  <td className="p-2">
+                                    <Checkbox
+                                      checked={selectedItems.has(`${item.pedido}-${item.ITEM_CODIGO}`)}
+                                      onCheckedChange={() => handleItemSelect(`${item.pedido}-${item.ITEM_CODIGO}`)}
+                                    />
+                                  </td>
                                   <td className="p-2">{item.pedido}</td>
                                   <td className="p-2">{item.ITEM_CODIGO}</td>
                                   <td className="p-2">{item.DESCRICAO || '-'}</td>
@@ -352,6 +406,15 @@ const JabOrdersByClient = () => {
                               ))}
                             </tbody>
                           </table>
+                        </div>
+
+                        <div className="mt-4 flex justify-end">
+                          <Button 
+                            onClick={() => handleEnviarParaSeparacao(clientName, data.pedidos[0]?.PES_CODIGO || 0, data.allItems)}
+                            disabled={selectedItems.size === 0}
+                          >
+                            Enviar para Separação
+                          </Button>
                         </div>
                       </div>
                     )}
