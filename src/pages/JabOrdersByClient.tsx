@@ -83,6 +83,7 @@ const JabOrdersByClient = () => {
       const clientKey = order.APELIDO || "Sem Cliente";
       
       if (!groups[clientKey]) {
+        console.log('Criando novo grupo para:', clientKey, 'com PES_CODIGO:', order.PES_CODIGO);
         groups[clientKey] = {
           pedidos: [],
           totalQuantidadeSaldo: 0,
@@ -94,9 +95,8 @@ const JabOrdersByClient = () => {
           pesCode: order.PES_CODIGO,
           allItems: []
         };
-      }
-      
-      if (!groups[clientKey].pesCode && order.PES_CODIGO) {
+      } else if (!groups[clientKey].pesCode && order.PES_CODIGO) {
+        console.log('Atualizando PES_CODIGO para:', clientKey, 'de:', groups[clientKey].pesCode, 'para:', order.PES_CODIGO);
         groups[clientKey].pesCode = order.PES_CODIGO;
       }
 
@@ -105,11 +105,14 @@ const JabOrdersByClient = () => {
       groups[clientKey].totalValorSaldo += order.valor_total || 0;
 
       if (order.items) {
-        groups[clientKey].allItems.push(...order.items.map(item => ({
+        const itemsWithPesCode = order.items.map(item => ({
           ...item,
           pedido: order.PED_NUMPEDIDO,
           PES_CODIGO: order.PES_CODIGO
-        })));
+        }));
+
+        console.log('Adicionando itens para:', clientKey, 'PES_CODIGO:', order.PES_CODIGO);
+        groups[clientKey].allItems.push(...itemsWithPesCode);
 
         order.items.forEach(item => {
           groups[clientKey].totalValorPedido += item.QTDE_PEDIDA * item.VALOR_UNITARIO;
@@ -121,7 +124,14 @@ const JabOrdersByClient = () => {
       }
     });
 
-    console.log('Grupos processados:', groups);
+    Object.entries(groups).forEach(([clientKey, data]) => {
+      console.log('Grupo processado:', clientKey, {
+        pesCode: data.pesCode,
+        totalPedidos: data.pedidos.length,
+        primeiroPedidoPesCode: data.pedidos[0]?.PES_CODIGO
+      });
+    });
+
     return groups;
   }, [ordersData.orders]);
 
@@ -178,15 +188,21 @@ const JabOrdersByClient = () => {
   const handleEnviarParaSeparacao = async (clientName: string, clientData: any) => {
     console.log('Iniciando envio para separação...');
     console.log('Cliente:', clientName);
-    console.log('Dados do cliente:', clientData);
-    console.log('Código do cliente (PES_CODE):', clientData.pesCode);
-    console.log('Itens selecionados:', Array.from(selectedItems));
+    console.log('Dados completos do cliente:', {
+      pesCode: clientData.pesCode,
+      primeiroPedido: clientData.pedidos[0],
+      totalPedidos: clientData.pedidos.length
+    });
     
-    const clienteCode = clientData.pesCode || clientData.pedidos?.[0]?.PES_CODIGO;
+    const clienteCode = clientData.pesCode || 
+                       clientData.pedidos?.[0]?.PES_CODIGO ||
+                       clientData.allItems?.[0]?.PES_CODIGO;
+    
+    console.log('Código do cliente encontrado:', clienteCode);
     
     try {
       if (!clienteCode) {
-        console.error('Erro: Código do cliente não encontrado');
+        console.error('Erro: Código do cliente não encontrado em nenhuma fonte');
         toast.error('Código do cliente não encontrado');
         return;
       }
