@@ -1,5 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -70,7 +71,32 @@ const OrderCard: React.FC<OrderCardProps> = ({
     }, 0);
   };
 
+  const calculateValorTotalPedido = () => {
+    if (!order.items) return 0;
+    return order.items.reduce((total, item) => {
+      return total + (item.QTDE_PEDIDA * item.VALOR_UNITARIO);
+    }, 0);
+  };
+
+  const calculateValorFaturado = () => {
+    if (!order.items) return 0;
+    return order.items.reduce((total, item) => {
+      return total + (item.QTDE_ENTREGUE * item.VALOR_UNITARIO);
+    }, 0);
+  };
+
   const orderId = `${order.MATRIZ}-${order.FILIAL}-${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`;
+  const valorTotalPedido = calculateValorTotalPedido();
+  const valorFaturado = calculateValorFaturado();
+  const valorFaturarComEstoque = calculateTotalFaturarComEstoque();
+  
+  const progressFaturamento = valorTotalPedido > 0 
+    ? (valorFaturado / valorTotalPedido) * 100 
+    : 0;
+    
+  const progressPotencial = valorTotalPedido > 0 
+    ? (valorFaturarComEstoque / valorTotalPedido) * 100 
+    : 0;
 
   return (
     <Card 
@@ -96,6 +122,22 @@ const OrderCard: React.FC<OrderCardProps> = ({
             <ChevronDown className="h-5 w-5 text-muted-foreground" />
           )}
         </div>
+        <div className="space-y-4 mt-2">
+          <div className="space-y-2">
+            <div className="flex justify-between items-center text-sm">
+              <span>Faturamento</span>
+              <span>{Math.round(progressFaturamento)}%</span>
+            </div>
+            <Progress value={progressFaturamento} className="h-2" />
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center text-sm">
+              <span>Potencial com Estoque</span>
+              <span>{Math.round(progressPotencial)}%</span>
+            </div>
+            <Progress value={progressPotencial} className="h-2" />
+          </div>
+        </div>
         <p className="text-sm text-muted-foreground">
           Ano Base: {order.PED_ANOBASE}
         </p>
@@ -117,9 +159,27 @@ const OrderCard: React.FC<OrderCardProps> = ({
             <span className="font-medium">{order.total_saldo.toLocaleString()}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">Valor Total:</span>
+            <span className="text-sm text-muted-foreground">Valor Total Saldo:</span>
             <span className="font-medium">
               R$ {order.valor_total.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-sm text-muted-foreground">Valor Total do Pedido:</span>
+            <span className="font-medium">
+              R$ {valorTotalPedido.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-sm text-muted-foreground">Valor Faturado:</span>
+            <span className="font-medium">
+              R$ {valorFaturado.toLocaleString(undefined, {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
@@ -128,7 +188,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
           <div className="flex justify-between border-t pt-2">
             <span className="text-sm text-muted-foreground">Faturar com Estoque:</span>
             <span className="font-medium text-primary">
-              R$ {calculateTotalFaturarComEstoque().toLocaleString(undefined, {
+              R$ {valorFaturarComEstoque.toLocaleString(undefined, {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
