@@ -104,9 +104,14 @@ const AprovacaoFinanceira = () => {
           {filteredSeparacoes.map((separacao) => (
             <Card key={separacao.id}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-lg">
-                  Cliente: {separacao.cliente_nome}
-                </CardTitle>
+                <div className="space-y-1">
+                  <CardTitle className="text-lg">
+                    Cliente: {separacao.cliente_nome}
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Representante: {separacao.representante || 'Não informado'}
+                  </p>
+                </div>
                 <Button 
                   variant="ghost" 
                   size="sm" 
