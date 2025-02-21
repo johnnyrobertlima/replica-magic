@@ -54,9 +54,10 @@ export function useJabOrders({ dateRange, page = 1, pageSize = 15 }: UseJabOrder
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
 
+      // Usando uma subquery para garantir pedidos únicos
       const { data: pedidosDistintos, error: errorDistintos, count } = await supabase
         .from('BLUEBAY_PEDIDO')
-        .select('DISTINCT PED_NUMPEDIDO', { count: 'exact' })
+        .select('*', { count: 'exact' })
         .eq('CENTROCUSTO', 'JAB')
         .in('STATUS', ['1', '2'])
         .gte('DATA_PEDIDO', dataInicial)
@@ -73,7 +74,8 @@ export function useJabOrders({ dateRange, page = 1, pageSize = 15 }: UseJabOrder
         return { orders: [], totalCount: count || 0 };
       }
 
-      const numeroPedidos = pedidosDistintos.map(p => p.PED_NUMPEDIDO);
+      // Extraímos os números de pedido únicos
+      const numeroPedidos = [...new Set(pedidosDistintos.map(p => p.PED_NUMPEDIDO))];
       console.log('Pedidos selecionados para esta página:', numeroPedidos.length);
 
       // Busca os detalhes dos pedidos
