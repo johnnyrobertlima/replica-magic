@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { ChevronDown, ChevronUp } from "lucide-react";
@@ -25,6 +24,7 @@ interface OrderCardProps {
     PEDIDO_CLIENTE?: string | null;
     total_saldo: number;
     valor_total: number;
+    REPRESENTANTE_NOME: string | null;
     items?: Array<{
       ITEM_CODIGO: string;
       DESCRICAO: string | null;

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import type { 
   PedidoUnicoResult, 
@@ -52,7 +51,8 @@ async function fetchPedidosDetalhados(numeroPedidos: string[]) {
       ITEM_CODIGO,
       QTDE_PEDIDA,
       QTDE_ENTREGUE,
-      DATA_PEDIDO
+      DATA_PEDIDO,
+      REPRESENTANTE
     `)
     .eq('CENTROCUSTO', 'JAB')
     .in('STATUS', ['1', '2'])
@@ -66,8 +66,8 @@ async function fetchPedidosDetalhados(numeroPedidos: string[]) {
   return data || [];
 }
 
-async function fetchRelatedData(pessoasIds: number[], itemCodigos: string[]) {
-  const [pessoasResponse, itensResponse, estoqueResponse] = await Promise.all([
+async function fetchRelatedData(pessoasIds: number[], itemCodigos: string[], representantesIds: number[]) {
+  const [pessoasResponse, itensResponse, estoqueResponse, representantesResponse] = await Promise.all([
     supabase
       .from('BLUEBAY_PESSOA')
       .select('PES_CODIGO, APELIDO')
@@ -79,13 +79,18 @@ async function fetchRelatedData(pessoasIds: number[], itemCodigos: string[]) {
     supabase
       .from('BLUEBAY_ESTOQUE')
       .select('ITEM_CODIGO, FISICO')
-      .in('ITEM_CODIGO', itemCodigos)
+      .in('ITEM_CODIGO', itemCodigos),
+    supabase
+      .from('BLUEBAY_PESSOA')
+      .select('PES_CODIGO, APELIDO')
+      .in('PES_CODIGO', representantesIds)
   ]);
 
   return {
     pessoas: pessoasResponse.data || [],
     itens: itensResponse.data || [],
-    estoque: estoqueResponse.data || []
+    estoque: estoqueResponse.data || [],
+    representantes: representantesResponse.data || []
   };
 }
 
@@ -118,13 +123,15 @@ export async function fetchJabOrders({
 
   const pessoasIds = [...new Set(pedidosDetalhados.map(p => p.PES_CODIGO).filter(Boolean))];
   const itemCodigos = [...new Set(pedidosDetalhados.map(p => p.ITEM_CODIGO).filter(Boolean))];
+  const representantesIds = [...new Set(pedidosDetalhados.map(p => p.REPRESENTANTE).filter(Boolean))];
 
-  const { pessoas, itens, estoque } = await fetchRelatedData(pessoasIds, itemCodigos);
+  const { pessoas, itens, estoque, representantes } = await fetchRelatedData(pessoasIds, itemCodigos, representantesIds);
 
   // Criamos os mapas para lookup rápido
   const apelidoMap = new Map(pessoas.map(p => [p.PES_CODIGO, p.APELIDO]));
   const itemMap = new Map(itens.map(i => [i.ITEM_CODIGO, i.DESCRICAO]));
   const estoqueMap = new Map(estoque.map(e => [e.ITEM_CODIGO, e.FISICO]));
+  const representanteMap = new Map(representantes.map(r => [r.PES_CODIGO, r.APELIDO]));
 
   // Agrupamos os pedidos
   const pedidosAgrupados = new Map<string, any[]>();
@@ -180,6 +187,7 @@ export async function fetchJabOrders({
       APELIDO: primeiroPedido.PES_CODIGO ? apelidoMap.get(primeiroPedido.PES_CODIGO) || null : null,
       PEDIDO_CLIENTE: primeiroPedido.PEDIDO_CLIENTE || null,
       STATUS: primeiroPedido.STATUS || '',
+      REPRESENTANTE_NOME: primeiroPedido.REPRESENTANTE ? representanteMap.get(primeiroPedido.REPRESENTANTE) || null : null,
       items: Array.from(items.values())
     };
   }).filter(Boolean) as JabOrder[];
