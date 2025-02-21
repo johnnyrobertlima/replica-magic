@@ -50,37 +50,37 @@ export function useJabOrders({ dateRange, page = 1, pageSize = 15 }: UseJabOrder
         pageSize
       });
 
-      // Primeiro buscamos todos os números de pedidos distintos para o período
-      const { data: todosPedidosDistintos, error: errorDistintos } = await supabase
+      // Primeiro fazemos uma query para obter todos os pedidos distintos ordenados
+      const { data: pedidosDistintos, error: errorDistintos, count: totalCount } = await supabase
         .from('BLUEBAY_PEDIDO')
-        .select('PED_NUMPEDIDO')
+        .select('PED_NUMPEDIDO', { count: 'exact' })
         .eq('CENTROCUSTO', 'JAB')
         .in('STATUS', ['1', '2'])
         .gte('DATA_PEDIDO', dataInicial)
         .lte('DATA_PEDIDO', `${dataFinal} 23:59:59.999`)
-        .order('PED_NUMPEDIDO');
+        .order('PED_NUMPEDIDO')
+        .limit(1000); // Limite alto para garantir que pegamos todos os pedidos
 
       if (errorDistintos) {
         console.error('Erro ao buscar pedidos distintos:', errorDistintos);
         throw errorDistintos;
       }
 
-      // Remove duplicatas e ordena
-      const numeroPedidosUnicos = [...new Set(todosPedidosDistintos?.map(p => p.PED_NUMPEDIDO))];
-      const totalCount = numeroPedidosUnicos.length;
+      // Remove duplicatas e mantém a ordem
+      const pedidosUnicos = Array.from(new Set(pedidosDistintos?.map(p => p.PED_NUMPEDIDO) || []));
 
       // Calcula o slice para a página atual
       const start = (page - 1) * pageSize;
       const end = start + pageSize;
-      const pedidosDaPagina = numeroPedidosUnicos.slice(start, end);
+      const pedidosDaPagina = pedidosUnicos.slice(start, end);
 
       console.log('Pedidos selecionados para esta página:', pedidosDaPagina.length);
 
       if (pedidosDaPagina.length === 0) {
-        return { orders: [], totalCount };
+        return { orders: [], totalCount: totalCount || 0 };
       }
 
-      // Busca os detalhes apenas dos pedidos desta página
+      // Busca os detalhes dos pedidos desta página
       const { data: pedidosDetalhados, error: errorPedidos } = await supabase
         .from('BLUEBAY_PEDIDO')
         .select(`
@@ -185,7 +185,7 @@ export function useJabOrders({ dateRange, page = 1, pageSize = 15 }: UseJabOrder
 
       return {
         orders,
-        totalCount,
+        totalCount: totalCount || 0,
         currentPage: page,
         pageSize
       };
