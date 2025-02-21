@@ -12,10 +12,10 @@ import type { OrderItem } from "./types";
 interface OrderItemsTableProps {
   items: OrderItem[];
   showZeroBalance: boolean;
-  showOnlyWithStock: boolean;
+  showOnlyWithStock?: boolean; // Tornando opcional com '?'
 }
 
-export const OrderItemsTable = ({ items, showZeroBalance, showOnlyWithStock }: OrderItemsTableProps) => {
+export const OrderItemsTable = ({ items, showZeroBalance, showOnlyWithStock = false }: OrderItemsTableProps) => {
   const filteredItems = items.filter(item => {
     if (!showZeroBalance && item.QTDE_SALDO <= 0) return false;
     if (showOnlyWithStock && (item.FISICO || 0) <= 0) return false;
@@ -68,3 +68,4 @@ export const OrderItemsTable = ({ items, showZeroBalance, showOnlyWithStock }: O
     </div>
   );
 };
+
