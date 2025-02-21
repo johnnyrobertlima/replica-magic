@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useJabOrders, useTotals } from "@/hooks/useJabOrders";
@@ -9,6 +9,7 @@ import { TotalCards } from "@/components/jab-orders/TotalCards";
 import { OrdersHeader } from "@/components/jab-orders/OrdersHeader";
 import { OrdersPagination } from "@/components/jab-orders/OrdersPagination";
 import type { SearchType } from "@/components/jab-orders/SearchFilters";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 const ITEMS_PER_PAGE = 15;
 
@@ -54,35 +55,56 @@ const JabOrdersByClient = () => {
     return str.replace(/^0+/, '');
   };
 
-  const filteredOrders = ordersData.orders.filter((order) => {
-    if (!["1", "2"].includes(order.STATUS)) {
-      return false;
-    }
-
-    if (!isSearching) return true;
+  // Agrupa os pedidos por cliente
+  const groupedOrders = useMemo(() => {
+    const groups: Record<string, typeof ordersData.orders> = {};
     
-    if (searchQuery) {
-      const normalizedSearchQuery = searchQuery.toLowerCase().trim();
+    ordersData.orders.forEach((order) => {
+      if (!["1", "2"].includes(order.STATUS)) return;
       
-      switch (searchType) {
-        case "pedido":
-          const normalizedOrderNumber = removeLeadingZeros(order.PED_NUMPEDIDO);
-          const normalizedSearchNumber = removeLeadingZeros(searchQuery);
-          return normalizedOrderNumber.includes(normalizedSearchNumber);
-        
-        case "cliente":
-          return order.APELIDO?.toLowerCase().includes(normalizedSearchQuery) || false;
-        
-        case "representante":
-          return order.REPRESENTANTE_NOME?.toLowerCase().includes(normalizedSearchQuery) || false;
-        
-        default:
-          return false;
+      const clientKey = order.APELIDO || "Sem Cliente";
+      if (!groups[clientKey]) {
+        groups[clientKey] = [];
       }
-    }
-    
-    return true;
-  });
+      groups[clientKey].push(order);
+    });
+
+    return groups;
+  }, [ordersData.orders]);
+
+  // Filtra os grupos de pedidos
+  const filteredGroups = useMemo(() => {
+    if (!isSearching || !searchQuery) return groupedOrders;
+
+    const normalizedSearchQuery = searchQuery.toLowerCase().trim();
+    const filteredGroups: Record<string, typeof ordersData.orders> = {};
+
+    Object.entries(groupedOrders).forEach(([clientName, orders]) => {
+      const filteredOrders = orders.filter(order => {
+        switch (searchType) {
+          case "pedido":
+            const normalizedOrderNumber = removeLeadingZeros(order.PED_NUMPEDIDO);
+            const normalizedSearchNumber = removeLeadingZeros(searchQuery);
+            return normalizedOrderNumber.includes(normalizedSearchNumber);
+          
+          case "cliente":
+            return clientName.toLowerCase().includes(normalizedSearchQuery);
+          
+          case "representante":
+            return order.REPRESENTANTE_NOME?.toLowerCase().includes(normalizedSearchQuery) || false;
+          
+          default:
+            return false;
+        }
+      });
+
+      if (filteredOrders.length > 0) {
+        filteredGroups[clientName] = filteredOrders;
+      }
+    });
+
+    return filteredGroups;
+  }, [groupedOrders, isSearching, searchQuery, searchType]);
 
   const totalPages = Math.ceil(ordersData.totalCount / ITEMS_PER_PAGE);
 
@@ -120,23 +142,36 @@ const JabOrdersByClient = () => {
           onSearchTypeChange={setSearchType}
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {filteredOrders.map((order) => {
-            const orderId = `${order.MATRIZ}-${order.FILIAL}-${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`;
-            const isExpanded = expandedOrder === orderId;
-            const showZeroBalance = showZeroBalanceMap[orderId] || false;
+        <div className="space-y-6">
+          {Object.entries(filteredGroups).map(([clientName, orders]) => (
+            <Card key={clientName} className="overflow-hidden">
+              <CardHeader className="bg-muted">
+                <CardTitle className="text-lg font-medium">
+                  Cliente: {clientName}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {orders.map((order) => {
+                    const orderId = `${order.MATRIZ}-${order.FILIAL}-${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`;
+                    const isExpanded = expandedOrder === orderId;
+                    const showZeroBalance = showZeroBalanceMap[orderId] || false;
 
-            return (
-              <OrderCard
-                key={orderId}
-                order={order}
-                isExpanded={isExpanded}
-                showZeroBalance={showZeroBalance}
-                onToggleExpand={() => toggleExpand(orderId)}
-                onToggleZeroBalance={() => toggleShowZeroBalance(orderId)}
-              />
-            );
-          })}
+                    return (
+                      <OrderCard
+                        key={orderId}
+                        order={order}
+                        isExpanded={isExpanded}
+                        showZeroBalance={showZeroBalance}
+                        onToggleExpand={() => toggleExpand(orderId)}
+                        onToggleZeroBalance={() => toggleShowZeroBalance(orderId)}
+                      />
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
         <OrdersPagination
