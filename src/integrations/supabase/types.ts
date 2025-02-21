@@ -1050,7 +1050,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_pedidos_agrupados: {
+        Args: {
+          data_inicial: string
+          data_final: string
+        }
+        Returns: {
+          pes_codigo: number
+          quantidade_pedidos: number
+          quantidade_itens_com_saldo: number
+          valor_do_saldo: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

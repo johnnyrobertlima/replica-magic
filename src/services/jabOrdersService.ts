@@ -15,7 +15,7 @@ export async function fetchPessoasCodigos(dataInicial: string, dataFinal: string
     .rpc('get_pedidos_agrupados', {
       data_inicial: dataInicial,
       data_final: dataFinal
-    });
+    } as any); // Type assertion needed due to Supabase types limitation
 
   if (error) {
     console.error('Erro ao buscar PES_CODIGO:', error);
