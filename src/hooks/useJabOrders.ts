@@ -1,7 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { startOfDay, endOfDay } from "date-fns";
+import { startOfDay, endOfDay, formatISO } from "date-fns";
 import type { DateRange as DayPickerDateRange } from "react-day-picker";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -35,8 +35,9 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
     queryFn: async () => {
       if (!dateRange?.from || !dateRange?.to) return [];
 
-      const dataInicial = startOfDay(dateRange.from).toISOString();
-      const dataFinal = endOfDay(dateRange.to).toISOString();
+      // Ajustando o formato das datas para considerar o timezone corretamente
+      const dataInicial = formatISO(startOfDay(dateRange.from), { format: 'extended' });
+      const dataFinal = formatISO(endOfDay(dateRange.to), { format: 'extended' });
 
       console.log('Buscando pedidos para o período:', { 
         dataInicial,
@@ -45,22 +46,27 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
         toDate: dateRange.to
       });
 
-      // Primeiro buscamos os números de pedido distintos
-      const { data: pedidosDistintos, error: errorPedidosDistintos } = await supabase
+      // Primeiro fazemos uma query para pegar todos os pedidos do período
+      const { data: todosPedidos, error: errorTodosPedidos } = await supabase
         .from('BLUEBAY_PEDIDO')
-        .select('PED_NUMPEDIDO')
+        .select('PED_NUMPEDIDO, DATA_PEDIDO, STATUS')
         .eq('CENTROCUSTO', 'JAB')
         .in('STATUS', ['1', '2'])
         .gte('DATA_PEDIDO', dataInicial)
-        .lte('DATA_PEDIDO', dataFinal)
-        .order('PED_NUMPEDIDO', { ascending: false });
+        .lte('DATA_PEDIDO', dataFinal);
 
-      if (errorPedidosDistintos) {
-        console.error('Erro ao buscar pedidos distintos:', errorPedidosDistintos);
-        throw errorPedidosDistintos;
+      if (errorTodosPedidos) {
+        console.error('Erro ao buscar todos os pedidos:', errorTodosPedidos);
+        throw errorTodosPedidos;
       }
 
-      const numeroPedidosDistintos = [...new Set(pedidosDistintos?.map(p => p.PED_NUMPEDIDO))];
+      console.log('Dados brutos dos pedidos:', todosPedidos?.map(p => ({
+        PED_NUMPEDIDO: p.PED_NUMPEDIDO,
+        DATA_PEDIDO: p.DATA_PEDIDO,
+        STATUS: p.STATUS
+      })));
+
+      const numeroPedidosDistintos = [...new Set(todosPedidos?.map(p => p.PED_NUMPEDIDO))];
       
       console.log('Total de pedidos distintos encontrados:', numeroPedidosDistintos.length);
       console.log('Lista de pedidos distintos:', numeroPedidosDistintos);
