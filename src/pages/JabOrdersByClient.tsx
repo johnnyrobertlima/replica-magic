@@ -245,10 +245,13 @@ const JabOrdersByClient = () => {
         newSet.delete(clientName);
         return newSet;
       });
-      toast.success('Itens enviados para separação com sucesso!');
+      toast.success(`${selectedItemsArray.length} ${selectedItemsArray.length === 1 ? 'item enviado' : 'itens enviados'} para aprovação financeira com sucesso!`, {
+        description: `Cliente: ${clientName}`,
+        duration: 5000
+      });
     } catch (error) {
       console.error('Erro ao criar separação:', error);
-      toast.error('Erro ao enviar itens para separação');
+      toast.error('Erro ao enviar itens para aprovação financeira. Por favor, tente novamente.');
     }
   };
 
