@@ -3,12 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import type { JabOrder } from "@/types/jabOrders";
 
 export async function fetchPessoasCodigos(dataInicial: string, dataFinal: string) {
+  // Buscamos todos os PES_CODIGO que têm pedidos com saldo, independente da data
   const { data, error } = await supabase
     .from('BLUEBAY_PEDIDO')
     .select('PES_CODIGO')
     .eq('CENTROCUSTO', 'JAB')
-    .gte('DATA_PEDIDO', dataInicial)
-    .lte('DATA_PEDIDO', dataFinal)
+    .gt('QTDE_SALDO', 0)
     .not('PES_CODIGO', 'is', null);
 
   if (error) throw error;
@@ -34,8 +34,7 @@ export async function fetchPedidos(dataInicial: string, dataFinal: string, pesCo
       PES_CODIGO
     `)
     .eq('CENTROCUSTO', 'JAB')
-    .gte('DATA_PEDIDO', dataInicial)
-    .lte('DATA_PEDIDO', dataFinal)
+    .gt('QTDE_SALDO', 0) // Adicionado filtro para trazer apenas pedidos com saldo
     .in('PES_CODIGO', pesCodigos)
     .order('DATA_PEDIDO', { ascending: false });
 
