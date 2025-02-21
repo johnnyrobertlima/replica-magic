@@ -16,7 +16,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 
-const ITEMS_PER_PAGE = 100;
+const ITEMS_PER_PAGE = 15; // Alterado para 15 itens por página
 
 const JabOrders = () => {
   const [date, setDate] = useState<DateRange | undefined>({
@@ -154,7 +154,7 @@ const JabOrders = () => {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {filteredOrders.map((order: JabOrder) => {
           const orderId = `${order.MATRIZ}-${order.FILIAL}-${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`;
           const isExpanded = expandedOrder === orderId;
