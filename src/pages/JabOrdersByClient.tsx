@@ -26,6 +26,7 @@ const JabOrdersByClient = () => {
   const [searchType, setSearchType] = useState<SearchType>("pedido");
   const [isSearching, setIsSearching] = useState(false);
   const [showZeroBalance, setShowZeroBalance] = useState(false);
+  const [showOnlyWithStock, setShowOnlyWithStock] = useState(false);
 
   const { data: ordersData = { orders: [], totalCount: 0 }, isLoading: isLoadingOrders } = useJabOrders({
     dateRange: searchDate,
@@ -273,18 +274,33 @@ const JabOrdersByClient = () => {
 
                     {isExpanded && (
                       <div className="mt-6">
-                        <div className="mb-4">
+                        <div className="mb-4 space-y-3">
                           <div className="flex items-center gap-2">
                             <Switch
                               checked={showZeroBalance}
                               onCheckedChange={setShowZeroBalance}
                               id="show-zero-balance"
+                              className="data-[state=checked]:bg-[#8B5CF6]"
                             />
                             <label 
                               htmlFor="show-zero-balance"
                               className="text-sm text-muted-foreground cursor-pointer"
                             >
                               Mostrar itens com saldo zero
+                            </label>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={showOnlyWithStock}
+                              onCheckedChange={setShowOnlyWithStock}
+                              id="show-only-with-stock"
+                              className="data-[state=checked]:bg-[#8B5CF6]"
+                            />
+                            <label 
+                              htmlFor="show-only-with-stock"
+                              className="text-sm text-muted-foreground cursor-pointer"
+                            >
+                              Mostrar apenas itens com estoque físico
                             </label>
                           </div>
                         </div>
@@ -306,7 +322,11 @@ const JabOrdersByClient = () => {
                             </thead>
                             <tbody>
                               {data.allItems
-                                .filter(item => showZeroBalance || item.QTDE_SALDO > 0)
+                                .filter(item => {
+                                  if (!showZeroBalance && item.QTDE_SALDO <= 0) return false;
+                                  if (showOnlyWithStock && (item.FISICO || 0) <= 0) return false;
+                                  return true;
+                                })
                                 .map((item, index) => (
                                 <tr key={`${item.pedido}-${item.ITEM_CODIGO}-${index}`} className="border-t">
                                   <td className="p-2">{item.pedido}</td>
