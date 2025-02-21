@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfDay, endOfDay } from "date-fns";
@@ -170,18 +171,10 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
 
       const ordersArray = Array.from(ordersMap.values());
 
-      // Ordenar o array de pedidos pelo número do pedido
-      const sortedOrdersArray = ordersArray.sort((a, b) => {
-        // Remove zeros à esquerda para comparação numérica correta
-        const numA = parseInt(a.PED_NUMPEDIDO.replace(/^0+/, ''));
-        const numB = parseInt(b.PED_NUMPEDIDO.replace(/^0+/, ''));
-        return numA - numB;
-      });
+      console.log('Número de pedidos agrupados:', ordersArray.length);
+      console.log('Lista final de pedidos:', ordersArray.map(o => o.PED_NUMPEDIDO));
 
-      console.log('Número de pedidos agrupados:', sortedOrdersArray.length);
-      console.log('Lista final de pedidos ordenados:', sortedOrdersArray.map(o => o.PED_NUMPEDIDO));
-
-      return sortedOrdersArray;
+      return ordersArray;
     },
     enabled: !!dateRange?.from && !!dateRange?.to,
     staleTime: 5 * 60 * 1000,
