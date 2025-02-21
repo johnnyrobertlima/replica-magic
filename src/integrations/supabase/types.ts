@@ -1050,6 +1050,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calcular_valor_total_jab: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          valor_total_saldo: number
+        }[]
+      }
       get_pedidos_agrupados: {
         Args: {
           data_inicial: string

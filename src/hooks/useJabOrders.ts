@@ -205,13 +205,16 @@ export function useJabOrders({ dateRange, page = 1, pageSize = 15 }: UseJabOrder
   });
 }
 
+interface ValorTotalJabResult {
+  valor_total_saldo: number;
+}
+
 export function useTotals() {
   return useQuery({
     queryKey: ['jab-totals'],
     queryFn: async () => {
-      // Fazemos uma única consulta que calcula o valor total diretamente no banco
       const { data, error } = await supabase
-        .rpc('calcular_valor_total_jab');
+        .rpc<ValorTotalJabResult>('calcular_valor_total_jab');
 
       if (error) {
         console.error('Erro ao calcular totais:', error);
@@ -219,7 +222,7 @@ export function useTotals() {
       }
 
       // Extraímos o valor do resultado
-      const valor = data?.[0]?.valor_total_saldo || 0;
+      const valor = (data?.[0]?.valor_total_saldo || 0) as number;
 
       console.log('Valor total calculado:', valor);
 
