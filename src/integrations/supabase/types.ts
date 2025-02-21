@@ -1062,6 +1062,18 @@ export type Database = {
           valor_do_saldo: number
         }[]
       }
+      get_pedidos_unicos: {
+        Args: {
+          data_inicial: string
+          data_final: string
+          offset_val: number
+          limit_val: number
+        }
+        Returns: {
+          ped_numpedido: string
+          total_count: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

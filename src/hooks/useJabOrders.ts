@@ -34,6 +34,11 @@ interface UseJabOrdersOptions {
   pageSize?: number;
 }
 
+interface PedidoUnico {
+  ped_numpedido: string;
+  total_count: number;
+}
+
 export function useJabOrders({ dateRange, page = 1, pageSize = 15 }: UseJabOrdersOptions = {}) {
   return useQuery({
     queryKey: ['jab-orders', dateRange?.from?.toISOString(), dateRange?.to?.toISOString(), page, pageSize],
@@ -51,12 +56,12 @@ export function useJabOrders({ dateRange, page = 1, pageSize = 15 }: UseJabOrder
       });
 
       // Primeiro, buscamos todos os números de pedido únicos para o período
-      const { data: todosPedidos, error: errorPedidos, count } = await supabase
-        .rpc('get_pedidos_unicos', {
+      const { data: todosPedidos, error: errorPedidos } = await supabase
+        .rpc<PedidoUnico>('get_pedidos_unicos', {
           data_inicial: dataInicial,
           data_final: `${dataFinal} 23:59:59.999`,
-          offset: (page - 1) * pageSize,
-          limit: pageSize
+          offset_val: (page - 1) * pageSize,
+          limit_val: pageSize
         });
 
       if (errorPedidos) {
@@ -65,10 +70,13 @@ export function useJabOrders({ dateRange, page = 1, pageSize = 15 }: UseJabOrder
       }
 
       if (!todosPedidos?.length) {
-        return { orders: [], totalCount: count || 0 };
+        // Usamos o total_count do primeiro registro ou 0 se não houver registros
+        return { orders: [], totalCount: todosPedidos?.[0]?.total_count || 0 };
       }
 
       const numeroPedidos = todosPedidos.map(p => p.ped_numpedido);
+      const totalCount = todosPedidos[0].total_count;
+      
       console.log('Pedidos selecionados para esta página:', numeroPedidos.length);
 
       // Busca os detalhes dos pedidos
@@ -176,7 +184,7 @@ export function useJabOrders({ dateRange, page = 1, pageSize = 15 }: UseJabOrder
 
       return {
         orders,
-        totalCount: count || 0,
+        totalCount,
         currentPage: page,
         pageSize
       };
