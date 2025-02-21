@@ -209,74 +209,25 @@ export function useTotals() {
   return useQuery({
     queryKey: ['jab-totals'],
     queryFn: async () => {
-      // Primeiro buscamos todos os números de pedido únicos com status 1 ou 2
-      const { data: pedidosUnicos, error: errorPedidos } = await supabase
-        .from('BLUEBAY_PEDIDO')
-        .select('PED_NUMPEDIDO')
-        .eq('CENTROCUSTO', 'JAB')
-        .in('STATUS', ['1', '2']);
+      // Fazemos uma única consulta que calcula o valor total diretamente no banco
+      const { data, error } = await supabase
+        .rpc('calcular_valor_total_jab');
 
-      if (errorPedidos) throw errorPedidos;
+      if (error) {
+        console.error('Erro ao calcular totais:', error);
+        throw error;
+      }
 
-      if (!pedidosUnicos?.length) return { valorTotalSaldo: 0, valorFaturarComEstoque: 0 };
+      // Extraímos o valor do resultado
+      const valor = data?.[0]?.valor_total_saldo || 0;
 
-      const numeroPedidos = [...new Set(pedidosUnicos.map(p => p.PED_NUMPEDIDO))];
+      console.log('Valor total calculado:', valor);
 
-      console.log('Número de pedidos únicos encontrados:', numeroPedidos.length);
-
-      // Agora buscamos os detalhes dos pedidos
-      const { data: pedidosDetalhados, error } = await supabase
-        .from('BLUEBAY_PEDIDO')
-        .select(`
-          QTDE_SALDO,
-          VALOR_UNITARIO,
-          ITEM_CODIGO
-        `)
-        .eq('CENTROCUSTO', 'JAB')
-        .in('STATUS', ['1', '2']);
-
-      if (error) throw error;
-
-      console.log('Total de pedidos detalhados encontrados:', pedidosDetalhados?.length);
-
-      if (!pedidosDetalhados?.length) return { valorTotalSaldo: 0, valorFaturarComEstoque: 0 };
-
-      const itemCodigos = [...new Set(pedidosDetalhados.map(p => p.ITEM_CODIGO).filter(Boolean))];
-      
-      // Buscamos o estoque para todos os itens
-      const { data: estoque } = await supabase
-        .from('BLUEBAY_ESTOQUE')
-        .select('ITEM_CODIGO, FISICO')
-        .in('ITEM_CODIGO', itemCodigos);
-
-      const estoqueMap = new Map(estoque?.map(e => [e.ITEM_CODIGO, e.FISICO]) || []);
-
-      // Calculamos o valor total do saldo (exatamente como na sua query)
-      let valorTotalSaldo = pedidosDetalhados.reduce((total, pedido) => {
-        if (!pedido.QTDE_SALDO || !pedido.VALOR_UNITARIO) return total;
-        return total + (pedido.QTDE_SALDO * pedido.VALOR_UNITARIO);
-      }, 0);
-
-      // Calculamos o valor que pode ser faturado com estoque
-      let valorFaturarComEstoque = pedidosDetalhados.reduce((total, pedido) => {
-        if (!pedido.ITEM_CODIGO || !pedido.QTDE_SALDO || !pedido.VALOR_UNITARIO) return total;
-        const estoqueFisico = estoqueMap.get(pedido.ITEM_CODIGO) || 0;
-        if (estoqueFisico > 0) {
-          return total + (pedido.QTDE_SALDO * pedido.VALOR_UNITARIO);
-        }
-        return total;
-      }, 0);
-
-      console.log('Valores calculados:', {
-        valorTotalSaldo,
-        valorFaturarComEstoque,
-        totalPedidos: pedidosDetalhados.length,
-        totalItens: itemCodigos.length
-      });
-
+      // Por enquanto retornamos o mesmo valor para ambos os campos
+      // até implementarmos a lógica específica para valorFaturarComEstoque
       return {
-        valorTotalSaldo,
-        valorFaturarComEstoque
+        valorTotalSaldo: valor,
+        valorFaturarComEstoque: valor
       };
     },
     staleTime: 5 * 60 * 1000,
