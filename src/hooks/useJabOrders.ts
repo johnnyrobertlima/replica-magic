@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { DateRange as DayPickerDateRange } from "react-day-picker";
@@ -53,30 +52,26 @@ export function useJabOrders({ dateRange, page = 1, pageSize = 15 }: UseJabOrder
       });
 
       // Primeiro, buscamos todos os números de pedido únicos para o período
-      const { data: todosPedidos, error: errorPedidos } = await supabase
-        .rpc<PedidoUnicoResult, {
-          data_inicial: string;
-          data_final: string;
-          offset_val: number;
-          limit_val: number;
-        }>('get_pedidos_unicos', {
-          data_inicial: dataInicial,
-          data_final: `${dataFinal} 23:59:59.999`,
-          offset_val: (page - 1) * pageSize,
-          limit_val: pageSize
-        });
+      const { data: todosPedidos, error: errorPedidos } = await supabase.rpc('get_pedidos_unicos', {
+        data_inicial: dataInicial,
+        data_final: `${dataFinal} 23:59:59.999`,
+        offset_val: (page - 1) * pageSize,
+        limit_val: pageSize
+      });
 
       if (errorPedidos) {
         console.error('Erro ao buscar pedidos:', errorPedidos);
         throw errorPedidos;
       }
 
-      if (!todosPedidos?.length) {
+      const pedidosArray = todosPedidos as PedidoUnicoResult[];
+      
+      if (!pedidosArray?.length) {
         return { orders: [], totalCount: 0 };
       }
 
-      const numeroPedidos = todosPedidos.map(p => p.ped_numpedido);
-      const totalCount = todosPedidos[0].total_count;
+      const numeroPedidos = pedidosArray.map(p => p.ped_numpedido);
+      const totalCount = pedidosArray[0].total_count;
       
       console.log('Pedidos selecionados para esta página:', numeroPedidos.length);
 
