@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { DateRange as DayPickerDateRange } from "react-day-picker";
@@ -206,29 +207,38 @@ export function useJabOrders({ dateRange, page = 1, pageSize = 15 }: UseJabOrder
 }
 
 type ValorTotalJabResult = Database['public']['Functions']['calcular_valor_total_jab']['Returns'][0];
+type ValorFaturarEstoqueResult = Database['public']['Functions']['calcular_valor_faturar_com_estoque']['Returns'][0];
 
 export function useTotals() {
   return useQuery({
     queryKey: ['jab-totals'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .rpc('calcular_valor_total_jab');
+      const [valorTotalResponse, valorFaturarResponse] = await Promise.all([
+        supabase.rpc('calcular_valor_total_jab'),
+        supabase.rpc('calcular_valor_faturar_com_estoque')
+      ]);
 
-      if (error) {
-        console.error('Erro ao calcular totais:', error);
-        throw error;
+      if (valorTotalResponse.error) {
+        console.error('Erro ao calcular valor total:', valorTotalResponse.error);
+        throw valorTotalResponse.error;
       }
 
-      // Extraímos o valor do resultado
-      const valor = (data?.[0]?.valor_total_saldo || 0) as number;
+      if (valorFaturarResponse.error) {
+        console.error('Erro ao calcular valor para faturar:', valorFaturarResponse.error);
+        throw valorFaturarResponse.error;
+      }
 
-      console.log('Valor total calculado:', valor);
+      const valorTotalSaldo = valorTotalResponse.data?.[0]?.valor_total_saldo || 0;
+      const valorFaturarComEstoque = valorFaturarResponse.data?.[0]?.valor_total_faturavel || 0;
 
-      // Por enquanto retornamos o mesmo valor para ambos os campos
-      // até implementarmos a lógica específica para valorFaturarComEstoque
+      console.log('Valores calculados:', {
+        valorTotalSaldo,
+        valorFaturarComEstoque
+      });
+
       return {
-        valorTotalSaldo: valor,
-        valorFaturarComEstoque: valor
+        valorTotalSaldo,
+        valorFaturarComEstoque
       };
     },
     staleTime: 5 * 60 * 1000,
