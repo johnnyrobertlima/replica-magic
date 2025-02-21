@@ -60,51 +60,48 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
         throw errorTodosPedidos;
       }
 
-      console.log('Dados brutos dos pedidos:', todosPedidos?.map(p => ({
-        PED_NUMPEDIDO: p.PED_NUMPEDIDO,
-        DATA_PEDIDO: p.DATA_PEDIDO,
-        STATUS: p.STATUS
-      })));
-
       const numeroPedidosDistintos = [...new Set(todosPedidos?.map(p => p.PED_NUMPEDIDO))];
       
       console.log('Total de pedidos distintos encontrados:', numeroPedidosDistintos.length);
       console.log('Lista de pedidos distintos:', numeroPedidosDistintos);
 
-      // Agora buscamos todos os dados desses pedidos
-      const { data: pedidosData, error: errorPedidos } = await supabase
-        .from('BLUEBAY_PEDIDO')
-        .select()
-        .eq('CENTROCUSTO', 'JAB')
-        .in('STATUS', ['1', '2'])
-        .in('PED_NUMPEDIDO', numeroPedidosDistintos)
-        .order('DATA_PEDIDO', { ascending: false });
+      // Vamos buscar os pedidos em lotes de 20 para evitar limitações
+      const BATCH_SIZE = 20;
+      let allPedidosData: any[] = [];
 
-      if (errorPedidos) {
-        console.error('Erro ao buscar detalhes dos pedidos:', errorPedidos);
-        throw errorPedidos;
+      for (let i = 0; i < numeroPedidosDistintos.length; i += BATCH_SIZE) {
+        const batch = numeroPedidosDistintos.slice(i, i + BATCH_SIZE);
+        const { data: batchData, error: errorPedidos } = await supabase
+          .from('BLUEBAY_PEDIDO')
+          .select()
+          .eq('CENTROCUSTO', 'JAB')
+          .in('STATUS', ['1', '2'])
+          .in('PED_NUMPEDIDO', batch);
+
+        if (errorPedidos) {
+          console.error('Erro ao buscar lote de pedidos:', errorPedidos);
+          throw errorPedidos;
+        }
+
+        if (batchData) {
+          allPedidosData = [...allPedidosData, ...batchData];
+        }
       }
-      
-      if (!pedidosData || pedidosData.length === 0) {
+
+      if (allPedidosData.length === 0) {
         console.log('Nenhum pedido encontrado para o período');
         return [];
       }
 
-      console.log('Pedidos encontrados:', pedidosData.map(p => ({
-        PED_NUMPEDIDO: p.PED_NUMPEDIDO,
-        DATA_PEDIDO: p.DATA_PEDIDO,
-        STATUS: p.STATUS
-      })));
-
       // Buscamos os apelidos das pessoas
-      const pessoasIds = [...new Set(pedidosData.map(p => p.PES_CODIGO).filter(Boolean))];
+      const pessoasIds = [...new Set(allPedidosData.map(p => p.PES_CODIGO).filter(Boolean))];
       const { data: pessoas } = await supabase
         .from('BLUEBAY_PESSOA')
         .select('PES_CODIGO, APELIDO')
         .in('PES_CODIGO', pessoasIds);
 
       // Buscamos as descrições dos itens
-      const itemCodigos = [...new Set(pedidosData.map(p => p.ITEM_CODIGO).filter(Boolean))];
+      const itemCodigos = [...new Set(allPedidosData.map(p => p.ITEM_CODIGO).filter(Boolean))];
       const { data: itens } = await supabase
         .from('BLUEBAY_ITEM')
         .select('ITEM_CODIGO, DESCRICAO')
@@ -127,11 +124,11 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
         estoque?.map(e => [e.ITEM_CODIGO, e.FISICO]) || []
       );
 
-      // Agora agrupamos apenas por número do pedido
+      // Agora agrupamos por número do pedido
       const ordersMap = new Map<string, JabOrder>();
 
-      for (const pedido of pedidosData) {
-        const key = `${pedido.PED_NUMPEDIDO}`;
+      for (const pedido of allPedidosData) {
+        const key = pedido.PED_NUMPEDIDO;
         const saldo = pedido.QTDE_SALDO || 0;
         const valorUnitario = pedido.VALOR_UNITARIO || 0;
 
@@ -175,9 +172,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
       const ordersArray = Array.from(ordersMap.values());
 
       console.log('Número de pedidos agrupados:', ordersArray.length);
-      if (ordersArray.length > 0) {
-        console.log('Exemplo de pedido agrupado:', ordersArray[0]);
-      }
+      console.log('Lista final de pedidos:', ordersArray.map(o => o.PED_NUMPEDIDO));
 
       return ordersArray;
     },
