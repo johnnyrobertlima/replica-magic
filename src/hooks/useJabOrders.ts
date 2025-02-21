@@ -34,10 +34,7 @@ interface UseJabOrdersOptions {
   pageSize?: number;
 }
 
-interface PedidoUnico {
-  ped_numpedido: string;
-  total_count: number;
-}
+type PedidoUnicoResult = Database['public']['Functions']['get_pedidos_unicos']['Returns'][0];
 
 export function useJabOrders({ dateRange, page = 1, pageSize = 15 }: UseJabOrdersOptions = {}) {
   return useQuery({
@@ -57,7 +54,12 @@ export function useJabOrders({ dateRange, page = 1, pageSize = 15 }: UseJabOrder
 
       // Primeiro, buscamos todos os números de pedido únicos para o período
       const { data: todosPedidos, error: errorPedidos } = await supabase
-        .rpc<PedidoUnico>('get_pedidos_unicos', {
+        .rpc<PedidoUnicoResult, {
+          data_inicial: string;
+          data_final: string;
+          offset_val: number;
+          limit_val: number;
+        }>('get_pedidos_unicos', {
           data_inicial: dataInicial,
           data_final: `${dataFinal} 23:59:59.999`,
           offset_val: (page - 1) * pageSize,
@@ -70,8 +72,7 @@ export function useJabOrders({ dateRange, page = 1, pageSize = 15 }: UseJabOrder
       }
 
       if (!todosPedidos?.length) {
-        // Usamos o total_count do primeiro registro ou 0 se não houver registros
-        return { orders: [], totalCount: todosPedidos?.[0]?.total_count || 0 };
+        return { orders: [], totalCount: 0 };
       }
 
       const numeroPedidos = todosPedidos.map(p => p.ped_numpedido);
