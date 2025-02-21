@@ -4,27 +4,13 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useJabOrders, useTotals } from "@/hooks/useJabOrders";
 import type { DateRange } from "react-day-picker";
-import { Card, CardContent } from "@/components/ui/card";
 import OrderCard from "@/components/jab-orders/OrderCard";
-import SearchFilters, { type SearchType } from "@/components/jab-orders/SearchFilters";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+import { TotalCards } from "@/components/jab-orders/TotalCards";
+import { OrdersHeader } from "@/components/jab-orders/OrdersHeader";
+import { OrdersPagination } from "@/components/jab-orders/OrdersPagination";
+import type { SearchType } from "@/components/jab-orders/SearchFilters";
 
 const ITEMS_PER_PAGE = 15;
-
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL'
-  }).format(value);
-};
 
 const JabOrders = () => {
   const [date, setDate] = useState<DateRange | undefined>({
@@ -100,49 +86,6 @@ const JabOrders = () => {
 
   const totalPages = Math.ceil(ordersData.totalCount / ITEMS_PER_PAGE);
 
-  const renderPaginationLinks = () => {
-    const pages = [];
-    const maxVisiblePages = 5;
-    
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-
-    if (endPage - startPage + 1 < maxVisiblePages) {
-      startPage = Math.max(1, endPage - maxVisiblePages + 1);
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(
-        <PaginationItem key={i}>
-          <PaginationLink
-            onClick={() => setCurrentPage(i)}
-            isActive={currentPage === i}
-          >
-            {i}
-          </PaginationLink>
-        </PaginationItem>
-      );
-    }
-
-    if (startPage > 1) {
-      pages.unshift(
-        <PaginationItem key="start-ellipsis">
-          <PaginationEllipsis />
-        </PaginationItem>
-      );
-    }
-
-    if (endPage < totalPages) {
-      pages.push(
-        <PaginationItem key="end-ellipsis">
-          <PaginationEllipsis />
-        </PaginationItem>
-      );
-    }
-
-    return pages;
-  };
-
   if (isLoadingOrders || isLoadingTotals) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -159,46 +102,23 @@ const JabOrders = () => {
       </Link>
 
       <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <Card className="bg-white shadow-lg">
-            <CardContent className="pt-6 p-8">
-              <div className="text-xl font-semibold text-gray-700 mb-2">Valor Total Saldo</div>
-              <div className="text-3xl lg:text-4xl font-bold text-primary">
-                {formatCurrency(totals.valorTotalSaldo)}
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-white shadow-lg">
-            <CardContent className="pt-6 p-8">
-              <div className="text-xl font-semibold text-gray-700 mb-2">Faturar com Estoque</div>
-              <div className="text-3xl lg:text-4xl font-bold text-primary">
-                {formatCurrency(totals.valorFaturarComEstoque)}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <TotalCards
+          valorTotalSaldo={totals.valorTotalSaldo}
+          valorFaturarComEstoque={totals.valorFaturarComEstoque}
+        />
 
-        <div className="flex justify-between items-center mb-8">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold">Separação de Pedidos JAB</h1>
-            <p className="text-muted-foreground">
-              {ordersData.totalCount > 0 ? (
-                `Exibindo página ${currentPage} de ${totalPages} (Total: ${ordersData.totalCount} pedidos)`
-              ) : (
-                "Nenhum pedido encontrado"
-              )}
-            </p>
-          </div>
-          <SearchFilters
-            searchQuery={searchQuery}
-            onSearchQueryChange={setSearchQuery}
-            onSearch={handleSearch}
-            date={date}
-            onDateChange={setDate}
-            searchType={searchType}
-            onSearchTypeChange={setSearchType}
-          />
-        </div>
+        <OrdersHeader
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalCount={ordersData.totalCount}
+          searchQuery={searchQuery}
+          onSearchQueryChange={setSearchQuery}
+          onSearch={handleSearch}
+          date={date}
+          onDateChange={setDate}
+          searchType={searchType}
+          onSearchTypeChange={setSearchType}
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {filteredOrders.map((order) => {
@@ -219,29 +139,11 @@ const JabOrders = () => {
           })}
         </div>
 
-        {totalPages > 1 && (
-          <div className="mt-8">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                  />
-                </PaginationItem>
-                
-                {renderPaginationLinks()}
-                
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
-        )}
+        <OrdersPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </div>
     </main>
   );
