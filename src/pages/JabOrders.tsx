@@ -6,6 +6,17 @@ import { useJabOrders, type JabOrder } from "@/hooks/useJabOrders";
 import type { DateRange } from "react-day-picker";
 import OrderCard from "@/components/jab-orders/OrderCard";
 import SearchFilters from "@/components/jab-orders/SearchFilters";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+
+const ITEMS_PER_PAGE = 12;
 
 const JabOrders = () => {
   const [date, setDate] = useState<DateRange | undefined>({
@@ -13,6 +24,7 @@ const JabOrders = () => {
     to: new Date(),
   });
   const [searchDate, setSearchDate] = useState<DateRange | undefined>(date);
+  const [currentPage, setCurrentPage] = useState(1);
   
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -34,6 +46,7 @@ const JabOrders = () => {
   const handleSearch = () => {
     setIsSearching(true);
     setSearchDate(date);
+    setCurrentPage(1); // Reset para primeira página ao pesquisar
   };
 
   const removeLeadingZeros = (str: string) => {
@@ -57,6 +70,54 @@ const JabOrders = () => {
     
     return true;
   });
+
+  // Paginação
+  const totalPages = Math.ceil(filteredOrders.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedOrders = filteredOrders.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+  const renderPaginationLinks = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(
+        <PaginationItem key={i}>
+          <PaginationLink
+            onClick={() => setCurrentPage(i)}
+            isActive={currentPage === i}
+          >
+            {i}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+
+    if (startPage > 1) {
+      pages.unshift(
+        <PaginationItem key="start-ellipsis">
+          <PaginationEllipsis />
+        </PaginationItem>
+      );
+    }
+
+    if (endPage < totalPages) {
+      pages.push(
+        <PaginationItem key="end-ellipsis">
+          <PaginationEllipsis />
+        </PaginationItem>
+      );
+    }
+
+    return pages;
+  };
 
   if (isLoading) {
     return (
@@ -85,7 +146,7 @@ const JabOrders = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {filteredOrders.map((order: JabOrder) => {
+        {paginatedOrders.map((order: JabOrder) => {
           const orderId = `${order.MATRIZ}-${order.FILIAL}-${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`;
           const isExpanded = expandedOrder === orderId;
           const showZeroBalance = showZeroBalanceMap[orderId] || false;
@@ -102,6 +163,30 @@ const JabOrders = () => {
           );
         })}
       </div>
+
+      {totalPages > 1 && (
+        <div className="mt-8">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+              
+              {renderPaginationLinks()}
+              
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
     </main>
   );
 };
