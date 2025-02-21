@@ -51,7 +51,6 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
         .from('BLUEBAY_PEDIDO')
         .select('PED_NUMPEDIDO, DATA_PEDIDO, STATUS')
         .eq('CENTROCUSTO', 'JAB')
-        .in('STATUS', ['1', '2'])
         .gte('DATA_PEDIDO', dataInicial)
         .lte('DATA_PEDIDO', dataFinal);
 
@@ -60,13 +59,22 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
         throw errorTodosPedidos;
       }
 
-      console.log('Dados brutos dos pedidos:', todosPedidos?.map(p => ({
+      console.log('Dados brutos de TODOS os pedidos antes do filtro de status:', todosPedidos?.map(p => ({
         PED_NUMPEDIDO: p.PED_NUMPEDIDO,
         DATA_PEDIDO: p.DATA_PEDIDO,
         STATUS: p.STATUS
       })));
 
-      const numeroPedidosDistintos = [...new Set(todosPedidos?.map(p => p.PED_NUMPEDIDO))];
+      // Filtramos os pedidos por status após a busca para ver quais estão sendo excluídos
+      const pedidosComStatusValido = todosPedidos?.filter(p => ['1', '2'].includes(p.STATUS)) || [];
+
+      console.log('Pedidos filtrados por status (1 e 2):', pedidosComStatusValido.map(p => ({
+        PED_NUMPEDIDO: p.PED_NUMPEDIDO,
+        DATA_PEDIDO: p.DATA_PEDIDO,
+        STATUS: p.STATUS
+      })));
+
+      const numeroPedidosDistintos = [...new Set(pedidosComStatusValido.map(p => p.PED_NUMPEDIDO))];
       
       console.log('Total de pedidos distintos encontrados:', numeroPedidosDistintos.length);
       console.log('Lista de pedidos distintos:', numeroPedidosDistintos);
@@ -76,7 +84,6 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
         .from('BLUEBAY_PEDIDO')
         .select()
         .eq('CENTROCUSTO', 'JAB')
-        .in('STATUS', ['1', '2'])
         .in('PED_NUMPEDIDO', numeroPedidosDistintos)
         .order('DATA_PEDIDO', { ascending: false });
 
@@ -90,7 +97,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
         return [];
       }
 
-      console.log('Pedidos encontrados:', pedidosData.map(p => ({
+      console.log('Pedidos encontrados com todos os detalhes:', pedidosData.map(p => ({
         PED_NUMPEDIDO: p.PED_NUMPEDIDO,
         DATA_PEDIDO: p.DATA_PEDIDO,
         STATUS: p.STATUS
@@ -175,10 +182,8 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
 
       const ordersArray = Array.from(ordersMap.values());
 
-      console.log('Número de pedidos agrupados:', ordersArray.length);
-      if (ordersArray.length > 0) {
-        console.log('Exemplo de pedido agrupado:', ordersArray[0]);
-      }
+      console.log('Número final de pedidos agrupados:', ordersArray.length);
+      console.log('Lista final de números de pedidos:', ordersArray.map(o => o.PED_NUMPEDIDO));
 
       return ordersArray;
     },
