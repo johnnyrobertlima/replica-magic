@@ -10,12 +10,19 @@ interface PedidoAgrupado {
 }
 
 export async function fetchPessoasCodigos(dataInicial: string, dataFinal: string) {
-  // Using a raw query with rpc to handle complex aggregations
+  // Using a raw query to match exactly the SQL query that works
   const { data, error } = await supabase
-    .rpc('get_pedidos_agrupados', {
-      data_inicial: dataInicial,
-      data_final: dataFinal
-    } as any); // Type assertion needed due to Supabase types limitation
+    .from('BLUEBAY_PEDIDO')
+    .select(`
+      PES_CODIGO,
+      quantidade_pedidos:count(PED_NUMPEDIDO),
+      quantidade_itens_com_saldo:sum(QTDE_SALDO),
+      valor_do_saldo:sum(QTDE_SALDO * VALOR_UNITARIO)
+    `)
+    .eq('CENTROCUSTO', 'JAB')
+    .gte('DATA_PEDIDO', dataInicial.split('T')[0])
+    .lte('DATA_PEDIDO', dataFinal.split('T')[0])
+    .groupBy('PES_CODIGO');
 
   if (error) {
     console.error('Erro ao buscar PES_CODIGO:', error);
@@ -45,8 +52,8 @@ export async function fetchPedidos(dataInicial: string, dataFinal: string, pesCo
       PES_CODIGO
     `)
     .eq('CENTROCUSTO', 'JAB')
-    .gte('DATA_PEDIDO', dataInicial)
-    .lte('DATA_PEDIDO', dataFinal)
+    .gte('DATA_PEDIDO', dataInicial.split('T')[0])
+    .lte('DATA_PEDIDO', dataFinal.split('T')[0])
     .in('PES_CODIGO', pesCodigos)
     .order('DATA_PEDIDO', { ascending: false });
 

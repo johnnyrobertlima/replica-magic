@@ -17,7 +17,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
       if (!dateRange?.from || !dateRange?.to) return [];
 
       const dataInicial = startOfDay(dateRange.from).toISOString();
-      const dataFinal = endOfDay(dateRange.to).toISOString();
+      const dataFinal = endOfDay(dateRange.from).toISOString(); // Changed to use from date for both
 
       console.log('Buscando pedidos para o período:', { 
         dataInicial,
