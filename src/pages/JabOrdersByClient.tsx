@@ -204,7 +204,10 @@ const JabOrdersByClient = () => {
             return (
               <Card 
                 key={clientName} 
-                className="overflow-hidden"
+                className={cn(
+                  "overflow-hidden",
+                  isExpanded && "col-span-full"
+                )}
               >
                 <CardContent className="p-6">
                   <div 
@@ -229,48 +232,56 @@ const JabOrdersByClient = () => {
                     )}
                   </div>
 
-                  <div className="mt-4 space-y-4">
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Faturamento</span>
-                        <span>{Math.round(progressFaturamento)}%</span>
+                  <div className={cn(
+                    "mt-4 space-y-4",
+                    isExpanded ? "md:grid md:grid-cols-2 md:gap-6 md:space-y-0" : ""
+                  )}>
+                    <div className={cn(
+                      "space-y-4",
+                      isExpanded && "md:col-span-1"
+                    )}>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>Faturamento</span>
+                          <span>{Math.round(progressFaturamento)}%</span>
+                        </div>
+                        <Progress value={progressFaturamento} className="h-2" />
                       </div>
-                      <Progress value={progressFaturamento} className="h-2" />
-                    </div>
 
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Potencial com Estoque</span>
-                        <span>{Math.round(progressPotencial)}%</span>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>Potencial com Estoque</span>
+                          <span>{Math.round(progressPotencial)}%</span>
+                        </div>
+                        <Progress value={progressPotencial} className="h-2" />
                       </div>
-                      <Progress value={progressPotencial} className="h-2" />
-                    </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Quantidade Saldo:</p>
-                        <p className="font-medium">{data.totalQuantidadeSaldo}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Valor Total Saldo:</p>
-                        <p className="font-medium">{formatCurrency(data.totalValorSaldo)}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Valor Total do Pedido:</p>
-                        <p className="font-medium">{formatCurrency(data.totalValorPedido)}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Valor Faturado:</p>
-                        <p className="font-medium">{formatCurrency(data.totalValorFaturado)}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Faturar com Estoque:</p>
-                        <p className="font-medium text-primary">{formatCurrency(data.totalFaturarComEstoque)}</p>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Quantidade Saldo:</p>
+                          <p className="font-medium">{data.totalQuantidadeSaldo}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Valor Total Saldo:</p>
+                          <p className="font-medium">{formatCurrency(data.totalValorSaldo)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Valor Total do Pedido:</p>
+                          <p className="font-medium">{formatCurrency(data.totalValorPedido)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Valor Faturado:</p>
+                          <p className="font-medium">{formatCurrency(data.totalValorFaturado)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Faturar com Estoque:</p>
+                          <p className="font-medium text-primary">{formatCurrency(data.totalFaturarComEstoque)}</p>
+                        </div>
                       </div>
                     </div>
 
                     {isExpanded && (
-                      <div className="mt-6">
+                      <div className="mt-6 md:mt-0 md:col-span-1">
                         <div className="mb-4">
                           <div className="flex items-center gap-2">
                             <Switch
