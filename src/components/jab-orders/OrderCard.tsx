@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 interface OrderCardProps {
   order: {
@@ -46,6 +47,8 @@ const OrderCard: React.FC<OrderCardProps> = ({
   onToggleExpand,
   onToggleZeroBalance,
 }) => {
+  const [showOnlyWithStock, setShowOnlyWithStock] = useState(false);
+
   const getStatusText = (status: string) => {
     switch (status) {
       case "1":
@@ -55,6 +58,16 @@ const OrderCard: React.FC<OrderCardProps> = ({
       default:
         return "ERRO";
     }
+  };
+
+  const calculateTotalFaturarComEstoque = () => {
+    if (!order.items) return 0;
+    return order.items.reduce((total, item) => {
+      if ((item.FISICO || 0) > 0) {
+        return total + (item.QTDE_SALDO * item.VALOR_UNITARIO);
+      }
+      return total;
+    }, 0);
   };
 
   const orderId = `${order.MATRIZ}-${order.FILIAL}-${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`;
@@ -112,22 +125,46 @@ const OrderCard: React.FC<OrderCardProps> = ({
               })}
             </span>
           </div>
+          <div className="flex justify-between border-t pt-2">
+            <span className="text-sm text-muted-foreground">Faturar com Estoque:</span>
+            <span className="font-medium text-primary">
+              R$ {calculateTotalFaturarComEstoque().toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </span>
+          </div>
           
           {isExpanded && (
             <div className="mt-6 space-y-4">
               <div className="flex justify-between items-center border-b pb-2">
-                <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
-                  <Switch
-                    checked={showZeroBalance}
-                    onCheckedChange={onToggleZeroBalance}
-                    id={`show-zero-balance-${orderId}`}
-                  />
-                  <label 
-                    htmlFor={`show-zero-balance-${orderId}`} 
-                    className="text-sm text-muted-foreground cursor-pointer"
-                  >
-                    Mostrar itens com saldo zero
-                  </label>
+                <div className="flex items-center gap-4" onClick={e => e.stopPropagation()}>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={showZeroBalance}
+                      onCheckedChange={onToggleZeroBalance}
+                      id={`show-zero-balance-${orderId}`}
+                    />
+                    <label 
+                      htmlFor={`show-zero-balance-${orderId}`} 
+                      className="text-sm text-muted-foreground cursor-pointer"
+                    >
+                      Mostrar itens com saldo zero
+                    </label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={showOnlyWithStock}
+                      onCheckedChange={setShowOnlyWithStock}
+                      id={`show-only-with-stock-${orderId}`}
+                    />
+                    <label 
+                      htmlFor={`show-only-with-stock-${orderId}`} 
+                      className="text-sm text-muted-foreground cursor-pointer"
+                    >
+                      Somente com estoque
+                    </label>
+                  </div>
                 </div>
                 <span className="text-sm font-semibold">Filial: {order.FILIAL}</span>
               </div>
@@ -149,7 +186,12 @@ const OrderCard: React.FC<OrderCardProps> = ({
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {order.items?.filter(item => showZeroBalance || item.QTDE_SALDO > 0)
+                      {order.items
+                        ?.filter(item => {
+                          if (!showZeroBalance && item.QTDE_SALDO <= 0) return false;
+                          if (showOnlyWithStock && (item.FISICO || 0) <= 0) return false;
+                          return true;
+                        })
                         .map((item, index) => (
                         <TableRow key={`${item.ITEM_CODIGO}-${index}`}>
                           <TableCell className="font-medium">{item.ITEM_CODIGO}</TableCell>
