@@ -12,11 +12,20 @@ interface PedidoAgrupado {
 export async function fetchPessoasCodigos(dataInicial: string, dataFinal: string) {
   console.log('Buscando pessoas no período:', {dataInicial, dataFinal});
   
+  // Query direta no banco, similar à query manual fornecida
   const { data, error } = await supabase
-    .rpc('get_pedidos_agrupados', {
-      data_inicial: dataInicial.split('T')[0],
-      data_final: dataFinal.split('T')[0]
-    });
+    .from('BLUEBAY_PEDIDO')
+    .select(`
+      PES_CODIGO,
+      count(distinct PED_NUMPEDIDO)::bigint as quantidade_pedidos,
+      sum(QTDE_SALDO)::numeric as quantidade_itens_com_saldo,
+      sum(QTDE_SALDO * VALOR_UNITARIO)::numeric as valor_do_saldo
+    `)
+    .eq('CENTROCUSTO', 'JAB')
+    .gte('DATA_PEDIDO', dataInicial)
+    .lte('DATA_PEDIDO', dataFinal)
+    .not('PES_CODIGO', 'is', null)
+    .groupBy('PES_CODIGO');
 
   if (error) {
     console.error('Erro ao buscar PES_CODIGO:', error);
@@ -31,7 +40,8 @@ export async function fetchPedidos(dataInicial: string, dataFinal: string, pesCo
   console.log('Buscando pedidos com params:', {
     dataInicial,
     dataFinal,
-    totalPesCodigos: pesCodigos.length
+    totalPesCodigos: pesCodigos.length,
+    pesCodigos
   });
 
   const { data, error } = await supabase
@@ -52,10 +62,9 @@ export async function fetchPedidos(dataInicial: string, dataFinal: string, pesCo
       PES_CODIGO
     `)
     .eq('CENTROCUSTO', 'JAB')
-    .gte('DATA_PEDIDO', dataInicial.split('T')[0])
-    .lte('DATA_PEDIDO', dataFinal.split('T')[0])
-    .in('PES_CODIGO', pesCodigos)
-    .order('DATA_PEDIDO', { ascending: false });
+    .gte('DATA_PEDIDO', dataInicial)
+    .lte('DATA_PEDIDO', dataFinal)
+    .in('PES_CODIGO', pesCodigos);
 
   if (error) {
     console.error('Erro ao buscar pedidos:', error);
