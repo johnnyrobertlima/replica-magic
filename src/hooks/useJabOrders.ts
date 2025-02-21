@@ -214,8 +214,7 @@ export function useTotals() {
         .from('BLUEBAY_PEDIDO')
         .select('PED_NUMPEDIDO')
         .eq('CENTROCUSTO', 'JAB')
-        .in('STATUS', ['1', '2'])
-        .order('PED_NUMPEDIDO');
+        .in('STATUS', ['1', '2']);
 
       if (errorPedidos) throw errorPedidos;
 
@@ -223,8 +222,10 @@ export function useTotals() {
 
       const numeroPedidos = [...new Set(pedidosUnicos.map(p => p.PED_NUMPEDIDO))];
 
-      // Agora buscamos os detalhes de todos os pedidos
-      const { data: pedidos, error } = await supabase
+      console.log('Número de pedidos únicos encontrados:', numeroPedidos.length);
+
+      // Agora buscamos os detalhes dos pedidos
+      const { data: pedidosDetalhados, error } = await supabase
         .from('BLUEBAY_PEDIDO')
         .select(`
           QTDE_SALDO,
@@ -238,11 +239,13 @@ export function useTotals() {
 
       if (error) throw error;
 
-      console.log('Total de pedidos para cálculo:', pedidos?.length);
+      console.log('Total de pedidos detalhados encontrados:', pedidosDetalhados?.length);
 
-      if (!pedidos?.length) return { valorTotalSaldo: 0, valorFaturarComEstoque: 0 };
+      if (!pedidosDetalhados?.length) return { valorTotalSaldo: 0, valorFaturarComEstoque: 0 };
 
-      const itemCodigos = [...new Set(pedidos.map(p => p.ITEM_CODIGO).filter(Boolean))];
+      const itemCodigos = [...new Set(pedidosDetalhados.map(p => p.ITEM_CODIGO).filter(Boolean))];
+      
+      console.log('Total de itens únicos:', itemCodigos.length);
       
       // Buscamos o estoque para todos os itens
       const { data: estoque } = await supabase
@@ -255,36 +258,27 @@ export function useTotals() {
       let valorTotalSaldo = 0;
       let valorFaturarComEstoque = 0;
 
-      // Agrupamos por pedido para evitar duplicatas
-      const pedidosAgrupados = new Map<string, any[]>();
-      pedidos.forEach(pedido => {
-        if (!pedidosAgrupados.has(pedido.PED_NUMPEDIDO)) {
-          pedidosAgrupados.set(pedido.PED_NUMPEDIDO, []);
-        }
-        pedidosAgrupados.get(pedido.PED_NUMPEDIDO)!.push(pedido);
-      });
-
       // Calculamos os totais
-      pedidosAgrupados.forEach(itensPedido => {
-        itensPedido.forEach(pedido => {
-          if (!pedido.ITEM_CODIGO) return;
-          
-          const saldo = pedido.QTDE_SALDO || 0;
-          const valorUnitario = pedido.VALOR_UNITARIO || 0;
-          const valorSaldo = saldo * valorUnitario;
-          
-          valorTotalSaldo += valorSaldo;
+      pedidosDetalhados.forEach(pedido => {
+        if (!pedido.ITEM_CODIGO) return;
+        
+        const saldo = pedido.QTDE_SALDO || 0;
+        const valorUnitario = pedido.VALOR_UNITARIO || 0;
+        const valorSaldo = saldo * valorUnitario;
+        
+        valorTotalSaldo += valorSaldo;
 
-          const estoqueFisico = estoqueMap.get(pedido.ITEM_CODIGO) || 0;
-          if (estoqueFisico > 0) {
-            valorFaturarComEstoque += valorSaldo;
-          }
-        });
+        const estoqueFisico = estoqueMap.get(pedido.ITEM_CODIGO) || 0;
+        if (estoqueFisico > 0) {
+          valorFaturarComEstoque += valorSaldo;
+        }
       });
 
       console.log('Valores calculados:', {
         valorTotalSaldo,
-        valorFaturarComEstoque
+        valorFaturarComEstoque,
+        totalPedidos: pedidosDetalhados.length,
+        totalItens: itemCodigos.length
       });
 
       return {
