@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Loader2, ChevronDown, ChevronUp } from "lucide-react";
@@ -153,20 +152,29 @@ const JabOrdersByClient = () => {
   }, [groupedOrders, isSearching, searchQuery, searchType]);
 
   const handleItemSelect = (itemId: string) => {
+    console.log('Item selecionado:', itemId);
     setSelectedItems(prev => {
       const newSet = new Set(prev);
       if (newSet.has(itemId)) {
         newSet.delete(itemId);
+        console.log('Item removido. Itens selecionados:', Array.from(newSet));
       } else {
         newSet.add(itemId);
+        console.log('Item adicionado. Itens selecionados:', Array.from(newSet));
       }
       return newSet;
     });
   };
 
   const handleEnviarParaSeparacao = async (clientName: string, clienteCode: number | null, items: any[]) => {
+    console.log('Iniciando envio para separação...');
+    console.log('Cliente:', clientName);
+    console.log('Código do cliente:', clienteCode);
+    console.log('Itens selecionados:', Array.from(selectedItems));
+    
     try {
       if (!clienteCode) {
+        console.error('Erro: Código do cliente não encontrado');
         toast.error('Código do cliente não encontrado');
         return;
       }
@@ -182,17 +190,22 @@ const JabOrdersByClient = () => {
         valor_total: item.QTDE_SALDO * item.VALOR_UNITARIO
       }));
 
+      console.log('Itens processados para envio:', selectedItemsArray);
+
       if (selectedItemsArray.length === 0) {
+        console.error('Erro: Nenhum item selecionado');
         toast.error('Selecione pelo menos um item para enviar para separação');
         return;
       }
 
+      console.log('Enviando para API...');
       await createSeparacao.mutateAsync({
         cliente_nome: clientName,
         cliente_codigo: clienteCode,
         itens: selectedItemsArray
       });
 
+      console.log('Separação criada com sucesso');
       setSelectedItems(new Set());
       setExpandedClients(prev => {
         const newSet = new Set(prev);
@@ -201,6 +214,7 @@ const JabOrdersByClient = () => {
       });
       toast.success('Itens enviados para separação com sucesso!');
     } catch (error) {
+      console.error('Erro ao criar separação:', error);
       toast.error('Erro ao enviar itens para separação');
     }
   };
@@ -389,45 +403,52 @@ const JabOrdersByClient = () => {
                                   return true;
                                 })
                                 .map((item, index) => (
-                                <tr key={`${item.pedido}-${item.ITEM_CODIGO}-${index}`} className="border-t">
-                                  <td className="p-2">
-                                    <Checkbox
-                                      checked={selectedItems.has(`${item.pedido}-${item.ITEM_CODIGO}`)}
-                                      onCheckedChange={() => handleItemSelect(`${item.pedido}-${item.ITEM_CODIGO}`)}
-                                    />
-                                  </td>
-                                  <td className="p-2">{item.pedido}</td>
-                                  <td className="p-2">{item.ITEM_CODIGO}</td>
-                                  <td className="p-2">{item.DESCRICAO || '-'}</td>
-                                  <td className="p-2 text-right">{item.QTDE_PEDIDA}</td>
-                                  <td className="p-2 text-right">{item.QTDE_ENTREGUE}</td>
-                                  <td className="p-2 text-right">{item.QTDE_SALDO}</td>
-                                  <td className="p-2 text-right">{item.FISICO || '-'}</td>
-                                  <td className="p-2 text-right">
-                                    {item.VALOR_UNITARIO.toLocaleString('pt-BR', {
-                                      style: 'currency',
-                                      currency: 'BRL'
-                                    })}
-                                  </td>
-                                  <td className="p-2 text-right">
-                                    {(item.QTDE_SALDO * item.VALOR_UNITARIO).toLocaleString('pt-BR', {
-                                      style: 'currency',
-                                      currency: 'BRL'
-                                    })}
-                                  </td>
-                                </tr>
-                              ))}
+                                  <tr key={`${item.pedido}-${item.ITEM_CODIGO}-${index}`} className="border-t">
+                                    <td className="p-2">
+                                      <Checkbox
+                                        id={`checkbox-${item.pedido}-${item.ITEM_CODIGO}`}
+                                        checked={selectedItems.has(`${item.pedido}-${item.ITEM_CODIGO}`)}
+                                        onCheckedChange={() => {
+                                          console.log('Checkbox clicado:', `${item.pedido}-${item.ITEM_CODIGO}`);
+                                          handleItemSelect(`${item.pedido}-${item.ITEM_CODIGO}`);
+                                        }}
+                                      />
+                                    </td>
+                                    <td className="p-2">{item.pedido}</td>
+                                    <td className="p-2">{item.ITEM_CODIGO}</td>
+                                    <td className="p-2">{item.DESCRICAO || '-'}</td>
+                                    <td className="p-2 text-right">{item.QTDE_PEDIDA}</td>
+                                    <td className="p-2 text-right">{item.QTDE_ENTREGUE}</td>
+                                    <td className="p-2 text-right">{item.QTDE_SALDO}</td>
+                                    <td className="p-2 text-right">{item.FISICO || '-'}</td>
+                                    <td className="p-2 text-right">
+                                      {item.VALOR_UNITARIO.toLocaleString('pt-BR', {
+                                        style: 'currency',
+                                        currency: 'BRL'
+                                      })}
+                                    </td>
+                                    <td className="p-2 text-right">
+                                      {(item.QTDE_SALDO * item.VALOR_UNITARIO).toLocaleString('pt-BR', {
+                                        style: 'currency',
+                                        currency: 'BRL'
+                                      })}
+                                    </td>
+                                  </tr>
+                                ))}
                             </tbody>
                           </table>
                         </div>
 
                         <div className="mt-4 flex justify-end">
                           <Button 
-                            onClick={() => handleEnviarParaSeparacao(
-                              clientName, 
-                              data.pedidos[0]?.PES_CODIGO || null,
-                              data.allItems
-                            )}
+                            onClick={() => {
+                              console.log('Botão Enviar para Separação clicado');
+                              handleEnviarParaSeparacao(
+                                clientName, 
+                                data.pedidos[0]?.PES_CODIGO || null,
+                                data.allItems
+                              );
+                            }}
                             disabled={selectedItems.size === 0}
                           >
                             Enviar para Separação
