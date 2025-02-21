@@ -190,7 +190,7 @@ const JabOrdersByClient = () => {
           onSearchTypeChange={setSearchType}
         />
 
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {Object.entries(filteredGroups).map(([clientName, data]) => {
             const isExpanded = expandedClients.has(clientName);
             const progressFaturamento = data.totalValorPedido > 0 
@@ -199,6 +199,7 @@ const JabOrdersByClient = () => {
             const progressPotencial = data.totalValorSaldo > 0 
               ? (data.totalFaturarComEstoque / data.totalValorSaldo) * 100 
               : 0;
+            const pedidosCount = new Set(data.allItems.map(item => item.pedido)).size;
 
             return (
               <Card 
@@ -217,6 +218,9 @@ const JabOrdersByClient = () => {
                           Representante: {data.representante}
                         </p>
                       )}
+                      <p className="text-sm text-muted-foreground">
+                        Total de Pedidos: {pedidosCount}
+                      </p>
                     </div>
                     {isExpanded ? (
                       <ChevronUp className="h-6 w-6 text-muted-foreground" />
@@ -283,7 +287,7 @@ const JabOrdersByClient = () => {
                           </div>
                         </div>
 
-                        <div className="rounded-lg border">
+                        <div className="rounded-lg border overflow-x-auto">
                           <table className="w-full">
                             <thead className="bg-muted">
                               <tr>
