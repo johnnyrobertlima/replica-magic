@@ -6,7 +6,7 @@ import ClientOrdersGrid from "@/components/jab-orders-by-client/ClientOrdersGrid
 import ClientOrdersPagination from "@/components/jab-orders-by-client/ClientOrdersPagination";
 import { useClientOrders } from "@/hooks/useClientOrders";
 
-const ITEMS_PER_PAGE = 12; // 3x4 grid
+const ITEMS_PER_PAGE = 30; // Increased from 12 to 30 to show more cards
 
 const JabOrdersByClient = () => {
   const {
