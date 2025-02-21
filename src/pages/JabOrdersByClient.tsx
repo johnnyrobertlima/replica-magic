@@ -61,23 +61,19 @@ const JabOrdersByClient = () => {
 
     const clientOrder = acc[pesCodigoKey];
     
-    // Acumular valores
-    const saldo = order.QTDE_SALDO || 0;
-    const valorUnitario = order.VALOR_UNITARIO || 0;
-    
     clientOrder.pedidos.push(order);
-    clientOrder.total_saldo += saldo;
-    clientOrder.valor_total += (saldo * valorUnitario);
+    clientOrder.total_saldo += order.QTDE_SALDO || 0;
+    clientOrder.valor_total += order.valor_total || 0;
 
     // Adicionar item apenas se houver ITEM_CODIGO
     if (order.ITEM_CODIGO) {
       clientOrder.items.push({
         ITEM_CODIGO: order.ITEM_CODIGO,
         DESCRICAO: order.DESCRICAO || null,
-        QTDE_SALDO: saldo,
+        QTDE_SALDO: order.QTDE_SALDO || 0,
         QTDE_PEDIDA: order.QTDE_PEDIDA || 0,
         QTDE_ENTREGUE: order.QTDE_ENTREGUE || 0,
-        VALOR_UNITARIO: valorUnitario,
+        VALOR_UNITARIO: order.VALOR_UNITARIO || 0,
         PED_NUMPEDIDO: order.PED_NUMPEDIDO
       });
     }
@@ -88,8 +84,9 @@ const JabOrdersByClient = () => {
   console.log("Total de clientes agrupados:", Object.keys(clientOrders).length); // Debug log
 
   const filteredClients = Object.values(clientOrders).filter(client => {
+    if (!isSearching) return true;
+    
     if (searchQuery) {
-      // Busca por PES_CODIGO ou por itens do pedido
       return (
         client.PES_CODIGO.toString().includes(searchQuery) ||
         client.items.some(item => 
