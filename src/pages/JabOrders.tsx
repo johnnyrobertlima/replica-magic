@@ -135,7 +135,20 @@ const JabOrders = () => {
       </Link>
 
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Separação de Pedidos JAB</h1>
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold">Separação de Pedidos JAB</h1>
+          <p className="text-muted-foreground">
+            {filteredOrders.length > 0 ? (
+              totalPages > 1 ? (
+                `Exibindo ${startIndex + 1}-${Math.min(startIndex + ITEMS_PER_PAGE, filteredOrders.length)} de ${filteredOrders.length} pedidos`
+              ) : (
+                `Total de ${filteredOrders.length} pedidos`
+              )
+            ) : (
+              "Nenhum pedido encontrado"
+            )}
+          </p>
+        </div>
         <SearchFilters
           searchQuery={searchQuery}
           onSearchQueryChange={setSearchQuery}
