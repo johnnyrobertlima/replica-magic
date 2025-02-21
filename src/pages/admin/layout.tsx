@@ -1,5 +1,6 @@
+
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Outlet } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Menu, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,7 @@ import {
 } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/use-toast";
 
-export const AdminLayout = ({ children }: { children: React.ReactNode }) => {
+export const AdminLayout = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -128,7 +129,9 @@ export const AdminLayout = ({ children }: { children: React.ReactNode }) => {
             ))}
           </nav>
         </aside>
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1 p-6">
+          <Outlet />
+        </main>
       </div>
     </div>
   );
