@@ -107,25 +107,6 @@ const JabOrders = () => {
           valorFaturarComEstoque={totals.valorFaturarComEstoque}
         />
 
-        <div className="flex justify-between items-center mb-8">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold">Separação de Pedidos JAB</h1>
-            <p className="text-muted-foreground">
-              {ordersData.totalCount > 0 ? (
-                `Exibindo página ${currentPage} de ${totalPages} (Total: ${ordersData.totalCount} pedidos)`
-              ) : (
-                "Nenhum pedido encontrado"
-              )}
-            </p>
-          </div>
-          <Link 
-            to="/client-area/bluebay/jab-orders-by-client"
-            className="text-primary hover:underline"
-          >
-            Ver por Cliente
-          </Link>
-        </div>
-
         <OrdersHeader
           currentPage={currentPage}
           totalPages={totalPages}
