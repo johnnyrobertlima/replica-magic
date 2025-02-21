@@ -63,6 +63,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
       const numeroPedidosDistintos = [...new Set(pedidosDistintos?.map(p => p.PED_NUMPEDIDO))];
       
       console.log('Total de pedidos distintos encontrados:', numeroPedidosDistintos.length);
+      console.log('Lista de pedidos distintos:', numeroPedidosDistintos);
 
       // Agora buscamos todos os dados desses pedidos
       const { data: pedidosData, error: errorPedidos } = await supabase
@@ -82,6 +83,12 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
         console.log('Nenhum pedido encontrado para o período');
         return [];
       }
+
+      console.log('Pedidos encontrados:', pedidosData.map(p => ({
+        PED_NUMPEDIDO: p.PED_NUMPEDIDO,
+        DATA_PEDIDO: p.DATA_PEDIDO,
+        STATUS: p.STATUS
+      })));
 
       // Buscamos os apelidos das pessoas
       const pessoasIds = [...new Set(pedidosData.map(p => p.PES_CODIGO).filter(Boolean))];
