@@ -1,11 +1,12 @@
+
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Loader2 } from "lucide-react";
-import { useJabOrders, useTotals, type JabOrder } from "@/hooks/useJabOrders";
+import { useJabOrders, useTotals } from "@/hooks/useJabOrders";
 import type { DateRange } from "react-day-picker";
 import { Card, CardContent } from "@/components/ui/card";
 import OrderCard from "@/components/jab-orders/OrderCard";
-import SearchFilters from "@/components/jab-orders/SearchFilters";
+import SearchFilters, { type SearchType } from "@/components/jab-orders/SearchFilters";
 import {
   Pagination,
   PaginationContent,
@@ -34,6 +35,7 @@ const JabOrders = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchType, setSearchType] = useState<SearchType>("pedido");
   const [isSearching, setIsSearching] = useState(false);
   const [showZeroBalanceMap, setShowZeroBalanceMap] = useState<Record<string, boolean>>({});
 
@@ -66,7 +68,7 @@ const JabOrders = () => {
     return str.replace(/^0+/, '');
   };
 
-  const filteredOrders = ordersData.orders.filter((order: JabOrder) => {
+  const filteredOrders = ordersData.orders.filter((order) => {
     if (!["1", "2"].includes(order.STATUS)) {
       return false;
     }
@@ -74,9 +76,23 @@ const JabOrders = () => {
     if (!isSearching) return true;
     
     if (searchQuery) {
-      const normalizedOrderNumber = removeLeadingZeros(order.PED_NUMPEDIDO);
-      const normalizedSearchQuery = removeLeadingZeros(searchQuery);
-      return normalizedOrderNumber.includes(normalizedSearchQuery);
+      const normalizedSearchQuery = searchQuery.toLowerCase().trim();
+      
+      switch (searchType) {
+        case "pedido":
+          const normalizedOrderNumber = removeLeadingZeros(order.PED_NUMPEDIDO);
+          const normalizedSearchNumber = removeLeadingZeros(searchQuery);
+          return normalizedOrderNumber.includes(normalizedSearchNumber);
+        
+        case "cliente":
+          return order.APELIDO?.toLowerCase().includes(normalizedSearchQuery) || false;
+        
+        case "representante":
+          return order.REPRESENTANTE_NOME?.toLowerCase().includes(normalizedSearchQuery) || false;
+        
+        default:
+          return false;
+      }
     }
     
     return true;
@@ -179,11 +195,13 @@ const JabOrders = () => {
             onSearch={handleSearch}
             date={date}
             onDateChange={setDate}
+            searchType={searchType}
+            onSearchTypeChange={setSearchType}
           />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {filteredOrders.map((order: JabOrder) => {
+          {filteredOrders.map((order) => {
             const orderId = `${order.MATRIZ}-${order.FILIAL}-${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`;
             const isExpanded = expandedOrder === orderId;
             const showZeroBalance = showZeroBalanceMap[orderId] || false;

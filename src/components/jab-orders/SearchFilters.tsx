@@ -7,6 +7,15 @@ import { Search, Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+export type SearchType = "pedido" | "cliente" | "representante";
 
 interface SearchFiltersProps {
   searchQuery: string;
@@ -14,6 +23,8 @@ interface SearchFiltersProps {
   onSearch: () => void;
   date: DateRange | undefined;
   onDateChange: (date: DateRange | undefined) => void;
+  searchType: SearchType;
+  onSearchTypeChange: (value: SearchType) => void;
 }
 
 const SearchFilters: React.FC<SearchFiltersProps> = ({
@@ -22,13 +33,39 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
   onSearch,
   date,
   onDateChange,
+  searchType,
+  onSearchTypeChange,
 }) => {
+  const getPlaceholder = () => {
+    switch (searchType) {
+      case "pedido":
+        return "Buscar por número do pedido";
+      case "cliente":
+        return "Buscar por nome do cliente";
+      case "representante":
+        return "Buscar por nome do representante";
+      default:
+        return "Buscar...";
+    }
+  };
+
   return (
     <div className="flex items-center gap-4">
+      <Select value={searchType} onValueChange={value => onSearchTypeChange(value as SearchType)}>
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder="Tipo de busca" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="pedido">Número do Pedido</SelectItem>
+          <SelectItem value="cliente">Nome do Cliente</SelectItem>
+          <SelectItem value="representante">Nome do Representante</SelectItem>
+        </SelectContent>
+      </Select>
+
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Buscar por número do pedido"
+          placeholder={getPlaceholder()}
           value={searchQuery}
           onChange={(e) => onSearchQueryChange(e.target.value)}
           className="pl-9 w-[250px]"
