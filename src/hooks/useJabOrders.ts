@@ -45,11 +45,12 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
         toDate: dateRange.to
       });
 
-      // Primeiro, buscamos os pedidos
+      // Atualizada a query para incluir o filtro de STATUS
       const { data: pedidosData, error: errorPedidos } = await supabase
         .from('BLUEBAY_PEDIDO')
         .select()
         .eq('CENTROCUSTO', 'JAB')
+        .in('STATUS', ['1', '2'])  // Filtro de STATUS adicionado aqui
         .gte('DATA_PEDIDO', dataInicial)
         .lte('DATA_PEDIDO', dataFinal)
         .order('DATA_PEDIDO', { ascending: false });
