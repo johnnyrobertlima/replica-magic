@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Loader2, ChevronDown, ChevronUp } from "lucide-react";
@@ -11,6 +10,7 @@ import type { SearchType } from "@/components/jab-orders/SearchFilters";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
 
 const ITEMS_PER_PAGE = 15;
 
@@ -57,7 +57,6 @@ const JabOrdersByClient = () => {
     return str.replace(/^0+/, '');
   };
 
-  // Agrupa e consolida os pedidos por cliente
   const groupedOrders = useMemo(() => {
     const groups: Record<string, {
       pedidos: typeof ordersData.orders,
@@ -91,7 +90,6 @@ const JabOrdersByClient = () => {
       groups[clientKey].totalQuantidadeSaldo += order.total_saldo || 0;
       groups[clientKey].totalValorSaldo += order.valor_total || 0;
 
-      // Acumula os itens de todos os pedidos
       if (order.items) {
         groups[clientKey].allItems.push(...order.items.map(item => ({
           ...item,
@@ -111,7 +109,6 @@ const JabOrdersByClient = () => {
     return groups;
   }, [ordersData.orders]);
 
-  // Filtra os grupos
   const filteredGroups = useMemo(() => {
     if (!isSearching || !searchQuery) return groupedOrders;
 
