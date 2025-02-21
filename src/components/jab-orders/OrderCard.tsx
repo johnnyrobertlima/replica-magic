@@ -94,8 +94,8 @@ const OrderCard: React.FC<OrderCardProps> = ({
     ? (valorFaturado / valorTotalPedido) * 100 
     : 0;
     
-  const progressPotencial = valorTotalPedido > 0 
-    ? (valorFaturarComEstoque / valorTotalPedido) * 100 
+  const progressPotencial = order.valor_total > 0 
+    ? (valorFaturarComEstoque / order.valor_total) * 100 
     : 0;
 
   return (
