@@ -26,18 +26,20 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
         toDate: dateRange.to
       });
 
-      // Fetch PES_CODIGO list without any additional filters
-      const pessoasCodigos = await fetchPessoasCodigos(dataInicial, dataFinal);
-      if (pessoasCodigos.length === 0) {
+      // Fetch agrupado por PES_CODIGO
+      const dadosAgrupados = await fetchPessoasCodigos(dataInicial, dataFinal);
+      if (dadosAgrupados.length === 0) {
         console.log('Nenhum código de pessoa encontrado para o período');
         return [];
       }
 
+      console.log('Total de PES_CODIGO encontrados:', dadosAgrupados.length);
+
       // Get unique PES_CODIGO values
-      const uniquePesCodigos = [...new Set(pessoasCodigos.map(p => p.PES_CODIGO))];
+      const uniquePesCodigos = dadosAgrupados.map(d => d.PES_CODIGO);
       console.log('Códigos de pessoas únicos encontrados:', uniquePesCodigos.length);
 
-      // Fetch pedidos
+      // Fetch pedidos detalhados
       const pedidosData = await fetchPedidos(dataInicial, dataFinal, uniquePesCodigos);
       if (pedidosData.length === 0) {
         console.log('Nenhum pedido encontrado para o período');
@@ -52,7 +54,6 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
         itens?.map(i => [i.ITEM_CODIGO, i.DESCRICAO]) || []
       );
 
-      // Process orders without any filtering
       return processOrders(pedidosData, itemMap);
     },
     enabled: !!dateRange?.from && !!dateRange?.to,

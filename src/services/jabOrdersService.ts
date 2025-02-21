@@ -2,17 +2,35 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { JabOrder } from "@/types/jabOrders";
 
+interface PedidoAgrupado {
+  PES_CODIGO: number;
+  quantidade_pedidos: number;
+  quantidade_itens_com_saldo: number;
+  valor_do_saldo: number;
+}
+
 export async function fetchPessoasCodigos(dataInicial: string, dataFinal: string) {
-  // Buscamos todos os PES_CODIGO que têm pedidos com saldo, independente da data
   const { data, error } = await supabase
     .from('BLUEBAY_PEDIDO')
-    .select('PES_CODIGO')
+    .select(`
+      PES_CODIGO,
+      quantidade_pedidos:count(PED_NUMPEDIDO),
+      quantidade_itens_com_saldo:sum(QTDE_SALDO),
+      valor_do_saldo:sum(QTDE_SALDO * VALOR_UNITARIO)
+    `)
     .eq('CENTROCUSTO', 'JAB')
-    .gt('QTDE_SALDO', 0)
-    .not('PES_CODIGO', 'is', null);
+    .gte('DATA_PEDIDO', dataInicial)
+    .lte('DATA_PEDIDO', dataFinal)
+    .not('PES_CODIGO', 'is', null)
+    .group('PES_CODIGO');
 
-  if (error) throw error;
-  return data || [];
+  if (error) {
+    console.error('Erro ao buscar PES_CODIGO:', error);
+    throw error;
+  }
+
+  console.log('Dados agrupados por PES_CODIGO:', data);
+  return (data || []) as PedidoAgrupado[];
 }
 
 export async function fetchPedidos(dataInicial: string, dataFinal: string, pesCodigos: number[]) {
@@ -34,11 +52,16 @@ export async function fetchPedidos(dataInicial: string, dataFinal: string, pesCo
       PES_CODIGO
     `)
     .eq('CENTROCUSTO', 'JAB')
-    .gt('QTDE_SALDO', 0) // Adicionado filtro para trazer apenas pedidos com saldo
+    .gte('DATA_PEDIDO', dataInicial)
+    .lte('DATA_PEDIDO', dataFinal)
     .in('PES_CODIGO', pesCodigos)
     .order('DATA_PEDIDO', { ascending: false });
 
-  if (error) throw error;
+  if (error) {
+    console.error('Erro ao buscar pedidos:', error);
+    throw error;
+  }
+
   return data || [];
 }
 
@@ -48,7 +71,11 @@ export async function fetchItensDescricoes(itemCodigos: string[]) {
     .select('ITEM_CODIGO, DESCRICAO')
     .in('ITEM_CODIGO', itemCodigos);
 
-  if (error) throw error;
+  if (error) {
+    console.error('Erro ao buscar descrições dos itens:', error);
+    throw error;
+  }
+
   return data || [];
 }
 
