@@ -1,41 +1,15 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { OrderProgress } from "./OrderProgress";
+import { OrderItemsTable } from "./OrderItemsTable";
+import type { Order } from "./types";
 
 interface OrderCardProps {
-  order: {
-    MATRIZ: number;
-    FILIAL: number;
-    PED_NUMPEDIDO: string;
-    PED_ANOBASE: number;
-    STATUS: string;
-    APELIDO: string | null;
-    PEDIDO_CLIENTE?: string | null;
-    total_saldo: number;
-    valor_total: number;
-    REPRESENTANTE_NOME: string | null;
-    items?: Array<{
-      ITEM_CODIGO: string;
-      DESCRICAO: string | null;
-      QTDE_PEDIDA: number;
-      QTDE_ENTREGUE: number;
-      QTDE_SALDO: number;
-      VALOR_UNITARIO: number;
-      FISICO: number | null;
-    }>;
-  };
+  order: Order;
   isExpanded: boolean;
   showZeroBalance: boolean;
   onToggleExpand: () => void;
@@ -90,14 +64,6 @@ const OrderCard: React.FC<OrderCardProps> = ({
   const valorTotalPedido = calculateValorTotalPedido();
   const valorFaturado = calculateValorFaturado();
   const valorFaturarComEstoque = calculateTotalFaturarComEstoque();
-  
-  const progressFaturamento = valorTotalPedido > 0 
-    ? (valorFaturado / valorTotalPedido) * 100 
-    : 0;
-    
-  const progressPotencial = order.valor_total > 0 
-    ? (valorFaturarComEstoque / order.valor_total) * 100 
-    : 0;
 
   return (
     <Card 
@@ -123,22 +89,14 @@ const OrderCard: React.FC<OrderCardProps> = ({
             <ChevronDown className="h-5 w-5 text-muted-foreground" />
           )}
         </div>
-        <div className="space-y-4 mt-2">
-          <div className="space-y-2">
-            <div className="flex justify-between items-center text-sm">
-              <span>Faturamento</span>
-              <span>{Math.round(progressFaturamento)}%</span>
-            </div>
-            <Progress value={progressFaturamento} className="h-2" />
-          </div>
-          <div className="space-y-2">
-            <div className="flex justify-between items-center text-sm">
-              <span>Potencial com Estoque</span>
-              <span>{Math.round(progressPotencial)}%</span>
-            </div>
-            <Progress value={progressPotencial} className="h-2" />
-          </div>
-        </div>
+
+        <OrderProgress
+          valorTotalPedido={valorTotalPedido}
+          valorFaturado={valorFaturado}
+          valorFaturarComEstoque={valorFaturarComEstoque}
+          valor_total={order.valor_total}
+        />
+
         <p className="text-sm text-muted-foreground">
           Ano Base: {order.PED_ANOBASE}
         </p>
@@ -237,55 +195,13 @@ const OrderCard: React.FC<OrderCardProps> = ({
                 <span className="text-sm font-semibold">Filial: {order.FILIAL}</span>
               </div>
               
-              <div className="bg-muted p-4 rounded-lg">
-                <h4 className="font-semibold mb-4">Itens do Pedido</h4>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>SKU</TableHead>
-                        <TableHead>Descrição</TableHead>
-                        <TableHead className="text-right">QT Pedido</TableHead>
-                        <TableHead className="text-right">QT Faturada</TableHead>
-                        <TableHead className="text-right">QT Saldo</TableHead>
-                        <TableHead className="text-right">QT Físico</TableHead>
-                        <TableHead className="text-right">VL Uni</TableHead>
-                        <TableHead className="text-right">VL Total Saldo</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {order.items
-                        ?.filter(item => {
-                          if (!showZeroBalance && item.QTDE_SALDO <= 0) return false;
-                          if (showOnlyWithStock && (item.FISICO || 0) <= 0) return false;
-                          return true;
-                        })
-                        .map((item, index) => (
-                        <TableRow key={`${item.ITEM_CODIGO}-${index}`}>
-                          <TableCell className="font-medium">{item.ITEM_CODIGO}</TableCell>
-                          <TableCell>{item.DESCRICAO || '-'}</TableCell>
-                          <TableCell className="text-right">{item.QTDE_PEDIDA.toLocaleString()}</TableCell>
-                          <TableCell className="text-right">{item.QTDE_ENTREGUE.toLocaleString()}</TableCell>
-                          <TableCell className="text-right">{item.QTDE_SALDO.toLocaleString()}</TableCell>
-                          <TableCell className="text-right">{item.FISICO?.toLocaleString() || '-'}</TableCell>
-                          <TableCell className="text-right">
-                            {item.VALOR_UNITARIO.toLocaleString(undefined, {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {(item.QTDE_SALDO * item.VALOR_UNITARIO).toLocaleString(undefined, {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
+              {order.items && (
+                <OrderItemsTable 
+                  items={order.items}
+                  showZeroBalance={showZeroBalance}
+                  showOnlyWithStock={showOnlyWithStock}
+                />
+              )}
             </div>
           )}
         </div>
