@@ -1,17 +1,16 @@
 
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import { useJabOrders, useTotals } from "@/hooks/useJabOrders";
 import type { DateRange } from "react-day-picker";
-import OrderCard from "@/components/jab-orders/OrderCard";
 import { TotalCards } from "@/components/jab-orders/TotalCards";
 import { OrdersHeader } from "@/components/jab-orders/OrdersHeader";
 import { OrdersPagination } from "@/components/jab-orders/OrdersPagination";
 import type { SearchType } from "@/components/jab-orders/SearchFilters";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { OrderItemsTable } from "@/components/jab-orders/OrderItemsTable";
+import { Card, CardContent } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Progress } from "@/components/ui/progress";
 
 const ITEMS_PER_PAGE = 15;
 
@@ -22,11 +21,11 @@ const JabOrdersByClient = () => {
   });
   const [searchDate, setSearchDate] = useState<DateRange | undefined>(date);
   const [currentPage, setCurrentPage] = useState(1);
-  const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+  const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState<SearchType>("pedido");
   const [isSearching, setIsSearching] = useState(false);
-  const [showZeroBalanceMap, setShowZeroBalanceMap] = useState<Record<string, boolean>>({});
+  const [showZeroBalance, setShowZeroBalance] = useState(false);
 
   const { data: ordersData = { orders: [], totalCount: 0 }, isLoading: isLoadingOrders } = useJabOrders({
     dateRange: searchDate,
@@ -36,15 +35,16 @@ const JabOrdersByClient = () => {
 
   const { data: totals = { valorTotalSaldo: 0, valorFaturarComEstoque: 0 }, isLoading: isLoadingTotals } = useTotals();
 
-  const toggleExpand = (orderId: string) => {
-    setExpandedOrder(expandedOrder === orderId ? null : orderId);
-  };
-
-  const toggleShowZeroBalance = (orderId: string) => {
-    setShowZeroBalanceMap(prev => ({
-      ...prev,
-      [orderId]: !prev[orderId]
-    }));
+  const toggleExpand = (clientName: string) => {
+    setExpandedClients(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(clientName)) {
+        newSet.delete(clientName);
+      } else {
+        newSet.add(clientName);
+      }
+      return newSet;
+    });
   };
 
   const handleSearch = () => {
@@ -60,12 +60,14 @@ const JabOrdersByClient = () => {
   // Agrupa e consolida os pedidos por cliente
   const groupedOrders = useMemo(() => {
     const groups: Record<string, {
-      orders: typeof ordersData.orders,
-      totalSaldo: number,
-      totalPedido: number,
-      totalFaturado: number,
+      pedidos: typeof ordersData.orders,
+      totalQuantidadeSaldo: number,
+      totalValorSaldo: number,
+      totalValorPedido: number,
+      totalValorFaturado: number,
       totalFaturarComEstoque: number,
-      representante: string | null
+      representante: string | null,
+      allItems: any[]
     }> = {};
     
     ordersData.orders.forEach((order) => {
@@ -74,26 +76,36 @@ const JabOrdersByClient = () => {
       const clientKey = order.APELIDO || "Sem Cliente";
       if (!groups[clientKey]) {
         groups[clientKey] = {
-          orders: [],
-          totalSaldo: 0,
-          totalPedido: 0,
-          totalFaturado: 0,
+          pedidos: [],
+          totalQuantidadeSaldo: 0,
+          totalValorSaldo: 0,
+          totalValorPedido: 0,
+          totalValorFaturado: 0,
           totalFaturarComEstoque: 0,
-          representante: order.REPRESENTANTE_NOME
+          representante: order.REPRESENTANTE_NOME,
+          allItems: []
         };
       }
 
-      groups[clientKey].orders.push(order);
-      groups[clientKey].totalSaldo += order.valor_total || 0;
+      groups[clientKey].pedidos.push(order);
+      groups[clientKey].totalQuantidadeSaldo += order.total_saldo || 0;
+      groups[clientKey].totalValorSaldo += order.valor_total || 0;
 
-      // Calcula totais baseados nos itens
-      order.items?.forEach(item => {
-        groups[clientKey].totalPedido += item.QTDE_PEDIDA * item.VALOR_UNITARIO;
-        groups[clientKey].totalFaturado += item.QTDE_ENTREGUE * item.VALOR_UNITARIO;
-        if ((item.FISICO || 0) > 0) {
-          groups[clientKey].totalFaturarComEstoque += item.QTDE_SALDO * item.VALOR_UNITARIO;
-        }
-      });
+      // Acumula os itens de todos os pedidos
+      if (order.items) {
+        groups[clientKey].allItems.push(...order.items.map(item => ({
+          ...item,
+          pedido: order.PED_NUMPEDIDO
+        })));
+
+        order.items.forEach(item => {
+          groups[clientKey].totalValorPedido += item.QTDE_PEDIDA * item.VALOR_UNITARIO;
+          groups[clientKey].totalValorFaturado += item.QTDE_ENTREGUE * item.VALOR_UNITARIO;
+          if ((item.FISICO || 0) > 0) {
+            groups[clientKey].totalFaturarComEstoque += item.QTDE_SALDO * item.VALOR_UNITARIO;
+          }
+        });
+      }
     });
 
     return groups;
@@ -111,7 +123,7 @@ const JabOrdersByClient = () => {
 
       switch (searchType) {
         case "pedido":
-          shouldInclude = groupData.orders.some(order => {
+          shouldInclude = groupData.pedidos.some(order => {
             const normalizedOrderNumber = removeLeadingZeros(order.PED_NUMPEDIDO);
             const normalizedSearchNumber = removeLeadingZeros(searchQuery);
             return normalizedOrderNumber.includes(normalizedSearchNumber);
@@ -178,61 +190,150 @@ const JabOrdersByClient = () => {
           onSearchTypeChange={setSearchType}
         />
 
-        <div className="space-y-6">
-          {Object.entries(filteredGroups).map(([clientName, data]) => (
-            <Card key={clientName} className="overflow-hidden">
-              <CardHeader className="bg-muted">
-                <CardTitle className="text-lg font-medium">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      Cliente: {clientName}
+        <div className="space-y-4">
+          {Object.entries(filteredGroups).map(([clientName, data]) => {
+            const isExpanded = expandedClients.has(clientName);
+            const progressFaturamento = data.totalValorPedido > 0 
+              ? (data.totalValorFaturado / data.totalValorPedido) * 100 
+              : 0;
+            const progressPotencial = data.totalValorSaldo > 0 
+              ? (data.totalFaturarComEstoque / data.totalValorSaldo) * 100 
+              : 0;
+
+            return (
+              <Card 
+                key={clientName} 
+                className="overflow-hidden"
+              >
+                <CardContent className="p-6">
+                  <div 
+                    className="flex items-center justify-between cursor-pointer"
+                    onClick={() => toggleExpand(clientName)}
+                  >
+                    <div className="space-y-1">
+                      <h3 className="text-lg font-semibold">Cliente: {clientName}</h3>
                       {data.representante && (
-                        <span className="text-sm text-muted-foreground ml-2">
-                          | Representante: {data.representante}
-                        </span>
+                        <p className="text-sm text-muted-foreground">
+                          Representante: {data.representante}
+                        </p>
                       )}
                     </div>
-                    <div className="text-primary">{formatCurrency(data.totalSaldo)}</div>
-                  </div>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4">
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-muted/30 rounded-lg">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Total em Pedidos</p>
-                      <p className="text-lg font-medium">{formatCurrency(data.totalPedido)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Total Faturado</p>
-                      <p className="text-lg font-medium">{formatCurrency(data.totalFaturado)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Total em Saldo</p>
-                      <p className="text-lg font-medium">{formatCurrency(data.totalSaldo)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Faturar com Estoque</p>
-                      <p className="text-lg font-medium text-primary">{formatCurrency(data.totalFaturarComEstoque)}</p>
-                    </div>
+                    {isExpanded ? (
+                      <ChevronUp className="h-6 w-6 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="h-6 w-6 text-muted-foreground" />
+                    )}
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {data.orders.map((order) => (
-                      <OrderCard
-                        key={`${order.MATRIZ}-${order.FILIAL}-${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`}
-                        order={order}
-                        isExpanded={expandedOrder === `${order.MATRIZ}-${order.FILIAL}-${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`}
-                        showZeroBalance={showZeroBalanceMap[`${order.MATRIZ}-${order.FILIAL}-${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`] || false}
-                        onToggleExpand={() => toggleExpand(`${order.MATRIZ}-${order.FILIAL}-${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`)}
-                        onToggleZeroBalance={() => toggleShowZeroBalance(`${order.MATRIZ}-${order.FILIAL}-${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`)}
-                      />
-                    ))}
+                  <div className="mt-4 space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Faturamento</span>
+                        <span>{Math.round(progressFaturamento)}%</span>
+                      </div>
+                      <Progress value={progressFaturamento} className="h-2" />
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Potencial com Estoque</span>
+                        <span>{Math.round(progressPotencial)}%</span>
+                      </div>
+                      <Progress value={progressPotencial} className="h-2" />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Quantidade Saldo:</p>
+                        <p className="font-medium">{data.totalQuantidadeSaldo}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Valor Total Saldo:</p>
+                        <p className="font-medium">{formatCurrency(data.totalValorSaldo)}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Valor Total do Pedido:</p>
+                        <p className="font-medium">{formatCurrency(data.totalValorPedido)}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Valor Faturado:</p>
+                        <p className="font-medium">{formatCurrency(data.totalValorFaturado)}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Faturar com Estoque:</p>
+                        <p className="font-medium text-primary">{formatCurrency(data.totalFaturarComEstoque)}</p>
+                      </div>
+                    </div>
+
+                    {isExpanded && (
+                      <div className="mt-6">
+                        <div className="mb-4">
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={showZeroBalance}
+                              onCheckedChange={setShowZeroBalance}
+                              id="show-zero-balance"
+                            />
+                            <label 
+                              htmlFor="show-zero-balance"
+                              className="text-sm text-muted-foreground cursor-pointer"
+                            >
+                              Mostrar itens com saldo zero
+                            </label>
+                          </div>
+                        </div>
+
+                        <div className="rounded-lg border">
+                          <table className="w-full">
+                            <thead className="bg-muted">
+                              <tr>
+                                <th className="text-left p-2">Pedido</th>
+                                <th className="text-left p-2">SKU</th>
+                                <th className="text-left p-2">Descrição</th>
+                                <th className="text-right p-2">Qt. Pedida</th>
+                                <th className="text-right p-2">Qt. Entregue</th>
+                                <th className="text-right p-2">Qt. Saldo</th>
+                                <th className="text-right p-2">Qt. Físico</th>
+                                <th className="text-right p-2">Valor Unit.</th>
+                                <th className="text-right p-2">Total</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {data.allItems
+                                .filter(item => showZeroBalance || item.QTDE_SALDO > 0)
+                                .map((item, index) => (
+                                <tr key={`${item.pedido}-${item.ITEM_CODIGO}-${index}`} className="border-t">
+                                  <td className="p-2">{item.pedido}</td>
+                                  <td className="p-2">{item.ITEM_CODIGO}</td>
+                                  <td className="p-2">{item.DESCRICAO || '-'}</td>
+                                  <td className="p-2 text-right">{item.QTDE_PEDIDA}</td>
+                                  <td className="p-2 text-right">{item.QTDE_ENTREGUE}</td>
+                                  <td className="p-2 text-right">{item.QTDE_SALDO}</td>
+                                  <td className="p-2 text-right">{item.FISICO || '-'}</td>
+                                  <td className="p-2 text-right">
+                                    {item.VALOR_UNITARIO.toLocaleString('pt-BR', {
+                                      style: 'currency',
+                                      currency: 'BRL'
+                                    })}
+                                  </td>
+                                  <td className="p-2 text-right">
+                                    {(item.QTDE_SALDO * item.VALOR_UNITARIO).toLocaleString('pt-BR', {
+                                      style: 'currency',
+                                      currency: 'BRL'
+                                    })}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         <OrdersPagination
