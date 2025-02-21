@@ -11,16 +11,16 @@ import TokenManagement from "@/pages/TokenManagement";
 import WhatsAppService from "@/pages/WhatsAppService";
 import WhatsAppClientRegistration from "@/pages/WhatsAppClientRegistration";
 import MailingRegistration from "@/pages/MailingRegistration";
-import AdminDashboard from "@/pages/admin/dashboard";
-import AdminClients from "@/pages/admin/clients";
-import AdminServices from "@/pages/admin/services";
-import AdminBanners from "@/pages/admin/banners";
-import AdminLogin from "@/pages/admin/login";
-import AdminSeo from "@/pages/admin/seo";
-import AdminMessages from "@/pages/admin/messages";
-import AdminSocial from "@/pages/admin/social";
-import AdminLogos from "@/pages/admin/logos";
-import AdminLayout from "@/pages/admin/layout";
+import { AdminDashboard } from "@/pages/admin/dashboard";
+import { AdminClients } from "@/pages/admin/clients";
+import { AdminServices } from "@/pages/admin/services";
+import { AdminBanners } from "@/pages/admin/banners";
+import { AdminLogin } from "@/pages/admin/login";
+import { AdminSEO } from "@/pages/admin/seo";
+import { AdminMessages } from "@/pages/admin/messages";
+import { AdminSocial } from "@/pages/admin/social";
+import { AdminLogos } from "@/pages/admin/logos";
+import { AdminLayout } from "@/pages/admin/layout";
 
 function App() {
   return (
@@ -43,7 +43,7 @@ function App() {
           <Route path="clients" element={<AdminClients />} />
           <Route path="services" element={<AdminServices />} />
           <Route path="banners" element={<AdminBanners />} />
-          <Route path="seo" element={<AdminSeo />} />
+          <Route path="seo" element={<AdminSEO />} />
           <Route path="messages" element={<AdminMessages />} />
           <Route path="social" element={<AdminSocial />} />
           <Route path="logos" element={<AdminLogos />} />
