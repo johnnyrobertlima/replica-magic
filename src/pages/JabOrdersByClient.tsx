@@ -10,6 +10,8 @@ import { OrdersHeader } from "@/components/jab-orders/OrdersHeader";
 import { OrdersPagination } from "@/components/jab-orders/OrdersPagination";
 import type { SearchType } from "@/components/jab-orders/SearchFilters";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { OrderItemsTable } from "@/components/jab-orders/OrderItemsTable";
 
 const ITEMS_PER_PAGE = 15;
 
@@ -55,51 +57,78 @@ const JabOrdersByClient = () => {
     return str.replace(/^0+/, '');
   };
 
-  // Agrupa os pedidos por cliente
+  // Agrupa e consolida os pedidos por cliente
   const groupedOrders = useMemo(() => {
-    const groups: Record<string, typeof ordersData.orders> = {};
+    const groups: Record<string, {
+      orders: typeof ordersData.orders,
+      totalSaldo: number,
+      totalPedido: number,
+      totalFaturado: number,
+      totalFaturarComEstoque: number,
+      representante: string | null
+    }> = {};
     
     ordersData.orders.forEach((order) => {
       if (!["1", "2"].includes(order.STATUS)) return;
       
       const clientKey = order.APELIDO || "Sem Cliente";
       if (!groups[clientKey]) {
-        groups[clientKey] = [];
+        groups[clientKey] = {
+          orders: [],
+          totalSaldo: 0,
+          totalPedido: 0,
+          totalFaturado: 0,
+          totalFaturarComEstoque: 0,
+          representante: order.REPRESENTANTE_NOME
+        };
       }
-      groups[clientKey].push(order);
+
+      groups[clientKey].orders.push(order);
+      groups[clientKey].totalSaldo += order.valor_total || 0;
+
+      // Calcula totais baseados nos itens
+      order.items?.forEach(item => {
+        groups[clientKey].totalPedido += item.QTDE_PEDIDA * item.VALOR_UNITARIO;
+        groups[clientKey].totalFaturado += item.QTDE_ENTREGUE * item.VALOR_UNITARIO;
+        if ((item.FISICO || 0) > 0) {
+          groups[clientKey].totalFaturarComEstoque += item.QTDE_SALDO * item.VALOR_UNITARIO;
+        }
+      });
     });
 
     return groups;
   }, [ordersData.orders]);
 
-  // Filtra os grupos de pedidos
+  // Filtra os grupos
   const filteredGroups = useMemo(() => {
     if (!isSearching || !searchQuery) return groupedOrders;
 
     const normalizedSearchQuery = searchQuery.toLowerCase().trim();
-    const filteredGroups: Record<string, typeof ordersData.orders> = {};
+    const filteredGroups: typeof groupedOrders = {};
 
-    Object.entries(groupedOrders).forEach(([clientName, orders]) => {
-      const filteredOrders = orders.filter(order => {
-        switch (searchType) {
-          case "pedido":
+    Object.entries(groupedOrders).forEach(([clientName, groupData]) => {
+      let shouldInclude = false;
+
+      switch (searchType) {
+        case "pedido":
+          shouldInclude = groupData.orders.some(order => {
             const normalizedOrderNumber = removeLeadingZeros(order.PED_NUMPEDIDO);
             const normalizedSearchNumber = removeLeadingZeros(searchQuery);
             return normalizedOrderNumber.includes(normalizedSearchNumber);
-          
-          case "cliente":
-            return clientName.toLowerCase().includes(normalizedSearchQuery);
-          
-          case "representante":
-            return order.REPRESENTANTE_NOME?.toLowerCase().includes(normalizedSearchQuery) || false;
-          
-          default:
-            return false;
-        }
-      });
+          });
+          break;
+        
+        case "cliente":
+          shouldInclude = clientName.toLowerCase().includes(normalizedSearchQuery);
+          break;
+        
+        case "representante":
+          shouldInclude = groupData.representante?.toLowerCase().includes(normalizedSearchQuery) || false;
+          break;
+      }
 
-      if (filteredOrders.length > 0) {
-        filteredGroups[clientName] = filteredOrders;
+      if (shouldInclude) {
+        filteredGroups[clientName] = groupData;
       }
     });
 
@@ -115,6 +144,13 @@ const JabOrdersByClient = () => {
       </div>
     );
   }
+
+  const formatCurrency = (value: number) => {
+    return value.toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    });
+  };
 
   return (
     <main className="container mx-auto px-4 py-8">
@@ -143,31 +179,56 @@ const JabOrdersByClient = () => {
         />
 
         <div className="space-y-6">
-          {Object.entries(filteredGroups).map(([clientName, orders]) => (
+          {Object.entries(filteredGroups).map(([clientName, data]) => (
             <Card key={clientName} className="overflow-hidden">
               <CardHeader className="bg-muted">
                 <CardTitle className="text-lg font-medium">
-                  Cliente: {clientName}
+                  <div className="flex justify-between items-center">
+                    <div>
+                      Cliente: {clientName}
+                      {data.representante && (
+                        <span className="text-sm text-muted-foreground ml-2">
+                          | Representante: {data.representante}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-primary">{formatCurrency(data.totalSaldo)}</div>
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {orders.map((order) => {
-                    const orderId = `${order.MATRIZ}-${order.FILIAL}-${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`;
-                    const isExpanded = expandedOrder === orderId;
-                    const showZeroBalance = showZeroBalanceMap[orderId] || false;
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-muted/30 rounded-lg">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total em Pedidos</p>
+                      <p className="text-lg font-medium">{formatCurrency(data.totalPedido)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total Faturado</p>
+                      <p className="text-lg font-medium">{formatCurrency(data.totalFaturado)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total em Saldo</p>
+                      <p className="text-lg font-medium">{formatCurrency(data.totalSaldo)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Faturar com Estoque</p>
+                      <p className="text-lg font-medium text-primary">{formatCurrency(data.totalFaturarComEstoque)}</p>
+                    </div>
+                  </div>
 
-                    return (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {data.orders.map((order) => (
                       <OrderCard
-                        key={orderId}
+                        key={`${order.MATRIZ}-${order.FILIAL}-${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`}
                         order={order}
-                        isExpanded={isExpanded}
-                        showZeroBalance={showZeroBalance}
-                        onToggleExpand={() => toggleExpand(orderId)}
-                        onToggleZeroBalance={() => toggleShowZeroBalance(orderId)}
+                        isExpanded={expandedOrder === `${order.MATRIZ}-${order.FILIAL}-${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`}
+                        showZeroBalance={showZeroBalanceMap[`${order.MATRIZ}-${order.FILIAL}-${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`] || false}
+                        onToggleExpand={() => toggleExpand(`${order.MATRIZ}-${order.FILIAL}-${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`)}
+                        onToggleZeroBalance={() => toggleShowZeroBalance(`${order.MATRIZ}-${order.FILIAL}-${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`)}
                       />
-                    );
-                  })}
+                    ))}
+                  </div>
                 </div>
               </CardContent>
             </Card>
