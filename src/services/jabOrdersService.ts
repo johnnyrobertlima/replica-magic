@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { JabOrder } from "@/types/jabOrders";
 
 interface PedidoAgrupado {
-  PES_CODIGO: number;
+  pes_codigo: number;
   quantidade_pedidos: number;
   quantidade_itens_com_saldo: number;
   valor_do_saldo: number;

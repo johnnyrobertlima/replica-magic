@@ -36,7 +36,7 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
       console.log('Total de PES_CODIGO encontrados:', dadosAgrupados.length);
 
       // Get unique PES_CODIGO values
-      const uniquePesCodigos = dadosAgrupados.map(d => d.PES_CODIGO);
+      const uniquePesCodigos = dadosAgrupados.map(d => d.pes_codigo);
       console.log('Códigos de pessoas únicos encontrados:', uniquePesCodigos.length);
 
       // Fetch pedidos detalhados
