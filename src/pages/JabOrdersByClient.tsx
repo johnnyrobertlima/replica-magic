@@ -33,11 +33,13 @@ const JabOrdersByClient = () => {
   const [showZeroBalance, setShowZeroBalance] = useState(false);
   const [showOnlyWithStock, setShowOnlyWithStock] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  
   const { data: ordersData = { orders: [], totalCount: 0 }, isLoading: isLoadingOrders } = useJabOrders({
     dateRange: searchDate,
     page: currentPage,
     pageSize: ITEMS_PER_PAGE
   });
+  
   const { data: totals = { valorTotalSaldo: 0, valorFaturarComEstoque: 0 }, isLoading: isLoadingTotals } = useTotals();
   const { createSeparacao } = useSeparacoes();
 
