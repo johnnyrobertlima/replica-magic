@@ -50,37 +50,33 @@ export function useJabOrders({ dateRange, page = 1, pageSize = 15 }: UseJabOrder
         pageSize
       });
 
-      // Primeiro fazemos uma query para obter todos os pedidos distintos ordenados
-      const { data: pedidosDistintos, error: errorDistintos, count: totalCount } = await supabase
+      // Consulta com paginação direta no banco
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+
+      const { data: pedidosDistintos, error: errorDistintos, count } = await supabase
         .from('BLUEBAY_PEDIDO')
-        .select('PED_NUMPEDIDO', { count: 'exact' })
+        .select('DISTINCT PED_NUMPEDIDO', { count: 'exact' })
         .eq('CENTROCUSTO', 'JAB')
         .in('STATUS', ['1', '2'])
         .gte('DATA_PEDIDO', dataInicial)
         .lte('DATA_PEDIDO', `${dataFinal} 23:59:59.999`)
         .order('PED_NUMPEDIDO')
-        .limit(1000); // Limite alto para garantir que pegamos todos os pedidos
+        .range(from, to);
 
       if (errorDistintos) {
         console.error('Erro ao buscar pedidos distintos:', errorDistintos);
         throw errorDistintos;
       }
 
-      // Remove duplicatas e mantém a ordem
-      const pedidosUnicos = Array.from(new Set(pedidosDistintos?.map(p => p.PED_NUMPEDIDO) || []));
-
-      // Calcula o slice para a página atual
-      const start = (page - 1) * pageSize;
-      const end = start + pageSize;
-      const pedidosDaPagina = pedidosUnicos.slice(start, end);
-
-      console.log('Pedidos selecionados para esta página:', pedidosDaPagina.length);
-
-      if (pedidosDaPagina.length === 0) {
-        return { orders: [], totalCount: totalCount || 0 };
+      if (!pedidosDistintos?.length) {
+        return { orders: [], totalCount: count || 0 };
       }
 
-      // Busca os detalhes dos pedidos desta página
+      const numeroPedidos = pedidosDistintos.map(p => p.PED_NUMPEDIDO);
+      console.log('Pedidos selecionados para esta página:', numeroPedidos.length);
+
+      // Busca os detalhes dos pedidos
       const { data: pedidosDetalhados, error: errorPedidos } = await supabase
         .from('BLUEBAY_PEDIDO')
         .select(`
@@ -99,7 +95,7 @@ export function useJabOrders({ dateRange, page = 1, pageSize = 15 }: UseJabOrder
         `)
         .eq('CENTROCUSTO', 'JAB')
         .in('STATUS', ['1', '2'])
-        .in('PED_NUMPEDIDO', pedidosDaPagina);
+        .in('PED_NUMPEDIDO', numeroPedidos);
 
       if (errorPedidos) {
         console.error('Erro ao buscar detalhes dos pedidos:', errorPedidos);
@@ -141,7 +137,7 @@ export function useJabOrders({ dateRange, page = 1, pageSize = 15 }: UseJabOrder
       });
 
       // Processamos os pedidos agrupados mantendo a ordem original
-      const orders: JabOrder[] = pedidosDaPagina.map(numPedido => {
+      const orders: JabOrder[] = numeroPedidos.map(numPedido => {
         const pedidos = pedidosAgrupados.get(numPedido) || [];
         const primeiroPedido = pedidos[0];
         
@@ -185,7 +181,7 @@ export function useJabOrders({ dateRange, page = 1, pageSize = 15 }: UseJabOrder
 
       return {
         orders,
-        totalCount: totalCount || 0,
+        totalCount: count || 0,
         currentPage: page,
         pageSize
       };
