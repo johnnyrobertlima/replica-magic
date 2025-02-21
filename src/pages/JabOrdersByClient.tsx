@@ -11,7 +11,6 @@ import type { SearchType } from "@/components/jab-orders/SearchFilters";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
-import { OrderItemsTable } from "@/components/jab-orders/OrderItemsTable";
 
 const ITEMS_PER_PAGE = 15;
 
@@ -23,7 +22,6 @@ const JabOrdersByClient = () => {
   const [searchDate, setSearchDate] = useState<DateRange | undefined>(date);
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedClient, setExpandedClient] = useState<string | null>(null);
-  const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState<SearchType>("pedido");
   const [isSearching, setIsSearching] = useState(false);
@@ -41,14 +39,10 @@ const JabOrdersByClient = () => {
     setExpandedClient(expandedClient === clientName ? null : clientName);
   };
 
-  const toggleExpandOrder = (orderId: string) => {
-    setExpandedOrder(expandedOrder === orderId ? null : orderId);
-  };
-
-  const toggleShowZeroBalance = (orderId: string) => {
+  const toggleShowZeroBalance = (clientName: string) => {
     setShowZeroBalanceMap(prev => ({
       ...prev,
-      [orderId]: !prev[orderId]
+      [clientName]: !prev[clientName]
     }));
   };
 
@@ -246,7 +240,6 @@ const JabOrdersByClient = () => {
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead>Detalhes</TableHead>
                             <TableHead>Nº Pedido</TableHead>
                             <TableHead>Pedido Cliente</TableHead>
                             <TableHead>Status</TableHead>
@@ -258,9 +251,6 @@ const JabOrdersByClient = () => {
                         </TableHeader>
                         <TableBody>
                           {data.orders.map((order) => {
-                            const orderId = `${order.MATRIZ}-${order.FILIAL}-${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`;
-                            const isOrderExpanded = expandedOrder === orderId;
-                            const showZeroBalance = showZeroBalanceMap[orderId] || false;
                             const valorFaturarComEstoque = order.items?.reduce((total, item) => {
                               if ((item.FISICO || 0) > 0) {
                                 return total + (item.QTDE_SALDO * item.VALOR_UNITARIO);
@@ -269,48 +259,20 @@ const JabOrdersByClient = () => {
                             }, 0) || 0;
 
                             return (
-                              <>
-                                <TableRow 
-                                  key={orderId}
-                                  className="cursor-pointer hover:bg-muted/50"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    toggleExpandOrder(orderId);
-                                  }}
-                                >
-                                  <TableCell>
-                                    {isOrderExpanded ? (
-                                      <ChevronUp className="h-4 w-4" />
-                                    ) : (
-                                      <ChevronDown className="h-4 w-4" />
-                                    )}
-                                  </TableCell>
-                                  <TableCell>{order.PED_NUMPEDIDO}</TableCell>
-                                  <TableCell>{order.PEDIDO_CLIENTE || '-'}</TableCell>
-                                  <TableCell>{order.STATUS === "1" ? "Aberto" : "Parcial"}</TableCell>
-                                  <TableCell className="text-right">{order.total_saldo}</TableCell>
-                                  <TableCell className="text-right">{formatCurrency(order.valor_total)}</TableCell>
-                                  <TableCell className="text-right">
-                                    {formatCurrency(order.items?.reduce((total, item) => 
-                                      total + (item.QTDE_PEDIDA * item.VALOR_UNITARIO), 0) || 0)}
-                                  </TableCell>
-                                  <TableCell className="text-right text-primary">
-                                    {formatCurrency(valorFaturarComEstoque)}
-                                  </TableCell>
-                                </TableRow>
-                                {isOrderExpanded && (
-                                  <TableRow>
-                                    <TableCell colSpan={8} className="p-0">
-                                      <div className="p-4 bg-muted/30">
-                                        <OrderItemsTable 
-                                          items={order.items || []}
-                                          showZeroBalance={showZeroBalance}
-                                        />
-                                      </div>
-                                    </TableCell>
-                                  </TableRow>
-                                )}
-                              </>
+                              <TableRow key={`${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`}>
+                                <TableCell>{order.PED_NUMPEDIDO}</TableCell>
+                                <TableCell>{order.PEDIDO_CLIENTE || '-'}</TableCell>
+                                <TableCell>{order.STATUS === "1" ? "Aberto" : "Parcial"}</TableCell>
+                                <TableCell className="text-right">{order.total_saldo}</TableCell>
+                                <TableCell className="text-right">{formatCurrency(order.valor_total)}</TableCell>
+                                <TableCell className="text-right">
+                                  {formatCurrency(order.items?.reduce((total, item) => 
+                                    total + (item.QTDE_PEDIDA * item.VALOR_UNITARIO), 0) || 0)}
+                                </TableCell>
+                                <TableCell className="text-right text-primary">
+                                  {formatCurrency(valorFaturarComEstoque)}
+                                </TableCell>
+                              </TableRow>
                             );
                           })}
                         </TableBody>
