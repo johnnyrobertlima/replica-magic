@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { ChevronDown, ChevronUp } from "lucide-react";
@@ -144,6 +145,11 @@ const OrderCard: React.FC<OrderCardProps> = ({
         {order.APELIDO && (
           <p className="text-sm text-muted-foreground">
             Cliente: {order.APELIDO}
+          </p>
+        )}
+        {order.REPRESENTANTE_NOME && (
+          <p className="text-sm text-muted-foreground">
+            Representante: {order.REPRESENTANTE_NOME}
           </p>
         )}
         {order.PEDIDO_CLIENTE && (
