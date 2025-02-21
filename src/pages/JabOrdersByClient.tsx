@@ -229,14 +229,8 @@ const JabOrdersByClient = () => {
                     )}
                   </div>
 
-                  <div className={cn(
-                    "mt-4 space-y-4",
-                    isExpanded ? "md:grid md:grid-cols-2 md:gap-6 md:space-y-0" : ""
-                  )}>
-                    <div className={cn(
-                      "space-y-4",
-                      isExpanded && "md:col-span-1"
-                    )}>
+                  <div className="mt-4 space-y-4">
+                    <div className="space-y-4">
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm">
                           <span>Faturamento</span>
@@ -278,7 +272,7 @@ const JabOrdersByClient = () => {
                     </div>
 
                     {isExpanded && (
-                      <div className="mt-6 md:mt-0 md:col-span-1">
+                      <div className="mt-6">
                         <div className="mb-4">
                           <div className="flex items-center gap-2">
                             <Switch
