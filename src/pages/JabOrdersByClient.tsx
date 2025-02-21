@@ -81,6 +81,7 @@ const JabOrdersByClient = () => {
       if (!["1", "2"].includes(order.STATUS)) return;
       
       const clientKey = order.APELIDO || "Sem Cliente";
+      
       if (!groups[clientKey]) {
         groups[clientKey] = {
           pedidos: [],
@@ -94,6 +95,10 @@ const JabOrdersByClient = () => {
           allItems: []
         };
       }
+      
+      if (!groups[clientKey].pesCode && order.PES_CODIGO) {
+        groups[clientKey].pesCode = order.PES_CODIGO;
+      }
 
       groups[clientKey].pedidos.push(order);
       groups[clientKey].totalQuantidadeSaldo += order.total_saldo || 0;
@@ -102,7 +107,8 @@ const JabOrdersByClient = () => {
       if (order.items) {
         groups[clientKey].allItems.push(...order.items.map(item => ({
           ...item,
-          pedido: order.PED_NUMPEDIDO
+          pedido: order.PED_NUMPEDIDO,
+          PES_CODIGO: order.PES_CODIGO
         })));
 
         order.items.forEach(item => {
@@ -115,6 +121,7 @@ const JabOrdersByClient = () => {
       }
     });
 
+    console.log('Grupos processados:', groups);
     return groups;
   }, [ordersData.orders]);
 
@@ -175,8 +182,10 @@ const JabOrdersByClient = () => {
     console.log('Código do cliente (PES_CODE):', clientData.pesCode);
     console.log('Itens selecionados:', Array.from(selectedItems));
     
+    const clienteCode = clientData.pesCode || clientData.pedidos?.[0]?.PES_CODIGO;
+    
     try {
-      if (!clientData.pesCode) {
+      if (!clienteCode) {
         console.error('Erro: Código do cliente não encontrado');
         toast.error('Código do cliente não encontrado');
         return;
@@ -201,10 +210,15 @@ const JabOrdersByClient = () => {
         return;
       }
 
-      console.log('Enviando para API...');
+      console.log('Enviando para API...', {
+        cliente_nome: clientName,
+        cliente_codigo: clienteCode,
+        itens: selectedItemsArray
+      });
+
       await createSeparacao.mutateAsync({
         cliente_nome: clientName,
-        cliente_codigo: clientData.pesCode,
+        cliente_codigo: clienteCode,
         itens: selectedItemsArray
       });
 
