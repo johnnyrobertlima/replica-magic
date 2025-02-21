@@ -26,7 +26,8 @@ export interface JabOrder {
   APELIDO: string | null;
   PEDIDO_CLIENTE: string | null;
   STATUS: string;
-  REPRESENTANTE_NOME: string | null;  // Novo campo para o apelido do representante
+  PES_CODIGO: number | null;  // Adicionado este campo
+  REPRESENTANTE_NOME: string | null;
   items: JabOrderItem[];
 }
 
