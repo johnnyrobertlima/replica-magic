@@ -1,15 +1,16 @@
 
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import { useJabOrders, useTotals } from "@/hooks/useJabOrders";
 import type { DateRange } from "react-day-picker";
-import OrderCard from "@/components/jab-orders/OrderCard";
 import { TotalCards } from "@/components/jab-orders/TotalCards";
 import { OrdersHeader } from "@/components/jab-orders/OrdersHeader";
 import { OrdersPagination } from "@/components/jab-orders/OrdersPagination";
 import type { SearchType } from "@/components/jab-orders/SearchFilters";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Switch } from "@/components/ui/switch";
 
 const ITEMS_PER_PAGE = 15;
 
@@ -20,7 +21,7 @@ const JabOrdersByClient = () => {
   });
   const [searchDate, setSearchDate] = useState<DateRange | undefined>(date);
   const [currentPage, setCurrentPage] = useState(1);
-  const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+  const [expandedClient, setExpandedClient] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState<SearchType>("pedido");
   const [isSearching, setIsSearching] = useState(false);
@@ -34,14 +35,14 @@ const JabOrdersByClient = () => {
 
   const { data: totals = { valorTotalSaldo: 0, valorFaturarComEstoque: 0 }, isLoading: isLoadingTotals } = useTotals();
 
-  const toggleExpand = (orderId: string) => {
-    setExpandedOrder(expandedOrder === orderId ? null : orderId);
+  const toggleExpand = (clientName: string) => {
+    setExpandedClient(expandedClient === clientName ? null : clientName);
   };
 
-  const toggleShowZeroBalance = (orderId: string) => {
+  const toggleShowZeroBalance = (clientName: string) => {
     setShowZeroBalanceMap(prev => ({
       ...prev,
-      [orderId]: !prev[orderId]
+      [clientName]: !prev[clientName]
     }));
   };
 
@@ -55,56 +56,83 @@ const JabOrdersByClient = () => {
     return str.replace(/^0+/, '');
   };
 
-  // Agrupa os pedidos por cliente
-  const groupedOrders = useMemo(() => {
-    const groups: Record<string, typeof ordersData.orders> = {};
+  // Agrupa e consolida os pedidos por cliente
+  const consolidatedGroups = useMemo(() => {
+    const groups: Record<string, {
+      orders: typeof ordersData.orders,
+      totalSaldo: number,
+      totalPedido: number,
+      totalFaturado: number,
+      totalFaturarComEstoque: number,
+      representante: string | null
+    }> = {};
     
     ordersData.orders.forEach((order) => {
       if (!["1", "2"].includes(order.STATUS)) return;
       
       const clientKey = order.APELIDO || "Sem Cliente";
       if (!groups[clientKey]) {
-        groups[clientKey] = [];
+        groups[clientKey] = {
+          orders: [],
+          totalSaldo: 0,
+          totalPedido: 0,
+          totalFaturado: 0,
+          totalFaturarComEstoque: 0,
+          representante: order.REPRESENTANTE_NOME
+        };
       }
-      groups[clientKey].push(order);
+
+      groups[clientKey].orders.push(order);
+      groups[clientKey].totalSaldo += order.valor_total || 0;
+
+      // Calcula totais baseados nos itens
+      order.items?.forEach(item => {
+        groups[clientKey].totalPedido += item.QTDE_PEDIDA * item.VALOR_UNITARIO;
+        groups[clientKey].totalFaturado += item.QTDE_ENTREGUE * item.VALOR_UNITARIO;
+        if ((item.FISICO || 0) > 0) {
+          groups[clientKey].totalFaturarComEstoque += item.QTDE_SALDO * item.VALOR_UNITARIO;
+        }
+      });
     });
 
     return groups;
   }, [ordersData.orders]);
 
-  // Filtra os grupos de pedidos
+  // Filtra os grupos
   const filteredGroups = useMemo(() => {
-    if (!isSearching || !searchQuery) return groupedOrders;
+    if (!isSearching || !searchQuery) return consolidatedGroups;
 
     const normalizedSearchQuery = searchQuery.toLowerCase().trim();
-    const filteredGroups: Record<string, typeof ordersData.orders> = {};
+    const filteredGroups: typeof consolidatedGroups = {};
 
-    Object.entries(groupedOrders).forEach(([clientName, orders]) => {
-      const filteredOrders = orders.filter(order => {
-        switch (searchType) {
-          case "pedido":
+    Object.entries(consolidatedGroups).forEach(([clientName, groupData]) => {
+      let shouldInclude = false;
+
+      switch (searchType) {
+        case "pedido":
+          shouldInclude = groupData.orders.some(order => {
             const normalizedOrderNumber = removeLeadingZeros(order.PED_NUMPEDIDO);
             const normalizedSearchNumber = removeLeadingZeros(searchQuery);
             return normalizedOrderNumber.includes(normalizedSearchNumber);
-          
-          case "cliente":
-            return clientName.toLowerCase().includes(normalizedSearchQuery);
-          
-          case "representante":
-            return order.REPRESENTANTE_NOME?.toLowerCase().includes(normalizedSearchQuery) || false;
-          
-          default:
-            return false;
-        }
-      });
+          });
+          break;
+        
+        case "cliente":
+          shouldInclude = clientName.toLowerCase().includes(normalizedSearchQuery);
+          break;
+        
+        case "representante":
+          shouldInclude = groupData.representante?.toLowerCase().includes(normalizedSearchQuery) || false;
+          break;
+      }
 
-      if (filteredOrders.length > 0) {
-        filteredGroups[clientName] = filteredOrders;
+      if (shouldInclude) {
+        filteredGroups[clientName] = groupData;
       }
     });
 
     return filteredGroups;
-  }, [groupedOrders, isSearching, searchQuery, searchType]);
+  }, [consolidatedGroups, isSearching, searchQuery, searchType]);
 
   const totalPages = Math.ceil(ordersData.totalCount / ITEMS_PER_PAGE);
 
@@ -115,6 +143,13 @@ const JabOrdersByClient = () => {
       </div>
     );
   }
+
+  const formatCurrency = (value: number) => {
+    return value.toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    });
+  };
 
   return (
     <main className="container mx-auto px-4 py-8">
@@ -142,33 +177,109 @@ const JabOrdersByClient = () => {
           onSearchTypeChange={setSearchType}
         />
 
-        <div className="space-y-6">
-          {Object.entries(filteredGroups).map(([clientName, orders]) => (
-            <Card key={clientName} className="overflow-hidden">
-              <CardHeader className="bg-muted">
-                <CardTitle className="text-lg font-medium">
-                  Cliente: {clientName}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {orders.map((order) => {
-                    const orderId = `${order.MATRIZ}-${order.FILIAL}-${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`;
-                    const isExpanded = expandedOrder === orderId;
-                    const showZeroBalance = showZeroBalanceMap[orderId] || false;
-
-                    return (
-                      <OrderCard
-                        key={orderId}
-                        order={order}
-                        isExpanded={isExpanded}
-                        showZeroBalance={showZeroBalance}
-                        onToggleExpand={() => toggleExpand(orderId)}
-                        onToggleZeroBalance={() => toggleShowZeroBalance(orderId)}
-                      />
-                    );
-                  })}
+        <div className="space-y-4">
+          {Object.entries(filteredGroups).map(([clientName, data]) => (
+            <Card 
+              key={clientName} 
+              className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => toggleExpand(clientName)}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="space-y-1">
+                    <h3 className="text-xl font-semibold">{clientName}</h3>
+                    {data.representante && (
+                      <p className="text-sm text-muted-foreground">
+                        Representante: {data.representante}
+                      </p>
+                    )}
+                  </div>
+                  {expandedClient === clientName ? (
+                    <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                  )}
                 </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total em Pedidos</p>
+                    <p className="text-lg font-medium">{formatCurrency(data.totalPedido)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total Faturado</p>
+                    <p className="text-lg font-medium">{formatCurrency(data.totalFaturado)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total em Saldo</p>
+                    <p className="text-lg font-medium">{formatCurrency(data.totalSaldo)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Faturar com Estoque</p>
+                    <p className="text-lg font-medium text-primary">{formatCurrency(data.totalFaturarComEstoque)}</p>
+                  </div>
+                </div>
+
+                {expandedClient === clientName && (
+                  <div className="mt-6">
+                    <div className="flex items-center gap-2 mb-4" onClick={e => e.stopPropagation()}>
+                      <Switch
+                        checked={showZeroBalanceMap[clientName] || false}
+                        onCheckedChange={() => toggleShowZeroBalance(clientName)}
+                        id={`show-zero-balance-${clientName}`}
+                      />
+                      <label 
+                        htmlFor={`show-zero-balance-${clientName}`}
+                        className="text-sm text-muted-foreground cursor-pointer"
+                      >
+                        Mostrar itens com saldo zero
+                      </label>
+                    </div>
+
+                    <div className="rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Nº Pedido</TableHead>
+                            <TableHead>Pedido Cliente</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Quantidade Saldo</TableHead>
+                            <TableHead className="text-right">Valor Saldo</TableHead>
+                            <TableHead className="text-right">Valor Total</TableHead>
+                            <TableHead className="text-right">Faturar com Estoque</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {data.orders.map((order) => {
+                            const valorFaturarComEstoque = order.items?.reduce((total, item) => {
+                              if ((item.FISICO || 0) > 0) {
+                                return total + (item.QTDE_SALDO * item.VALOR_UNITARIO);
+                              }
+                              return total;
+                            }, 0) || 0;
+
+                            return (
+                              <TableRow key={`${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`}>
+                                <TableCell>{order.PED_NUMPEDIDO}</TableCell>
+                                <TableCell>{order.PEDIDO_CLIENTE || '-'}</TableCell>
+                                <TableCell>{order.STATUS === "1" ? "Aberto" : "Parcial"}</TableCell>
+                                <TableCell className="text-right">{order.total_saldo}</TableCell>
+                                <TableCell className="text-right">{formatCurrency(order.valor_total)}</TableCell>
+                                <TableCell className="text-right">
+                                  {formatCurrency(order.items?.reduce((total, item) => 
+                                    total + (item.QTDE_PEDIDA * item.VALOR_UNITARIO), 0) || 0)}
+                                </TableCell>
+                                <TableCell className="text-right text-primary">
+                                  {formatCurrency(valorFaturarComEstoque)}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
