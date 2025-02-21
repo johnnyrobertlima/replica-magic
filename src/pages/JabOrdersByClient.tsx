@@ -73,6 +73,7 @@ const JabOrdersByClient = () => {
       totalValorFaturado: number,
       totalFaturarComEstoque: number,
       representante: string | null,
+      pesCode: number | null,
       allItems: any[]
     }> = {};
     
@@ -89,6 +90,7 @@ const JabOrdersByClient = () => {
           totalValorFaturado: 0,
           totalFaturarComEstoque: 0,
           representante: order.REPRESENTANTE_NOME,
+          pesCode: order.PES_CODIGO,
           allItems: []
         };
       }
@@ -166,20 +168,21 @@ const JabOrdersByClient = () => {
     });
   };
 
-  const handleEnviarParaSeparacao = async (clientName: string, clienteCode: number | null, items: any[]) => {
+  const handleEnviarParaSeparacao = async (clientName: string, clientData: any) => {
     console.log('Iniciando envio para separação...');
     console.log('Cliente:', clientName);
-    console.log('Código do cliente:', clienteCode);
+    console.log('Dados do cliente:', clientData);
+    console.log('Código do cliente (PES_CODE):', clientData.pesCode);
     console.log('Itens selecionados:', Array.from(selectedItems));
     
     try {
-      if (!clienteCode) {
+      if (!clientData.pesCode) {
         console.error('Erro: Código do cliente não encontrado');
         toast.error('Código do cliente não encontrado');
         return;
       }
 
-      const selectedItemsArray = items.filter(item => 
+      const selectedItemsArray = clientData.allItems.filter(item => 
         selectedItems.has(`${item.pedido}-${item.ITEM_CODIGO}`)
       ).map(item => ({
         pedido: item.pedido,
@@ -201,7 +204,7 @@ const JabOrdersByClient = () => {
       console.log('Enviando para API...');
       await createSeparacao.mutateAsync({
         cliente_nome: clientName,
-        cliente_codigo: clienteCode,
+        cliente_codigo: clientData.pesCode,
         itens: selectedItemsArray
       });
 
@@ -445,8 +448,7 @@ const JabOrdersByClient = () => {
                               console.log('Botão Enviar para Separação clicado');
                               handleEnviarParaSeparacao(
                                 clientName, 
-                                data.pedidos[0]?.PES_CODIGO || null,
-                                data.allItems
+                                data
                               );
                             }}
                             disabled={selectedItems.size === 0}
