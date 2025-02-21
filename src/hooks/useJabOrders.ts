@@ -1,14 +1,32 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { startOfDay, endOfDay, format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { startOfDay, endOfDay } from "date-fns";
 import type { DateRange as DayPickerDateRange } from "react-day-picker";
-import type { JabOrder } from "@/types/jabOrders";
-import { 
-  fetchPessoasCodigos, 
-  fetchPedidos,
-  fetchItensDescricoes,
-  processOrders 
-} from "@/services/jabOrdersService";
+import type { Database } from "@/integrations/supabase/types";
+
+type BluebayPedido = Database["public"]["Tables"]["BLUEBAY_PEDIDO"]["Row"];
+type SupabasePedido = Partial<BluebayPedido>;
+
+export interface JabOrder {
+  MATRIZ: number;
+  FILIAL: number;
+  PED_NUMPEDIDO: string;
+  PED_ANOBASE: number;
+  total_saldo: number;
+  valor_total: number;
+  APELIDO: string | null;
+  PEDIDO_CLIENTE: string | null;
+  STATUS: string;
+  items: Array<{
+    ITEM_CODIGO: string;
+    DESCRICAO: string | null;
+    QTDE_SALDO: number;
+    QTDE_PEDIDA: number;
+    QTDE_ENTREGUE: number;
+    VALOR_UNITARIO: number;
+  }>;
+}
 
 export function useJabOrders(dateRange?: DayPickerDateRange) {
   return useQuery({
@@ -16,69 +34,119 @@ export function useJabOrders(dateRange?: DayPickerDateRange) {
     queryFn: async () => {
       if (!dateRange?.from || !dateRange?.to) return [];
 
-      // Garantindo que as datas cubram o dia inteiro
-      const fromDate = startOfDay(dateRange.from);
-      const toDate = endOfDay(dateRange.to);
-
-      // Formatando para YYYY-MM-DD para evitar problemas com timezone
-      const dataInicial = format(fromDate, 'yyyy-MM-dd');
-      const dataFinal = format(toDate, 'yyyy-MM-dd');
+      const dataInicial = startOfDay(dateRange.from).toISOString();
+      const dataFinal = endOfDay(dateRange.to).toISOString();
 
       console.log('Buscando pedidos para o período:', { 
         dataInicial,
         dataFinal,
-        fromDate: fromDate.toISOString(),
-        toDate: toDate.toISOString()
+        fromDate: dateRange.from,
+        toDate: dateRange.to
       });
 
-      // Buscar todos os PES_CODIGO que têm pedidos no período
-      const dadosAgrupados = await fetchPessoasCodigos(dataInicial, dataFinal);
-      console.log('Dados agrupados retornados:', dadosAgrupados);
+      // Primeiro, buscamos os pedidos
+      const { data: pedidosData, error: errorPedidos } = await supabase
+        .from('BLUEBAY_PEDIDO')
+        .select()
+        .eq('CENTROCUSTO', 'JAB')
+        .gte('DATA_PEDIDO', dataInicial)
+        .lte('DATA_PEDIDO', dataFinal)
+        .order('DATA_PEDIDO', { ascending: false });
+
+      if (errorPedidos) {
+        console.error('Erro ao buscar pedidos:', errorPedidos);
+        throw errorPedidos;
+      }
       
-      if (dadosAgrupados.length === 0) {
-        console.log('Nenhum código de pessoa encontrado para o período');
+      if (!pedidosData || pedidosData.length === 0) {
+        console.log('Nenhum pedido encontrado para o período:', {
+          centrocusto: 'JAB',
+          dataInicial,
+          dataFinal
+        });
         return [];
       }
 
-      // Get unique PES_CODIGO values (sem filtros adicionais)
-      const uniquePesCodigos = [...new Set(dadosAgrupados.map(d => d.pes_codigo))];
-      console.log('PES_CODIGO únicos encontrados:', {
-        total: uniquePesCodigos.length,
-        codigos: uniquePesCodigos
-      });
+      console.log('Total de pedidos encontrados:', pedidosData.length);
 
-      // Buscar todos os pedidos para esses códigos no período
-      const pedidosData = await fetchPedidos(dataInicial, dataFinal, uniquePesCodigos);
-      console.log('Pedidos encontrados:', {
-        total: pedidosData.length,
-        porCliente: uniquePesCodigos.map(codigo => ({
-          pes_codigo: codigo,
-          total: pedidosData.filter(p => p.PES_CODIGO === codigo).length
-        }))
-      });
+      // Buscamos os apelidos das pessoas
+      const pessoasIds = [...new Set(pedidosData.map(p => p.PES_CODIGO).filter(Boolean))];
+      const { data: pessoas } = await supabase
+        .from('BLUEBAY_PESSOA')
+        .select('PES_CODIGO, APELIDO')
+        .in('PES_CODIGO', pessoasIds);
 
-      if (pedidosData.length === 0) {
-        console.log('Nenhum pedido encontrado para o período');
-        return [];
-      }
-
-      // Buscar descrições dos itens (sem filtros)
+      // Buscamos as descrições dos itens
       const itemCodigos = [...new Set(pedidosData.map(p => p.ITEM_CODIGO).filter(Boolean))];
-      const itens = await fetchItensDescricoes(itemCodigos);
+      const { data: itens } = await supabase
+        .from('BLUEBAY_ITEM')
+        .select('ITEM_CODIGO, DESCRICAO')
+        .in('ITEM_CODIGO', itemCodigos);
+
+      // Criamos os mapas para lookup rápido
+      const apelidoMap = new Map(
+        pessoas?.map(p => [p.PES_CODIGO, p.APELIDO]) || []
+      );
       const itemMap = new Map(
         itens?.map(i => [i.ITEM_CODIGO, i.DESCRICAO]) || []
       );
 
-      // Processar pedidos sem filtros adicionais
-      const processedOrders = processOrders(pedidosData, itemMap);
-      console.log('Total de pedidos processados:', processedOrders.length);
+      // Criamos um Map para armazenar os pedidos agrupados
+      const ordersMap = new Map<string, JabOrder>();
 
-      return processedOrders;
+      // Processamos os pedidos em um único loop
+      for (const pedido of pedidosData) {
+        const key = `${pedido.FILIAL ?? 0}-${pedido.PED_NUMPEDIDO}-${pedido.PED_ANOBASE}`;
+        const saldo = pedido.QTDE_SALDO || 0;
+        const valorUnitario = pedido.VALOR_UNITARIO || 0;
+
+        if (!ordersMap.has(key)) {
+          ordersMap.set(key, {
+            MATRIZ: pedido.MATRIZ || 0,
+            FILIAL: pedido.FILIAL ?? 0,
+            PED_NUMPEDIDO: pedido.PED_NUMPEDIDO || '',
+            PED_ANOBASE: pedido.PED_ANOBASE || 0,
+            total_saldo: saldo,
+            valor_total: saldo * valorUnitario,
+            APELIDO: pedido.PES_CODIGO ? apelidoMap.get(pedido.PES_CODIGO) || null : null,
+            PEDIDO_CLIENTE: pedido.PEDIDO_CLIENTE || null,
+            STATUS: pedido.STATUS || '',
+            items: []
+          });
+        } else {
+          const order = ordersMap.get(key)!;
+          order.total_saldo += saldo;
+          order.valor_total += saldo * valorUnitario;
+        }
+
+        if (pedido.ITEM_CODIGO) {
+          const order = ordersMap.get(key)!;
+          const existingItemIndex = order.items.findIndex(item => item.ITEM_CODIGO === pedido.ITEM_CODIGO);
+          
+          if (existingItemIndex === -1) {
+            order.items.push({
+              ITEM_CODIGO: pedido.ITEM_CODIGO,
+              DESCRICAO: itemMap.get(pedido.ITEM_CODIGO) || null,
+              QTDE_SALDO: saldo,
+              QTDE_PEDIDA: pedido.QTDE_PEDIDA || 0,
+              QTDE_ENTREGUE: pedido.QTDE_ENTREGUE || 0,
+              VALOR_UNITARIO: valorUnitario
+            });
+          }
+        }
+      }
+
+      const ordersArray = Array.from(ordersMap.values());
+
+      console.log('Número de pedidos agrupados:', ordersArray.length);
+      if (ordersArray.length > 0) {
+        console.log('Exemplo de pedido agrupado:', ordersArray[0]);
+      }
+
+      return ordersArray;
     },
     enabled: !!dateRange?.from && !!dateRange?.to,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000,   // 10 minutes
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 }
-
-export type { JabOrder };

@@ -4,7 +4,6 @@ import Index from "@/pages/Index";
 import ClientArea from "@/pages/ClientArea";
 import PostManagement from "@/pages/PostManagement";
 import JabOrders from "@/pages/JabOrders";
-import JabOrdersByClient from "@/pages/JabOrdersByClient";
 import ContentManagement from "@/pages/ContentManagement";
 import MailingRegistration from "@/pages/MailingRegistration";
 import TokenManagement from "@/pages/TokenManagement";
@@ -33,7 +32,6 @@ function App() {
         <Route path="/client-area" element={<ClientArea />} />
         <Route path="/post-management" element={<PostManagement />} />
         <Route path="/client-area/bluebay/jab-orders" element={<JabOrders />} />
-        <Route path="/client-area/bluebay/jab-orders-by-client" element={<JabOrdersByClient />} />
         <Route path="/client-area/content-management" element={<ContentManagement />} />
         <Route path="/client-area/mailing-registration" element={<MailingRegistration />} />
         <Route path="/client-area/tokens" element={<TokenManagement />} />
