@@ -230,12 +230,10 @@ export function useTotals() {
         .select(`
           QTDE_SALDO,
           VALOR_UNITARIO,
-          ITEM_CODIGO,
-          PED_NUMPEDIDO
+          ITEM_CODIGO
         `)
         .eq('CENTROCUSTO', 'JAB')
-        .in('STATUS', ['1', '2'])
-        .in('PED_NUMPEDIDO', numeroPedidos);
+        .in('STATUS', ['1', '2']);
 
       if (error) throw error;
 
@@ -245,8 +243,6 @@ export function useTotals() {
 
       const itemCodigos = [...new Set(pedidosDetalhados.map(p => p.ITEM_CODIGO).filter(Boolean))];
       
-      console.log('Total de itens únicos:', itemCodigos.length);
-      
       // Buscamos o estoque para todos os itens
       const { data: estoque } = await supabase
         .from('BLUEBAY_ESTOQUE')
@@ -255,24 +251,21 @@ export function useTotals() {
 
       const estoqueMap = new Map(estoque?.map(e => [e.ITEM_CODIGO, e.FISICO]) || []);
 
-      let valorTotalSaldo = 0;
-      let valorFaturarComEstoque = 0;
+      // Calculamos o valor total do saldo (exatamente como na sua query)
+      let valorTotalSaldo = pedidosDetalhados.reduce((total, pedido) => {
+        if (!pedido.QTDE_SALDO || !pedido.VALOR_UNITARIO) return total;
+        return total + (pedido.QTDE_SALDO * pedido.VALOR_UNITARIO);
+      }, 0);
 
-      // Calculamos os totais
-      pedidosDetalhados.forEach(pedido => {
-        if (!pedido.ITEM_CODIGO) return;
-        
-        const saldo = pedido.QTDE_SALDO || 0;
-        const valorUnitario = pedido.VALOR_UNITARIO || 0;
-        const valorSaldo = saldo * valorUnitario;
-        
-        valorTotalSaldo += valorSaldo;
-
+      // Calculamos o valor que pode ser faturado com estoque
+      let valorFaturarComEstoque = pedidosDetalhados.reduce((total, pedido) => {
+        if (!pedido.ITEM_CODIGO || !pedido.QTDE_SALDO || !pedido.VALOR_UNITARIO) return total;
         const estoqueFisico = estoqueMap.get(pedido.ITEM_CODIGO) || 0;
         if (estoqueFisico > 0) {
-          valorFaturarComEstoque += valorSaldo;
+          return total + (pedido.QTDE_SALDO * pedido.VALOR_UNITARIO);
         }
-      });
+        return total;
+      }, 0);
 
       console.log('Valores calculados:', {
         valorTotalSaldo,
