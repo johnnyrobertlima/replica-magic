@@ -144,18 +144,18 @@ const JabOrders = () => {
 
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-lg font-semibold text-gray-700">Valor Total Saldo</div>
-              <div className="text-2xl font-bold text-primary">
+          <Card className="bg-white shadow-lg">
+            <CardContent className="pt-6 p-8">
+              <div className="text-xl font-semibold text-gray-700 mb-2">Valor Total Saldo</div>
+              <div className="text-3xl lg:text-4xl font-bold text-primary">
                 {formatCurrency(totals.valorTotalSaldo)}
               </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-lg font-semibold text-gray-700">Faturar com Estoque</div>
-              <div className="text-2xl font-bold text-primary">
+          <Card className="bg-white shadow-lg">
+            <CardContent className="pt-6 p-8">
+              <div className="text-xl font-semibold text-gray-700 mb-2">Faturar com Estoque</div>
+              <div className="text-3xl lg:text-4xl font-bold text-primary">
                 {formatCurrency(totals.valorFaturarComEstoque)}
               </div>
             </CardContent>
