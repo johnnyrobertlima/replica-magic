@@ -50,12 +50,11 @@ export function useSeparacoes() {
           .select(`
             PED_NUMPEDIDO,
             REPRESENTANTE,
-            pessoa:BLUEBAY_PESSOA(
-              RAZAOSOCIAL
-            )
+            representante:BLUEBAY_PESSOA!inner(RAZAOSOCIAL)
           `)
           .eq('CENTROCUSTO', 'JAB')
-          .in('PED_NUMPEDIDO', uniquePedidos);
+          .in('PED_NUMPEDIDO', uniquePedidos)
+          .eq('BLUEBAY_PESSOA.PES_CODIGO', 'BLUEBAY_PEDIDO.REPRESENTANTE');
 
         // Mapear os representantes para as separações
         return separacoes.map(separacao => {
@@ -63,7 +62,7 @@ export function useSeparacoes() {
             separacao.separacao_itens?.some(item => item.pedido === p.PED_NUMPEDIDO)
           );
           
-          const representanteNome = pedidoInfo?.pessoa?.RAZAOSOCIAL || 'Não informado';
+          const representanteNome = pedidoInfo?.representante?.RAZAOSOCIAL || 'Não informado';
 
           return {
             ...separacao,
