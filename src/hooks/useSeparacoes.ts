@@ -50,10 +50,11 @@ export function useSeparacoes() {
           .select(`
             PED_NUMPEDIDO,
             REPRESENTANTE,
-            BLUEBAY_PESSOA!BLUEBAY_PEDIDO_REPRESENTANTE_fkey (
+            pedido_representante:BLUEBAY_PESSOA!BLUEBAY_PEDIDO_REPRESENTANTE_fkey (
               RAZAOSOCIAL
             )
           `)
+          .eq('CENTROCUSTO', 'JAB')
           .in('PED_NUMPEDIDO', uniquePedidos);
 
         // Mapear os representantes para as separações
@@ -62,7 +63,7 @@ export function useSeparacoes() {
             separacao.separacao_itens?.some(item => item.pedido === p.PED_NUMPEDIDO)
           );
           
-          const representanteNome = pedidoInfo?.BLUEBAY_PESSOA?.RAZAOSOCIAL || 'Não informado';
+          const representanteNome = pedidoInfo?.pedido_representante?.RAZAOSOCIAL || 'Não informado';
 
           return {
             ...separacao,
