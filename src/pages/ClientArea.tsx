@@ -1,7 +1,6 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare, Key, UserPlus, Mail, Database, Package2, DollarSign } from "lucide-react";
+import { MessageSquare, Key, UserPlus, Mail, Database, Package2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const ClientArea = () => {
@@ -114,20 +113,10 @@ const ClientArea = () => {
               Gerencie pedidos e separação de itens
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent>
             <Link to="/client-area/bluebay/jab-orders">
               <Button className="w-full">
-                Pedidos JAB
-              </Button>
-            </Link>
-            <Link to="/client-area/bluebay/jab-orders-by-client">
-              <Button className="w-full" variant="outline">
                 Separação de pedidos JAB
-              </Button>
-            </Link>
-            <Link to="/client-area/bluebay/aprovacao-financeira">
-              <Button className="w-full" variant="outline">
-                Aprovação Financeira
               </Button>
             </Link>
           </CardContent>
