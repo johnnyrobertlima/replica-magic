@@ -11,6 +11,7 @@ export interface Permission {
   permission_type: 'read' | 'write' | 'admin';
   created_at: string;
   updated_at: string;
+  group_name?: string; // Adicionando o nome do grupo
 }
 
 export interface PermissionFormData {

@@ -23,6 +23,7 @@ export const PermissionTable = ({ permissions, isLoading, onDelete }: Permission
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead>Grupo</TableHead>
             <TableHead>Caminho do Recurso</TableHead>
             <TableHead>Tipo de Permissão</TableHead>
             <TableHead className="w-[100px]">Ações</TableHead>
@@ -31,19 +32,20 @@ export const PermissionTable = ({ permissions, isLoading, onDelete }: Permission
         <TableBody>
           {isLoading ? (
             <TableRow>
-              <TableCell colSpan={3} className="text-center">
+              <TableCell colSpan={4} className="text-center">
                 <Loader2 className="h-4 w-4 animate-spin mx-auto" />
               </TableCell>
             </TableRow>
           ) : permissions?.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={3} className="text-center text-muted-foreground">
+              <TableCell colSpan={4} className="text-center text-muted-foreground">
                 Nenhuma permissão encontrada
               </TableCell>
             </TableRow>
           ) : (
             permissions?.map((permission) => (
               <TableRow key={permission.id}>
+                <TableCell>{permission.group_name}</TableCell>
                 <TableCell>{permission.resource_path}</TableCell>
                 <TableCell className="capitalize">{permission.permission_type}</TableCell>
                 <TableCell>

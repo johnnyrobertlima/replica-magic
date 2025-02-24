@@ -53,12 +53,21 @@ export const AdminPermissions = () => {
       if (!selectedGroupId) return [];
       const { data, error } = await supabase
         .from("group_permissions")
-        .select("*")
+        .select(`
+          *,
+          groups!inner (
+            name
+          )
+        `)
         .eq("group_id", selectedGroupId)
         .order("resource_path");
       
       if (error) throw error;
-      return data as Permission[];
+      
+      return data.map(permission => ({
+        ...permission,
+        group_name: permission.groups.name
+      })) as Permission[];
     },
     enabled: !!selectedGroupId,
   });
