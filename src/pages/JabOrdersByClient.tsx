@@ -187,16 +187,34 @@ const JabOrdersByClient = () => {
       let allSelectedItems: Array<{
         pedido: string;
         item: any;
-        PES_CODIGO: number;
+        PES_CODIGO: number | null;
         APELIDO: string | null;
       }> = [];
 
       Object.values(groupedOrders).forEach(group => {
         group.allItems.forEach(item => {
           if (selectedItems.includes(item.ITEM_CODIGO)) {
-            const pesCodigoNumerico = typeof item.PES_CODIGO === 'object' ? 
-              null : 
-              Number(item.PES_CODIGO);
+            let pesCodigoNumerico = null;
+            
+            if (typeof item.PES_CODIGO === 'number') {
+              pesCodigoNumerico = item.PES_CODIGO;
+            } else if (typeof item.PES_CODIGO === 'string') {
+              const parsed = parseInt(item.PES_CODIGO, 10);
+              if (!isNaN(parsed)) {
+                pesCodigoNumerico = parsed;
+              }
+            } else if (item.PES_CODIGO && typeof item.PES_CODIGO === 'object') {
+              const value = item.PES_CODIGO.value;
+              if (typeof value === 'string' || typeof value === 'number') {
+                const parsed = parseInt(String(value), 10);
+                if (!isNaN(parsed)) {
+                  pesCodigoNumerico = parsed;
+                }
+              }
+            }
+
+            console.log('PES_CODIGO original:', item.PES_CODIGO);
+            console.log('PES_CODIGO processado:', pesCodigoNumerico);
 
             allSelectedItems.push({
               pedido: item.pedido,
