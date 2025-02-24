@@ -27,6 +27,7 @@ import { AdminSocial } from "@/pages/admin/social";
 import { AdminGroups } from "@/pages/admin/groups";
 import { AdminPermissions } from "@/pages/admin/permissions";
 import { AdminLogin } from "@/pages/admin/login";
+import { UserGroupManagement } from "@/pages/admin/users/UserGroupManagement";
 import { Outlet } from "react-router-dom";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
 
@@ -70,6 +71,11 @@ function App() {
           <Route path="permissions" element={
             <PermissionGuard resourcePath="/admin" requiredPermission="admin">
               <AdminPermissions />
+            </PermissionGuard>
+          } />
+          <Route path="users" element={
+            <PermissionGuard resourcePath="/admin" requiredPermission="admin">
+              <UserGroupManagement />
             </PermissionGuard>
           } />
           <Route path="logos" element={

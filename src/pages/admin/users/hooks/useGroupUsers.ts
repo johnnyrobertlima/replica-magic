@@ -15,7 +15,7 @@ export const useGroupUsers = (groupId: string) => {
           id,
           user_id,
           group_id,
-          user:user_id (
+          auth:user_id (
             email
           )
         `)
@@ -27,7 +27,7 @@ export const useGroupUsers = (groupId: string) => {
         id: assignment.id,
         user_id: assignment.user_id,
         group_id: assignment.group_id,
-        user_email: assignment.user?.email
+        user_email: assignment.auth?.email
       })) as UserGroupAssignment[];
     },
     enabled: !!groupId,
