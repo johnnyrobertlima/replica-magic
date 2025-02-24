@@ -1,11 +1,8 @@
 
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -14,30 +11,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useToast } from "@/components/ui/use-toast";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Plus, Loader2 } from "lucide-react";
-import { ActionButtons } from "@/components/admin/ActionButtons";
-
-interface Group {
-  id: string;
-  name: string;
-  description: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-interface GroupFormData {
-  name: string;
-  description: string;
-}
+import { GroupForm } from "./groups/GroupForm";
+import { GroupsTable } from "./groups/GroupsTable";
+import { useGroupMutations } from "./groups/useGroupMutations";
+import type { Group, GroupFormData } from "./groups/types";
 
 export const AdminGroups = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -46,9 +24,8 @@ export const AdminGroups = () => {
     name: "",
     description: "",
   });
-  
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+
+  const { createMutation, updateMutation, deleteMutation } = useGroupMutations();
 
   const { data: groups, isLoading } = useQuery({
     queryKey: ["groups"],
@@ -66,106 +43,25 @@ export const AdminGroups = () => {
     },
   });
 
-  const createMutation = useMutation({
-    mutationFn: async (data: GroupFormData) => {
-      const { data: session } = await supabase.auth.getSession();
-      if (!session) throw new Error("No session");
-
-      const { error } = await supabase
-        .from("groups")
-        .insert([data])
-        .select()
-        .single();
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["groups"] });
-      setIsOpen(false);
-      resetForm();
-      toast({
-        title: "Grupo criado",
-        description: "O grupo foi criado com sucesso!",
-      });
-    },
-    onError: (error) => {
-      console.error("Erro ao criar grupo:", error);
-      toast({
-        title: "Erro ao criar grupo",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: GroupFormData }) => {
-      const { data: session } = await supabase.auth.getSession();
-      if (!session) throw new Error("No session");
-
-      const { error } = await supabase
-        .from("groups")
-        .update(data)
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["groups"] });
-      setIsOpen(false);
-      resetForm();
-      toast({
-        title: "Grupo atualizado",
-        description: "O grupo foi atualizado com sucesso!",
-      });
-    },
-    onError: (error) => {
-      console.error("Erro ao atualizar grupo:", error);
-      toast({
-        title: "Erro ao atualizar grupo",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { data: session } = await supabase.auth.getSession();
-      if (!session) throw new Error("No session");
-
-      const { error } = await supabase
-        .from("groups")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["groups"] });
-      toast({
-        title: "Grupo excluído",
-        description: "O grupo foi excluído com sucesso!",
-      });
-    },
-    onError: (error) => {
-      console.error("Erro ao excluir grupo:", error);
-      toast({
-        title: "Erro ao excluir grupo",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingGroup) {
-      updateMutation.mutate({ id: editingGroup.id, data: formData });
+      updateMutation.mutate(
+        { id: editingGroup.id, data: formData },
+        {
+          onSuccess: () => {
+            setIsOpen(false);
+            resetForm();
+          },
+        }
+      );
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate(formData, {
+        onSuccess: () => {
+          setIsOpen(false);
+          resetForm();
+        },
+      });
     }
   };
 
@@ -225,71 +121,22 @@ export const AdminGroups = () => {
                   : "Preencha as informações para criar um novo grupo."}
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="name">Nome</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="description">Descrição</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                />
-              </div>
-              <Button
-                type="submit"
-                disabled={createMutation.isPending || updateMutation.isPending}
-                className="w-full"
-              >
-                {createMutation.isPending || updateMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : editingGroup ? (
-                  "Atualizar"
-                ) : (
-                  "Criar"
-                )}
-              </Button>
-            </form>
+            <GroupForm
+              formData={formData}
+              setFormData={setFormData}
+              onSubmit={handleSubmit}
+              isLoading={createMutation.isPending || updateMutation.isPending}
+              editingGroup={editingGroup}
+            />
           </DialogContent>
         </Dialog>
       </div>
 
-      <div className="bg-white rounded-lg shadow">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>Descrição</TableHead>
-              <TableHead className="w-[120px]">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {groups?.map((group) => (
-              <TableRow key={group.id}>
-                <TableCell>{group.name}</TableCell>
-                <TableCell>{group.description}</TableCell>
-                <TableCell>
-                  <ActionButtons
-                    onEdit={() => handleEdit(group)}
-                    onDelete={() => handleDelete(group.id)}
-                  />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      <GroupsTable
+        groups={groups || []}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+      />
     </div>
   );
 };
