@@ -20,6 +20,5 @@ export interface Separacao {
   quantidade_itens: number;
   created_at: string;
   updated_at: string;
-  representante: string | null;
   itens?: SeparacaoItem[];
 }

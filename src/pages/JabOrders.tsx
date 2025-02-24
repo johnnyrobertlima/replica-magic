@@ -1,110 +1,151 @@
 
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { useJabOrders, useTotals } from "@/hooks/useJabOrders";
+import type { DateRange } from "react-day-picker";
 import OrderCard from "@/components/jab-orders/OrderCard";
+import { TotalCards } from "@/components/jab-orders/TotalCards";
 import { OrdersHeader } from "@/components/jab-orders/OrdersHeader";
 import { OrdersPagination } from "@/components/jab-orders/OrdersPagination";
-import SearchFilters from "@/components/jab-orders/SearchFilters";
-import { TotalCards } from "@/components/jab-orders/TotalCards";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-import type { DateRange } from "react-day-picker";
 import type { SearchType } from "@/components/jab-orders/SearchFilters";
 
-const JabOrders = () => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [dateRange, setDateRange] = useState<DateRange>();
-  const [searchType, setSearchType] = useState<SearchType>("pedido");
+const ITEMS_PER_PAGE = 15;
 
-  const { data, isLoading } = useJabOrders({
-    dateRange,
+const JabOrders = () => {
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: new Date(),
+    to: new Date(),
+  });
+  const [searchDate, setSearchDate] = useState<DateRange | undefined>(date);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchType, setSearchType] = useState<SearchType>("pedido");
+  const [isSearching, setIsSearching] = useState(false);
+  const [showZeroBalanceMap, setShowZeroBalanceMap] = useState<Record<string, boolean>>({});
+
+  const { data: ordersData = { orders: [], totalCount: 0 }, isLoading: isLoadingOrders } = useJabOrders({
+    dateRange: searchDate,
     page: currentPage,
-    pageSize: 10
+    pageSize: ITEMS_PER_PAGE
   });
 
-  const { data: totalsData } = useTotals();
+  const { data: totals = { valorTotalSaldo: 0, valorFaturarComEstoque: 0 }, isLoading: isLoadingTotals } = useTotals();
+
+  const toggleExpand = (orderId: string) => {
+    setExpandedOrder(expandedOrder === orderId ? null : orderId);
+  };
+
+  const toggleShowZeroBalance = (orderId: string) => {
+    setShowZeroBalanceMap(prev => ({
+      ...prev,
+      [orderId]: !prev[orderId]
+    }));
+  };
 
   const handleSearch = () => {
-    // Implementar lógica de busca
-    console.log("Searching...", { searchQuery, dateRange, searchType });
+    setIsSearching(true);
+    setSearchDate(date);
+    setCurrentPage(1);
   };
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+  const removeLeadingZeros = (str: string) => {
+    return str.replace(/^0+/, '');
   };
 
-  if (isLoading) {
-    return <div>Carregando...</div>;
+  const filteredOrders = ordersData.orders.filter((order) => {
+    if (!["1", "2"].includes(order.STATUS)) {
+      return false;
+    }
+
+    if (!isSearching) return true;
+    
+    if (searchQuery) {
+      const normalizedSearchQuery = searchQuery.toLowerCase().trim();
+      
+      switch (searchType) {
+        case "pedido":
+          const normalizedOrderNumber = removeLeadingZeros(order.PED_NUMPEDIDO);
+          const normalizedSearchNumber = removeLeadingZeros(searchQuery);
+          return normalizedOrderNumber.includes(normalizedSearchNumber);
+        
+        case "cliente":
+          return order.APELIDO?.toLowerCase().includes(normalizedSearchQuery) || false;
+        
+        case "representante":
+          return order.REPRESENTANTE_NOME?.toLowerCase().includes(normalizedSearchQuery) || false;
+        
+        default:
+          return false;
+      }
+    }
+    
+    return true;
+  });
+
+  const totalPages = Math.ceil(ordersData.totalCount / ITEMS_PER_PAGE);
+
+  if (isLoadingOrders || isLoadingTotals) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
-  const orders = data?.orders || [];
-  const totalCount = data?.totalCount || 0;
-  const totalPages = Math.ceil(totalCount / 10);
-
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-6">
-        <Link to="/client-area">
-          <Button variant="outline">Voltar para Área do Cliente</Button>
-        </Link>
-      </div>
-      
-      <OrdersHeader 
-        currentPage={currentPage}
-        totalPages={totalPages}
-        totalCount={totalCount}
-        searchQuery={searchQuery}
-        onSearchQueryChange={setSearchQuery}
-        onSearch={handleSearch}
-        date={dateRange}
-        onDateChange={setDateRange}
-        searchType={searchType}
-        onSearchTypeChange={setSearchType}
-      />
-      
-      <div className="mb-6">
-        <SearchFilters
+    <main className="container mx-auto px-4 py-8">
+      <Link to="/client-area" className="inline-flex items-center gap-2 mb-6 text-primary hover:underline">
+        <ArrowLeft className="h-4 w-4" />
+        Voltar para Área do Cliente
+      </Link>
+
+      <div className="space-y-6">
+        <TotalCards
+          valorTotalSaldo={totals.valorTotalSaldo}
+          valorFaturarComEstoque={totals.valorFaturarComEstoque}
+        />
+
+        <OrdersHeader
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalCount={ordersData.totalCount}
           searchQuery={searchQuery}
           onSearchQueryChange={setSearchQuery}
           onSearch={handleSearch}
-          date={dateRange}
-          onDateChange={setDateRange}
+          date={date}
+          onDateChange={setDate}
           searchType={searchType}
           onSearchTypeChange={setSearchType}
         />
-      </div>
 
-      {totalsData && (
-        <div className="mb-6">
-          <TotalCards
-            valorTotalSaldo={totalsData.valorTotalSaldo}
-            valorFaturarComEstoque={totalsData.valorFaturarComEstoque}
-          />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {filteredOrders.map((order) => {
+            const orderId = `${order.MATRIZ}-${order.FILIAL}-${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`;
+            const isExpanded = expandedOrder === orderId;
+            const showZeroBalance = showZeroBalanceMap[orderId] || false;
+
+            return (
+              <OrderCard
+                key={orderId}
+                order={order}
+                isExpanded={isExpanded}
+                showZeroBalance={showZeroBalance}
+                onToggleExpand={() => toggleExpand(orderId)}
+                onToggleZeroBalance={() => toggleShowZeroBalance(orderId)}
+              />
+            );
+          })}
         </div>
-      )}
 
-      <div className="grid gap-4">
-        {orders.map((order) => (
-          <OrderCard 
-            key={`${order.MATRIZ}-${order.FILIAL}-${order.PED_NUMPEDIDO}`} 
-            order={order}
-            isExpanded={false}
-            showZeroBalance={false}
-            onToggleExpand={() => {}}
-            onToggleZeroBalance={() => {}}
-          />
-        ))}
-      </div>
-
-      <div className="mt-6">
         <OrdersPagination
           currentPage={currentPage}
           totalPages={totalPages}
-          onPageChange={handlePageChange}
+          onPageChange={setCurrentPage}
         />
       </div>
-    </div>
+    </main>
   );
 };
 
