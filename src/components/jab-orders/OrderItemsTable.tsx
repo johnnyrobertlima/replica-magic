@@ -7,15 +7,24 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 import type { OrderItem } from "./types";
 
 interface OrderItemsTableProps {
   items: OrderItem[];
   showZeroBalance: boolean;
   showOnlyWithStock: boolean;
+  selectedItems: string[];
+  onItemSelect: (itemCode: string) => void;
 }
 
-export const OrderItemsTable = ({ items, showZeroBalance, showOnlyWithStock }: OrderItemsTableProps) => {
+export const OrderItemsTable = ({ 
+  items, 
+  showZeroBalance, 
+  showOnlyWithStock,
+  selectedItems,
+  onItemSelect
+}: OrderItemsTableProps) => {
   const filteredItems = items.filter(item => {
     if (!showZeroBalance && item.QTDE_SALDO <= 0) return false;
     if (showOnlyWithStock && (item.FISICO || 0) <= 0) return false;
@@ -29,6 +38,7 @@ export const OrderItemsTable = ({ items, showZeroBalance, showOnlyWithStock }: O
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[50px]"></TableHead>
               <TableHead>SKU</TableHead>
               <TableHead>Descrição</TableHead>
               <TableHead className="text-right">QT Pedido</TableHead>
@@ -42,6 +52,12 @@ export const OrderItemsTable = ({ items, showZeroBalance, showOnlyWithStock }: O
           <TableBody>
             {filteredItems.map((item, index) => (
               <TableRow key={`${item.ITEM_CODIGO}-${index}`}>
+                <TableCell>
+                  <Checkbox
+                    checked={selectedItems.includes(item.ITEM_CODIGO)}
+                    onCheckedChange={() => onItemSelect(item.ITEM_CODIGO)}
+                  />
+                </TableCell>
                 <TableCell className="font-medium">{item.ITEM_CODIGO}</TableCell>
                 <TableCell>{item.DESCRICAO || '-'}</TableCell>
                 <TableCell className="text-right">{item.QTDE_PEDIDA.toLocaleString()}</TableCell>
