@@ -20,7 +20,7 @@ export function useGroups() {
   });
 
   const createGroup = useMutation({
-    mutationFn: async (group: Partial<Group>) => {
+    mutationFn: async (group: { name: string; description?: string }) => {
       const { data, error } = await supabase
         .from('groups')
         .insert(group)
@@ -110,10 +110,18 @@ export function useGroupPermissions(groupId?: string) {
   });
 
   const updatePermission = useMutation({
-    mutationFn: async (permission: Partial<GroupPermission>) => {
+    mutationFn: async ({ group_id, resource_path, permission_type }: { 
+      group_id: string; 
+      resource_path: string; 
+      permission_type: PermissionType 
+    }) => {
       const { data, error } = await supabase
         .from('group_permissions')
-        .upsert(permission)
+        .upsert({
+          group_id,
+          resource_path,
+          permission_type
+        })
         .select()
         .single();
       
