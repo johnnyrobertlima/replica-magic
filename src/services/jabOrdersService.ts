@@ -66,8 +66,8 @@ async function fetchPedidosDetalhados(numeroPedidos: string[]) {
   return data || [];
 }
 
-async function fetchRelatedData(pessoasIds: number[], itemCodigos: string[], representantesIds: number[]) {
-  const [pessoasResponse, itensResponse, estoqueResponse, representantesResponse] = await Promise.all([
+async function fetchRelatedData(pessoasIds: number[], itemCodigos: string[]) {
+  const [pessoasResponse, itensResponse, estoqueResponse] = await Promise.all([
     supabase
       .from('BLUEBAY_PESSOA')
       .select('PES_CODIGO, APELIDO')
@@ -79,18 +79,13 @@ async function fetchRelatedData(pessoasIds: number[], itemCodigos: string[], rep
     supabase
       .from('BLUEBAY_ESTOQUE')
       .select('ITEM_CODIGO, FISICO')
-      .in('ITEM_CODIGO', itemCodigos),
-    supabase
-      .from('BLUEBAY_PESSOA')
-      .select('PES_CODIGO, APELIDO')
-      .in('PES_CODIGO', representantesIds)
+      .in('ITEM_CODIGO', itemCodigos)
   ]);
 
   return {
     pessoas: pessoasResponse.data || [],
     itens: itensResponse.data || [],
-    estoque: estoqueResponse.data || [],
-    representantes: representantesResponse.data || []
+    estoque: estoqueResponse.data || []
   };
 }
 
@@ -121,19 +116,18 @@ export async function fetchJabOrders({
     return { orders: [], totalCount };
   }
 
-  const pessoasIds = [...new Set(pedidosDetalhados.map(p => p.PES_CODIGO).filter(Boolean))];
+  // Coleta todos os IDs únicos para buscar dados relacionados
+  const pessoasIds = [...new Set(pedidosDetalhados.map(p => p.PES_CODIGO).filter(id => id !== null && id !== undefined))] as number[];
   const itemCodigos = [...new Set(pedidosDetalhados.map(p => p.ITEM_CODIGO).filter(Boolean))];
-  const representantesIds = [...new Set(pedidosDetalhados.map(p => p.REPRESENTANTE).filter(Boolean))];
 
-  const { pessoas, itens, estoque, representantes } = await fetchRelatedData(pessoasIds, itemCodigos, representantesIds);
+  const { pessoas, itens, estoque } = await fetchRelatedData(pessoasIds, itemCodigos);
 
-  // Criamos os mapas para lookup rápido
-  const apelidoMap = new Map(pessoas.map(p => [p.PES_CODIGO, p.APELIDO]));
+  // Cria mapas para lookup rápido
+  const pessoasMap = new Map(pessoas.map(p => [p.PES_CODIGO, p]));
   const itemMap = new Map(itens.map(i => [i.ITEM_CODIGO, i.DESCRICAO]));
   const estoqueMap = new Map(estoque.map(e => [e.ITEM_CODIGO, e.FISICO]));
-  const representanteMap = new Map(representantes.map(r => [r.PES_CODIGO, r.APELIDO]));
 
-  // Agrupamos os pedidos
+  // Agrupa os pedidos
   const pedidosAgrupados = new Map<string, any[]>();
   pedidosDetalhados.forEach(pedido => {
     const key = pedido.PED_NUMPEDIDO;
@@ -143,7 +137,7 @@ export async function fetchJabOrders({
     pedidosAgrupados.get(key)!.push(pedido);
   });
 
-  // Processamos os pedidos agrupados mantendo a ordem original
+  // Processa os pedidos agrupados mantendo a ordem original
   const orders: JabOrder[] = numeroPedidos.map(numPedido => {
     const pedidos = pedidosAgrupados.get(numPedido) || [];
     const primeiroPedido = pedidos[0];
@@ -152,6 +146,8 @@ export async function fetchJabOrders({
       console.log('Pedido não encontrado:', numPedido);
       return null;
     }
+
+    const pessoa = pessoasMap.get(primeiroPedido.PES_CODIGO);
 
     let total_saldo = 0;
     let valor_total = 0;
@@ -173,7 +169,10 @@ export async function fetchJabOrders({
         QTDE_PEDIDA: pedido.QTDE_PEDIDA || 0,
         QTDE_ENTREGUE: pedido.QTDE_ENTREGUE || 0,
         VALOR_UNITARIO: valorUnitario,
-        FISICO: estoqueMap.get(pedido.ITEM_CODIGO) || null
+        FISICO: estoqueMap.get(pedido.ITEM_CODIGO) || null,
+        pedido: pedido.PED_NUMPEDIDO,
+        APELIDO: pessoa?.APELIDO || null,
+        PES_CODIGO: primeiroPedido.PES_CODIGO
       });
     });
 
@@ -184,10 +183,10 @@ export async function fetchJabOrders({
       PED_ANOBASE: primeiroPedido.PED_ANOBASE || 0,
       total_saldo,
       valor_total,
-      APELIDO: primeiroPedido.PES_CODIGO ? apelidoMap.get(primeiroPedido.PES_CODIGO) || null : null,
+      APELIDO: pessoa?.APELIDO || null,
       PEDIDO_CLIENTE: primeiroPedido.PEDIDO_CLIENTE || null,
       STATUS: primeiroPedido.STATUS || '',
-      REPRESENTANTE_NOME: primeiroPedido.REPRESENTANTE ? representanteMap.get(primeiroPedido.REPRESENTANTE) || null : null,
+      PES_CODIGO: primeiroPedido.PES_CODIGO,
       items: Array.from(items.values())
     };
   }).filter(Boolean) as JabOrder[];
@@ -200,7 +199,7 @@ export async function fetchJabOrders({
   };
 }
 
-export async function fetchJabTotals(): Promise<JabTotalsResponse> {
+export async function fetchTotals(): Promise<JabTotalsResponse> {
   const valorTotalResponse = await supabase.rpc('calcular_valor_total_jab');
   const valorFaturarResponse = await supabase.rpc('calcular_valor_faturar_com_estoque');
 
