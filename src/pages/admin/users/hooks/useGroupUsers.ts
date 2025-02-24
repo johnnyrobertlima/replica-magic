@@ -3,6 +3,17 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { UserGroupAssignment } from "../types";
 
+interface AuthUser {
+  email: string | null;
+}
+
+interface GroupUserResponse {
+  id: string;
+  user_id: string;
+  group_id: string;
+  auth: AuthUser;
+}
+
 export const useGroupUsers = (groupId: string) => {
   return useQuery({
     queryKey: ["group-users", groupId],
@@ -23,7 +34,7 @@ export const useGroupUsers = (groupId: string) => {
       
       if (error) throw error;
       
-      return data.map(assignment => ({
+      return (data as GroupUserResponse[]).map(assignment => ({
         id: assignment.id,
         user_id: assignment.user_id,
         group_id: assignment.group_id,
