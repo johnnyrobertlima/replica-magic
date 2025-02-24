@@ -209,6 +209,7 @@ const JabOrdersByClient = () => {
         itemsByClient[clientName].push(item);
       });
 
+      let successCount = 0;
       for (const [clientName, items] of Object.entries(itemsByClient)) {
         const clienteCode = items[0]?.PES_CODIGO;
         if (!clienteCode) {
@@ -269,17 +270,22 @@ const JabOrdersByClient = () => {
           });
           continue;
         }
+
+        successCount++;
       }
 
-      await queryClient.invalidateQueries({ queryKey: ['separacoes'] });
-      
-      toast({
-        title: "Sucesso",
-        description: "Itens enviados para separação com sucesso",
-      });
+      if (successCount > 0) {
+        await queryClient.invalidateQueries({ queryKey: ['separacoes'] });
+        
+        toast({
+          title: "Sucesso",
+          description: `${successCount} separação(ões) criada(s) com sucesso!`,
+          variant: "default",
+        });
 
-      setSelectedItems([]);
-      setExpandedClients(new Set());
+        setSelectedItems([]);
+        setExpandedClients(new Set());
+      }
     } catch (error) {
       console.error('Erro ao processar separação:', error);
       toast({
