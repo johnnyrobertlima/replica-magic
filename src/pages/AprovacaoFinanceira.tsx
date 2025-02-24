@@ -98,7 +98,7 @@ const AprovacaoFinanceira = () => {
                       <div className="space-y-4">
                         <h4 className="font-semibold">Itens do Pedido</h4>
                         <div className="space-y-2">
-                          {separacao.itens?.map((item, index) => (
+                          {separacao.separacao_itens?.map((item, index) => (
                             <div key={index} className="border rounded p-3">
                               <p className="font-medium">{item.item_codigo} - {item.descricao}</p>
                               <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
