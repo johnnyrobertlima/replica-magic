@@ -1227,6 +1227,12 @@ export type Database = {
           valor_total_saldo: number
         }[]
       }
+      check_admin_permission: {
+        Args: {
+          check_user_id: string
+        }
+        Returns: boolean
+      }
       check_user_permission: {
         Args: {
           user_id: string
