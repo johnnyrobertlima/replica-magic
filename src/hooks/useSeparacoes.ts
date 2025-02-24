@@ -2,10 +2,33 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+interface Separacao {
+  id: string;
+  cliente_codigo: number;
+  cliente_nome: string;
+  created_at: string;
+  quantidade_itens: number;
+  status: string;
+  updated_at: string;
+  valor_total: number;
+  separacao_itens: {
+    created_at: string;
+    descricao: string | null;
+    id: string;
+    item_codigo: string;
+    pedido: string;
+    quantidade_pedida: number;
+    separacao_id: string;
+    valor_total: number;
+    valor_unitario: number;
+  }[];
+  representante_nome?: string;
+}
+
 export function useSeparacoes() {
   return useQuery({
     queryKey: ['separacoes'],
-    queryFn: async () => {
+    queryFn: async (): Promise<Separacao[]> => {
       const { data: separacoes, error } = await supabase
         .from('separacoes')
         .select(`
@@ -18,24 +41,32 @@ export function useSeparacoes() {
 
       // Buscar informações dos representantes
       if (separacoes) {
+        const uniquePedidos = Array.from(new Set(
+          separacoes.flatMap(sep => sep.separacao_itens?.map(item => item.pedido) || [])
+        ));
+
         const { data: pedidosInfo } = await supabase
           .from('BLUEBAY_PEDIDO')
-          .select('PED_NUMPEDIDO, REPRESENTANTE_NOME')
-          .in('PED_NUMPEDIDO', separacoes.flatMap(sep => 
-            sep.separacao_itens?.map(item => item.pedido) || []
-          ));
+          .select(`
+            PED_NUMPEDIDO,
+            REPRESENTANTE,
+            BLUEBAY_PESSOA!BLUEBAY_PEDIDO_REPRESENTANTE_fkey (
+              RAZAOSOCIAL
+            )
+          `)
+          .in('PED_NUMPEDIDO', uniquePedidos);
 
         // Mapear os representantes para as separações
         return separacoes.map(separacao => {
-          const pedidosRepresentantes = pedidosInfo?.filter(p => 
+          const pedidoInfo = pedidosInfo?.find(p => 
             separacao.separacao_itens?.some(item => item.pedido === p.PED_NUMPEDIDO)
-          ) || [];
+          );
           
-          const representante = pedidosRepresentantes[0]?.REPRESENTANTE_NOME || 'Não informado';
+          const representanteNome = pedidoInfo?.BLUEBAY_PESSOA?.RAZAOSOCIAL || 'Não informado';
 
           return {
             ...separacao,
-            representante_nome: representante
+            representante_nome: representanteNome
           };
         });
       }
