@@ -18,7 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSeparacoes } from "@/hooks/useSeparacoes";
 import { SeparacaoCard } from "@/components/jab-orders/SeparacaoCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const ITEMS_PER_PAGE = 15;
 
@@ -175,10 +175,15 @@ const JabOrdersByClient = () => {
   const [isSending, setIsSending] = useState(false);
 
   const handleEnviarParaSeparacao = async () => {
-    if (selectedItems.length === 0) return;
+    console.log('Iniciando envio para separação...');
+    if (selectedItems.length === 0) {
+      console.log('Nenhum item selecionado');
+      return;
+    }
 
     setIsSending(true);
     try {
+      console.log('Items selecionados:', selectedItems);
       let allSelectedItems: Array<{
         pedido: string;
         item: any;
@@ -199,6 +204,7 @@ const JabOrdersByClient = () => {
         });
       });
 
+      console.log('Items agrupados:', allSelectedItems);
       const itemsByClient: Record<string, typeof allSelectedItems> = {};
       
       allSelectedItems.forEach(item => {
@@ -209,10 +215,13 @@ const JabOrdersByClient = () => {
         itemsByClient[clientName].push(item);
       });
 
+      console.log('Items por cliente:', itemsByClient);
       let successCount = 0;
       for (const [clientName, items] of Object.entries(itemsByClient)) {
+        console.log(`Processando cliente: ${clientName}`);
         const clienteCode = items[0]?.PES_CODIGO;
         if (!clienteCode) {
+          console.error(`Cliente ${clientName} sem código`);
           toast({
             title: "Erro",
             description: `Cliente ${clientName} não possui código válido`,
@@ -225,6 +234,7 @@ const JabOrdersByClient = () => {
           sum + (item.item.QTDE_SALDO * item.item.VALOR_UNITARIO), 0
         );
 
+        console.log(`Inserindo separação para ${clientName}`);
         const { data: separacao, error: separacaoError } = await supabase
           .from('separacoes')
           .insert({
@@ -257,6 +267,7 @@ const JabOrdersByClient = () => {
           valor_total: item.QTDE_SALDO * item.VALOR_UNITARIO
         }));
 
+        console.log(`Inserindo itens para separação ${separacao.id}`);
         const { error: itensError } = await supabase
           .from('separacao_itens')
           .insert(separacaoItens);
@@ -275,6 +286,7 @@ const JabOrdersByClient = () => {
       }
 
       if (successCount > 0) {
+        console.log(`Sucesso! ${successCount} separações criadas`);
         await queryClient.invalidateQueries({ queryKey: ['separacoes'] });
         
         toast({
