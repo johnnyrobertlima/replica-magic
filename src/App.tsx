@@ -12,6 +12,7 @@ import WhatsAppClientRegistration from "@/pages/WhatsAppClientRegistration";
 import WhatsAppService from "@/pages/WhatsAppService";
 import ClientLogin from "@/pages/ClientLogin";
 import AprovacaoFinanceira from "@/pages/AprovacaoFinanceira";
+import BluebayHome from "@/pages/BluebayHome";
 
 // Admin imports
 import { AdminLayout } from "@/pages/admin/layout";
@@ -33,6 +34,7 @@ function App() {
         <Route path="/" element={<Index />} />
         <Route path="/client-area" element={<ClientArea />} />
         <Route path="/post-management" element={<PostManagement />} />
+        <Route path="/client-area/bluebay" element={<BluebayHome />} />
         <Route path="/client-area/bluebay/jab-orders" element={<JabOrders />} />
         <Route path="/client-area/bluebay/jab-orders-by-client" element={<JabOrdersByClient />} />
         <Route path="/client-area/bluebay/aprovacao-financeira" element={<AprovacaoFinanceira />} />
