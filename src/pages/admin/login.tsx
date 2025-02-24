@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,15 +12,66 @@ export const AdminLogin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const getUserGroups = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('user_groups')
+      .select(`
+        groups (
+          name
+        )
+      `)
+      .eq('user_id', userId);
+
+    if (error) throw error;
+    return data;
+  };
+
+  const handleRedirect = async (userId: string) => {
+    try {
+      const userGroups = await getUserGroups(userId);
+      
+      // Verifica se o usuário tem o grupo admin
+      const isAdmin = userGroups.some(
+        (ug: any) => ug.groups?.name === 'admin'
+      );
+
+      if (isAdmin) {
+        navigate("/admin"); // Dashboard principal para admins
+        return;
+      }
+
+      // Verifica se o usuário tem o grupo manager
+      const isManager = userGroups.some(
+        (ug: any) => ug.groups?.name === 'manager'
+      );
+
+      if (isManager) {
+        navigate("/admin/clients"); // Área de clientes para managers
+        return;
+      }
+
+      // Se não tem grupo específico, redireciona para uma área restrita
+      navigate("/admin/social"); // Área de social media por padrão
+      
+    } catch (error: any) {
+      console.error("Erro ao verificar grupos:", error);
+      navigate("/admin"); // Redireciona para o dashboard em caso de erro
+    }
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: { user }, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
+      
       if (error) throw error;
-      navigate("/admin");
+      if (!user) throw new Error("Usuário não encontrado");
+      
+      await handleRedirect(user.id);
+      
     } catch (error: any) {
       toast({
         title: "Erro ao fazer login",
