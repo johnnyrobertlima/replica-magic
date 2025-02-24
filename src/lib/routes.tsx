@@ -24,3 +24,4 @@ export const routes = [
   { path: "/client-area/bluebay/jab-orders-by-client", element: <JabOrdersByClient /> },
   { path: "/client-area/bluebay/aprovacao-financeira", element: <AprovacaoFinanceira /> }
 ];
+
