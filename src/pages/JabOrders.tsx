@@ -19,11 +19,11 @@ const JabOrders = () => {
   });
   const [searchDate, setSearchDate] = useState<DateRange | undefined>(date);
   const [currentPage, setCurrentPage] = useState(1);
-  const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState<SearchType>("pedido");
   const [isSearching, setIsSearching] = useState(false);
-  const [showZeroBalanceMap, setShowZeroBalanceMap] = useState<Record<string, boolean>>({});
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [showOnlyWithStock, setShowOnlyWithStock] = useState(false);
 
   const { data: ordersData = { orders: [], totalCount: 0 }, isLoading: isLoadingOrders } = useJabOrders({
     dateRange: searchDate,
@@ -33,15 +33,13 @@ const JabOrders = () => {
 
   const { data: totals = { valorTotalSaldo: 0, valorFaturarComEstoque: 0 }, isLoading: isLoadingTotals } = useTotals();
 
-  const toggleExpand = (orderId: string) => {
-    setExpandedOrder(expandedOrder === orderId ? null : orderId);
-  };
-
-  const toggleShowZeroBalance = (orderId: string) => {
-    setShowZeroBalanceMap(prev => ({
-      ...prev,
-      [orderId]: !prev[orderId]
-    }));
+  const handleItemSelect = (itemCode: string) => {
+    setSelectedItems(prev => {
+      if (prev.includes(itemCode)) {
+        return prev.filter(code => code !== itemCode);
+      }
+      return [...prev, itemCode];
+    });
   };
 
   const handleSearch = () => {
@@ -121,22 +119,16 @@ const JabOrders = () => {
         />
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {filteredOrders.map((order) => {
-            const orderId = `${order.MATRIZ}-${order.FILIAL}-${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`;
-            const isExpanded = expandedOrder === orderId;
-            const showZeroBalance = showZeroBalanceMap[orderId] || false;
-
-            return (
-              <OrderCard
-                key={orderId}
-                order={order}
-                isExpanded={isExpanded}
-                showZeroBalance={showZeroBalance}
-                onToggleExpand={() => toggleExpand(orderId)}
-                onToggleZeroBalance={() => toggleShowZeroBalance(orderId)}
-              />
-            );
-          })}
+          {filteredOrders.map((order) => (
+            <OrderCard
+              key={`${order.MATRIZ}-${order.FILIAL}-${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`}
+              order={order}
+              showZeroBalance={true}
+              showOnlyWithStock={showOnlyWithStock}
+              selectedItems={selectedItems}
+              onItemSelect={handleItemSelect}
+            />
+          ))}
         </div>
 
         <OrdersPagination
