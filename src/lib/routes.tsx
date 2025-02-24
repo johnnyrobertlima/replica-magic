@@ -7,8 +7,10 @@ import WhatsAppClientRegistration from "@/pages/WhatsAppClientRegistration";
 import MailingRegistration from "@/pages/MailingRegistration";
 import ContentManagement from "@/pages/ContentManagement";
 import PostManagement from "@/pages/PostManagement";
+import JabOrders from "@/pages/JabOrders";
 import JabOrdersByClient from "@/pages/JabOrdersByClient";
 import AprovacaoFinanceira from "@/pages/AprovacaoFinanceira";
+import AccessManagement from "@/pages/admin/AccessManagement";
 
 export const routes = [
   { path: "/", element: <Index /> },
@@ -19,7 +21,8 @@ export const routes = [
   { path: "/client-area/mailing-registration", element: <MailingRegistration /> },
   { path: "/client-area/content-management", element: <ContentManagement /> },
   { path: "/client-area/post-management", element: <PostManagement /> },
-  { path: "/client-area/bluebay/jab-orders", element: <JabOrdersByClient /> },
+  { path: "/client-area/bluebay/jab-orders", element: <JabOrders /> },
   { path: "/client-area/bluebay/jab-orders-by-client", element: <JabOrdersByClient /> },
   { path: "/client-area/bluebay/aprovacao-financeira", element: <AprovacaoFinanceira /> },
+  { path: "/admin/access-management", element: <AccessManagement /> }
 ];
