@@ -10,13 +10,23 @@ export const usePermissionMutations = (selectedGroupId: string) => {
 
   const createMutation = useMutation({
     mutationFn: async (data: PermissionFormData) => {
-      const { error } = await supabase.from("group_permissions").insert([
-        {
-          group_id: selectedGroupId,
-          ...data,
-        },
-      ]);
-      if (error) throw error;
+      console.log("Creating permission with data:", {
+        group_id: selectedGroupId,
+        ...data,
+      });
+      
+      const { error } = await supabase.from("group_permissions").insert({
+        group_id: selectedGroupId,
+        resource_path: data.resource_path,
+        permission_type: data.permission_type,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+      
+      if (error) {
+        console.error("Error creating permission:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["permissions", selectedGroupId] });
@@ -26,6 +36,7 @@ export const usePermissionMutations = (selectedGroupId: string) => {
       });
     },
     onError: (error) => {
+      console.error("Mutation error:", error);
       toast({
         title: "Erro ao adicionar permissão",
         description: error.message,
@@ -36,11 +47,16 @@ export const usePermissionMutations = (selectedGroupId: string) => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      console.log("Deleting permission:", id);
       const { error } = await supabase
         .from("group_permissions")
         .delete()
         .eq("id", id);
-      if (error) throw error;
+      
+      if (error) {
+        console.error("Error deleting permission:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["permissions", selectedGroupId] });
@@ -50,6 +66,7 @@ export const usePermissionMutations = (selectedGroupId: string) => {
       });
     },
     onError: (error) => {
+      console.error("Delete mutation error:", error);
       toast({
         title: "Erro ao remover permissão",
         description: error.message,
@@ -63,3 +80,4 @@ export const usePermissionMutations = (selectedGroupId: string) => {
     deleteMutation,
   };
 };
+
