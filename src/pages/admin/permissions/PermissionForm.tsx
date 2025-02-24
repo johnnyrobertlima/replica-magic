@@ -17,6 +17,7 @@ import { usePermissionMutations } from "./usePermissionMutations";
 
 // Lista de rotas conhecidas da aplicação
 const KNOWN_ROUTES = [
+  // Rotas administrativas
   "/admin/permissions",
   "/admin/groups",
   "/admin/banners",
@@ -27,13 +28,24 @@ const KNOWN_ROUTES = [
   "/admin/seo",
   "/admin/services",
   "/admin/social",
+  // Área do cliente
+  "/client-area",
+  "/client-area/bluebay",
+  "/client-area/bluebay/jab-orders",
+  "/client-area/bluebay/jab-orders-by-client",
+  "/client-area/bluebay/aprovacao-financeira",
+  "/client-area/content-management",
+  "/client-area/mailing-registration",
+  "/client-area/tokens",
+  "/client-area/whatsapp-registration",
+  "/client-area/whatsapp",
+  // Outras rotas
   "/content-management",
   "/post-management",
   "/token-management",
   "/whatsapp-service",
   "/mailing-registration",
   "/jab-orders",
-  "/client-area",
   "/client-login",
   "/bluebay-home",
 ];
