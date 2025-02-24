@@ -15,6 +15,29 @@ import type { PermissionFormData } from "./types";
 import { useToast } from "@/components/ui/use-toast";
 import { usePermissionMutations } from "./usePermissionMutations";
 
+// Lista de rotas conhecidas da aplicação
+const KNOWN_ROUTES = [
+  "/admin/permissions",
+  "/admin/groups",
+  "/admin/banners",
+  "/admin/clients",
+  "/admin/dashboard",
+  "/admin/logos",
+  "/admin/messages",
+  "/admin/seo",
+  "/admin/services",
+  "/admin/social",
+  "/content-management",
+  "/post-management",
+  "/token-management",
+  "/whatsapp-service",
+  "/mailing-registration",
+  "/jab-orders",
+  "/client-area",
+  "/client-login",
+  "/bluebay-home",
+];
+
 interface PermissionFormProps {
   selectedGroupId: string;
   existingPaths?: string[];
@@ -29,6 +52,9 @@ export const PermissionForm = ({ selectedGroupId, existingPaths, onSuccess }: Pe
   const [customPath, setCustomPath] = useState<boolean>(false);
   const { toast } = useToast();
   const { createMutation } = usePermissionMutations(selectedGroupId);
+
+  // Combinar rotas conhecidas com caminhos existentes e remover duplicatas
+  const allPaths = Array.from(new Set([...KNOWN_ROUTES, ...(existingPaths || [])])).sort();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,7 +106,7 @@ export const PermissionForm = ({ selectedGroupId, existingPaths, onSuccess }: Pe
               <SelectValue placeholder="Selecione um caminho" />
             </SelectTrigger>
             <SelectContent>
-              {existingPaths?.map((path) => (
+              {allPaths.map((path) => (
                 <SelectItem key={path} value={path}>
                   {path}
                 </SelectItem>
