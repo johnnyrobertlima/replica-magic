@@ -9,6 +9,7 @@ import { TotalCards } from "@/components/jab-orders/TotalCards";
 import { OrdersHeader } from "@/components/jab-orders/OrdersHeader";
 import { OrdersPagination } from "@/components/jab-orders/OrdersPagination";
 import type { SearchType } from "@/components/jab-orders/SearchFilters";
+import { Switch } from "@/components/ui/switch";
 
 const ITEMS_PER_PAGE = 15;
 
@@ -24,6 +25,7 @@ const JabOrders = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [showOnlyWithStock, setShowOnlyWithStock] = useState(false);
+  const [showZeroBalance, setShowZeroBalance] = useState(true);
 
   const { data: ordersData = { orders: [], totalCount: 0 }, isLoading: isLoadingOrders } = useJabOrders({
     dateRange: searchDate,
@@ -82,6 +84,21 @@ const JabOrders = () => {
     return true;
   });
 
+  // Calcular totais dos itens selecionados
+  const selectedItemsTotals = filteredOrders.reduce((acc, order) => {
+    const selectedOrderItems = order.items.filter(item => selectedItems.includes(item.ITEM_CODIGO));
+    
+    selectedOrderItems.forEach(item => {
+      acc.totalSaldo += item.QTDE_SALDO;
+      acc.totalValor += item.QTDE_SALDO * item.VALOR_UNITARIO;
+      if ((item.FISICO || 0) > 0) {
+        acc.totalComEstoque += item.QTDE_SALDO * item.VALOR_UNITARIO;
+      }
+    });
+    
+    return acc;
+  }, { totalSaldo: 0, totalValor: 0, totalComEstoque: 0 });
+
   const totalPages = Math.ceil(ordersData.totalCount / ITEMS_PER_PAGE);
 
   if (isLoadingOrders || isLoadingTotals) {
@@ -101,8 +118,8 @@ const JabOrders = () => {
 
       <div className="space-y-6">
         <TotalCards
-          valorTotalSaldo={totals.valorTotalSaldo}
-          valorFaturarComEstoque={totals.valorFaturarComEstoque}
+          valorTotalSaldo={selectedItems.length > 0 ? selectedItemsTotals.totalValor : totals.valorTotalSaldo}
+          valorFaturarComEstoque={selectedItems.length > 0 ? selectedItemsTotals.totalComEstoque : totals.valorFaturarComEstoque}
         />
 
         <OrdersHeader
@@ -118,18 +135,58 @@ const JabOrders = () => {
           onSearchTypeChange={setSearchType}
         />
 
+        <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={showZeroBalance}
+              onCheckedChange={setShowZeroBalance}
+              id="show-zero-balance"
+            />
+            <label 
+              htmlFor="show-zero-balance"
+              className="text-sm text-muted-foreground cursor-pointer"
+            >
+              Mostrar itens com saldo zero
+            </label>
+          </div>
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={showOnlyWithStock}
+              onCheckedChange={setShowOnlyWithStock}
+              id="show-only-with-stock"
+            />
+            <label 
+              htmlFor="show-only-with-stock"
+              className="text-sm text-muted-foreground cursor-pointer"
+            >
+              Mostrar apenas itens com estoque físico
+            </label>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {filteredOrders.map((order) => (
             <OrderCard
               key={`${order.MATRIZ}-${order.FILIAL}-${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`}
               order={order}
-              showZeroBalance={true}
+              showZeroBalance={showZeroBalance}
               showOnlyWithStock={showOnlyWithStock}
               selectedItems={selectedItems}
               onItemSelect={handleItemSelect}
             />
           ))}
         </div>
+
+        {selectedItems.length > 0 && (
+          <div className="fixed bottom-4 right-4 bg-card text-card-foreground p-4 rounded-lg shadow-lg border">
+            <p className="text-sm font-medium">Itens Selecionados: {selectedItems.length}</p>
+            <p className="text-sm">Total Saldo: {selectedItemsTotals.totalSaldo}</p>
+            <p className="text-sm">Valor Total: {selectedItemsTotals.totalValor.toLocaleString('pt-BR', {
+              style: 'currency',
+              currency: 'BRL'
+            })}</p>
+          </div>
+        )}
 
         <OrdersPagination
           currentPage={currentPage}
