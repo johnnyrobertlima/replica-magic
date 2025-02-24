@@ -278,7 +278,7 @@ const JabOrdersByClient = () => {
       }
 
       setSelectedItems([]);
-      await queryClient.invalidateQueries(['separacoes']);
+      await queryClient.invalidateQueries({ queryKey: ['separacoes'] });
       
       toast({
         title: "Sucesso",
