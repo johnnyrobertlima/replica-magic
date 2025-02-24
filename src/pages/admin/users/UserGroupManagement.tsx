@@ -43,12 +43,17 @@ export const UserGroupManagement = () => {
   const { data: users, isLoading: isLoadingUsers } = useQuery({
     queryKey: ["users"],
     queryFn: async () => {
-      const { data, error } = await supabase.auth.admin.listUsers();
-      if (error) throw error;
-      return data.users.map(user => ({
-        id: user.id,
-        email: user.email,
-      })) as User[];
+      try {
+        const { data: { users }, error } = await supabase.auth.admin.listUsers();
+        if (error) throw error;
+        return users.map(user => ({
+          id: user.id,
+          email: user.email || '',
+        })) as User[];
+      } catch (error) {
+        console.error('Erro ao buscar usuários:', error);
+        return [];
+      }
     },
   });
 
@@ -56,11 +61,14 @@ export const UserGroupManagement = () => {
     queryKey: ["group-users", selectedGroupId],
     queryFn: async () => {
       if (!selectedGroupId) return [];
+      
       const { data, error } = await supabase
         .from("user_groups")
         .select(`
-          *,
-          auth.users!inner (
+          id,
+          user_id,
+          group_id,
+          users:user_id (
             email
           )
         `)
@@ -69,8 +77,10 @@ export const UserGroupManagement = () => {
       if (error) throw error;
       
       return data.map(assignment => ({
-        ...assignment,
-        user_email: assignment.users.email,
+        id: assignment.id,
+        user_id: assignment.user_id,
+        group_id: assignment.group_id,
+        user_email: assignment.users?.email
       })) as UserGroupAssignment[];
     },
     enabled: !!selectedGroupId,
