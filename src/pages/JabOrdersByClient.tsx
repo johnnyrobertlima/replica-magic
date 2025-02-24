@@ -90,7 +90,7 @@ const JabOrdersByClient = () => {
           totalValorSaldo: 0,
           totalValorPedido: 0,
           totalValorFaturado: 0,
-          totalFaturarComEstoque: 0,
+          totalValorFaturarComEstoque: 0,
           representante: order.REPRESENTANTE_NOME,
           allItems: []
         };
@@ -112,7 +112,7 @@ const JabOrdersByClient = () => {
           groups[clientKey].totalValorPedido += item.QTDE_PEDIDA * item.VALOR_UNITARIO;
           groups[clientKey].totalValorFaturado += item.QTDE_ENTREGUE * item.VALOR_UNITARIO;
           if ((item.FISICO || 0) > 0) {
-            groups[clientKey].totalFaturarComEstoque += item.QTDE_SALDO * item.VALOR_UNITARIO;
+            groups[clientKey].totalValorFaturarComEstoque += item.QTDE_SALDO * item.VALOR_UNITARIO;
           }
         });
       }
@@ -304,7 +304,7 @@ const JabOrdersByClient = () => {
                   ? (data.totalValorFaturado / data.totalValorPedido) * 100 
                   : 0;
                 const progressPotencial = data.totalValorSaldo > 0 
-                  ? (data.totalFaturarComEstoque / data.totalValorSaldo) * 100 
+                  ? (data.totalValorFaturarComEstoque / data.totalValorSaldo) * 100 
                   : 0;
                 const pedidosCount = new Set(data.allItems.map(item => item.pedido)).size;
 
@@ -376,7 +376,7 @@ const JabOrdersByClient = () => {
                             </div>
                             <div>
                               <p className="text-sm text-muted-foreground">Faturar com Estoque:</p>
-                              <p className="font-medium text-primary">{formatCurrency(data.totalFaturarComEstoque)}</p>
+                              <p className="font-medium text-primary">{formatCurrency(data.totalValorFaturarComEstoque)}</p>
                             </div>
                           </div>
                         </div>
