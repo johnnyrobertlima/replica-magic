@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { Check, X } from "lucide-react";
 import type { JabOrder } from "@/types/jabOrders";
 import { OrderItemsTable } from "./OrderItemsTable";
 import { OrderProgress } from "./OrderProgress";
@@ -53,7 +52,14 @@ export const OrderCard = ({
         </div>
 
         <div className="space-y-4 mt-4">
-          <OrderProgress order={order} />
+          <div className="text-sm text-muted-foreground">
+            <p>Status: {order.STATUS}</p>
+            <p>Total de Saldo: {order.total_saldo}</p>
+            <p>Valor Total: {order.valor_total.toLocaleString('pt-BR', {
+              style: 'currency',
+              currency: 'BRL'
+            })}</p>
+          </div>
 
           {isExpanded && (
             <OrderItemsTable 
