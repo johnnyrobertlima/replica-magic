@@ -13,9 +13,12 @@ const AprovacaoFinanceira = () => {
   const { data: separacoes = [], isLoading } = useSeparacoes();
   const { toast } = useToast();
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
+  const [hiddenCards, setHiddenCards] = useState<Set<string>>(new Set());
 
-  // Filtra apenas as separações pendentes
-  const separacoesPendentes = separacoes.filter(sep => sep.status === 'pendente');
+  // Filtra apenas as separações pendentes e não ocultas
+  const separacoesPendentes = separacoes
+    .filter(sep => sep.status === 'pendente')
+    .filter(sep => !hiddenCards.has(sep.id));
 
   const toggleCard = (id: string) => {
     setExpandedCards(current => {
@@ -29,6 +32,14 @@ const AprovacaoFinanceira = () => {
     });
   };
 
+  const hideCard = (id: string) => {
+    setHiddenCards(current => {
+      const newSet = new Set(current);
+      newSet.add(id);
+      return newSet;
+    });
+  };
+
   const handleAprovar = (id: string) => {
     // Aqui você pode adicionar a lógica de aprovação
     toast({
@@ -36,6 +47,7 @@ const AprovacaoFinanceira = () => {
       description: "Pedido aprovado com sucesso!",
       variant: "default",
     });
+    hideCard(id);
   };
 
   const handleReprovar = (id: string) => {
@@ -45,6 +57,7 @@ const AprovacaoFinanceira = () => {
       description: "Pedido reprovado!",
       variant: "destructive",
     });
+    hideCard(id);
   };
 
   return (
