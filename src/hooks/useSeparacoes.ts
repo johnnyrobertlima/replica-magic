@@ -50,7 +50,7 @@ export function useSeparacoes() {
           .select(`
             PED_NUMPEDIDO,
             REPRESENTANTE,
-            pedido_representante:BLUEBAY_PESSOA!BLUEBAY_PEDIDO_REPRESENTANTE_fkey (
+            pessoa:BLUEBAY_PESSOA(
               RAZAOSOCIAL
             )
           `)
@@ -63,7 +63,7 @@ export function useSeparacoes() {
             separacao.separacao_itens?.some(item => item.pedido === p.PED_NUMPEDIDO)
           );
           
-          const representanteNome = pedidoInfo?.pedido_representante?.RAZAOSOCIAL || 'Não informado';
+          const representanteNome = pedidoInfo?.pessoa?.RAZAOSOCIAL || 'Não informado';
 
           return {
             ...separacao,
