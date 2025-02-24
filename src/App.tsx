@@ -7,7 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/">
       <ThemeProvider defaultTheme="light" attribute="class">
         <Routes>
           {routes.map((route) => (
