@@ -7,6 +7,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const AprovacaoFinanceira = () => {
   const { data: separacoes = [], isLoading } = useSeparacoes();
@@ -64,19 +65,23 @@ const AprovacaoFinanceira = () => {
             <Loader2 className="h-8 w-8 animate-spin" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {separacoesPendentes.length > 0 ? (
               separacoesPendentes.map((separacao) => (
-                <Card key={separacao.id}>
+                <Card key={separacao.id} className={expandedCards.has(separacao.id) ? "col-span-full" : ""}>
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <div>
+                      <div className="space-y-1">
                         <CardTitle>Cliente: {separacao.cliente_nome}</CardTitle>
                         <CardDescription>
                           Valor Total: {separacao.valor_total.toLocaleString('pt-BR', {
                             style: 'currency',
                             currency: 'BRL'
                           })}
+                        </CardDescription>
+                        {/* Aqui você pode adicionar o campo do representante quando estiver disponível na API */}
+                        <CardDescription>
+                          Representante: {separacao.representante_nome || "Não informado"}
                         </CardDescription>
                       </div>
                       <Button
@@ -95,22 +100,39 @@ const AprovacaoFinanceira = () => {
 
                   {expandedCards.has(separacao.id) && (
                     <CardContent>
-                      <div className="space-y-4">
-                        <h4 className="font-semibold">Itens do Pedido</h4>
-                        <div className="space-y-2">
-                          {separacao.separacao_itens?.map((item, index) => (
-                            <div key={index} className="border rounded p-3">
-                              <p className="font-medium">{item.item_codigo} - {item.descricao}</p>
-                              <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
-                                <p>Quantidade: {item.quantidade_pedida}</p>
-                                <p>Valor Unitário: {item.valor_unitario.toLocaleString('pt-BR', {
-                                  style: 'currency',
-                                  currency: 'BRL'
-                                })}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+                      <div className="rounded-lg border overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>SKU</TableHead>
+                              <TableHead>Descrição</TableHead>
+                              <TableHead className="text-right">Quantidade</TableHead>
+                              <TableHead className="text-right">Valor Unit.</TableHead>
+                              <TableHead className="text-right">Total</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {separacao.separacao_itens?.map((item, index) => (
+                              <TableRow key={`${item.item_codigo}-${index}`}>
+                                <TableCell className="font-medium">{item.item_codigo}</TableCell>
+                                <TableCell>{item.descricao}</TableCell>
+                                <TableCell className="text-right">{item.quantidade_pedida}</TableCell>
+                                <TableCell className="text-right">
+                                  {item.valor_unitario.toLocaleString('pt-BR', {
+                                    style: 'currency',
+                                    currency: 'BRL'
+                                  })}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {(item.quantidade_pedida * item.valor_unitario).toLocaleString('pt-BR', {
+                                    style: 'currency',
+                                    currency: 'BRL'
+                                  })}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
                       </div>
                     </CardContent>
                   )}
