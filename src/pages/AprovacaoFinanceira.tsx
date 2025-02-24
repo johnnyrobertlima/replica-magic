@@ -80,7 +80,7 @@ const AprovacaoFinanceira = () => {
                           })}
                         </CardDescription>
                         <CardDescription>
-                          Representante: {/* Aguardando implementação do campo do representante */}
+                          Representante: {separacao.representante_nome}
                         </CardDescription>
                       </div>
                       <Button
@@ -103,6 +103,7 @@ const AprovacaoFinanceira = () => {
                         <Table>
                           <TableHeader>
                             <TableRow>
+                              <TableHead>Pedido</TableHead>
                               <TableHead>SKU</TableHead>
                               <TableHead>Descrição</TableHead>
                               <TableHead className="text-right">Quantidade</TableHead>
@@ -113,6 +114,7 @@ const AprovacaoFinanceira = () => {
                           <TableBody>
                             {separacao.separacao_itens?.map((item, index) => (
                               <TableRow key={`${item.item_codigo}-${index}`}>
+                                <TableCell className="font-medium">{item.pedido}</TableCell>
                                 <TableCell className="font-medium">{item.item_codigo}</TableCell>
                                 <TableCell>{item.descricao}</TableCell>
                                 <TableCell className="text-right">{item.quantidade_pedida}</TableCell>
