@@ -1,90 +1,22 @@
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Loader2, UserPlus, Users } from "lucide-react";
+import { Loader2, Users } from "lucide-react";
 import { toast } from "sonner";
-import type { Group } from "../groups/types";
-import type { User, UserGroupAssignment } from "./types";
+import { GroupSelect } from "./components/GroupSelect";
+import { UserSelect } from "./components/UserSelect";
+import { UsersTable } from "./components/UsersTable";
+import { useGroups } from "./hooks/useGroups";
+import { useUsers } from "./hooks/useUsers";
+import { useGroupUsers } from "./hooks/useGroupUsers";
 
 export const UserGroupManagement = () => {
   const [selectedGroupId, setSelectedGroupId] = useState<string>("");
   const [selectedUserId, setSelectedUserId] = useState<string>("");
 
-  const { data: groups, isLoading: isLoadingGroups } = useQuery({
-    queryKey: ["groups"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("groups")
-        .select("*")
-        .order("name");
-      if (error) throw error;
-      return data as Group[];
-    },
-  });
-
-  const { data: users, isLoading: isLoadingUsers } = useQuery({
-    queryKey: ["users"],
-    queryFn: async () => {
-      try {
-        const { data: { users }, error } = await supabase.auth.admin.listUsers();
-        if (error) throw error;
-        return users.map(user => ({
-          id: user.id,
-          email: user.email || '',
-        })) as User[];
-      } catch (error) {
-        console.error('Erro ao buscar usuários:', error);
-        return [];
-      }
-    },
-  });
-
-  const { data: groupUsers, isLoading: isLoadingGroupUsers, refetch: refetchGroupUsers } = useQuery({
-    queryKey: ["group-users", selectedGroupId],
-    queryFn: async () => {
-      if (!selectedGroupId) return [];
-      
-      const { data, error } = await supabase
-        .from("user_groups")
-        .select(`
-          id,
-          user_id,
-          group_id,
-          users:user_id (
-            email
-          )
-        `)
-        .eq("group_id", selectedGroupId);
-      
-      if (error) throw error;
-      
-      return data.map(assignment => ({
-        id: assignment.id,
-        user_id: assignment.user_id,
-        group_id: assignment.group_id,
-        user_email: assignment.users?.email
-      })) as UserGroupAssignment[];
-    },
-    enabled: !!selectedGroupId,
-  });
+  const { data: groups, isLoading: isLoadingGroups } = useGroups();
+  const { data: users } = useUsers();
+  const { data: groupUsers, isLoading: isLoadingGroupUsers, refetch: refetchGroupUsers } = useGroupUsers(selectedGroupId);
 
   const handleAddUserToGroup = async () => {
     if (!selectedGroupId || !selectedUserId) {
@@ -145,95 +77,26 @@ export const UserGroupManagement = () => {
       </div>
 
       <div className="grid gap-6">
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="group">Selecione um grupo</Label>
-          <Select
-            value={selectedGroupId}
-            onValueChange={(value) => setSelectedGroupId(value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione um grupo" />
-            </SelectTrigger>
-            <SelectContent>
-              {groups?.map((group) => (
-                <SelectItem key={group.id} value={group.id}>
-                  {group.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <GroupSelect
+          groups={groups}
+          value={selectedGroupId}
+          onChange={setSelectedGroupId}
+        />
 
         {selectedGroupId && (
           <>
-            <div className="flex gap-4 items-end">
-              <div className="flex-1">
-                <Label htmlFor="user">Adicionar usuário ao grupo</Label>
-                <Select
-                  value={selectedUserId}
-                  onValueChange={(value) => setSelectedUserId(value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um usuário" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {users?.map((user) => (
-                      <SelectItem key={user.id} value={user.id}>
-                        {user.email}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button
-                onClick={handleAddUserToGroup}
-                disabled={!selectedUserId}
-              >
-                <UserPlus className="h-4 w-4 mr-2" />
-                Adicionar
-              </Button>
-            </div>
+            <UserSelect
+              users={users}
+              value={selectedUserId}
+              onChange={setSelectedUserId}
+              onAdd={handleAddUserToGroup}
+            />
 
-            <div className="bg-white rounded-lg shadow">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Email do Usuário</TableHead>
-                    <TableHead className="w-[100px]">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoadingGroupUsers ? (
-                    <TableRow>
-                      <TableCell colSpan={2} className="text-center">
-                        <Loader2 className="h-4 w-4 animate-spin mx-auto" />
-                      </TableCell>
-                    </TableRow>
-                  ) : groupUsers?.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={2} className="text-center text-muted-foreground">
-                        Nenhum usuário encontrado neste grupo
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    groupUsers?.map((assignment) => (
-                      <TableRow key={assignment.id}>
-                        <TableCell>{assignment.user_email}</TableCell>
-                        <TableCell>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleRemoveUserFromGroup(assignment.id)}
-                          >
-                            Remover
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+            <UsersTable
+              users={groupUsers}
+              isLoading={isLoadingGroupUsers}
+              onRemove={handleRemoveUserFromGroup}
+            />
           </>
         )}
       </div>
