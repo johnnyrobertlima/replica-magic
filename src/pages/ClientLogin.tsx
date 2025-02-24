@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,45 +7,71 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
+import { Loader2 } from "lucide-react";
 
 const ClientLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
+      if (isSignUp) {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              name: name,
+            }
+          }
+        });
+        if (error) throw error;
         toast({
-          variant: "destructive",
-          title: "Erro ao fazer login",
-          description: error.message,
+          title: "Conta criada com sucesso!",
+          description: "Verifique seu email para confirmar o cadastro.",
         });
       } else {
-        toast({
-          title: "Login realizado com sucesso",
-          description: "Você será redirecionado para a área do cliente.",
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
         });
+        if (error) throw error;
         navigate("/client-area");
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Erro ao fazer login",
-        description: "Ocorreu um erro inesperado. Tente novamente.",
+        title: "Erro na autenticação",
+        description: error.message,
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSocialLogin = async (provider: 'google' | 'azure') => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/client-area`,
+        },
+      });
+      if (error) throw error;
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro na autenticação",
+        description: error.message,
+      });
     }
   };
 
@@ -52,14 +79,28 @@ const ClientLogin = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Login do Cliente</CardTitle>
+          <CardTitle>{isSignUp ? "Criar Conta" : "Login"}</CardTitle>
           <CardDescription>
-            Entre com suas credenciais para acessar a área do cliente
+            {isSignUp
+              ? "Crie sua conta para acessar o sistema"
+              : "Entre com suas credenciais para acessar o sistema"}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div className="space-y-2">
+          <form onSubmit={handleEmailLogin} className="space-y-4">
+            {isSignUp && (
+              <div className="space-y-1">
+                <Label htmlFor="name">Nome</Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required={isSignUp}
+                  placeholder="Seu nome completo"
+                />
+              </div>
+            )}
+            <div className="space-y-1">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
@@ -70,7 +111,7 @@ const ClientLogin = () => {
                 placeholder="seu@email.com"
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="password">Senha</Label>
               <Input
                 id="password"
@@ -81,10 +122,59 @@ const ClientLogin = () => {
                 placeholder="••••••••"
               />
             </div>
+
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Entrando..." : "Entrar"}
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : isSignUp ? (
+                "Criar Conta"
+              ) : (
+                "Entrar"
+              )}
             </Button>
           </form>
+
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">
+                  Ou continue com
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => handleSocialLogin("google")}
+              >
+                Google
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => handleSocialLogin("azure")}
+              >
+                Microsoft
+              </Button>
+            </div>
+          </div>
+
+          <div className="mt-4 text-center">
+            <Button
+              variant="link"
+              onClick={() => setIsSignUp(!isSignUp)}
+              type="button"
+            >
+              {isSignUp
+                ? "Já tem uma conta? Entre"
+                : "Não tem uma conta? Cadastre-se"}
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
