@@ -29,13 +29,13 @@ interface Group {
   id: string;
   name: string;
   description: string | null;
-  landing_page: string;
+  created_at: string;
+  updated_at: string;
 }
 
 interface GroupFormData {
   name: string;
   description: string;
-  landing_page: string;
 }
 
 export const AdminGroups = () => {
@@ -44,7 +44,6 @@ export const AdminGroups = () => {
   const [formData, setFormData] = useState<GroupFormData>({
     name: "",
     description: "",
-    landing_page: "/client-area",
   });
   
   const { toast } = useToast();
@@ -147,7 +146,6 @@ export const AdminGroups = () => {
     setFormData({
       name: group.name,
       description: group.description || "",
-      landing_page: group.landing_page,
     });
     setIsOpen(true);
   };
@@ -162,7 +160,6 @@ export const AdminGroups = () => {
     setFormData({
       name: "",
       description: "",
-      landing_page: "/client-area",
     });
     setEditingGroup(null);
   };
@@ -217,17 +214,6 @@ export const AdminGroups = () => {
                   }
                 />
               </div>
-              <div>
-                <Label htmlFor="landing_page">Página Inicial</Label>
-                <Input
-                  id="landing_page"
-                  value={formData.landing_page}
-                  onChange={(e) =>
-                    setFormData({ ...formData, landing_page: e.target.value })
-                  }
-                  required
-                />
-              </div>
               <Button
                 type="submit"
                 disabled={createMutation.isPending || updateMutation.isPending}
@@ -252,7 +238,6 @@ export const AdminGroups = () => {
             <TableRow>
               <TableHead>Nome</TableHead>
               <TableHead>Descrição</TableHead>
-              <TableHead>Página Inicial</TableHead>
               <TableHead className="w-[120px]">Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -261,7 +246,6 @@ export const AdminGroups = () => {
               <TableRow key={group.id}>
                 <TableCell>{group.name}</TableCell>
                 <TableCell>{group.description}</TableCell>
-                <TableCell>{group.landing_page}</TableCell>
                 <TableCell>
                   <ActionButtons
                     onEdit={() => handleEdit(group)}
