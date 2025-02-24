@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Loader2, ChevronDown, ChevronUp } from "lucide-react";
@@ -177,7 +178,11 @@ const JabOrdersByClient = () => {
   const handleEnviarParaSeparacao = async () => {
     console.log('Iniciando envio para separação...');
     if (selectedItems.length === 0) {
-      console.log('Nenhum item selecionado');
+      toast({
+        title: "Aviso",
+        description: "Selecione pelo menos um item para enviar para separação",
+        variant: "default",
+      });
       return;
     }
 
@@ -322,6 +327,12 @@ const JabOrdersByClient = () => {
 
         setSelectedItems([]);
         setExpandedClients(new Set());
+      } else {
+        toast({
+          title: "Aviso",
+          description: "Nenhuma separação foi criada",
+          variant: "default",
+        });
       }
     } catch (error) {
       console.error('Erro ao processar separação:', error);
