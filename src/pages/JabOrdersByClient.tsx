@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Loader2, ChevronDown, ChevronUp } from "lucide-react";
@@ -20,6 +19,7 @@ import { useSeparacoes } from "@/hooks/useSeparacoes";
 import { SeparacaoCard } from "@/components/jab-orders/SeparacaoCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { Toaster } from "@/components/ui/toaster";
 
 const ITEMS_PER_PAGE = 15;
 
@@ -610,6 +610,7 @@ const JabOrdersByClient = () => {
           </TabsContent>
         </Tabs>
       </div>
+      <Toaster />
     </main>
   );
 };
