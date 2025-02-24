@@ -24,6 +24,7 @@ import { AdminMessages } from "@/pages/admin/messages";
 import { AdminSEO } from "@/pages/admin/seo";
 import { AdminServices } from "@/pages/admin/services";
 import { AdminSocial } from "@/pages/admin/social";
+import { AdminGroups } from "@/pages/admin/groups";
 import { AdminLogin } from "@/pages/admin/login";
 import { Outlet } from "react-router-dom";
 
@@ -51,6 +52,7 @@ function App() {
           <Route index element={<AdminDashboard />} />
           <Route path="banners" element={<AdminBanners />} />
           <Route path="clients" element={<AdminClients />} />
+          <Route path="groups" element={<AdminGroups />} />
           <Route path="logos" element={<AdminLogos />} />
           <Route path="messages" element={<AdminMessages />} />
           <Route path="seo" element={<AdminSEO />} />
