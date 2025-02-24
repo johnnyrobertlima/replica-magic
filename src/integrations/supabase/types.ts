@@ -609,65 +609,6 @@ export type Database = {
         }
         Relationships: []
       }
-      group_permissions: {
-        Row: {
-          created_at: string | null
-          group_id: string | null
-          id: string
-          permission_type: Database["public"]["Enums"]["permission_type"]
-          resource_path: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          group_id?: string | null
-          id?: string
-          permission_type: Database["public"]["Enums"]["permission_type"]
-          resource_path: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          group_id?: string | null
-          id?: string
-          permission_type?: Database["public"]["Enums"]["permission_type"]
-          resource_path?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "group_permissions_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "groups"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      groups: {
-        Row: {
-          created_at: string | null
-          description: string | null
-          id: string
-          name: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          name: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          name?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       insights_social: {
         Row: {
           account_id: string | null
@@ -1181,35 +1122,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_groups: {
-        Row: {
-          created_at: string | null
-          group_id: string | null
-          id: string
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          group_id?: string | null
-          id?: string
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          group_id?: string | null
-          id?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_groups_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "groups"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
     }
     Views: {
       [_ in never]: never
@@ -1226,14 +1138,6 @@ export type Database = {
         Returns: {
           valor_total_saldo: number
         }[]
-      }
-      check_user_permission: {
-        Args: {
-          user_id: string
-          resource_path: string
-          required_permission: Database["public"]["Enums"]["permission_type"]
-        }
-        Returns: boolean
       }
       get_pedidos_agrupados: {
         Args: {
@@ -1261,7 +1165,7 @@ export type Database = {
       }
     }
     Enums: {
-      permission_type: "read" | "write" | "admin"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
