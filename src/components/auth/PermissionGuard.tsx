@@ -51,7 +51,7 @@ export const PermissionGuard = ({
             description: "Você não tem permissão para acessar esta página.",
             variant: "destructive",
           });
-          navigate('/admin');
+          navigate('/admin/login'); // Alterado aqui - redireciona para login ao invés de /admin
         }
 
       } catch (error: any) {
@@ -61,7 +61,7 @@ export const PermissionGuard = ({
           description: error.message,
           variant: "destructive",
         });
-        navigate('/admin');
+        navigate('/admin/login'); // Alterado aqui também
       }
     };
 
