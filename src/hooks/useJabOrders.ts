@@ -1,7 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
-import type { UseJabOrdersOptions } from "@/types/jabOrders";
-import { fetchJabOrders, fetchJabTotals } from "@/services/jabOrdersService";
+import type { UseJabOrdersOptions, JabTotalsResponse } from "@/types/jabOrders";
+import { fetchJabOrders, fetchTotals } from "@/services/jabOrdersService";
 
 export type { JabOrder } from "@/types/jabOrders";
 
@@ -16,9 +16,9 @@ export function useJabOrders(options: UseJabOrdersOptions = {}) {
 }
 
 export function useTotals() {
-  return useQuery({
+  return useQuery<JabTotalsResponse>({
     queryKey: ['jab-totals'],
-    queryFn: fetchJabTotals,
+    queryFn: fetchTotals,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
