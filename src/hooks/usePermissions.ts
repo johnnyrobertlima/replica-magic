@@ -20,10 +20,10 @@ export function useGroups() {
   });
 
   const createGroup = useMutation({
-    mutationFn: async (group: { name: string; description?: string }) => {
+    mutationFn: async ({ name, description }: { name: string; description?: string }) => {
       const { data, error } = await supabase
         .from('groups')
-        .insert(group)
+        .insert({ name, description })
         .select()
         .single();
       
