@@ -14,61 +14,66 @@ const BluebayHome = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Link to="/client-area/bluebay/jab-orders-by-client">
-            <Card className="h-full transition-all hover:shadow-lg">
-              <CardHeader>
-                <div className="flex items-center gap-4">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <Boxes className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <CardTitle>Pedidos por Cliente</CardTitle>
-                    <CardDescription>
-                      Visualize e gerencie pedidos agrupados por cliente
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-            </Card>
-          </Link>
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle className="text-2xl mb-4">Área JAB</CardTitle>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <Link to="/client-area/bluebay/jab-orders-by-client">
+                <Card className="h-full transition-all hover:shadow-lg">
+                  <CardHeader>
+                    <div className="flex items-center gap-4">
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        <Boxes className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <CardTitle>Pedidos por Cliente</CardTitle>
+                        <CardDescription>
+                          Visualize e gerencie pedidos agrupados por cliente
+                        </CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                </Card>
+              </Link>
 
-          <Link to="/client-area/bluebay/jab-orders">
-            <Card className="h-full transition-all hover:shadow-lg">
-              <CardHeader>
-                <div className="flex items-center gap-4">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <ClipboardCheck className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <CardTitle>Separação de Pedidos</CardTitle>
-                    <CardDescription>
-                      Acompanhe e gerencie as separações de pedidos
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-            </Card>
-          </Link>
+              <Link to="/client-area/bluebay/jab-orders">
+                <Card className="h-full transition-all hover:shadow-lg">
+                  <CardHeader>
+                    <div className="flex items-center gap-4">
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        <ClipboardCheck className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <CardTitle>Separação de Pedidos</CardTitle>
+                        <CardDescription>
+                          Acompanhe e gerencie as separações de pedidos
+                        </CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                </Card>
+              </Link>
 
-          <Link to="/client-area/bluebay/aprovacao-financeira">
-            <Card className="h-full transition-all hover:shadow-lg">
-              <CardHeader>
-                <div className="flex items-center gap-4">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <FileCheck className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <CardTitle>Aprovação Financeira</CardTitle>
-                    <CardDescription>
-                      Aprove ou reprove pedidos pendentes
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-            </Card>
-          </Link>
-        </div>
+              <Link to="/client-area/bluebay/aprovacao-financeira">
+                <Card className="h-full transition-all hover:shadow-lg">
+                  <CardHeader>
+                    <div className="flex items-center gap-4">
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        <FileCheck className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <CardTitle>Aprovação Financeira</CardTitle>
+                        <CardDescription>
+                          Aprove ou reprove pedidos pendentes
+                        </CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                </Card>
+              </Link>
+            </div>
+          </CardHeader>
+        </Card>
       </div>
     </main>
   );
