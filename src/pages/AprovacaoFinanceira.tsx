@@ -79,9 +79,8 @@ const AprovacaoFinanceira = () => {
                             currency: 'BRL'
                           })}
                         </CardDescription>
-                        {/* Aqui você pode adicionar o campo do representante quando estiver disponível na API */}
                         <CardDescription>
-                          Representante: {separacao.representante_nome || "Não informado"}
+                          Representante: {/* Aguardando implementação do campo do representante */}
                         </CardDescription>
                       </div>
                       <Button
