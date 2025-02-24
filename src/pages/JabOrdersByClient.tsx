@@ -11,6 +11,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 const ITEMS_PER_PAGE = 15;
 
@@ -27,6 +30,7 @@ const JabOrdersByClient = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [showZeroBalance, setShowZeroBalance] = useState(false);
   const [showOnlyWithStock, setShowOnlyWithStock] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
   const { data: ordersData = { orders: [], totalCount: 0 }, isLoading: isLoadingOrders } = useJabOrders({
     dateRange: searchDate,
@@ -94,7 +98,9 @@ const JabOrdersByClient = () => {
       if (order.items) {
         groups[clientKey].allItems.push(...order.items.map(item => ({
           ...item,
-          pedido: order.PED_NUMPEDIDO
+          pedido: order.PED_NUMPEDIDO,
+          APELIDO: order.APELIDO,
+          PES_CODIGO: order.PES_CODIGO
         })));
 
         order.items.forEach(item => {
@@ -146,6 +152,92 @@ const JabOrdersByClient = () => {
   }, [groupedOrders, isSearching, searchQuery, searchType]);
 
   const totalPages = Math.ceil(ordersData.totalCount / ITEMS_PER_PAGE);
+
+  const handleItemSelect = (itemCode: string) => {
+    setSelectedItems(prev => {
+      if (prev.includes(itemCode)) {
+        return prev.filter(code => code !== itemCode);
+      }
+      return [...prev, itemCode];
+    });
+  };
+
+  const handleEnviarParaSeparacao = async () => {
+    if (selectedItems.length === 0) return;
+
+    // Encontrar todos os itens selecionados nos pedidos
+    let allSelectedItems: Array<{
+      pedido: string;
+      item: any;
+    }> = [];
+
+    Object.values(groupedOrders).forEach(group => {
+      group.allItems.forEach(item => {
+        if (selectedItems.includes(item.ITEM_CODIGO)) {
+          allSelectedItems.push({
+            pedido: item.pedido,
+            item: item
+          });
+        }
+      });
+    });
+
+    // Agrupar por cliente
+    const itemsByClient = allSelectedItems.reduce((acc, curr) => {
+      const clientName = curr.item.APELIDO || "Sem Cliente";
+      if (!acc[clientName]) {
+        acc[clientName] = [];
+      }
+      acc[clientName].push(curr);
+      return acc;
+    }, {});
+
+    // Criar separação para cada cliente
+    for (const [clientName, items] of Object.entries(itemsByClient)) {
+      const valorTotal = items.reduce((sum, item) => 
+        sum + (item.item.QTDE_SALDO * item.item.VALOR_UNITARIO), 0
+      );
+
+      const { data: separacao, error: separacaoError } = await supabase
+        .from('separacoes')
+        .insert({
+          cliente_nome: clientName,
+          cliente_codigo: items[0].item.PES_CODIGO,
+          quantidade_itens: items.length,
+          valor_total: valorTotal
+        })
+        .select()
+        .single();
+
+      if (separacaoError) {
+        console.error('Erro ao criar separação:', separacaoError);
+        return;
+      }
+
+      // Inserir itens da separação
+      const { error: itensError } = await supabase
+        .from('separacao_itens')
+        .insert(
+          items.map(({ pedido, item }) => ({
+            separacao_id: separacao.id,
+            pedido: pedido,
+            item_codigo: item.ITEM_CODIGO,
+            descricao: item.DESCRICAO,
+            quantidade_pedida: item.QTDE_SALDO,
+            valor_unitario: item.VALOR_UNITARIO,
+            valor_total: item.QTDE_SALDO * item.VALOR_UNITARIO
+          }))
+        );
+
+      if (itensError) {
+        console.error('Erro ao inserir itens:', itensError);
+        return;
+      }
+    }
+
+    // Limpar seleção após enviar
+    setSelectedItems([]);
+  };
 
   if (isLoadingOrders || isLoadingTotals) {
     return (
@@ -309,6 +401,7 @@ const JabOrdersByClient = () => {
                           <table className="w-full">
                             <thead className="bg-muted">
                               <tr>
+                                <th className="text-left p-2"></th>
                                 <th className="text-left p-2">Pedido</th>
                                 <th className="text-left p-2">SKU</th>
                                 <th className="text-left p-2">Descrição</th>
@@ -329,6 +422,12 @@ const JabOrdersByClient = () => {
                                 })
                                 .map((item, index) => (
                                 <tr key={`${item.pedido}-${item.ITEM_CODIGO}-${index}`} className="border-t">
+                                  <td className="p-2">
+                                    <Checkbox
+                                      checked={selectedItems.includes(item.ITEM_CODIGO)}
+                                      onCheckedChange={() => handleItemSelect(item.ITEM_CODIGO)}
+                                    />
+                                  </td>
                                   <td className="p-2">{item.pedido}</td>
                                   <td className="p-2">{item.ITEM_CODIGO}</td>
                                   <td className="p-2">{item.DESCRICAO || '-'}</td>
@@ -361,6 +460,17 @@ const JabOrdersByClient = () => {
             );
           })}
         </div>
+
+        {selectedItems.length > 0 && (
+          <div className="fixed bottom-4 right-4">
+            <Button
+              onClick={handleEnviarParaSeparacao}
+              className="bg-primary text-white"
+            >
+              Enviar {selectedItems.length} itens para Separação
+            </Button>
+          </div>
+        )}
 
         <OrdersPagination
           currentPage={currentPage}
