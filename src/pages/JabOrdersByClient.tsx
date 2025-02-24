@@ -194,10 +194,14 @@ const JabOrdersByClient = () => {
       Object.values(groupedOrders).forEach(group => {
         group.allItems.forEach(item => {
           if (selectedItems.includes(item.ITEM_CODIGO)) {
+            const pesCodigoNumerico = typeof item.PES_CODIGO === 'object' ? 
+              null : 
+              Number(item.PES_CODIGO);
+
             allSelectedItems.push({
               pedido: item.pedido,
               item: item,
-              PES_CODIGO: item.PES_CODIGO,
+              PES_CODIGO: pesCodigoNumerico,
               APELIDO: item.APELIDO
             });
           }
@@ -219,9 +223,12 @@ const JabOrdersByClient = () => {
       let successCount = 0;
       for (const [clientName, items] of Object.entries(itemsByClient)) {
         console.log(`Processando cliente: ${clientName}`);
-        const clienteCode = items[0]?.PES_CODIGO;
+        
+        const clientItem = items.find(item => item.PES_CODIGO !== null);
+        const clienteCode = clientItem?.PES_CODIGO;
+
         if (!clienteCode) {
-          console.error(`Cliente ${clientName} sem código`);
+          console.error(`Cliente ${clientName} sem código válido:`, items[0]);
           toast({
             title: "Erro",
             description: `Cliente ${clientName} não possui código válido`,
@@ -234,7 +241,7 @@ const JabOrdersByClient = () => {
           sum + (item.item.QTDE_SALDO * item.item.VALOR_UNITARIO), 0
         );
 
-        console.log(`Inserindo separação para ${clientName}`);
+        console.log(`Inserindo separação para ${clientName} com código ${clienteCode}`);
         const { data: separacao, error: separacaoError } = await supabase
           .from('separacoes')
           .insert({
