@@ -3,6 +3,23 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { UserGroupAssignment } from "../types";
 
+interface UserGroup {
+  id: string;
+  user_id: string;
+  group_id: string;
+  created_at?: string;
+}
+
+interface User {
+  id: string;
+  email?: string;
+  created_at: string;
+}
+
+interface AdminUsersResponse {
+  users: User[];
+}
+
 export const useGroupUsers = (groupId: string) => {
   return useQuery({
     queryKey: ["group-users", groupId],
@@ -17,14 +34,13 @@ export const useGroupUsers = (groupId: string) => {
       if (error) throw error;
 
       // Buscar os emails dos usuários em uma consulta separada
-      const userIds = userGroups.map(ug => ug.user_id);
-      const { data: users, error: userError } = await supabase.auth.admin.listUsers();
+      const { data: usersData, error: userError } = await supabase.auth.admin.listUsers();
       
       if (userError) throw userError;
 
       // Mapear os dados combinando as informações
-      return userGroups.map(assignment => {
-        const user = users.users.find(u => u.id === assignment.user_id);
+      return (userGroups as UserGroup[]).map(assignment => {
+        const user = (usersData as AdminUsersResponse).users.find(u => u.id === assignment.user_id);
         return {
           id: assignment.id,
           user_id: assignment.user_id,
