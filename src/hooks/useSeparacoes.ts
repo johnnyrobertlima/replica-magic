@@ -45,30 +45,35 @@ export function useSeparacoes() {
           separacoes.flatMap(sep => sep.separacao_itens?.map(item => item.pedido) || [])
         ));
 
-        const { data: pedidosInfo } = await supabase
+        // Primeiro buscar pedidos
+        const { data: pedidosReps } = await supabase
           .from('BLUEBAY_PEDIDO')
-          .select(`
-            PED_NUMPEDIDO,
-            REPRESENTANTE,
-            representante:BLUEBAY_PESSOA!inner(RAZAOSOCIAL)
-          `)
+          .select('PED_NUMPEDIDO, REPRESENTANTE')
           .eq('CENTROCUSTO', 'JAB')
-          .in('PED_NUMPEDIDO', uniquePedidos)
-          .eq('BLUEBAY_PESSOA.PES_CODIGO', 'BLUEBAY_PEDIDO.REPRESENTANTE');
+          .in('PED_NUMPEDIDO', uniquePedidos);
 
-        // Mapear os representantes para as separações
-        return separacoes.map(separacao => {
-          const pedidoInfo = pedidosInfo?.find(p => 
-            separacao.separacao_itens?.some(item => item.pedido === p.PED_NUMPEDIDO)
-          );
-          
-          const representanteNome = pedidoInfo?.representante?.RAZAOSOCIAL || 'Não informado';
+        if (pedidosReps && pedidosReps.length > 0) {
+          // Depois buscar representantes
+          const { data: representantes } = await supabase
+            .from('BLUEBAY_PESSOA')
+            .select('PES_CODIGO, RAZAOSOCIAL')
+            .in('PES_CODIGO', pedidosReps.map(p => p.REPRESENTANTE).filter(Boolean));
 
-          return {
-            ...separacao,
-            representante_nome: representanteNome
-          };
-        });
+          // Mapear os representantes para as separações
+          return separacoes.map(separacao => {
+            const pedido = pedidosReps?.find(p => 
+              separacao.separacao_itens?.some(item => item.pedido === p.PED_NUMPEDIDO)
+            );
+            
+            const representante = representantes?.find(r => r.PES_CODIGO === pedido?.REPRESENTANTE);
+            const representanteNome = representante?.RAZAOSOCIAL || 'Não informado';
+
+            return {
+              ...separacao,
+              representante_nome: representanteNome
+            };
+          });
+        }
       }
 
       return separacoes || [];
