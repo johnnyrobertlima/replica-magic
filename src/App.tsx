@@ -28,6 +28,7 @@ import { AdminGroups } from "@/pages/admin/groups";
 import { AdminPermissions } from "@/pages/admin/permissions";
 import { AdminLogin } from "@/pages/admin/login";
 import { Outlet } from "react-router-dom";
+import { PermissionGuard } from "@/components/auth/PermissionGuard";
 
 function App() {
   return (
@@ -51,15 +52,51 @@ function App() {
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin" element={<AdminLayout><Outlet /></AdminLayout>}>
           <Route index element={<AdminDashboard />} />
-          <Route path="banners" element={<AdminBanners />} />
-          <Route path="clients" element={<AdminClients />} />
-          <Route path="groups" element={<AdminGroups />} />
-          <Route path="permissions" element={<AdminPermissions />} />
-          <Route path="logos" element={<AdminLogos />} />
-          <Route path="messages" element={<AdminMessages />} />
-          <Route path="seo" element={<AdminSEO />} />
-          <Route path="services" element={<AdminServices />} />
-          <Route path="social" element={<AdminSocial />} />
+          <Route path="banners" element={
+            <PermissionGuard resourcePath="/admin/banners">
+              <AdminBanners />
+            </PermissionGuard>
+          } />
+          <Route path="clients" element={
+            <PermissionGuard resourcePath="/admin/clients">
+              <AdminClients />
+            </PermissionGuard>
+          } />
+          <Route path="groups" element={
+            <PermissionGuard resourcePath="/admin" requiredPermission="admin">
+              <AdminGroups />
+            </PermissionGuard>
+          } />
+          <Route path="permissions" element={
+            <PermissionGuard resourcePath="/admin" requiredPermission="admin">
+              <AdminPermissions />
+            </PermissionGuard>
+          } />
+          <Route path="logos" element={
+            <PermissionGuard resourcePath="/admin/logos">
+              <AdminLogos />
+            </PermissionGuard>
+          } />
+          <Route path="messages" element={
+            <PermissionGuard resourcePath="/admin/messages">
+              <AdminMessages />
+            </PermissionGuard>
+          } />
+          <Route path="seo" element={
+            <PermissionGuard resourcePath="/admin/seo">
+              <AdminSEO />
+            </PermissionGuard>
+          } />
+          <Route path="services" element={
+            <PermissionGuard resourcePath="/admin/services">
+              <AdminServices />
+            </PermissionGuard>
+          } />
+          <Route path="social" element={
+            <PermissionGuard resourcePath="/admin/social">
+              <AdminSocial />
+            </PermissionGuard>
+          } />
         </Route>
       </Routes>
     </Router>
