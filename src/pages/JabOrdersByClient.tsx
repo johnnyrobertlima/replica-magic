@@ -169,6 +169,8 @@ const JabOrdersByClient = () => {
     let allSelectedItems: Array<{
       pedido: string;
       item: any;
+      PES_CODIGO: number;
+      APELIDO: string | null;
     }> = [];
 
     Object.values(groupedOrders).forEach(group => {
@@ -176,21 +178,24 @@ const JabOrdersByClient = () => {
         if (selectedItems.includes(item.ITEM_CODIGO)) {
           allSelectedItems.push({
             pedido: item.pedido,
-            item: item
+            item: item,
+            PES_CODIGO: item.PES_CODIGO,
+            APELIDO: item.APELIDO
           });
         }
       });
     });
 
     // Agrupar por cliente
-    const itemsByClient = allSelectedItems.reduce((acc, curr) => {
-      const clientName = curr.item.APELIDO || "Sem Cliente";
-      if (!acc[clientName]) {
-        acc[clientName] = [];
+    const itemsByClient: Record<string, typeof allSelectedItems> = {};
+    
+    allSelectedItems.forEach(item => {
+      const clientName = item.APELIDO || "Sem Cliente";
+      if (!itemsByClient[clientName]) {
+        itemsByClient[clientName] = [];
       }
-      acc[clientName].push(curr);
-      return acc;
-    }, {});
+      itemsByClient[clientName].push(item);
+    });
 
     // Criar separação para cada cliente
     for (const [clientName, items] of Object.entries(itemsByClient)) {
@@ -202,7 +207,7 @@ const JabOrdersByClient = () => {
         .from('separacoes')
         .insert({
           cliente_nome: clientName,
-          cliente_codigo: items[0].item.PES_CODIGO,
+          cliente_codigo: items[0].PES_CODIGO,
           quantidade_itens: items.length,
           valor_total: valorTotal
         })

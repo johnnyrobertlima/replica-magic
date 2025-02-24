@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useJabOrders, useTotals } from "@/hooks/useJabOrders";
 import type { DateRange } from "react-day-picker";
-import OrderCard from "@/components/jab-orders/OrderCard";
+import { OrderCard } from "@/components/jab-orders/OrderCard";
 import { TotalCards } from "@/components/jab-orders/TotalCards";
 import { OrdersHeader } from "@/components/jab-orders/OrdersHeader";
 import { OrdersPagination } from "@/components/jab-orders/OrdersPagination";
