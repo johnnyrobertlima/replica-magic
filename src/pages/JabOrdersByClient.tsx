@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import { useJabOrders, useTotals } from "@/hooks/useJabOrders";
+import { useQueryClient } from "@tanstack/react-query";
 import type { DateRange } from "react-day-picker";
 import { TotalCards } from "@/components/jab-orders/TotalCards";
 import { OrdersHeader } from "@/components/jab-orders/OrdersHeader";
@@ -17,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSeparacoes } from "@/hooks/useSeparacoes";
 import { SeparacaoCard } from "@/components/jab-orders/SeparacaoCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/components/ui/use-toast";
 
 const ITEMS_PER_PAGE = 15;
 
@@ -170,7 +172,6 @@ const JabOrdersByClient = () => {
   const handleEnviarParaSeparacao = async () => {
     if (selectedItems.length === 0) return;
 
-    // Encontrar todos os itens selecionados nos pedidos
     let allSelectedItems: Array<{
       pedido: string;
       item: any;
@@ -191,7 +192,6 @@ const JabOrdersByClient = () => {
       });
     });
 
-    // Agrupar por cliente
     const itemsByClient: Record<string, typeof allSelectedItems> = {};
     
     allSelectedItems.forEach(item => {
@@ -202,7 +202,6 @@ const JabOrdersByClient = () => {
       itemsByClient[clientName].push(item);
     });
 
-    // Criar separação para cada cliente
     for (const [clientName, items] of Object.entries(itemsByClient)) {
       const valorTotal = items.reduce((sum, item) => 
         sum + (item.item.QTDE_SALDO * item.item.VALOR_UNITARIO), 0
@@ -224,7 +223,6 @@ const JabOrdersByClient = () => {
         return;
       }
 
-      // Inserir itens da separação
       const { error: itensError } = await supabase
         .from('separacao_itens')
         .insert(
@@ -245,7 +243,6 @@ const JabOrdersByClient = () => {
       }
     }
 
-    // Limpar seleção após enviar
     setSelectedItems([]);
   };
 
