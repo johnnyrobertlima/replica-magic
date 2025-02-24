@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -52,6 +53,9 @@ export const AdminGroups = () => {
   const { data: groups, isLoading } = useQuery({
     queryKey: ["groups"],
     queryFn: async () => {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session) throw new Error("No session");
+
       const { data, error } = await supabase
         .from("groups")
         .select("*")
@@ -64,7 +68,15 @@ export const AdminGroups = () => {
 
   const createMutation = useMutation({
     mutationFn: async (data: GroupFormData) => {
-      const { error } = await supabase.from("groups").insert([data]);
+      const { data: session } = await supabase.auth.getSession();
+      if (!session) throw new Error("No session");
+
+      const { error } = await supabase
+        .from("groups")
+        .insert([data])
+        .select()
+        .single();
+
       if (error) throw error;
     },
     onSuccess: () => {
@@ -77,6 +89,7 @@ export const AdminGroups = () => {
       });
     },
     onError: (error) => {
+      console.error("Erro ao criar grupo:", error);
       toast({
         title: "Erro ao criar grupo",
         description: error.message,
@@ -87,10 +100,16 @@ export const AdminGroups = () => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: GroupFormData }) => {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session) throw new Error("No session");
+
       const { error } = await supabase
         .from("groups")
         .update(data)
-        .eq("id", id);
+        .eq("id", id)
+        .select()
+        .single();
+
       if (error) throw error;
     },
     onSuccess: () => {
@@ -103,6 +122,7 @@ export const AdminGroups = () => {
       });
     },
     onError: (error) => {
+      console.error("Erro ao atualizar grupo:", error);
       toast({
         title: "Erro ao atualizar grupo",
         description: error.message,
@@ -113,7 +133,14 @@ export const AdminGroups = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("groups").delete().eq("id", id);
+      const { data: session } = await supabase.auth.getSession();
+      if (!session) throw new Error("No session");
+
+      const { error } = await supabase
+        .from("groups")
+        .delete()
+        .eq("id", id);
+
       if (error) throw error;
     },
     onSuccess: () => {
@@ -124,6 +151,7 @@ export const AdminGroups = () => {
       });
     },
     onError: (error) => {
+      console.error("Erro ao excluir grupo:", error);
       toast({
         title: "Erro ao excluir grupo",
         description: error.message,
@@ -191,6 +219,11 @@ export const AdminGroups = () => {
               <DialogTitle>
                 {editingGroup ? "Editar Grupo" : "Criar Novo Grupo"}
               </DialogTitle>
+              <DialogDescription>
+                {editingGroup 
+                  ? "Atualize as informações do grupo selecionado."
+                  : "Preencha as informações para criar um novo grupo."}
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
