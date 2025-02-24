@@ -172,40 +172,43 @@ const JabOrdersByClient = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const [isSending, setIsSending] = useState(false);
+
   const handleEnviarParaSeparacao = async () => {
     if (selectedItems.length === 0) return;
 
-    let allSelectedItems: Array<{
-      pedido: string;
-      item: any;
-      PES_CODIGO: number;
-      APELIDO: string | null;
-    }> = [];
-
-    Object.values(groupedOrders).forEach(group => {
-      group.allItems.forEach(item => {
-        if (selectedItems.includes(item.ITEM_CODIGO)) {
-          allSelectedItems.push({
-            pedido: item.pedido,
-            item: item,
-            PES_CODIGO: item.PES_CODIGO,
-            APELIDO: item.APELIDO
-          });
-        }
-      });
-    });
-
-    const itemsByClient: Record<string, typeof allSelectedItems> = {};
-    
-    allSelectedItems.forEach(item => {
-      const clientName = item.APELIDO || "Sem Cliente";
-      if (!itemsByClient[clientName]) {
-        itemsByClient[clientName] = [];
-      }
-      itemsByClient[clientName].push(item);
-    });
-
+    setIsSending(true);
     try {
+      let allSelectedItems: Array<{
+        pedido: string;
+        item: any;
+        PES_CODIGO: number;
+        APELIDO: string | null;
+      }> = [];
+
+      Object.values(groupedOrders).forEach(group => {
+        group.allItems.forEach(item => {
+          if (selectedItems.includes(item.ITEM_CODIGO)) {
+            allSelectedItems.push({
+              pedido: item.pedido,
+              item: item,
+              PES_CODIGO: item.PES_CODIGO,
+              APELIDO: item.APELIDO
+            });
+          }
+        });
+      });
+
+      const itemsByClient: Record<string, typeof allSelectedItems> = {};
+      
+      allSelectedItems.forEach(item => {
+        const clientName = item.APELIDO || "Sem Cliente";
+        if (!itemsByClient[clientName]) {
+          itemsByClient[clientName] = [];
+        }
+        itemsByClient[clientName].push(item);
+      });
+
       for (const [clientName, items] of Object.entries(itemsByClient)) {
         const clienteCode = items[0]?.PES_CODIGO;
         if (!clienteCode) {
@@ -220,13 +223,6 @@ const JabOrdersByClient = () => {
         const valorTotal = items.reduce((sum, item) => 
           sum + (item.item.QTDE_SALDO * item.item.VALOR_UNITARIO), 0
         );
-
-        console.log('Criando separação para:', {
-          cliente_nome: clientName,
-          cliente_codigo: clienteCode,
-          quantidade_itens: items.length,
-          valor_total: valorTotal
-        });
 
         const { data: separacao, error: separacaoError } = await supabase
           .from('separacoes')
@@ -260,8 +256,6 @@ const JabOrdersByClient = () => {
           valor_total: item.QTDE_SALDO * item.VALOR_UNITARIO
         }));
 
-        console.log('Inserindo itens:', separacaoItens);
-
         const { error: itensError } = await supabase
           .from('separacao_itens')
           .insert(separacaoItens);
@@ -277,13 +271,15 @@ const JabOrdersByClient = () => {
         }
       }
 
-      setSelectedItems([]);
       await queryClient.invalidateQueries({ queryKey: ['separacoes'] });
       
       toast({
         title: "Sucesso",
         description: "Itens enviados para separação com sucesso",
       });
+
+      setSelectedItems([]);
+      setExpandedClients(new Set());
     } catch (error) {
       console.error('Erro ao processar separação:', error);
       toast({
@@ -291,6 +287,8 @@ const JabOrdersByClient = () => {
         description: "Ocorreu um erro ao enviar os itens para separação",
         variant: "destructive",
       });
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -524,12 +522,20 @@ const JabOrdersByClient = () => {
             </div>
 
             {selectedItems.length > 0 && (
-              <div className="fixed bottom-4 right-4">
+              <div className="fixed bottom-4 right-4 z-50">
                 <Button
                   onClick={handleEnviarParaSeparacao}
-                  className="bg-primary text-white"
+                  disabled={isSending}
+                  className="bg-primary text-white shadow-lg hover:bg-primary/90"
                 >
-                  Enviar {selectedItems.length} itens para Separação
+                  {isSending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Enviando...
+                    </>
+                  ) : (
+                    `Enviar ${selectedItems.length} itens para Separação`
+                  )}
                 </Button>
               </div>
             )}
