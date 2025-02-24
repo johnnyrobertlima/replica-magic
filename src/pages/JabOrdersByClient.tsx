@@ -169,6 +169,9 @@ const JabOrdersByClient = () => {
     });
   };
 
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
   const handleEnviarParaSeparacao = async () => {
     if (selectedItems.length === 0) return;
 
@@ -202,48 +205,93 @@ const JabOrdersByClient = () => {
       itemsByClient[clientName].push(item);
     });
 
-    for (const [clientName, items] of Object.entries(itemsByClient)) {
-      const valorTotal = items.reduce((sum, item) => 
-        sum + (item.item.QTDE_SALDO * item.item.VALOR_UNITARIO), 0
-      );
+    try {
+      for (const [clientName, items] of Object.entries(itemsByClient)) {
+        const clienteCode = items[0]?.PES_CODIGO;
+        if (!clienteCode) {
+          toast({
+            title: "Erro",
+            description: `Cliente ${clientName} não possui código válido`,
+            variant: "destructive",
+          });
+          continue;
+        }
 
-      const { data: separacao, error: separacaoError } = await supabase
-        .from('separacoes')
-        .insert({
-          cliente_nome: clientName,
-          cliente_codigo: items[0].PES_CODIGO,
-          quantidade_itens: items.length,
-          valor_total: valorTotal
-        })
-        .select()
-        .single();
-
-      if (separacaoError) {
-        console.error('Erro ao criar separação:', separacaoError);
-        return;
-      }
-
-      const { error: itensError } = await supabase
-        .from('separacao_itens')
-        .insert(
-          items.map(({ pedido, item }) => ({
-            separacao_id: separacao.id,
-            pedido: pedido,
-            item_codigo: item.ITEM_CODIGO,
-            descricao: item.DESCRICAO,
-            quantidade_pedida: item.QTDE_SALDO,
-            valor_unitario: item.VALOR_UNITARIO,
-            valor_total: item.QTDE_SALDO * item.VALOR_UNITARIO
-          }))
+        const valorTotal = items.reduce((sum, item) => 
+          sum + (item.item.QTDE_SALDO * item.item.VALOR_UNITARIO), 0
         );
 
-      if (itensError) {
-        console.error('Erro ao inserir itens:', itensError);
-        return;
-      }
-    }
+        console.log('Criando separação para:', {
+          cliente_nome: clientName,
+          cliente_codigo: clienteCode,
+          quantidade_itens: items.length,
+          valor_total: valorTotal
+        });
 
-    setSelectedItems([]);
+        const { data: separacao, error: separacaoError } = await supabase
+          .from('separacoes')
+          .insert({
+            cliente_nome: clientName,
+            cliente_codigo: clienteCode,
+            quantidade_itens: items.length,
+            valor_total: valorTotal,
+            status: 'pendente'
+          })
+          .select()
+          .single();
+
+        if (separacaoError) {
+          console.error('Erro ao criar separação:', separacaoError);
+          toast({
+            title: "Erro",
+            description: `Erro ao criar separação para ${clientName}`,
+            variant: "destructive",
+          });
+          continue;
+        }
+
+        const separacaoItens = items.map(({ pedido, item }) => ({
+          separacao_id: separacao.id,
+          pedido: pedido,
+          item_codigo: item.ITEM_CODIGO,
+          descricao: item.DESCRICAO,
+          quantidade_pedida: item.QTDE_SALDO,
+          valor_unitario: item.VALOR_UNITARIO,
+          valor_total: item.QTDE_SALDO * item.VALOR_UNITARIO
+        }));
+
+        console.log('Inserindo itens:', separacaoItens);
+
+        const { error: itensError } = await supabase
+          .from('separacao_itens')
+          .insert(separacaoItens);
+
+        if (itensError) {
+          console.error('Erro ao inserir itens:', itensError);
+          toast({
+            title: "Erro",
+            description: `Erro ao inserir itens para ${clientName}`,
+            variant: "destructive",
+          });
+          continue;
+        }
+      }
+
+      setSelectedItems([]);
+      await queryClient.invalidateQueries(['separacoes']);
+      
+      toast({
+        title: "Sucesso",
+        description: "Itens enviados para separação com sucesso",
+      });
+    } catch (error) {
+      console.error('Erro ao processar separação:', error);
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao enviar os itens para separação",
+        variant: "destructive",
+      });
+    }
   };
 
   if (isLoadingOrders || isLoadingTotals || isLoadingSeparacoes) {
