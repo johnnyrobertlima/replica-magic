@@ -49,6 +49,7 @@ export const AdminPermissions = () => {
     resource_path: "",
     permission_type: "read",
   });
+  const [customPath, setCustomPath] = useState<boolean>(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -63,6 +64,22 @@ export const AdminPermissions = () => {
       
       if (error) throw error;
       return data as Group[];
+    },
+  });
+
+  const { data: existingPaths } = useQuery({
+    queryKey: ["existing-paths"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("group_permissions")
+        .select("resource_path")
+        .order("resource_path");
+      
+      if (error) throw error;
+      
+      // Remove duplicates and return unique paths
+      const paths = [...new Set(data.map(p => p.resource_path))];
+      return paths;
     },
   });
 
@@ -157,6 +174,17 @@ export const AdminPermissions = () => {
       resource_path: "",
       permission_type: "read",
     });
+    setCustomPath(false);
+  };
+
+  const handleResourcePathChange = (value: string) => {
+    if (value === "other") {
+      setCustomPath(true);
+      setFormData(prev => ({ ...prev, resource_path: "" }));
+    } else {
+      setCustomPath(false);
+      setFormData(prev => ({ ...prev, resource_path: value }));
+    }
   };
 
   if (isLoadingGroups) {
@@ -200,15 +228,46 @@ export const AdminPermissions = () => {
               <h2 className="text-lg font-semibold">Adicionar Nova Permissão</h2>
               <div className="grid gap-2">
                 <Label htmlFor="resource_path">Caminho do Recurso</Label>
-                <Input
-                  id="resource_path"
-                  placeholder="/admin/users"
-                  value={formData.resource_path}
-                  onChange={(e) =>
-                    setFormData({ ...formData, resource_path: e.target.value })
-                  }
-                  required
-                />
+                {!customPath ? (
+                  <Select
+                    value={formData.resource_path}
+                    onValueChange={handleResourcePathChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um caminho" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {existingPaths?.map((path) => (
+                        <SelectItem key={path} value={path}>
+                          {path}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="other">Outro (personalizado)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="space-y-2">
+                    <Input
+                      id="resource_path"
+                      placeholder="/admin/users"
+                      value={formData.resource_path}
+                      onChange={(e) =>
+                        setFormData({ ...formData, resource_path: e.target.value })
+                      }
+                      required
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setCustomPath(false);
+                        setFormData(prev => ({ ...prev, resource_path: "" }));
+                      }}
+                    >
+                      Voltar para lista
+                    </Button>
+                  </div>
+                )}
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="permission_type">Tipo de Permissão</Label>
