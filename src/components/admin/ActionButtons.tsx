@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Power, Pencil, Trash2 } from "lucide-react";
 
@@ -6,6 +7,7 @@ interface ActionButtonsProps {
   onToggle?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
+  showEdit?: boolean;
 }
 
 export const ActionButtons = ({
@@ -13,6 +15,7 @@ export const ActionButtons = ({
   onToggle,
   onEdit,
   onDelete,
+  showEdit = true,
 }: ActionButtonsProps) => {
   return (
     <div className="flex gap-2">
@@ -26,7 +29,7 @@ export const ActionButtons = ({
           <Power className="h-4 w-4" />
         </Button>
       )}
-      {onEdit && (
+      {showEdit && onEdit && (
         <Button
           variant="outline"
           size="icon"
