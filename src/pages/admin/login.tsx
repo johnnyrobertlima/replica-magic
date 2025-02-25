@@ -30,32 +30,39 @@ export const AdminLogin = () => {
     try {
       const userGroups = await getUserGroups(userId);
       
-      // Verifica se o usuário tem o grupo admin
-      const isAdmin = userGroups.some(
-        (ug: any) => ug.groups?.name === 'admin'
-      );
+      // Define a ordem de prioridade dos grupos e suas páginas iniciais
+      const groupRedirects = [
+        { group: 'admin', path: '/admin' },
+        { group: 'manager', path: '/admin/clients' },
+        { group: 'editor', path: '/admin/social' },
+        { group: 'client', path: '/admin/social' }
+      ];
 
-      if (isAdmin) {
-        navigate("/admin"); // Dashboard principal para admins
+      // Encontra o primeiro grupo que o usuário tem acesso, seguindo a ordem de prioridade
+      const userGroupNames = userGroups.map((ug: any) => ug.groups?.name);
+      const redirect = groupRedirects.find(gr => userGroupNames.includes(gr.group));
+
+      if (redirect) {
+        navigate(redirect.path);
         return;
       }
 
-      // Verifica se o usuário tem o grupo manager
-      const isManager = userGroups.some(
-        (ug: any) => ug.groups?.name === 'manager'
-      );
-
-      if (isManager) {
-        navigate("/admin/clients"); // Área de clientes para managers
-        return;
-      }
-
-      // Se não tem grupo específico, redireciona para uma área restrita
-      navigate("/admin/social"); // Área de social media por padrão
+      // Se não encontrar nenhum grupo específico, redireciona para uma área restrita padrão
+      toast({
+        title: "Aviso",
+        description: "Seu grupo de usuário não tem uma página inicial definida.",
+        variant: "default",
+      });
+      navigate("/admin/social");
       
     } catch (error: any) {
       console.error("Erro ao verificar grupos:", error);
-      navigate("/admin"); // Redireciona para o dashboard em caso de erro
+      toast({
+        title: "Erro ao verificar permissões",
+        description: error.message,
+        variant: "destructive",
+      });
+      navigate("/admin/login");
     }
   };
 
