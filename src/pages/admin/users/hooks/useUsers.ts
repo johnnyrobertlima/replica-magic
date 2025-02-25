@@ -18,7 +18,7 @@ export const useUsers = () => {
         .from('user_groups')
         .select(`
           user_id,
-          user_profiles!user_id (
+          user_profiles (
             email
           )
         `);

@@ -25,7 +25,8 @@ export const useGroupUsers = (groupId: string) => {
           id,
           user_id,
           group_id,
-          user_profiles!user_id (
+          created_at,
+          user_profiles (
             email
           )
         `)
@@ -33,7 +34,7 @@ export const useGroupUsers = (groupId: string) => {
       
       if (error) throw error;
 
-      const typedUserGroups = userGroups as UserGroupWithProfile[];
+      const typedUserGroups = userGroups as unknown as UserGroupWithProfile[];
 
       return typedUserGroups.map(assignment => ({
         id: assignment.id,
