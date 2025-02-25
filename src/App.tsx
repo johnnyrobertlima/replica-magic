@@ -35,18 +35,68 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Index />} />
-      <Route path="/client-area" element={<ClientArea />} />
-      <Route path="/post-management" element={<PostManagement />} />
-      <Route path="/client-area/bluebay" element={<BluebayHome />} />
-      <Route path="/client-area/bluebay/jab-orders" element={<JabOrders />} />
-      <Route path="/client-area/bluebay/jab-orders-by-client" element={<JabOrdersByClient />} />
-      <Route path="/client-area/bluebay/aprovacao-financeira" element={<AprovacaoFinanceira />} />
-      <Route path="/client-area/content-management" element={<ContentManagement />} />
-      <Route path="/client-area/mailing-registration" element={<MailingRegistration />} />
-      <Route path="/client-area/tokens" element={<TokenManagement />} />
-      <Route path="/client-area/whatsapp-registration" element={<WhatsAppClientRegistration />} />
-      <Route path="/client-area/whatsapp" element={<WhatsAppService />} />
       <Route path="/login" element={<ClientLogin />} />
+      
+      {/* Client Area Routes - Protected */}
+      <Route path="/client-area" element={
+        <PermissionGuard resourcePath="/client-area">
+          <ClientArea />
+        </PermissionGuard>
+      } />
+      <Route path="/post-management" element={
+        <PermissionGuard resourcePath="/post-management">
+          <PostManagement />
+        </PermissionGuard>
+      } />
+      
+      {/* Bluebay Routes */}
+      <Route path="/client-area/bluebay" element={
+        <PermissionGuard resourcePath="/client-area/bluebay">
+          <BluebayHome />
+        </PermissionGuard>
+      } />
+      <Route path="/client-area/bluebay/jab-orders" element={
+        <PermissionGuard resourcePath="/client-area/bluebay/jab-orders">
+          <JabOrders />
+        </PermissionGuard>
+      } />
+      <Route path="/client-area/bluebay/jab-orders-by-client" element={
+        <PermissionGuard resourcePath="/client-area/bluebay/jab-orders">
+          <JabOrdersByClient />
+        </PermissionGuard>
+      } />
+      <Route path="/client-area/bluebay/aprovacao-financeira" element={
+        <PermissionGuard resourcePath="/client-area/bluebay/financeiro">
+          <AprovacaoFinanceira />
+        </PermissionGuard>
+      } />
+
+      {/* Content Management Routes */}
+      <Route path="/client-area/content-management" element={
+        <PermissionGuard resourcePath="/client-area/content">
+          <ContentManagement />
+        </PermissionGuard>
+      } />
+      <Route path="/client-area/mailing-registration" element={
+        <PermissionGuard resourcePath="/client-area/mailing">
+          <MailingRegistration />
+        </PermissionGuard>
+      } />
+      <Route path="/client-area/tokens" element={
+        <PermissionGuard resourcePath="/client-area/tokens">
+          <TokenManagement />
+        </PermissionGuard>
+      } />
+      <Route path="/client-area/whatsapp-registration" element={
+        <PermissionGuard resourcePath="/client-area/whatsapp">
+          <WhatsAppClientRegistration />
+        </PermissionGuard>
+      } />
+      <Route path="/client-area/whatsapp" element={
+        <PermissionGuard resourcePath="/client-area/whatsapp">
+          <WhatsAppService />
+        </PermissionGuard>
+      } />
 
       {/* Admin Routes */}
       <Route path="/admin/login" element={<AdminLogin />} />
