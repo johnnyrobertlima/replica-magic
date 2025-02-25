@@ -84,9 +84,6 @@ export const AdminLogin = () => {
 
     try {
       console.log("Iniciando tentativa de login com:", { email: trimmedEmail }); 
-
-      // Verificar se o Supabase está configurado corretamente
-      console.log("Supabase URL:", supabase.supabaseUrl);
       
       const { data: { user }, error } = await supabase.auth.signInWithPassword({
         email: trimmedEmail,
