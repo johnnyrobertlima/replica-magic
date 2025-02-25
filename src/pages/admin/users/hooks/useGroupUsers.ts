@@ -9,19 +9,13 @@ export const useGroupUsers = (groupId: string) => {
     queryFn: async () => {
       if (!groupId) return [];
       
-      const { data: userGroups, error } = await supabase
+      // First, get all user groups for this group
+      const { data: userGroups, error: groupError } = await supabase
         .from("user_groups")
-        .select(`
-          id,
-          user_id,
-          group_id,
-          user_profiles!inner (
-            email
-          )
-        `)
+        .select("*, user_profiles(email)")
         .eq("group_id", groupId);
       
-      if (error) throw error;
+      if (groupError) throw groupError;
       if (!userGroups) return [];
 
       return userGroups.map(group => ({
