@@ -3,6 +3,15 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { UserGroupAssignment } from "../types";
 
+interface UserGroupJoinResult {
+  id: string;
+  user_id: string;
+  group_id: string;
+  user_profiles: {
+    email: string | null;
+  } | null;
+}
+
 export const useGroupUsers = (groupId: string) => {
   return useQuery({
     queryKey: ["group-users", groupId],
@@ -15,7 +24,7 @@ export const useGroupUsers = (groupId: string) => {
           id,
           user_id,
           group_id,
-          user_profiles!user_groups_user_id_fkey (
+          user_profiles (
             email
           )
         `)
@@ -24,7 +33,7 @@ export const useGroupUsers = (groupId: string) => {
       if (groupError) throw groupError;
       if (!userGroups) return [];
 
-      return userGroups.map(group => ({
+      return (userGroups as UserGroupJoinResult[]).map(group => ({
         id: group.id,
         user_id: group.user_id,
         group_id: group.group_id,
