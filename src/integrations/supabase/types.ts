@@ -1233,6 +1233,12 @@ export type Database = {
       }
     }
     Views: {
+      admin_users: {
+        Row: {
+          user_id: string | null
+        }
+        Relationships: []
+      }
       user_groups_with_profiles: {
         Row: {
           group_id: string | null
