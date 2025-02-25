@@ -7,7 +7,7 @@ interface UserGroupJoinResult {
   id: string;
   user_id: string;
   group_id: string;
-  profiles: {
+  user_profile: {
     email: string | null;
   } | null;
 }
@@ -24,7 +24,7 @@ export const useGroupUsers = (groupId: string) => {
           id,
           user_id,
           group_id,
-          profiles:user_profiles!user_id(email)
+          user_profile:user_profiles!id(email)
         `)
         .eq("group_id", groupId);
       
@@ -35,7 +35,7 @@ export const useGroupUsers = (groupId: string) => {
         id: group.id,
         user_id: group.user_id,
         group_id: group.group_id,
-        user_email: group.profiles?.email || null
+        user_email: group.user_profile?.email || null
       }));
     },
     enabled: !!groupId,
