@@ -38,11 +38,13 @@ export const UserGroupManagement = () => {
         return;
       }
 
-      // Fazer inserção direta sem verificação de políticas complexas
-      const { error } = await supabase.rpc('add_user_to_group', {
-        p_user_id: selectedUserId,
-        p_group_id: selectedGroupId
-      });
+      // Inserir usando uma inserção direta na tabela
+      const { error } = await supabase
+        .from("user_groups")
+        .insert([{ 
+          group_id: selectedGroupId, 
+          user_id: selectedUserId 
+        }]);
 
       if (error) {
         console.error("Error adding user to group:", error);
@@ -65,9 +67,10 @@ export const UserGroupManagement = () => {
     }
 
     try {
-      const { error } = await supabase.rpc('remove_user_from_group', {
-        p_assignment_id: assignmentId
-      });
+      const { error } = await supabase
+        .from("user_groups")
+        .delete()
+        .eq("id", assignmentId);
 
       if (error) {
         console.error("Error removing user from group:", error);

@@ -1252,6 +1252,13 @@ export type Database = {
       }
     }
     Functions: {
+      add_user_to_group: {
+        Args: {
+          p_user_id: string
+          p_group_id: string
+        }
+        Returns: undefined
+      }
       calcular_valor_faturar_com_estoque: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -1307,6 +1314,12 @@ export type Database = {
           ped_numpedido: string
           total_count: number
         }[]
+      }
+      remove_user_from_group: {
+        Args: {
+          p_assignment_id: string
+        }
+        Returns: undefined
       }
     }
     Enums: {
