@@ -24,7 +24,7 @@ export const useGroupUsers = (groupId: string) => {
           id,
           user_id,
           group_id,
-          profiles:user_profiles(email)
+          profiles:user_profiles!user_id(email)
         `)
         .eq("group_id", groupId);
       
