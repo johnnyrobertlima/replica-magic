@@ -44,6 +44,18 @@ export const GroupForm = ({
           }
         />
       </div>
+      <div>
+        <Label htmlFor="homepage">Página Inicial</Label>
+        <Input
+          id="homepage"
+          value={formData.homepage}
+          onChange={(e) =>
+            setFormData({ ...formData, homepage: e.target.value })
+          }
+          placeholder="/admin/example"
+          required
+        />
+      </div>
       <Button
         type="submit"
         disabled={isLoading}

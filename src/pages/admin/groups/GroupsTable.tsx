@@ -24,6 +24,7 @@ export const GroupsTable = ({ groups, onEdit, onDelete }: GroupsTableProps) => {
           <TableRow>
             <TableHead>Nome</TableHead>
             <TableHead>Descrição</TableHead>
+            <TableHead>Página Inicial</TableHead>
             <TableHead className="w-[120px]">Ações</TableHead>
           </TableRow>
         </TableHeader>
@@ -32,6 +33,7 @@ export const GroupsTable = ({ groups, onEdit, onDelete }: GroupsTableProps) => {
             <TableRow key={group.id}>
               <TableCell>{group.name}</TableCell>
               <TableCell>{group.description}</TableCell>
+              <TableCell>{group.homepage}</TableCell>
               <TableCell>
                 <ActionButtons
                   onEdit={() => onEdit(group)}

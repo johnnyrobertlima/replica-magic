@@ -17,7 +17,8 @@ export const AdminLogin = () => {
       .from('user_groups')
       .select(`
         groups (
-          name
+          name,
+          homepage
         )
       `)
       .eq('user_id', userId);
@@ -30,24 +31,33 @@ export const AdminLogin = () => {
     try {
       const userGroups = await getUserGroups(userId);
       
-      // Define a ordem de prioridade dos grupos e suas páginas iniciais
-      const groupRedirects = [
-        { group: 'admin', path: '/admin' },
-        { group: 'manager', path: '/admin/clients' },
-        { group: 'editor', path: '/admin/social' },
-        { group: 'client', path: '/admin/social' }
-      ];
-
-      // Encontra o primeiro grupo que o usuário tem acesso, seguindo a ordem de prioridade
-      const userGroupNames = userGroups.map((ug: any) => ug.groups?.name);
-      const redirect = groupRedirects.find(gr => userGroupNames.includes(gr.group));
-
-      if (redirect) {
-        navigate(redirect.path);
+      if (!userGroups || userGroups.length === 0) {
+        toast({
+          title: "Aviso",
+          description: "Usuário não pertence a nenhum grupo.",
+          variant: "default",
+        });
+        navigate("/admin/login");
         return;
       }
 
-      // Se não encontrar nenhum grupo específico, redireciona para uma área restrita padrão
+      // Ordena os grupos para priorizar 'admin', depois 'manager', etc.
+      const groupOrder = ['admin', 'manager', 'editor', 'client'];
+      const sortedGroups = userGroups.sort((a, b) => {
+        const aIndex = groupOrder.indexOf(a.groups?.name || '');
+        const bIndex = groupOrder.indexOf(b.groups?.name || '');
+        return aIndex - bIndex;
+      });
+
+      // Pega o primeiro grupo (maior prioridade) que tenha uma homepage definida
+      const primaryGroup = sortedGroups.find(ug => ug.groups?.homepage);
+
+      if (primaryGroup?.groups?.homepage) {
+        navigate(primaryGroup.groups.homepage);
+        return;
+      }
+
+      // Se nenhum grupo tiver homepage definida
       toast({
         title: "Aviso",
         description: "Seu grupo de usuário não tem uma página inicial definida.",
