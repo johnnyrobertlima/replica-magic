@@ -7,7 +7,7 @@ interface UserGroupJoinResult {
   id: string;
   user_id: string;
   group_id: string;
-  user_profile: {
+  user_profiles: {
     email: string | null;
   } | null;
 }
@@ -24,10 +24,11 @@ export const useGroupUsers = (groupId: string) => {
           id,
           user_id,
           group_id,
-          user_profile:user_profiles(email)
+          user_profiles (
+            email
+          )
         `)
-        .eq("group_id", groupId)
-        .eq('user_profiles.id', 'user_groups.user_id');
+        .eq("group_id", groupId);
       
       if (groupError) throw groupError;
       if (!userGroups) return [];
@@ -36,7 +37,7 @@ export const useGroupUsers = (groupId: string) => {
         id: group.id,
         user_id: group.user_id,
         group_id: group.group_id,
-        user_email: group.user_profile?.email || null
+        user_email: group.user_profiles?.email || null
       }));
     },
     enabled: !!groupId,
