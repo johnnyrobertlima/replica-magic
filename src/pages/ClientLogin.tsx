@@ -23,13 +23,15 @@ const ClientLogin = () => {
     setLoading(true);
 
     try {
+      console.log("Tentando autenticar com:", { email: email.trim() });
+
       if (isSignUp) {
         const { error } = await supabase.auth.signUp({
-          email,
-          password,
+          email: email.trim(),
+          password: password.trim(),
           options: {
             data: {
-              name: name,
+              name: name.trim(),
             }
           }
         });
@@ -39,18 +41,37 @@ const ClientLogin = () => {
           description: "Verifique seu email para confirmar o cadastro.",
         });
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
+        const { data: { user }, error } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password: password.trim(),
         });
-        if (error) throw error;
+        
+        if (error) {
+          console.error("Erro de autenticação:", error);
+          throw error;
+        }
+        
+        if (!user) {
+          throw new Error("Usuário não encontrado");
+        }
+
+        console.log("Login bem-sucedido:", user);
         navigate("/client-area");
       }
     } catch (error: any) {
+      console.error("Erro completo:", error);
+      let message = "Erro na autenticação";
+      
+      if (error.message.includes("Invalid login credentials")) {
+        message = "Email ou senha incorretos";
+      } else if (error.message.includes("Email not confirmed")) {
+        message = "Email não confirmado. Por favor, verifique sua caixa de entrada";
+      }
+      
       toast({
         variant: "destructive",
         title: "Erro na autenticação",
-        description: error.message,
+        description: message,
       });
     } finally {
       setLoading(false);
