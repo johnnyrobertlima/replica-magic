@@ -3,45 +3,41 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { UserGroupAssignment } from "../types";
 
-interface UserGroupWithProfile {
-  id: string;
-  user_id: string;
-  group_id: string;
-  created_at?: string;
-  user_profiles: {
-    email: string | null;
-  } | null;
-}
-
 export const useGroupUsers = (groupId: string) => {
   return useQuery({
     queryKey: ["group-users", groupId],
     queryFn: async () => {
       if (!groupId) return [];
       
-      const { data: userGroups, error } = await supabase
+      // First, get all user groups for this group
+      const { data: userGroups, error: groupError } = await supabase
         .from("user_groups")
-        .select(`
-          id,
-          user_id,
-          group_id,
-          created_at,
-          user_profiles (
-            email
-          )
-        `)
+        .select("*")
         .eq("group_id", groupId);
       
-      if (error) throw error;
+      if (groupError) throw groupError;
+      if (!userGroups) return [];
 
-      const typedUserGroups = userGroups as unknown as UserGroupWithProfile[];
-
-      return typedUserGroups.map(assignment => ({
-        id: assignment.id,
-        user_id: assignment.user_id,
-        group_id: assignment.group_id,
-        user_email: assignment.user_profiles?.email || null
-      })) as UserGroupAssignment[];
+      // Then, get the user profiles for all users in these groups
+      const userIds = userGroups.map(ug => ug.user_id);
+      
+      const { data: userProfiles, error: profileError } = await supabase
+        .from("user_profiles")
+        .select("id, email")
+        .in("id", userIds);
+      
+      if (profileError) throw profileError;
+      
+      // Map the data together
+      return userGroups.map(group => {
+        const userProfile = userProfiles?.find(profile => profile.id === group.user_id);
+        return {
+          id: group.id,
+          user_id: group.user_id,
+          group_id: group.group_id,
+          user_email: userProfile?.email || null
+        };
+      }) as UserGroupAssignment[];
     },
     enabled: !!groupId,
   });
