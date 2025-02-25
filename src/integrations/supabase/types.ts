@@ -1233,7 +1233,23 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_groups_with_profiles: {
+        Row: {
+          group_id: string | null
+          id: string | null
+          user_email: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_groups_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       calcular_valor_faturar_com_estoque: {
