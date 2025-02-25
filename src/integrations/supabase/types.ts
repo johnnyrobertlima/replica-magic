@@ -1308,6 +1308,10 @@ export type Database = {
           total_count: number
         }[]
       }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
       permission_type: "read" | "write" | "admin"
