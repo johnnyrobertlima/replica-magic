@@ -23,6 +23,7 @@ export const AdminGroups = () => {
   const [formData, setFormData] = useState<GroupFormData>({
     name: "",
     description: "",
+    homepage: "", // Adicionando o campo homepage
   });
 
   const { createMutation, updateMutation, deleteMutation } = useGroupMutations();
@@ -70,6 +71,7 @@ export const AdminGroups = () => {
     setFormData({
       name: group.name,
       description: group.description || "",
+      homepage: group.homepage || "", // Adicionando o campo homepage
     });
     setIsOpen(true);
   };
@@ -84,6 +86,7 @@ export const AdminGroups = () => {
     setFormData({
       name: "",
       description: "",
+      homepage: "", // Adicionando o campo homepage
     });
     setEditingGroup(null);
   };
