@@ -7,17 +7,19 @@ export const useUsers = () => {
   return useQuery({
     queryKey: ["users"],
     queryFn: async () => {
-      // Buscar diretamente da tabela user_profiles ao invés de user_groups
-      const { data, error } = await supabase
+      const { data: profiles, error } = await supabase
         .from('user_profiles')
-        .select(`
-          id,
-          email
-        `);
+        .select('*')
+        .throwOnError();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erro ao buscar usuários:", error);
+        throw error;
+      }
 
-      return (data || []).map(profile => ({
+      console.log("Perfis de usuários encontrados:", profiles);
+
+      return (profiles || []).map(profile => ({
         id: profile.id,
         email: profile.email || ''
       })) as User[];
