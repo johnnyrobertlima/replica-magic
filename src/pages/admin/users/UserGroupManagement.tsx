@@ -25,22 +25,28 @@ export const UserGroupManagement = () => {
     }
 
     try {
-      const { error } = await supabase
-        .from("user_groups")
-        .insert([
-          { 
-            group_id: selectedGroupId, 
-            user_id: selectedUserId 
-          }
-        ]);
+      // Verificar se o usuário já está no grupo
+      const { data: existingAssignment } = await supabase
+        .from("user_groups_with_profiles")
+        .select("id")
+        .eq("group_id", selectedGroupId)
+        .eq("user_id", selectedUserId)
+        .single();
+
+      if (existingAssignment) {
+        toast.error("Este usuário já está no grupo");
+        return;
+      }
+
+      // Fazer inserção direta sem verificação de políticas complexas
+      const { error } = await supabase.rpc('add_user_to_group', {
+        p_user_id: selectedUserId,
+        p_group_id: selectedGroupId
+      });
 
       if (error) {
-        if (error.code === '23505') {
-          toast.error("Este usuário já está no grupo");
-        } else {
-          console.error("Error adding user to group:", error);
-          toast.error("Erro ao adicionar usuário ao grupo");
-        }
+        console.error("Error adding user to group:", error);
+        toast.error("Erro ao adicionar usuário ao grupo");
         return;
       }
 
@@ -59,10 +65,9 @@ export const UserGroupManagement = () => {
     }
 
     try {
-      const { error } = await supabase
-        .from("user_groups")
-        .delete()
-        .eq("id", assignmentId);
+      const { error } = await supabase.rpc('remove_user_from_group', {
+        p_assignment_id: assignmentId
+      });
 
       if (error) {
         console.error("Error removing user from group:", error);
