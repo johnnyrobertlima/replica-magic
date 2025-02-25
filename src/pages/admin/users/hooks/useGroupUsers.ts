@@ -8,6 +8,9 @@ interface UserGroup {
   user_id: string;
   group_id: string;
   created_at?: string;
+  users: {
+    email: string;
+  } | null;
 }
 
 export const useGroupUsers = (groupId: string) => {
@@ -22,7 +25,7 @@ export const useGroupUsers = (groupId: string) => {
           id,
           user_id,
           group_id,
-          users:user_id (
+          users (
             email
           )
         `)
