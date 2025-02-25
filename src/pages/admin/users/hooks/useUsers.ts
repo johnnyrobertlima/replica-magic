@@ -7,39 +7,23 @@ export const useUsers = () => {
   return useQuery({
     queryKey: ["users"],
     queryFn: async () => {
-      // Primeiro, vamos buscar os usuários da auth
-      const { data: { users: authUsers }, error: authError } = await supabase.auth.admin.listUsers();
+      // Buscar todos os usuários através da view existente
+      const { data: users, error } = await supabase
+        .from('user_groups_with_profiles')
+        .select('user_id, user_email')
+        .distinctOn('user_id');
 
-      if (authError) {
-        console.error("Erro ao buscar usuários da auth:", authError);
-        throw authError;
+      if (error) {
+        console.error("Erro ao buscar usuários:", error);
+        throw error;
       }
 
-      console.log("Usuários da auth encontrados:", authUsers);
+      console.log("Usuários encontrados:", users);
 
-      // Em seguida, buscar os perfis existentes
-      const { data: profiles, error: profilesError } = await supabase
-        .from('user_profiles')
-        .select('*');
-
-      if (profilesError) {
-        console.error("Erro ao buscar perfis:", profilesError);
-        throw profilesError;
-      }
-
-      console.log("Perfis existentes:", profiles);
-
-      // Criar um mapa dos perfis existentes
-      const profileMap = new Map(
-        (profiles || []).map(profile => [profile.id, profile])
-      );
-
-      // Combinar os dados dos usuários auth com os perfis
-      return authUsers.map(user => ({
-        id: user.id,
-        email: user.email || '',
-        // Usar dados do perfil se existir, caso contrário usar dados do auth
-        ...((profileMap.get(user.id)) || {})
+      // Mapear os dados para o formato esperado
+      return (users || []).map(user => ({
+        id: user.user_id,
+        email: user.user_email || ''
       })) as User[];
     },
   });
