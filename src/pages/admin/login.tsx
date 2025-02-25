@@ -15,34 +15,35 @@ export const AdminLogin = () => {
   const { toast } = useToast();
 
   const getUserGroups = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('user_groups')
-      .select(`
-        groups (
-          name,
-          homepage
-        )
-      `)
-      .eq('user_id', userId);
+    try {
+      // Modificada a query para pegar todos os dados do grupo
+      const { data, error } = await supabase
+        .from('user_groups')
+        .select('*, groups:groups (*)')
+        .eq('user_id', userId);
 
-    if (error) {
-      console.error("Erro ao buscar grupos:", error);
+      if (error) {
+        console.error("Erro ao buscar grupos:", error);
+        throw error;
+      }
+
+      console.log("Dados completos dos grupos do usuário:", data);
+      return data;
+    } catch (error) {
+      console.error("Erro na função getUserGroups:", error);
       throw error;
     }
-    
-    console.log("Grupos do usuário:", data); // Debug
-    return data;
   };
 
   const handleRedirect = async (userId: string) => {
     try {
-      console.log("Iniciando redirecionamento para usuário:", userId); // Debug
+      console.log("Iniciando redirecionamento para usuário:", userId);
       
       const userGroups = await getUserGroups(userId);
-      console.log("Grupos encontrados:", userGroups); // Debug
+      console.log("Grupos encontrados:", userGroups);
       
       if (!userGroups || userGroups.length === 0) {
-        console.log("Usuário sem grupos"); // Debug
+        console.log("Usuário sem grupos");
         toast({
           title: "Aviso",
           description: "Usuário não pertence a nenhum grupo.",
@@ -52,35 +53,39 @@ export const AdminLogin = () => {
         return;
       }
 
-      // Lista de prioridade dos grupos (admin tem maior prioridade)
-      const groupOrder = ['admin', 'manager', 'editor', 'client'];
-      
-      // Ordena os grupos pela prioridade
+      // Procura pelo grupo JAB primeiro
+      const jabGroup = userGroups.find(ug => ug.groups?.name === 'JAB');
+      if (jabGroup?.groups?.homepage) {
+        console.log("Grupo JAB encontrado, redirecionando para:", jabGroup.groups.homepage);
+        navigate(jabGroup.groups.homepage);
+        return;
+      }
+
+      // Se não encontrar o grupo JAB, segue a lógica de prioridade
+      const groupOrder = ['admin', 'manager', 'editor', 'client', 'JAB'];
       const sortedGroups = userGroups.sort((a, b) => {
         const aIndex = groupOrder.indexOf(a.groups?.name || '');
         const bIndex = groupOrder.indexOf(b.groups?.name || '');
-        console.log(`Comparando grupos: ${a.groups?.name}(${aIndex}) vs ${b.groups?.name}(${bIndex})`); // Debug
+        console.log(`Comparando grupos: ${a.groups?.name}(${aIndex}) vs ${b.groups?.name}(${bIndex})`);
         return aIndex - bIndex;
       });
 
-      console.log("Grupos ordenados:", sortedGroups); // Debug
+      console.log("Grupos ordenados:", sortedGroups);
 
-      // Encontra o primeiro grupo que tem uma homepage definida
       const primaryGroup = sortedGroups.find(ug => {
-        console.log("Verificando homepage para grupo:", ug.groups); // Debug
+        console.log("Verificando homepage para grupo:", ug.groups);
         return ug.groups?.homepage;
       });
 
-      console.log("Grupo primário encontrado:", primaryGroup); // Debug
+      console.log("Grupo primário encontrado:", primaryGroup);
 
       if (primaryGroup?.groups?.homepage) {
-        console.log("Redirecionando para:", primaryGroup.groups.homepage); // Debug
+        console.log("Redirecionando para:", primaryGroup.groups.homepage);
         navigate(primaryGroup.groups.homepage);
         return;
       }
 
-      // Se nenhum grupo tiver homepage definida, redireciona para social
-      console.log("Nenhuma homepage encontrada, redirecionando para /admin/social"); // Debug
+      console.log("Nenhuma homepage encontrada, redirecionando para /admin/social");
       toast({
         title: "Aviso",
         description: "Seu grupo de usuário não tem uma página inicial definida.",
@@ -128,7 +133,6 @@ export const AdminLogin = () => {
       }
 
       console.log("Login bem-sucedido, user_id:", user.id);
-      
       await handleRedirect(user.id);
       
     } catch (error: any) {
