@@ -16,21 +16,19 @@ export const AdminLogin = () => {
 
   const getUserGroups = async (userId: string) => {
     try {
-      // Modificada a query para pegar todos os dados do grupo
       const { data, error } = await supabase
         .from('user_groups')
         .select('*, groups:groups (*)')
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .throwOnError();
 
-      if (error) {
-        console.error("Erro ao buscar grupos:", error);
-        throw error;
-      }
+      if (error) throw error;
+      if (!data) throw new Error("Nenhum grupo encontrado");
 
-      console.log("Dados completos dos grupos do usuário:", data);
+      console.log("Dados dos grupos do usuário:", data);
       return data;
     } catch (error) {
-      console.error("Erro na função getUserGroups:", error);
+      console.error("Erro ao buscar grupos:", error);
       throw error;
     }
   };
@@ -40,7 +38,6 @@ export const AdminLogin = () => {
       console.log("Iniciando redirecionamento para usuário:", userId);
       
       const userGroups = await getUserGroups(userId);
-      console.log("Grupos encontrados:", userGroups);
       
       if (!userGroups || userGroups.length === 0) {
         console.log("Usuário sem grupos");
@@ -53,48 +50,27 @@ export const AdminLogin = () => {
         return;
       }
 
-      // Procura pelo grupo JAB primeiro
-      const jabGroup = userGroups.find(ug => ug.groups?.name === 'JAB');
-      if (jabGroup?.groups?.homepage) {
+      // Verifica se existe um grupo JAB com homepage definida
+      const jabGroup = userGroups.find(ug => 
+        ug.groups?.name === 'JAB' && ug.groups?.homepage
+      );
+
+      if (jabGroup) {
         console.log("Grupo JAB encontrado, redirecionando para:", jabGroup.groups.homepage);
         navigate(jabGroup.groups.homepage);
         return;
       }
 
-      // Se não encontrar o grupo JAB, segue a lógica de prioridade
-      const groupOrder = ['admin', 'manager', 'editor', 'client', 'JAB'];
-      const sortedGroups = userGroups.sort((a, b) => {
-        const aIndex = groupOrder.indexOf(a.groups?.name || '');
-        const bIndex = groupOrder.indexOf(b.groups?.name || '');
-        console.log(`Comparando grupos: ${a.groups?.name}(${aIndex}) vs ${b.groups?.name}(${bIndex})`);
-        return aIndex - bIndex;
-      });
-
-      console.log("Grupos ordenados:", sortedGroups);
-
-      const primaryGroup = sortedGroups.find(ug => {
-        console.log("Verificando homepage para grupo:", ug.groups);
-        return ug.groups?.homepage;
-      });
-
-      console.log("Grupo primário encontrado:", primaryGroup);
-
-      if (primaryGroup?.groups?.homepage) {
-        console.log("Redirecionando para:", primaryGroup.groups.homepage);
-        navigate(primaryGroup.groups.homepage);
-        return;
-      }
-
-      console.log("Nenhuma homepage encontrada, redirecionando para /admin/social");
+      console.log("Grupo JAB não encontrado ou sem homepage definida");
       toast({
         title: "Aviso",
-        description: "Seu grupo de usuário não tem uma página inicial definida.",
+        description: "Não foi possível encontrar a página inicial configurada.",
         variant: "default",
       });
-      navigate("/admin/social");
+      navigate("/admin/login");
       
     } catch (error: any) {
-      console.error("Erro completo ao verificar grupos:", error);
+      console.error("Erro ao verificar grupos:", error);
       toast({
         title: "Erro ao verificar permissões",
         description: error.message,
@@ -108,35 +84,22 @@ export const AdminLogin = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    const trimmedEmail = email.trim();
-    const trimmedPassword = password.trim();
-
     try {
-      console.log("Iniciando tentativa de login com:", { email: trimmedEmail }); 
+      console.log("Tentando autenticar com:", { email: email.trim() });
       
       const { data: { user }, error } = await supabase.auth.signInWithPassword({
-        email: trimmedEmail,
-        password: trimmedPassword
+        email: email.trim(),
+        password: password.trim()
       });
       
-      if (error) {
-        console.error("Erro detalhado de autenticação:", {
-          message: error.message,
-          status: error.status,
-          name: error.name
-        });
-        throw error;
-      }
-
-      if (!user) {
-        throw new Error("Usuário não encontrado após autenticação");
-      }
+      if (error) throw error;
+      if (!user) throw new Error("Usuário não encontrado após autenticação");
 
       console.log("Login bem-sucedido, user_id:", user.id);
       await handleRedirect(user.id);
       
     } catch (error: any) {
-      console.error("Erro completo do login:", error);
+      console.error("Erro no login:", error);
       let message = "Erro ao fazer login";
       
       if (error.message.includes("Invalid login credentials")) {
