@@ -5,10 +5,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
+import { Loader2 } from "lucide-react";
 
 export const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -41,7 +43,6 @@ export const AdminLogin = () => {
         return;
       }
 
-      // Ordena os grupos para priorizar 'admin', depois 'manager', etc.
       const groupOrder = ['admin', 'manager', 'editor', 'client'];
       const sortedGroups = userGroups.sort((a, b) => {
         const aIndex = groupOrder.indexOf(a.groups?.name || '');
@@ -49,7 +50,6 @@ export const AdminLogin = () => {
         return aIndex - bIndex;
       });
 
-      // Pega o primeiro grupo (maior prioridade) que tenha uma homepage definida
       const primaryGroup = sortedGroups.find(ug => ug.groups?.homepage);
 
       if (primaryGroup?.groups?.homepage) {
@@ -57,7 +57,6 @@ export const AdminLogin = () => {
         return;
       }
 
-      // Se nenhum grupo tiver homepage definida
       toast({
         title: "Aviso",
         description: "Seu grupo de usuário não tem uma página inicial definida.",
@@ -78,23 +77,45 @@ export const AdminLogin = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
+
     try {
-      const { data: { user }, error } = await supabase.auth.signInWithPassword({
+      console.log("Tentando fazer login com:", { email }); // Log para debug
+
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
-      if (error) throw error;
-      if (!user) throw new Error("Usuário não encontrado");
+      if (error) {
+        console.error("Erro de autenticação:", error); // Log para debug
+        throw error;
+      }
+
+      if (!data.user) {
+        throw new Error("Usuário não encontrado");
+      }
       
-      await handleRedirect(user.id);
+      await handleRedirect(data.user.id);
       
     } catch (error: any) {
+      console.error("Erro completo:", error); // Log para debug
+      let message = "Erro ao fazer login";
+      
+      // Mensagens de erro mais específicas
+      if (error.message.includes("Invalid login credentials")) {
+        message = "Email ou senha incorretos";
+      } else if (error.message.includes("Email not confirmed")) {
+        message = "Email não confirmado. Por favor, verifique sua caixa de entrada";
+      }
+      
       toast({
-        title: "Erro ao fazer login",
-        description: error.message,
+        title: "Erro no login",
+        description: message,
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -113,6 +134,8 @@ export const AdminLogin = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="username"
+              disabled={isLoading}
             />
           </div>
           <div>
@@ -122,10 +145,19 @@ export const AdminLogin = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              autoComplete="current-password"
+              disabled={isLoading}
             />
           </div>
-          <Button type="submit" className="w-full">
-            Entrar
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Entrando...
+              </>
+            ) : (
+              "Entrar"
+            )}
           </Button>
         </form>
       </div>
