@@ -3,9 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "../types";
 
-interface UserData {
-  id: string;
-  email: string;
+interface UserGroupWithUser {
+  user_id: string;
+  users?: {
+    email: string | null;
+  } | null;
 }
 
 export const useUsers = () => {
@@ -16,19 +18,18 @@ export const useUsers = () => {
         .from('user_groups')
         .select(`
           user_id,
-          users (
-            id,
+          users!user_id (
             email
           )
         `);
 
       if (error) throw error;
 
-      // Transformar os dados e remover duplicatas usando um Set
+      const typedData = data as unknown as UserGroupWithUser[];
       const uniqueUsers = new Set<string>();
       const users: User[] = [];
 
-      data?.forEach(item => {
+      typedData.forEach(item => {
         if (item.users?.email && !uniqueUsers.has(item.user_id)) {
           uniqueUsers.add(item.user_id);
           users.push({
