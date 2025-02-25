@@ -25,15 +25,24 @@ export const AdminLogin = () => {
       `)
       .eq('user_id', userId);
 
-    if (error) throw error;
+    if (error) {
+      console.error("Erro ao buscar grupos:", error);
+      throw error;
+    }
+    
+    console.log("Grupos do usuário:", data); // Debug
     return data;
   };
 
   const handleRedirect = async (userId: string) => {
     try {
+      console.log("Iniciando redirecionamento para usuário:", userId); // Debug
+      
       const userGroups = await getUserGroups(userId);
+      console.log("Grupos encontrados:", userGroups); // Debug
       
       if (!userGroups || userGroups.length === 0) {
+        console.log("Usuário sem grupos"); // Debug
         toast({
           title: "Aviso",
           description: "Usuário não pertence a nenhum grupo.",
@@ -43,20 +52,35 @@ export const AdminLogin = () => {
         return;
       }
 
+      // Lista de prioridade dos grupos (admin tem maior prioridade)
       const groupOrder = ['admin', 'manager', 'editor', 'client'];
+      
+      // Ordena os grupos pela prioridade
       const sortedGroups = userGroups.sort((a, b) => {
         const aIndex = groupOrder.indexOf(a.groups?.name || '');
         const bIndex = groupOrder.indexOf(b.groups?.name || '');
+        console.log(`Comparando grupos: ${a.groups?.name}(${aIndex}) vs ${b.groups?.name}(${bIndex})`); // Debug
         return aIndex - bIndex;
       });
 
-      const primaryGroup = sortedGroups.find(ug => ug.groups?.homepage);
+      console.log("Grupos ordenados:", sortedGroups); // Debug
+
+      // Encontra o primeiro grupo que tem uma homepage definida
+      const primaryGroup = sortedGroups.find(ug => {
+        console.log("Verificando homepage para grupo:", ug.groups); // Debug
+        return ug.groups?.homepage;
+      });
+
+      console.log("Grupo primário encontrado:", primaryGroup); // Debug
 
       if (primaryGroup?.groups?.homepage) {
+        console.log("Redirecionando para:", primaryGroup.groups.homepage); // Debug
         navigate(primaryGroup.groups.homepage);
         return;
       }
 
+      // Se nenhum grupo tiver homepage definida, redireciona para social
+      console.log("Nenhuma homepage encontrada, redirecionando para /admin/social"); // Debug
       toast({
         title: "Aviso",
         description: "Seu grupo de usuário não tem uma página inicial definida.",
@@ -65,7 +89,7 @@ export const AdminLogin = () => {
       navigate("/admin/social");
       
     } catch (error: any) {
-      console.error("Erro ao verificar grupos:", error);
+      console.error("Erro completo ao verificar grupos:", error);
       toast({
         title: "Erro ao verificar permissões",
         description: error.message,
