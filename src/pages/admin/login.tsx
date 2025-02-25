@@ -16,16 +16,26 @@ export const AdminLogin = () => {
 
   const getUserGroups = async (userId: string) => {
     try {
+      console.log("Buscando grupos para usuário:", userId);
       const { data, error } = await supabase
         .from('user_groups')
-        .select('*, groups:groups (*)')
+        .select(`
+          id,
+          user_id,
+          group_id,
+          groups:groups (
+            id,
+            name,
+            homepage
+          )
+        `)
         .eq('user_id', userId)
         .throwOnError();
 
       if (error) throw error;
       if (!data) throw new Error("Nenhum grupo encontrado");
 
-      console.log("Dados dos grupos do usuário:", data);
+      console.log("Grupos encontrados:", JSON.stringify(data, null, 2));
       return data;
     } catch (error) {
       console.error("Erro ao buscar grupos:", error);
@@ -46,7 +56,6 @@ export const AdminLogin = () => {
           description: "Usuário não pertence a nenhum grupo.",
           variant: "default",
         });
-        navigate("/admin/login");
         return;
       }
 
@@ -55,19 +64,24 @@ export const AdminLogin = () => {
         ug.groups?.name === 'JAB' && ug.groups?.homepage
       );
 
-      if (jabGroup) {
-        console.log("Grupo JAB encontrado, redirecionando para:", jabGroup.groups.homepage);
-        navigate(jabGroup.groups.homepage);
+      if (jabGroup && jabGroup.groups?.homepage) {
+        const homepage = jabGroup.groups.homepage;
+        console.log("Grupo JAB encontrado, homepage:", homepage);
+
+        // Remove a barra inicial se existir para evitar problemas de rota
+        const normalizedHomepage = homepage.startsWith('/') ? homepage.slice(1) : homepage;
+        console.log("Redirecionando para:", normalizedHomepage);
+        
+        navigate(`/${normalizedHomepage}`);
         return;
       }
 
       console.log("Grupo JAB não encontrado ou sem homepage definida");
       toast({
         title: "Aviso",
-        description: "Não foi possível encontrar a página inicial configurada.",
+        description: "Não foi possível encontrar uma página inicial configurada para seu grupo.",
         variant: "default",
       });
-      navigate("/admin/login");
       
     } catch (error: any) {
       console.error("Erro ao verificar grupos:", error);
@@ -76,7 +90,6 @@ export const AdminLogin = () => {
         description: error.message,
         variant: "destructive",
       });
-      navigate("/admin/login");
     }
   };
 
