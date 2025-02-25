@@ -3,9 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "../types";
 
-interface UserGroupWithUser {
+interface UserGroupWithProfile {
   user_id: string;
-  users?: {
+  user_profiles: {
     email: string | null;
   } | null;
 }
@@ -18,23 +18,23 @@ export const useUsers = () => {
         .from('user_groups')
         .select(`
           user_id,
-          users!user_id (
+          user_profiles!user_id (
             email
           )
         `);
 
       if (error) throw error;
 
-      const typedData = data as unknown as UserGroupWithUser[];
+      const typedData = data as unknown as UserGroupWithProfile[];
       const uniqueUsers = new Set<string>();
       const users: User[] = [];
 
       typedData.forEach(item => {
-        if (item.users?.email && !uniqueUsers.has(item.user_id)) {
+        if (item.user_profiles?.email && !uniqueUsers.has(item.user_id)) {
           uniqueUsers.add(item.user_id);
           users.push({
             id: item.user_id,
-            email: item.users.email
+            email: item.user_profiles.email
           });
         }
       });
