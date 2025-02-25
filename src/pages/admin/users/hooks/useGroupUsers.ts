@@ -24,9 +24,10 @@ export const useGroupUsers = (groupId: string) => {
           id,
           user_id,
           group_id,
-          user_profile:user_profiles!id(email)
+          user_profile:user_profiles(email)
         `)
-        .eq("group_id", groupId);
+        .eq("group_id", groupId)
+        .eq('user_profiles.id', 'user_groups.user_id');
       
       if (groupError) throw groupError;
       if (!userGroups) return [];
