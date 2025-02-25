@@ -83,8 +83,8 @@ export const AdminLogin = () => {
       console.log("Tentando fazer login com:", { email }); // Log para debug
 
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+        email: email.trim(),
+        password: password.trim()
       });
       
       if (error) {
@@ -126,7 +126,7 @@ export const AdminLogin = () => {
           <h1 className="text-2xl font-bold">Admin ONI</h1>
           <p className="text-muted-foreground">Faça login para continuar</p>
         </div>
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleLogin} className="space-y-4" autoComplete="off">
           <div>
             <Input
               type="email"
@@ -136,6 +136,7 @@ export const AdminLogin = () => {
               required
               autoComplete="username"
               disabled={isLoading}
+              className="w-full"
             />
           </div>
           <div>
@@ -147,9 +148,14 @@ export const AdminLogin = () => {
               required
               autoComplete="current-password"
               disabled={isLoading}
+              className="w-full"
             />
           </div>
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button 
+            type="submit" 
+            className="w-full" 
+            disabled={isLoading || !email || !password}
+          >
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
