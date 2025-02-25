@@ -79,30 +79,41 @@ export const AdminLogin = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    try {
-      console.log("Tentando fazer login com:", { email }); // Log para debug
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
 
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password: password.trim()
+    try {
+      console.log("Iniciando tentativa de login com:", { email: trimmedEmail }); 
+
+      // Verificar se o Supabase está configurado corretamente
+      console.log("Supabase URL:", supabase.supabaseUrl);
+      
+      const { data: { user }, error } = await supabase.auth.signInWithPassword({
+        email: trimmedEmail,
+        password: trimmedPassword
       });
       
       if (error) {
-        console.error("Erro de autenticação:", error); // Log para debug
+        console.error("Erro detalhado de autenticação:", {
+          message: error.message,
+          status: error.status,
+          name: error.name
+        });
         throw error;
       }
 
-      if (!data.user) {
-        throw new Error("Usuário não encontrado");
+      if (!user) {
+        throw new Error("Usuário não encontrado após autenticação");
       }
+
+      console.log("Login bem-sucedido, user_id:", user.id);
       
-      await handleRedirect(data.user.id);
+      await handleRedirect(user.id);
       
     } catch (error: any) {
-      console.error("Erro completo:", error); // Log para debug
+      console.error("Erro completo do login:", error);
       let message = "Erro ao fazer login";
       
-      // Mensagens de erro mais específicas
       if (error.message.includes("Invalid login credentials")) {
         message = "Email ou senha incorretos";
       } else if (error.message.includes("Email not confirmed")) {
