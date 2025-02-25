@@ -24,22 +24,33 @@ export const UserGroupManagement = () => {
       return;
     }
 
-    const { error } = await supabase
-      .from("user_groups")
-      .insert([{ group_id: selectedGroupId, user_id: selectedUserId }]);
+    try {
+      const { error } = await supabase
+        .from("user_groups")
+        .insert([
+          { 
+            group_id: selectedGroupId, 
+            user_id: selectedUserId 
+          }
+        ]);
 
-    if (error) {
-      if (error.code === '23505') {
-        toast.error("Este usuário já está no grupo");
-      } else {
-        toast.error("Erro ao adicionar usuário ao grupo");
+      if (error) {
+        if (error.code === '23505') {
+          toast.error("Este usuário já está no grupo");
+        } else {
+          console.error("Error adding user to group:", error);
+          toast.error("Erro ao adicionar usuário ao grupo");
+        }
+        return;
       }
-      return;
-    }
 
-    toast.success("Usuário adicionado ao grupo com sucesso");
-    refetchGroupUsers();
-    setSelectedUserId("");
+      toast.success("Usuário adicionado ao grupo com sucesso");
+      refetchGroupUsers();
+      setSelectedUserId("");
+    } catch (error) {
+      console.error("Error in handleAddUserToGroup:", error);
+      toast.error("Erro ao adicionar usuário ao grupo");
+    }
   };
 
   const handleRemoveUserFromGroup = async (assignmentId: string) => {
@@ -47,18 +58,24 @@ export const UserGroupManagement = () => {
       return;
     }
 
-    const { error } = await supabase
-      .from("user_groups")
-      .delete()
-      .eq("id", assignmentId);
+    try {
+      const { error } = await supabase
+        .from("user_groups")
+        .delete()
+        .eq("id", assignmentId);
 
-    if (error) {
+      if (error) {
+        console.error("Error removing user from group:", error);
+        toast.error("Erro ao remover usuário do grupo");
+        return;
+      }
+
+      toast.success("Usuário removido do grupo com sucesso");
+      refetchGroupUsers();
+    } catch (error) {
+      console.error("Error in handleRemoveUserFromGroup:", error);
       toast.error("Erro ao remover usuário do grupo");
-      return;
     }
-
-    toast.success("Usuário removido do grupo com sucesso");
-    refetchGroupUsers();
   };
 
   if (isLoadingGroups) {
