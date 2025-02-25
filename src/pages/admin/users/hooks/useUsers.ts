@@ -7,31 +7,22 @@ export const useUsers = () => {
   return useQuery({
     queryKey: ["users"],
     queryFn: async () => {
-      // Buscar todos os usuários através da view existente
+      // Buscar todos os usuários da tabela user_profiles
       const { data: users, error } = await supabase
-        .from('user_groups_with_profiles')
-        .select('user_id, user_email');
+        .from('user_profiles')
+        .select('id, email');
 
       if (error) {
         console.error("Erro ao buscar usuários:", error);
         throw error;
       }
 
-      console.log("Usuários encontrados (antes da deduplição):", users);
-
-      // Remover duplicatas usando Set
-      const uniqueUsers = Array.from(
-        new Map(
-          users?.map(user => [user.user_id, user])
-        ).values()
-      );
-
-      console.log("Usuários únicos:", uniqueUsers);
+      console.log("Usuários encontrados:", users);
 
       // Mapear os dados para o formato esperado
-      return (uniqueUsers || []).map(user => ({
-        id: user.user_id,
-        email: user.user_email || ''
+      return (users || []).map(user => ({
+        id: user.id,
+        email: user.email || ''
       })) as User[];
     },
   });
