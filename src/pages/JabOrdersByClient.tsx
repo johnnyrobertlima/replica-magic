@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { LogOut } from "lucide-react";
@@ -35,7 +36,8 @@ const JabOrdersByClient = () => {
       try {
         const { data, error } = await supabase
           .from("orders")
-          .select("*");
+          .select("*")
+          .returns<Order[]>();
 
         if (error) {
           console.error("Erro ao buscar pedidos:", error);
@@ -96,7 +98,7 @@ const JabOrdersByClient = () => {
       ) : (
         <div className="overflow-x-auto">
           <Table>
-            <TableCaption>A list of your recent orders.</TableCaption>
+            <TableCaption>Lista dos seus pedidos recentes.</TableCaption>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[100px]">ID</TableHead>
