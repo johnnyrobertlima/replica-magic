@@ -16,25 +16,55 @@ export const useUsers = () => {
         if (sessionError) throw sessionError;
         if (!session) throw new Error("Usuário não autenticado");
 
-        console.log("Session:", session);
+        // Primeiro, buscar todos os usuários do auth
+        const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+        if (authError) throw authError;
 
-        // Buscar todos os usuários da tabela user_profiles
-        const { data: users, error } = await supabase
+        // Buscar todos os perfis existentes
+        const { data: profiles, error: profilesError } = await supabase
           .from('user_profiles')
           .select('id, email');
 
-        if (error) {
-          console.error("Erro ao buscar usuários:", error);
-          throw error;
+        if (profilesError) {
+          console.error("Erro ao buscar perfis:", profilesError);
+          throw profilesError;
         }
 
-        console.log("Usuários encontrados:", users);
+        // Criar um Set com os IDs dos perfis existentes
+        const existingProfileIds = new Set(profiles?.map(p => p.id) || []);
 
-        // Mapear os dados para o formato esperado
-        return (users || []).map(user => ({
+        // Para cada usuário do auth que não tem perfil, criar um
+        for (const authUser of (authUsers?.users || [])) {
+          if (!existingProfileIds.has(authUser.id)) {
+            const { error: insertError } = await supabase
+              .from('user_profiles')
+              .insert({
+                id: authUser.id,
+                email: authUser.email,
+              });
+
+            if (insertError) {
+              console.error("Erro ao criar perfil para usuário:", insertError);
+              // Continuar mesmo se houver erro, para não bloquear todo o processo
+            }
+          }
+        }
+
+        // Buscar novamente todos os perfis após possíveis inserções
+        const { data: finalProfiles, error: finalError } = await supabase
+          .from('user_profiles')
+          .select('id, email');
+
+        if (finalError) {
+          console.error("Erro ao buscar perfis finais:", finalError);
+          throw finalError;
+        }
+
+        return (finalProfiles || []).map(user => ({
           id: user.id,
           email: user.email || ''
         })) as User[];
+
       } catch (error: any) {
         console.error("Erro na query de usuários:", error);
         toast({
