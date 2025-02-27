@@ -1,12 +1,12 @@
+
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Loader2, ChevronDown, ChevronUp } from "lucide-react";
-import { useJabOrders, useTotals } from "@/hooks/useJabOrders";
+import { useJabOrdersByClient, useTotals } from "@/hooks/useJabOrders";
 import { useQueryClient } from "@tanstack/react-query";
 import type { DateRange } from "react-day-picker";
 import { TotalCards } from "@/components/jab-orders/TotalCards";
 import { OrdersHeader } from "@/components/jab-orders/OrdersHeader";
-import { OrdersPagination } from "@/components/jab-orders/OrdersPagination";
 import type { SearchType } from "@/components/jab-orders/SearchFilters";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -21,15 +21,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 
-const ITEMS_PER_PAGE = 15;
-
 const JabOrdersByClient = () => {
   const [date, setDate] = useState<DateRange | undefined>({
     from: new Date(),
     to: new Date(),
   });
   const [searchDate, setSearchDate] = useState<DateRange | undefined>(date);
-  const [currentPage, setCurrentPage] = useState(1);
   const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState<SearchType>("pedido");
@@ -38,10 +35,8 @@ const JabOrdersByClient = () => {
   const [showOnlyWithStock, setShowOnlyWithStock] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
-  const { data: ordersData = { orders: [], totalCount: 0 }, isLoading: isLoadingOrders } = useJabOrders({
-    dateRange: searchDate,
-    page: currentPage,
-    pageSize: ITEMS_PER_PAGE
+  const { data: ordersData = { clientGroups: {} }, isLoading: isLoadingOrders } = useJabOrdersByClient({
+    dateRange: searchDate
   });
 
   const { data: totals = { valorTotalSaldo: 0, valorFaturarComEstoque: 0 }, isLoading: isLoadingTotals } = useTotals();
@@ -63,74 +58,21 @@ const JabOrdersByClient = () => {
   const handleSearch = () => {
     setIsSearching(true);
     setSearchDate(date);
-    setCurrentPage(1);
   };
 
   const removeLeadingZeros = (str: string) => {
     return str.replace(/^0+/, '');
   };
 
-  const groupedOrders = useMemo(() => {
-    const groups: Record<string, {
-      pedidos: typeof ordersData.orders,
-      totalQuantidadeSaldo: number,
-      totalValorSaldo: number,
-      totalValorPedido: number,
-      totalValorFaturado: number,
-      totalValorFaturarComEstoque: number,
-      representante: string | null,
-      allItems: any[]
-    }> = {};
-    
-    ordersData.orders.forEach((order) => {
-      if (!["1", "2"].includes(order.STATUS)) return;
-      
-      const clientKey = order.APELIDO || "Sem Cliente";
-      if (!groups[clientKey]) {
-        groups[clientKey] = {
-          pedidos: [],
-          totalQuantidadeSaldo: 0,
-          totalValorSaldo: 0,
-          totalValorPedido: 0,
-          totalValorFaturado: 0,
-          totalValorFaturarComEstoque: 0,
-          representante: order.REPRESENTANTE_NOME,
-          allItems: []
-        };
-      }
-
-      groups[clientKey].pedidos.push(order);
-      groups[clientKey].totalQuantidadeSaldo += order.total_saldo || 0;
-      groups[clientKey].totalValorSaldo += order.valor_total || 0;
-
-      if (order.items) {
-        groups[clientKey].allItems.push(...order.items.map(item => ({
-          ...item,
-          pedido: order.PED_NUMPEDIDO,
-          APELIDO: order.APELIDO,
-          PES_CODIGO: order.PES_CODIGO
-        })));
-
-        order.items.forEach(item => {
-          groups[clientKey].totalValorPedido += item.QTDE_PEDIDA * item.VALOR_UNITARIO;
-          groups[clientKey].totalValorFaturado += item.QTDE_ENTREGUE * item.VALOR_UNITARIO;
-          if ((item.FISICO || 0) > 0) {
-            groups[clientKey].totalValorFaturarComEstoque += item.QTDE_SALDO * item.VALOR_UNITARIO;
-          }
-        });
-      }
-    });
-
-    return groups;
-  }, [ordersData.orders]);
+  const clientGroups = useMemo(() => ordersData.clientGroups, [ordersData.clientGroups]);
 
   const filteredGroups = useMemo(() => {
-    if (!isSearching || !searchQuery) return groupedOrders;
+    if (!isSearching || !searchQuery) return clientGroups;
 
     const normalizedSearchQuery = searchQuery.toLowerCase().trim();
-    const filteredGroups: typeof groupedOrders = {};
+    const filteredGroups: typeof clientGroups = {};
 
-    Object.entries(groupedOrders).forEach(([clientName, groupData]) => {
+    Object.entries(clientGroups).forEach(([clientName, groupData]) => {
       let shouldInclude = false;
 
       switch (searchType) {
@@ -157,9 +99,7 @@ const JabOrdersByClient = () => {
     });
 
     return filteredGroups;
-  }, [groupedOrders, isSearching, searchQuery, searchType]);
-
-  const totalPages = Math.ceil(ordersData.totalCount / ITEMS_PER_PAGE);
+  }, [clientGroups, isSearching, searchQuery, searchType]);
 
   const handleItemSelect = (itemCode: string) => {
     setSelectedItems(prev => {
@@ -196,7 +136,7 @@ const JabOrdersByClient = () => {
         APELIDO: string | null;
       }> = [];
 
-      Object.values(groupedOrders).forEach(group => {
+      Object.values(clientGroups).forEach(group => {
         group.allItems.forEach(item => {
           if (selectedItems.includes(item.ITEM_CODIGO)) {
             let pesCodigoNumerico = null;
@@ -382,9 +322,9 @@ const JabOrdersByClient = () => {
             />
 
             <OrdersHeader
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalCount={ordersData.totalCount}
+              currentPage={1}
+              totalPages={1}
+              totalCount={Object.keys(filteredGroups).length}
               searchQuery={searchQuery}
               onSearchQueryChange={setSearchQuery}
               onSearch={handleSearch}
@@ -593,12 +533,6 @@ const JabOrdersByClient = () => {
                 </Button>
               </div>
             )}
-
-            <OrdersPagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
           </TabsContent>
 
           <TabsContent value="separacoes">
