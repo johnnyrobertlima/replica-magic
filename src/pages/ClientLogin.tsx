@@ -18,32 +18,53 @@ const ClientLogin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const getUserGroups = async (userId: string) => {
+  // Função simplificada para obter a homepage do grupo do usuário
+  const getUserGroupHomepage = async (userId: string) => {
     try {
-      console.log("Buscando grupos para usuário:", userId);
-      const { data, error } = await supabase
-        .from('user_groups')
-        .select(`
-          id,
-          user_id,
-          group_id,
-          groups:groups (
-            id,
-            name,
-            homepage
-          )
-        `)
-        .eq('user_id', userId)
-        .throwOnError();
+      console.log("Buscando homepage do grupo para usuário:", userId);
+      
+      // Consulta direta para evitar problemas de recursão em políticas RLS
+      const { data, error } = await supabase.rpc('get_user_group_homepage', {
+        user_id_param: userId
+      });
 
-      if (error) throw error;
-      if (!data) throw new Error("Nenhum grupo encontrado");
-
-      console.log("Grupos encontrados:", JSON.stringify(data, null, 2));
+      if (error) {
+        console.error("Erro ao chamar RPC:", error);
+        
+        // Fallback: tente consultar diretamente como admin (usando service_role)
+        // Note: Esta abordagem só funcionará se a aplicação tiver acesso à chave service_role
+        console.log("Tentando consulta direta às tabelas...");
+        
+        const { data: userGroups, error: groupsError } = await supabase
+          .from('user_groups')
+          .select('group_id')
+          .eq('user_id', userId);
+          
+        if (groupsError || !userGroups || userGroups.length === 0) {
+          console.error("Erro ao buscar grupos do usuário:", groupsError);
+          return null;
+        }
+        
+        // Buscar o primeiro grupo que tenha homepage definida
+        for (const ug of userGroups) {
+          const { data: group, error: groupError } = await supabase
+            .from('groups')
+            .select('homepage')
+            .eq('id', ug.group_id)
+            .single();
+            
+          if (!groupError && group && group.homepage) {
+            return group.homepage;
+          }
+        }
+        
+        return null;
+      }
+      
       return data;
     } catch (error) {
-      console.error("Erro ao buscar grupos:", error);
-      throw error;
+      console.error("Erro ao buscar homepage do grupo:", error);
+      return null;
     }
   };
 
@@ -51,26 +72,11 @@ const ClientLogin = () => {
     try {
       console.log("Iniciando redirecionamento para usuário:", userId);
       
-      const userGroups = await getUserGroups(userId);
+      // Tentar obter a homepage do grupo do usuário
+      const homepage = await getUserGroupHomepage(userId);
       
-      if (!userGroups || userGroups.length === 0) {
-        console.log("Usuário sem grupos");
-        toast({
-          title: "Aviso",
-          description: "Usuário não pertence a nenhum grupo.",
-          variant: "default",
-        });
-        navigate("/client-area"); // Redirecionamento padrão
-        return;
-      }
-
-      // Verifica se existe um grupo com homepage definida
-      const groupWithHomepage = userGroups.find(ug => ug.groups?.homepage);
-
-      if (groupWithHomepage && groupWithHomepage.groups?.homepage) {
-        const homepage = groupWithHomepage.groups.homepage;
-        console.log("Grupo encontrado, homepage:", homepage);
-
+      if (homepage) {
+        console.log("Homepage encontrada:", homepage);
         // Remove a barra inicial se existir para evitar problemas de rota
         const normalizedHomepage = homepage.startsWith('/') ? homepage.slice(1) : homepage;
         console.log("Redirecionando para:", normalizedHomepage);
@@ -78,18 +84,20 @@ const ClientLogin = () => {
         navigate(`/${normalizedHomepage}`);
         return;
       }
-
-      console.log("Nenhum grupo encontrado com homepage definida");
-      navigate("/client-area"); // Redirecionamento padrão
+      
+      // Se chegou aqui, não encontrou homepage específica
+      console.log("Nenhuma homepage específica encontrada, redirecionando para a área padrão");
+      navigate("/client-area");
       
     } catch (error: any) {
-      console.error("Erro ao verificar grupos:", error);
+      console.error("Erro ao verificar redirecionamento:", error);
       toast({
         title: "Erro ao verificar permissões",
         description: error.message,
         variant: "destructive",
       });
-      navigate("/client-area"); // Redirecionamento padrão em caso de erro
+      // Redirecionamento padrão em caso de erro
+      navigate("/client-area");
     }
   };
 
@@ -131,6 +139,8 @@ const ClientLogin = () => {
         }
 
         console.log("Login bem-sucedido:", user);
+        
+        // Após login bem-sucedido, verificar para onde redirecionar o usuário
         await handleRedirect(user.id);
       }
     } catch (error: any) {
