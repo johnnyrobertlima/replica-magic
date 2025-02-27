@@ -23,45 +23,31 @@ const ClientLogin = () => {
     try {
       console.log("Buscando homepage do grupo para usuário:", userId);
       
-      // Consulta direta para evitar problemas de recursão em políticas RLS
-      const { data, error } = await supabase.rpc('get_user_group_homepage', {
-        user_id_param: userId
-      });
-
-      if (error) {
-        console.error("Erro ao chamar RPC:", error);
+      // Usando uma consulta tradicional em vez de RPC
+      const { data: userGroups, error: groupsError } = await supabase
+        .from('user_groups')
+        .select('group_id')
+        .eq('user_id', userId);
         
-        // Fallback: tente consultar diretamente como admin (usando service_role)
-        // Note: Esta abordagem só funcionará se a aplicação tiver acesso à chave service_role
-        console.log("Tentando consulta direta às tabelas...");
-        
-        const { data: userGroups, error: groupsError } = await supabase
-          .from('user_groups')
-          .select('group_id')
-          .eq('user_id', userId);
-          
-        if (groupsError || !userGroups || userGroups.length === 0) {
-          console.error("Erro ao buscar grupos do usuário:", groupsError);
-          return null;
-        }
-        
-        // Buscar o primeiro grupo que tenha homepage definida
-        for (const ug of userGroups) {
-          const { data: group, error: groupError } = await supabase
-            .from('groups')
-            .select('homepage')
-            .eq('id', ug.group_id)
-            .single();
-            
-          if (!groupError && group && group.homepage) {
-            return group.homepage;
-          }
-        }
-        
+      if (groupsError || !userGroups || userGroups.length === 0) {
+        console.error("Erro ao buscar grupos do usuário:", groupsError);
         return null;
       }
       
-      return data;
+      // Buscar o primeiro grupo que tenha homepage definida
+      for (const ug of userGroups) {
+        const { data: group, error: groupError } = await supabase
+          .from('groups')
+          .select('homepage')
+          .eq('id', ug.group_id)
+          .single();
+          
+        if (!groupError && group && group.homepage) {
+          return group.homepage;
+        }
+      }
+      
+      return null;
     } catch (error) {
       console.error("Erro ao buscar homepage do grupo:", error);
       return null;
@@ -75,7 +61,7 @@ const ClientLogin = () => {
       // Tentar obter a homepage do grupo do usuário
       const homepage = await getUserGroupHomepage(userId);
       
-      if (homepage) {
+      if (homepage && typeof homepage === 'string') {
         console.log("Homepage encontrada:", homepage);
         // Remove a barra inicial se existir para evitar problemas de rota
         const normalizedHomepage = homepage.startsWith('/') ? homepage.slice(1) : homepage;

@@ -1318,6 +1318,12 @@ export type Database = {
           total_count: number
         }[]
       }
+      get_user_group_homepage: {
+        Args: {
+          user_id_param: string
+        }
+        Returns: string
+      }
       remove_user_from_group: {
         Args: {
           p_assignment_id: string
