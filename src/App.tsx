@@ -66,7 +66,7 @@ function App() {
         </PermissionGuard>
       } />
       <Route path="/client-area/bluebay/aprovacao-financeira" element={
-        <PermissionGuard resourcePath="/client-area/bluebay/financeiro">
+        <PermissionGuard resourcePath="/client-area/bluebay/aprovacao-financeira">
           <AprovacaoFinanceira />
         </PermissionGuard>
       } />
