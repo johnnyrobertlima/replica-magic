@@ -18,36 +18,22 @@ const ClientLogin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Função simplificada para obter a homepage do grupo do usuário
+  // Função para obter a homepage do grupo do usuário usando RPC
   const getUserGroupHomepage = async (userId: string) => {
     try {
       console.log("Buscando homepage do grupo para usuário:", userId);
       
-      // Usando uma consulta tradicional em vez de RPC
-      const { data: userGroups, error: groupsError } = await supabase
-        .from('user_groups')
-        .select('group_id')
-        .eq('user_id', userId);
-        
-      if (groupsError || !userGroups || userGroups.length === 0) {
-        console.error("Erro ao buscar grupos do usuário:", groupsError);
+      // Usar a função RPC corretamente, agora definida nos tipos
+      const { data, error } = await supabase.rpc('get_user_group_homepage', {
+        user_id_param: userId
+      });
+      
+      if (error) {
+        console.error("Erro ao chamar RPC:", error);
         return null;
       }
       
-      // Buscar o primeiro grupo que tenha homepage definida
-      for (const ug of userGroups) {
-        const { data: group, error: groupError } = await supabase
-          .from('groups')
-          .select('homepage')
-          .eq('id', ug.group_id)
-          .single();
-          
-        if (!groupError && group && group.homepage) {
-          return group.homepage;
-        }
-      }
-      
-      return null;
+      return data;
     } catch (error) {
       console.error("Erro ao buscar homepage do grupo:", error);
       return null;
