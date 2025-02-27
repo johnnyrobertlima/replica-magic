@@ -18,6 +18,81 @@ const ClientLogin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const getUserGroups = async (userId: string) => {
+    try {
+      console.log("Buscando grupos para usuário:", userId);
+      const { data, error } = await supabase
+        .from('user_groups')
+        .select(`
+          id,
+          user_id,
+          group_id,
+          groups:groups (
+            id,
+            name,
+            homepage
+          )
+        `)
+        .eq('user_id', userId)
+        .throwOnError();
+
+      if (error) throw error;
+      if (!data) throw new Error("Nenhum grupo encontrado");
+
+      console.log("Grupos encontrados:", JSON.stringify(data, null, 2));
+      return data;
+    } catch (error) {
+      console.error("Erro ao buscar grupos:", error);
+      throw error;
+    }
+  };
+
+  const handleRedirect = async (userId: string) => {
+    try {
+      console.log("Iniciando redirecionamento para usuário:", userId);
+      
+      const userGroups = await getUserGroups(userId);
+      
+      if (!userGroups || userGroups.length === 0) {
+        console.log("Usuário sem grupos");
+        toast({
+          title: "Aviso",
+          description: "Usuário não pertence a nenhum grupo.",
+          variant: "default",
+        });
+        navigate("/client-area"); // Redirecionamento padrão
+        return;
+      }
+
+      // Verifica se existe um grupo com homepage definida
+      const groupWithHomepage = userGroups.find(ug => ug.groups?.homepage);
+
+      if (groupWithHomepage && groupWithHomepage.groups?.homepage) {
+        const homepage = groupWithHomepage.groups.homepage;
+        console.log("Grupo encontrado, homepage:", homepage);
+
+        // Remove a barra inicial se existir para evitar problemas de rota
+        const normalizedHomepage = homepage.startsWith('/') ? homepage.slice(1) : homepage;
+        console.log("Redirecionando para:", normalizedHomepage);
+        
+        navigate(`/${normalizedHomepage}`);
+        return;
+      }
+
+      console.log("Nenhum grupo encontrado com homepage definida");
+      navigate("/client-area"); // Redirecionamento padrão
+      
+    } catch (error: any) {
+      console.error("Erro ao verificar grupos:", error);
+      toast({
+        title: "Erro ao verificar permissões",
+        description: error.message,
+        variant: "destructive",
+      });
+      navigate("/client-area"); // Redirecionamento padrão em caso de erro
+    }
+  };
+
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -56,7 +131,7 @@ const ClientLogin = () => {
         }
 
         console.log("Login bem-sucedido:", user);
-        navigate("/client-area");
+        await handleRedirect(user.id);
       }
     } catch (error: any) {
       console.error("Erro completo:", error);
