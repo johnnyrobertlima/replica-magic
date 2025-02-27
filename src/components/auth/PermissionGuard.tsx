@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
@@ -19,6 +19,7 @@ export const PermissionGuard = ({
   const [isLoading, setIsLoading] = useState(true);
   const [hasPermission, setHasPermission] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -29,7 +30,12 @@ export const PermissionGuard = ({
         if (sessionError) throw sessionError;
         
         if (!session) {
-          navigate('/admin/login');
+          // Determine the appropriate login page based on the current path
+          const isAdminRoute = location.pathname.startsWith('/admin');
+          const loginPath = isAdminRoute ? '/admin/login' : '/login';
+          
+          console.log(`Sessão não encontrada, redirecionando para ${loginPath}`);
+          navigate(loginPath);
           return;
         }
 
@@ -46,12 +52,17 @@ export const PermissionGuard = ({
         setIsLoading(false);
 
         if (!data) {
+          console.log(`Permissão negada para recurso ${resourcePath}`);
+          // Determine login redirect based on route context
+          const isAdminRoute = location.pathname.startsWith('/admin');
+          const loginPath = isAdminRoute ? '/admin/login' : '/login';
+          
           toast({
             title: "Acesso negado",
             description: "Você não tem permissão para acessar esta página.",
             variant: "destructive",
           });
-          navigate('/admin/login'); // Alterado aqui - redireciona para login ao invés de /admin
+          navigate(loginPath);
         }
 
       } catch (error: any) {
@@ -61,12 +72,16 @@ export const PermissionGuard = ({
           description: error.message,
           variant: "destructive",
         });
-        navigate('/admin/login'); // Alterado aqui também
+        
+        // Determine login redirect based on route context
+        const isAdminRoute = location.pathname.startsWith('/admin');
+        const loginPath = isAdminRoute ? '/admin/login' : '/login';
+        navigate(loginPath);
       }
     };
 
     checkPermission();
-  }, [resourcePath, requiredPermission, navigate, toast]);
+  }, [resourcePath, requiredPermission, navigate, toast, location]);
 
   if (isLoading) {
     return (
