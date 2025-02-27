@@ -37,31 +37,11 @@ export interface UseJabOrdersOptions {
   pageSize?: number;
 }
 
-export interface UseJabOrdersByClientOptions {
-  dateRange?: DayPickerDateRange;
-}
-
 export interface JabOrdersResponse {
   orders: JabOrder[];
   totalCount: number;
   currentPage?: number;
   pageSize?: number;
-}
-
-export interface JabOrdersByClientResponse {
-  clientGroups: {
-    [clientName: string]: {
-      pedidos: JabOrder[];
-      totalQuantidadeSaldo: number;
-      totalValorSaldo: number;
-      totalValorPedido: number;
-      totalValorFaturado: number;
-      totalValorFaturarComEstoque: number;
-      representante: string | null;
-      allItems: any[];
-      PES_CODIGO: number;
-    }
-  };
 }
 
 export interface JabTotalsResponse {
