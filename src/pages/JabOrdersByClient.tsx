@@ -605,7 +605,7 @@ const JabOrdersByClient = () => {
 
             {selectedItems.length > 0 && (
               <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-2">
-                <Card className="shadow-lg bg-primary/5 border-primary/20">
+                <Card className="shadow-lg bg-white border border-gray-200">
                   <CardContent className="p-4">
                     <div className="flex flex-col gap-1">
                       <h4 className="font-medium text-sm">Resumo da seleção</h4>
