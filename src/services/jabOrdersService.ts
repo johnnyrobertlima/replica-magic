@@ -38,14 +38,32 @@ async function fetchPedidosUnicos(
   };
 }
 
-async function fetchAllPedidosUnicos(
+async function fetchAllPedidos(
   dataInicial: string, 
   dataFinal: string
-): Promise<string[]> {
-  // Esta função busca todos os pedidos sem paginação
-  const { data: todosPedidos, error } = await supabase
+): Promise<any[]> {
+  // Vamos buscar diretamente todos os detalhes dos pedidos
+  // para evitar múltiplas consultas e garantir que todos os dados sejam capturados
+  console.log('Buscando todos os pedidos detalhados para o período:', { dataInicial, dataFinal });
+  
+  const { data, error } = await supabase
     .from('BLUEBAY_PEDIDO')
-    .select('PED_NUMPEDIDO')
+    .select(`
+      MATRIZ,
+      FILIAL,
+      PED_NUMPEDIDO,
+      PED_ANOBASE,
+      QTDE_SALDO,
+      VALOR_UNITARIO,
+      PES_CODIGO,
+      PEDIDO_CLIENTE,
+      STATUS,
+      ITEM_CODIGO,
+      QTDE_PEDIDA,
+      QTDE_ENTREGUE,
+      DATA_PEDIDO,
+      REPRESENTANTE
+    `)
     .eq('CENTROCUSTO', 'JAB')
     .in('STATUS', ['1', '2'])
     .gte('DATA_PEDIDO', dataInicial)
@@ -57,15 +75,7 @@ async function fetchAllPedidosUnicos(
     throw error;
   }
 
-  if (!todosPedidos?.length) {
-    return [];
-  }
-
-  // Filtrar pedidos únicos manualmente, já que 'unique()' não está disponível
-  const pedidosSet = new Set<string>();
-  todosPedidos.forEach(p => pedidosSet.add(p.PED_NUMPEDIDO));
-  
-  return Array.from(pedidosSet);
+  return data || [];
 }
 
 async function fetchPedidosDetalhados(numeroPedidos: string[]) {
@@ -255,14 +265,8 @@ export async function fetchJabOrdersByClient({
 
   console.log('Buscando todos os pedidos para o período:', { dataInicial, dataFinal });
 
-  // Buscar todos os pedidos únicos para o período (sem paginação)
-  const numeroPedidos = await fetchAllPedidosUnicos(dataInicial, dataFinal);
-
-  if (!numeroPedidos.length) {
-    return { clientGroups: {} };
-  }
-
-  const pedidosDetalhados = await fetchPedidosDetalhados(numeroPedidos);
+  // Buscar todos os pedidos detalhados diretamente em uma consulta só
+  const pedidosDetalhados = await fetchAllPedidos(dataInicial, dataFinal);
 
   if (!pedidosDetalhados.length) {
     return { clientGroups: {} };
@@ -272,12 +276,25 @@ export async function fetchJabOrdersByClient({
   const pessoasIds = [...new Set(pedidosDetalhados.map(p => p.PES_CODIGO).filter(id => id !== null && id !== undefined))] as number[];
   const itemCodigos = [...new Set(pedidosDetalhados.map(p => p.ITEM_CODIGO).filter(Boolean))];
 
+  console.log(`Encontrados ${pessoasIds.length} clientes e ${itemCodigos.length} itens diferentes`);
+
   const { pessoas, itens, estoque } = await fetchRelatedData(pessoasIds, itemCodigos);
 
   // Cria mapas para lookup rápido
   const pessoasMap = new Map(pessoas.map(p => [p.PES_CODIGO, p]));
   const itemMap = new Map(itens.map(i => [i.ITEM_CODIGO, i.DESCRICAO]));
   const estoqueMap = new Map(estoque.map(e => [e.ITEM_CODIGO, e.FISICO]));
+
+  // Extrair números de pedidos únicos dos pedidos detalhados
+  const numeroPedidosSet = new Set<string>();
+  pedidosDetalhados.forEach(pedido => {
+    if (pedido.PED_NUMPEDIDO) {
+      numeroPedidosSet.add(pedido.PED_NUMPEDIDO);
+    }
+  });
+  const numeroPedidos = Array.from(numeroPedidosSet);
+
+  console.log(`Encontrados ${numeroPedidos.length} pedidos únicos`);
 
   // Agrupa os pedidos por número de pedido
   const pedidosAgrupados = new Map<string, any[]>();
@@ -344,14 +361,31 @@ export async function fetchJabOrdersByClient({
     };
   }).filter(Boolean) as JabOrder[];
 
-  // Agora vamos agrupar os pedidos por cliente
-  const clientGroups: JabOrdersByClientResponse['clientGroups'] = {};
+  console.log(`Processados ${orders.length} pedidos`);
+
+  // Agora vamos agrupar os pedidos por cliente (usando PES_CODIGO para garantir precisão)
+  const clientGroupsMap = new Map<number, {
+    APELIDO: string | null;
+    pedidos: JabOrder[];
+    totalQuantidadeSaldo: number;
+    totalValorSaldo: number;
+    totalValorPedido: number;
+    totalValorFaturado: number;
+    totalValorFaturarComEstoque: number;
+    representante: string | null;
+    allItems: any[];
+    PES_CODIGO: number;
+  }>();
   
   orders.forEach(order => {
-    const clientKey = order.APELIDO || "Sem Cliente";
+    if (!order.PES_CODIGO) {
+      console.log('Pedido sem PES_CODIGO:', order.PED_NUMPEDIDO);
+      return;
+    }
     
-    if (!clientGroups[clientKey]) {
-      clientGroups[clientKey] = {
+    if (!clientGroupsMap.has(order.PES_CODIGO)) {
+      clientGroupsMap.set(order.PES_CODIGO, {
+        APELIDO: order.APELIDO,
         pedidos: [],
         totalQuantidadeSaldo: 0,
         totalValorSaldo: 0,
@@ -361,12 +395,14 @@ export async function fetchJabOrdersByClient({
         representante: order.REPRESENTANTE_NOME,
         allItems: [],
         PES_CODIGO: order.PES_CODIGO
-      };
+      });
     }
     
-    clientGroups[clientKey].pedidos.push(order);
-    clientGroups[clientKey].totalQuantidadeSaldo += order.total_saldo || 0;
-    clientGroups[clientKey].totalValorSaldo += order.valor_total || 0;
+    const clientData = clientGroupsMap.get(order.PES_CODIGO)!;
+    
+    clientData.pedidos.push(order);
+    clientData.totalQuantidadeSaldo += order.total_saldo || 0;
+    clientData.totalValorSaldo += order.valor_total || 0;
     
     if (order.items) {
       const items = order.items.map(item => ({
@@ -376,17 +412,26 @@ export async function fetchJabOrdersByClient({
         PES_CODIGO: order.PES_CODIGO
       }));
       
-      clientGroups[clientKey].allItems.push(...items);
+      clientData.allItems.push(...items);
       
       order.items.forEach(item => {
-        clientGroups[clientKey].totalValorPedido += item.QTDE_PEDIDA * item.VALOR_UNITARIO;
-        clientGroups[clientKey].totalValorFaturado += item.QTDE_ENTREGUE * item.VALOR_UNITARIO;
+        clientData.totalValorPedido += item.QTDE_PEDIDA * item.VALOR_UNITARIO;
+        clientData.totalValorFaturado += item.QTDE_ENTREGUE * item.VALOR_UNITARIO;
         if ((item.FISICO || 0) > 0) {
-          clientGroups[clientKey].totalValorFaturarComEstoque += item.QTDE_SALDO * item.VALOR_UNITARIO;
+          clientData.totalValorFaturarComEstoque += item.QTDE_SALDO * item.VALOR_UNITARIO;
         }
       });
     }
   });
+
+  // Converter o Map em um objeto para retornar
+  const clientGroups: JabOrdersByClientResponse['clientGroups'] = {};
+  clientGroupsMap.forEach((data, pesCode) => {
+    const clientKey = data.APELIDO || `Cliente ${pesCode}`;
+    clientGroups[clientKey] = data;
+  });
+
+  console.log(`Agrupados em ${Object.keys(clientGroups).length} clientes`);
 
   return { clientGroups };
 }
