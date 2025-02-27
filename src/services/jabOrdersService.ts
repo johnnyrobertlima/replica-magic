@@ -247,6 +247,35 @@ async function fetchRelatedData(pessoasIds: number[], itemCodigos: string[]) {
   };
 }
 
+async function fetchItensSeparacao() {
+  // Busca itens em separação com status "pendente"
+  const { data, error } = await supabase
+    .from('separacao_itens')
+    .select(`
+      item_codigo,
+      separacoes(status)
+    `)
+    .eq('separacoes.status', 'pendente');
+
+  if (error) {
+    console.error('Erro ao buscar itens em separação:', error);
+    return {};
+  }
+
+  // Cria um mapa de códigos de item -> true para fácil verificação
+  const itensSeparacaoMap: Record<string, boolean> = {};
+  if (data) {
+    data.forEach(item => {
+      if (item.item_codigo) {
+        itensSeparacaoMap[item.item_codigo] = true;
+      }
+    });
+  }
+
+  console.log(`Encontrados ${Object.keys(itensSeparacaoMap).length} itens em separação`);
+  return itensSeparacaoMap;
+}
+
 export async function fetchJabOrders({ 
   dateRange, 
   page = 1, 
@@ -279,6 +308,7 @@ export async function fetchJabOrders({
   const itemCodigos = [...new Set(pedidosDetalhados.map(p => p.ITEM_CODIGO).filter(Boolean))];
 
   const { pessoas, itens, estoque } = await fetchRelatedData(pessoasIds, itemCodigos);
+  const itensSeparacao = await fetchItensSeparacao();
 
   // Cria mapas para lookup rápido
   const pessoasMap = new Map(pessoas.map(p => [p.PES_CODIGO, p]));
@@ -328,6 +358,7 @@ export async function fetchJabOrders({
         QTDE_ENTREGUE: pedido.QTDE_ENTREGUE || 0,
         VALOR_UNITARIO: valorUnitario,
         FISICO: estoqueMap.get(pedido.ITEM_CODIGO) || null,
+        emSeparacao: itensSeparacao[pedido.ITEM_CODIGO] || false,
         pedido: pedido.PED_NUMPEDIDO,
         APELIDO: pessoa?.APELIDO || null,
         PES_CODIGO: primeiroPedido.PES_CODIGO
@@ -354,7 +385,8 @@ export async function fetchJabOrders({
     orders,
     totalCount,
     currentPage: page,
-    pageSize
+    pageSize,
+    itensSeparacao
   };
 }
 
@@ -395,6 +427,7 @@ export async function fetchAllJabOrders({
   console.log(`Encontrados ${pessoasIds.length} clientes e ${itemCodigos.length} itens diferentes`);
 
   const { pessoas, itens, estoque } = await fetchRelatedData(pessoasIds, itemCodigos);
+  const itensSeparacao = await fetchItensSeparacao();
 
   // Cria mapas para lookup rápido
   const pessoasMap = new Map(pessoas.map(p => [p.PES_CODIGO, p]));
@@ -444,6 +477,7 @@ export async function fetchAllJabOrders({
         QTDE_ENTREGUE: pedido.QTDE_ENTREGUE || 0,
         VALOR_UNITARIO: valorUnitario,
         FISICO: estoqueMap.get(pedido.ITEM_CODIGO) || null,
+        emSeparacao: itensSeparacao[pedido.ITEM_CODIGO] || false,
         pedido: pedido.PED_NUMPEDIDO,
         APELIDO: pessoa?.APELIDO || null,
         PES_CODIGO: primeiroPedido.PES_CODIGO
@@ -490,7 +524,8 @@ export async function fetchAllJabOrders({
     orders: ordersFlat,
     totalCount: numeroPedidos.length,
     currentPage: 1,
-    pageSize: numeroPedidos.length
+    pageSize: numeroPedidos.length,
+    itensSeparacao
   };
 }
 

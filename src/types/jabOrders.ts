@@ -14,6 +14,7 @@ export interface JabOrderItem {
   QTDE_ENTREGUE: number;
   VALOR_UNITARIO: number;
   FISICO: number | null;
+  emSeparacao?: boolean;
 }
 
 export interface JabOrder {
@@ -42,6 +43,7 @@ export interface JabOrdersResponse {
   totalCount: number;
   currentPage?: number;
   pageSize?: number;
+  itensSeparacao?: Record<string, boolean>;
 }
 
 export interface JabTotalsResponse {

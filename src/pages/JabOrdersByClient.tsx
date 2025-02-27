@@ -36,7 +36,7 @@ const JabOrdersByClient = () => {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [selectedItemsDetails, setSelectedItemsDetails] = useState<Record<string, { qtde: number, valor: number }>>({});
 
-  const { data: ordersData = { orders: [], totalCount: 0 }, isLoading: isLoadingOrders } = useAllJabOrders({
+  const { data: ordersData = { orders: [], totalCount: 0, itensSeparacao: {} }, isLoading: isLoadingOrders } = useAllJabOrders({
     dateRange: searchDate
   });
 
@@ -345,6 +345,7 @@ const JabOrdersByClient = () => {
       if (successCount > 0) {
         console.log(`Sucesso! ${successCount} separações criadas`);
         await queryClient.invalidateQueries({ queryKey: ['separacoes'] });
+        await queryClient.invalidateQueries({ queryKey: ['jabOrders'] });
         
         toast({
           title: "Sucesso",
@@ -563,16 +564,30 @@ const JabOrdersByClient = () => {
                                       return true;
                                     })
                                     .map((item, index) => (
-                                    <tr key={`${item.pedido}-${item.ITEM_CODIGO}-${index}`} className="border-t">
+                                    <tr 
+                                      key={`${item.pedido}-${item.ITEM_CODIGO}-${index}`} 
+                                      className={cn(
+                                        "border-t",
+                                        item.emSeparacao && "bg-[#FEF7CD]" // Fundo amarelo claro para itens em separação
+                                      )}
+                                    >
                                       <td className="p-2">
                                         <Checkbox
                                           checked={selectedItems.includes(item.ITEM_CODIGO)}
                                           onCheckedChange={() => handleItemSelect(item)}
+                                          disabled={item.emSeparacao}
                                         />
                                       </td>
                                       <td className="p-2">{item.pedido}</td>
                                       <td className="p-2">{item.ITEM_CODIGO}</td>
-                                      <td className="p-2">{item.DESCRICAO || '-'}</td>
+                                      <td className="p-2">
+                                        {item.DESCRICAO || '-'}
+                                        {item.emSeparacao && (
+                                          <span className="ml-2 text-amber-600 text-xs font-medium">
+                                            (Em separação)
+                                          </span>
+                                        )}
+                                      </td>
                                       <td className="p-2 text-right">{item.QTDE_PEDIDA}</td>
                                       <td className="p-2 text-right">{item.QTDE_ENTREGUE}</td>
                                       <td className="p-2 text-right">{item.QTDE_SALDO}</td>
