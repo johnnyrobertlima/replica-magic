@@ -50,8 +50,7 @@ async function fetchAllPedidosUnicos(
     .in('STATUS', ['1', '2'])
     .gte('DATA_PEDIDO', dataInicial)
     .lte('DATA_PEDIDO', `${dataFinal} 23:59:59.999`)
-    .order('PED_NUMPEDIDO')
-    .unique();
+    .order('PED_NUMPEDIDO');
 
   if (error) {
     console.error('Erro ao buscar todos os pedidos:', error);
@@ -62,7 +61,11 @@ async function fetchAllPedidosUnicos(
     return [];
   }
 
-  return todosPedidos.map(p => p.PED_NUMPEDIDO);
+  // Filtrar pedidos únicos manualmente, já que 'unique()' não está disponível
+  const pedidosSet = new Set<string>();
+  todosPedidos.forEach(p => pedidosSet.add(p.PED_NUMPEDIDO));
+  
+  return Array.from(pedidosSet);
 }
 
 async function fetchPedidosDetalhados(numeroPedidos: string[]) {
