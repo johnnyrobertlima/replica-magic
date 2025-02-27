@@ -34,6 +34,7 @@ const JabOrdersByClient = () => {
   const [showZeroBalance, setShowZeroBalance] = useState(false);
   const [showOnlyWithStock, setShowOnlyWithStock] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [selectedItemsDetails, setSelectedItemsDetails] = useState<Record<string, { qtde: number, valor: number }>>({});
 
   const { data: ordersData = { orders: [], totalCount: 0 }, isLoading: isLoadingOrders } = useAllJabOrders({
     dateRange: searchDate
@@ -42,6 +43,13 @@ const JabOrdersByClient = () => {
   const { data: totals = { valorTotalSaldo: 0, valorFaturarComEstoque: 0 }, isLoading: isLoadingTotals } = useTotals();
 
   const { data: separacoes = [], isLoading: isLoadingSeparacoes } = useSeparacoes();
+
+  // Calcular o total dos itens selecionados
+  const totalSelecionado = useMemo(() => {
+    return Object.values(selectedItemsDetails).reduce((total, item) => {
+      return total + (item.qtde * item.valor);
+    }, 0);
+  }, [selectedItemsDetails]);
 
   // Agrupar pedidos por cliente
   const groupedOrders = useMemo(() => {
@@ -158,12 +166,38 @@ const JabOrdersByClient = () => {
     return filteredGroups;
   }, [groupedOrders, isSearching, searchQuery, searchType]);
 
-  const handleItemSelect = (itemCode: string) => {
+  const handleItemSelect = (item: any) => {
+    const itemCode = item.ITEM_CODIGO;
+    
     setSelectedItems(prev => {
-      if (prev.includes(itemCode)) {
-        return prev.filter(code => code !== itemCode);
+      const isAlreadySelected = prev.includes(itemCode);
+      let newSelectedItems = prev;
+      
+      if (isAlreadySelected) {
+        // Remover item da seleção
+        newSelectedItems = prev.filter(code => code !== itemCode);
+        
+        // Remover detalhes do item
+        setSelectedItemsDetails(prevDetails => {
+          const newDetails = {...prevDetails};
+          delete newDetails[itemCode];
+          return newDetails;
+        });
+      } else {
+        // Adicionar item à seleção
+        newSelectedItems = [...prev, itemCode];
+        
+        // Adicionar detalhes do item
+        setSelectedItemsDetails(prevDetails => ({
+          ...prevDetails,
+          [itemCode]: {
+            qtde: item.QTDE_SALDO,
+            valor: item.VALOR_UNITARIO
+          }
+        }));
       }
-      return [...prev, itemCode];
+      
+      return newSelectedItems;
     });
   };
 
@@ -319,6 +353,7 @@ const JabOrdersByClient = () => {
         });
 
         setSelectedItems([]);
+        setSelectedItemsDetails({});
         setExpandedClients(new Set());
       } else {
         toast({
@@ -532,7 +567,7 @@ const JabOrdersByClient = () => {
                                       <td className="p-2">
                                         <Checkbox
                                           checked={selectedItems.includes(item.ITEM_CODIGO)}
-                                          onCheckedChange={() => handleItemSelect(item.ITEM_CODIGO)}
+                                          onCheckedChange={() => handleItemSelect(item)}
                                         />
                                       </td>
                                       <td className="p-2">{item.pedido}</td>
@@ -569,7 +604,23 @@ const JabOrdersByClient = () => {
             </div>
 
             {selectedItems.length > 0 && (
-              <div className="fixed bottom-4 right-4 z-50">
+              <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-2">
+                <Card className="shadow-lg bg-primary/5 border-primary/20">
+                  <CardContent className="p-4">
+                    <div className="flex flex-col gap-1">
+                      <h4 className="font-medium text-sm">Resumo da seleção</h4>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Itens selecionados:</span>
+                        <span className="font-semibold">{selectedItems.length}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Valor total:</span>
+                        <span className="font-semibold text-primary">{formatCurrency(totalSelecionado)}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                
                 <Button
                   onClick={handleEnviarParaSeparacao}
                   disabled={isSending}
