@@ -61,17 +61,36 @@ const AprovacaoFinanceira = () => {
       try {
         setIsLoading(true);
 
-        // Buscar todos os títulos financeiros
+        if (separacoesPendentes.length === 0) {
+          setClientesFinanceiros([]);
+          setIsLoading(false);
+          return;
+        }
+
+        // Obter os códigos de cliente das separações pendentes
+        const clientesCodigos = separacoesPendentes
+          .map(sep => sep.cliente_codigo)
+          .filter((value, index, self) => self.indexOf(value) === index); // remove duplicados
+
+        if (clientesCodigos.length === 0) {
+          setClientesFinanceiros([]);
+          setIsLoading(false);
+          return;
+        }
+
+        // Buscar todos os títulos financeiros dos clientes com separações pendentes
         const { data: titulos, error: titulosError } = await supabase
           .from('BLUEBAY_TITULO')
-          .select('*');
+          .select('*')
+          .in('PES_CODIGO', clientesCodigos.map(String));
 
         if (titulosError) throw titulosError;
 
-        // Buscar informações dos clientes
+        // Buscar informações dos clientes com separações pendentes
         const { data: clientes, error: clientesError } = await supabase
           .from('BLUEBAY_PESSOA')
-          .select('PES_CODIGO, APELIDO, volume_saudavel_faturamento');
+          .select('PES_CODIGO, APELIDO, volume_saudavel_faturamento')
+          .in('PES_CODIGO', clientesCodigos);
 
         if (clientesError) throw clientesError;
 
@@ -140,7 +159,7 @@ const AprovacaoFinanceira = () => {
     };
 
     fetchFinancialData();
-  }, [toast]);
+  }, [separacoesPendentes, toast]);
 
   const toggleCard = (id: string) => {
     setExpandedCards(current => {
@@ -260,90 +279,95 @@ const AprovacaoFinanceira = () => {
           Gerencie as aprovações financeiras dos pedidos e monitore informações financeiras dos clientes.
         </p>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {clientesFinanceiros.map((cliente) => (
-            <Card key={cliente.PES_CODIGO} className="overflow-hidden">
-              <CardHeader>
-                <CardTitle>{cliente.APELIDO || `Cliente ${cliente.PES_CODIGO}`}</CardTitle>
-                <CardDescription>
-                  Código: {cliente.PES_CODIGO}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Valores Totais:</span>
-                    <span className="font-medium">{formatCurrency(cliente.valoresTotais)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Valores em Aberto:</span>
-                    <span className="font-medium">{formatCurrency(cliente.valoresEmAberto)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Valores Vencidos:</span>
-                    <span className="font-medium text-red-500">{formatCurrency(cliente.valoresVencidos)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Volume Saudável de Faturamento:</span>
-                    <div className="flex items-center gap-1">
-                      <span className="font-medium">
-                        {cliente.volume_saudavel_faturamento 
-                          ? formatCurrency(cliente.volume_saudavel_faturamento) 
-                          : "Não definido"}
-                      </span>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-6 w-6"
-                            onClick={() => {
-                              setClienteEditando(cliente.PES_CODIGO);
-                              setVolumeSaudavelValue(
-                                cliente.volume_saudavel_faturamento 
-                                  ? cliente.volume_saudavel_faturamento.toString().replace('.', ',') 
-                                  : ""
-                              );
-                            }}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Volume Saudável de Faturamento</DialogTitle>
-                            <DialogDescription>
-                              Defina o volume saudável de faturamento para {cliente.APELIDO || `Cliente ${cliente.PES_CODIGO}`}.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="space-y-4 py-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="volume-saudavel">Valor</Label>
-                              <Input
-                                id="volume-saudavel"
-                                value={volumeSaudavelValue}
-                                onChange={(e) => setVolumeSaudavelValue(e.target.value)}
-                                placeholder="0,00"
-                              />
-                            </div>
-                          </div>
-                          <DialogFooter>
-                            <DialogClose asChild>
-                              <Button type="button" variant="secondary">Cancelar</Button>
-                            </DialogClose>
-                            <DialogClose asChild>
-                              <Button type="button" onClick={handleVolumeSaudavelSubmit}>Salvar</Button>
-                            </DialogClose>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
+        {clientesFinanceiros.length > 0 && (
+          <>
+            <h2 className="text-2xl font-bold mt-8">Informações Financeiras dos Clientes</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {clientesFinanceiros.map((cliente) => (
+                <Card key={cliente.PES_CODIGO} className="overflow-hidden">
+                  <CardHeader>
+                    <CardTitle>{cliente.APELIDO || `Cliente ${cliente.PES_CODIGO}`}</CardTitle>
+                    <CardDescription>
+                      Código: {cliente.PES_CODIGO}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Valores Totais:</span>
+                        <span className="font-medium">{formatCurrency(cliente.valoresTotais)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Valores em Aberto:</span>
+                        <span className="font-medium">{formatCurrency(cliente.valoresEmAberto)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Valores Vencidos:</span>
+                        <span className="font-medium text-red-500">{formatCurrency(cliente.valoresVencidos)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Volume Saudável de Faturamento:</span>
+                        <div className="flex items-center gap-1">
+                          <span className="font-medium">
+                            {cliente.volume_saudavel_faturamento 
+                              ? formatCurrency(cliente.volume_saudavel_faturamento) 
+                              : "Não definido"}
+                          </span>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-6 w-6"
+                                onClick={() => {
+                                  setClienteEditando(cliente.PES_CODIGO);
+                                  setVolumeSaudavelValue(
+                                    cliente.volume_saudavel_faturamento 
+                                      ? cliente.volume_saudavel_faturamento.toString().replace('.', ',') 
+                                      : ""
+                                  );
+                                }}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Volume Saudável de Faturamento</DialogTitle>
+                                <DialogDescription>
+                                  Defina o volume saudável de faturamento para {cliente.APELIDO || `Cliente ${cliente.PES_CODIGO}`}.
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="space-y-4 py-4">
+                                <div className="space-y-2">
+                                  <Label htmlFor="volume-saudavel">Valor</Label>
+                                  <Input
+                                    id="volume-saudavel"
+                                    value={volumeSaudavelValue}
+                                    onChange={(e) => setVolumeSaudavelValue(e.target.value)}
+                                    placeholder="0,00"
+                                  />
+                                </div>
+                              </div>
+                              <DialogFooter>
+                                <DialogClose asChild>
+                                  <Button type="button" variant="secondary">Cancelar</Button>
+                                </DialogClose>
+                                <DialogClose asChild>
+                                  <Button type="button" onClick={handleVolumeSaudavelSubmit}>Salvar</Button>
+                                </DialogClose>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </>
+        )}
         
         <h2 className="text-2xl font-bold mt-8">Pedidos Pendentes de Aprovação</h2>
         
