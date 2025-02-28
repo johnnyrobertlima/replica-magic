@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Loader2, ChevronDown, ChevronUp, Edit } from "lucide-react";
 import { useSeparacoes } from "@/hooks/useSeparacoes";
@@ -52,23 +52,30 @@ const AprovacaoFinanceira = () => {
   const [volumeSaudavelValue, setVolumeSaudavelValue] = useState<string>("");
   const [clienteEditando, setClienteEditando] = useState<number | null>(null);
 
-  // Filtra apenas as separações pendentes e não ocultas
-  const separacoesPendentes = separacoes
-    .filter(sep => sep.status === 'pendente')
-    .filter(sep => !hiddenCards.has(sep.id));
+  // Memoize o cálculo das separações pendentes para evitar recálculos desnecessários
+  const getSeparacoesPendentes = useCallback(() => {
+    return separacoes
+      .filter(sep => sep.status === 'pendente')
+      .filter(sep => !hiddenCards.has(sep.id));
+  }, [separacoes, hiddenCards]);
 
-  // Extrair códigos de cliente para useEffect
-  const clientesCodigos = separacoesPendentes
-    .map(sep => sep.cliente_codigo)
-    .filter((value, index, self) => self.indexOf(value) === index);
-  
-  // Criar uma string de dependência estável para o useEffect
-  const clientesCodigosKey = clientesCodigos.sort().join(',');
+  // Use o useCallback para estabilizar a função que obtém os códigos dos clientes
+  const getClientesCodigos = useCallback((sepPendentes: any[]) => {
+    return sepPendentes
+      .map(sep => sep.cliente_codigo)
+      .filter((value, index, self) => self.indexOf(value) === index);
+  }, []);
 
   useEffect(() => {
     const fetchFinancialData = async () => {
       try {
         setIsLoading(true);
+        
+        // Obter as separações pendentes usando a função memoizada
+        const separacoesPendentes = getSeparacoesPendentes();
+        
+        // Obter os códigos dos clientes
+        const clientesCodigos = getClientesCodigos(separacoesPendentes);
 
         if (clientesCodigos.length === 0) {
           setClientesFinanceiros([]);
@@ -163,7 +170,7 @@ const AprovacaoFinanceira = () => {
     };
 
     fetchFinancialData();
-  }, [clientesCodigosKey, toast, separacoesPendentes]);
+  }, [getSeparacoesPendentes, getClientesCodigos, toast]);
 
   const toggleCard = (id: string) => {
     setExpandedCards(current => {
