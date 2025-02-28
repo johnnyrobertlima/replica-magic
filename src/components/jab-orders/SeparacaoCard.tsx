@@ -49,8 +49,10 @@ export const SeparacaoCard = ({ separacao, expandedView = false, onExpandToggle 
   });
 
   const toggleExpand = (e: React.MouseEvent) => {
+    // Garantir que o comportamento padrão seja prevenido
     e.preventDefault();
     e.stopPropagation();
+    
     const newExpandedState = !isExpanded;
     console.log("Toggling card expansion:", separacao.id, "New state:", newExpandedState);
     setIsExpanded(newExpandedState);
@@ -82,6 +84,7 @@ export const SeparacaoCard = ({ separacao, expandedView = false, onExpandToggle 
             <Button
               variant="ghost"
               size="sm"
+              type="button" // Importante para evitar submissão de formulário acidental
               onClick={toggleExpand}
             >
               {isExpanded ? (

@@ -216,12 +216,11 @@ const AprovacaoFinanceira = () => {
     fetchFinancialData();
   }, [getSeparacoesPendentes, getClientesCodigos, toast]);
 
-  const toggleCard = (id: string, e?: React.MouseEvent) => {
-    // Previne o comportamento padrão do link (navegar para outra página)
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
+  // Função para alternar a expansão dos cards (importante: com prevenção de comportamento padrão)
+  const toggleCard = (id: string, e: React.MouseEvent) => {
+    // Previne o comportamento padrão que poderia estar causando a navegação
+    e.preventDefault();
+    e.stopPropagation();
     
     console.log("Toggling card:", id);
     
