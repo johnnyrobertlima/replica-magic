@@ -106,7 +106,7 @@ export const SeparacaoCard = ({ separacao, expandedView = false, onExpandToggle 
             </div>
           </div>
 
-          {isExpanded ? (
+          {isExpanded && (
             <div className="rounded-lg border overflow-x-auto mt-4">
               <Table>
                 <TableHeader>
@@ -139,26 +139,6 @@ export const SeparacaoCard = ({ separacao, expandedView = false, onExpandToggle 
                   })}
                 </TableBody>
               </Table>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Itens:</p>
-              <div className="max-h-40 overflow-y-auto space-y-2">
-                {separacao.separacao_itens.slice(0, 3).map((item) => (
-                  <div key={item.id} className="text-sm border-b pb-2">
-                    <p className="font-medium">{item.descricao || item.item_codigo}</p>
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>Pedido: {item.pedido}</span>
-                      <span>{item.quantidade_pedida} un × {formatCurrency(item.valor_unitario)}</span>
-                    </div>
-                  </div>
-                ))}
-                {separacao.separacao_itens.length > 3 && !isExpanded && (
-                  <p className="text-sm text-muted-foreground text-center">
-                    + {separacao.separacao_itens.length - 3} itens adicionais
-                  </p>
-                )}
-              </div>
             </div>
           )}
         </div>
