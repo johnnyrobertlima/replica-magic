@@ -294,7 +294,7 @@ const AprovacaoFinanceira = () => {
         
         <h2 className="text-2xl font-bold mt-8">Pedidos Pendentes de Aprovação</h2>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {clientesFinanceiros.length > 0 ? (
             clientesFinanceiros.map((cliente) => (
               <Card 
@@ -305,7 +305,7 @@ const AprovacaoFinanceira = () => {
                     : ""
                 } ${
                   expandedCards.has(`cliente-${cliente.PES_CODIGO}`) 
-                    ? "md:col-span-3" 
+                    ? "md:col-span-2" 
                     : ""
                 }`}
               >
@@ -513,7 +513,7 @@ const AprovacaoFinanceira = () => {
               </Card>
             ))
           ) : (
-            <Card className="col-span-3">
+            <Card className="col-span-2">
               <CardContent className="p-6">
                 <p className="text-center text-muted-foreground">
                   Nenhum pedido pendente de aprovação financeira.
