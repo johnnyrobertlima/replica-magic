@@ -84,10 +84,12 @@ const AprovacaoFinanceira = () => {
         }
 
         // Buscar todos os títulos financeiros dos clientes com separações pendentes
+        // Filtrar apenas os títulos com STATUS 1, 2 ou 3
         const { data: titulos, error: titulosError } = await supabase
           .from('BLUEBAY_TITULO')
           .select('*')
-          .in('PES_CODIGO', clientesCodigos.map(String));
+          .in('PES_CODIGO', clientesCodigos.map(String))
+          .in('STATUS', ['1', '2', '3']);
 
         if (titulosError) throw titulosError;
 
@@ -295,9 +297,23 @@ const AprovacaoFinanceira = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {clientesFinanceiros.length > 0 ? (
             clientesFinanceiros.map((cliente) => (
-              <Card key={cliente.PES_CODIGO} className="overflow-hidden">
+              <Card 
+                key={cliente.PES_CODIGO} 
+                className={`overflow-hidden transition-all duration-300 ${
+                  expandedCards.size > 0 && !expandedCards.has(`cliente-${cliente.PES_CODIGO}`) 
+                    ? "md:hidden" 
+                    : ""
+                } ${
+                  expandedCards.has(`cliente-${cliente.PES_CODIGO}`) 
+                    ? "md:col-span-3" 
+                    : ""
+                }`}
+              >
                 <CardHeader>
-                  <div className="flex items-center justify-between">
+                  <div 
+                    className="flex items-center justify-between cursor-pointer"
+                    onClick={() => toggleCard(`cliente-${cliente.PES_CODIGO}`)}
+                  >
                     <div>
                       <CardTitle>{cliente.APELIDO || `Cliente ${cliente.PES_CODIGO}`}</CardTitle>
                       <CardDescription>
@@ -311,7 +327,8 @@ const AprovacaoFinanceira = () => {
                             variant="outline" 
                             size="sm"
                             className="flex items-center gap-1"
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation(); // Prevenir que o clique propague para o toggle do card
                               setClienteEditando(cliente.PES_CODIGO);
                               setVolumeSaudavelValue(
                                 cliente.volume_saudavel_faturamento 
@@ -324,7 +341,7 @@ const AprovacaoFinanceira = () => {
                             <span>Volume Saudável</span>
                           </Button>
                         </DialogTrigger>
-                        <DialogContent>
+                        <DialogContent onClick={(e) => e.stopPropagation()}>
                           <DialogHeader>
                             <DialogTitle>Volume Saudável de Faturamento</DialogTitle>
                             <DialogDescription>
@@ -352,6 +369,20 @@ const AprovacaoFinanceira = () => {
                           </DialogFooter>
                         </DialogContent>
                       </Dialog>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleCard(`cliente-${cliente.PES_CODIGO}`);
+                        }}
+                      >
+                        {expandedCards.has(`cliente-${cliente.PES_CODIGO}`) ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
+                        )}
+                      </Button>
                     </div>
                   </div>
                 </CardHeader>
@@ -400,7 +431,10 @@ const AprovacaoFinanceira = () => {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => toggleCard(separacao.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleCard(separacao.id);
+                              }}
                             >
                               {expandedCards.has(separacao.id) ? (
                                 <ChevronUp className="h-4 w-4" />
@@ -453,14 +487,20 @@ const AprovacaoFinanceira = () => {
                             <Button
                               variant="destructive"
                               size="sm"
-                              onClick={() => handleReprovar(separacao.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleReprovar(separacao.id);
+                              }}
                             >
                               Reprovar
                             </Button>
                             <Button
                               variant="default"
                               size="sm"
-                              onClick={() => handleAprovar(separacao.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAprovar(separacao.id);
+                              }}
                             >
                               Aprovar
                             </Button>
