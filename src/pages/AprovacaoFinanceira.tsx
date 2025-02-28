@@ -174,7 +174,13 @@ const AprovacaoFinanceira = () => {
     fetchFinancialData();
   }, [getSeparacoesPendentes, getClientesCodigos, toast]);
 
-  const toggleCard = (id: string) => {
+  const toggleCard = (id: string, e?: React.MouseEvent) => {
+    // Previne o comportamento padrão do link (navegar para outra página)
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     setExpandedCards(current => {
       const newSet = new Set(current);
       if (newSet.has(id)) {
@@ -194,7 +200,10 @@ const AprovacaoFinanceira = () => {
     });
   };
 
-  const handleAprovar = (id: string) => {
+  const handleAprovar = (id: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     // Aqui você pode adicionar a lógica de aprovação
     toast({
       title: "Sucesso",
@@ -204,7 +213,10 @@ const AprovacaoFinanceira = () => {
     hideCard(id);
   };
 
-  const handleReprovar = (id: string) => {
+  const handleReprovar = (id: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     // Aqui você pode adicionar a lógica de reprovação
     toast({
       title: "Aviso",
@@ -312,7 +324,7 @@ const AprovacaoFinanceira = () => {
                 <CardHeader>
                   <div 
                     className="flex items-center justify-between cursor-pointer"
-                    onClick={() => toggleCard(`cliente-${cliente.PES_CODIGO}`)}
+                    onClick={(e) => toggleCard(`cliente-${cliente.PES_CODIGO}`, e)}
                   >
                     <div>
                       <CardTitle>{cliente.APELIDO || `Cliente ${cliente.PES_CODIGO}`}</CardTitle>
@@ -374,7 +386,7 @@ const AprovacaoFinanceira = () => {
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
-                          toggleCard(`cliente-${cliente.PES_CODIGO}`);
+                          toggleCard(`cliente-${cliente.PES_CODIGO}`, e);
                         }}
                       >
                         {expandedCards.has(`cliente-${cliente.PES_CODIGO}`) ? (
@@ -420,7 +432,11 @@ const AprovacaoFinanceira = () => {
                     <h3 className="font-semibold text-lg mb-2">Pedidos Pendentes</h3>
                     <div className="space-y-4">
                       {cliente.separacoes.map(separacao => (
-                        <div key={separacao.id} className="border rounded-lg p-4">
+                        <div 
+                          key={separacao.id} 
+                          className="border rounded-lg p-4"
+                          onClick={(e) => toggleCard(separacao.id, e)}
+                        >
                           <div className="flex justify-between items-start mb-4">
                             <div>
                               <p className="font-medium">Valor Total: {formatCurrency(separacao.valor_total)}</p>
@@ -433,7 +449,7 @@ const AprovacaoFinanceira = () => {
                               size="sm"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                toggleCard(separacao.id);
+                                toggleCard(separacao.id, e);
                               }}
                             >
                               {expandedCards.has(separacao.id) ? (
@@ -445,7 +461,7 @@ const AprovacaoFinanceira = () => {
                           </div>
 
                           {expandedCards.has(separacao.id) && (
-                            <div className="rounded-lg border overflow-x-auto">
+                            <div className="rounded-lg border overflow-x-auto" onClick={e => e.stopPropagation()}>
                               <Table>
                                 <TableHeader>
                                   <TableRow>
@@ -487,20 +503,14 @@ const AprovacaoFinanceira = () => {
                             <Button
                               variant="destructive"
                               size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleReprovar(separacao.id);
-                              }}
+                              onClick={(e) => handleReprovar(separacao.id, e)}
                             >
                               Reprovar
                             </Button>
                             <Button
                               variant="default"
                               size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleAprovar(separacao.id);
-                              }}
+                              onClick={(e) => handleAprovar(separacao.id, e)}
                             >
                               Aprovar
                             </Button>
