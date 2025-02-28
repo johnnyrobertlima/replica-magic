@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp } from "lucide-react";
@@ -25,11 +25,21 @@ interface SeparacaoCardProps {
     }>;
   };
   expandedView?: boolean;
+  onExpandToggle?: (id: string, expanded: boolean) => void;
 }
 
-export const SeparacaoCard = ({ separacao, expandedView = false }: SeparacaoCardProps) => {
+export const SeparacaoCard = ({ separacao, expandedView = false, onExpandToggle }: SeparacaoCardProps) => {
   const [isExpanded, setIsExpanded] = useState(expandedView);
   
+  useEffect(() => {
+    console.log("SeparacaoCard montado para separação:", separacao.id);
+    console.log("Estado inicial de expansão:", isExpanded);
+    
+    return () => {
+      console.log("SeparacaoCard desmontado para separação:", separacao.id);
+    };
+  }, [separacao.id, isExpanded]);
+
   const createdAt = new Date(separacao.created_at).toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
@@ -41,8 +51,17 @@ export const SeparacaoCard = ({ separacao, expandedView = false }: SeparacaoCard
   const toggleExpand = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsExpanded(!isExpanded);
+    const newExpandedState = !isExpanded;
+    console.log("Toggling card expansion:", separacao.id, "New state:", newExpandedState);
+    setIsExpanded(newExpandedState);
+    
+    if (onExpandToggle) {
+      onExpandToggle(separacao.id, newExpandedState);
+    }
   };
+
+  console.log("Renderizando SeparacaoCard:", separacao.id, "Expandido:", isExpanded);
+  console.log("Número de itens na separação:", separacao.separacao_itens?.length || 0);
 
   return (
     <Card className={`overflow-hidden transition-all duration-300 ${expandedView ? 'col-span-full' : ''}`}>
@@ -101,20 +120,23 @@ export const SeparacaoCard = ({ separacao, expandedView = false }: SeparacaoCard
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {separacao.separacao_itens.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-medium">{item.pedido}</TableCell>
-                      <TableCell className="font-medium">{item.item_codigo}</TableCell>
-                      <TableCell>{item.descricao || '-'}</TableCell>
-                      <TableCell className="text-right">{item.quantidade_pedida}</TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(item.valor_unitario)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(item.valor_total)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {separacao.separacao_itens.map((item) => {
+                    console.log("Renderizando item:", item.id, item.item_codigo);
+                    return (
+                      <TableRow key={item.id}>
+                        <TableCell className="font-medium">{item.pedido}</TableCell>
+                        <TableCell className="font-medium">{item.item_codigo}</TableCell>
+                        <TableCell>{item.descricao || '-'}</TableCell>
+                        <TableCell className="text-right">{item.quantidade_pedida}</TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(item.valor_unitario)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(item.valor_total)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
