@@ -301,7 +301,7 @@ const AprovacaoFinanceira = () => {
                     <div>
                       <CardTitle>{cliente.APELIDO || `Cliente ${cliente.PES_CODIGO}`}</CardTitle>
                       <CardDescription>
-                        Código: {cliente.PES_CODIGO}
+                        Representante: {cliente.PES_CODIGO}
                       </CardDescription>
                     </div>
                     <div className="flex flex-col items-end gap-2">
