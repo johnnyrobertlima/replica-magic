@@ -405,6 +405,63 @@ export type Database = {
         }
         Relationships: []
       }
+      BLUEBAY_TITULO: {
+        Row: {
+          ANOBASE: number
+          DTEMISSAO: string | null
+          DTPAGTO: string | null
+          DTVENCIMENTO: string | null
+          FILIAL: number
+          MATRIZ: number
+          NUMDOCUMENTO: number | null
+          NUMLCTO: number
+          NUMNOTA: number | null
+          PES_CODIGO: string | null
+          STATUS: string | null
+          TIPO: string
+          VLRABATIMENTO: number | null
+          VLRDESCONTO: number | null
+          VLRSALDO: number | null
+          VLRTITULO: number | null
+        }
+        Insert: {
+          ANOBASE: number
+          DTEMISSAO?: string | null
+          DTPAGTO?: string | null
+          DTVENCIMENTO?: string | null
+          FILIAL: number
+          MATRIZ: number
+          NUMDOCUMENTO?: number | null
+          NUMLCTO: number
+          NUMNOTA?: number | null
+          PES_CODIGO?: string | null
+          STATUS?: string | null
+          TIPO: string
+          VLRABATIMENTO?: number | null
+          VLRDESCONTO?: number | null
+          VLRSALDO?: number | null
+          VLRTITULO?: number | null
+        }
+        Update: {
+          ANOBASE?: number
+          DTEMISSAO?: string | null
+          DTPAGTO?: string | null
+          DTVENCIMENTO?: string | null
+          FILIAL?: number
+          MATRIZ?: number
+          NUMDOCUMENTO?: number | null
+          NUMLCTO?: number
+          NUMNOTA?: number | null
+          PES_CODIGO?: string | null
+          STATUS?: string | null
+          TIPO?: string
+          VLRABATIMENTO?: number | null
+          VLRDESCONTO?: number | null
+          VLRSALDO?: number | null
+          VLRTITULO?: number | null
+        }
+        Relationships: []
+      }
       campaigns: {
         Row: {
           client_id: string | null
