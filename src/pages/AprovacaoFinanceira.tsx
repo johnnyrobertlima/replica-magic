@@ -46,7 +46,7 @@ interface ClienteFinanceiro {
 const AprovacaoFinanceira = () => {
   const { data: separacoes = [], isLoading: isLoadingSeparacoes } = useSeparacoes();
   const { toast } = useToast();
-  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
+  const [expandedCards, setExpandedCards] = useState<string[]>([]); // Mudança para array em vez de Set
   const [hiddenCards, setHiddenCards] = useState<Set<string>>(new Set());
   const [clientesFinanceiros, setClientesFinanceiros] = useState<ClienteFinanceiro[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -56,7 +56,7 @@ const AprovacaoFinanceira = () => {
   // Log para debugging
   useEffect(() => {
     console.log("Separações carregadas:", separacoes);
-    console.log("Cards expandidos:", Array.from(expandedCards));
+    console.log("Cards expandidos:", expandedCards);
   }, [separacoes, expandedCards]);
 
   // Memoize o cálculo das separações pendentes para evitar recálculos desnecessários
@@ -216,6 +216,11 @@ const AprovacaoFinanceira = () => {
     fetchFinancialData();
   }, [getSeparacoesPendentes, getClientesCodigos, toast]);
 
+  // Função para verificar se um card está expandido
+  const isCardExpanded = (id: string) => {
+    return expandedCards.includes(id);
+  };
+
   // Função para alternar a expansão dos cards (importante: com prevenção de comportamento padrão)
   const toggleCard = (id: string, e: React.MouseEvent) => {
     // Previne o comportamento padrão que poderia estar causando a navegação
@@ -225,16 +230,30 @@ const AprovacaoFinanceira = () => {
     console.log("Toggling card:", id);
     
     setExpandedCards(current => {
-      const newSet = new Set(current);
-      if (newSet.has(id)) {
+      if (current.includes(id)) {
         console.log("Removendo card dos expandidos:", id);
-        newSet.delete(id);
+        return current.filter(cardId => cardId !== id);
       } else {
         console.log("Adicionando card aos expandidos:", id);
-        newSet.add(id);
+        return [...current, id];
       }
-      return newSet;
     });
+  };
+
+  // Função para expandir um card específico
+  const expandCard = (id: string) => {
+    if (!isCardExpanded(id)) {
+      console.log("Expandindo card:", id);
+      setExpandedCards(current => [...current, id]);
+    }
+  };
+
+  // Função para colapsar um card específico
+  const collapseCard = (id: string) => {
+    if (isCardExpanded(id)) {
+      console.log("Colapsando card:", id);
+      setExpandedCards(current => current.filter(cardId => cardId !== id));
+    }
   };
 
   const hideCard = (id: string) => {
@@ -363,17 +382,19 @@ const AprovacaoFinanceira = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {clientesFinanceiros.length > 0 ? (
             clientesFinanceiros.map((cliente) => {
-              console.log(`Renderizando card para cliente ${cliente.PES_CODIGO} com ${cliente.separacoes.length} separações`);
+              const clienteId = `cliente-${cliente.PES_CODIGO}`;
+              const isExpanded = isCardExpanded(clienteId);
+              console.log(`Renderizando card para cliente ${cliente.PES_CODIGO} com ${cliente.separacoes.length} separações, expandido: ${isExpanded}`);
               
               return (
                 <Card 
                   key={cliente.PES_CODIGO} 
                   className={`overflow-hidden transition-all duration-300 ${
-                    expandedCards.size > 0 && !expandedCards.has(`cliente-${cliente.PES_CODIGO}`) 
+                    expandedCards.length > 0 && !isExpanded
                       ? "md:hidden" 
                       : ""
                   } ${
-                    expandedCards.has(`cliente-${cliente.PES_CODIGO}`) 
+                    isExpanded 
                       ? "md:col-span-2" 
                       : ""
                   }`}
@@ -381,7 +402,7 @@ const AprovacaoFinanceira = () => {
                   <CardHeader>
                     <div 
                       className="flex items-center justify-between cursor-pointer"
-                      onClick={(e) => toggleCard(`cliente-${cliente.PES_CODIGO}`, e)}
+                      onClick={(e) => toggleCard(clienteId, e)}
                     >
                       <div>
                         <CardTitle>{cliente.APELIDO || `Cliente ${cliente.PES_CODIGO}`}</CardTitle>
@@ -441,12 +462,13 @@ const AprovacaoFinanceira = () => {
                         <Button
                           variant="ghost"
                           size="sm"
+                          type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            toggleCard(`cliente-${cliente.PES_CODIGO}`, e);
+                            toggleCard(clienteId, e);
                           }}
                         >
-                          {expandedCards.has(`cliente-${cliente.PES_CODIGO}`) ? (
+                          {isExpanded ? (
                             <ChevronUp className="h-4 w-4" />
                           ) : (
                             <ChevronDown className="h-4 w-4" />
@@ -489,7 +511,8 @@ const AprovacaoFinanceira = () => {
                       <h3 className="font-semibold text-lg mb-2">Pedidos Pendentes</h3>
                       <div className="space-y-4">
                         {cliente.separacoes.map(separacao => {
-                          console.log(`Renderizando separação ${separacao.id}, expandido: ${expandedCards.has(separacao.id)}`);
+                          const isExpanded = isCardExpanded(separacao.id);
+                          console.log(`Renderizando separação ${separacao.id}, expandido: ${isExpanded}`);
                           return (
                             <div key={separacao.id} className="relative border rounded-lg">
                               <div 
@@ -509,12 +532,13 @@ const AprovacaoFinanceira = () => {
                                   <Button
                                     variant="ghost"
                                     size="sm"
+                                    type="button"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       toggleCard(separacao.id, e);
                                     }}
                                   >
-                                    {expandedCards.has(separacao.id) ? (
+                                    {isExpanded ? (
                                       <ChevronUp className="h-4 w-4" />
                                     ) : (
                                       <ChevronDown className="h-4 w-4" />
@@ -522,7 +546,7 @@ const AprovacaoFinanceira = () => {
                                   </Button>
                                 </div>
 
-                                {expandedCards.has(separacao.id) && (
+                                {isExpanded && separacao.separacao_itens && separacao.separacao_itens.length > 0 && (
                                   <div className="rounded-lg border overflow-x-auto mt-4">
                                     <Table>
                                       <TableHeader>
@@ -536,7 +560,7 @@ const AprovacaoFinanceira = () => {
                                         </TableRow>
                                       </TableHeader>
                                       <TableBody>
-                                        {separacao.separacao_itens?.map((item, index) => (
+                                        {separacao.separacao_itens.map((item, index) => (
                                           <TableRow key={`${item.id}-${index}`}>
                                             <TableCell className="font-medium">{item.pedido}</TableCell>
                                             <TableCell className="font-medium">{item.item_codigo}</TableCell>
@@ -559,6 +583,7 @@ const AprovacaoFinanceira = () => {
                                   <Button
                                     variant="destructive"
                                     size="sm"
+                                    type="button"
                                     onClick={(e) => handleReprovar(separacao.id, e)}
                                   >
                                     Reprovar
@@ -566,6 +591,7 @@ const AprovacaoFinanceira = () => {
                                   <Button
                                     variant="default"
                                     size="sm"
+                                    type="button"
                                     onClick={(e) => handleAprovar(separacao.id, e)}
                                   >
                                     Aprovar
