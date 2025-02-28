@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SeparacaoCard } from "@/components/jab-orders/SeparacaoCard";
 
 interface TituloFinanceiro {
   PES_CODIGO: string | number;
@@ -431,92 +432,88 @@ const AprovacaoFinanceira = () => {
                   <div>
                     <h3 className="font-semibold text-lg mb-2">Pedidos Pendentes</h3>
                     <div className="space-y-4">
-                      {cliente.separacoes.map(separacao => (
-                        <div 
-                          key={separacao.id} 
-                          className="border rounded-lg p-4"
-                          onClick={(e) => toggleCard(separacao.id, e)}
-                        >
-                          <div className="flex justify-between items-start mb-4">
-                            <div>
-                              <p className="font-medium">Valor Total: {formatCurrency(separacao.valor_total)}</p>
-                              <p className="text-sm text-muted-foreground">
-                                Representante: {separacao.representante_nome || "Não informado"}
-                              </p>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleCard(separacao.id, e);
-                              }}
+                      {cliente.separacoes.map(separacao => {
+                        const isExpanded = expandedCards.has(separacao.id);
+                        return (
+                          <div key={separacao.id} className="border rounded-lg p-4">
+                            <div 
+                              className="flex justify-between items-start mb-4 cursor-pointer"
+                              onClick={(e) => toggleCard(separacao.id, e)}
                             >
-                              {expandedCards.has(separacao.id) ? (
-                                <ChevronUp className="h-4 w-4" />
-                              ) : (
-                                <ChevronDown className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </div>
+                              <div>
+                                <p className="font-medium">Valor Total: {formatCurrency(separacao.valor_total)}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  Representante: {separacao.representante_nome || "Não informado"}
+                                </p>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleCard(separacao.id, e);
+                                }}
+                              >
+                                {isExpanded ? (
+                                  <ChevronUp className="h-4 w-4" />
+                                ) : (
+                                  <ChevronDown className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </div>
 
-                          {expandedCards.has(separacao.id) && (
-                            <div className="rounded-lg border overflow-x-auto" onClick={e => e.stopPropagation()}>
-                              <Table>
-                                <TableHeader>
-                                  <TableRow>
-                                    <TableHead>Pedido</TableHead>
-                                    <TableHead>SKU</TableHead>
-                                    <TableHead>Descrição</TableHead>
-                                    <TableHead className="text-right">Quantidade</TableHead>
-                                    <TableHead className="text-right">Valor Unit.</TableHead>
-                                    <TableHead className="text-right">Total</TableHead>
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {separacao.separacao_itens?.map((item, index) => (
-                                    <TableRow key={`${item.item_codigo}-${index}`}>
-                                      <TableCell className="font-medium">{item.pedido}</TableCell>
-                                      <TableCell className="font-medium">{item.item_codigo}</TableCell>
-                                      <TableCell>{item.descricao}</TableCell>
-                                      <TableCell className="text-right">{item.quantidade_pedida}</TableCell>
-                                      <TableCell className="text-right">
-                                        {item.valor_unitario.toLocaleString('pt-BR', {
-                                          style: 'currency',
-                                          currency: 'BRL'
-                                        })}
-                                      </TableCell>
-                                      <TableCell className="text-right">
-                                        {(item.quantidade_pedida * item.valor_unitario).toLocaleString('pt-BR', {
-                                          style: 'currency',
-                                          currency: 'BRL'
-                                        })}
-                                      </TableCell>
+                            {isExpanded && (
+                              <div className="rounded-lg border overflow-x-auto mt-4">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead>Pedido</TableHead>
+                                      <TableHead>SKU</TableHead>
+                                      <TableHead>Descrição</TableHead>
+                                      <TableHead className="text-right">Quantidade</TableHead>
+                                      <TableHead className="text-right">Valor Unit.</TableHead>
+                                      <TableHead className="text-right">Total</TableHead>
                                     </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
-                            </div>
-                          )}
+                                  </TableHeader>
+                                  <TableBody>
+                                    {separacao.separacao_itens?.map((item, index) => (
+                                      <TableRow key={`${item.item_codigo}-${index}`}>
+                                        <TableCell className="font-medium">{item.pedido}</TableCell>
+                                        <TableCell className="font-medium">{item.item_codigo}</TableCell>
+                                        <TableCell>{item.descricao || '-'}</TableCell>
+                                        <TableCell className="text-right">{item.quantidade_pedida}</TableCell>
+                                        <TableCell className="text-right">
+                                          {formatCurrency(item.valor_unitario)}
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                          {formatCurrency(item.quantidade_pedida * item.valor_unitario)}
+                                        </TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                            )}
 
-                          <div className="flex justify-end gap-2 mt-4">
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={(e) => handleReprovar(separacao.id, e)}
-                            >
-                              Reprovar
-                            </Button>
-                            <Button
-                              variant="default"
-                              size="sm"
-                              onClick={(e) => handleAprovar(separacao.id, e)}
-                            >
-                              Aprovar
-                            </Button>
+                            <div className="flex justify-end gap-2 mt-4">
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={(e) => handleReprovar(separacao.id, e)}
+                              >
+                                Reprovar
+                              </Button>
+                              <Button
+                                variant="default"
+                                size="sm"
+                                onClick={(e) => handleAprovar(separacao.id, e)}
+                              >
+                                Aprovar
+                              </Button>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 </CardContent>
