@@ -352,6 +352,7 @@ export type Database = {
           RAZAOSOCIAL: string | null
           TELEFONE: string | null
           UF: string | null
+          volume_saudavel_faturamento: number | null
         }
         Insert: {
           APELIDO?: string | null
@@ -371,6 +372,7 @@ export type Database = {
           RAZAOSOCIAL?: string | null
           TELEFONE?: string | null
           UF?: string | null
+          volume_saudavel_faturamento?: number | null
         }
         Update: {
           APELIDO?: string | null
@@ -390,6 +392,7 @@ export type Database = {
           RAZAOSOCIAL?: string | null
           TELEFONE?: string | null
           UF?: string | null
+          volume_saudavel_faturamento?: number | null
         }
         Relationships: []
       }

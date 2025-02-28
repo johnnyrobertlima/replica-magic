@@ -82,44 +82,48 @@ const AprovacaoFinanceira = () => {
         // Agrupar os títulos por cliente
         const clientesMap = new Map<number, ClienteFinanceiro>();
 
-        clientes.forEach(cliente => {
-          if (cliente.PES_CODIGO) {
-            clientesMap.set(cliente.PES_CODIGO, {
-              PES_CODIGO: cliente.PES_CODIGO,
-              APELIDO: cliente.APELIDO,
-              volume_saudavel_faturamento: cliente.volume_saudavel_faturamento,
-              valoresTotais: 0,
-              valoresEmAberto: 0,
-              valoresVencidos: 0
-            });
-          }
-        });
+        if (clientes) {
+          clientes.forEach(cliente => {
+            if (cliente.PES_CODIGO) {
+              clientesMap.set(cliente.PES_CODIGO, {
+                PES_CODIGO: cliente.PES_CODIGO,
+                APELIDO: cliente.APELIDO,
+                volume_saudavel_faturamento: cliente.volume_saudavel_faturamento,
+                valoresTotais: 0,
+                valoresEmAberto: 0,
+                valoresVencidos: 0
+              });
+            }
+          });
+        }
 
         // Calcular os valores para cada cliente
-        titulos.forEach((titulo: TituloFinanceiro) => {
-          const pesCodigoNumerico = typeof titulo.PES_CODIGO === 'string' 
-            ? parseInt(titulo.PES_CODIGO, 10) 
-            : titulo.PES_CODIGO;
-          
-          if (isNaN(pesCodigoNumerico) || !clientesMap.has(pesCodigoNumerico)) return;
+        if (titulos) {
+          titulos.forEach((titulo: TituloFinanceiro) => {
+            const pesCodigoNumerico = typeof titulo.PES_CODIGO === 'string' 
+              ? parseInt(titulo.PES_CODIGO, 10) 
+              : titulo.PES_CODIGO;
+            
+            if (isNaN(pesCodigoNumerico) || !clientesMap.has(pesCodigoNumerico)) return;
 
-          const cliente = clientesMap.get(pesCodigoNumerico)!;
-          
-          // Valores Totais = Soma da coluna VLRTITULO - VLRDESCONTO - VLRABATIMENTO
-          const valorTotal = (titulo.VLRTITULO || 0) - (titulo.VLRDESCONTO || 0) - (titulo.VLRABATIMENTO || 0);
-          cliente.valoresTotais += valorTotal;
-          
-          // Valores em Aberto = Soma da coluna VLRSALDO
-          cliente.valoresEmAberto += (titulo.VLRSALDO || 0);
-          
-          // Valores Vencidos = Soma da coluna VLRSALDO de títulos vencidos
-          if (titulo.DTVENCIMENTO) {
-            const vencimento = new Date(titulo.DTVENCIMENTO);
-            if (vencimento < today) {
-              cliente.valoresVencidos += (titulo.VLRSALDO || 0);
+            const cliente = clientesMap.get(pesCodigoNumerico)!;
+            
+            // Valores Totais = Soma da coluna VLRTITULO - VLRDESCONTO - VLRABATIMENTO
+            const valorTotal = (titulo.VLRTITULO || 0) - (titulo.VLRDESCONTO || 0) - (titulo.VLRABATIMENTO || 0);
+            cliente.valoresTotais += valorTotal;
+            
+            // Valores em Aberto = Soma da coluna VLRSALDO
+            cliente.valoresEmAberto += (titulo.VLRSALDO || 0);
+            
+            // Valores Vencidos = Soma da coluna VLRSALDO de títulos vencidos
+            if (titulo.DTVENCIMENTO) {
+              const vencimento = new Date(titulo.DTVENCIMENTO);
+              if (vencimento < today) {
+                cliente.valoresVencidos += (titulo.VLRSALDO || 0);
+              }
             }
-          }
-        });
+          });
+        }
 
         // Converter mapa para array
         setClientesFinanceiros(Array.from(clientesMap.values()));
