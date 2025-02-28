@@ -56,21 +56,18 @@ const AprovacaoFinanceira = () => {
     .filter(sep => sep.status === 'pendente')
     .filter(sep => !hiddenCards.has(sep.id));
 
+  // Extrair códigos de cliente para useEffect
+  const clientesCodigos = separacoesPendentes
+    .map(sep => sep.cliente_codigo)
+    .filter((value, index, self) => self.indexOf(value) === index);
+  
+  // Criar uma string de dependência estável para o useEffect
+  const clientesCodigosKey = clientesCodigos.sort().join(',');
+
   useEffect(() => {
     const fetchFinancialData = async () => {
       try {
         setIsLoading(true);
-
-        if (separacoesPendentes.length === 0) {
-          setClientesFinanceiros([]);
-          setIsLoading(false);
-          return;
-        }
-
-        // Obter os códigos de cliente das separações pendentes
-        const clientesCodigos = separacoesPendentes
-          .map(sep => sep.cliente_codigo)
-          .filter((value, index, self) => self.indexOf(value) === index); // remove duplicados
 
         if (clientesCodigos.length === 0) {
           setClientesFinanceiros([]);
@@ -159,7 +156,7 @@ const AprovacaoFinanceira = () => {
     };
 
     fetchFinancialData();
-  }, [separacoesPendentes, toast]);
+  }, [clientesCodigosKey, toast]);
 
   const toggleCard = (id: string) => {
     setExpandedCards(current => {
