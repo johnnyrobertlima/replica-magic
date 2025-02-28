@@ -39,6 +39,7 @@ interface ClienteFinanceiro {
   valoresTotais: number;
   valoresEmAberto: number;
   valoresVencidos: number;
+  separacoes: any[]; // Separações associadas a este cliente
 }
 
 const AprovacaoFinanceira = () => {
@@ -101,13 +102,19 @@ const AprovacaoFinanceira = () => {
         if (clientes) {
           clientes.forEach(cliente => {
             if (cliente.PES_CODIGO) {
+              // Encontrar as separações deste cliente
+              const clienteSeparacoes = separacoesPendentes.filter(
+                sep => sep.cliente_codigo === cliente.PES_CODIGO
+              );
+              
               clientesMap.set(cliente.PES_CODIGO, {
                 PES_CODIGO: cliente.PES_CODIGO,
                 APELIDO: cliente.APELIDO,
                 volume_saudavel_faturamento: cliente.volume_saudavel_faturamento,
                 valoresTotais: 0,
                 valoresEmAberto: 0,
-                valoresVencidos: 0
+                valoresVencidos: 0,
+                separacoes: clienteSeparacoes
               });
             }
           });
@@ -156,7 +163,7 @@ const AprovacaoFinanceira = () => {
     };
 
     fetchFinancialData();
-  }, [clientesCodigosKey, toast]);
+  }, [clientesCodigosKey, toast, separacoesPendentes]);
 
   const toggleCard = (id: string) => {
     setExpandedCards(current => {
@@ -276,197 +283,196 @@ const AprovacaoFinanceira = () => {
           Gerencie as aprovações financeiras dos pedidos e monitore informações financeiras dos clientes.
         </p>
         
-        {clientesFinanceiros.length > 0 && (
-          <>
-            <h2 className="text-2xl font-bold mt-8">Informações Financeiras dos Clientes</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {clientesFinanceiros.map((cliente) => (
-                <Card key={cliente.PES_CODIGO} className="overflow-hidden">
-                  <CardHeader>
-                    <CardTitle>{cliente.APELIDO || `Cliente ${cliente.PES_CODIGO}`}</CardTitle>
-                    <CardDescription>
-                      Código: {cliente.PES_CODIGO}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Valores Totais:</span>
-                        <span className="font-medium">{formatCurrency(cliente.valoresTotais)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Valores em Aberto:</span>
-                        <span className="font-medium">{formatCurrency(cliente.valoresEmAberto)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Valores Vencidos:</span>
-                        <span className="font-medium text-red-500">{formatCurrency(cliente.valoresVencidos)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Volume Saudável de Faturamento:</span>
-                        <div className="flex items-center gap-1">
-                          <span className="font-medium">
-                            {cliente.volume_saudavel_faturamento 
-                              ? formatCurrency(cliente.volume_saudavel_faturamento) 
-                              : "Não definido"}
-                          </span>
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-6 w-6"
-                                onClick={() => {
-                                  setClienteEditando(cliente.PES_CODIGO);
-                                  setVolumeSaudavelValue(
-                                    cliente.volume_saudavel_faturamento 
-                                      ? cliente.volume_saudavel_faturamento.toString().replace('.', ',') 
-                                      : ""
-                                  );
-                                }}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Volume Saudável de Faturamento</DialogTitle>
-                                <DialogDescription>
-                                  Defina o volume saudável de faturamento para {cliente.APELIDO || `Cliente ${cliente.PES_CODIGO}`}.
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="space-y-4 py-4">
-                                <div className="space-y-2">
-                                  <Label htmlFor="volume-saudavel">Valor</Label>
-                                  <Input
-                                    id="volume-saudavel"
-                                    value={volumeSaudavelValue}
-                                    onChange={(e) => setVolumeSaudavelValue(e.target.value)}
-                                    placeholder="0,00"
-                                  />
-                                </div>
-                              </div>
-                              <DialogFooter>
-                                <DialogClose asChild>
-                                  <Button type="button" variant="secondary">Cancelar</Button>
-                                </DialogClose>
-                                <DialogClose asChild>
-                                  <Button type="button" onClick={handleVolumeSaudavelSubmit}>Salvar</Button>
-                                </DialogClose>
-                              </DialogFooter>
-                            </DialogContent>
-                          </Dialog>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </>
-        )}
-        
         <h2 className="text-2xl font-bold mt-8">Pedidos Pendentes de Aprovação</h2>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {separacoesPendentes.length > 0 ? (
-            separacoesPendentes.map((separacao) => (
-              <Card key={separacao.id} className={expandedCards.has(separacao.id) ? "col-span-full" : ""}>
+        <div className="grid grid-cols-1 gap-6">
+          {clientesFinanceiros.length > 0 ? (
+            clientesFinanceiros.map((cliente) => (
+              <Card key={cliente.PES_CODIGO} className="overflow-hidden">
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <CardTitle>Cliente: {separacao.cliente_nome}</CardTitle>
+                    <div>
+                      <CardTitle>{cliente.APELIDO || `Cliente ${cliente.PES_CODIGO}`}</CardTitle>
                       <CardDescription>
-                        Valor Total: {separacao.valor_total.toLocaleString('pt-BR', {
-                          style: 'currency',
-                          currency: 'BRL'
-                        })}
-                      </CardDescription>
-                      <CardDescription>
-                        Representante: {separacao.representante_nome}
+                        Código: {cliente.PES_CODIGO}
                       </CardDescription>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleCard(separacao.id)}
-                    >
-                      {expandedCards.has(separacao.id) ? (
-                        <ChevronUp className="h-4 w-4" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4" />
-                      )}
-                    </Button>
+                    <div className="flex flex-col items-end gap-2">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="flex items-center gap-1"
+                            onClick={() => {
+                              setClienteEditando(cliente.PES_CODIGO);
+                              setVolumeSaudavelValue(
+                                cliente.volume_saudavel_faturamento 
+                                  ? cliente.volume_saudavel_faturamento.toString().replace('.', ',') 
+                                  : ""
+                              );
+                            }}
+                          >
+                            <Edit className="h-3 w-3" />
+                            <span>Volume Saudável</span>
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Volume Saudável de Faturamento</DialogTitle>
+                            <DialogDescription>
+                              Defina o volume saudável de faturamento para {cliente.APELIDO || `Cliente ${cliente.PES_CODIGO}`}.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-4 py-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="volume-saudavel">Valor</Label>
+                              <Input
+                                id="volume-saudavel"
+                                value={volumeSaudavelValue}
+                                onChange={(e) => setVolumeSaudavelValue(e.target.value)}
+                                placeholder="0,00"
+                              />
+                            </div>
+                          </div>
+                          <DialogFooter>
+                            <DialogClose asChild>
+                              <Button type="button" variant="secondary">Cancelar</Button>
+                            </DialogClose>
+                            <DialogClose asChild>
+                              <Button type="button" onClick={handleVolumeSaudavelSubmit}>Salvar</Button>
+                            </DialogClose>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
                   </div>
                 </CardHeader>
-
-                {expandedCards.has(separacao.id) && (
-                  <CardContent>
-                    <div className="rounded-lg border overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Pedido</TableHead>
-                            <TableHead>SKU</TableHead>
-                            <TableHead>Descrição</TableHead>
-                            <TableHead className="text-right">Quantidade</TableHead>
-                            <TableHead className="text-right">Valor Unit.</TableHead>
-                            <TableHead className="text-right">Total</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {separacao.separacao_itens?.map((item, index) => (
-                            <TableRow key={`${item.item_codigo}-${index}`}>
-                              <TableCell className="font-medium">{item.pedido}</TableCell>
-                              <TableCell className="font-medium">{item.item_codigo}</TableCell>
-                              <TableCell>{item.descricao}</TableCell>
-                              <TableCell className="text-right">{item.quantidade_pedida}</TableCell>
-                              <TableCell className="text-right">
-                                {item.valor_unitario.toLocaleString('pt-BR', {
-                                  style: 'currency',
-                                  currency: 'BRL'
-                                })}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                {(item.quantidade_pedida * item.valor_unitario).toLocaleString('pt-BR', {
-                                  style: 'currency',
-                                  currency: 'BRL'
-                                })}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                
+                <CardContent className="space-y-6">
+                  {/* Informações Financeiras */}
+                  <div>
+                    <h3 className="font-semibold text-lg mb-2">Informações Financeiras</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="space-y-1">
+                        <span className="text-sm text-muted-foreground">Valores Totais</span>
+                        <p className="font-medium">{formatCurrency(cliente.valoresTotais)}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-sm text-muted-foreground">Valores em Aberto</span>
+                        <p className="font-medium">{formatCurrency(cliente.valoresEmAberto)}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-sm text-muted-foreground">Valores Vencidos</span>
+                        <p className="font-medium text-red-500">{formatCurrency(cliente.valoresVencidos)}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-sm text-muted-foreground">Volume Saudável</span>
+                        <p className="font-medium">
+                          {cliente.volume_saudavel_faturamento 
+                            ? formatCurrency(cliente.volume_saudavel_faturamento) 
+                            : "Não definido"}
+                        </p>
+                      </div>
                     </div>
-                  </CardContent>
-                )}
+                  </div>
 
-                <CardFooter className="flex justify-end gap-2">
-                  <Button
-                    variant="destructive"
-                    onClick={() => handleReprovar(separacao.id)}
-                  >
-                    Reprovar
-                  </Button>
-                  <Button
-                    variant="default"
-                    onClick={() => handleAprovar(separacao.id)}
-                  >
-                    Aprovar
-                  </Button>
-                </CardFooter>
+                  {/* Pedidos do Cliente */}
+                  <div>
+                    <h3 className="font-semibold text-lg mb-2">Pedidos Pendentes</h3>
+                    <div className="space-y-4">
+                      {cliente.separacoes.map(separacao => (
+                        <div key={separacao.id} className="border rounded-lg p-4">
+                          <div className="flex justify-between items-start mb-4">
+                            <div>
+                              <p className="font-medium">Valor Total: {formatCurrency(separacao.valor_total)}</p>
+                              <p className="text-sm text-muted-foreground">
+                                Representante: {separacao.representante_nome || "Não informado"}
+                              </p>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => toggleCard(separacao.id)}
+                            >
+                              {expandedCards.has(separacao.id) ? (
+                                <ChevronUp className="h-4 w-4" />
+                              ) : (
+                                <ChevronDown className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
+
+                          {expandedCards.has(separacao.id) && (
+                            <div className="rounded-lg border overflow-x-auto">
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead>Pedido</TableHead>
+                                    <TableHead>SKU</TableHead>
+                                    <TableHead>Descrição</TableHead>
+                                    <TableHead className="text-right">Quantidade</TableHead>
+                                    <TableHead className="text-right">Valor Unit.</TableHead>
+                                    <TableHead className="text-right">Total</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {separacao.separacao_itens?.map((item, index) => (
+                                    <TableRow key={`${item.item_codigo}-${index}`}>
+                                      <TableCell className="font-medium">{item.pedido}</TableCell>
+                                      <TableCell className="font-medium">{item.item_codigo}</TableCell>
+                                      <TableCell>{item.descricao}</TableCell>
+                                      <TableCell className="text-right">{item.quantidade_pedida}</TableCell>
+                                      <TableCell className="text-right">
+                                        {item.valor_unitario.toLocaleString('pt-BR', {
+                                          style: 'currency',
+                                          currency: 'BRL'
+                                        })}
+                                      </TableCell>
+                                      <TableCell className="text-right">
+                                        {(item.quantidade_pedida * item.valor_unitario).toLocaleString('pt-BR', {
+                                          style: 'currency',
+                                          currency: 'BRL'
+                                        })}
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </div>
+                          )}
+
+                          <div className="flex justify-end gap-2 mt-4">
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleReprovar(separacao.id)}
+                            >
+                              Reprovar
+                            </Button>
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() => handleAprovar(separacao.id)}
+                            >
+                              Aprovar
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
               </Card>
             ))
           ) : (
-            <div className="col-span-full">
-              <Card>
-                <CardContent className="p-6">
-                  <p className="text-center text-muted-foreground">
-                    Nenhum pedido pendente de aprovação financeira.
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
+            <Card>
+              <CardContent className="p-6">
+                <p className="text-center text-muted-foreground">
+                  Nenhum pedido pendente de aprovação financeira.
+                </p>
+              </CardContent>
+            </Card>
           )}
         </div>
       </div>
