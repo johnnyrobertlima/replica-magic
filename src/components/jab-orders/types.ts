@@ -7,7 +7,6 @@ export interface OrderItem {
   QTDE_SALDO: number;
   VALOR_UNITARIO: number;
   FISICO: number | null;
-  PED_NUMPEDIDO?: string;
 }
 
 export interface Order {

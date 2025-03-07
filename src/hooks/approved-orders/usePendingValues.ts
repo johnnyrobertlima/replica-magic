@@ -18,12 +18,10 @@ export const usePendingValues = () => {
     console.log('fetchPendingValues: Filtering by item codes:', itemCodigos);
     
     try {
-      // Force a clean fetch with no caching to ensure data is fresh
       let query = supabase
         .from('BLUEBAY_PEDIDO')
-        .select('PED_NUMPEDIDO, QTDE_SALDO, VALOR_UNITARIO, ITEM_CODIGO, QTDE_PEDIDA, QTDE_ENTREGUE')
-        .in('PED_NUMPEDIDO', pedidoNumbers)
-        .order('ITEM_CODIGO');
+        .select('PED_NUMPEDIDO, QTDE_SALDO, VALOR_UNITARIO, ITEM_CODIGO, QTDE_PEDIDA')
+        .in('PED_NUMPEDIDO', pedidoNumbers);
       
       // If specific item codes are provided, filter by those too
       if (itemCodigos.length > 0) {
@@ -77,33 +75,5 @@ export const usePendingValues = () => {
     }
   }, []);
 
-  // Added new function to fetch the most current item details
-  const fetchCurrentItemDetails = useCallback(async (
-    pedidoNumber: string,
-    itemCodigo: string
-  ) => {
-    try {
-      console.log(`fetchCurrentItemDetails: Fetching details for pedido ${pedidoNumber}, item ${itemCodigo}`);
-      
-      const { data, error } = await supabase
-        .from('BLUEBAY_PEDIDO')
-        .select('QTDE_SALDO, VALOR_UNITARIO, QTDE_PEDIDA, QTDE_ENTREGUE')
-        .eq('PED_NUMPEDIDO', pedidoNumber)
-        .eq('ITEM_CODIGO', itemCodigo)
-        .single();
-      
-      if (error) {
-        console.error('Error fetching current item details:', error);
-        return null;
-      }
-      
-      console.log('fetchCurrentItemDetails: Retrieved data:', data);
-      return data;
-    } catch (error) {
-      console.error('Error in fetchCurrentItemDetails:', error);
-      return null;
-    }
-  }, []);
-
-  return { fetchPendingValues, fetchCurrentItemDetails };
+  return { fetchPendingValues };
 };
