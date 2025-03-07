@@ -2,7 +2,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
 import { ChartContainer } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
+import { Progress } from "@/components/ui/progress";
 
 interface ApprovedOrdersCockpitProps {
   valorTotal: number;
@@ -19,22 +19,9 @@ export const ApprovedOrdersCockpit = ({
   valorFaltaFaturar,
   valorFaturado
 }: ApprovedOrdersCockpitProps) => {
-  // Chart data with all metrics
-  const chartData = [
-    { name: 'Valor Aprovado', valor: valorTotal },
-    { name: 'Valor Faturado', valor: valorFaturado },
-    { name: 'Falta Faturar', valor: valorFaltaFaturar }
-  ];
-
-  // Function to get color based on data name
-  const getBarColor = (entry: any) => {
-    const name = entry?.name;
-    if (name === 'Valor Aprovado') return "#16a34a";
-    if (name === 'Valor Faturado') return "#2563eb";
-    if (name === 'Falta Faturar') return "#d97706";
-    return "#16a34a"; // Default
-  };
-
+  // Calculate percentage for gauge
+  const percentFaturado = valorTotal > 0 ? (valorFaturado / valorTotal) * 100 : 0;
+  
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
@@ -87,46 +74,84 @@ export const ApprovedOrdersCockpit = ({
       <Card className="bg-white shadow-lg">
         <CardContent className="pt-6 p-6">
           <h3 className="text-xl font-semibold text-gray-700 mb-4">Comparativo de Valores</h3>
-          {/* Increased height from 100px to 300px (3x larger) */}
-          <div className="h-[300px] w-full">
-            <ChartContainer
-              config={{
-                valor: {
-                  color: "#16a34a", // Green for approved
-                },
-              }}
-            >
-              <div style={{ width: '100%', height: '100%' }}>
-                <BarChart 
-                  data={chartData}
-                  margin={{ top: 10, right: 30, left: 30, bottom: 30 }}
-                  /* Increased height from 100px to 300px (3x larger) */
-                  height={300}
-                  width={500}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis 
-                    tickFormatter={(value) => formatCurrency(value)}
-                    domain={[0, 'auto']} 
-                  />
-                  <Tooltip 
-                    formatter={(value) => formatCurrency(Number(value))}
-                  />
-                  <Bar 
-                    dataKey="valor" 
-                    name="Valor" 
-                    fill="#16a34a" 
-                    radius={[4, 4, 0, 0]} 
-                    isAnimationActive={true}
+          <div className="h-[300px] w-full flex flex-col items-center justify-center">
+            <div className="cockpit-container w-full max-w-[600px]">
+              {/* Gauge display with car cockpit styling */}
+              <div className="bg-gray-100 rounded-t-full pt-4 pb-0 px-8 border-2 border-gray-300 relative">
+                {/* Gauge numbers */}
+                <div className="flex justify-between mb-2 px-4">
+                  <span className="text-xs text-gray-500">0</span>
+                  <span className="text-xs text-gray-500">25%</span>
+                  <span className="text-xs text-gray-500">50%</span>
+                  <span className="text-xs text-gray-500">75%</span>
+                  <span className="text-xs text-gray-500">100%</span>
+                </div>
+                
+                {/* Main gauge part */}
+                <div className="relative h-32">
+                  <div className="absolute bottom-0 w-full bg-gray-200 h-32 rounded-t-full overflow-hidden border border-gray-300">
+                    {/* Gauge level indicators */}
+                    <div className="flex h-full">
+                      <div className="w-1/4 h-full border-r border-gray-300"></div>
+                      <div className="w-1/4 h-full border-r border-gray-300"></div>
+                      <div className="w-1/4 h-full border-r border-gray-300"></div>
+                      <div className="w-1/4 h-full"></div>
+                    </div>
+                  </div>
+                  
+                  {/* Gauge color levels */}
+                  <div className="absolute bottom-0 w-full h-32 rounded-t-full overflow-hidden">
+                    <div className="h-full flex">
+                      <div className="w-1/4 h-full bg-red-400 opacity-70"></div>
+                      <div className="w-1/4 h-full bg-yellow-400 opacity-70"></div>
+                      <div className="w-1/4 h-full bg-green-400 opacity-70"></div>
+                      <div className="w-1/4 h-full bg-blue-400 opacity-70"></div>
+                    </div>
+                  </div>
+                  
+                  {/* Gauge pointer/needle */}
+                  <div 
+                    className="absolute bottom-0 left-1/2 transform -translate-x-1/2 origin-bottom rotate-[-90deg]" 
+                    style={{ 
+                      transform: `translateX(-50%) rotate(${(percentFaturado * 1.8) - 90}deg)`,
+                      transition: 'transform 1s ease-out'
+                    }}
                   >
-                    {chartData.map((entry, index) => (
-                      <rect key={`rect-${index}`} fill={getBarColor(entry)} />
-                    ))}
-                  </Bar>
-                </BarChart>
+                    <div className="w-1 h-28 bg-gray-800 rounded-t-full"></div>
+                    <div className="w-4 h-4 rounded-full bg-gray-800 -mt-0.5 -ml-1.5"></div>
+                  </div>
+                </div>
+                
+                {/* Digital display */}
+                <div className="my-4 p-2 bg-black text-green-400 font-mono rounded text-center border-2 border-gray-700">
+                  <div className="text-sm">Valor Faturado</div>
+                  <div className="text-lg font-bold">{formatCurrency(valorFaturado)}</div>
+                  <div className="text-xs opacity-75">de {formatCurrency(valorTotal)}</div>
+                </div>
+                
+                {/* Percentage display */}
+                <div className="flex justify-center mb-4">
+                  <div className="px-4 py-1 bg-gray-200 rounded-full border border-gray-300">
+                    <span className="font-bold">{percentFaturado.toFixed(1)}%</span>
+                  </div>
+                </div>
+                
+                {/* Progress bar at bottom */}
+                <div className="mb-4">
+                  <Progress value={percentFaturado} className="h-2" />
+                </div>
               </div>
-            </ChartContainer>
+              
+              {/* Dashboard controls */}
+              <div className="bg-gray-700 py-3 px-6 rounded-b-lg border-x-2 border-b-2 border-gray-300 flex justify-between">
+                <div className="text-white text-sm">
+                  <div>Valor Total: {formatCurrency(valorTotal)}</div>
+                </div>
+                <div className="text-white text-sm">
+                  <div>Falta Faturar: {formatCurrency(valorFaltaFaturar)}</div>
+                </div>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
