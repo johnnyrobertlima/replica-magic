@@ -8,73 +8,108 @@ interface ApprovedOrdersCockpitProps {
   valorTotal: number;
   quantidadeItens: number;
   quantidadePedidos: number;
+  valorFaltaFaturar: number;
+  valorFaturado: number;
 }
 
 export const ApprovedOrdersCockpit = ({ 
   valorTotal, 
   quantidadeItens, 
-  quantidadePedidos 
+  quantidadePedidos,
+  valorFaltaFaturar,
+  valorFaturado
 }: ApprovedOrdersCockpitProps) => {
-  // Simple chart data
+  // Chart data with all metrics
   const chartData = [
-    { name: 'Valor Aprovado', valor: valorTotal }
+    { name: 'Valor Aprovado', valor: valorTotal },
+    { name: 'Valor Faturado', valor: valorFaturado },
+    { name: 'Falta Faturar', valor: valorFaltaFaturar }
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-      <Card className="bg-white shadow-lg">
-        <CardContent className="pt-6 p-8">
-          <h3 className="text-xl font-semibold text-gray-700 mb-2">Valor Total Aprovado</h3>
-          <div className="text-3xl lg:text-4xl font-bold text-green-600">
-            {formatCurrency(valorTotal)}
-          </div>
-        </CardContent>
-      </Card>
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <Card className="bg-white shadow-lg border-l-4 border-l-green-600">
+          <CardContent className="pt-6 p-6">
+            <h3 className="text-lg font-semibold text-gray-700 mb-2">Valor Total Aprovado</h3>
+            <div className="text-2xl font-bold text-green-600">
+              {formatCurrency(valorTotal)}
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-white shadow-lg border-l-4 border-l-blue-600">
+          <CardContent className="pt-6 p-6">
+            <h3 className="text-lg font-semibold text-gray-700 mb-2">Valor Faturado</h3>
+            <div className="text-2xl font-bold text-blue-600">
+              {formatCurrency(valorFaturado)}
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-white shadow-lg border-l-4 border-l-amber-600">
+          <CardContent className="pt-6 p-6">
+            <h3 className="text-lg font-semibold text-gray-700 mb-2">Falta Faturar</h3>
+            <div className="text-2xl font-bold text-amber-600">
+              {formatCurrency(valorFaltaFaturar)}
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-white shadow-lg border-l-4 border-l-purple-600">
+          <CardContent className="pt-6 p-6">
+            <h3 className="text-lg font-semibold text-gray-700 mb-2">Pedidos Aprovados</h3>
+            <div className="text-2xl font-bold text-purple-600">
+              {quantidadePedidos}
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-white shadow-lg border-l-4 border-l-indigo-600">
+          <CardContent className="pt-6 p-6">
+            <h3 className="text-lg font-semibold text-gray-700 mb-2">Quantidade de Itens</h3>
+            <div className="text-2xl font-bold text-indigo-600">
+              {quantidadeItens}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
       
       <Card className="bg-white shadow-lg">
-        <CardContent className="pt-6 p-8">
-          <h3 className="text-xl font-semibold text-gray-700 mb-2">Quantidade de Itens</h3>
-          <div className="text-3xl lg:text-4xl font-bold text-primary">
-            {quantidadeItens}
-          </div>
-        </CardContent>
-      </Card>
-      
-      <Card className="bg-white shadow-lg">
-        <CardContent className="pt-6 p-8">
-          <h3 className="text-xl font-semibold text-gray-700 mb-2">Pedidos Aprovados</h3>
-          <div className="text-3xl lg:text-4xl font-bold text-primary">
-            {quantidadePedidos}
-          </div>
-        </CardContent>
-      </Card>
-      
-      <Card className="col-span-1 md:col-span-3 bg-white shadow-lg">
-        <CardContent className="pt-6 p-8">
-          <h3 className="text-xl font-semibold text-gray-700 mb-4">Visualização de Valor Aprovado</h3>
+        <CardContent className="pt-6 p-6">
+          <h3 className="text-xl font-semibold text-gray-700 mb-4">Comparativo de Valores</h3>
           <div className="h-80">
             <ChartContainer
               config={{
                 valor: {
-                  color: "#16a34a",
+                  color: "#16a34a", // Green for approved
+                  // Additional colors are handled in the Bar components
                 },
               }}
             >
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis 
-                  tickFormatter={(value) => formatCurrency(value)}
-                />
-                <Tooltip 
-                  formatter={(value) => formatCurrency(Number(value))}
-                />
-                <Bar 
-                  dataKey="valor" 
-                  fill="var(--color-valor, #16a34a)" 
-                  name="Valor Aprovado" 
-                />
-              </BarChart>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis 
+                    tickFormatter={(value) => formatCurrency(value)}
+                  />
+                  <Tooltip 
+                    formatter={(value) => formatCurrency(Number(value))}
+                  />
+                  <Bar 
+                    dataKey="valor" 
+                    name="Valor" 
+                    fill={(data) => {
+                      const name = data.name;
+                      if (name === 'Valor Aprovado') return "#16a34a";
+                      if (name === 'Valor Faturado') return "#2563eb";
+                      if (name === 'Falta Faturar') return "#d97706";
+                      return "#16a34a"; // Default
+                    }}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
             </ChartContainer>
           </div>
         </CardContent>
