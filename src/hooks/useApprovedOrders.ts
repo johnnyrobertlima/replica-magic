@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { ClienteFinanceiro } from '@/hooks/useClientesFinanceiros';
+import { ClienteFinanceiro } from '@/types/financialClient';
 
 export interface ApprovedOrder {
   separacaoId: string;

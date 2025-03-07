@@ -7,7 +7,7 @@ import { SeparacaoCard } from "@/components/jab-orders/SeparacaoCard";
 import { ClienteFinanceiroInfo } from "@/components/jab-orders/ClienteFinanceiroInfo";
 import { VolumeSaudavelDialog } from "@/components/jab-orders/VolumeSaudavelDialog";
 import { useToast } from "@/hooks/use-toast";
-import { ClienteFinanceiro } from "@/hooks/useClientesFinanceiros";
+import { ClienteFinanceiro } from "@/types/financialClient";
 
 interface ClienteFinanceiroCardProps {
   cliente: ClienteFinanceiro;
