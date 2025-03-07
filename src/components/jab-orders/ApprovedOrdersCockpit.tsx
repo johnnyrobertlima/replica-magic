@@ -87,7 +87,7 @@ export const ApprovedOrdersCockpit = ({
       <Card className="bg-white shadow-lg">
         <CardContent className="pt-6 p-6">
           <h3 className="text-xl font-semibold text-gray-700 mb-4">Comparativo de Valores</h3>
-          <div className="h-64 w-full"> {/* Ajustado para altura menor e largura controlada */}
+          <div className="h-56 w-full"> {/* Ajustado para altura ainda menor */}
             <ChartContainer
               config={{
                 valor: {
@@ -98,12 +98,13 @@ export const ApprovedOrdersCockpit = ({
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart 
                   data={chartData}
-                  margin={{ top: 10, right: 30, left: 30, bottom: 20 }} // Ajustado as margens
+                  margin={{ top: 10, right: 30, left: 30, bottom: 30 }} // Aumentado margin bottom
                 >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis 
                     tickFormatter={(value) => formatCurrency(value)}
+                    domain={[0, 'auto']} // Ensure the chart starts from zero and scales automatically
                   />
                   <Tooltip 
                     formatter={(value) => formatCurrency(Number(value))}
