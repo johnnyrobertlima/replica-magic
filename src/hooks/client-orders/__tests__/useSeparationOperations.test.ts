@@ -36,7 +36,7 @@ describe('useSeparationOperations', () => {
       }
     };
     
-    (sendOrdersForSeparation as jest.Mock).mockResolvedValue({ success: true });
+    (sendOrdersForSeparation as ReturnType<typeof vi.fn>).mockResolvedValue({ success: true });
     
     const { result } = renderHook(() => 
       useSeparationOperations(state, setState, groupedOrders)
@@ -60,7 +60,7 @@ describe('useSeparationOperations', () => {
     const setState = vi.fn();
     const groupedOrders = {};
     
-    (sendOrdersForSeparation as jest.Mock).mockResolvedValue({ success: true });
+    (sendOrdersForSeparation as ReturnType<typeof vi.fn>).mockResolvedValue({ success: true });
     
     const { result } = renderHook(() => 
       useSeparationOperations(state, setState, groupedOrders)
@@ -94,7 +94,7 @@ describe('useSeparationOperations', () => {
     const setState = vi.fn();
     const groupedOrders = {};
     
-    (sendOrdersForSeparation as jest.Mock).mockResolvedValue({ success: true });
+    (sendOrdersForSeparation as ReturnType<typeof vi.fn>).mockResolvedValue({ success: true });
     
     const { result } = renderHook(() => 
       useSeparationOperations(state, setState, groupedOrders)
@@ -120,7 +120,7 @@ describe('useSeparationOperations', () => {
     const setState = vi.fn();
     const groupedOrders = {};
     
-    (sendOrdersForSeparation as jest.Mock).mockResolvedValue({ success: true });
+    (sendOrdersForSeparation as ReturnType<typeof vi.fn>).mockResolvedValue({ success: true });
     
     const { result } = renderHook(() => 
       useSeparationOperations(state, setState, groupedOrders)
@@ -143,7 +143,7 @@ describe('useSeparationOperations', () => {
     const setState = vi.fn();
     const groupedOrders = {};
     
-    (sendOrdersForSeparation as jest.Mock).mockRejectedValue(new Error('Operation failed'));
+    (sendOrdersForSeparation as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Operation failed'));
     
     const { result } = renderHook(() => 
       useSeparationOperations(state, setState, groupedOrders)

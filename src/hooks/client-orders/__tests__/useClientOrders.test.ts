@@ -1,3 +1,4 @@
+
 import { renderHook } from '@testing-library/react-hooks';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useClientOrders } from '../../useClientOrders';
@@ -39,7 +40,7 @@ describe('useClientOrders', () => {
     vi.clearAllMocks();
     
     // Setup default mock return values
-    (useClientOrdersState as jest.Mock).mockReturnValue({
+    (useClientOrdersState as ReturnType<typeof vi.fn>).mockReturnValue({
       state: {
         date: { from: new Date(), to: new Date() },
         searchDate: { from: new Date(), to: new Date() },
@@ -72,28 +73,28 @@ describe('useClientOrders', () => {
       handleSearch: vi.fn()
     });
     
-    (useAllJabOrders as jest.Mock).mockReturnValue({
+    (useAllJabOrders as ReturnType<typeof vi.fn>).mockReturnValue({
       data: { orders: [], totalCount: 0, itensSeparacao: {} },
       isLoading: false
     });
     
-    (useTotals as jest.Mock).mockReturnValue({
+    (useTotals as ReturnType<typeof vi.fn>).mockReturnValue({
       data: { valorTotalSaldo: 0, valorFaturarComEstoque: 0 },
       isLoading: false
     });
     
-    (useSeparacoes as jest.Mock).mockReturnValue({
+    (useSeparacoes as ReturnType<typeof vi.fn>).mockReturnValue({
       data: [],
       isLoading: false
     });
     
-    (useItemSelection as jest.Mock).mockReturnValue({
+    (useItemSelection as ReturnType<typeof vi.fn>).mockReturnValue({
       totalSelecionado: 0,
       handleItemSelect: vi.fn(),
       exportSelectedItemsToExcel: vi.fn()
     });
     
-    (useSeparationOperations as jest.Mock).mockReturnValue({
+    (useSeparationOperations as ReturnType<typeof vi.fn>).mockReturnValue({
       handleEnviarParaSeparacao: vi.fn()
     });
   });
@@ -131,7 +132,7 @@ describe('useClientOrders', () => {
   it('should pass searchDate to useAllJabOrders', () => {
     const mockSearchDate = { from: new Date(2023, 0, 1), to: new Date(2023, 0, 31) };
     
-    (useClientOrdersState as jest.Mock).mockReturnValue({
+    (useClientOrdersState as ReturnType<typeof vi.fn>).mockReturnValue({
       state: {
         date: { from: new Date(), to: new Date() },
         searchDate: mockSearchDate,
@@ -172,7 +173,7 @@ describe('useClientOrders', () => {
   });
 
   it('should handle loading states correctly', () => {
-    (useAllJabOrders as jest.Mock).mockReturnValue({
+    (useAllJabOrders as ReturnType<typeof vi.fn>).mockReturnValue({
       data: undefined,
       isLoading: true
     });
@@ -183,17 +184,17 @@ describe('useClientOrders', () => {
   });
 
   it('should combine loading states from all data fetching hooks', () => {
-    (useAllJabOrders as jest.Mock).mockReturnValue({
+    (useAllJabOrders as ReturnType<typeof vi.fn>).mockReturnValue({
       data: { orders: [], totalCount: 0, itensSeparacao: {} },
       isLoading: false
     });
     
-    (useTotals as jest.Mock).mockReturnValue({
+    (useTotals as ReturnType<typeof vi.fn>).mockReturnValue({
       data: { valorTotalSaldo: 0, valorFaturarComEstoque: 0 },
       isLoading: true
     });
     
-    (useSeparacoes as jest.Mock).mockReturnValue({
+    (useSeparacoes as ReturnType<typeof vi.fn>).mockReturnValue({
       data: [],
       isLoading: false
     });

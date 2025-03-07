@@ -39,7 +39,7 @@ describe('useItemSelection', () => {
   
   beforeEach(() => {
     vi.clearAllMocks();
-    (useToast as jest.Mock).mockReturnValue(mockToast);
+    (useToast as ReturnType<typeof vi.fn>).mockReturnValue(mockToast);
   });
 
   it('should calculate total selected amount correctly', () => {
