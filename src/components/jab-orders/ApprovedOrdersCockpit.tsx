@@ -87,7 +87,8 @@ export const ApprovedOrdersCockpit = ({
       <Card className="bg-white shadow-lg">
         <CardContent className="pt-6 p-6">
           <h3 className="text-xl font-semibold text-gray-700 mb-4">Comparativo de Valores</h3>
-          <div className="h-[300px] w-full"> {/* Increased height from 100px to 300px (3x larger) */}
+          {/* Increased height from 100px to 300px (3x larger) */}
+          <div className="h-[300px] w-full">
             <ChartContainer
               config={{
                 valor: {
@@ -99,7 +100,8 @@ export const ApprovedOrdersCockpit = ({
                 <BarChart 
                   data={chartData}
                   margin={{ top: 10, right: 30, left: 30, bottom: 30 }}
-                  height={300} {/* Increased height from 100px to 300px (3x larger) */}
+                  /* Increased height from 100px to 300px (3x larger) */
+                  height={300}
                   width={500}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
