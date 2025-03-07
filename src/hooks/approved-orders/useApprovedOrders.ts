@@ -5,7 +5,6 @@ import { usePendingValues } from './usePendingValues';
 import { useOrderTotals } from './useOrderTotals';
 import { useMonthSelection } from './useMonthSelection';
 import { ApprovedOrder, OrderTotals, PendingValuesState } from './types';
-import { ClienteFinanceiro } from '@/types/financialClient';
 
 export const useApprovedOrders = () => {
   const { 
@@ -34,20 +33,31 @@ export const useApprovedOrders = () => {
         console.log(`useApprovedOrders: Loaded ${filteredOrders.length} orders for ${selectedYear}-${selectedMonth}`, filteredOrders);
         setApprovedOrders(filteredOrders);
         
-        // Get all pedido numbers from the filtered orders
-        const uniquePedidoNumbers = Array.from(new Set(
-          filteredOrders.flatMap(order => {
-            const separacao = order.clienteData.separacoes.find(sep => sep.id === order.separacaoId);
-            return separacao?.separacao_itens?.map(item => item.pedido) || [];
-          })
-        ));
+        // Get all pedido numbers and item codes from the filtered orders
+        const uniquePedidoNumbers: string[] = [];
+        const approvedItemCodes: string[] = [];
+        
+        filteredOrders.forEach(order => {
+          const separacao = order.clienteData.separacoes.find(sep => sep.id === order.separacaoId);
+          if (separacao?.separacao_itens) {
+            separacao.separacao_itens.forEach(item => {
+              if (!uniquePedidoNumbers.includes(item.pedido)) {
+                uniquePedidoNumbers.push(item.pedido);
+              }
+              if (item.item_codigo && !approvedItemCodes.includes(item.item_codigo)) {
+                approvedItemCodes.push(item.item_codigo);
+              }
+            });
+          }
+        });
         
         console.log('useApprovedOrders: Unique pedido numbers for current month:', uniquePedidoNumbers);
+        console.log('useApprovedOrders: Approved item codes for current month:', approvedItemCodes);
         
-        // Fetch and set pending values ONLY for the current month's approved orders
+        // Fetch and set pending values ONLY for the current month's approved items
         if (uniquePedidoNumbers.length > 0) {
-          console.log(`useApprovedOrders: Fetching pending values for ${uniquePedidoNumbers.length} pedidos`);
-          const pendingValuesByPedido = await fetchPendingValues(uniquePedidoNumbers);
+          console.log(`useApprovedOrders: Fetching pending values for ${uniquePedidoNumbers.length} pedidos and ${approvedItemCodes.length} item codes`);
+          const pendingValuesByPedido = await fetchPendingValues(uniquePedidoNumbers, approvedItemCodes);
           console.log('useApprovedOrders: Setting pending values:', pendingValuesByPedido);
           setPendingValues(pendingValuesByPedido);
         } else {

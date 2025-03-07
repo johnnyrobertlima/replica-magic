@@ -5,21 +5,32 @@ import { PendingValuesState } from './types';
 
 export const usePendingValues = () => {
   // Fetch pending values (items that need to be invoiced) for approved orders
-  const fetchPendingValues = useCallback(async (pedidoNumbers: string[]) => {
+  const fetchPendingValues = useCallback(async (
+    pedidoNumbers: string[],
+    itemCodigos: string[] = []
+  ) => {
     if (pedidoNumbers.length === 0) {
       console.log('fetchPendingValues: No pedido numbers provided, returning empty object');
       return {};
     }
     
     console.log('fetchPendingValues: Called with pedido numbers:', pedidoNumbers);
+    console.log('fetchPendingValues: Filtering by item codes:', itemCodigos);
     
     try {
-      // Only fetch the pending values for the specific pedido numbers that were approved
-      console.log('fetchPendingValues: Querying Supabase for pedidos:', pedidoNumbers);
-      const { data, error } = await supabase
+      let query = supabase
         .from('BLUEBAY_PEDIDO')
-        .select('PED_NUMPEDIDO, QTDE_SALDO, VALOR_UNITARIO')
+        .select('PED_NUMPEDIDO, QTDE_SALDO, VALOR_UNITARIO, ITEM_CODIGO')
         .in('PED_NUMPEDIDO', pedidoNumbers);
+      
+      // If specific item codes are provided, filter by those too
+      if (itemCodigos.length > 0) {
+        console.log('fetchPendingValues: Adding ITEM_CODIGO filter for', itemCodigos.length, 'items');
+        query = query.in('ITEM_CODIGO', itemCodigos);
+      }
+      
+      console.log('fetchPendingValues: Executing query');
+      const { data, error } = await query;
       
       if (error) {
         console.error('fetchPendingValues: Supabase error:', error);
@@ -27,15 +38,17 @@ export const usePendingValues = () => {
       }
       
       console.log('fetchPendingValues: Raw data from Supabase:', data);
+      console.log('fetchPendingValues: Retrieved', data.length, 'items from database');
       
       // Calculate pending values per order
       const pendingValues = data.reduce((acc, item) => {
         const pedidoNumber = item.PED_NUMPEDIDO;
+        const itemCodigo = item.ITEM_CODIGO;
         const qtdeSaldo = item.QTDE_SALDO || 0;
         const valorUnitario = item.VALOR_UNITARIO || 0;
         const pendingValue = qtdeSaldo * valorUnitario;
         
-        console.log(`fetchPendingValues: Processing item - Pedido: ${pedidoNumber}, Saldo: ${qtdeSaldo}, Valor: ${valorUnitario}, Pending Value: ${pendingValue}`);
+        console.log(`fetchPendingValues: Processing item - Pedido: ${pedidoNumber}, Item: ${itemCodigo}, Saldo: ${qtdeSaldo}, Valor: ${valorUnitario}, Pending Value: ${pendingValue}`);
         
         if (!acc[pedidoNumber]) {
           acc[pedidoNumber] = 0;
