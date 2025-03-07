@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useApprovedOrdersStorage } from './useApprovedOrdersStorage';
 import { usePendingValues } from './usePendingValues';
@@ -68,9 +69,9 @@ export const useApprovedOrders = () => {
     loadOrdersForMonth();
   }, [selectedYear, selectedMonth, loadApprovedOrders, fetchPendingValues]);
 
-  const calculateTotals = useCallback(async () => {
+  const computeTotals = useCallback(async () => {
     if (!approvedOrders) {
-      console.log('calculateTotals: No approved orders available');
+      console.log('computeTotals: No approved orders available');
       return { 
         valorTotal: 0, 
         quantidadeItens: 0, 
@@ -87,20 +88,20 @@ export const useApprovedOrders = () => {
     });
 
     const uniquePedidoNumbers = [...new Set(pedidoNumbers)];
-    console.log('calculateTotals: Unique pedido numbers:', uniquePedidoNumbers);
+    console.log('computeTotals: Unique pedido numbers:', uniquePedidoNumbers);
 
     const pendingValues = await fetchPendingValues(uniquePedidoNumbers);
-    console.log('calculateTotals: Pending values:', pendingValues);
+    console.log('computeTotals: Pending values:', pendingValues);
 
-    return await orderTotals.calculateTotals(approvedOrders, pendingValues);
-  }, [approvedOrders, fetchPendingValues, orderTotals]);
+    return await calculateTotals(approvedOrders, pendingValues);
+  }, [approvedOrders, fetchPendingValues, calculateTotals]);
 
   return {
     approvedOrders,
     isLoading,
     addApprovedOrder,
     loadApprovedOrders,
-    calculateTotals,
+    calculateTotals: computeTotals,
     handleMonthSelect,
     selectedYear,
     selectedMonth

@@ -40,21 +40,24 @@ export const OrderItemsTable = ({
         const item = items[i];
         
         try {
-          // Fetch the current data for each item
-          const currentData = await fetchCurrentItemDetails(
-            typeof item.pedido === 'string' ? item.pedido : '',
-            item.ITEM_CODIGO
-          );
-          
-          if (currentData) {
-            // Update with fresh data from the database
-            updatedItemsData[i] = {
-              ...item,
-              QTDE_SALDO: Number(currentData.QTDE_SALDO || 0),
-              QTDE_PEDIDA: Number(currentData.QTDE_PEDIDA || 0),
-              QTDE_ENTREGUE: Number(currentData.QTDE_ENTREGUE || 0),
-              VALOR_UNITARIO: Number(currentData.VALOR_UNITARIO || 0)
-            };
+          // Check if item has a valid pedido property that is a string
+          if (item && typeof item.PED_NUMPEDIDO === 'string') {
+            // Fetch the current data for each item
+            const currentData = await fetchCurrentItemDetails(
+              item.PED_NUMPEDIDO,
+              item.ITEM_CODIGO
+            );
+            
+            if (currentData) {
+              // Update with fresh data from the database
+              updatedItemsData[i] = {
+                ...item,
+                QTDE_SALDO: Number(currentData.QTDE_SALDO || 0),
+                QTDE_PEDIDA: Number(currentData.QTDE_PEDIDA || 0),
+                QTDE_ENTREGUE: Number(currentData.QTDE_ENTREGUE || 0),
+                VALOR_UNITARIO: Number(currentData.VALOR_UNITARIO || 0)
+              };
+            }
           }
         } catch (err) {
           console.error(`Error refreshing data for item ${item.ITEM_CODIGO}:`, err);
