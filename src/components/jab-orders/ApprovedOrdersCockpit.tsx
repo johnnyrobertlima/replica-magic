@@ -87,17 +87,19 @@ export const ApprovedOrdersCockpit = ({
       <Card className="bg-white shadow-lg">
         <CardContent className="pt-6 p-6">
           <h3 className="text-xl font-semibold text-gray-700 mb-4">Comparativo de Valores</h3>
-          <div className="h-80">
+          <div className="h-64 w-full"> {/* Ajustado para altura menor e largura controlada */}
             <ChartContainer
               config={{
                 valor: {
                   color: "#16a34a", // Green for approved
-                  // Additional colors are handled in the Bar components
                 },
               }}
             >
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData}>
+                <BarChart 
+                  data={chartData}
+                  margin={{ top: 10, right: 30, left: 30, bottom: 20 }} // Ajustado as margens
+                >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis 
@@ -110,7 +112,7 @@ export const ApprovedOrdersCockpit = ({
                     dataKey="valor" 
                     name="Valor" 
                     fill="#16a34a" 
-                    stroke=""
+                    radius={[4, 4, 0, 0]} // Bordas arredondadas no topo
                     isAnimationActive={true}
                   >
                     {chartData.map((entry, index) => (

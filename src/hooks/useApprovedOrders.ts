@@ -87,7 +87,7 @@ export const useApprovedOrders = () => {
           
           setApprovedOrders(filteredOrders);
           
-          // Fetch pending values for the filtered orders
+          // Fetch pending values for the filtered orders only
           const uniquePedidoNumbers = Array.from(new Set(
             filteredOrders.flatMap(order => {
               const separacao = order.clienteData.separacoes.find(sep => sep.id === order.separacaoId);
@@ -99,6 +99,7 @@ export const useApprovedOrders = () => {
           setPendingValues(pendingValuesByPedido);
         } else {
           setApprovedOrders([]);
+          setPendingValues({});
         }
       } catch (error) {
         console.error('Error loading approved orders from localStorage:', error);
@@ -131,7 +132,7 @@ export const useApprovedOrders = () => {
     });
   }, []);
 
-  // Calculate totals - Now only considering approved items for valorFaltaFaturar
+  // Calculate totals - Agora considerando APENAS os itens dos pedidos aprovados do mês atual
   const calculateTotals = useCallback((): OrderTotals => {
     let valorTotal = 0;
     let quantidadeItens = 0;
