@@ -2,6 +2,7 @@
 import type { DateRange } from "react-day-picker";
 import type { SearchType } from "@/components/jab-orders/SearchFilters";
 import type { JabOrder, JabOrderItem } from "@/types/jabOrders";
+import type { SearchState } from "@/hooks/client-orders/useClientOrdersSearch";
 
 export interface ClientOrderGroup {
   pedidos: JabOrder[];
@@ -19,13 +20,8 @@ export interface ClientOrderGroup {
   PES_CODIGO: number;
 }
 
-export interface ClientOrdersState {
-  date: DateRange | undefined;
-  searchDate: DateRange | undefined;
+export interface ClientOrdersState extends SearchState {
   expandedClients: Set<string>;
-  searchQuery: string;
-  searchType: SearchType;
-  isSearching: boolean;
   showZeroBalance: boolean;
   showOnlyWithStock: boolean;
   selectedItems: string[];

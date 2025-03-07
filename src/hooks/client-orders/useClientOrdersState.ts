@@ -1,23 +1,13 @@
 
 import { useState } from "react";
 import type { ClientOrdersState } from "@/types/clientOrders";
-import type { DateRange } from "react-day-picker";
-import type { SearchType } from "@/components/jab-orders/SearchFilters";
+import { useClientOrdersSearch } from "./useClientOrdersSearch";
 
 export const useClientOrdersState = () => {
-  const [state, setState] = useState<ClientOrdersState>({
-    date: {
-      from: new Date(),
-      to: new Date(),
-    },
-    searchDate: {
-      from: new Date(),
-      to: new Date(),
-    },
+  const searchState = useClientOrdersSearch();
+
+  const [state, setState] = useState<Omit<ClientOrdersState, 'date' | 'searchDate' | 'searchQuery' | 'searchType' | 'isSearching'>>({
     expandedClients: new Set<string>(),
-    searchQuery: "",
-    searchType: "pedido",
-    isSearching: false,
     showZeroBalance: false,
     showOnlyWithStock: false,
     selectedItems: [],
@@ -27,10 +17,7 @@ export const useClientOrdersState = () => {
 
   // Destructure state for easier access
   const {
-    date,
     expandedClients,
-    searchQuery,
-    searchType,
     showZeroBalance,
     showOnlyWithStock,
     selectedItems,
@@ -39,18 +26,6 @@ export const useClientOrdersState = () => {
   } = state;
 
   // State update methods
-  const setDate = (newDate: DateRange | undefined) => {
-    setState(prev => ({ ...prev, date: newDate }));
-  };
-
-  const setSearchQuery = (query: string) => {
-    setState(prev => ({ ...prev, searchQuery: query }));
-  };
-
-  const setSearchType = (type: SearchType) => {
-    setState(prev => ({ ...prev, searchType: type }));
-  };
-
   const setShowZeroBalance = (show: boolean) => {
     setState(prev => ({ ...prev, showZeroBalance: show }));
   };
@@ -71,34 +46,61 @@ export const useClientOrdersState = () => {
     });
   };
 
-  const handleSearch = () => {
-    setState(prev => ({ 
-      ...prev, 
-      isSearching: true,
-      searchDate: prev.date
-    }));
+  // Create a combined state object to maintain compatibility with existing code
+  const combinedState: ClientOrdersState = {
+    ...searchState,
+    ...state
   };
 
   return {
-    state,
-    setState,
+    state: combinedState,
+    setState: (updater: React.SetStateAction<ClientOrdersState>) => {
+      if (typeof updater === 'function') {
+        const newState = updater(combinedState);
+        // Update search state
+        if (newState.date !== searchState.date) searchState.setDate(newState.date);
+        if (newState.searchQuery !== searchState.searchQuery) searchState.setSearchQuery(newState.searchQuery);
+        if (newState.searchType !== searchState.searchType) searchState.setSearchType(newState.searchType);
+        
+        // Update local state
+        setState(prev => ({
+          ...prev,
+          expandedClients: newState.expandedClients,
+          showZeroBalance: newState.showZeroBalance,
+          showOnlyWithStock: newState.showOnlyWithStock,
+          selectedItems: newState.selectedItems,
+          selectedItemsDetails: newState.selectedItemsDetails,
+          isSending: newState.isSending
+        }));
+      } else {
+        // Update search state
+        if (updater.date !== searchState.date) searchState.setDate(updater.date);
+        if (updater.searchQuery !== searchState.searchQuery) searchState.setSearchQuery(updater.searchQuery);
+        if (updater.searchType !== searchState.searchType) searchState.setSearchType(updater.searchType);
+        
+        // Update local state
+        setState({
+          expandedClients: updater.expandedClients,
+          showZeroBalance: updater.showZeroBalance,
+          showOnlyWithStock: updater.showOnlyWithStock,
+          selectedItems: updater.selectedItems,
+          selectedItemsDetails: updater.selectedItemsDetails,
+          isSending: updater.isSending
+        });
+      }
+    },
+    // Search state values and methods (spread from searchState)
+    ...searchState,
     // State values
-    date,
     expandedClients,
-    searchQuery,
-    searchType,
     showZeroBalance,
     showOnlyWithStock,
     selectedItems,
     selectedItemsDetails,
     isSending,
     // State update methods
-    setDate,
-    setSearchQuery,
-    setSearchType,
     setShowZeroBalance,
     setShowOnlyWithStock,
-    toggleExpand,
-    handleSearch
+    toggleExpand
   };
 };

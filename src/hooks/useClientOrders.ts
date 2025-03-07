@@ -13,9 +13,11 @@ export const useClientOrders = () => {
     state,
     setState,
     date,
+    searchDate,
     expandedClients,
     searchQuery,
     searchType,
+    isSearching,
     showZeroBalance,
     showOnlyWithStock,
     selectedItems,
@@ -31,7 +33,7 @@ export const useClientOrders = () => {
 
   // Data fetching hooks
   const { data: ordersData = { orders: [], totalCount: 0, itensSeparacao: {} }, isLoading: isLoadingOrders } = useAllJabOrders({
-    dateRange: state.searchDate
+    dateRange: searchDate
   });
 
   const { data: totals = { valorTotalSaldo: 0, valorFaturarComEstoque: 0 }, isLoading: isLoadingTotals } = useTotals();
@@ -43,8 +45,8 @@ export const useClientOrders = () => {
 
   // Filter groups by search criteria
   const filteredGroups = useMemo(() => 
-    filterGroupsBySearchCriteria(groupedOrders, state.isSearching, searchQuery, searchType), 
-    [groupedOrders, state.isSearching, searchQuery, searchType]
+    filterGroupsBySearchCriteria(groupedOrders, isSearching, searchQuery, searchType), 
+    [groupedOrders, isSearching, searchQuery, searchType]
   );
 
   // Use the item selection hook
