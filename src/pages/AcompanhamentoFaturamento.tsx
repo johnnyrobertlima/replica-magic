@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom";
-import { ArrowLeft, Loader2, FileText } from "lucide-react";
+
+import { Loader2, FileText } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Toaster } from "@/components/ui/toaster";
 import { useApprovedOrders } from "@/hooks/useApprovedOrders";
@@ -46,10 +46,6 @@ const AcompanhamentoFaturamento = () => {
   return (
     <main className="container mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
-        <Link to="/client-area" className="inline-flex items-center gap-2 text-primary hover:underline">
-          <ArrowLeft className="h-4 w-4" />
-          Voltar para Área do Cliente
-        </Link>
         <JabNavMenu />
       </div>
 

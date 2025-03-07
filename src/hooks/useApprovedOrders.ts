@@ -35,6 +35,7 @@ export const useApprovedOrders = () => {
     if (pedidoNumbers.length === 0) return {};
     
     try {
+      // Only fetch the pending values for the specific pedido numbers that were approved
       const { data, error } = await supabase
         .from('BLUEBAY_PEDIDO')
         .select('PED_NUMPEDIDO, QTDE_SALDO, VALOR_UNITARIO')
@@ -130,7 +131,7 @@ export const useApprovedOrders = () => {
     });
   }, []);
 
-  // Calculate totals
+  // Calculate totals - Now only considering approved items for valorFaltaFaturar
   const calculateTotals = useCallback((): OrderTotals => {
     let valorTotal = 0;
     let quantidadeItens = 0;
@@ -152,7 +153,7 @@ export const useApprovedOrders = () => {
         separacao.separacao_itens?.forEach(item => {
           uniquePedidos.add(item.pedido);
           
-          // Add pending values
+          // Add pending values - only for approved orders
           const pendingValue = pendingValues[item.pedido] || 0;
           valorFaltaFaturar += pendingValue;
         });

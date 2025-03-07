@@ -1,6 +1,5 @@
 
-import { Link } from "react-router-dom";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { OrderFilters } from "@/components/jab-orders/OrderFilters";
 import { OrderList } from "@/components/jab-orders/OrderList";
 import { OrderSelectionSummary } from "@/components/jab-orders/OrderSelectionSummary";
@@ -45,11 +44,7 @@ const JabOrders = () => {
 
   return (
     <main className="container mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
-        <Link to="/client-area" className="inline-flex items-center gap-2 text-primary hover:underline">
-          <ArrowLeft className="h-4 w-4" />
-          Voltar para Área do Cliente
-        </Link>
+      <div className="flex flex-col md:flex-row md:justify-end md:items-center gap-4 mb-6">
         <JabNavMenu />
       </div>
 
