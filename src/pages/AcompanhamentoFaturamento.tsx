@@ -130,6 +130,7 @@ const AcompanhamentoFaturamento = () => {
                       onHideCard={() => {}}
                       onApprove={() => {}}
                       expandedView={isExpanded}
+                      showApprovalButtons={false}
                     />
                     
                     {approvedSeparacao.separacao_itens && approvedSeparacao.separacao_itens.length > 0 && (

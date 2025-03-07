@@ -15,6 +15,7 @@ interface ClienteFinanceiroCardProps {
   onHideCard: (id: string) => void;
   onApprove: (separacaoId: string, clienteData: ClienteFinanceiro) => void;
   expandedView?: boolean; // Add the expandedView prop as an optional boolean
+  showApprovalButtons?: boolean; // Add this prop to control button visibility
 }
 
 export const ClienteFinanceiroCard = ({ 
@@ -22,7 +23,8 @@ export const ClienteFinanceiroCard = ({
   onUpdateVolumeSaudavel,
   onHideCard,
   onApprove,
-  expandedView = false // Default to false if not provided
+  expandedView = false, // Default to false if not provided
+  showApprovalButtons = true // Default to showing buttons if not specified
 }: ClienteFinanceiroCardProps) => {
   const [isExpanded, setIsExpanded] = useState(expandedView);
   const [expandedSeparacoes, setExpandedSeparacoes] = useState<string[]>([]);
@@ -126,24 +128,26 @@ export const ClienteFinanceiroCard = ({
                     onExpandToggle={handleExpandToggle}
                   />
                   
-                  <div className="flex justify-end gap-2 p-4 border-t">
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      type="button"
-                      onClick={() => handleReprovar(separacao.id)}
-                    >
-                      Reprovar
-                    </Button>
-                    <Button
-                      variant="default"
-                      size="sm"
-                      type="button"
-                      onClick={() => handleAprovar(separacao.id)}
-                    >
-                      Aprovar
-                    </Button>
-                  </div>
+                  {showApprovalButtons && (
+                    <div className="flex justify-end gap-2 p-4 border-t">
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        type="button"
+                        onClick={() => handleReprovar(separacao.id)}
+                      >
+                        Reprovar
+                      </Button>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        type="button"
+                        onClick={() => handleAprovar(separacao.id)}
+                      >
+                        Aprovar
+                      </Button>
+                    </div>
+                  )}
                 </div>
               );
             })}

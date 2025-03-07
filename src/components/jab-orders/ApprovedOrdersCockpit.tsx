@@ -1,3 +1,4 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
 import { ChartContainer } from "@/components/ui/chart";
@@ -86,7 +87,7 @@ export const ApprovedOrdersCockpit = ({
       <Card className="bg-white shadow-lg">
         <CardContent className="pt-6 p-6">
           <h3 className="text-xl font-semibold text-gray-700 mb-4">Comparativo de Valores</h3>
-          <div className="h-[100px] w-full">
+          <div className="h-[300px] w-full"> {/* Increased height from 100px to 300px (3x larger) */}
             <ChartContainer
               config={{
                 valor: {
@@ -97,8 +98,8 @@ export const ApprovedOrdersCockpit = ({
               <div style={{ width: '100%', height: '100%' }}>
                 <BarChart 
                   data={chartData}
-                  margin={{ top: 0, right: 30, left: 30, bottom: 30 }}
-                  height={100}
+                  margin={{ top: 10, right: 30, left: 30, bottom: 30 }}
+                  height={300} {/* Increased height from 100px to 300px (3x larger) */}
                   width={500}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
