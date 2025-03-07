@@ -105,7 +105,7 @@ const AcompanhamentoFaturamento = () => {
                     <div className="flex justify-between items-start">
                       <div>
                         <CardTitle className="text-lg">
-                          {clienteWithApprovedSeparacao.RAZAOSOCIAL || 'Cliente sem nome'}
+                          {order.clienteData.APELIDO || 'Cliente sem nome'}
                         </CardTitle>
                         <p className="text-sm text-gray-500 mt-1">
                           Aprovado em: {order.approvedAt.toLocaleString('pt-BR')}
@@ -126,7 +126,7 @@ const AcompanhamentoFaturamento = () => {
                     />
                     
                     {/* Show order numbers */}
-                    {approvedSeparacao.separacao_itens?.length > 0 && (
+                    {approvedSeparacao.separacao_itens && approvedSeparacao.separacao_itens.length > 0 && (
                       <div className="mt-4 pt-4 border-t border-gray-200">
                         <h4 className="text-sm font-medium flex items-center gap-1 mb-2">
                           <FileText className="h-4 w-4" /> 

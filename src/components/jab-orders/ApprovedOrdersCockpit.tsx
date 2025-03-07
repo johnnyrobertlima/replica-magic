@@ -26,6 +26,15 @@ export const ApprovedOrdersCockpit = ({
     { name: 'Falta Faturar', valor: valorFaltaFaturar }
   ];
 
+  // Function to get color based on data name
+  const getBarColor = (entry: any) => {
+    const name = entry?.name;
+    if (name === 'Valor Aprovado') return "#16a34a";
+    if (name === 'Valor Faturado') return "#2563eb";
+    if (name === 'Falta Faturar') return "#d97706";
+    return "#16a34a"; // Default
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
@@ -100,14 +109,14 @@ export const ApprovedOrdersCockpit = ({
                   <Bar 
                     dataKey="valor" 
                     name="Valor" 
-                    fill={(data) => {
-                      const name = data.name;
-                      if (name === 'Valor Aprovado') return "#16a34a";
-                      if (name === 'Valor Faturado') return "#2563eb";
-                      if (name === 'Falta Faturar') return "#d97706";
-                      return "#16a34a"; // Default
-                    }}
-                  />
+                    fill="#16a34a" 
+                    stroke=""
+                    isAnimationActive={true}
+                  >
+                    {chartData.map((entry, index) => (
+                      <rect key={`rect-${index}`} fill={getBarColor(entry)} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </ChartContainer>
