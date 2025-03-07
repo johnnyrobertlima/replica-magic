@@ -32,13 +32,9 @@ export const SeparacaoCard = ({ separacao, expandedView = false, onExpandToggle 
   const [isExpanded, setIsExpanded] = useState(expandedView);
   
   useEffect(() => {
-    console.log("SeparacaoCard montado para separação:", separacao.id);
-    console.log("Estado inicial de expansão:", isExpanded);
-    
-    return () => {
-      console.log("SeparacaoCard desmontado para separação:", separacao.id);
-    };
-  }, [separacao.id, isExpanded]);
+    // Update internal state when external expandedView prop changes
+    setIsExpanded(expandedView);
+  }, [expandedView]);
 
   const createdAt = new Date(separacao.created_at).toLocaleDateString('pt-BR', {
     day: '2-digit',
@@ -48,22 +44,14 @@ export const SeparacaoCard = ({ separacao, expandedView = false, onExpandToggle 
     minute: '2-digit'
   });
 
-  const toggleExpand = (e: React.MouseEvent) => {
-    // Garantir que o comportamento padrão seja prevenido
-    e.preventDefault();
-    e.stopPropagation();
-    
+  const toggleExpand = () => {
     const newExpandedState = !isExpanded;
-    console.log("Toggling card expansion:", separacao.id, "New state:", newExpandedState);
     setIsExpanded(newExpandedState);
     
     if (onExpandToggle) {
       onExpandToggle(separacao.id, newExpandedState);
     }
   };
-
-  console.log("Renderizando SeparacaoCard:", separacao.id, "Expandido:", isExpanded);
-  console.log("Número de itens na separação:", separacao.separacao_itens?.length || 0);
 
   return (
     <Card className={`overflow-hidden transition-all duration-300 ${expandedView ? 'col-span-full' : ''}`}>
@@ -84,7 +72,7 @@ export const SeparacaoCard = ({ separacao, expandedView = false, onExpandToggle 
             <Button
               variant="ghost"
               size="sm"
-              type="button" // Importante para evitar submissão de formulário acidental
+              type="button"
               onClick={toggleExpand}
             >
               {isExpanded ? (
@@ -109,7 +97,7 @@ export const SeparacaoCard = ({ separacao, expandedView = false, onExpandToggle 
             </div>
           </div>
 
-          {isExpanded && (
+          {isExpanded && separacao.separacao_itens && separacao.separacao_itens.length > 0 && (
             <div className="rounded-lg border overflow-x-auto mt-4">
               <Table>
                 <TableHeader>
@@ -123,23 +111,20 @@ export const SeparacaoCard = ({ separacao, expandedView = false, onExpandToggle 
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {separacao.separacao_itens.map((item) => {
-                    console.log("Renderizando item:", item.id, item.item_codigo);
-                    return (
-                      <TableRow key={item.id}>
-                        <TableCell className="font-medium">{item.pedido}</TableCell>
-                        <TableCell className="font-medium">{item.item_codigo}</TableCell>
-                        <TableCell>{item.descricao || '-'}</TableCell>
-                        <TableCell className="text-right">{item.quantidade_pedida}</TableCell>
-                        <TableCell className="text-right">
-                          {formatCurrency(item.valor_unitario)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {formatCurrency(item.valor_total)}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                  {separacao.separacao_itens.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-medium">{item.pedido}</TableCell>
+                      <TableCell className="font-medium">{item.item_codigo}</TableCell>
+                      <TableCell>{item.descricao || '-'}</TableCell>
+                      <TableCell className="text-right">{item.quantidade_pedida}</TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(item.valor_unitario)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(item.valor_total)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </div>

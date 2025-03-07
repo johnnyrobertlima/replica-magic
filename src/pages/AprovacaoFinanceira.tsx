@@ -7,7 +7,6 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
@@ -46,18 +45,12 @@ interface ClienteFinanceiro {
 const AprovacaoFinanceira = () => {
   const { data: separacoes = [], isLoading: isLoadingSeparacoes } = useSeparacoes();
   const { toast } = useToast();
-  const [expandedCards, setExpandedCards] = useState<string[]>([]); // Mudança para array em vez de Set
+  const [expandedCards, setExpandedCards] = useState<string[]>([]);
   const [hiddenCards, setHiddenCards] = useState<Set<string>>(new Set());
   const [clientesFinanceiros, setClientesFinanceiros] = useState<ClienteFinanceiro[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [volumeSaudavelValue, setVolumeSaudavelValue] = useState<string>("");
   const [clienteEditando, setClienteEditando] = useState<number | null>(null);
-
-  // Log para debugging
-  useEffect(() => {
-    console.log("Separações carregadas:", separacoes);
-    console.log("Cards expandidos:", expandedCards);
-  }, [separacoes, expandedCards]);
 
   // Memoize o cálculo das separações pendentes para evitar recálculos desnecessários
   const getSeparacoesPendentes = useCallback(() => {
@@ -65,7 +58,6 @@ const AprovacaoFinanceira = () => {
       .filter(sep => sep.status === 'pendente')
       .filter(sep => !hiddenCards.has(sep.id));
     
-    console.log("Separações pendentes:", pendentes.length);
     return pendentes;
   }, [separacoes, hiddenCards]);
 
@@ -75,7 +67,6 @@ const AprovacaoFinanceira = () => {
       .map(sep => sep.cliente_codigo)
       .filter((value, index, self) => self.indexOf(value) === index);
     
-    console.log("Códigos de clientes únicos:", codigos);
     return codigos;
   }, []);
 
@@ -83,7 +74,6 @@ const AprovacaoFinanceira = () => {
     const fetchFinancialData = async () => {
       try {
         setIsLoading(true);
-        console.log("Iniciando busca de dados financeiros");
         
         // Obter as separações pendentes usando a função memoizada
         const separacoesPendentes = getSeparacoesPendentes();
@@ -92,7 +82,6 @@ const AprovacaoFinanceira = () => {
         const clientesCodigos = getClientesCodigos(separacoesPendentes);
 
         if (clientesCodigos.length === 0) {
-          console.log("Nenhum cliente encontrado. Resetando clientes financeiros.");
           setClientesFinanceiros([]);
           setIsLoading(false);
           return;
@@ -100,7 +89,6 @@ const AprovacaoFinanceira = () => {
 
         // Buscar todos os títulos financeiros dos clientes com separações pendentes
         // Filtrar apenas os títulos com STATUS 1, 2 ou 3
-        console.log("Buscando títulos financeiros para clientes:", clientesCodigos);
         const { data: titulos, error: titulosError } = await supabase
           .from('BLUEBAY_TITULO')
           .select('*')
@@ -108,17 +96,14 @@ const AprovacaoFinanceira = () => {
           .in('STATUS', ['1', '2', '3']);
 
         if (titulosError) throw titulosError;
-        console.log("Títulos encontrados:", titulos?.length || 0);
 
         // Buscar informações dos clientes com separações pendentes
-        console.log("Buscando informações dos clientes");
         const { data: clientes, error: clientesError } = await supabase
           .from('BLUEBAY_PESSOA')
           .select('PES_CODIGO, APELIDO, volume_saudavel_faturamento')
           .in('PES_CODIGO', clientesCodigos);
 
         if (clientesError) throw clientesError;
-        console.log("Clientes encontrados:", clientes?.length || 0);
 
         // Data atual para comparação de vencimentos
         const today = new Date();
@@ -134,8 +119,6 @@ const AprovacaoFinanceira = () => {
               const clienteSeparacoes = separacoesPendentes.filter(
                 sep => sep.cliente_codigo === cliente.PES_CODIGO
               );
-              
-              console.log(`Cliente ${cliente.PES_CODIGO} tem ${clienteSeparacoes.length} separações`);
               
               clientesMap.set(cliente.PES_CODIGO, {
                 PES_CODIGO: cliente.PES_CODIGO,
@@ -180,24 +163,6 @@ const AprovacaoFinanceira = () => {
 
         // Converter mapa para array
         const clientesArray = Array.from(clientesMap.values());
-        console.log("Total de clientes financeiros:", clientesArray.length);
-        
-        // Log detalhado de cada cliente e suas separações
-        clientesArray.forEach(cliente => {
-          console.log(`Cliente ${cliente.PES_CODIGO} (${cliente.APELIDO}):`, {
-            valoresTotais: cliente.valoresTotais,
-            valoresEmAberto: cliente.valoresEmAberto,
-            valoresVencidos: cliente.valoresVencidos,
-            separacoes: cliente.separacoes.length
-          });
-          
-          cliente.separacoes.forEach(sep => {
-            console.log(`  Separação ${sep.id}:`, {
-              valor_total: sep.valor_total,
-              itens: sep.separacao_itens?.length || 0
-            });
-          });
-        });
         
         setClientesFinanceiros(clientesArray);
       } catch (error) {
@@ -209,55 +174,25 @@ const AprovacaoFinanceira = () => {
         });
       } finally {
         setIsLoading(false);
-        console.log("Busca de dados financeiros concluída");
       }
     };
 
     fetchFinancialData();
   }, [getSeparacoesPendentes, getClientesCodigos, toast]);
 
-  // Função para verificar se um card está expandido
-  const isCardExpanded = (id: string) => {
-    return expandedCards.includes(id);
-  };
-
-  // Função para alternar a expansão dos cards (importante: com prevenção de comportamento padrão)
-  const toggleCard = (id: string, e: React.MouseEvent) => {
-    // Previne o comportamento padrão que poderia estar causando a navegação
-    e.preventDefault();
-    e.stopPropagation();
-    
-    console.log("Toggling card:", id);
-    
+  // Função para alternar a expansão dos cards
+  const handleExpandToggle = (id: string, expanded: boolean) => {
     setExpandedCards(current => {
-      if (current.includes(id)) {
-        console.log("Removendo card dos expandidos:", id);
-        return current.filter(cardId => cardId !== id);
-      } else {
-        console.log("Adicionando card aos expandidos:", id);
+      if (expanded && !current.includes(id)) {
         return [...current, id];
+      } else if (!expanded && current.includes(id)) {
+        return current.filter(cardId => cardId !== id);
       }
+      return current;
     });
   };
 
-  // Função para expandir um card específico
-  const expandCard = (id: string) => {
-    if (!isCardExpanded(id)) {
-      console.log("Expandindo card:", id);
-      setExpandedCards(current => [...current, id]);
-    }
-  };
-
-  // Função para colapsar um card específico
-  const collapseCard = (id: string) => {
-    if (isCardExpanded(id)) {
-      console.log("Colapsando card:", id);
-      setExpandedCards(current => current.filter(cardId => cardId !== id));
-    }
-  };
-
   const hideCard = (id: string) => {
-    console.log("Escondendo card:", id);
     setHiddenCards(current => {
       const newSet = new Set(current);
       newSet.add(id);
@@ -265,11 +200,7 @@ const AprovacaoFinanceira = () => {
     });
   };
 
-  const handleAprovar = (id: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    console.log("Aprovando separação:", id);
+  const handleAprovar = (id: string) => {
     // Aqui você pode adicionar a lógica de aprovação
     toast({
       title: "Sucesso",
@@ -279,11 +210,7 @@ const AprovacaoFinanceira = () => {
     hideCard(id);
   };
 
-  const handleReprovar = (id: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    console.log("Reprovando separação:", id);
+  const handleReprovar = (id: string) => {
     // Aqui você pode adicionar a lógica de reprovação
     toast({
       title: "Aviso",
@@ -295,8 +222,6 @@ const AprovacaoFinanceira = () => {
 
   const handleVolumeSaudavelSubmit = async () => {
     if (!clienteEditando) return;
-    
-    console.log("Atualizando volume saudável para cliente:", clienteEditando);
     
     try {
       const valorNumerico = parseFloat(volumeSaudavelValue.replace(/\./g, '').replace(',', '.'));
@@ -316,8 +241,6 @@ const AprovacaoFinanceira = () => {
         .eq('PES_CODIGO', clienteEditando);
       
       if (error) throw error;
-      
-      console.log("Volume saudável atualizado com sucesso");
       
       // Atualizar os dados locais
       setClientesFinanceiros(prev => 
@@ -362,8 +285,6 @@ const AprovacaoFinanceira = () => {
     );
   }
 
-  console.log("Renderizando AprovacaoFinanceira com", clientesFinanceiros.length, "clientes");
-
   return (
     <main className="container mx-auto px-4 py-8">
       <Link to="/client-area" className="inline-flex items-center gap-2 mb-6 text-primary hover:underline">
@@ -383,8 +304,7 @@ const AprovacaoFinanceira = () => {
           {clientesFinanceiros.length > 0 ? (
             clientesFinanceiros.map((cliente) => {
               const clienteId = `cliente-${cliente.PES_CODIGO}`;
-              const isExpanded = isCardExpanded(clienteId);
-              console.log(`Renderizando card para cliente ${cliente.PES_CODIGO} com ${cliente.separacoes.length} separações, expandido: ${isExpanded}`);
+              const isExpanded = expandedCards.includes(clienteId);
               
               return (
                 <Card 
@@ -400,10 +320,7 @@ const AprovacaoFinanceira = () => {
                   }`}
                 >
                   <CardHeader>
-                    <div 
-                      className="flex items-center justify-between cursor-pointer"
-                      onClick={(e) => toggleCard(clienteId, e)}
-                    >
+                    <div className="flex items-center justify-between">
                       <div>
                         <CardTitle>{cliente.APELIDO || `Cliente ${cliente.PES_CODIGO}`}</CardTitle>
                         <CardDescription>
@@ -417,8 +334,7 @@ const AprovacaoFinanceira = () => {
                               variant="outline" 
                               size="sm"
                               className="flex items-center gap-1"
-                              onClick={(e) => {
-                                e.stopPropagation(); // Prevenir que o clique propague para o toggle do card
+                              onClick={() => {
                                 setClienteEditando(cliente.PES_CODIGO);
                                 setVolumeSaudavelValue(
                                   cliente.volume_saudavel_faturamento 
@@ -431,7 +347,7 @@ const AprovacaoFinanceira = () => {
                               <span>Volume Saudável</span>
                             </Button>
                           </DialogTrigger>
-                          <DialogContent onClick={(e) => e.stopPropagation()}>
+                          <DialogContent>
                             <DialogHeader>
                               <DialogTitle>Volume Saudável de Faturamento</DialogTitle>
                               <DialogDescription>
@@ -463,10 +379,7 @@ const AprovacaoFinanceira = () => {
                           variant="ghost"
                           size="sm"
                           type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleCard(clienteId, e);
-                          }}
+                          onClick={() => handleExpandToggle(clienteId, !isExpanded)}
                         >
                           {isExpanded ? (
                             <ChevronUp className="h-4 w-4" />
@@ -511,92 +424,33 @@ const AprovacaoFinanceira = () => {
                       <h3 className="font-semibold text-lg mb-2">Pedidos Pendentes</h3>
                       <div className="space-y-4">
                         {cliente.separacoes.map(separacao => {
-                          const isExpanded = isCardExpanded(separacao.id);
-                          console.log(`Renderizando separação ${separacao.id}, expandido: ${isExpanded}`);
+                          const isExpanded = expandedCards.includes(separacao.id);
+                          
                           return (
                             <div key={separacao.id} className="relative border rounded-lg">
-                              <div 
-                                className="p-4 cursor-pointer"
-                                onClick={(e) => toggleCard(separacao.id, e)}
-                              >
-                                <div className="flex justify-between items-start mb-4">
-                                  <div>
-                                    <p className="font-medium">Valor Total: {formatCurrency(separacao.valor_total)}</p>
-                                    <p className="text-sm text-muted-foreground">
-                                      Criado em: {new Date(separacao.created_at).toLocaleDateString('pt-BR')}
-                                    </p>
-                                    <p className="text-sm text-muted-foreground">
-                                      Representante: {separacao.representante_nome || "Não informado"}
-                                    </p>
-                                  </div>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      toggleCard(separacao.id, e);
-                                    }}
-                                  >
-                                    {isExpanded ? (
-                                      <ChevronUp className="h-4 w-4" />
-                                    ) : (
-                                      <ChevronDown className="h-4 w-4" />
-                                    )}
-                                  </Button>
-                                </div>
-
-                                {isExpanded && separacao.separacao_itens && separacao.separacao_itens.length > 0 && (
-                                  <div className="rounded-lg border overflow-x-auto mt-4">
-                                    <Table>
-                                      <TableHeader>
-                                        <TableRow>
-                                          <TableHead>Pedido</TableHead>
-                                          <TableHead>SKU</TableHead>
-                                          <TableHead>Descrição</TableHead>
-                                          <TableHead className="text-right">Quantidade</TableHead>
-                                          <TableHead className="text-right">Valor Unit.</TableHead>
-                                          <TableHead className="text-right">Total</TableHead>
-                                        </TableRow>
-                                      </TableHeader>
-                                      <TableBody>
-                                        {separacao.separacao_itens.map((item, index) => (
-                                          <TableRow key={`${item.id}-${index}`}>
-                                            <TableCell className="font-medium">{item.pedido}</TableCell>
-                                            <TableCell className="font-medium">{item.item_codigo}</TableCell>
-                                            <TableCell>{item.descricao || '-'}</TableCell>
-                                            <TableCell className="text-right">{item.quantidade_pedida}</TableCell>
-                                            <TableCell className="text-right">
-                                              {formatCurrency(item.valor_unitario)}
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                              {formatCurrency(item.valor_total)}
-                                            </TableCell>
-                                          </TableRow>
-                                        ))}
-                                      </TableBody>
-                                    </Table>
-                                  </div>
-                                )}
-
-                                <div className="flex justify-end gap-2 mt-4">
-                                  <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    type="button"
-                                    onClick={(e) => handleReprovar(separacao.id, e)}
-                                  >
-                                    Reprovar
-                                  </Button>
-                                  <Button
-                                    variant="default"
-                                    size="sm"
-                                    type="button"
-                                    onClick={(e) => handleAprovar(separacao.id, e)}
-                                  >
-                                    Aprovar
-                                  </Button>
-                                </div>
+                              <SeparacaoCard 
+                                separacao={separacao} 
+                                expandedView={isExpanded}
+                                onExpandToggle={handleExpandToggle}
+                              />
+                              
+                              <div className="flex justify-end gap-2 p-4 border-t">
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  type="button"
+                                  onClick={() => handleReprovar(separacao.id)}
+                                >
+                                  Reprovar
+                                </Button>
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  type="button"
+                                  onClick={() => handleAprovar(separacao.id)}
+                                >
+                                  Aprovar
+                                </Button>
                               </div>
                             </div>
                           );
