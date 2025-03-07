@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useApprovedOrdersStorage } from './useApprovedOrdersStorage';
 import { usePendingValues } from './usePendingValues';
 import { useOrderTotals } from './useOrderTotals';
@@ -21,18 +20,15 @@ export const useApprovedOrders = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [pendingValues, setPendingValues] = useState<PendingValuesState>({});
   
-  // Load approved orders when month selection changes
   useEffect(() => {
     const loadOrdersForMonth = async () => {
       try {
         console.log(`useApprovedOrders: Loading orders for ${selectedYear}-${selectedMonth}`);
         setIsLoading(true);
         
-        // Load orders for the selected month
         const filteredOrders = loadApprovedOrders(selectedYear, selectedMonth);
         console.log(`useApprovedOrders: Loaded ${filteredOrders.length} orders for ${selectedYear}-${selectedMonth}`, filteredOrders);
         
-        // Get all pedido numbers and item codes from the filtered orders
         const uniquePedidoNumbers: string[] = [];
         const approvedItemCodes: string[] = [];
         
@@ -53,7 +49,6 @@ export const useApprovedOrders = () => {
         console.log('useApprovedOrders: Unique pedido numbers for current month:', uniquePedidoNumbers);
         console.log('useApprovedOrders: Approved item codes for current month:', approvedItemCodes);
         
-        // Fetch and set pending values ONLY for the current month's approved items
         if (uniquePedidoNumbers.length > 0) {
           console.log(`useApprovedOrders: Fetching pending values for ${uniquePedidoNumbers.length} pedidos and ${approvedItemCodes.length} item codes`);
           const pendingValuesByPedido = await fetchPendingValues(uniquePedidoNumbers, approvedItemCodes);
@@ -73,19 +68,39 @@ export const useApprovedOrders = () => {
     loadOrdersForMonth();
   }, [selectedYear, selectedMonth, loadApprovedOrders, fetchPendingValues]);
 
+  const calculateTotals = useCallback(async () => {
+    if (!approvedOrders) {
+      console.log('calculateTotals: No approved orders available');
+      return { 
+        valorTotal: 0, 
+        quantidadeItens: 0, 
+        quantidadePedidos: 0,
+        valorFaltaFaturar: 0,
+        valorFaturado: 0
+      };
+    }
+
+    const pedidoNumbers = approvedOrders.flatMap(order => {
+      const separacao = order.clienteData.separacoes.find(sep => sep.id === order.separacaoId);
+      if (!separacao || !separacao.separacao_itens) return [];
+      return separacao.separacao_itens.map(item => item.pedido);
+    });
+
+    const uniquePedidoNumbers = [...new Set(pedidoNumbers)];
+    console.log('calculateTotals: Unique pedido numbers:', uniquePedidoNumbers);
+
+    const pendingValues = await fetchPendingValues(uniquePedidoNumbers);
+    console.log('calculateTotals: Pending values:', pendingValues);
+
+    return await orderTotals.calculateTotals(approvedOrders, pendingValues);
+  }, [approvedOrders, fetchPendingValues, orderTotals]);
+
   return {
     approvedOrders,
     isLoading,
     addApprovedOrder,
     loadApprovedOrders,
-    calculateTotals: () => {
-      console.log('useApprovedOrders: Calling calculateTotals with', {
-        approvedOrdersCount: approvedOrders.length,
-        pendingValuesCount: Object.keys(pendingValues).length,
-        pendingValues
-      });
-      return calculateTotals(approvedOrders, pendingValues);
-    },
+    calculateTotals,
     handleMonthSelect,
     selectedYear,
     selectedMonth

@@ -9,7 +9,8 @@ import JabNavMenu from "@/components/jab-orders/JabNavMenu";
 import { MonthFilterSelect } from "@/components/jab-orders/MonthFilterSelect";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { OrderTotals } from "@/hooks/approved-orders/types";
 
 const AcompanhamentoFaturamento = () => {
   const { 
@@ -22,15 +23,25 @@ const AcompanhamentoFaturamento = () => {
     selectedMonth
   } = useApprovedOrders();
   
-  const { 
-    valorTotal, 
-    quantidadeItens, 
-    quantidadePedidos,
-    valorFaltaFaturar,
-    valorFaturado
-  } = calculateTotals();
-
+  const [totals, setTotals] = useState<OrderTotals>({
+    valorTotal: 0,
+    quantidadeItens: 0,
+    quantidadePedidos: 0,
+    valorFaltaFaturar: 0,
+    valorFaturado: 0
+  });
+  
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
+  
+  // When approvedOrders change, recalculate totals
+  useEffect(() => {
+    const loadTotals = async () => {
+      const calculatedTotals = await calculateTotals();
+      setTotals(calculatedTotals);
+    };
+    
+    loadTotals();
+  }, [approvedOrders, calculateTotals]);
   
   const formattedMonth = format(
     new Date(selectedYear, selectedMonth - 1, 1),
@@ -69,11 +80,11 @@ const AcompanhamentoFaturamento = () => {
         </div>
         
         <ApprovedOrdersCockpit 
-          valorTotal={valorTotal}
-          quantidadeItens={quantidadeItens}
-          quantidadePedidos={quantidadePedidos}
-          valorFaltaFaturar={valorFaltaFaturar}
-          valorFaturado={valorFaturado}
+          valorTotal={totals.valorTotal}
+          quantidadeItens={totals.quantidadeItens}
+          quantidadePedidos={totals.quantidadePedidos}
+          valorFaltaFaturar={totals.valorFaltaFaturar}
+          valorFaturado={totals.valorFaturado}
         />
         
         <div className="flex items-center justify-between">

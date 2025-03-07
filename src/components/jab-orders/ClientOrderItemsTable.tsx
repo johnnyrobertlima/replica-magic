@@ -1,6 +1,8 @@
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn, formatCurrency } from "@/lib/utils";
+import { useEffect, useState } from "react";
+import { usePendingValues } from "@/hooks/approved-orders/usePendingValues";
 
 interface OrderItem {
   pedido: string;
@@ -29,7 +31,46 @@ export const ClientOrderItemsTable = ({
   selectedItems,
   onItemSelect
 }: ClientOrderItemsTableProps) => {
-  const filteredItems = items.filter((item) => {
+  const [updatedItems, setUpdatedItems] = useState<OrderItem[]>(items);
+  const { fetchCurrentItemDetails } = usePendingValues();
+
+  // When items change or on initial load, refresh the actual saldo values
+  useEffect(() => {
+    const refreshItemData = async () => {
+      const updatedItemsData = [...items];
+      
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        
+        try {
+          // Fetch the current data for each item
+          const currentData = await fetchCurrentItemDetails(
+            item.pedido,
+            item.ITEM_CODIGO
+          );
+          
+          if (currentData) {
+            // Update with fresh data from the database
+            updatedItemsData[i] = {
+              ...item,
+              QTDE_SALDO: Number(currentData.QTDE_SALDO || 0),
+              QTDE_PEDIDA: Number(currentData.QTDE_PEDIDA || 0),
+              QTDE_ENTREGUE: Number(currentData.QTDE_ENTREGUE || 0),
+              VALOR_UNITARIO: Number(currentData.VALOR_UNITARIO || 0)
+            };
+          }
+        } catch (err) {
+          console.error(`Error refreshing data for item ${item.ITEM_CODIGO}:`, err);
+        }
+      }
+      
+      setUpdatedItems(updatedItemsData);
+    };
+    
+    refreshItemData();
+  }, [items, fetchCurrentItemDetails]);
+
+  const filteredItems = updatedItems.filter((item) => {
     if (!showZeroBalance && item.QTDE_SALDO <= 0) return false;
     if (showOnlyWithStock && (item.FISICO || 0) <= 0) return false;
     return true;
@@ -69,7 +110,7 @@ export const ClientOrderItemsTable = ({
                   <Checkbox
                     checked={selectedItems.includes(item.ITEM_CODIGO)}
                     onCheckedChange={() => onItemSelect(item)}
-                    disabled={item.emSeparacao}
+                    disabled={item.emSeparacao || item.QTDE_SALDO <= 0}
                   />
                 </td>
                 <td className="p-2">{item.pedido}</td>
