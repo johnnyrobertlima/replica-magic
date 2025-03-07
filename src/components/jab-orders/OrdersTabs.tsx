@@ -34,6 +34,7 @@ export const OrdersTabs = ({ clientOrders }: OrdersTabsProps) => {
     handleSearch,
     handleItemSelect,
     handleEnviarParaSeparacao,
+    exportSelectedItemsToExcel, // Add the new function
   } = clientOrders;
 
   return (
@@ -83,6 +84,7 @@ export const OrdersTabs = ({ clientOrders }: OrdersTabsProps) => {
           totalSelecionado={totalSelecionado}
           isSending={isSending}
           onSendToSeparacao={handleEnviarParaSeparacao}
+          onExportToExcel={exportSelectedItemsToExcel}
         />
       </TabsContent>
 

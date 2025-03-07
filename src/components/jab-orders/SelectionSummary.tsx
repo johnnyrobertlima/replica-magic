@@ -1,5 +1,5 @@
 
-import { Loader2 } from "lucide-react";
+import { Loader2, FileSpreadsheet } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
@@ -9,13 +9,15 @@ interface SelectionSummaryProps {
   totalSelecionado: number;
   isSending: boolean;
   onSendToSeparacao: () => void;
+  onExportToExcel: () => void;
 }
 
 export const SelectionSummary = ({
   selectedItems,
   totalSelecionado,
   isSending,
-  onSendToSeparacao
+  onSendToSeparacao,
+  onExportToExcel
 }: SelectionSummaryProps) => {
   if (selectedItems.length === 0) {
     return null;
@@ -39,20 +41,31 @@ export const SelectionSummary = ({
         </CardContent>
       </Card>
       
-      <Button
-        onClick={onSendToSeparacao}
-        disabled={isSending}
-        className="bg-primary text-white shadow-lg hover:bg-primary/90"
-      >
-        {isSending ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Enviando...
-          </>
-        ) : (
-          `Enviar ${selectedItems.length} itens para Separação`
-        )}
-      </Button>
+      <div className="flex gap-2">
+        <Button
+          onClick={onExportToExcel}
+          variant="outline"
+          className="bg-white text-primary border-primary hover:bg-primary/10"
+        >
+          <FileSpreadsheet className="mr-2 h-4 w-4" />
+          Exportar para Excel
+        </Button>
+        
+        <Button
+          onClick={onSendToSeparacao}
+          disabled={isSending}
+          className="bg-primary text-white shadow-lg hover:bg-primary/90"
+        >
+          {isSending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Enviando...
+            </>
+          ) : (
+            `Enviar ${selectedItems.length} itens para Separação`
+          )}
+        </Button>
+      </div>
     </div>
   );
 };

@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { ArrowLeft, Loader2, FileText } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,7 +29,6 @@ const AcompanhamentoFaturamento = () => {
     valorFaturado
   } = calculateTotals();
   
-  // Format the current selected month for display
   const formattedMonth = format(
     new Date(selectedYear, selectedMonth - 1, 1),
     "MMMM 'de' yyyy",
@@ -67,7 +65,6 @@ const AcompanhamentoFaturamento = () => {
           <MonthFilterSelect onMonthSelect={handleMonthSelect} />
         </div>
         
-        {/* Cockpit de métricas */}
         <ApprovedOrdersCockpit 
           valorTotal={valorTotal}
           quantidadeItens={quantidadeItens}
@@ -86,14 +83,12 @@ const AcompanhamentoFaturamento = () => {
         {approvedOrders.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {approvedOrders.map((order) => {
-              // Find the specific separação that was approved
               const approvedSeparacao = order.clienteData.separacoes.find(
                 sep => sep.id === order.separacaoId
               );
               
               if (!approvedSeparacao) return null;
               
-              // Create a modified cliente object with only the approved separação
               const clienteWithApprovedSeparacao = {
                 ...order.clienteData,
                 separacoes: [approvedSeparacao]
@@ -125,7 +120,6 @@ const AcompanhamentoFaturamento = () => {
                       onApprove={() => {}}
                     />
                     
-                    {/* Show order numbers */}
                     {approvedSeparacao.separacao_itens && approvedSeparacao.separacao_itens.length > 0 && (
                       <div className="mt-4 pt-4 border-t border-gray-200">
                         <h4 className="text-sm font-medium flex items-center gap-1 mb-2">
@@ -133,9 +127,9 @@ const AcompanhamentoFaturamento = () => {
                           Pedidos incluídos:
                         </h4>
                         <div className="flex flex-wrap gap-2">
-                          {Array.from(new Set(approvedSeparacao.separacao_itens.map(item => item.pedido))).map(pedido => (
-                            <span key={pedido} className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded">
-                              {pedido}
+                          {Array.from(new Set(approvedSeparacao.separacao_itens.map(item => item.pedido))).map((pedido, index) => (
+                            <span key={`pedido-${index}`} className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded">
+                              {String(pedido)}
                             </span>
                           ))}
                         </div>
