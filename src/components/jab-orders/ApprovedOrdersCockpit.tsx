@@ -76,7 +76,7 @@ export const ApprovedOrdersCockpit = ({
           <h3 className="text-xl font-semibold text-gray-700 mb-4">Comparativo de Valores</h3>
           <div className="h-[300px] w-full flex flex-col items-center justify-center">
             <div className="cockpit-container w-full max-w-[600px]">
-              {/* Gauge display with car cockpit styling */}
+              {/* Semi-circular gauge with racing dashboard styling */}
               <div className="bg-gray-100 rounded-t-full pt-4 pb-0 px-8 border-2 border-gray-300 relative">
                 {/* Gauge numbers */}
                 <div className="flex justify-between mb-2 px-4">
@@ -89,8 +89,9 @@ export const ApprovedOrdersCockpit = ({
                 
                 {/* Main gauge part */}
                 <div className="relative h-32">
+                  {/* Background gauge */}
                   <div className="absolute bottom-0 w-full bg-gray-200 h-32 rounded-t-full overflow-hidden border border-gray-300">
-                    {/* Gauge level indicators */}
+                    {/* Gauge section markers */}
                     <div className="flex h-full">
                       <div className="w-1/4 h-full border-r border-gray-300"></div>
                       <div className="w-1/4 h-full border-r border-gray-300"></div>
@@ -99,7 +100,7 @@ export const ApprovedOrdersCockpit = ({
                     </div>
                   </div>
                   
-                  {/* Gauge color levels */}
+                  {/* Colored gauge segments */}
                   <div className="absolute bottom-0 w-full h-32 rounded-t-full overflow-hidden">
                     <div className="h-full flex">
                       <div className="w-1/4 h-full bg-red-400 opacity-70"></div>
@@ -142,7 +143,7 @@ export const ApprovedOrdersCockpit = ({
                 </div>
               </div>
               
-              {/* Dashboard controls */}
+              {/* Dashboard controls area */}
               <div className="bg-gray-700 py-3 px-6 rounded-b-lg border-x-2 border-b-2 border-gray-300 flex justify-between">
                 <div className="text-white text-sm">
                   <div>Valor Total: {formatCurrency(valorTotal)}</div>
