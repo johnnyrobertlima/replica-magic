@@ -3,6 +3,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
 import { ChartContainer } from "@/components/ui/chart";
 import { Progress } from "@/components/ui/progress";
+import dynamic from 'next/dynamic';
+import { useEffect, useState } from "react";
+
+// Dynamically import ApexCharts to avoid SSR issues
+const ReactApexChart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
 interface ApprovedOrdersCockpitProps {
   valorTotal: number;
@@ -21,6 +26,134 @@ export const ApprovedOrdersCockpit = ({
 }: ApprovedOrdersCockpitProps) => {
   // Calculate percentage for gauge
   const percentFaturado = valorTotal > 0 ? (valorFaturado / valorTotal) * 100 : 0;
+  
+  // State to handle client-side rendering of ApexCharts
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  
+  // Gauge chart options
+  const gaugeOptions = {
+    chart: {
+      type: 'radialBar',
+      height: 350,
+      toolbar: {
+        show: false
+      }
+    },
+    plotOptions: {
+      radialBar: {
+        startAngle: -90,
+        endAngle: 90,
+        hollow: {
+          margin: 0,
+          size: '70%',
+        },
+        track: {
+          background: '#e7e7e7',
+          strokeWidth: '97%',
+          margin: 5, 
+          dropShadow: {
+            enabled: true,
+            top: 2,
+            left: 0,
+            blur: 4,
+            opacity: 0.15
+          }
+        },
+        dataLabels: {
+          name: {
+            offsetY: -10,
+            color: '#333',
+            fontSize: '16px',
+            fontWeight: 600,
+            fontFamily: 'inherit',
+          },
+          value: {
+            offsetY: 5,
+            color: '#2563eb',
+            fontSize: '22px',
+            fontWeight: 700,
+            formatter: function(val: number) {
+              return formatCurrency(valorFaturado) + ' (' + val.toFixed(1) + '%)';
+            }
+          },
+        }
+      }
+    },
+    fill: {
+      type: 'gradient',
+      gradient: {
+        shade: 'dark',
+        type: 'horizontal',
+        gradientToColors: ['#16a34a'],
+        stops: [0, 100]
+      }
+    },
+    stroke: {
+      lineCap: 'round'
+    },
+    labels: ['Valor Faturado'],
+    colors: ['#2563eb'],
+  };
+  
+  // Bar chart options
+  const barOptions = {
+    chart: {
+      type: 'bar',
+      height: 350,
+      toolbar: {
+        show: false
+      },
+      animations: {
+        enabled: true,
+        easing: 'easeinout',
+        speed: 800,
+        dynamicAnimation: {
+          enabled: true,
+          speed: 350
+        }
+      }
+    },
+    plotOptions: {
+      bar: {
+        horizontal: false,
+        borderRadius: 4,
+        columnWidth: '55%',
+      },
+    },
+    dataLabels: {
+      enabled: false
+    },
+    colors: ['#16a34a', '#2563eb', '#d97706'],
+    xaxis: {
+      categories: ['Valor Total Aprovado', 'Valor Faturado', 'Falta Faturar'],
+    },
+    yaxis: {
+      labels: {
+        formatter: function (value: number) {
+          return formatCurrency(value);
+        }
+      }
+    },
+    tooltip: {
+      y: {
+        formatter: function (value: number) {
+          return formatCurrency(value);
+        }
+      }
+    }
+  };
+  
+  // Bar chart series
+  const barSeries = [
+    {
+      name: 'Valor',
+      data: [valorTotal, valorFaturado, valorFaltaFaturar]
+    }
+  ];
   
   return (
     <div className="space-y-6">
@@ -71,91 +204,51 @@ export const ApprovedOrdersCockpit = ({
         </Card>
       </div>
       
-      <Card className="bg-white shadow-lg">
-        <CardContent className="pt-6 p-6">
-          <h3 className="text-xl font-semibold text-gray-700 mb-4">Comparativo de Valores</h3>
-          <div className="h-[300px] w-full flex flex-col items-center justify-center">
-            <div className="cockpit-container w-full max-w-[600px]">
-              {/* Semi-circular gauge with racing dashboard styling */}
-              <div className="bg-gray-100 rounded-t-full pt-4 pb-0 px-8 border-2 border-gray-300 relative">
-                {/* Gauge numbers */}
-                <div className="flex justify-between mb-2 px-4">
-                  <span className="text-xs text-gray-500">0</span>
-                  <span className="text-xs text-gray-500">25%</span>
-                  <span className="text-xs text-gray-500">50%</span>
-                  <span className="text-xs text-gray-500">75%</span>
-                  <span className="text-xs text-gray-500">100%</span>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="bg-white shadow-lg">
+          <CardContent className="pt-6 p-6">
+            <h3 className="text-xl font-semibold text-gray-700 mb-4">Progresso de Faturamento</h3>
+            <div className="flex flex-col items-center">
+              {mounted && (
+                <ReactApexChart 
+                  options={gaugeOptions as any}
+                  series={[percentFaturado]}
+                  type="radialBar"
+                  height={350}
+                />
+              )}
+              <div className="w-full mt-4">
+                <div className="flex justify-between mb-2 text-sm">
+                  <span>0%</span>
+                  <span>50%</span>
+                  <span>100%</span>
                 </div>
-                
-                {/* Main gauge part */}
-                <div className="relative h-32">
-                  {/* Background gauge */}
-                  <div className="absolute bottom-0 w-full bg-gray-200 h-32 rounded-t-full overflow-hidden border border-gray-300">
-                    {/* Gauge section markers */}
-                    <div className="flex h-full">
-                      <div className="w-1/4 h-full border-r border-gray-300"></div>
-                      <div className="w-1/4 h-full border-r border-gray-300"></div>
-                      <div className="w-1/4 h-full border-r border-gray-300"></div>
-                      <div className="w-1/4 h-full"></div>
-                    </div>
-                  </div>
-                  
-                  {/* Colored gauge segments */}
-                  <div className="absolute bottom-0 w-full h-32 rounded-t-full overflow-hidden">
-                    <div className="h-full flex">
-                      <div className="w-1/4 h-full bg-red-400 opacity-70"></div>
-                      <div className="w-1/4 h-full bg-yellow-400 opacity-70"></div>
-                      <div className="w-1/4 h-full bg-green-400 opacity-70"></div>
-                      <div className="w-1/4 h-full bg-blue-400 opacity-70"></div>
-                    </div>
-                  </div>
-                  
-                  {/* Gauge pointer/needle */}
-                  <div 
-                    className="absolute bottom-0 left-1/2 transform -translate-x-1/2 origin-bottom rotate-[-90deg]" 
-                    style={{ 
-                      transform: `translateX(-50%) rotate(${(percentFaturado * 1.8) - 90}deg)`,
-                      transition: 'transform 1s ease-out'
-                    }}
-                  >
-                    <div className="w-1 h-28 bg-gray-800 rounded-t-full"></div>
-                    <div className="w-4 h-4 rounded-full bg-gray-800 -mt-0.5 -ml-1.5"></div>
-                  </div>
-                </div>
-                
-                {/* Digital display */}
-                <div className="my-4 p-2 bg-black text-green-400 font-mono rounded text-center border-2 border-gray-700">
-                  <div className="text-sm">Valor Faturado</div>
-                  <div className="text-lg font-bold">{formatCurrency(valorFaturado)}</div>
-                  <div className="text-xs opacity-75">de {formatCurrency(valorTotal)}</div>
-                </div>
-                
-                {/* Percentage display */}
-                <div className="flex justify-center mb-4">
-                  <div className="px-4 py-1 bg-gray-200 rounded-full border border-gray-300">
-                    <span className="font-bold">{percentFaturado.toFixed(1)}%</span>
-                  </div>
-                </div>
-                
-                {/* Progress bar at bottom */}
-                <div className="mb-4">
-                  <Progress value={percentFaturado} className="h-2" />
-                </div>
-              </div>
-              
-              {/* Dashboard controls area */}
-              <div className="bg-gray-700 py-3 px-6 rounded-b-lg border-x-2 border-b-2 border-gray-300 flex justify-between">
-                <div className="text-white text-sm">
-                  <div>Valor Total: {formatCurrency(valorTotal)}</div>
-                </div>
-                <div className="text-white text-sm">
-                  <div>Falta Faturar: {formatCurrency(valorFaltaFaturar)}</div>
+                <Progress value={percentFaturado} className="h-2" />
+                <div className="flex justify-between mt-4 text-sm text-gray-500">
+                  <span>Total: {formatCurrency(valorTotal)}</span>
+                  <span>Falta: {formatCurrency(valorFaltaFaturar)}</span>
                 </div>
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-white shadow-lg">
+          <CardContent className="pt-6 p-6">
+            <h3 className="text-xl font-semibold text-gray-700 mb-4">Comparativo de Valores</h3>
+            <div className="h-[350px] w-full">
+              {mounted && (
+                <ReactApexChart 
+                  options={barOptions as any}
+                  series={barSeries}
+                  type="bar"
+                  height={350}
+                />
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
