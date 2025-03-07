@@ -1,8 +1,7 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
 import { ChartContainer } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 
 interface ApprovedOrdersCockpitProps {
   valorTotal: number;
@@ -87,8 +86,7 @@ export const ApprovedOrdersCockpit = ({
       <Card className="bg-white shadow-lg">
         <CardContent className="pt-6 p-6">
           <h3 className="text-xl font-semibold text-gray-700 mb-4">Comparativo de Valores</h3>
-          {/* IMPORTANTE: Reduzido DRASTICAMENTE a altura do gráfico */}
-          <div className="h-[140px] w-full">
+          <div className="h-[100px] w-full">
             <ChartContainer
               config={{
                 valor: {
@@ -96,12 +94,11 @@ export const ApprovedOrdersCockpit = ({
                 },
               }}
             >
-              {/* Usando tamanho fixo ao invés de responsivo para evitar problemas */}
               <div style={{ width: '100%', height: '100%' }}>
                 <BarChart 
                   data={chartData}
-                  margin={{ top: 0, right: 30, left: 30, bottom: 40 }}
-                  height={140}
+                  margin={{ top: 0, right: 30, left: 30, bottom: 30 }}
+                  height={100}
                   width={500}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
