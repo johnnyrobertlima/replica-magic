@@ -22,6 +22,7 @@ export interface ClienteFinanceiro {
   valoresEmAberto: number;
   valoresVencidos: number;
   separacoes: any[]; // Separações associadas a este cliente
+  representanteNome: string | null; // Campo adicional para o nome do representante
 }
 
 export const useClientesFinanceiros = () => {
@@ -115,6 +116,58 @@ export const useClientesFinanceiros = () => {
 
         if (clientesError) throw clientesError;
 
+        // Fetch pedidos to get REPRESENTANTE codes
+        const representantesCodigos = new Set<number>();
+        const clienteToRepresentanteMap = new Map<number, number>();
+
+        // Get unique pedido numbers from separações
+        const numeroPedidos = separacoesPendentes
+          .flatMap(sep => sep.separacao_itens.map((item: any) => item.pedido))
+          .filter((value, index, self) => self.indexOf(value) === index);
+
+        if (numeroPedidos.length > 0) {
+          const { data: pedidos, error: pedidosError } = await supabase
+            .from('BLUEBAY_PEDIDO')
+            .select('PED_NUMPEDIDO, REPRESENTANTE')
+            .eq('CENTROCUSTO', 'JAB')
+            .in('PED_NUMPEDIDO', numeroPedidos);
+
+          if (pedidosError) throw pedidosError;
+
+          if (pedidos && pedidos.length > 0) {
+            // Map each cliente to their representante
+            pedidos.forEach(pedido => {
+              if (pedido.REPRESENTANTE) {
+                representantesCodigos.add(pedido.REPRESENTANTE);
+                
+                // Find the separação with this pedido
+                separacoesPendentes.forEach(sep => {
+                  if (sep.separacao_itens.some((item: any) => item.pedido === pedido.PED_NUMPEDIDO)) {
+                    clienteToRepresentanteMap.set(sep.cliente_codigo, pedido.REPRESENTANTE);
+                  }
+                });
+              }
+            });
+          }
+        }
+
+        // Fetch representantes info
+        const representantesInfo = new Map<number, string>();
+        if (representantesCodigos.size > 0) {
+          const { data: representantes, error: representantesError } = await supabase
+            .from('BLUEBAY_PESSOA')
+            .select('PES_CODIGO, RAZAOSOCIAL')
+            .in('PES_CODIGO', Array.from(representantesCodigos));
+
+          if (representantesError) throw representantesError;
+
+          if (representantes) {
+            representantes.forEach(rep => {
+              representantesInfo.set(rep.PES_CODIGO, rep.RAZAOSOCIAL);
+            });
+          }
+        }
+
         // Current date for comparison
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -130,6 +183,10 @@ export const useClientesFinanceiros = () => {
                 sep => sep.cliente_codigo === cliente.PES_CODIGO
               );
               
+              // Get representante for this cliente
+              const representanteCodigo = clienteToRepresentanteMap.get(cliente.PES_CODIGO);
+              const representanteNome = representanteCodigo ? representantesInfo.get(representanteCodigo) || null : null;
+              
               clientesMap.set(cliente.PES_CODIGO, {
                 PES_CODIGO: cliente.PES_CODIGO,
                 APELIDO: cliente.APELIDO,
@@ -137,7 +194,8 @@ export const useClientesFinanceiros = () => {
                 valoresTotais: 0,
                 valoresEmAberto: 0,
                 valoresVencidos: 0,
-                separacoes: clienteSeparacoes
+                separacoes: clienteSeparacoes,
+                representanteNome: representanteNome
               });
             }
           });

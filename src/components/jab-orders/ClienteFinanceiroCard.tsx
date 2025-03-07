@@ -58,6 +58,7 @@ export const ClienteFinanceiroCard = ({
   };
 
   const clienteNome = cliente.APELIDO || `Cliente ${cliente.PES_CODIGO}`;
+  const representanteNome = cliente.representanteNome || "Não informado";
 
   return (
     <Card className={`overflow-hidden transition-all duration-300 ${isExpanded ? "md:col-span-2" : ""}`}>
@@ -66,7 +67,7 @@ export const ClienteFinanceiroCard = ({
           <div>
             <CardTitle>{clienteNome}</CardTitle>
             <CardDescription>
-              Representante: {clienteNome}
+              Representante: {representanteNome}
             </CardDescription>
           </div>
           <div className="flex flex-col items-end gap-2">
