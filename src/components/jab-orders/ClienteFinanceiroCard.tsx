@@ -14,15 +14,17 @@ interface ClienteFinanceiroCardProps {
   onUpdateVolumeSaudavel: (clienteCodigo: number, valor: number) => Promise<{ success: boolean; error?: any }>;
   onHideCard: (id: string) => void;
   onApprove: (separacaoId: string, clienteData: ClienteFinanceiro) => void;
+  expandedView?: boolean; // Add the expandedView prop as an optional boolean
 }
 
 export const ClienteFinanceiroCard = ({ 
   cliente, 
   onUpdateVolumeSaudavel,
   onHideCard,
-  onApprove
+  onApprove,
+  expandedView = false // Default to false if not provided
 }: ClienteFinanceiroCardProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(expandedView);
   const [expandedSeparacoes, setExpandedSeparacoes] = useState<string[]>([]);
   const { toast } = useToast();
 
