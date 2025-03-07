@@ -44,11 +44,12 @@ export const ClientOrderItemsTable = ({
             <th className="text-left p-2">Pedido</th>
             <th className="text-left p-2">SKU</th>
             <th className="text-left p-2">Descrição</th>
-            <th className="text-right p-2">Qt. Pedida</th>
-            <th className="text-right p-2">Qt. Entregue</th>
-            <th className="text-right p-2">Qt. Saldo</th>
+            <th className="text-right p-2">Solicitado</th>
+            <th className="text-right p-2">Entregue</th>
+            <th className="text-right p-2">Saldo</th>
             <th className="text-right p-2">Qt. Físico</th>
             <th className="text-right p-2">Valor Unit.</th>
+            <th className="text-right p-2">Falta Faturar</th>
             <th className="text-right p-2">Total</th>
           </tr>
         </thead>
@@ -84,6 +85,9 @@ export const ClientOrderItemsTable = ({
               <td className="p-2 text-right">{item.FISICO || '-'}</td>
               <td className="p-2 text-right">
                 {formatCurrency(item.VALOR_UNITARIO)}
+              </td>
+              <td className="p-2 text-right">
+                {formatCurrency(item.QTDE_SALDO * item.VALOR_UNITARIO)}
               </td>
               <td className="p-2 text-right">
                 {formatCurrency(item.QTDE_SALDO * item.VALOR_UNITARIO)}

@@ -9,6 +9,7 @@ import JabNavMenu from "@/components/jab-orders/JabNavMenu";
 import { MonthFilterSelect } from "@/components/jab-orders/MonthFilterSelect";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useState } from "react";
 
 const AcompanhamentoFaturamento = () => {
   const { 
@@ -28,12 +29,18 @@ const AcompanhamentoFaturamento = () => {
     valorFaltaFaturar,
     valorFaturado
   } = calculateTotals();
+
+  const [expandedCard, setExpandedCard] = useState<string | null>(null);
   
   const formattedMonth = format(
     new Date(selectedYear, selectedMonth - 1, 1),
     "MMMM 'de' yyyy",
     { locale: ptBR }
   );
+
+  const handleExpandToggle = (id: string) => {
+    setExpandedCard(expandedCard === id ? null : id);
+  };
 
   if (isLoading) {
     return (
@@ -90,8 +97,13 @@ const AcompanhamentoFaturamento = () => {
                 separacoes: [approvedSeparacao]
               };
               
+              const isExpanded = expandedCard === order.separacaoId;
+              
               return (
-                <Card key={order.separacaoId} className="border-l-4 border-l-green-500 shadow-md">
+                <Card 
+                  key={order.separacaoId} 
+                  className={`border-l-4 border-l-green-500 shadow-md ${isExpanded ? 'col-span-full' : ''}`}
+                >
                   <CardHeader className="pb-0 pt-4 px-4">
                     <div className="flex justify-between items-start">
                       <div>
@@ -102,8 +114,11 @@ const AcompanhamentoFaturamento = () => {
                           Aprovado em: {order.approvedAt.toLocaleString('pt-BR')}
                         </p>
                       </div>
-                      <div className="bg-green-100 text-green-800 font-medium py-1 px-3 rounded-full text-xs">
-                        Aprovado
+                      <div 
+                        className="bg-green-100 text-green-800 font-medium py-1 px-3 rounded-full text-xs cursor-pointer"
+                        onClick={() => handleExpandToggle(order.separacaoId)}
+                      >
+                        {isExpanded ? 'Recolher' : 'Expandir'}
                       </div>
                     </div>
                   </CardHeader>
@@ -114,6 +129,7 @@ const AcompanhamentoFaturamento = () => {
                       onUpdateVolumeSaudavel={() => Promise.resolve({ success: true })}
                       onHideCard={() => {}}
                       onApprove={() => {}}
+                      expandedView={isExpanded}
                     />
                     
                     {approvedSeparacao.separacao_itens && approvedSeparacao.separacao_itens.length > 0 && (

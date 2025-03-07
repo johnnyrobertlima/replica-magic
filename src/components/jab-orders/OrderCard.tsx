@@ -27,7 +27,7 @@ export const OrderCard = ({
   };
 
   return (
-    <div className="bg-card text-card-foreground rounded-lg border shadow-sm">
+    <div className={`bg-card text-card-foreground rounded-lg border shadow-sm ${isExpanded ? 'col-span-full' : ''}`}>
       <div className="p-6">
         <div className="flex flex-col space-y-1.5">
           <div className="flex items-center justify-between">

@@ -54,7 +54,7 @@ export const SeparacaoCard = ({ separacao, expandedView = false, onExpandToggle 
   };
 
   return (
-    <Card className={`overflow-hidden transition-all duration-300 ${expandedView ? 'col-span-full' : ''}`}>
+    <Card className={`overflow-hidden transition-all duration-300 ${isExpanded ? 'col-span-full' : ''}`}>
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
@@ -105,8 +105,10 @@ export const SeparacaoCard = ({ separacao, expandedView = false, onExpandToggle 
                     <TableHead>Pedido</TableHead>
                     <TableHead>SKU</TableHead>
                     <TableHead>Descrição</TableHead>
-                    <TableHead className="text-right">Quantidade</TableHead>
+                    <TableHead className="text-right">Solicitado</TableHead>
+                    <TableHead className="text-right">Saldo</TableHead>
                     <TableHead className="text-right">Valor Unit.</TableHead>
+                    <TableHead className="text-right">Falta Faturar</TableHead>
                     <TableHead className="text-right">Total</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -117,8 +119,13 @@ export const SeparacaoCard = ({ separacao, expandedView = false, onExpandToggle 
                       <TableCell className="font-medium">{item.item_codigo}</TableCell>
                       <TableCell>{item.descricao || '-'}</TableCell>
                       <TableCell className="text-right">{item.quantidade_pedida}</TableCell>
+                      {/* For now we'll just use quantidade_pedida as saldo too - this will be replaced in real data */}
+                      <TableCell className="text-right">{item.quantidade_pedida}</TableCell> 
                       <TableCell className="text-right">
                         {formatCurrency(item.valor_unitario)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(item.quantidade_pedida * item.valor_unitario)}
                       </TableCell>
                       <TableCell className="text-right">
                         {formatCurrency(item.valor_total)}
