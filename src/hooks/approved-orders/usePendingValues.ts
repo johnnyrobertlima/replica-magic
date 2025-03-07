@@ -20,7 +20,7 @@ export const usePendingValues = () => {
     try {
       let query = supabase
         .from('BLUEBAY_PEDIDO')
-        .select('PED_NUMPEDIDO, QTDE_SALDO, VALOR_UNITARIO, ITEM_CODIGO')
+        .select('PED_NUMPEDIDO, QTDE_SALDO, VALOR_UNITARIO, ITEM_CODIGO, QTDE_PEDIDA')
         .in('PED_NUMPEDIDO', pedidoNumbers);
       
       // If specific item codes are provided, filter by those too

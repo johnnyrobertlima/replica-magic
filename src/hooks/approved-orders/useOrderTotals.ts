@@ -1,4 +1,3 @@
-
 import { useCallback } from 'react';
 import { ApprovedOrder, OrderTotals, PendingValuesState } from './types';
 
@@ -43,6 +42,11 @@ export const useOrderTotals = () => {
             console.log(`calculateTotals: Adding pedido ${item.pedido} to tracking`);
             uniquePedidos.add(item.pedido);
             pedidosAprovados.push(item.pedido);
+            
+            // Calculate "Falta Faturar" for each item directly
+            const faltaFaturarItem = (item.QTDE_SALDO || 0) * (item.VALOR_UNITARIO || 0);
+            valorFaltaFaturar += faltaFaturarItem;
+            console.log(`calculateTotals: Item falta faturar: ${faltaFaturarItem}, Running total: ${valorFaltaFaturar}`);
           });
         } else {
           console.log(`calculateTotals: No items found in separacao`);
@@ -56,9 +60,10 @@ export const useOrderTotals = () => {
     console.log(`calculateTotals: Unique pedidos count: ${quantidadePedidos}, All pedidos: ${Array.from(uniquePedidos).join(', ')}`);
     console.log(`calculateTotals: All pedidos approved (with duplicates): ${pedidosAprovados.join(', ')}`);
     
-    // Calculate "Falta Faturar" - only using pending values for orders approved in the selected month
-    if (pedidosAprovados.length > 0) {
-      console.log(`calculateTotals: Calculating "Falta Faturar" for ${pedidosAprovados.length} approved pedidos`);
+    // If we've already calculated "Falta Faturar" directly from the items, we don't need
+    // to use pendingValues anymore, but keeping the code for backward compatibility
+    if (valorFaltaFaturar === 0 && pedidosAprovados.length > 0) {
+      console.log(`calculateTotals: Items didn't have QTDE_SALDO and VALOR_UNITARIO, using pendingValues as fallback`);
       
       // Only consider pending values for orders approved in this month
       Object.entries(pendingValues).forEach(([pedido, valor]) => {
@@ -71,8 +76,6 @@ export const useOrderTotals = () => {
           console.log(`calculateTotals: Pedido ${pedido} is NOT in approved list, skipping`);
         }
       });
-    } else {
-      console.log(`calculateTotals: No approved pedidos found, "Falta Faturar" will be 0`);
     }
     
     // Ensure valorFaturado is never negative
