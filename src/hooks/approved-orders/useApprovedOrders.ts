@@ -31,7 +31,6 @@ export const useApprovedOrders = () => {
         // Load orders for the selected month
         const filteredOrders = loadApprovedOrders(selectedYear, selectedMonth);
         console.log(`useApprovedOrders: Loaded ${filteredOrders.length} orders for ${selectedYear}-${selectedMonth}`, filteredOrders);
-        setApprovedOrders(filteredOrders);
         
         // Get all pedido numbers and item codes from the filtered orders
         const uniquePedidoNumbers: string[] = [];
@@ -72,12 +71,13 @@ export const useApprovedOrders = () => {
     };
     
     loadOrdersForMonth();
-  }, [selectedYear, selectedMonth, loadApprovedOrders, fetchPendingValues, setApprovedOrders]);
+  }, [selectedYear, selectedMonth, loadApprovedOrders, fetchPendingValues]);
 
   return {
     approvedOrders,
     isLoading,
     addApprovedOrder,
+    loadApprovedOrders, // Expose the loadApprovedOrders function
     calculateTotals: () => {
       console.log('useApprovedOrders: Calling calculateTotals with', {
         approvedOrdersCount: approvedOrders.length,

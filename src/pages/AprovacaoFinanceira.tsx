@@ -1,4 +1,3 @@
-
 import { Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Toaster } from "@/components/ui/toaster";
@@ -7,6 +6,7 @@ import { ClienteFinanceiroCard } from "@/components/jab-orders/ClienteFinanceiro
 import { useApprovedOrders } from "@/hooks/useApprovedOrders";
 import JabNavMenu from "@/components/jab-orders/JabNavMenu";
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 const AprovacaoFinanceira = () => {
   const { 
@@ -17,7 +17,31 @@ const AprovacaoFinanceira = () => {
     updateVolumeSaudavel 
   } = useClientesFinanceiros();
 
-  const { addApprovedOrder } = useApprovedOrders();
+  const { addApprovedOrder, loadApprovedOrders, selectedYear, selectedMonth } = useApprovedOrders();
+  const [approvedSeparacaoIds, setApprovedSeparacaoIds] = useState<Set<string>>(new Set());
+  
+  useEffect(() => {
+    const loadApproved = async () => {
+      const approvedOrders = loadApprovedOrders(selectedYear, selectedMonth);
+      const approvedIds = new Set(approvedOrders.map(order => order.separacaoId));
+      setApprovedSeparacaoIds(approvedIds);
+    };
+    
+    loadApproved();
+  }, [loadApprovedOrders, selectedYear, selectedMonth]);
+
+  const filteredClientesFinanceiros = clientesFinanceiros.filter(cliente => {
+    const pendingSeparacoes = cliente.separacoes.filter(
+      separacao => !approvedSeparacaoIds.has(separacao.id)
+    );
+    
+    return pendingSeparacoes.length > 0;
+  });
+
+  const clientesWithPendingSeparacoes = filteredClientesFinanceiros.map(cliente => ({
+    ...cliente,
+    separacoes: cliente.separacoes.filter(separacao => !approvedSeparacaoIds.has(separacao.id))
+  }));
 
   if (isLoading || isLoadingSeparacoes) {
     return (
@@ -50,14 +74,21 @@ const AprovacaoFinanceira = () => {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {clientesFinanceiros.length > 0 ? (
-            clientesFinanceiros.map((cliente) => (
+          {clientesWithPendingSeparacoes.length > 0 ? (
+            clientesWithPendingSeparacoes.map((cliente) => (
               <ClienteFinanceiroCard
                 key={cliente.PES_CODIGO}
                 cliente={cliente}
                 onUpdateVolumeSaudavel={updateVolumeSaudavel}
                 onHideCard={hideCard}
-                onApprove={addApprovedOrder}
+                onApprove={(separacaoId) => {
+                  addApprovedOrder(separacaoId, cliente);
+                  setApprovedSeparacaoIds(prev => {
+                    const newSet = new Set(prev);
+                    newSet.add(separacaoId);
+                    return newSet;
+                  });
+                }}
               />
             ))
           ) : (

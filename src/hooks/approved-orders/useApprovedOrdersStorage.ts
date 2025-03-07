@@ -26,29 +26,35 @@ export const useApprovedOrdersStorage = () => {
                  approvalDate.getMonth() + 1 === selectedMonth;
         });
         
+        setApprovedOrders(filteredOrders);
         return filteredOrders;
       }
       
+      setApprovedOrders([]);
       return [];
     } catch (error) {
       console.error('Error loading approved orders from localStorage:', error);
+      setApprovedOrders([]);
       return [];
     }
   }, []);
 
   // Save to localStorage whenever approvedOrders changes
   const addApprovedOrder = useCallback((separacaoId: string, clienteData: ClienteFinanceiro) => {
+    // Check if order already exists before adding
+    const newOrder = {
+      separacaoId,
+      clienteData,
+      approvedAt: new Date()
+    };
+    
     setApprovedOrders(prevOrders => {
       // Check if order already exists
       const exists = prevOrders.some(order => order.separacaoId === separacaoId);
       if (exists) return prevOrders;
       
       // Add new order
-      const newOrders = [...prevOrders, {
-        separacaoId,
-        clienteData,
-        approvedAt: new Date()
-      }];
+      const newOrders = [...prevOrders, newOrder];
       
       // Save to localStorage
       localStorage.setItem('approvedOrders', JSON.stringify(newOrders));
