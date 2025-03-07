@@ -26,10 +26,12 @@ export const useApprovedOrders = () => {
   useEffect(() => {
     const loadOrdersForMonth = async () => {
       try {
+        console.log(`useApprovedOrders: Loading orders for ${selectedYear}-${selectedMonth}`);
         setIsLoading(true);
         
         // Load orders for the selected month
         const filteredOrders = loadApprovedOrders(selectedYear, selectedMonth);
+        console.log(`useApprovedOrders: Loaded ${filteredOrders.length} orders for ${selectedYear}-${selectedMonth}`, filteredOrders);
         setApprovedOrders(filteredOrders);
         
         // Get all pedido numbers from the filtered orders
@@ -40,13 +42,16 @@ export const useApprovedOrders = () => {
           })
         ));
         
-        console.log('Unique pedido numbers for current month:', uniquePedidoNumbers);
+        console.log('useApprovedOrders: Unique pedido numbers for current month:', uniquePedidoNumbers);
         
         // Fetch and set pending values ONLY for the current month's approved orders
         if (uniquePedidoNumbers.length > 0) {
+          console.log(`useApprovedOrders: Fetching pending values for ${uniquePedidoNumbers.length} pedidos`);
           const pendingValuesByPedido = await fetchPendingValues(uniquePedidoNumbers);
+          console.log('useApprovedOrders: Setting pending values:', pendingValuesByPedido);
           setPendingValues(pendingValuesByPedido);
         } else {
+          console.log('useApprovedOrders: No pedidos found, setting empty pending values');
           setPendingValues({});
         }
       } catch (error) {
@@ -63,7 +68,14 @@ export const useApprovedOrders = () => {
     approvedOrders,
     isLoading,
     addApprovedOrder,
-    calculateTotals: () => calculateTotals(approvedOrders, pendingValues),
+    calculateTotals: () => {
+      console.log('useApprovedOrders: Calling calculateTotals with', {
+        approvedOrdersCount: approvedOrders.length,
+        pendingValuesCount: Object.keys(pendingValues).length,
+        pendingValues
+      });
+      return calculateTotals(approvedOrders, pendingValues);
+    },
     handleMonthSelect,
     selectedYear,
     selectedMonth
