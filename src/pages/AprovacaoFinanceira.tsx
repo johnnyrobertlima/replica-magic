@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Toaster } from "@/components/ui/toaster";
 import { useClientesFinanceiros } from "@/hooks/useClientesFinanceiros";
 import { ClienteFinanceiroCard } from "@/components/jab-orders/ClienteFinanceiroCard";
+import { useApprovedOrders } from "@/hooks/useApprovedOrders";
 
 const AprovacaoFinanceira = () => {
   const { 
@@ -14,6 +15,8 @@ const AprovacaoFinanceira = () => {
     hideCard, 
     updateVolumeSaudavel 
   } = useClientesFinanceiros();
+
+  const { addApprovedOrder } = useApprovedOrders();
 
   if (isLoading || isLoadingSeparacoes) {
     return (
@@ -36,7 +39,15 @@ const AprovacaoFinanceira = () => {
           Gerencie as aprovações financeiras dos pedidos e monitore informações financeiras dos clientes.
         </p>
         
-        <h2 className="text-2xl font-bold mt-8">Pedidos Pendentes de Aprovação</h2>
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold">Pedidos Pendentes de Aprovação</h2>
+          <Link 
+            to="/client-area/bluebay/acompanhamento-faturamento" 
+            className="text-primary hover:underline"
+          >
+            Ver Pedidos Aprovados
+          </Link>
+        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {clientesFinanceiros.length > 0 ? (
@@ -46,6 +57,7 @@ const AprovacaoFinanceira = () => {
                 cliente={cliente}
                 onUpdateVolumeSaudavel={updateVolumeSaudavel}
                 onHideCard={hideCard}
+                onApprove={addApprovedOrder}
               />
             ))
           ) : (

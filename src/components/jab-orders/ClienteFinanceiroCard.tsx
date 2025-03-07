@@ -13,12 +13,14 @@ interface ClienteFinanceiroCardProps {
   cliente: ClienteFinanceiro;
   onUpdateVolumeSaudavel: (clienteCodigo: number, valor: number) => Promise<{ success: boolean; error?: any }>;
   onHideCard: (id: string) => void;
+  onApprove: (separacaoId: string, clienteData: ClienteFinanceiro) => void;
 }
 
 export const ClienteFinanceiroCard = ({ 
   cliente, 
   onUpdateVolumeSaudavel,
-  onHideCard 
+  onHideCard,
+  onApprove
 }: ClienteFinanceiroCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [expandedSeparacoes, setExpandedSeparacoes] = useState<string[]>([]);
@@ -40,11 +42,16 @@ export const ClienteFinanceiroCard = ({
   };
 
   const handleAprovar = (id: string) => {
+    // Call the onApprove function with the separacaoId and cliente data
+    onApprove(id, cliente);
+    
     toast({
       title: "Sucesso",
       description: "Pedido aprovado com sucesso!",
       variant: "default",
     });
+    
+    // Hide the card from the current view
     onHideCard(id);
   };
 

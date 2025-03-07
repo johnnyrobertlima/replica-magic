@@ -12,6 +12,7 @@ import WhatsAppClientRegistration from "@/pages/WhatsAppClientRegistration";
 import WhatsAppService from "@/pages/WhatsAppService";
 import ClientLogin from "@/pages/ClientLogin";
 import AprovacaoFinanceira from "@/pages/AprovacaoFinanceira";
+import AcompanhamentoFaturamento from "@/pages/AcompanhamentoFaturamento";
 import BluebayHome from "@/pages/BluebayHome";
 
 // Admin imports
@@ -68,6 +69,11 @@ function App() {
       <Route path="/client-area/bluebay/aprovacao-financeira" element={
         <PermissionGuard resourcePath="/client-area/bluebay/aprovacao-financeira">
           <AprovacaoFinanceira />
+        </PermissionGuard>
+      } />
+      <Route path="/client-area/bluebay/acompanhamento-faturamento" element={
+        <PermissionGuard resourcePath="/client-area/bluebay/aprovacao-financeira">
+          <AcompanhamentoFaturamento />
         </PermissionGuard>
       } />
 
