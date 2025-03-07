@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { useApprovedOrders } from "@/hooks/useApprovedOrders";
 import { ApprovedOrdersCockpit } from "@/components/jab-orders/ApprovedOrdersCockpit";
 import { ClienteFinanceiroCard } from "@/components/jab-orders/ClienteFinanceiroCard";
-import { formatCurrency } from "@/lib/utils";
+import JabNavMenu from "@/components/jab-orders/JabNavMenu";
 
 const AcompanhamentoFaturamento = () => {
   const { approvedOrders, isLoading, calculateTotals, addApprovedOrder } = useApprovedOrders();
@@ -22,10 +22,13 @@ const AcompanhamentoFaturamento = () => {
 
   return (
     <main className="container mx-auto px-4 py-8">
-      <Link to="/client-area" className="inline-flex items-center gap-2 mb-6 text-primary hover:underline">
-        <ArrowLeft className="h-4 w-4" />
-        Voltar para Área do Cliente
-      </Link>
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
+        <Link to="/client-area" className="inline-flex items-center gap-2 text-primary hover:underline">
+          <ArrowLeft className="h-4 w-4" />
+          Voltar para Área do Cliente
+        </Link>
+        <JabNavMenu />
+      </div>
 
       <div className="space-y-6">
         <h1 className="text-3xl font-bold">Acompanhamento de Faturamento</h1>

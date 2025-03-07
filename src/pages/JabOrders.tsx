@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Loader2 } from "lucide-react";
@@ -10,6 +9,7 @@ import { OrdersHeader } from "@/components/jab-orders/OrdersHeader";
 import { OrdersPagination } from "@/components/jab-orders/OrdersPagination";
 import type { SearchType } from "@/components/jab-orders/SearchFilters";
 import { Switch } from "@/components/ui/switch";
+import JabNavMenu from "@/components/jab-orders/JabNavMenu";
 
 const ITEMS_PER_PAGE = 15;
 
@@ -84,7 +84,6 @@ const JabOrders = () => {
     return true;
   });
 
-  // Calcular totais dos itens selecionados
   const selectedItemsTotals = filteredOrders.reduce((acc, order) => {
     const selectedOrderItems = order.items.filter(item => selectedItems.includes(item.ITEM_CODIGO));
     
@@ -111,10 +110,13 @@ const JabOrders = () => {
 
   return (
     <main className="container mx-auto px-4 py-8">
-      <Link to="/client-area" className="inline-flex items-center gap-2 mb-6 text-primary hover:underline">
-        <ArrowLeft className="h-4 w-4" />
-        Voltar para Área do Cliente
-      </Link>
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
+        <Link to="/client-area" className="inline-flex items-center gap-2 text-primary hover:underline">
+          <ArrowLeft className="h-4 w-4" />
+          Voltar para Área do Cliente
+        </Link>
+        <JabNavMenu />
+      </div>
 
       <div className="space-y-6">
         <TotalCards

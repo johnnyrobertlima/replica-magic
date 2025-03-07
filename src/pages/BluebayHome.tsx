@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Boxes, ClipboardCheck, FileCheck, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import JabNavMenu from "@/components/jab-orders/JabNavMenu";
 
 const BluebayHome = () => {
   const navigate = useNavigate();
@@ -33,21 +34,24 @@ const BluebayHome = () => {
   return (
     <main className="container mx-auto px-4 py-8">
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div className="text-center space-y-2">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="text-center md:text-left space-y-2">
             <h1 className="text-4xl font-bold">Área do Cliente Bluebay</h1>
             <p className="text-muted-foreground">
               Acesse as funcionalidades disponíveis para sua conta
             </p>
           </div>
-          <Button
-            variant="outline"
-            onClick={handleLogout}
-            className="flex items-center gap-2"
-          >
-            <LogOut className="h-4 w-4" />
-            Sair
-          </Button>
+          <div className="flex items-center gap-4">
+            <JabNavMenu />
+            <Button
+              variant="outline"
+              onClick={handleLogout}
+              className="flex items-center gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              Sair
+            </Button>
+          </div>
         </div>
 
         <Card className="w-full">
