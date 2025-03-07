@@ -1,3 +1,4 @@
+
 import { useCallback } from 'react';
 import { ApprovedOrder, OrderTotals, PendingValuesState } from './types';
 
@@ -34,7 +35,7 @@ export const useOrderTotals = () => {
         
         console.log(`calculateTotals: Updated running totals - valorTotal: ${valorTotal}, quantidadeItens: ${quantidadeItens}`);
         
-        // Add pedidos to set and array
+        // Calculate "Falta Faturar" directly from separacao_itens
         if (separacao.separacao_itens && separacao.separacao_itens.length > 0) {
           console.log(`calculateTotals: Processing ${separacao.separacao_itens.length} items in separacao`);
           
@@ -43,8 +44,11 @@ export const useOrderTotals = () => {
             uniquePedidos.add(item.pedido);
             pedidosAprovados.push(item.pedido);
             
-            // Calculate "Falta Faturar" for each item directly
-            const faltaFaturarItem = (item.QTDE_SALDO || 0) * (item.VALOR_UNITARIO || 0);
+            // Calculate "Falta Faturar" for each item
+            const quantidade = item.quantidade_pedida || 0;
+            const valorUnitario = item.valor_unitario || 0;
+            const faltaFaturarItem = quantidade * valorUnitario;
+            
             valorFaltaFaturar += faltaFaturarItem;
             console.log(`calculateTotals: Item falta faturar: ${faltaFaturarItem}, Running total: ${valorFaltaFaturar}`);
           });
@@ -60,24 +64,9 @@ export const useOrderTotals = () => {
     console.log(`calculateTotals: Unique pedidos count: ${quantidadePedidos}, All pedidos: ${Array.from(uniquePedidos).join(', ')}`);
     console.log(`calculateTotals: All pedidos approved (with duplicates): ${pedidosAprovados.join(', ')}`);
     
-    // If we've already calculated "Falta Faturar" directly from the items, we don't need
-    // to use pendingValues anymore, but keeping the code for backward compatibility
-    if (valorFaltaFaturar === 0 && pedidosAprovados.length > 0) {
-      console.log(`calculateTotals: Items didn't have QTDE_SALDO and VALOR_UNITARIO, using pendingValues as fallback`);
-      
-      // Only consider pending values for orders approved in this month
-      Object.entries(pendingValues).forEach(([pedido, valor]) => {
-        console.log(`calculateTotals: Checking pedido ${pedido} with pending value ${valor}`);
-        
-        if (pedidosAprovados.includes(pedido)) {
-          console.log(`calculateTotals: Pedido ${pedido} is in approved list, adding ${valor} to valorFaltaFaturar`);
-          valorFaltaFaturar += valor;
-        } else {
-          console.log(`calculateTotals: Pedido ${pedido} is NOT in approved list, skipping`);
-        }
-      });
-    }
-    
+    // We're now calculating "Falta Faturar" directly from the separacao_itens,
+    // so we don't need to use pendingValues anymore as a fallback
+
     // Ensure valorFaturado is never negative
     const valorFaturado = Math.max(0, valorTotal - valorFaltaFaturar);
     

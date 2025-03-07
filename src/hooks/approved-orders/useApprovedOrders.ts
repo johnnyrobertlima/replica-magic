@@ -77,7 +77,7 @@ export const useApprovedOrders = () => {
     approvedOrders,
     isLoading,
     addApprovedOrder,
-    loadApprovedOrders, // Expose the loadApprovedOrders function
+    loadApprovedOrders,
     calculateTotals: () => {
       console.log('useApprovedOrders: Calling calculateTotals with', {
         approvedOrdersCount: approvedOrders.length,
