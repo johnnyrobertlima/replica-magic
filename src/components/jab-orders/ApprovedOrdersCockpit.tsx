@@ -3,11 +3,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
 import { ChartContainer } from "@/components/ui/chart";
 import { Progress } from "@/components/ui/progress";
-import dynamic from 'next/dynamic';
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 
-// Dynamically import ApexCharts to avoid SSR issues
-const ReactApexChart = dynamic(() => import('react-apexcharts'), { ssr: false });
+// Lazy load ApexCharts to avoid issues with SSR/window object
+const ReactApexChart = lazy(() => import('react-apexcharts'));
 
 interface ApprovedOrdersCockpitProps {
   valorTotal: number;
@@ -155,6 +154,13 @@ export const ApprovedOrdersCockpit = ({
     }
   ];
   
+  // Render a loading indicator while the chart is being loaded
+  const LoadingChart = () => (
+    <div className="flex items-center justify-center h-[350px] w-full">
+      <div className="animate-spin h-10 w-10 border-4 border-blue-500 rounded-full border-t-transparent"></div>
+    </div>
+  );
+  
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
@@ -210,12 +216,14 @@ export const ApprovedOrdersCockpit = ({
             <h3 className="text-xl font-semibold text-gray-700 mb-4">Progresso de Faturamento</h3>
             <div className="flex flex-col items-center">
               {mounted && (
-                <ReactApexChart 
-                  options={gaugeOptions as any}
-                  series={[percentFaturado]}
-                  type="radialBar"
-                  height={350}
-                />
+                <Suspense fallback={<LoadingChart />}>
+                  <ReactApexChart 
+                    options={gaugeOptions as any}
+                    series={[percentFaturado]}
+                    type="radialBar"
+                    height={350}
+                  />
+                </Suspense>
               )}
               <div className="w-full mt-4">
                 <div className="flex justify-between mb-2 text-sm">
@@ -238,12 +246,14 @@ export const ApprovedOrdersCockpit = ({
             <h3 className="text-xl font-semibold text-gray-700 mb-4">Comparativo de Valores</h3>
             <div className="h-[350px] w-full">
               {mounted && (
-                <ReactApexChart 
-                  options={barOptions as any}
-                  series={barSeries}
-                  type="bar"
-                  height={350}
-                />
+                <Suspense fallback={<LoadingChart />}>
+                  <ReactApexChart 
+                    options={barOptions as any}
+                    series={barSeries}
+                    type="bar"
+                    height={350}
+                  />
+                </Suspense>
               )}
             </div>
           </CardContent>
