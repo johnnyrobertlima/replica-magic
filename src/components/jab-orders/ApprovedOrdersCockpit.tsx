@@ -87,7 +87,8 @@ export const ApprovedOrdersCockpit = ({
       <Card className="bg-white shadow-lg">
         <CardContent className="pt-6 p-6">
           <h3 className="text-xl font-semibold text-gray-700 mb-4">Comparativo de Valores</h3>
-          <div className="h-56 w-full"> {/* Ajustado para altura ainda menor */}
+          {/* IMPORTANTE: Reduzido DRASTICAMENTE a altura do gráfico */}
+          <div className="h-[140px] w-full">
             <ChartContainer
               config={{
                 valor: {
@@ -95,16 +96,19 @@ export const ApprovedOrdersCockpit = ({
                 },
               }}
             >
-              <ResponsiveContainer width="100%" height="100%">
+              {/* Usando tamanho fixo ao invés de responsivo para evitar problemas */}
+              <div style={{ width: '100%', height: '100%' }}>
                 <BarChart 
                   data={chartData}
-                  margin={{ top: 10, right: 30, left: 30, bottom: 30 }} // Aumentado margin bottom
+                  margin={{ top: 0, right: 30, left: 30, bottom: 40 }}
+                  height={140}
+                  width={500}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis 
                     tickFormatter={(value) => formatCurrency(value)}
-                    domain={[0, 'auto']} // Ensure the chart starts from zero and scales automatically
+                    domain={[0, 'auto']} 
                   />
                   <Tooltip 
                     formatter={(value) => formatCurrency(Number(value))}
@@ -113,7 +117,7 @@ export const ApprovedOrdersCockpit = ({
                     dataKey="valor" 
                     name="Valor" 
                     fill="#16a34a" 
-                    radius={[4, 4, 0, 0]} // Bordas arredondadas no topo
+                    radius={[4, 4, 0, 0]} 
                     isAnimationActive={true}
                   >
                     {chartData.map((entry, index) => (
@@ -121,7 +125,7 @@ export const ApprovedOrdersCockpit = ({
                     ))}
                   </Bar>
                 </BarChart>
-              </ResponsiveContainer>
+              </div>
             </ChartContainer>
           </div>
         </CardContent>

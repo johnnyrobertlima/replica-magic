@@ -90,7 +90,7 @@ export const useApprovedOrders = () => {
           
           setApprovedOrders(filteredOrders);
           
-          // Fetch pending values for the filtered orders only
+          // Get all pedido numbers from the filtered orders
           const uniquePedidoNumbers = Array.from(new Set(
             filteredOrders.flatMap(order => {
               const separacao = order.clienteData.separacoes.find(sep => sep.id === order.separacaoId);
@@ -99,8 +99,14 @@ export const useApprovedOrders = () => {
           ));
           
           console.log('Unique pedido numbers for current month:', uniquePedidoNumbers);
-          const pendingValuesByPedido = await fetchPendingValues(uniquePedidoNumbers);
-          setPendingValues(pendingValuesByPedido);
+          
+          // Fetch and set pending values ONLY for the current month's approved orders
+          if (uniquePedidoNumbers.length > 0) {
+            const pendingValuesByPedido = await fetchPendingValues(uniquePedidoNumbers);
+            setPendingValues(pendingValuesByPedido);
+          } else {
+            setPendingValues({});
+          }
         } else {
           setApprovedOrders([]);
           setPendingValues({});
@@ -136,7 +142,7 @@ export const useApprovedOrders = () => {
     });
   }, []);
 
-  // Calculate totals - considerando APENAS os itens dos pedidos aprovados do mês atual
+  // Calculate totals - CORRIGIDO: considera apenas os itens dos pedidos aprovados do mês atual
   const calculateTotals = useCallback((): OrderTotals => {
     let valorTotal = 0;
     let quantidadeItens = 0;
@@ -145,6 +151,8 @@ export const useApprovedOrders = () => {
     
     // Get unique pedido numbers to count properly
     const uniquePedidos = new Set<string>();
+    
+    // Collect all pedido numbers from the approved orders for the current month
     const pedidosAprovados: string[] = [];
     
     approvedOrders.forEach(order => {
@@ -155,7 +163,7 @@ export const useApprovedOrders = () => {
         valorTotal += separacao.valor_total || 0;
         quantidadeItens += separacao.quantidade_itens || 0;
         
-        // Add pedidos to set to count unique pedidos
+        // Add pedidos to set and array
         separacao.separacao_itens?.forEach(item => {
           uniquePedidos.add(item.pedido);
           pedidosAprovados.push(item.pedido);
@@ -165,14 +173,18 @@ export const useApprovedOrders = () => {
     
     quantidadePedidos = uniquePedidos.size;
     
-    // Calculate valorFaltaFaturar using only the pending values from the current month's approved orders
-    Object.entries(pendingValues).forEach(([pedido, valor]) => {
-      if (pedidosAprovados.includes(pedido)) {
-        valorFaltaFaturar += valor;
-      }
-    });
+    // Calculate "Falta Faturar" - IMPORTANTE: usando apenas valores pendentes 
+    // dos pedidos aprovados no mês selecionado
+    if (pedidosAprovados.length > 0) {
+      // Só considerar os valores pendentes dos pedidos aprovados neste mês
+      Object.entries(pendingValues).forEach(([pedido, valor]) => {
+        if (pedidosAprovados.includes(pedido)) {
+          valorFaltaFaturar += valor;
+        }
+      });
+    }
     
-    // Calculate valor faturado (approved value minus pending value)
+    // Garantir que valorFaturado nunca seja negativo
     const valorFaturado = Math.max(0, valorTotal - valorFaltaFaturar);
     
     console.log('Calculated totals:', { 
@@ -181,6 +193,7 @@ export const useApprovedOrders = () => {
       quantidadePedidos, 
       valorFaltaFaturar, 
       valorFaturado,
+      pedidosAprovados,
       pendingValues
     });
     
