@@ -37,15 +37,22 @@ export const usePendingValues = () => {
         throw error;
       }
       
+      if (!data || data.length === 0) {
+        console.log('fetchPendingValues: No data returned from query');
+        return {};
+      }
+      
       console.log('fetchPendingValues: Raw data from Supabase:', data);
       console.log('fetchPendingValues: Retrieved', data.length, 'items from database');
       
-      // Calculate pending values per order
+      // Calculate pending values per order with improved null checking
       const pendingValues = data.reduce((acc, item) => {
+        if (!item) return acc;
+        
         const pedidoNumber = item.PED_NUMPEDIDO;
         const itemCodigo = item.ITEM_CODIGO;
-        const qtdeSaldo = item.QTDE_SALDO || 0;
-        const valorUnitario = item.VALOR_UNITARIO || 0;
+        const qtdeSaldo = Number(item.QTDE_SALDO || 0);
+        const valorUnitario = Number(item.VALOR_UNITARIO || 0);
         const pendingValue = qtdeSaldo * valorUnitario;
         
         console.log(`fetchPendingValues: Processing item - Pedido: ${pedidoNumber}, Item: ${itemCodigo}, Saldo: ${qtdeSaldo}, Valor: ${valorUnitario}, Pending Value: ${pendingValue}`);
