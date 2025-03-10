@@ -9,7 +9,8 @@ import {
   fetchClientInfo, 
   fetchPedidosForRepresentantes, 
   fetchRepresentantesInfo,
-  processClientsData
+  processClientsData,
+  fetchValoresVencidos
 } from "@/services/financialService";
 
 export type { ClienteFinanceiro } from "@/types/financialClient";
@@ -142,6 +143,12 @@ export const useClientesFinanceiros = () => {
           titulos,
           today
         );
+        
+        // Now fetch overdue values directly for each client
+        for (const cliente of clientesArray) {
+          const valorVencido = await fetchValoresVencidos(cliente.PES_CODIGO);
+          cliente.valoresVencidos = valorVencido;
+        }
         
         setClientesFinanceiros(clientesArray);
       } catch (error) {

@@ -101,5 +101,8 @@ export const processClientsData = (
 
 // Fetch títulos vencidos for a specific client
 export const fetchValoresVencidos = async (clienteCodigo: number) => {
-  return await fetchTitulosVencidos(clienteCodigo);
+  console.log(`Buscando valores vencidos para cliente ${clienteCodigo}`);
+  const result = await fetchTitulosVencidos(clienteCodigo);
+  console.log(`Resultado da busca: ${result}`);
+  return result;
 };
