@@ -56,7 +56,8 @@ export const calculateClientFinancialValues = (
   cliente.valoresEmAberto += (titulo.VLRSALDO || 0);
   
   // Overdue values = VLRSALDO of overdue titles
-  // Note: This calculation is now supplemented by direct database query
+  // Note: This calculation is now handled by direct database query in fetchTitulosVencidos
+  // We keep this logic for legacy compatibility but it won't affect the final value
   if (titulo.DTVENCIMENTO) {
     const vencimento = new Date(titulo.DTVENCIMENTO);
     const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -66,6 +67,8 @@ export const calculateClientFinancialValues = (
     
     // Compara apenas as datas (sem horas)
     if (vencimentoDateOnly < todayDateOnly) {
+      // This value will be overwritten by the fetchTitulosVencidos function
+      // We're keeping the logic here for reference and debugging purposes
       cliente.valoresVencidos += (titulo.VLRSALDO || 0);
     }
   }
@@ -76,9 +79,12 @@ export const calculateClientFinancialValues = (
 // Função para buscar títulos vencidos diretamente do Supabase
 export const fetchTitulosVencidos = async (clienteCodigo: string | number) => {
   try {
-    const { data, error } = await supabase
+    console.log(`Executando busca de títulos vencidos para cliente ${clienteCodigo}`);
+    
+    // Use a SQL-like query to match exactly what you showed in your SQL query
+    const { data, error, count } = await supabase
       .from('BLUEBAY_TITULO')
-      .select('VLRSALDO')
+      .select('VLRSALDO', { count: 'exact' })
       .eq('PES_CODIGO', clienteCodigo.toString())
       .lt('DTVENCIMENTO', new Date().toISOString().split('T')[0]);
     
@@ -87,11 +93,17 @@ export const fetchTitulosVencidos = async (clienteCodigo: string | number) => {
       throw error;
     }
     
-    console.log(`Títulos vencidos para cliente ${clienteCodigo}:`, data);
+    console.log(`Encontrados ${count} títulos vencidos para cliente ${clienteCodigo}`);
+    console.log(`Dados dos títulos:`, data);
     
     // Soma os valores vencidos
-    const valorVencido = data.reduce((total, titulo) => total + (titulo.VLRSALDO || 0), 0);
-    console.log(`Total valor vencido para cliente ${clienteCodigo}:`, valorVencido);
+    const valorVencido = data.reduce((total, titulo) => {
+      const valor = parseFloat(titulo.VLRSALDO) || 0;
+      console.log(`Valor saldo: ${valor}`);
+      return total + valor;
+    }, 0);
+    
+    console.log(`Total valor vencido para cliente ${clienteCodigo}: ${valorVencido}`);
     
     return valorVencido;
   } catch (error) {
