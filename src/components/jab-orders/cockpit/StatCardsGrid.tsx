@@ -8,44 +8,48 @@ interface StatCardsGridProps {
   valorFaltaFaturar: number;
   quantidadePedidos: number;
   quantidadeItens: number;
+  className?: string;
+  isLoading?: boolean;
 }
 
 export const StatCardsGrid = ({
-  valorTotal,
-  valorFaturado,
-  valorFaltaFaturar,
-  quantidadePedidos,
-  quantidadeItens
+  valorTotal = 0,
+  valorFaturado = 0,
+  valorFaltaFaturar = 0,
+  quantidadePedidos = 0,
+  quantidadeItens = 0,
+  className,
+  isLoading = false
 }: StatCardsGridProps) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+    <div className={`grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 ${className || ''}`}>
       <StatCard 
         title="Valor Total Aprovado" 
-        value={formatCurrency(valorTotal)} 
+        value={isLoading ? "..." : formatCurrency(valorTotal)} 
         color="green" 
       />
       
       <StatCard 
         title="Valor Faturado" 
-        value={formatCurrency(valorFaturado)} 
+        value={isLoading ? "..." : formatCurrency(valorFaturado)} 
         color="blue" 
       />
       
       <StatCard 
         title="Falta Faturar" 
-        value={formatCurrency(valorFaltaFaturar)} 
+        value={isLoading ? "..." : formatCurrency(valorFaltaFaturar)} 
         color="amber" 
       />
       
       <StatCard 
         title="Pedidos Aprovados" 
-        value={quantidadePedidos} 
+        value={isLoading ? "..." : quantidadePedidos} 
         color="purple" 
       />
       
       <StatCard 
         title="Quantidade de Itens" 
-        value={quantidadeItens} 
+        value={isLoading ? "..." : quantidadeItens} 
         color="indigo" 
       />
     </div>
