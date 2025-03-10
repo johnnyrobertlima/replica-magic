@@ -50,34 +50,42 @@ export const OrderItemsTable = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredItems.map((item, index) => (
-              <TableRow key={`${item.ITEM_CODIGO}-${index}`}>
-                <TableCell>
-                  <Checkbox
-                    checked={selectedItems.includes(item.ITEM_CODIGO)}
-                    onCheckedChange={() => onItemSelect(item.ITEM_CODIGO)}
-                  />
-                </TableCell>
-                <TableCell className="font-medium">{item.ITEM_CODIGO}</TableCell>
-                <TableCell>{item.DESCRICAO || '-'}</TableCell>
-                <TableCell className="text-right">{item.QTDE_PEDIDA.toLocaleString()}</TableCell>
-                <TableCell className="text-right">{item.QTDE_ENTREGUE.toLocaleString()}</TableCell>
-                <TableCell className="text-right">{item.QTDE_SALDO.toLocaleString()}</TableCell>
-                <TableCell className="text-right">{item.FISICO?.toLocaleString() || '-'}</TableCell>
-                <TableCell className="text-right">
-                  {item.VALOR_UNITARIO.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </TableCell>
-                <TableCell className="text-right">
-                  {(item.QTDE_SALDO * item.VALOR_UNITARIO).toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
+            {filteredItems.length > 0 ? (
+              filteredItems.map((item, index) => (
+                <TableRow key={`${item.ITEM_CODIGO}-${index}`}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedItems.includes(item.ITEM_CODIGO)}
+                      onCheckedChange={() => onItemSelect(item.ITEM_CODIGO)}
+                    />
+                  </TableCell>
+                  <TableCell className="font-medium">{item.ITEM_CODIGO}</TableCell>
+                  <TableCell>{item.DESCRICAO || '-'}</TableCell>
+                  <TableCell className="text-right">{item.QTDE_PEDIDA.toLocaleString()}</TableCell>
+                  <TableCell className="text-right">{item.QTDE_ENTREGUE.toLocaleString()}</TableCell>
+                  <TableCell className="text-right">{item.QTDE_SALDO.toLocaleString()}</TableCell>
+                  <TableCell className="text-right">{item.FISICO?.toLocaleString() || '-'}</TableCell>
+                  <TableCell className="text-right">
+                    {item.VALOR_UNITARIO.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {(item.QTDE_SALDO * item.VALOR_UNITARIO).toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={9} className="text-center py-4">
+                  Nenhum item encontrado.
                 </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </div>
