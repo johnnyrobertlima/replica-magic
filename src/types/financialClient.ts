@@ -1,4 +1,3 @@
-
 export interface TituloFinanceiro {
   PES_CODIGO: string | number;
   VLRTITULO: number;
@@ -6,6 +5,7 @@ export interface TituloFinanceiro {
   VLRABATIMENTO: number;
   VLRSALDO: number;
   DTVENCIMENTO: string;
+  DTVENCTO: string;
   STATUS: string;
 }
 
