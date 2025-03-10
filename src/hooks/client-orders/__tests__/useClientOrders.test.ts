@@ -1,5 +1,5 @@
 
-import { renderHook } from '@testing-library/react-hooks';
+import { renderHook } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useClientOrders } from '../../useClientOrders';
 import { useClientOrdersState } from '../useClientOrdersState';

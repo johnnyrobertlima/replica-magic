@@ -1,7 +1,8 @@
 
-import { renderHook, act } from '@testing-library/react-hooks';
+import { renderHook } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { useClientOrdersState } from '../useClientOrdersState';
+import { act } from 'react-dom/test-utils';
 
 // Mock the useClientOrdersSearch hook
 vi.mock('../useClientOrdersSearch', () => ({

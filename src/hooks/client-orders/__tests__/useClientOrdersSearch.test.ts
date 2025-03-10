@@ -1,11 +1,11 @@
 
-import { renderHook, act } from '@testing-library/react-hooks';
+import { renderHook } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { useClientOrdersSearch } from '../useClientOrdersSearch';
+import { act } from 'react-dom/test-utils';
 
 describe('useClientOrdersSearch', () => {
   it('should initialize with default values', () => {
-    const today = new Date();
     const { result } = renderHook(() => useClientOrdersSearch());
     
     expect(result.current.date).toEqual({

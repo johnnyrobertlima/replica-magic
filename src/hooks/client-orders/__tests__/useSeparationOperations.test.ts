@@ -1,8 +1,9 @@
 
-import { renderHook, act } from '@testing-library/react-hooks';
+import { renderHook } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useSeparationOperations } from '../useSeparationOperations';
 import { sendOrdersForSeparation } from '@/services/clientSeparationService';
+import { act } from 'react-dom/test-utils';
 
 // Mock the services and React Query
 vi.mock('@/services/clientSeparationService', () => ({
