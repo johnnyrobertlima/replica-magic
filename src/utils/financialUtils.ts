@@ -57,15 +57,43 @@ export const calculateClientFinancialValues = (
   cliente.valoresEmAberto += (titulo.VLRSALDO || 0);
   
   // Overdue values = VLRSALDO of overdue titles
-  // Only use DTVENCIMENTO field as specified
+  // Verifica se a data de vencimento é anterior à data atual
   if (titulo.DTVENCIMENTO) {
     const vencimento = new Date(titulo.DTVENCIMENTO);
-    // Set hours to 0 to compare only dates
-    vencimento.setHours(0, 0, 0, 0);
-    if (vencimento < today) {
+    const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    
+    // Ajusta a data de vencimento para remover o horário
+    const vencimentoDateOnly = new Date(vencimento.getFullYear(), vencimento.getMonth(), vencimento.getDate());
+    
+    // Compara apenas as datas (sem horas)
+    if (vencimentoDateOnly < todayDateOnly) {
       cliente.valoresVencidos += (titulo.VLRSALDO || 0);
     }
   }
 
   return cliente;
+};
+
+// Função para buscar títulos vencidos diretamente do Supabase
+export const fetchTitulosVencidos = async (clienteCodigo: string | number) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const { data, error } = await supabase
+      .from('BLUEBAY_TITULO')
+      .select('VLRSALDO')
+      .eq('PES_CODIGO', clienteCodigo.toString())
+      .lt('DTVENCIMENTO', today.toISOString().split('T')[0]);
+    
+    if (error) throw error;
+    
+    // Soma os valores vencidos
+    const valorVencido = data.reduce((total, titulo) => total + (titulo.VLRSALDO || 0), 0);
+    
+    return valorVencido;
+  } catch (error) {
+    console.error("Erro ao buscar títulos vencidos:", error);
+    return 0;
+  }
 };
