@@ -55,11 +55,10 @@ export const processClientsData = (
   clienteSeparacoes: Record<number, any[]>,
   clienteToRepresentanteMap: Map<number, number>,
   representantesInfo: Map<number, string>,
-  titulos: any[]
+  titulos: any[],
+  today: Date
 ) => {
   const clientesMap = new Map<number, ClienteFinanceiro>();
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
 
   // Initialize clients map
   if (clientes) {

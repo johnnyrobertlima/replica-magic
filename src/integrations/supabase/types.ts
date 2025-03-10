@@ -414,6 +414,7 @@ export type Database = {
           DTEMISSAO: string | null
           DTPAGTO: string | null
           DTVENCIMENTO: string | null
+          DTVENCTO: string | null
           FILIAL: number
           MATRIZ: number
           NUMDOCUMENTO: number | null
@@ -432,6 +433,7 @@ export type Database = {
           DTEMISSAO?: string | null
           DTPAGTO?: string | null
           DTVENCIMENTO?: string | null
+          DTVENCTO?: string | null
           FILIAL: number
           MATRIZ: number
           NUMDOCUMENTO?: number | null
@@ -450,6 +452,7 @@ export type Database = {
           DTEMISSAO?: string | null
           DTPAGTO?: string | null
           DTVENCIMENTO?: string | null
+          DTVENCTO?: string | null
           FILIAL?: number
           MATRIZ?: number
           NUMDOCUMENTO?: number | null

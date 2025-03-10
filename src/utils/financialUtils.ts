@@ -57,8 +57,11 @@ export const calculateClientFinancialValues = (
   cliente.valoresEmAberto += (titulo.VLRSALDO || 0);
   
   // Overdue values = VLRSALDO of overdue titles
+  // Ensuring we're checking DTVENCIMENTO against today's date
   if (titulo.DTVENCIMENTO) {
     const vencimento = new Date(titulo.DTVENCIMENTO);
+    // Set hours to 0 to compare only dates
+    vencimento.setHours(0, 0, 0, 0);
     if (vencimento < today) {
       cliente.valoresVencidos += (titulo.VLRSALDO || 0);
     }

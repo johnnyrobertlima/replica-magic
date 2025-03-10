@@ -129,13 +129,18 @@ export const useClientesFinanceiros = () => {
           }
         }
 
+        // Create today's date with hours set to 0 to compare only dates
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
         // Process and set clients data
         const clientesArray = processClientsData(
           clientes, 
           clienteSeparacoes, 
           clienteToRepresentanteMap, 
           representantesInfo,
-          titulos
+          titulos,
+          today
         );
         
         setClientesFinanceiros(clientesArray);
