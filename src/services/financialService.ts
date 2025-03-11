@@ -1,4 +1,5 @@
-import { supabase } from "@/lib/supabaseClient";
+
+import { supabase } from "@/integrations/supabase/client";
 
 export const fetchFinancialTitles = async (clienteCodigos: number[]): Promise<any[]> => {
   try {
