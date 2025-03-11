@@ -78,10 +78,11 @@ export const useClientesFinanceiros = () => {
 
         const clienteSeparacoes: Record<number, any[]> = {};
         separacoesPendentes.forEach(sep => {
-          if (!clienteSeparacoes[sep.cliente_codigo]) {
-            clienteSeparacoes[sep.cliente_codigo] = [];
+          const codigo = Number(sep.cliente_codigo);
+          if (!clienteSeparacoes[codigo]) {
+            clienteSeparacoes[codigo] = [];
           }
-          clienteSeparacoes[sep.cliente_codigo].push(sep);
+          clienteSeparacoes[codigo].push(sep);
         });
 
         const numeroPedidos = separacoesPendentes
@@ -98,11 +99,13 @@ export const useClientesFinanceiros = () => {
           if (pedidos && pedidos.length > 0) {
             pedidos.forEach(pedido => {
               if (pedido.REPRESENTANTE) {
-                representantesCodigos.add(pedido.REPRESENTANTE);
+                const repCodigo = Number(pedido.REPRESENTANTE);
+                representantesCodigos.add(repCodigo);
                 
                 separacoesPendentes.forEach(sep => {
                   if (sep.separacao_itens.some((item: any) => item.pedido === pedido.PED_NUMPEDIDO)) {
-                    clienteToRepresentanteMap.set(sep.cliente_codigo, pedido.REPRESENTANTE);
+                    const clienteCodigo = Number(sep.cliente_codigo);
+                    clienteToRepresentanteMap.set(clienteCodigo, repCodigo);
                   }
                 });
               }
@@ -113,7 +116,8 @@ export const useClientesFinanceiros = () => {
 
               if (representantes) {
                 representantes.forEach(rep => {
-                  representantesInfo.set(rep.PES_CODIGO, rep.RAZAOSOCIAL);
+                  const repCodigo = Number(rep.PES_CODIGO);
+                  representantesInfo.set(repCodigo, rep.RAZAOSOCIAL);
                 });
               }
             }

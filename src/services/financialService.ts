@@ -6,7 +6,7 @@ export const fetchClientInfo = async (clienteCodigo: number | string) => {
   const { data, error } = await supabase
     .from('BLUEBAY_PESSOA')
     .select('*')
-    .eq('PES_CODIGO', String(clienteCodigo))
+    .eq('PES_CODIGO', clienteCodigo.toString())
     .maybeSingle();
 
   if (error) {

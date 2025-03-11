@@ -2,6 +2,7 @@
 import { formatCurrency } from "@/lib/utils";
 import type { JabOrder, JabOrderItem } from "@/types/jabOrders";
 import { loadClientFinancialData } from "./financialUtils";
+import type { SearchType } from "@/types/searchTypes";
 
 // Helper function to get client code from item
 export function getClientCodeFromItem(item: JabOrderItem & { PES_CODIGO?: number }): number | null {

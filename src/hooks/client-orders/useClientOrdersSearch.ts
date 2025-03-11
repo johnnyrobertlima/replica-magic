@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import type { DateRange } from "react-day-picker";
-import type { SearchType } from "@/components/jab-orders/SearchFilters";
+import type { SearchType } from "@/types/searchTypes";
 
 export interface SearchState {
   date: DateRange | undefined;

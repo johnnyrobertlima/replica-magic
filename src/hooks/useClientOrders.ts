@@ -52,9 +52,17 @@ export const useClientOrders = () => {
 
   // Filter groups by search criteria - mapping the searchType to correct expected value
   const filteredGroups = useMemo(() => {
-    // Map 'cliente' to 'client' to fix the type error
-    const mappedSearchType = searchType === 'cliente' ? 'client' : searchType;
-    return filterGroupsBySearchCriteria(groupedOrders, isSearching, searchQuery, mappedSearchType);
+    // Map searchType to the expected value in the filterGroupsBySearchCriteria function
+    let mappedSearchType = searchType;
+    if (searchType === 'cliente') mappedSearchType = 'client';
+    
+    // Filter groups based on the mapped search type
+    return filterGroupsBySearchCriteria(
+      groupedOrders, 
+      isSearching, 
+      searchQuery, 
+      mappedSearchType as 'pedido' | 'item' | 'client'
+    );
   }, [groupedOrders, isSearching, searchQuery, searchType]);
 
   // Use the item selection hook

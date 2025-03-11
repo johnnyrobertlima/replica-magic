@@ -24,7 +24,7 @@ export const calcularValoresVencidos = (titulos: any[], today: Date): number => 
 export const loadClientFinancialData = async (clienteCodigo: number | string) => {
   try {
     // Fetch financial titles for the client
-    const titulos = await fetchFinancialTitles([String(clienteCodigo)]);
+    const titulos = await fetchFinancialTitles([clienteCodigo.toString()]);
     
     // Calculate today's date for valores vencidos calculation
     const today = new Date();
@@ -62,7 +62,7 @@ export const updateVolumeSaudavel = async (clienteCodigo: number | string, valor
     const { data, error } = await supabase
       .from('BLUEBAY_PESSOA')
       .update({ volume_saudavel_faturamento: valor })
-      .eq('PES_CODIGO', String(clienteCodigo))
+      .eq('PES_CODIGO', clienteCodigo.toString())
       .select();
 
     if (error) {
@@ -82,7 +82,7 @@ export const fetchTitulosVencidos = async (clienteCodigo: number | string): Prom
     let { data, error } = await supabase
       .from('BLUEBAY_TITULO')
       .select('VLRSALDO')
-      .eq('PES_CODIGO', String(clienteCodigo))
+      .eq('PES_CODIGO', clienteCodigo.toString())
       .lt('DTVENCIMENTO', new Date().toISOString());
 
     if (error) throw error;

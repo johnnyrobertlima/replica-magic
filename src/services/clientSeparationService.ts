@@ -2,98 +2,88 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { ClienteFinanceiro } from "@/types/financialClient";
 
-export const sendOrdersForSeparation = async (selectedItems: string[], clienteData: ClienteFinanceiro) => {
+export async function sendOrdersForSeparation(
+  selectedItems: string[],
+  clienteData: ClienteFinanceiro
+) {
   try {
-    // Validate input
-    if (!selectedItems || selectedItems.length === 0) {
-      return { success: false, error: "No items selected for separation" };
-    }
-
-    // Get the client code
-    const clienteCodigo = clienteData.PES_CODIGO;
-    if (!clienteCodigo) {
-      return { success: false, error: "Client code is missing" };
-    }
-
-    // Find the items in the client's separations
-    const allSeparationItems = clienteData.separacoes.flatMap(sep => sep.separacao_itens || []);
-    const itemsToSeparate = allSeparationItems.filter(item => 
-      selectedItems.includes(item.item_codigo)
+    // Get current date
+    const currentDate = new Date().toISOString();
+    
+    // Calculate total values
+    const allItems = clienteData.separacoes[0]?.separacao_itens || [];
+    const selectedItemsData = allItems.filter((item: any) => 
+      selectedItems.includes(item.ITEM_CODIGO)
     );
-
-    if (itemsToSeparate.length === 0) {
-      return { success: false, error: "No matching items found in client separations" };
+    
+    if (selectedItemsData.length === 0) {
+      return { success: false, error: "No items selected" };
     }
-
-    // Get the client name
-    const clienteNome = clienteData.APELIDO || `Cliente ${clienteCodigo}`;
-
+    
+    const valorTotal = selectedItemsData.reduce(
+      (acc: number, item: any) => acc + (item.VALOR_UNITARIO || 0) * (item.QTDE_SALDO || 0),
+      0
+    );
+    
     // Create a new separation record
-    const { data: separationData, error: separationError } = await supabase
-      .from('separacoes')
+    const { data: separacaoData, error: separacaoError } = await supabase
+      .from("separacoes")
       .insert({
-        cliente_codigo: clienteCodigo,
-        cliente_nome: clienteNome,
-        status: 'pending',
-        created_at: new Date().toISOString(),
-        valor_total: itemsToSeparate.reduce((sum, item) => 
-          sum + (item.valor_unitario * item.quantidade_pedida), 0),
-        quantidade_itens: itemsToSeparate.length
+        cliente_codigo: clienteData.PES_CODIGO,
+        cliente_nome: clienteData.APELIDO || "",
+        status: "pendente",
+        created_at: currentDate,
+        valor_total: valorTotal,
+        quantidade_itens: selectedItemsData.length
       })
       .select()
       .single();
-
-    if (separationError) {
-      console.error("Error creating separation:", separationError);
-      return { success: false, error: separationError };
+    
+    if (separacaoError) {
+      console.error("Error creating separation:", separacaoError);
+      return { success: false, error: separacaoError };
     }
-
-    // Create separation items with all required fields
-    const separationItems = itemsToSeparate.map(item => ({
-      separacao_id: separationData.id,
-      item_codigo: item.item_codigo,
-      descricao: item.descricao,
-      quantidade_pedida: Number(item.quantidade_pedida),
-      valor_unitario: Number(item.valor_unitario),
-      pedido: item.pedido,
-      valor_total: Number(item.quantidade_pedida) * Number(item.valor_unitario)
+    
+    // Create separation items
+    const separacaoItems = selectedItemsData.map((item: any) => ({
+      separacao_id: separacaoData.id,
+      item_codigo: item.ITEM_CODIGO,
+      descricao: item.DESCRICAO,
+      quantidade_pedida: item.QTDE_SALDO,
+      valor_unitario: item.VALOR_UNITARIO,
+      valor_total: (item.QTDE_SALDO || 0) * (item.VALOR_UNITARIO || 0),
+      pedido: item.pedido
     }));
-
+    
     const { error: itemsError } = await supabase
-      .from('separacao_itens')
-      .insert(separationItems);
-
+      .from("separacao_itens")
+      .insert(separacaoItems);
+    
     if (itemsError) {
       console.error("Error creating separation items:", itemsError);
-      // Try to rollback the separation
-      await supabase.from('separacoes').delete().eq('id', separationData.id);
+      
+      // Rollback separation if items couldn't be created
+      await supabase
+        .from("separacoes")
+        .delete()
+        .eq("id", separacaoData.id);
+        
       return { success: false, error: itemsError };
     }
-
-    // Update the status of the original items to mark them as in separation
-    for (const item of itemsToSeparate) {
-      if (item.id) {
-        await supabase
-          .from('separacao_itens')
-          .update({ 
-            // Only include properties that exist in the table
-            descricao: item.descricao,
-            quantidade_pedida: item.quantidade_pedida,
-            valor_unitario: item.valor_unitario
-          })
-          .eq('id', item.id);
-      }
+    
+    // Update the status of the separation
+    const { error: updateError } = await supabase
+      .from("separacoes")
+      .update({ status: "pendente" })
+      .eq("id", separacaoData.id);
+    
+    if (updateError) {
+      console.error("Error updating separation status:", updateError);
     }
-
-    return { 
-      success: true, 
-      data: {
-        separationId: separationData.id,
-        itemCount: separationItems.length
-      }
-    };
+    
+    return { success: true, data: separacaoData };
   } catch (error) {
-    console.error('Error sending orders for separation:', error);
+    console.error("Error in sendOrdersForSeparation:", error);
     return { success: false, error };
   }
-};
+}
