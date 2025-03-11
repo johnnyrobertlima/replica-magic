@@ -1,4 +1,3 @@
-
 import { 
   fetchClient, 
   fetchAllClients,
@@ -25,13 +24,16 @@ export const calcularValoresVencidos = (titulos: any[], today: Date): number => 
     .reduce((acc, titulo) => acc + (titulo.VLRSALDO || 0), 0);
 };
 
-export const loadClientFinancialData = async (clienteCodigo: number | string) => {
+export const loadClientFinancialData = async (clientId: number | string) => {
+  // Convert clientId to number if it's a string
+  const numericClientId = typeof clientId === 'string' ? parseInt(clientId, 10) : clientId;
+  
   try {
     // Fetch financial titles for the client
     const { data: titulos = [], error } = await supabase
       .from("BLUEBAY_TITULO")
       .select("*")
-      .eq("PES_CODIGO", clienteCodigo.toString());
+      .eq("PES_CODIGO", numericClientId.toString());
     
     if (error) throw error;
     
@@ -86,12 +88,15 @@ export const updateVolumeSaudavel = async (clienteCodigo: number | string, valor
   }
 };
 
-export const fetchTitulosVencidos = async (clienteCodigo: number | string): Promise<number> => {
+export const fetchTitulosVencidos = async (clientId: number | string) => {
+  // Convert clientId to number if it's a string
+  const numericClientId = typeof clientId === 'string' ? parseInt(clientId, 10) : clientId;
+  
   try {
     let { data, error } = await supabase
       .from('BLUEBAY_TITULO')
       .select('VLRSALDO')
-      .eq('PES_CODIGO', clienteCodigo.toString())
+      .eq('PES_CODIGO', numericClientId.toString())
       .lt('DTVENCIMENTO', new Date().toISOString());
 
     if (error) throw error;

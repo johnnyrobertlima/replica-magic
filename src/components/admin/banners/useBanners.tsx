@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Banner } from "@/types/banner";
 
 export function useBanners() {
-  return useQuery({
+  return useQuery<Banner[]>({
     queryKey: ["banners"],
     queryFn: async () => {
       const { data, error } = await supabase
