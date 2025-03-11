@@ -1,9 +1,9 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-export const fetchFinancialTitles = async (clienteCodigos: readonly number[]): Promise<any[]> => {
+export const fetchFinancialTitles = async (clienteCodigos: number[] | string[]): Promise<any[]> => {
   try {
-    // Convert number array to string array for Supabase query
+    // Convert number array to string array for Supabase query if needed
     const clienteCodigosStrings = clienteCodigos.map(codigo => String(codigo));
     
     const { data, error } = await supabase
@@ -23,9 +23,9 @@ export const fetchFinancialTitles = async (clienteCodigos: readonly number[]): P
   }
 };
 
-export const fetchClientInfo = async (clienteCodigos: readonly number[]): Promise<any[]> => {
+export const fetchClientInfo = async (clienteCodigos: number[] | string[]): Promise<any[]> => {
   try {
-    // Convert number array to string array for Supabase query
+    // Convert number array to string array for Supabase query if needed
     const clienteCodigosStrings = clienteCodigos.map(codigo => String(codigo));
     
     const { data, error } = await supabase

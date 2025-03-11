@@ -10,7 +10,7 @@ export const getClientesCodigos = (separacoes: any[]) => {
   return Array.from(new Set(separacoes.map(sep => sep.cliente_codigo)));
 };
 
-export const updateVolumeSaudavel = async (clienteCodigo: number, valor: number) => {
+export const updateVolumeSaudavel = async (clienteCodigo: number | string, valor: number) => {
   try {
     const { data, error } = await supabase
       .from('BLUEBAY_PESSOA')
