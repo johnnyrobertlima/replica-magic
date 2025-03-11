@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useClienteFinanceiro } from "@/hooks/useClientesFinanceiros";
 import { useNavigate, useParams } from 'react-router-dom';
@@ -6,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { SeparacaoDePedidos } from "@/components/SeparacaoDePedidos";
-import { ClienteFinanceiro } from "@/types/financialClient";
 import { fetchTitulosVencidos } from "@/utils/financialUtils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -42,7 +40,7 @@ const AprovacaoFinanceira = () => {
       if (clienteId) {
         try {
           const titulos = await fetchTitulosVencidos(clienteId);
-          setTitulosVencidos(titulos as Titulo[]);
+          setTitulosVencidos(titulos);
         } catch (error) {
           console.error("Erro ao carregar títulos vencidos:", error);
         }
