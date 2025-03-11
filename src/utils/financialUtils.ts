@@ -1,4 +1,3 @@
-
 import { ClienteFinanceiro } from "@/types/financialClient";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -15,7 +14,7 @@ export const updateVolumeSaudavel = async (clienteCodigo: number, valor: number)
     const { data, error } = await supabase
       .from('BLUEBAY_PESSOA')
       .update({ volume_saudavel_faturamento: valor })
-      .eq('PES_CODIGO', String(clienteCodigo))
+      .eq('PES_CODIGO', clienteCodigo.toString())
       .select();
 
     if (error) {

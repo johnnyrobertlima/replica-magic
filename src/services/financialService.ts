@@ -1,10 +1,9 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export const fetchFinancialTitles = async (clienteCodigos: readonly number[]): Promise<any[]> => {
   try {
-    // Convert number array to string array
-    const clienteCodigosStrings = clienteCodigos.map(codigo => String(codigo));
+    // Convert number array to string array for Supabase query
+    const clienteCodigosStrings = clienteCodigos.map(String);
     
     const { data, error } = await supabase
       .from('BLUEBAY_TITULO')
@@ -25,8 +24,7 @@ export const fetchFinancialTitles = async (clienteCodigos: readonly number[]): P
 
 export const fetchClientInfo = async (clienteCodigos: readonly number[]): Promise<any[]> => {
   try {
-    // Convert number array to string array
-    const clienteCodigosStrings = clienteCodigos.map(codigo => String(codigo));
+    const clienteCodigosStrings = clienteCodigos.map(String);
     
     const { data, error } = await supabase
       .from('BLUEBAY_PESSOA')
