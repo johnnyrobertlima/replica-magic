@@ -72,6 +72,11 @@ export const ClientOrderCard = ({
             <p className="text-sm text-muted-foreground">
               Total de Pedidos: {pedidosCount}
             </p>
+            {data.volumeSaudavel !== undefined && (
+              <p className="text-sm text-muted-foreground">
+                Volume Saudável: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(data.volumeSaudavel)}
+              </p>
+            )}
           </div>
           {isExpanded ? (
             <ChevronUp className="h-6 w-6 text-muted-foreground" />

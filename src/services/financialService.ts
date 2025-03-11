@@ -1,55 +1,81 @@
+import { supabase } from "@/lib/supabaseClient";
 
-import { supabase } from "@/integrations/supabase/client";
-import { ClienteFinanceiro } from "@/types/financialClient";
-import { calculateClientFinancialValues, fetchTitulosVencidos } from "@/utils/financialUtils";
+export const fetchFinancialTitles = async (clienteCodigos: number[]): Promise<any[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('BLUEBAY_TITULO')
+      .select('*')
+      .in('PES_CODIGO', clienteCodigos);
 
-// Fetch financial titles for clients
-export const fetchFinancialTitles = async (clientesCodigos: number[]) => {
-  const { data: titulos, error } = await supabase
-    .from('BLUEBAY_TITULO')
-    .select('*')
-    .in('PES_CODIGO', clientesCodigos.map(String))
-    .in('STATUS', ['1', '2', '3']);
+    if (error) {
+      console.error("Erro ao buscar títulos financeiros:", error);
+      return [];
+    }
 
-  if (error) throw error;
-  return titulos;
+    return data || [];
+  } catch (error) {
+    console.error("Erro ao buscar títulos financeiros:", error);
+    return [];
+  }
 };
 
-// Fetch client info
-export const fetchClientInfo = async (clientesCodigos: number[]) => {
-  const { data: clientes, error } = await supabase
-    .from('BLUEBAY_PESSOA')
-    .select('PES_CODIGO, APELIDO, volume_saudavel_faturamento')
-    .in('PES_CODIGO', clientesCodigos);
+export const fetchClientInfo = async (clienteCodigos: number[]): Promise<any[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('BLUEBAY_PESSOA')
+      .select('PES_CODIGO, RAZAOSOCIAL, APELIDO, volume_saudavel_faturamento')
+      .in('PES_CODIGO', clienteCodigos);
 
-  if (error) throw error;
-  return clientes;
+    if (error) {
+      console.error("Erro ao buscar informações dos clientes:", error);
+      return [];
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error("Erro ao buscar informações dos clientes:", error);
+    return [];
+  }
 };
 
-// Fetch pedidos to get REPRESENTANTE codes
-export const fetchPedidosForRepresentantes = async (numeroPedidos: string[]) => {
-  const { data: pedidos, error } = await supabase
-    .from('BLUEBAY_PEDIDO')
-    .select('PED_NUMPEDIDO, REPRESENTANTE')
-    .eq('CENTROCUSTO', 'JAB')
-    .in('PED_NUMPEDIDO', numeroPedidos);
+export const fetchPedidosForRepresentantes = async (numeroPedidos: number[]): Promise<any[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('BLUEBAY_PEDIDO')
+      .select('PED_NUMPEDIDO, REPRESENTANTE')
+      .in('PED_NUMPEDIDO', numeroPedidos);
 
-  if (error) throw error;
-  return pedidos;
+    if (error) {
+      console.error("Erro ao buscar pedidos para representantes:", error);
+      return [];
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error("Erro ao buscar pedidos para representantes:", error);
+    return [];
+  }
 };
 
-// Fetch representantes info
-export const fetchRepresentantesInfo = async (representantesCodigos: number[]) => {
-  const { data: representantes, error } = await supabase
-    .from('BLUEBAY_PESSOA')
-    .select('PES_CODIGO, RAZAOSOCIAL')
-    .in('PES_CODIGO', representantesCodigos);
+export const fetchRepresentantesInfo = async (representantesCodigos: number[]): Promise<any[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('BLUEBAY_PESSOA')
+      .select('PES_CODIGO, RAZAOSOCIAL')
+      .in('PES_CODIGO', representantesCodigos);
 
-  if (error) throw error;
-  return representantes;
+    if (error) {
+      console.error("Erro ao buscar informações dos representantes:", error);
+      return [];
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error("Erro ao buscar informações dos representantes:", error);
+    return [];
+  }
 };
 
-// Process clients data with financial information
 export const processClientsData = (
   clientes: any[],
   clienteSeparacoes: Record<number, any[]>,
@@ -57,73 +83,43 @@ export const processClientsData = (
   representantesInfo: Map<number, string>,
   titulos: any[],
   today: Date
-) => {
-  const clientesMap = new Map<number, ClienteFinanceiro>();
+): any[] => {
+  return clientes.map(cliente => {
+    const separacoes = clienteSeparacoes[cliente.PES_CODIGO] || [];
+    const representanteCodigo = clienteToRepresentanteMap.get(cliente.PES_CODIGO);
+    const representanteNome = representanteCodigo ? representantesInfo.get(representanteCodigo) : null;
 
-  // Initialize clients map
-  if (clientes) {
-    clientes.forEach(cliente => {
-      if (cliente.PES_CODIGO) {
-        // Get representante for this cliente
-        const representanteCodigo = clienteToRepresentanteMap.get(cliente.PES_CODIGO);
-        const representanteNome = representanteCodigo ? representantesInfo.get(representanteCodigo) || null : null;
-        
-        clientesMap.set(cliente.PES_CODIGO, {
-          PES_CODIGO: cliente.PES_CODIGO,
-          APELIDO: cliente.APELIDO,
-          volume_saudavel_faturamento: cliente.volume_saudavel_faturamento,
-          valoresTotais: 0,
-          valoresEmAberto: 0,
-          valoresVencidos: 0,
-          separacoes: clienteSeparacoes[cliente.PES_CODIGO] || [],
-          representanteNome: representanteNome
-        });
-      }
-    });
-  }
+    // Filter titulos for the current client
+    const titulosCliente = titulos.filter(titulo => titulo.PES_CODIGO === cliente.PES_CODIGO);
 
-  // Calculate values for each client
-  if (titulos) {
-    titulos.forEach(titulo => {
-      const pesCodigoNumerico = typeof titulo.PES_CODIGO === 'string' 
-        ? parseInt(titulo.PES_CODIGO, 10) 
-        : titulo.PES_CODIGO;
-      
-      if (isNaN(pesCodigoNumerico) || !clientesMap.has(pesCodigoNumerico)) return;
+    // Calculate total values based on titulos
+    const valoresTotais = titulosCliente.reduce((acc, titulo) => acc + (titulo.VLRTITULO || 0), 0);
+    const valoresEmAberto = titulosCliente.reduce((acc, titulo) => acc + (titulo.VLRSALDO || 0), 0);
 
-      const cliente = clientesMap.get(pesCodigoNumerico)!;
-      calculateClientFinancialValues(cliente, titulo, today);
-    });
-  }
-
-  // Convert map to array
-  return Array.from(clientesMap.values());
+    return {
+      ...cliente,
+      separacoes: separacoes,
+      representante: representanteCodigo,
+      representanteNome: representanteNome,
+      valoresTotais: valoresTotais,
+      valoresEmAberto: valoresEmAberto,
+      valoresVencidos: 0, // Initialize as 0, will be fetched later
+    };
+  });
 };
 
-// Fetch títulos vencidos for a specific client
-export const fetchValoresVencidos = async (clienteCodigo: string | number): Promise<number> => {
-  console.log(`Buscando valores vencidos para cliente ${clienteCodigo}`);
-  
+export const fetchValoresVencidos = async (clienteCodigo: number | string): Promise<number> => {
   try {
-    const clienteCodigoStr = clienteCodigo.toString();
-    const { data, error } = await supabase.rpc('calcular_valor_vencido', { 
-      cliente_codigo: clienteCodigoStr 
-    });
-    
-    if (error) {
-      console.error("Erro ao calcular valor vencido via RPC:", error);
-      return await fetchTitulosVencidos(clienteCodigoStr);
-    }
-    
-    if (data && data[0]) {
-      console.log(`Valor vencido via RPC: ${data[0].total_vlr_saldo}`);
-      return parseFloat(data[0].total_vlr_saldo) || 0;
-    }
-    
-    console.log("Usando método alternativo para buscar valores vencidos");
-    return await fetchTitulosVencidos(clienteCodigoStr);
+    const { data, error } = await supabase
+      .rpc('calcular_valor_vencido', { 
+        cliente_codigo: String(clienteCodigo)
+      });
+
+    if (error) throw error;
+
+    return data?.[0]?.total_vlr_saldo || 0;
   } catch (error) {
-    console.error("Erro ao buscar via RPC, tentando método alternativo:", error);
-    return await fetchTitulosVencidos(clienteCodigo.toString());
+    console.error('Error fetching valores vencidos:', error);
+    return 0;
   }
-};
+}
