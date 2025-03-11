@@ -72,7 +72,7 @@ export const ClientOrderCard = ({
             <p className="text-sm text-muted-foreground">
               Total de Pedidos: {pedidosCount}
             </p>
-            {data.volumeSaudavel !== undefined && (
+            {data.volumeSaudavel !== undefined && data.volumeSaudavel !== null && (
               <p className="text-sm text-muted-foreground">
                 Volume Saudável: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(data.volumeSaudavel)}
               </p>

@@ -152,6 +152,10 @@ export const useClientesFinanceiros = () => {
           const valorVencido = await fetchValoresVencidos(cliente.PES_CODIGO);
           console.log(`Cliente ${cliente.PES_CODIGO}: valor vencido = ${valorVencido}`);
           cliente.valoresVencidos = valorVencido;
+          
+          // Make sure volumeSaudavel is properly set for the UI
+          cliente.volumeSaudavel = cliente.volume_saudavel_faturamento;
+          console.log(`Cliente ${cliente.PES_CODIGO}: volume saudável = ${cliente.volumeSaudavel}`);
         }
         
         console.log("Clientes processados:", clientesArray);

@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export const fetchFinancialTitles = async (clienteCodigos: readonly number[]): Promise<any[]> => {
@@ -115,6 +116,7 @@ export const processClientsData = (
       valoresTotais: valoresTotais,
       valoresEmAberto: valoresEmAberto,
       valoresVencidos: 0, // Initialize as 0, will be fetched later
+      volume_saudavel_faturamento: cliente.volume_saudavel_faturamento || null // Ensure this field is included
     };
   });
 };
