@@ -19,7 +19,7 @@ export const updateVolumeSaudavel = async (clienteCodigo: number, valor: number)
     const { data, error } = await supabase
       .from('BLUEBAY_PESSOA')
       .update({ volume_saudavel_faturamento: valor })
-      .eq('PES_CODIGO', clienteCodigo)
+      .eq('PES_CODIGO', String(clienteCodigo))
       .select();
 
     if (error) {

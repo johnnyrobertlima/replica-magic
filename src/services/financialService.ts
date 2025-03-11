@@ -3,10 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const fetchFinancialTitles = async (clienteCodigos: number[]): Promise<any[]> => {
   try {
+    // Convert number array to string array
+    const clienteCodigosStrings = clienteCodigos.map(codigo => String(codigo));
+    
     const { data, error } = await supabase
       .from('BLUEBAY_TITULO')
       .select('*')
-      .in('PES_CODIGO', clienteCodigos);
+      .in('PES_CODIGO', clienteCodigosStrings);
 
     if (error) {
       console.error("Erro ao buscar títulos financeiros:", error);
@@ -22,10 +25,13 @@ export const fetchFinancialTitles = async (clienteCodigos: number[]): Promise<an
 
 export const fetchClientInfo = async (clienteCodigos: number[]): Promise<any[]> => {
   try {
+    // Convert number array to string array
+    const clienteCodigosStrings = clienteCodigos.map(codigo => String(codigo));
+    
     const { data, error } = await supabase
       .from('BLUEBAY_PESSOA')
       .select('PES_CODIGO, RAZAOSOCIAL, APELIDO, volume_saudavel_faturamento')
-      .in('PES_CODIGO', clienteCodigos);
+      .in('PES_CODIGO', clienteCodigosStrings);
 
     if (error) {
       console.error("Erro ao buscar informações dos clientes:", error);
