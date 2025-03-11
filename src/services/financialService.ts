@@ -45,7 +45,7 @@ export const fetchClientInfo = async (clienteCodigos: number[] | string[]): Prom
   }
 };
 
-export const fetchPedidosForRepresentantes = async (numeroPedidos: readonly number[]): Promise<any[]> => {
+export const fetchPedidosForRepresentantes = async (numeroPedidos: number[] | string[]): Promise<any[]> => {
   try {
     // Convert numbers to strings for Supabase query
     const numeroPedidosStrings = numeroPedidos.map(numero => String(numero));
@@ -67,7 +67,7 @@ export const fetchPedidosForRepresentantes = async (numeroPedidos: readonly numb
   }
 };
 
-export const fetchRepresentantesInfo = async (representantesCodigos: readonly number[]): Promise<any[]> => {
+export const fetchRepresentantesInfo = async (representantesCodigos: number[] | string[]): Promise<any[]> => {
   try {
     // Convert numbers to strings for Supabase query
     const representantesCodigosStrings = representantesCodigos.map(codigo => String(codigo));
