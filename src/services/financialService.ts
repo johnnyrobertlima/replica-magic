@@ -33,11 +33,22 @@ export const fetchFinancialTitles = async (clientesCodigos: Array<string | numbe
   return data || [];
 };
 
-export const fetchRepresentantesInfo = async () => {
+export const fetchRepresentantesInfo = async (representantesCodigos?: Array<string | number>) => {
   try {
-    const { data: representantesData, error: representantesError } = await supabase
+    if (representantesCodigos && representantesCodigos.length === 0) {
+      return [];
+    }
+
+    let query = supabase
       .from('BLUEBAY_REPRESENTANTE')
       .select('PES_CODIGO');
+    
+    if (representantesCodigos) {
+      const stringRepresentantesCodigos = representantesCodigos.map(String);
+      query = query.in('PES_CODIGO', stringRepresentantesCodigos);
+    }
+
+    const { data: representantesData, error: representantesError } = await query;
 
     if (representantesError) throw representantesError;
 
@@ -45,12 +56,12 @@ export const fetchRepresentantesInfo = async () => {
       return [];
     }
 
-    const representantesCodigos = representantesData.map(rep => String(rep.PES_CODIGO));
+    const representantesCodigos2 = representantesData.map(rep => String(rep.PES_CODIGO));
 
     const { data: pessoasData, error: pessoasError } = await supabase
       .from('BLUEBAY_PESSOA')
       .select('PES_CODIGO, APELIDO, RAZAOSOCIAL')
-      .in('PES_CODIGO', representantesCodigos);
+      .in('PES_CODIGO', representantesCodigos2);
 
     if (pessoasError) throw pessoasError;
 
@@ -94,4 +105,57 @@ export const fetchValoresVencidos = async (clienteCodigo: string | number): Prom
     console.error('Error fetching valores vencidos:', error);
     return 0;
   }
+};
+
+// Add the missing processClientsData function
+export const processClientsData = (
+  clientes: any[],
+  clienteSeparacoes: Record<number, any[]>,
+  clienteToRepresentanteMap: Map<number, number>,
+  representantesInfo: Map<number, string>,
+  titulos: any[],
+  today: Date
+): ClienteFinanceiro[] => {
+  if (!clientes || clientes.length === 0) {
+    return [];
+  }
+  
+  return clientes.map(cliente => {
+    // Get the PES_CODIGO as number
+    const clienteCodigo = Number(cliente.PES_CODIGO);
+    
+    // Get separacoes for the client
+    const separacoes = clienteSeparacoes[clienteCodigo] || [];
+    
+    // Get representante info
+    const representanteCodigo = clienteToRepresentanteMap.get(clienteCodigo);
+    const representanteNome = representanteCodigo ? representantesInfo.get(representanteCodigo) : null;
+    
+    // Get titulos for the client
+    const clienteTitulos = titulos.filter(titulo => String(titulo.PES_CODIGO) === String(clienteCodigo));
+    
+    // Calculate financial values
+    const valoresTotais = clienteTitulos.reduce((acc, titulo) => acc + (titulo.VLRTITULO || 0), 0);
+    const valoresEmAberto = clienteTitulos.reduce((acc, titulo) => acc + (titulo.VLRSALDO || 0), 0);
+    
+    // Calculate valores vencidos
+    const valoresVencidos = clienteTitulos
+      .filter(titulo => {
+        const dtVencimento = titulo.DTVENCIMENTO ? new Date(titulo.DTVENCIMENTO) : null;
+        return dtVencimento && dtVencimento < today && titulo.VLRSALDO > 0;
+      })
+      .reduce((acc, titulo) => acc + (titulo.VLRSALDO || 0), 0);
+    
+    // Create the ClienteFinanceiro object
+    return {
+      PES_CODIGO: clienteCodigo,
+      APELIDO: cliente.APELIDO,
+      volume_saudavel_faturamento: cliente.volume_saudavel_faturamento,
+      valoresTotais,
+      valoresEmAberto,
+      valoresVencidos,
+      separacoes,
+      representanteNome
+    };
+  });
 };

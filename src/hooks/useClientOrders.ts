@@ -50,11 +50,12 @@ export const useClientOrders = () => {
   // Group orders by client
   const groupedOrders = useMemo(() => groupOrdersByClient(fullOrdersData), [fullOrdersData]);
 
-  // Filter groups by search criteria
-  const filteredGroups = useMemo(() => 
-    filterGroupsBySearchCriteria(groupedOrders, isSearching, searchQuery, searchType), 
-    [groupedOrders, isSearching, searchQuery, searchType]
-  );
+  // Filter groups by search criteria - mapping the searchType to correct expected value
+  const filteredGroups = useMemo(() => {
+    // Map 'cliente' to 'client' to fix the type error
+    const mappedSearchType = searchType === 'cliente' ? 'client' : searchType;
+    return filterGroupsBySearchCriteria(groupedOrders, isSearching, searchQuery, mappedSearchType);
+  }, [groupedOrders, isSearching, searchQuery, searchType]);
 
   // Use the item selection hook
   const {

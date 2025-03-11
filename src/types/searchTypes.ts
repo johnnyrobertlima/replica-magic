@@ -1,2 +1,3 @@
 
-export type SearchType = "pedido" | "item" | "client";
+// Define the search type enum
+export type SearchType = "pedido" | "item" | "client" | "cliente";

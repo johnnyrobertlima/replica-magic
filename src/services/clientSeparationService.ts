@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import type { ClienteFinanceiro } from "@/types/financialClient";
 
@@ -24,15 +25,20 @@ export const sendOrdersForSeparation = async (selectedItems: string[], clienteDa
       return { success: false, error: "No matching items found in client separations" };
     }
 
+    // Get the client name
+    const clienteNome = clienteData.APELIDO || `Cliente ${clienteCodigo}`;
+
     // Create a new separation record
     const { data: separationData, error: separationError } = await supabase
       .from('separacoes')
       .insert({
         cliente_codigo: clienteCodigo,
+        cliente_nome: clienteNome,
         status: 'pending',
         created_at: new Date().toISOString(),
         valor_total: itemsToSeparate.reduce((sum, item) => 
-          sum + (item.valor_unitario * item.quantidade_pedida), 0)
+          sum + (item.valor_unitario * item.quantidade_pedida), 0),
+        quantidade_itens: itemsToSeparate.length
       })
       .select()
       .single();
@@ -42,14 +48,15 @@ export const sendOrdersForSeparation = async (selectedItems: string[], clienteDa
       return { success: false, error: separationError };
     }
 
-    // Create separation items
+    // Create separation items with all required fields
     const separationItems = itemsToSeparate.map(item => ({
       separacao_id: separationData.id,
       item_codigo: item.item_codigo,
       descricao: item.descricao,
-      quantidade_pedida: item.quantidade_pedida,
-      valor_unitario: item.valor_unitario,
-      pedido: item.pedido
+      quantidade_pedida: Number(item.quantidade_pedida),
+      valor_unitario: Number(item.valor_unitario),
+      pedido: item.pedido,
+      valor_total: Number(item.quantidade_pedida) * Number(item.valor_unitario)
     }));
 
     const { error: itemsError } = await supabase
@@ -68,7 +75,12 @@ export const sendOrdersForSeparation = async (selectedItems: string[], clienteDa
       if (item.id) {
         await supabase
           .from('separacao_itens')
-          .update({ status: 'in_separation' })
+          .update({ 
+            // Only include properties that exist in the table
+            descricao: item.descricao,
+            quantidade_pedida: item.quantidade_pedida,
+            valor_unitario: item.valor_unitario
+          })
           .eq('id', item.id);
       }
     }

@@ -19,4 +19,5 @@ export interface ClienteFinanceiro {
   valoresVencidos: number;
   separacoes: any[]; // Separações associadas a este cliente
   representanteNome: string | null; // Campo adicional para o nome do representante
+  volumeSaudavel?: number | null; // Optional for backward compatibility
 }

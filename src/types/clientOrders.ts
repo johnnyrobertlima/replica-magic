@@ -1,34 +1,17 @@
 
 import type { DateRange } from "react-day-picker";
-import type { SearchType } from "@/components/jab-orders/SearchFilters";
-import type { JabOrder, JabOrderItem } from "@/types/jabOrders";
-import type { SearchState } from "@/hooks/client-orders/useClientOrdersSearch";
+import type { SearchType } from "./searchTypes";
 
-export interface ClientOrderGroup {
-  pedidos: JabOrder[];
-  totalQuantidadeSaldo: number;
-  totalValorSaldo: number;
-  totalValorPedido: number;
-  totalValorFaturado: number;
-  totalValorFaturarComEstoque: number;
-  representante: string | null;
-  allItems: (JabOrderItem & {
-    pedido: string;
-    APELIDO: string | null;
-    PES_CODIGO: number;
-  })[];
-  PES_CODIGO: number;
-}
-
-export interface ClientOrdersState extends SearchState {
+export interface ClientOrdersState {
+  date: DateRange | undefined;
+  searchDate: DateRange | undefined;
+  searchQuery: string;
+  searchType: SearchType;
+  isSearching: boolean;
   expandedClients: Set<string>;
   showZeroBalance: boolean;
   showOnlyWithStock: boolean;
   selectedItems: string[];
-  selectedItemsDetails: Record<string, { qtde: number; valor: number }>;
+  selectedItemsDetails: Record<string, any>;
   isSending: boolean;
-}
-
-export interface ClientOrdersTotals {
-  totalSelecionado: number;
 }

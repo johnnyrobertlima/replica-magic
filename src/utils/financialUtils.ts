@@ -4,6 +4,7 @@ import {
   fetchFinancialTitles, 
   fetchPedidosForRepresentantes,
   fetchRepresentantesInfo,
+  fetchValoresVencidos,
   processClientsData
 } from '@/services/financialService';
 import { supabase } from "@/integrations/supabase/client";

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useSeparacoes } from "@/hooks/useSeparacoes";
 import { useToast } from "@/hooks/use-toast";
@@ -67,8 +68,13 @@ export const useClientesFinanceiros = () => {
           return;
         }
 
+        // Fetch titulos data for all clients
         const titulos = await fetchFinancialTitles(clientesCodigos);
-        const clientes = await fetchClientInfo(clientesCodigos);
+        
+        // Fetch client data
+        const clientesPromises = clientesCodigos.map(codigo => fetchClientInfo(codigo));
+        const clientesData = await Promise.all(clientesPromises);
+        const clientes = clientesData.filter(c => c !== null); // Filter out null values
 
         const clienteSeparacoes: Record<number, any[]> = {};
         separacoesPendentes.forEach(sep => {
