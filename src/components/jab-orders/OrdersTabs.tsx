@@ -28,7 +28,7 @@ export const OrdersTabs = ({ clientOrders }: OrdersTabsProps) => {
     totalSelecionado,
     toggleExpand,
     handleSearch,
-    handleItemSelect,
+    toggleItemSelection,
     handleEnviarParaSeparacao,
     exportSelectedItemsToExcel,
   } = clientOrders;
@@ -54,11 +54,11 @@ export const OrdersTabs = ({ clientOrders }: OrdersTabsProps) => {
           selectedItems={selectedItems}
           expandedClients={expandedClients}
           filteredGroups={filteredGroups}
-          totalSelecionado={totalSelecionado}
+          totalSelecionado={totalSelecionado.totalValor}
           isSending={isSending}
           toggleExpand={toggleExpand}
           handleSearch={handleSearch}
-          handleItemSelect={handleItemSelect}
+          handleItemSelect={toggleItemSelection}
           handleEnviarParaSeparacao={handleEnviarParaSeparacao}
           exportSelectedItemsToExcel={exportSelectedItemsToExcel}
         />

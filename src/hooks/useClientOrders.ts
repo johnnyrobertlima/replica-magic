@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrdersState } from "./useOrdersState";
@@ -21,16 +22,16 @@ export const useClientOrders = () => {
     ordersData,
     totals,
     filteredOrders,
-    selectedItemsTotals: totalSelecionado,
+    selectedItemsTotals,
     isLoading: isLoadingOrders,
     handleItemSelect,
     handleSearch,
-    handleEnviarParaSeparacao,
     toggleExpand,
-    exportSelectedItemsToExcel,
-    sendToSeparacao,
     expandedClients,
     filteredGroups,
+    exportSelectedItemsToExcel,
+    sendToSeparacao,
+    handleEnviarParaSeparacao,
     error
   } = useOrdersState();
 
@@ -55,8 +56,6 @@ export const useClientOrders = () => {
           }
         }
       });
-      
-      
     }
   }, [clientesFinanceiros, filteredGroups]);
   
@@ -94,7 +93,7 @@ export const useClientOrders = () => {
     exportSelectedItemsToExcel,
     sendToSeparacao,
     totals,
-    totalSelecionado,
+    totalSelecionado: selectedItemsTotals,
     handleEnviarParaSeparacao,
     separacoes: []
   };
