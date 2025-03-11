@@ -126,7 +126,7 @@ export const getClientById = async (clientId: number | string) => {
       .single();
       
     if (error) throw error;
-    return data as unknown as ClienteFinanceiro;
+    return data as ClienteFinanceiro;
   } catch (error) {
     console.error("Error fetching client data:", error);
     throw error;

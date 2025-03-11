@@ -99,5 +99,5 @@ export const fetchClientsByRepIds = async (repIds: (number | string)[]) => {
     .in("REP_CODIGO", repIdStrings);
 
   if (error) throw error;
-  return data || [];
+  return (data || []) as any[];
 };
