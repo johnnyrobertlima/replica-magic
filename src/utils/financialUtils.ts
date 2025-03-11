@@ -116,10 +116,13 @@ export const getClientById = async (clientId: number | string) => {
       throw new Error(`Invalid client ID: ${clientId}`);
     }
     
+    // Convert to string for the query as PES_CODIGO is stored as text
+    const clientIdStr = String(numericClientId);
+    
     const { data, error } = await supabase
       .from("BLUEBAY_PESSOA")
       .select("*")
-      .eq("PES_CODIGO", String(numericClientId))
+      .eq("PES_CODIGO", clientIdStr)
       .single();
       
     if (error) throw error;
