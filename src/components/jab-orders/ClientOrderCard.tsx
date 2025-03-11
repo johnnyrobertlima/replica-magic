@@ -2,11 +2,14 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import { OrderProgressBars } from "./OrderProgressBars";
 import { OrderSummaryGrid } from "./OrderSummaryGrid";
 import { ClientOrderFilters } from "./ClientOrderFilters";
 import { ClientOrderItemsTable } from "./ClientOrderItemsTable";
+import { ClienteFinanceiroInfo } from "./ClienteFinanceiroInfo";
+import { VolumeSaudavelDialog } from "./VolumeSaudavelDialog";
+import { updateVolumeSaudavel } from "@/utils/financialUtils";
 
 interface ClientOrderCardProps {
   clientName: string;
@@ -50,6 +53,19 @@ export const ClientOrderCard = ({
     setLocalShowOnlyWithStock(checked);
   };
 
+  // Get client financial data if available
+  const clienteFinanceiro = data.clienteFinanceiro || {
+    valoresTotais: 0,
+    valoresEmAberto: 0,
+    valoresVencidos: 0,
+    volume_saudavel_faturamento: null,
+    PES_CODIGO: data.clienteCodigo
+  };
+
+  const handleUpdateVolumeSaudavel = async (clienteCodigo: number, valor: number) => {
+    return await updateVolumeSaudavel(clienteCodigo, valor);
+  };
+
   return (
     <Card 
       className={cn(
@@ -58,29 +74,54 @@ export const ClientOrderCard = ({
       )}
     >
       <CardContent className="p-6">
-        <div 
-          className="flex items-center justify-between cursor-pointer"
-          onClick={onToggleExpand}
-        >
-          <div className="space-y-1">
-            <h3 className="text-lg font-semibold">Cliente: {clientName}</h3>
-            {data.representante && (
+        <div className="flex items-center justify-between">
+          <div 
+            className="flex-grow cursor-pointer"
+            onClick={onToggleExpand}
+          >
+            <div className="space-y-1">
+              <h3 className="text-lg font-semibold">Cliente: {clientName}</h3>
+              {data.representante && (
+                <p className="text-sm text-muted-foreground">
+                  Representante: {data.representante}
+                </p>
+              )}
               <p className="text-sm text-muted-foreground">
-                Representante: {data.representante}
+                Total de Pedidos: {pedidosCount}
               </p>
-            )}
-            <p className="text-sm text-muted-foreground">
-              Total de Pedidos: {pedidosCount}
-            </p>
+            </div>
           </div>
-          {isExpanded ? (
-            <ChevronUp className="h-6 w-6 text-muted-foreground" />
-          ) : (
-            <ChevronDown className="h-6 w-6 text-muted-foreground" />
+          
+          {clienteFinanceiro.PES_CODIGO && (
+            <div className="ml-4">
+              <VolumeSaudavelDialog
+                clienteNome={clientName}
+                clienteCodigo={clienteFinanceiro.PES_CODIGO}
+                valorAtual={clienteFinanceiro.volume_saudavel_faturamento}
+                onUpdate={handleUpdateVolumeSaudavel}
+              />
+            </div>
           )}
+          
+          <div className="ml-2 cursor-pointer" onClick={onToggleExpand}>
+            {isExpanded ? (
+              <ChevronUp className="h-6 w-6 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-6 w-6 text-muted-foreground" />
+            )}
+          </div>
         </div>
 
         <div className="mt-4 space-y-4">
+          {clienteFinanceiro && (
+            <ClienteFinanceiroInfo 
+              valoresTotais={clienteFinanceiro.valoresTotais || 0}
+              valoresEmAberto={clienteFinanceiro.valoresEmAberto || 0}
+              valoresVencidos={clienteFinanceiro.valoresVencidos || 0}
+              volumeSaudavel={clienteFinanceiro.volume_saudavel_faturamento}
+            />
+          )}
+
           <OrderProgressBars 
             progressFaturamento={progressFaturamento}
             progressPotencial={progressPotencial}

@@ -1,94 +1,87 @@
-
-import { useMemo } from "react";
-import { useAllJabOrders, useTotals } from "@/hooks/useJabOrders";
-import { useSeparacoes } from "@/hooks/useSeparacoes";
-import { groupOrdersByClient, filterGroupsBySearchCriteria } from "@/utils/clientOrdersUtils";
-import { useClientOrdersState } from "./client-orders/useClientOrdersState";
-import { useItemSelection } from "./client-orders/useItemSelection";
-import { useSeparationOperations } from "./client-orders/useSeparationOperations";
+import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useOrdersState } from "./useOrdersState";
+import { useClientesFinanceiros } from "./useClientesFinanceiros";
 
 export const useClientOrders = () => {
-  // Use the state hook
   const {
-    state,
-    setState,
+    orders,
+    isLoading: isLoadingOrders,
+    error,
     date,
-    searchDate,
-    expandedClients,
     searchQuery,
     searchType,
-    isSearching,
     showZeroBalance,
     showOnlyWithStock,
     selectedItems,
+    toggleItemSelection,
+    clearSelection,
     isSending,
-    setDate,
-    setSearchQuery,
-    setSearchType,
-    setShowZeroBalance,
-    setShowOnlyWithStock,
+    setIsSending,
+    currentPage,
+    itemsPerPage,
+    handleSearch,
+    filteredOrders,
+    filteredGroups,
+    expandedClients,
     toggleExpand,
-    handleSearch
-  } = useClientOrdersState();
-
-  // Data fetching hooks
-  const { data: ordersData = { orders: [], totalCount: 0, itensSeparacao: {} }, isLoading: isLoadingOrders } = useAllJabOrders({
-    dateRange: searchDate
-  });
-
-  const { data: totals = { valorTotalSaldo: 0, valorFaturarComEstoque: 0 }, isLoading: isLoadingTotals } = useTotals();
-
-  const { data: separacoes = [], isLoading: isLoadingSeparacoes } = useSeparacoes();
-
-  // Group orders by client
-  const groupedOrders = useMemo(() => groupOrdersByClient(ordersData), [ordersData]);
-
-  // Filter groups by search criteria
-  const filteredGroups = useMemo(() => 
-    filterGroupsBySearchCriteria(groupedOrders, isSearching, searchQuery, searchType), 
-    [groupedOrders, isSearching, searchQuery, searchType]
-  );
-
-  // Use the item selection hook
-  const {
-    totalSelecionado,
-    handleItemSelect,
-    exportSelectedItemsToExcel
-  } = useItemSelection(state, setState, filteredGroups);
-
-  // Use the separation operations hook
-  const {
-    handleEnviarParaSeparacao
-  } = useSeparationOperations(state, setState, groupedOrders);
+    exportSelectedItemsToExcel,
+    sendToSeparacao
+  } = useOrdersState();
+  
+  const { clientesFinanceiros, isLoading: isLoadingFinanceiros } = useClientesFinanceiros();
+  
+  const processClienteFinanceiro = useCallback(() => {
+    if (clientesFinanceiros.length > 0) {
+      const clienteFinanceiroMap = new Map();
+      clientesFinanceiros.forEach(cliente => {
+        clienteFinanceiroMap.set(cliente.PES_CODIGO, cliente);
+      });
+      
+      const updatedGroups = { ...filteredGroups };
+      
+      Object.keys(updatedGroups).forEach(clientName => {
+        const group = updatedGroups[clientName];
+        if (group.clienteCodigo) {
+          const financeiro = clienteFinanceiroMap.get(group.clienteCodigo);
+          if (financeiro) {
+            group.clienteFinanceiro = financeiro;
+          }
+        }
+      });
+      
+      
+    }
+  }, [clientesFinanceiros, filteredGroups]);
+  
+  useEffect(() => {
+    processClienteFinanceiro();
+  }, [clientesFinanceiros, processClienteFinanceiro]);
+  
+  const isLoading = isLoadingOrders || isLoadingFinanceiros;
 
   return {
-    // State
+    orders,
+    isLoading,
+    error,
     date,
-    setDate,
     searchQuery,
-    setSearchQuery,
     searchType,
-    setSearchType,
     showZeroBalance,
-    setShowZeroBalance,
     showOnlyWithStock,
-    setShowOnlyWithStock,
     selectedItems,
-    expandedClients,
+    toggleItemSelection,
+    clearSelection,
     isSending,
-    // Data
-    ordersData,
-    totals,
-    separacoes,
-    filteredGroups,
-    totalSelecionado,
-    // Loading states
-    isLoading: isLoadingOrders || isLoadingTotals || isLoadingSeparacoes,
-    // Methods
-    toggleExpand,
+    setIsSending,
+    currentPage,
+    itemsPerPage,
     handleSearch,
-    handleItemSelect,
-    handleEnviarParaSeparacao,
+    filteredOrders,
+    filteredGroups,
+    expandedClients,
+    toggleExpand,
     exportSelectedItemsToExcel,
+    sendToSeparacao
   };
 };
