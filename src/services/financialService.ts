@@ -109,6 +109,14 @@ export const processClientsData = (
     const valoresTotais = titulosCliente.reduce((acc, titulo) => acc + (titulo.VLRTITULO || 0), 0);
     const valoresEmAberto = titulosCliente.reduce((acc, titulo) => acc + (titulo.VLRSALDO || 0), 0);
 
+    // Calculate vencidos
+    const valoresVencidos = titulosCliente
+      .filter(titulo => {
+        const dtVencimento = titulo.DTVENCIMENTO ? new Date(titulo.DTVENCIMENTO) : null;
+        return dtVencimento && dtVencimento < today && titulo.VLRSALDO > 0;
+      })
+      .reduce((acc, titulo) => acc + (titulo.VLRSALDO || 0), 0);
+
     return {
       ...cliente,
       separacoes: separacoes,
@@ -116,9 +124,9 @@ export const processClientsData = (
       representanteNome: representanteNome,
       valoresTotais: valoresTotais,
       valoresEmAberto: valoresEmAberto,
-      valoresVencidos: 0, // Initialize as 0, will be fetched later
-      volume_saudavel_faturamento: cliente.volume_saudavel_faturamento || null, // Ensure this field is included
-      volumeSaudavel: cliente.volume_saudavel_faturamento || null // Add volumeSaudavel property explicitly
+      valoresVencidos: valoresVencidos,
+      volume_saudavel_faturamento: cliente.volume_saudavel_faturamento || null,
+      volumeSaudavel: cliente.volume_saudavel_faturamento || null
     };
   });
 };

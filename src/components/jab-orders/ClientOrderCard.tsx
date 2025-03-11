@@ -50,6 +50,12 @@ export const ClientOrderCard = ({
     setLocalShowOnlyWithStock(checked);
   };
 
+  // Format currency
+  const formatCurrency = (value: number | null | undefined) => {
+    if (value === null || value === undefined) return 'N/A';
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+  };
+
   return (
     <Card 
       className={cn(
@@ -64,9 +70,9 @@ export const ClientOrderCard = ({
         >
           <div className="space-y-1">
             <h3 className="text-lg font-semibold">Cliente: {clientName}</h3>
-            {data.representante && (
+            {data.representanteNome && (
               <p className="text-sm text-muted-foreground">
-                Representante: {data.representante}
+                Representante: {data.representanteNome}
               </p>
             )}
             <p className="text-sm text-muted-foreground">
@@ -74,7 +80,12 @@ export const ClientOrderCard = ({
             </p>
             {data.volumeSaudavel !== undefined && data.volumeSaudavel !== null && (
               <p className="text-sm text-muted-foreground">
-                Volume Saudável: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(data.volumeSaudavel)}
+                Volume Saudável: {formatCurrency(data.volumeSaudavel)}
+              </p>
+            )}
+            {data.valoresVencidos !== undefined && (
+              <p className={`text-sm ${data.valoresVencidos > 0 ? 'text-red-500 font-medium' : 'text-muted-foreground'}`}>
+                Valores Vencidos: {formatCurrency(data.valoresVencidos)}
               </p>
             )}
           </div>
