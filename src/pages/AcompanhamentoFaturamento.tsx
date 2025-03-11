@@ -1,6 +1,6 @@
-
-import { Loader2, FileText } from "lucide-react";
+import { Loader2, FileText, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/toaster";
 import { useApprovedOrders } from "@/hooks/useApprovedOrders";
 import { ApprovedOrdersCockpit } from "@/components/jab-orders/ApprovedOrdersCockpit";
@@ -10,6 +10,7 @@ import { MonthFilterSelect } from "@/components/jab-orders/MonthFilterSelect";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState, useEffect } from "react";
+import { formatCurrency } from "@/lib/utils";
 
 const AcompanhamentoFaturamento = () => {
   const { 
@@ -51,6 +52,60 @@ const AcompanhamentoFaturamento = () => {
 
   const handleExpandToggle = (id: string) => {
     setExpandedCard(expandedCard === id ? null : id);
+  };
+
+  const handleExportCard = (order: any) => {
+    const clienteData = order.clienteData;
+    const approvedSeparacao = order.clienteData.separacoes.find(
+      sep => sep.id === order.separacaoId
+    );
+
+    if (!approvedSeparacao) return;
+
+    const clientInfo = {
+      'Cliente': clienteData.APELIDO || 'N/A',
+      'Código Cliente': clienteData.PES_CODIGO || 'N/A',
+      'Representante': clienteData.representanteNome || 'N/A',
+      'Volume Saudável': clienteData.volumeSaudavel ? formatCurrency(clienteData.volumeSaudavel) : 'N/A',
+      'Valores Totais': formatCurrency(clienteData.valoresTotais),
+      'Valores em Aberto': formatCurrency(clienteData.valoresEmAberto),
+      'Valores Vencidos': formatCurrency(clienteData.valoresVencidos),
+      'Data de Aprovação': order.approvedAt.toLocaleString('pt-BR')
+    };
+
+    const items = approvedSeparacao.separacao_itens.map((item: any) => ({
+      'Pedido': item.pedido,
+      'Código do Item': item.ITEM_CODIGO,
+      'Descrição': item.DESCRICAO || 'N/A',
+      'Quantidade Pedida': item.QTDE_PEDIDA,
+      'Quantidade Saldo': item.QTDE_SALDO,
+      'Valor Unitário': formatCurrency(item.VALOR_UNITARIO),
+      'Valor Total': formatCurrency(item.QTDE_SALDO * item.VALOR_UNITARIO)
+    }));
+
+    const clientHeaders = Object.keys(clientInfo);
+    const itemHeaders = Object.keys(items[0] || {});
+
+    const csvContent = [
+      'INFORMAÇÕES DO CLIENTE',
+      clientHeaders.map(header => `"${header}"`).join(','),
+      Object.values(clientInfo).map(value => `"${value}"`).join(','),
+      '',
+      'ITENS DO PEDIDO',
+      itemHeaders.map(header => `"${header}"`).join(','),
+      ...items.map(item => 
+        Object.values(item).map(value => `"${value}"`).join(',')
+      )
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `pedido-${clienteData.APELIDO}-${format(order.approvedAt, 'dd-MM-yyyy')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   if (isLoading) {
@@ -125,11 +180,22 @@ const AcompanhamentoFaturamento = () => {
                           Aprovado em: {order.approvedAt.toLocaleString('pt-BR')}
                         </p>
                       </div>
-                      <div 
-                        className="bg-green-100 text-green-800 font-medium py-1 px-3 rounded-full text-xs cursor-pointer"
-                        onClick={() => handleExpandToggle(order.separacaoId)}
-                      >
-                        {isExpanded ? 'Recolher' : 'Expandir'}
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleExportCard(order)}
+                          className="flex items-center gap-1"
+                        >
+                          <Download className="h-4 w-4" />
+                          Exportar
+                        </Button>
+                        <div 
+                          className="bg-green-100 text-green-800 font-medium py-1 px-3 rounded-full text-xs cursor-pointer"
+                          onClick={() => handleExpandToggle(order.separacaoId)}
+                        >
+                          {isExpanded ? 'Recolher' : 'Expandir'}
+                        </div>
                       </div>
                     </div>
                   </CardHeader>
