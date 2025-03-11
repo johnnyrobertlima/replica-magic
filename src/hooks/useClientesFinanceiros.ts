@@ -54,12 +54,19 @@ export const useClientesFinanceirosByIds = (clienteIds: (number | string)[]) => 
         const clientesEnriquecidos = await Promise.all(
           clientes.map(async (cliente) => {
             const financialData = await loadClientFinancialData(cliente.PES_CODIGO);
-            return {
+            
+            // Construct a properly typed ClienteFinanceiro object
+            const enrichedClient: ClienteFinanceiro = {
               ...cliente,
-              ...financialData,
+              PES_CODIGO: Number(cliente.PES_CODIGO),
+              valoresTotais: financialData.valoresTotais,
+              valoresEmAberto: financialData.valoresEmAberto,
+              valoresVencidos: financialData.valoresVencidos,
               separacoes: [],  // Default empty array
               representanteNome: null  // Default null
-            } as ClienteFinanceiro;
+            };
+            
+            return enrichedClient;
           })
         );
         

@@ -37,7 +37,4 @@ export interface ClienteFinanceiro {
   RAZAOSOCIAL?: string | null;
   TELEFONE?: string | null;
   UF?: string | null;
-  
-  // Add LIMITE_CREDITO for AprovacaoFinanceira.tsx
-  LIMITE_CREDITO?: number | null;
 }

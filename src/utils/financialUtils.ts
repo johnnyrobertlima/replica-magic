@@ -121,12 +121,14 @@ export const getClientById = async (clientId: number | string) => {
     
     const { data, error } = await supabase
       .from("BLUEBAY_PESSOA")
-      .select("PES_CODIGO, APELIDO, RAZAOSOCIAL, EMAIL, TELEFONE, CIDADE, UF, volume_saudavel_faturamento, BAIRRO, CATEGORIA, CEP, CNPJCPF, COMPLEMENTO, DATACADASTRO, ENDERECO, INSCRICAO_ESTADUAL, NOME_CATEGORIA, NUMERO, LIMITE_CREDITO")
+      .select("PES_CODIGO, APELIDO, RAZAOSOCIAL, EMAIL, TELEFONE, CIDADE, UF, volume_saudavel_faturamento, BAIRRO, CATEGORIA, CEP, CNPJCPF, COMPLEMENTO, DATACADASTRO, ENDERECO, INSCRICAO_ESTADUAL, NOME_CATEGORIA, NUMERO")
       .eq("PES_CODIGO", clientIdStr)
       .single();
       
     if (error) throw error;
-    return data as ClienteFinanceiro;
+    
+    // Cast the data to ClienteFinanceiro to ensure type compatibility
+    return data as unknown as ClienteFinanceiro;
   } catch (error) {
     console.error("Error fetching client data:", error);
     throw error;
