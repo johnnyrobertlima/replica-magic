@@ -12,12 +12,13 @@ export function useBanners() {
         .select("*")
         .eq("page", "home")
         .order("created_at", { ascending: false });
+      
       if (error) {
         console.error("Error fetching banners:", error);
         throw error;
       }
-      // Use a type assertion with a more specific type to avoid deep instantiation
-      return (data || []) as Array<Banner>;
+      
+      return (data || []) as Banner[];
     },
   });
 }

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { ClienteFinanceiro } from "@/types/financialClient";
 
@@ -35,7 +34,6 @@ export const processClientsData = (clients: any[]) => {
 
 // Fetch multiple clients by their IDs
 export const fetchClientsByIds = async (clientIds: (number | string)[]) => {
-  // Convert array of potentially string IDs to numbers
   const numericClientIds = clientIds.map(id => 
     typeof id === 'string' ? parseInt(id, 10) : id
   ).filter(id => !isNaN(id));
@@ -47,11 +45,10 @@ export const fetchClientsByIds = async (clientIds: (number | string)[]) => {
   const { data, error } = await supabase
     .from("BLUEBAY_PESSOA")
     .select("*")
-    .in("PES_CODIGO", numericClientIds);
+    .in("PES_CODIGO", numericClientIds.map(String));
 
   if (error) throw error;
-  // Return as an explicit array type to avoid deep instantiation
-  return (data || []) as Array<any>;
+  return data as any[];
 };
 
 // Fetch all clients

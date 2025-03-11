@@ -1,4 +1,3 @@
-
 import { 
   fetchClient, 
   fetchAllClients,
@@ -26,22 +25,18 @@ export const calcularValoresVencidos = (titulos: any[], today: Date): number => 
 };
 
 export const loadClientFinancialData = async (clientId: number | string) => {
-  // Convert clientId to number if it's a string
-  const numericClientId = typeof clientId === 'string' ? parseInt(clientId, 10) : clientId;
-  
   try {
-    // Fetch financial titles for the client
+    const clientIdStr = String(clientId);
+    
     const { data: titulos = [], error } = await supabase
       .from("BLUEBAY_TITULO")
       .select("*")
-      .eq("PES_CODIGO", String(numericClientId));
+      .eq("PES_CODIGO", clientIdStr);
     
     if (error) throw error;
     
-    // Calculate today's date for valores vencidos calculation
     const today = new Date();
     
-    // Calculate financial values
     const valoresTotais = titulos.reduce((acc, titulo) => acc + (titulo.VLRTITULO || 0), 0);
     const valoresEmAberto = titulos.reduce((acc, titulo) => acc + (titulo.VLRSALDO || 0), 0);
     const valoresVencidos = calcularValoresVencidos(titulos, today);
@@ -71,7 +66,6 @@ export const getClientesCodigos = (separacoes: any[]) => {
 
 export const updateVolumeSaudavel = async (clienteCodigo: number | string, valor: number) => {
   try {
-    // When passing to Supabase, convert numeric clienteCodigo to string
     const clienteCodigoStr = typeof clienteCodigo === 'number' ? String(clienteCodigo) : clienteCodigo;
     
     const { data, error } = await supabase
@@ -93,11 +87,9 @@ export const updateVolumeSaudavel = async (clienteCodigo: number | string, valor
 };
 
 export const fetchTitulosVencidos = async (clientId: number | string) => {
-  // Convert clientId to number if it's a string
   const numericClientId = typeof clientId === 'string' ? parseInt(clientId, 10) : clientId;
   
   try {
-    // When passing to Supabase, convert the numeric ID to string
     const clientIdStr = String(numericClientId);
     
     let { data, error } = await supabase
@@ -117,10 +109,8 @@ export const fetchTitulosVencidos = async (clientId: number | string) => {
 
 export const getClientById = async (clientId: number | string) => {
   try {
-    // Convert to number if it's a string
     const numericClientId = typeof clientId === 'string' ? parseInt(clientId, 10) : clientId;
     
-    // Check if the ID is valid
     if (isNaN(numericClientId)) {
       throw new Error(`Invalid client ID: ${clientId}`);
     }
