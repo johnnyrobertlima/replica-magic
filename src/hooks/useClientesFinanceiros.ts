@@ -24,10 +24,12 @@ export const useClienteFinanceiro = (clienteId: number | string | undefined) => 
         // Load financial data
         const financialData = await loadClientFinancialData(clienteId);
         
-        // Return combined data
+        // Return combined data with default empty values for required fields
         return {
           ...cliente,
-          ...financialData
+          ...financialData,
+          separacoes: [],  // Default empty array for separacoes
+          representanteNome: null  // Default null for representanteNome
         } as ClienteFinanceiro;
       } catch (error) {
         console.error("Error fetching cliente financeiro:", error);
@@ -54,7 +56,9 @@ export const useClientesFinanceirosByIds = (clienteIds: (number | string)[]) => 
             const financialData = await loadClientFinancialData(cliente.PES_CODIGO);
             return {
               ...cliente,
-              ...financialData
+              ...financialData,
+              separacoes: [],  // Default empty array
+              representanteNome: null  // Default null
             } as ClienteFinanceiro;
           })
         );

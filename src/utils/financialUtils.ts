@@ -71,10 +71,13 @@ export const getClientesCodigos = (separacoes: any[]) => {
 
 export const updateVolumeSaudavel = async (clienteCodigo: number | string, valor: number) => {
   try {
+    // When passing to Supabase, convert numeric clienteCodigo to string
+    const clienteCodigoStr = typeof clienteCodigo === 'number' ? String(clienteCodigo) : clienteCodigo;
+    
     const { data, error } = await supabase
       .from('BLUEBAY_PESSOA')
       .update({ volume_saudavel_faturamento: valor })
-      .eq('PES_CODIGO', String(clienteCodigo))
+      .eq('PES_CODIGO', clienteCodigoStr)
       .select();
 
     if (error) {
@@ -94,10 +97,13 @@ export const fetchTitulosVencidos = async (clientId: number | string) => {
   const numericClientId = typeof clientId === 'string' ? parseInt(clientId, 10) : clientId;
   
   try {
+    // When passing to Supabase, convert the numeric ID to string
+    const clientIdStr = String(numericClientId);
+    
     let { data, error } = await supabase
       .from('BLUEBAY_TITULO')
       .select('*')
-      .eq('PES_CODIGO', String(numericClientId))
+      .eq('PES_CODIGO', clientIdStr)
       .lt('DTVENCIMENTO', new Date().toISOString());
 
     if (error) throw error;

@@ -20,4 +20,24 @@ export interface ClienteFinanceiro {
   separacoes: any[]; // Separações associadas a este cliente
   representanteNome: string | null; // Campo adicional para o nome do representante
   volumeSaudavel?: number | null; // Optional for backward compatibility
+  
+  // Add all other BLUEBAY_PESSOA fields as optional to avoid type errors
+  BAIRRO?: string | null;
+  CATEGORIA?: string | null;
+  CEP?: string | null;
+  CIDADE?: string | null;
+  CNPJCPF?: string | null;
+  COMPLEMENTO?: string | null;
+  DATACADASTRO?: string | null;
+  EMAIL?: string | null;
+  ENDERECO?: string | null;
+  INSCRICAO_ESTADUAL?: string | null;
+  NOME_CATEGORIA?: string | null;
+  NUMERO?: string | null;
+  RAZAOSOCIAL?: string | null;
+  TELEFONE?: string | null;
+  UF?: string | null;
+  
+  // Add LIMITE_CREDITO for AprovacaoFinanceira.tsx
+  LIMITE_CREDITO?: number | null;
 }
