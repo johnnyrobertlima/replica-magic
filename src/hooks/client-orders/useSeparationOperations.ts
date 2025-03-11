@@ -38,7 +38,7 @@ export const useSeparationOperations = (
         valoresTotais: clientData.valoresTotais || 0,
         valoresEmAberto: clientData.valoresEmAberto || 0,
         valoresVencidos: clientData.valoresVencidos || 0,
-        separacoes: [{ separacao_itens: clientData.allItems || [] }],
+        separacoes: clientData.allItems ? [{ separacao_itens: clientData.allItems }] : [],
         representanteNome: clientData.representanteNome || null
       };
 

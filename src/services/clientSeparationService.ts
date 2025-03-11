@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { JabOrdersResponse } from "@/types/jabOrders";
+import { ClienteFinanceiro } from "@/types/financialClient";
 
 // Fetch estoque data for a specific item
 export const getEstoqueForItem = async (itemCodigo: string) => {
@@ -46,24 +47,22 @@ export const getItemsWithEstoque = async () => {
 // Send orders for separation
 export const sendOrdersForSeparation = async (
   orderIds: string[],
-  selectedItems: Record<string, string[]>
+  clienteFinanceiro: ClienteFinanceiro
 ) => {
   try {
-    // Implementation for sending orders for separation
-    // This is a placeholder since the actual implementation depends on your requirements
-    console.log('Sending orders for separation:', orderIds, selectedItems);
+    console.log('Sending orders for separation:', orderIds, clienteFinanceiro);
     
-    // Replace with actual API call or database operation
+    // Create a proper separation record
     const { data, error } = await supabase
       .from('separacoes')
-      .insert(
-        orderIds.map(orderId => ({
-          order_id: orderId,
-          items: selectedItems[orderId] || [],
-          status: 'pending',
-          created_at: new Date().toISOString()
-        }))
-      );
+      .insert({
+        cliente_codigo: clienteFinanceiro.PES_CODIGO,
+        cliente_nome: clienteFinanceiro.APELIDO || `Cliente ${clienteFinanceiro.PES_CODIGO}`,
+        status: 'pending',
+        created_at: new Date().toISOString(),
+        quantidade_itens: orderIds.length,
+        valor_total: clienteFinanceiro.valoresEmAberto || 0
+      });
       
     if (error) throw error;
     

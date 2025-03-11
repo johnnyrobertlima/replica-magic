@@ -1,8 +1,8 @@
+
 import { useState, useEffect } from "react";
 import { useClienteFinanceiro } from "@/hooks/useClientesFinanceiros";
-import { useRouter } from 'next/router';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { DataTable } from "@/components/ui/data-table";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { SeparacaoDePedidos } from "@/components/SeparacaoDePedidos";
@@ -11,7 +11,7 @@ import { fetchTitulosVencidos } from "@/utils/financialUtils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft } from "lucide-react";
-import { formatCurrency } from "@/utils/currencyUtils";
+import { formatCurrency } from "@/lib/utils";
 
 interface Titulo {
   BOL_CODIGO: number;
@@ -19,14 +19,16 @@ interface Titulo {
   BOL_DATAVENCIMENTO: string;
   BOL_VALOR: number;
   BOL_SITUACAO: string;
+  DTVENCIMENTO: string;
+  VLRSALDO: number;
 }
 
 const AprovacaoFinanceira = () => {
-  const router = useRouter();
-  const { clienteId } = router.query;
+  const navigate = useNavigate();
+  const { clienteId } = useParams();
   const [cliente, setCliente] = useState<ClienteFinanceiro | null>(null);
-  const [titulosVencidos, setTitulosVencidos] = useState<Titulo[] | null>(null);
-  const { data, isLoading, isError } = useClienteFinanceiro(clienteId as string);
+  const [titulosVencidos, setTitulosVencidos] = useState<Titulo[]>([]);
+  const { data, isLoading, isError } = useClienteFinanceiro(clienteId);
   const [showSeparacaoPedidos, setShowSeparacaoPedidos] = useState(false);
 
   useEffect(() => {
@@ -40,7 +42,7 @@ const AprovacaoFinanceira = () => {
       if (clienteId) {
         try {
           const titulos = await fetchTitulosVencidos(clienteId);
-          setTitulosVencidos(titulos);
+          setTitulosVencidos(titulos as Titulo[]);
         } catch (error) {
           console.error("Erro ao carregar títulos vencidos:", error);
         }
@@ -51,7 +53,7 @@ const AprovacaoFinanceira = () => {
   }, [clienteId]);
 
   const handleGoBack = () => {
-    router.back();
+    navigate(-1);
   };
 
   const handleAprovarCliente = () => {
@@ -69,32 +71,6 @@ const AprovacaoFinanceira = () => {
   const handleCloseSeparacaoPedidos = () => {
     setShowSeparacaoPedidos(false);
   };
-
-  const columns = [
-    {
-      accessorKey: 'BOL_CODIGO',
-      header: 'Código',
-    },
-    {
-      accessorKey: 'BOL_DATAEMISSAO',
-      header: 'Data de Emissão',
-      cell: ({ row }) => format(new Date(row.BOL_DATAEMISSAO), 'dd/MM/yyyy', { locale: ptBR }),
-    },
-    {
-      accessorKey: 'BOL_DATAVENCIMENTO',
-      header: 'Data de Vencimento',
-      cell: ({ row }) => format(new Date(row.BOL_DATAVENCIMENTO), 'dd/MM/yyyy', { locale: ptBR }),
-    },
-    {
-      accessorKey: 'BOL_VALOR',
-      header: 'Valor',
-      cell: ({ row }) => formatCurrency(row.BOL_VALOR),
-    },
-    {
-      accessorKey: 'BOL_SITUACAO',
-      header: 'Situação',
-    },
-  ];
 
   if (isLoading) return <div>Carregando...</div>;
   if (isError) return <div>Erro ao carregar dados.</div>;
@@ -124,10 +100,6 @@ const AprovacaoFinanceira = () => {
               <p>{cliente.APELIDO}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-sm font-medium">Limite de Crédito</p>
-              <p>{formatCurrency(cliente.LIMITE_CREDITO)}</p>
-            </div>
-            <div className="space-y-1">
               <p className="text-sm font-medium">Total em Aberto</p>
               <p>{formatCurrency(cliente.valoresEmAberto)}</p>
             </div>
@@ -144,7 +116,28 @@ const AprovacaoFinanceira = () => {
           <div>
             <h2 className="text-xl font-semibold mb-2">Títulos Vencidos</h2>
             {titulosVencidos && titulosVencidos.length > 0 ? (
-              <DataTable columns={columns} data={titulosVencidos} />
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr>
+                      <th className="text-left p-2">Código</th>
+                      <th className="text-left p-2">Data de Vencimento</th>
+                      <th className="text-left p-2">Valor</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {titulosVencidos.map((titulo) => (
+                      <tr key={titulo.BOL_CODIGO}>
+                        <td className="p-2">{titulo.BOL_CODIGO}</td>
+                        <td className="p-2">
+                          {titulo.DTVENCIMENTO ? format(new Date(titulo.DTVENCIMENTO), 'dd/MM/yyyy', { locale: ptBR }) : 'N/A'}
+                        </td>
+                        <td className="p-2">{formatCurrency(titulo.VLRSALDO)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             ) : (
               <Badge variant="secondary">Nenhum título vencido encontrado.</Badge>
             )}

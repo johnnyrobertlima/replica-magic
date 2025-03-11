@@ -1,3 +1,4 @@
+
 import { 
   fetchClient, 
   fetchAllClients,
@@ -95,16 +96,16 @@ export const fetchTitulosVencidos = async (clientId: number | string) => {
   try {
     let { data, error } = await supabase
       .from('BLUEBAY_TITULO')
-      .select('VLRSALDO')
+      .select('*')
       .eq('PES_CODIGO', numericClientId.toString())
       .lt('DTVENCIMENTO', new Date().toISOString());
 
     if (error) throw error;
 
-    return data?.reduce((acc, titulo) => acc + (titulo.VLRSALDO || 0), 0) || 0;
+    return data || [];
   } catch (error) {
     console.error('Error fetching titulos vencidos:', error);
-    return 0;
+    return [];
   }
 };
 

@@ -10,6 +10,7 @@ export function useBanners() {
       const { data, error } = await supabase
         .from("banners")
         .select("*")
+        .eq("page", "home")
         .order("created_at", { ascending: false });
       if (error) {
         console.error("Error fetching banners:", error);
