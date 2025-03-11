@@ -3,22 +3,19 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Banner } from "@/types/banner";
 
-export function useBanners() {
-  return useQuery<Banner[]>({
+export const useBanners = () => {
+  return useQuery({
     queryKey: ["banners"],
-    queryFn: async () => {
+    queryFn: async (): Promise<Banner[]> => {
       const { data, error } = await supabase
         .from("banners")
-        .select("id, title, description, button_text, button_link, image_url, youtube_url, is_active, duration")
-        .eq("page", "home")
-        .order("created_at", { ascending: false });
-      
+        .select("id, title, description, image_url, button_text, button_link, youtube_url, is_active, created_at, updated_at, duration");
+
       if (error) {
-        console.error("Error fetching banners:", error);
-        throw error;
+        throw new Error(`Error fetching banners: ${error.message}`);
       }
-      
+
       return data || [];
     },
   });
-}
+};
