@@ -105,7 +105,9 @@ export const fetchValoresVencidos = async (clienteCodigo: string | number): Prom
   console.log(`Buscando valores vencidos para cliente ${clienteCodigo}`);
   
   try {
+    // Ensure clienteCodigo is a string for the RPC call
     const clienteCodigoStr = clienteCodigo.toString();
+    
     const { data, error } = await supabase.rpc('calcular_valor_vencido', { 
       cliente_codigo: clienteCodigoStr 
     });

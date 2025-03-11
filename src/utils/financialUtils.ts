@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { ClienteFinanceiro, TituloFinanceiro } from "@/types/financialClient";
 
@@ -79,7 +80,9 @@ export const calculateClientFinancialValues = (
 // Função para buscar títulos vencidos diretamente do Supabase
 export const fetchTitulosVencidos = async (clienteCodigo: string | number): Promise<number> => {
   try {
+    // Ensure clienteCodigo is a string for the query
     const clienteCodigoStr = clienteCodigo.toString();
+    
     console.log(`Executando busca de títulos vencidos para cliente ${clienteCodigoStr}`);
     
     const { data, error, count } = await supabase
