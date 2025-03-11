@@ -47,10 +47,13 @@ export const fetchClientInfo = async (clienteCodigos: number[]): Promise<any[]> 
 
 export const fetchPedidosForRepresentantes = async (numeroPedidos: number[]): Promise<any[]> => {
   try {
+    // Convert numbers to strings if needed
+    const numeroPedidosStrings = numeroPedidos.map(numero => String(numero));
+    
     const { data, error } = await supabase
       .from('BLUEBAY_PEDIDO')
       .select('PED_NUMPEDIDO, REPRESENTANTE')
-      .in('PED_NUMPEDIDO', numeroPedidos);
+      .in('PED_NUMPEDIDO', numeroPedidosStrings);
 
     if (error) {
       console.error("Erro ao buscar pedidos para representantes:", error);
@@ -66,10 +69,13 @@ export const fetchPedidosForRepresentantes = async (numeroPedidos: number[]): Pr
 
 export const fetchRepresentantesInfo = async (representantesCodigos: number[]): Promise<any[]> => {
   try {
+    // Convert numbers to strings
+    const representantesCodigosStrings = representantesCodigos.map(codigo => String(codigo));
+    
     const { data, error } = await supabase
       .from('BLUEBAY_PESSOA')
       .select('PES_CODIGO, RAZAOSOCIAL')
-      .in('PES_CODIGO', representantesCodigos);
+      .in('PES_CODIGO', representantesCodigosStrings);
 
     if (error) {
       console.error("Erro ao buscar informações dos representantes:", error);
