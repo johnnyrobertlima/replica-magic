@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const fetchFinancialTitles = async (clienteCodigos: number[] | string[]): Promise<any[]> => {
   try {
-    // Convert number array to string array for Supabase query if needed
+    // Convert all codes to strings for Supabase query
     const clienteCodigosStrings = clienteCodigos.map(codigo => String(codigo));
     
     const { data, error } = await supabase
@@ -25,7 +25,7 @@ export const fetchFinancialTitles = async (clienteCodigos: number[] | string[]):
 
 export const fetchClientInfo = async (clienteCodigos: number[] | string[]): Promise<any[]> => {
   try {
-    // Convert number array to string array for Supabase query if needed
+    // Convert all codes to strings for Supabase query
     const clienteCodigosStrings = clienteCodigos.map(codigo => String(codigo));
     
     const { data, error } = await supabase
@@ -47,7 +47,7 @@ export const fetchClientInfo = async (clienteCodigos: number[] | string[]): Prom
 
 export const fetchPedidosForRepresentantes = async (numeroPedidos: number[] | string[]): Promise<any[]> => {
   try {
-    // Convert numbers to strings for Supabase query
+    // Convert all numbers to strings for Supabase query
     const numeroPedidosStrings = numeroPedidos.map(numero => String(numero));
     
     const { data, error } = await supabase
@@ -69,7 +69,7 @@ export const fetchPedidosForRepresentantes = async (numeroPedidos: number[] | st
 
 export const fetchRepresentantesInfo = async (representantesCodigos: number[] | string[]): Promise<any[]> => {
   try {
-    // Convert numbers to strings for Supabase query
+    // Convert all codes to strings for Supabase query
     const representantesCodigosStrings = representantesCodigos.map(codigo => String(codigo));
     
     const { data, error } = await supabase
