@@ -6,6 +6,7 @@ import { groupOrdersByClient, filterGroupsBySearchCriteria } from "@/utils/clien
 import { useClientOrdersState } from "./client-orders/useClientOrdersState";
 import { useItemSelection } from "./client-orders/useItemSelection";
 import { useSeparationOperations } from "./client-orders/useSeparationOperations";
+import type { JabOrdersResponse } from "@/types/jabOrders";
 
 export const useClientOrders = () => {
   // Use the state hook
@@ -32,7 +33,7 @@ export const useClientOrders = () => {
   } = useClientOrdersState();
 
   // Data fetching hooks
-  const { data: ordersData = { orders: [], totalCount: 0, itensSeparacao: {} }, isLoading: isLoadingOrders } = useAllJabOrders({
+  const { data: ordersData = { orders: [], totalCount: 0, itensSeparacao: {} } as JabOrdersResponse, isLoading: isLoadingOrders } = useAllJabOrders({
     dateRange: searchDate
   });
 
@@ -40,8 +41,14 @@ export const useClientOrders = () => {
 
   const { data: separacoes = [], isLoading: isLoadingSeparacoes } = useSeparacoes();
 
+  // Create a full response object with default empty itensSeparacao if not provided
+  const fullOrdersData = useMemo(() => ({
+    ...ordersData,
+    itensSeparacao: ordersData.itensSeparacao || {}
+  }), [ordersData]);
+
   // Group orders by client
-  const groupedOrders = useMemo(() => groupOrdersByClient(ordersData), [ordersData]);
+  const groupedOrders = useMemo(() => groupOrdersByClient(fullOrdersData), [fullOrdersData]);
 
   // Filter groups by search criteria
   const filteredGroups = useMemo(() => 
@@ -77,7 +84,7 @@ export const useClientOrders = () => {
     expandedClients,
     isSending,
     // Data
-    ordersData,
+    ordersData: fullOrdersData,
     totals,
     separacoes,
     filteredGroups,

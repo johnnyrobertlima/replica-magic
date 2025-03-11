@@ -1,10 +1,30 @@
 
 import { formatCurrency } from "@/lib/utils";
-import type { JabOrder } from "@/types/jabOrders";
+import type { JabOrder, JabOrderItem } from "@/types/jabOrders";
 import { loadClientFinancialData } from "./financialUtils";
 
+// Helper function to get client code from item
+export function getClientCodeFromItem(item: JabOrderItem & { PES_CODIGO?: number }): number | null {
+  return item.PES_CODIGO || null;
+}
+
+// Helper function to calculate total selected items value
+export function calculateTotalSelected(selectedItems: string[], groups: Record<string, any>): number {
+  let total = 0;
+  
+  Object.values(groups).forEach((group: any) => {
+    group.allItems.forEach((item: any) => {
+      if (selectedItems.includes(item.ITEM_CODIGO)) {
+        total += (item.VALOR_UNITARIO || 0) * (item.QTDE_SALDO || 0);
+      }
+    });
+  });
+  
+  return total;
+}
+
 // Função para agrupar pedidos por cliente
-export function groupOrdersByClient(data: { orders: JabOrder[], totalCount: number, itensSeparacao: Record<string, boolean> }) {
+export function groupOrdersByClient(data: { orders: JabOrder[], totalCount: number, itensSeparacao?: Record<string, boolean> }) {
   const groups: Record<string, any> = {};
 
   // Processa cada pedido
@@ -103,7 +123,7 @@ export function filterGroupsBySearchCriteria(
   groups: Record<string, any>,
   isSearching: boolean,
   searchQuery: string,
-  searchType: 'client' | 'item'
+  searchType: 'client' | 'item' | 'pedido'
 ) {
   // Se não estiver buscando, retorna todos os grupos
   if (!isSearching || !searchQuery) {
@@ -141,6 +161,21 @@ export function filterGroupsBySearchCriteria(
           ...data,
           allItems: filteredItems,
         };
+      }
+
+      return filtered;
+    }, {} as Record<string, any>);
+  }
+
+  // Filtra por número de pedido
+  if (searchType === 'pedido') {
+    return Object.entries(groups).reduce((filtered, [clientName, data]) => {
+      const hasMatchingOrder = Array.from(data.pedidos).some((pedido: any) => 
+        String(pedido).toLowerCase().includes(normalizedQuery)
+      );
+
+      if (hasMatchingOrder) {
+        filtered[clientName] = data;
       }
 
       return filtered;

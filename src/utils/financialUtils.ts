@@ -1,3 +1,4 @@
+
 import { 
   fetchClientInfo, 
   fetchFinancialTitles, 
@@ -5,6 +6,7 @@ import {
   fetchRepresentantesInfo,
   processClientsData
 } from '@/services/financialService';
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Calculate valores vencidos (past due balance) for a client
