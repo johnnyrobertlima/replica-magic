@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { ClienteFinanceiro } from "@/types/financialClient";
 import { calculateClientFinancialValues, fetchTitulosVencidos } from "@/utils/financialUtils";
@@ -104,28 +105,27 @@ export const fetchValoresVencidos = async (clienteCodigo: number) => {
   console.log(`Buscando valores vencidos para cliente ${clienteCodigo}`);
   
   try {
-    // First try using direct database query
-    const { data, error } = await supabase
-      .from('BLUEBAY_TITULO')
-      .select('VLRSALDO')
-      .eq('PES_CODIGO', clienteCodigo.toString())
-      .lt('DTVENCIMENTO', new Date().toISOString().split('T')[0]);
+    // First try the database function we just created
+    const { data, error } = await supabase.rpc('calcular_valor_vencido', { 
+      cliente_codigo: clienteCodigo.toString() 
+    });
     
     if (error) {
-      console.error("Erro ao buscar títulos vencidos:", error);
-      return 0;
+      console.error("Erro ao calcular valor vencido via RPC:", error);
+      // Fallback to the original method if RPC fails
+      return await fetchTitulosVencidos(clienteCodigo.toString());
     }
     
-    // Calculate total overdue value
-    const valorVencido = data.reduce((total, titulo) => {
-      return total + (parseFloat(titulo.VLRSALDO) || 0);
-    }, 0);
+    if (data && data[0]) {
+      console.log(`Valor vencido via RPC: ${data[0].total_vlr_saldo}`);
+      return parseFloat(data[0].total_vlr_saldo) || 0;
+    }
     
-    console.log(`Valor vencido calculado: ${valorVencido}`);
-    return valorVencido;
-    
+    // Fallback to the original method
+    console.log("Usando método alternativo para buscar valores vencidos");
+    return await fetchTitulosVencidos(clienteCodigo.toString());
   } catch (error) {
-    console.error("Erro ao buscar valores vencidos:", error);
-    return 0;
+    console.error("Erro ao buscar via RPC, tentando método alternativo:", error);
+    return await fetchTitulosVencidos(clienteCodigo.toString());
   }
 };

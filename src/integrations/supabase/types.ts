@@ -1403,6 +1403,14 @@ export type Database = {
           valor_total_saldo: number
         }[]
       }
+      calcular_valor_vencido: {
+        Args: {
+          cliente_codigo: string
+        }
+        Returns: {
+          total_vlr_saldo: number
+        }[]
+      }
       check_admin_permission: {
         Args: {
           check_user_id: string
