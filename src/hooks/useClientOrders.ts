@@ -5,31 +5,37 @@ import { useClientesFinanceiros } from "./useClientesFinanceiros";
 
 export const useClientOrders = () => {
   const {
-    orders,
-    isLoading: isLoadingOrders,
-    error,
     date,
-    searchQuery,
-    searchType,
-    showZeroBalance,
-    showOnlyWithStock,
-    selectedItems,
-    toggleItemSelection,
-    clearSelection,
-    isSending,
-    setIsSending,
+    setDate,
     currentPage,
-    itemsPerPage,
-    handleSearch,
+    setCurrentPage,
+    searchQuery,
+    setSearchQuery,
+    searchType,
+    setSearchType,
+    showZeroBalance,
+    setShowZeroBalance,
+    showOnlyWithStock,
+    setShowOnlyWithStock,
+    selectedItems,
+    ordersData,
+    totals,
     filteredOrders,
-    filteredGroups,
-    expandedClients,
+    selectedItemsTotals: totalSelecionado,
+    isLoading: isLoadingOrders,
+    handleItemSelect,
+    handleSearch,
+    handleEnviarParaSeparacao,
     toggleExpand,
     exportSelectedItemsToExcel,
-    sendToSeparacao
+    sendToSeparacao,
+    expandedClients,
+    filteredGroups,
+    error
   } = useOrdersState();
-  
+
   const { clientesFinanceiros, isLoading: isLoadingFinanceiros } = useClientesFinanceiros();
+  const [isSending, setIsSending] = useState(false);
   
   const processClienteFinanceiro = useCallback(() => {
     if (clientesFinanceiros.length > 0) {
@@ -61,27 +67,35 @@ export const useClientOrders = () => {
   const isLoading = isLoadingOrders || isLoadingFinanceiros;
 
   return {
-    orders,
+    orders: ordersData?.orders || [],
     isLoading,
     error,
     date,
+    setDate,
     searchQuery,
+    setSearchQuery,
     searchType,
+    setSearchType,
     showZeroBalance,
+    setShowZeroBalance,
     showOnlyWithStock,
+    setShowOnlyWithStock,
     selectedItems,
-    toggleItemSelection,
-    clearSelection,
+    toggleItemSelection: handleItemSelect,
     isSending,
     setIsSending,
     currentPage,
-    itemsPerPage,
+    itemsPerPage: 15,
     handleSearch,
     filteredOrders,
     filteredGroups,
     expandedClients,
     toggleExpand,
     exportSelectedItemsToExcel,
-    sendToSeparacao
+    sendToSeparacao,
+    totals,
+    totalSelecionado,
+    handleEnviarParaSeparacao,
+    separacoes: []
   };
 };
