@@ -72,7 +72,7 @@ export const ClientOrderCard = ({
             <h3 className="text-lg font-semibold">Cliente: {clientName}</h3>
             {data.representanteNome && (
               <p className="text-sm text-muted-foreground">
-                Representante: {data.representanteNome}
+                <span className="font-medium">Representante:</span> {data.representanteNome}
               </p>
             )}
             <p className="text-sm text-muted-foreground">
@@ -80,22 +80,22 @@ export const ClientOrderCard = ({
             </p>
             {data.volumeSaudavel !== undefined && data.volumeSaudavel !== null && (
               <p className="text-sm text-muted-foreground">
-                Volume Saudável: {formatCurrency(data.volumeSaudavel)}
+                <span className="font-medium">Volume Saudável:</span> {formatCurrency(data.volumeSaudavel)}
               </p>
             )}
             {data.valoresVencidos !== undefined && (
               <p className={`text-sm ${data.valoresVencidos > 0 ? 'text-red-500 font-medium' : 'text-muted-foreground'}`}>
-                Valores Vencidos: {formatCurrency(data.valoresVencidos)}
+                <span className="font-medium">Valores Vencidos:</span> {formatCurrency(data.valoresVencidos)}
               </p>
             )}
             {data.valoresTotais !== undefined && (
               <p className="text-sm text-muted-foreground">
-                Valores Totais: {formatCurrency(data.valoresTotais)}
+                <span className="font-medium">Valores Totais:</span> {formatCurrency(data.valoresTotais)}
               </p>
             )}
             {data.valoresEmAberto !== undefined && (
               <p className="text-sm text-muted-foreground">
-                Valores em Aberto: {formatCurrency(data.valoresEmAberto)}
+                <span className="font-medium">Valores em Aberto:</span> {formatCurrency(data.valoresEmAberto)}
               </p>
             )}
           </div>

@@ -1,4 +1,3 @@
-
 import { formatCurrency } from "@/lib/utils";
 import type { JabOrder, JabOrderItem } from "@/types/jabOrders";
 import { loadClientFinancialData } from "./financialUtils";
@@ -63,7 +62,7 @@ export function groupOrdersByClient(data: { orders: JabOrder[], totalCount: numb
           })
           .catch(err => console.error(`Erro ao carregar dados financeiros para ${clientName}:`, err));
 
-        // Carrega o volume saudável do cliente (futuramente)
+        // Carrega o volume saudável do cliente
         fetch(`/api/volume-saudavel?clienteCodigo=${order.PES_CODIGO}`)
           .then(res => res.json())
           .then(data => {
