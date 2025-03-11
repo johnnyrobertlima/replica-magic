@@ -101,7 +101,7 @@ export const processClientsData = (
 };
 
 // Fetch títulos vencidos for a specific client
-export const fetchValoresVencidos = async (clienteCodigo: number | string) => {
+export const fetchValoresVencidos = async (clienteCodigo: number | string): Promise<number> => {
   console.log(`Buscando valores vencidos para cliente ${clienteCodigo}`);
   
   try {
