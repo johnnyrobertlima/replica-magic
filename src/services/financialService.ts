@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { ClienteFinanceiro } from "@/types/financialClient";
 import { calculateClientFinancialValues, fetchTitulosVencidos } from "@/utils/financialUtils";
@@ -126,6 +127,6 @@ export const fetchValoresVencidos = async (clienteCodigo: number | string) => {
     return await fetchTitulosVencidos(clienteCodigoStr);
   } catch (error) {
     console.error("Erro ao buscar via RPC, tentando método alternativo:", error);
-    return await fetchTitulosVencidos(clienteCodigoStr);
+    return await fetchTitulosVencidos(clienteCodigo.toString());
   }
 };
