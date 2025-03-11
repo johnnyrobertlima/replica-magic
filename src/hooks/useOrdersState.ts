@@ -1,7 +1,6 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import type { DateRange } from "react-day-picker";
 import type { SearchType } from "@/types/searchTypes";
-import type { SearchType } from "@/components/jab-orders/SearchFilters";
 import { useJabOrders, useTotals } from "@/hooks/useJabOrders";
 
 const ITEMS_PER_PAGE = 15;
@@ -109,8 +108,8 @@ export const useOrdersState = () => {
     selectedItems,
     ordersData,
     totals,
-    filteredOrders,
-    selectedItemsTotals,
+    filteredOrders: ordersData.orders,
+    selectedItemsTotals: { totalSaldo: 0, totalValor: 0, totalComEstoque: 0 },
     isLoading: isLoadingOrders || isLoadingTotals,
     totalPages,
     handleItemSelect,

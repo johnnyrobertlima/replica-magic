@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ClienteFinanceiro } from "@/types/financialClient";
 
 // Fetch a single client by ID
-export const fetchClient = async (clientId: number) => {
+export const fetchClient = async (clientId: number | string) => {
   // Convert to number if it's a string
   const numericClientId = typeof clientId === 'string' ? parseInt(clientId, 10) : clientId;
   
@@ -13,13 +13,13 @@ export const fetchClient = async (clientId: number) => {
   }
 
   const { data, error } = await supabase
-    .from("clientes")
+    .from("BLUEBAY_PESSOA")
     .select("*")
     .eq("PES_CODIGO", numericClientId)
     .single();
 
   if (error) throw error;
-  return data as ClienteFinanceiro;
+  return data as unknown as ClienteFinanceiro;
 };
 
 // Process client data to add calculated properties
@@ -33,7 +33,7 @@ export const processClientsData = (clients: ClienteFinanceiro[]) => {
 };
 
 // Fetch multiple clients by their IDs
-export const fetchClientsByIds = async (clientIds: number[]) => {
+export const fetchClientsByIds = async (clientIds: (number | string)[]) => {
   // Convert array of potentially string IDs to numbers
   const numericClientIds = clientIds.map(id => 
     typeof id === 'string' ? parseInt(id, 10) : id
@@ -44,37 +44,37 @@ export const fetchClientsByIds = async (clientIds: number[]) => {
   }
 
   const { data, error } = await supabase
-    .from("clientes")
+    .from("BLUEBAY_PESSOA")
     .select("*")
-    .in("PES_CODIGO", numericClientIds as readonly number[]);
+    .in("PES_CODIGO", numericClientIds);
 
   if (error) throw error;
-  return processClientsData(data as ClienteFinanceiro[]);
+  return data as unknown as ClienteFinanceiro[];
 };
 
 // Fetch all clients
 export const fetchAllClients = async () => {
   const { data, error } = await supabase
-    .from("clientes")
+    .from("BLUEBAY_PESSOA")
     .select("*");
 
   if (error) throw error;
-  return processClientsData(data as ClienteFinanceiro[]);
+  return data as unknown as ClienteFinanceiro[];
 };
 
 // Fetch clients by name search
 export const fetchClientsByName = async (search: string) => {
   const { data, error } = await supabase
-    .from("clientes")
+    .from("BLUEBAY_PESSOA")
     .select("*")
     .ilike("APELIDO", `%${search}%`);
 
   if (error) throw error;
-  return processClientsData(data as ClienteFinanceiro[]);
+  return data as unknown as ClienteFinanceiro[];
 };
 
 // Fetch clients by rep ID(s)
-export const fetchClientsByRepIds = async (repIds: number[]) => {
+export const fetchClientsByRepIds = async (repIds: (number | string)[]) => {
   // Convert array of potentially string IDs to numbers
   const numericRepIds = repIds.map(id => 
     typeof id === 'string' ? parseInt(id, 10) : id
@@ -85,10 +85,10 @@ export const fetchClientsByRepIds = async (repIds: number[]) => {
   }
 
   const { data, error } = await supabase
-    .from("clientes")
+    .from("BLUEBAY_PESSOA")
     .select("*")
-    .in("REP_CODIGO", numericRepIds as readonly number[]);
+    .in("REP_CODIGO", numericRepIds);
 
   if (error) throw error;
-  return processClientsData(data as ClienteFinanceiro[]);
+  return data as unknown as ClienteFinanceiro[];
 };

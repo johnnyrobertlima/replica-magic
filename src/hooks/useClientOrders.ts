@@ -7,6 +7,7 @@ import { useClientOrdersState } from "./client-orders/useClientOrdersState";
 import { useItemSelection } from "./client-orders/useItemSelection";
 import { useSeparationOperations } from "./client-orders/useSeparationOperations";
 import type { JabOrdersResponse } from "@/types/jabOrders";
+import type { SearchType } from "@/types/searchTypes";
 
 export const useClientOrders = () => {
   // Use the state hook
@@ -53,15 +54,23 @@ export const useClientOrders = () => {
   // Filter groups by search criteria - mapping the searchType to correct expected value
   const filteredGroups = useMemo(() => {
     // Map searchType to the expected value in the filterGroupsBySearchCriteria function
-    let mappedSearchType = searchType;
-    if (searchType === 'cliente') mappedSearchType = 'client';
+    let mappedSearchType: "pedido" | "item" | "client" = "pedido";
+    
+    if (searchType === "item") {
+      mappedSearchType = "item";
+    } else if (searchType === "cliente" || searchType === "client") {
+      mappedSearchType = "client";
+    } else if (searchType === "representante") {
+      // For "representante", we'll use "client" as the closest match
+      mappedSearchType = "client";
+    }
     
     // Filter groups based on the mapped search type
     return filterGroupsBySearchCriteria(
       groupedOrders, 
       isSearching, 
       searchQuery, 
-      mappedSearchType as 'pedido' | 'item' | 'client'
+      mappedSearchType
     );
   }, [groupedOrders, isSearching, searchQuery, searchType]);
 

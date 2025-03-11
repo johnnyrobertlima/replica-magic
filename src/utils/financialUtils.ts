@@ -1,15 +1,16 @@
+
 import { 
-  fetchClientInfo, 
-  fetchFinancialTitles, 
-  fetchPedidosForRepresentantes,
-  fetchRepresentantesInfo,
-  fetchValoresVencidos,
+  fetchClient, 
+  fetchAllClients,
+  fetchClientsByIds,
+  fetchClientsByName,
+  fetchClientsByRepIds,
   processClientsData
 } from '@/services/financialService';
 import { supabase } from "@/integrations/supabase/client";
 import { ClienteFinanceiro } from "@/types/financialClient";
-import { Orders, OrderItem } from "@/types/jabOrders";
-import { countStatusType, formatNumberToCurrency } from "@/lib/utils";
+import { JabOrdersResponse, JabOrderItem } from "@/types/jabOrders";
+import { formatCurrency } from "@/lib/utils";
 import { Separacao } from "@/types/separacao";
 
 /**
@@ -27,7 +28,12 @@ export const calcularValoresVencidos = (titulos: any[], today: Date): number => 
 export const loadClientFinancialData = async (clienteCodigo: number | string) => {
   try {
     // Fetch financial titles for the client
-    const titulos = await fetchFinancialTitles([clienteCodigo.toString()]);
+    const { data: titulos = [], error } = await supabase
+      .from("BLUEBAY_TITULO")
+      .select("*")
+      .eq("PES_CODIGO", clienteCodigo.toString());
+    
+    if (error) throw error;
     
     // Calculate today's date for valores vencidos calculation
     const today = new Date();
@@ -97,7 +103,7 @@ export const fetchTitulosVencidos = async (clienteCodigo: number | string): Prom
   }
 };
 
-export const getClientById = async (clientId: number) => {
+export const getClientById = async (clientId: number | string) => {
   try {
     // Convert to number if it's a string
     const numericClientId = typeof clientId === 'string' ? parseInt(clientId, 10) : clientId;
@@ -108,13 +114,13 @@ export const getClientById = async (clientId: number) => {
     }
     
     const { data, error } = await supabase
-      .from("clientes")
+      .from("BLUEBAY_PESSOA")
       .select("*")
       .eq("PES_CODIGO", numericClientId)
       .single();
       
     if (error) throw error;
-    return data as ClienteFinanceiro;
+    return data as unknown as ClienteFinanceiro;
   } catch (error) {
     console.error("Error fetching client data:", error);
     throw error;

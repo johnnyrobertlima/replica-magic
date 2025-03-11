@@ -1,177 +1,124 @@
 
-import { useState, useEffect, useCallback } from "react";
-import { useSeparacoes } from "@/hooks/useSeparacoes";
-import { useToast } from "@/hooks/use-toast";
-import { ClienteFinanceiro } from "@/types/financialClient";
-import { getSeparacoesPendentes, getClientesCodigos, updateVolumeSaudavel as updateVolumeSaudavelUtil } from "@/utils/financialUtils";
+import { useQuery } from "@tanstack/react-query";
 import { 
-  fetchFinancialTitles, 
-  fetchClientInfo, 
-  fetchPedidosForRepresentantes, 
-  fetchRepresentantesInfo,
-  processClientsData,
-  fetchValoresVencidos
+  fetchClient, 
+  fetchAllClients,
+  fetchClientsByIds,
+  fetchClientsByName,
+  fetchClientsByRepIds
 } from "@/services/financialService";
+import { loadClientFinancialData, fetchTitulosVencidos } from "@/utils/financialUtils";
+import type { ClienteFinanceiro } from "@/types/financialClient";
 
-export type { ClienteFinanceiro } from "@/types/financialClient";
-
-export const useClientesFinanceiros = () => {
-  const { data: separacoes = [], isLoading: isLoadingSeparacoes } = useSeparacoes();
-  const { toast } = useToast();
-  const [clientesFinanceiros, setClientesFinanceiros] = useState<ClienteFinanceiro[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hiddenCards, setHiddenCards] = useState<Set<string>>(new Set());
-
-  const getSeparacoesPendentesCallback = useCallback(() => {
-    return getSeparacoesPendentes(separacoes, hiddenCards);
-  }, [separacoes, hiddenCards]);
-
-  const getClientesCodigosCallback = useCallback((sepPendentes: any[]) => {
-    return getClientesCodigos(sepPendentes);
-  }, []);
-
-  const hideCard = (id: string) => {
-    setHiddenCards(current => {
-      const newSet = new Set(current);
-      newSet.add(id);
-      return newSet;
-    });
-  };
-
-  const updateVolumeSaudavel = async (clienteCodigo: number, valor: number) => {
-    const result = await updateVolumeSaudavelUtil(clienteCodigo, valor);
-    
-    if (result.success) {
-      setClientesFinanceiros(prev => 
-        prev.map(cliente => 
-          cliente.PES_CODIGO === clienteCodigo
-            ? { ...cliente, volume_saudavel_faturamento: valor } 
-            : cliente
-        )
-      );
-    }
-    
-    return result;
-  };
-
-  useEffect(() => {
-    const fetchFinancialData = async () => {
+// Get a single client by ID
+export const useClienteFinanceiro = (clienteId: number | string | undefined) => {
+  return useQuery({
+    queryKey: ["cliente-financeiro", clienteId],
+    queryFn: async () => {
+      if (!clienteId) return null;
+      
       try {
-        setIsLoading(true);
+        // Fetch basic client data
+        const cliente = await fetchClient(clienteId);
         
-        const separacoesPendentes = getSeparacoesPendentesCallback();
-        const clientesCodigos = getClientesCodigosCallback(separacoesPendentes);
-
-        if (clientesCodigos.length === 0) {
-          setClientesFinanceiros([]);
-          setIsLoading(false);
-          return;
-        }
-
-        // Fetch titulos data for all clients
-        const titulos = await fetchFinancialTitles(clientesCodigos);
+        // Load financial data
+        const financialData = await loadClientFinancialData(clienteId);
         
-        // Fetch client data
-        const clientesPromises = clientesCodigos.map(codigo => fetchClientInfo(codigo));
-        const clientesData = await Promise.all(clientesPromises);
-        const clientes = clientesData.filter(c => c !== null); // Filter out null values
+        // Return combined data
+        return {
+          ...cliente,
+          ...financialData
+        } as ClienteFinanceiro;
+      } catch (error) {
+        console.error("Error fetching cliente financeiro:", error);
+        throw error;
+      }
+    },
+    enabled: !!clienteId,
+  });
+};
 
-        const clienteSeparacoes: Record<number, any[]> = {};
-        separacoesPendentes.forEach(sep => {
-          const codigo = Number(sep.cliente_codigo);
-          if (!clienteSeparacoes[codigo]) {
-            clienteSeparacoes[codigo] = [];
-          }
-          clienteSeparacoes[codigo].push(sep);
-        });
-
-        const numeroPedidos = separacoesPendentes
-          .flatMap(sep => sep.separacao_itens.map((item: any) => item.pedido))
-          .filter((value, index, self) => self.indexOf(value) === index);
-
-        const representantesCodigos = new Set<number>();
-        const clienteToRepresentanteMap = new Map<number, number>();
-        const representantesInfo = new Map<number, string>();
-
-        if (numeroPedidos.length > 0) {
-          const pedidos = await fetchPedidosForRepresentantes(numeroPedidos);
-
-          if (pedidos && pedidos.length > 0) {
-            pedidos.forEach(pedido => {
-              if (pedido.REPRESENTANTE) {
-                const repCodigo = Number(pedido.REPRESENTANTE);
-                representantesCodigos.add(repCodigo);
-                
-                separacoesPendentes.forEach(sep => {
-                  if (sep.separacao_itens.some((item: any) => item.pedido === pedido.PED_NUMPEDIDO)) {
-                    const clienteCodigo = Number(sep.cliente_codigo);
-                    clienteToRepresentanteMap.set(clienteCodigo, repCodigo);
-                  }
-                });
-              }
-            });
-
-            if (representantesCodigos.size > 0) {
-              const representantes = await fetchRepresentantesInfo(Array.from(representantesCodigos));
-
-              if (representantes) {
-                representantes.forEach(rep => {
-                  const repCodigo = Number(rep.PES_CODIGO);
-                  representantesInfo.set(repCodigo, rep.RAZAOSOCIAL);
-                });
-              }
-            }
-          }
-        }
-
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        const clientesArray = processClientsData(
-          clientes, 
-          clienteSeparacoes, 
-          clienteToRepresentanteMap, 
-          representantesInfo,
-          titulos,
-          today
+// Get multiple clients by their IDs
+export const useClientesFinanceirosByIds = (clienteIds: (number | string)[]) => {
+  return useQuery({
+    queryKey: ["clientes-financeiros-by-ids", clienteIds],
+    queryFn: async () => {
+      if (!clienteIds.length) return [];
+      
+      try {
+        const clientes = await fetchClientsByIds(clienteIds);
+        
+        // Enrich with financial data
+        const clientesEnriquecidos = await Promise.all(
+          clientes.map(async (cliente) => {
+            const financialData = await loadClientFinancialData(cliente.PES_CODIGO);
+            return {
+              ...cliente,
+              ...financialData
+            } as ClienteFinanceiro;
+          })
         );
         
-        console.log("Buscando valores vencidos para cada cliente...");
-        
-        for (const cliente of clientesArray) {
-          console.log(`Processando cliente ${cliente.PES_CODIGO} (${cliente.APELIDO})`);
-          const valorVencido = await fetchValoresVencidos(cliente.PES_CODIGO);
-          console.log(`Cliente ${cliente.PES_CODIGO}: valor vencido = ${valorVencido}`);
-          cliente.valoresVencidos = valorVencido;
-          
-          if (cliente.volume_saudavel_faturamento !== undefined && cliente.volumeSaudavel === undefined) {
-            cliente.volumeSaudavel = cliente.volume_saudavel_faturamento;
-          }
-          console.log(`Cliente ${cliente.PES_CODIGO}: volume saudável = ${cliente.volumeSaudavel}`);
-        }
-        
-        console.log("Clientes processados:", clientesArray);
-        setClientesFinanceiros(clientesArray);
+        return clientesEnriquecidos;
       } catch (error) {
-        console.error("Erro ao buscar dados financeiros:", error);
-        toast({
-          title: "Erro",
-          description: "Não foi possível carregar os dados financeiros.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
+        console.error("Error fetching clientes financeiros by ids:", error);
+        throw error;
       }
-    };
+    },
+    enabled: clienteIds.length > 0,
+  });
+};
 
-    fetchFinancialData();
-  }, [getSeparacoesPendentesCallback, getClientesCodigosCallback, toast]);
+// Get all clients
+export const useAllClientesFinanceiros = () => {
+  return useQuery({
+    queryKey: ["all-clientes-financeiros"],
+    queryFn: async () => {
+      try {
+        const clientes = await fetchAllClients();
+        return clientes;
+      } catch (error) {
+        console.error("Error fetching all clientes financeiros:", error);
+        throw error;
+      }
+    },
+  });
+};
 
-  return {
-    clientesFinanceiros,
-    isLoading,
-    isLoadingSeparacoes,
-    hideCard,
-    updateVolumeSaudavel
-  };
+// Search clients by name
+export const useClientesFinanceirosByName = (searchQuery: string) => {
+  return useQuery({
+    queryKey: ["clientes-financeiros-by-name", searchQuery],
+    queryFn: async () => {
+      if (!searchQuery) return [];
+      
+      try {
+        const clientes = await fetchClientsByName(searchQuery);
+        return clientes;
+      } catch (error) {
+        console.error("Error searching clientes financeiros by name:", error);
+        throw error;
+      }
+    },
+    enabled: !!searchQuery,
+  });
+};
+
+// Get clients by representante IDs
+export const useClientesFinanceirosByRepIds = (repIds: (number | string)[]) => {
+  return useQuery({
+    queryKey: ["clientes-financeiros-by-rep-ids", repIds],
+    queryFn: async () => {
+      if (!repIds.length) return [];
+      
+      try {
+        const clientes = await fetchClientsByRepIds(repIds);
+        return clientes;
+      } catch (error) {
+        console.error("Error fetching clientes financeiros by rep ids:", error);
+        throw error;
+      }
+    },
+    enabled: repIds.length > 0,
+  });
 };
