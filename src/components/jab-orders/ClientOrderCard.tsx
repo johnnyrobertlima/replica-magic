@@ -97,6 +97,7 @@ export const ClientOrderCard = ({
             totalValorPedido={data.totalValorPedido}
             totalValorFaturado={data.totalValorFaturado}
             totalValorFaturarComEstoque={data.totalValorFaturarComEstoque}
+            volumeSaudavel={data.volumeSaudavel}
           />
 
           {isExpanded && (

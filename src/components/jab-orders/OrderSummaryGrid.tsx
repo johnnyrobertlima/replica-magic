@@ -7,6 +7,7 @@ interface OrderSummaryGridProps {
   totalValorPedido: number;
   totalValorFaturado: number;
   totalValorFaturarComEstoque: number;
+  volumeSaudavel?: number | null;
 }
 
 export const OrderSummaryGrid = ({
@@ -14,7 +15,8 @@ export const OrderSummaryGrid = ({
   totalValorSaldo,
   totalValorPedido,
   totalValorFaturado,
-  totalValorFaturarComEstoque
+  totalValorFaturarComEstoque,
+  volumeSaudavel
 }: OrderSummaryGridProps) => {
   return (
     <div className="grid grid-cols-2 gap-4">
@@ -38,6 +40,12 @@ export const OrderSummaryGrid = ({
         <p className="text-sm text-muted-foreground">Faturar com Estoque:</p>
         <p className="font-medium text-primary">{formatCurrency(totalValorFaturarComEstoque)}</p>
       </div>
+      {volumeSaudavel !== undefined && volumeSaudavel !== null && (
+        <div>
+          <p className="text-sm text-muted-foreground">Volume Saudável:</p>
+          <p className="font-medium text-emerald-600">{formatCurrency(volumeSaudavel)}</p>
+        </div>
+      )}
     </div>
   );
 };

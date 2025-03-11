@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export const fetchFinancialTitles = async (clienteCodigos: number[]): Promise<any[]> => {
@@ -46,7 +47,7 @@ export const fetchClientInfo = async (clienteCodigos: number[]): Promise<any[]> 
 
 export const fetchPedidosForRepresentantes = async (numeroPedidos: number[]): Promise<any[]> => {
   try {
-    // Convert numbers to strings if needed
+    // Convert numbers to strings for Supabase query
     const numeroPedidosStrings = numeroPedidos.map(numero => String(numero));
     
     const { data, error } = await supabase
@@ -68,7 +69,7 @@ export const fetchPedidosForRepresentantes = async (numeroPedidos: number[]): Pr
 
 export const fetchRepresentantesInfo = async (representantesCodigos: number[]): Promise<any[]> => {
   try {
-    // Convert numbers to strings
+    // Convert numbers to strings for Supabase query
     const representantesCodigosStrings = representantesCodigos.map(codigo => String(codigo));
     
     const { data, error } = await supabase
@@ -102,7 +103,7 @@ export const processClientsData = (
     const representanteNome = representanteCodigo ? representantesInfo.get(representanteCodigo) : null;
 
     // Filter titulos for the current client
-    const titulosCliente = titulos.filter(titulo => titulo.PES_CODIGO === cliente.PES_CODIGO);
+    const titulosCliente = titulos.filter(titulo => titulo.PES_CODIGO === String(cliente.PES_CODIGO));
 
     // Calculate total values based on titulos
     const valoresTotais = titulosCliente.reduce((acc, titulo) => acc + (titulo.VLRTITULO || 0), 0);
