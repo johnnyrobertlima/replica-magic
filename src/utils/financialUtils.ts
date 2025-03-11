@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { ClienteFinanceiro, TituloFinanceiro } from "@/types/financialClient";
 
@@ -81,13 +82,12 @@ export const fetchTitulosVencidos = async (clienteCodigo: string) => {
   try {
     console.log(`Executando busca de títulos vencidos para cliente ${clienteCodigo}`);
     
-    // Convert clienteCodigo to string for the query
-    const clienteCodigoStr = clienteCodigo.toString();
+    // No need to convert clienteCodigo to string since it's already passed as string
     
     const { data, error, count } = await supabase
       .from('BLUEBAY_TITULO')
       .select('VLRSALDO', { count: 'exact' })
-      .eq('PES_CODIGO', clienteCodigoStr)
+      .eq('PES_CODIGO', clienteCodigo)
       .lt('DTVENCIMENTO', new Date().toISOString().split('T')[0]);
     
     if (error) {
