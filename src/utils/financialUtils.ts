@@ -81,7 +81,7 @@ export const calculateClientFinancialValues = (
 export const fetchTitulosVencidos = async (clienteCodigo: string | number): Promise<number> => {
   try {
     // Ensure clienteCodigo is a string for the query
-    const clienteCodigoStr = clienteCodigo.toString();
+    const clienteCodigoStr = String(clienteCodigo);
     
     console.log(`Executando busca de títulos vencidos para cliente ${clienteCodigoStr}`);
     

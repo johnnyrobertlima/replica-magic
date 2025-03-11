@@ -106,7 +106,7 @@ export const fetchValoresVencidos = async (clienteCodigo: string | number): Prom
   
   try {
     // Ensure clienteCodigo is a string for the RPC call
-    const clienteCodigoStr = clienteCodigo.toString();
+    const clienteCodigoStr = String(clienteCodigo);
     
     const { data, error } = await supabase.rpc('calcular_valor_vencido', { 
       cliente_codigo: clienteCodigoStr 
@@ -126,6 +126,6 @@ export const fetchValoresVencidos = async (clienteCodigo: string | number): Prom
     return await fetchTitulosVencidos(clienteCodigoStr);
   } catch (error) {
     console.error("Erro ao buscar via RPC, tentando método alternativo:", error);
-    return await fetchTitulosVencidos(clienteCodigo.toString());
+    return await fetchTitulosVencidos(String(clienteCodigo));
   }
 };
