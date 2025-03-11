@@ -1,3 +1,4 @@
+
 import { 
   fetchClient, 
   fetchAllClients,
@@ -25,10 +26,13 @@ export const loadClientFinancialData = async (clientId: number | string) => {
   try {
     const numericClientId = typeof clientId === 'string' ? parseInt(clientId, 10) : clientId;
     
+    // Convert numericClientId to string for the query as PES_CODIGO appears to be stored as text in the database
+    const clientIdStr = String(numericClientId);
+    
     const { data: titulos = [], error } = await supabase
       .from("BLUEBAY_TITULO")
       .select("*")
-      .eq("PES_CODIGO", numericClientId);
+      .eq("PES_CODIGO", clientIdStr);
     
     if (error) throw error;
     
@@ -63,7 +67,8 @@ export const getClientesCodigos = (separacoes: any[]) => {
 
 export const updateVolumeSaudavel = async (clienteCodigo: number | string, valor: number) => {
   try {
-    const clienteCodigoStr = typeof clienteCodigo === 'number' ? String(clienteCodigo) : clienteCodigo;
+    // Ensure clienteCodigo is converted to string for the query
+    const clienteCodigoStr = String(clienteCodigo);
     
     const { data, error } = await supabase
       .from('BLUEBAY_PESSOA')
@@ -84,10 +89,9 @@ export const updateVolumeSaudavel = async (clienteCodigo: number | string, valor
 };
 
 export const fetchTitulosVencidos = async (clientId: number | string) => {
-  const numericClientId = typeof clientId === 'string' ? parseInt(clientId, 10) : clientId;
-  
   try {
-    const clientIdStr = String(numericClientId);
+    // Convert to string for the query as PES_CODIGO is stored as text
+    const clientIdStr = String(clientId);
     
     let { data, error } = await supabase
       .from('BLUEBAY_TITULO')

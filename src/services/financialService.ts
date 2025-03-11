@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import type { ClienteFinanceiro } from "@/types/financialClient";
 
@@ -18,7 +19,7 @@ export const fetchClient = async (clientId: number | string) => {
     .single();
 
   if (error) throw error;
-  // Return as unknown first, then cast to ClienteFinanceiro to avoid deep instantiation
+  // Cast to ClienteFinanceiro type
   return data as unknown as ClienteFinanceiro;
 };
 
@@ -58,8 +59,7 @@ export const fetchAllClients = async () => {
     .select("*");
 
   if (error) throw error;
-  // Return as an explicit array type to avoid deep instantiation
-  return (data || []) as Array<any>;
+  return data || [];
 };
 
 // Fetch clients by name search
@@ -70,8 +70,7 @@ export const fetchClientsByName = async (search: string) => {
     .ilike("APELIDO", `%${search}%`);
 
   if (error) throw error;
-  // Return as an explicit array type to avoid deep instantiation
-  return (data || []) as Array<any>;
+  return data || [];
 };
 
 // Fetch clients by rep ID(s)
@@ -91,6 +90,5 @@ export const fetchClientsByRepIds = async (repIds: (number | string)[]) => {
     .in("REP_CODIGO", numericRepIds);
 
   if (error) throw error;
-  // Return as an explicit array type to avoid deep instantiation
-  return (data || []) as Array<any>;
+  return data || [];
 };
