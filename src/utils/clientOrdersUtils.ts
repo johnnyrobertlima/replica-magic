@@ -1,126 +1,157 @@
 
-import type { ClientOrderGroup } from "@/types/clientOrders";
-import type { JabOrdersResponse } from "@/types/jabOrders";
+import { formatCurrency } from "@/lib/utils";
+import type { JabOrder } from "@/types/jabOrders";
+import { loadClientFinancialData } from "./financialUtils";
 
-export const groupOrdersByClient = (ordersData: JabOrdersResponse): Record<string, ClientOrderGroup> => {
-  const groups: Record<string, ClientOrderGroup> = {};
-  
-  ordersData.orders.forEach((order) => {
-    if (!["1", "2"].includes(order.STATUS)) return;
-    
-    const clientKey = order.APELIDO || "Sem Cliente";
-    if (!groups[clientKey]) {
-      groups[clientKey] = {
-        pedidos: [],
+// Função para agrupar pedidos por cliente
+export function groupOrdersByClient(data: { orders: JabOrder[], totalCount: number, itensSeparacao: Record<string, boolean> }) {
+  const groups: Record<string, any> = {};
+
+  // Processa cada pedido
+  for (const order of data.orders) {
+    const clientName = order.APELIDO || `Cliente ${order.PES_CODIGO}`;
+    const representanteNome = order.REPRESENTANTE_NOME || null;
+
+    // Se o cliente não existir no objeto groups, cria-o
+    if (!groups[clientName]) {
+      groups[clientName] = {
+        clientId: order.PES_CODIGO,
         totalQuantidadeSaldo: 0,
         totalValorSaldo: 0,
         totalValorPedido: 0,
         totalValorFaturado: 0,
         totalValorFaturarComEstoque: 0,
-        representante: order.REPRESENTANTE_NOME,
         allItems: [],
-        PES_CODIGO: order.PES_CODIGO
+        pedidos: new Set(),
+        representanteNome: representanteNome,
+        volumeSaudavel: null,
+        valoresTotais: undefined,
+        valoresEmAberto: undefined,
+        valoresVencidos: undefined
       };
-    }
 
-    groups[clientKey].pedidos.push(order);
-    groups[clientKey].totalQuantidadeSaldo += order.total_saldo || 0;
-    groups[clientKey].totalValorSaldo += order.valor_total || 0;
+      // Carrega dados financeiros do cliente se tiver PES_CODIGO
+      if (order.PES_CODIGO) {
+        loadClientFinancialData(order.PES_CODIGO)
+          .then(financialData => {
+            if (groups[clientName]) {
+              groups[clientName].valoresTotais = financialData.valoresTotais;
+              groups[clientName].valoresEmAberto = financialData.valoresEmAberto;
+              groups[clientName].valoresVencidos = financialData.valoresVencidos;
+            }
+          })
+          .catch(err => console.error(`Erro ao carregar dados financeiros para ${clientName}:`, err));
 
-    if (order.items) {
-      const items = order.items.map(item => ({
-        ...item,
-        pedido: order.PED_NUMPEDIDO,
-        APELIDO: order.APELIDO,
-        PES_CODIGO: order.PES_CODIGO
-      }));
-      
-      groups[clientKey].allItems.push(...items);
-      
-      order.items.forEach(item => {
-        groups[clientKey].totalValorPedido += item.QTDE_PEDIDA * item.VALOR_UNITARIO;
-        groups[clientKey].totalValorFaturado += item.QTDE_ENTREGUE * item.VALOR_UNITARIO;
-        if ((item.FISICO || 0) > 0) {
-          groups[clientKey].totalValorFaturarComEstoque += Math.min(item.QTDE_SALDO, item.FISICO || 0) * item.VALOR_UNITARIO;
-        }
-      });
-    }
-  });
-
-  return groups;
-};
-
-export const filterGroupsBySearchCriteria = (
-  groupedOrders: Record<string, ClientOrderGroup>,
-  isSearching: boolean,
-  searchQuery: string,
-  searchType: string
-): Record<string, ClientOrderGroup> => {
-  if (!isSearching || !searchQuery) return groupedOrders;
-
-  const normalizedSearchQuery = searchQuery.toLowerCase().trim();
-  const filteredGroups: Record<string, ClientOrderGroup> = {};
-
-  const removeLeadingZeros = (str: string) => {
-    return str.replace(/^0+/, '');
-  };
-
-  Object.entries(groupedOrders).forEach(([clientName, groupData]) => {
-    let shouldInclude = false;
-
-    switch (searchType) {
-      case "pedido":
-        shouldInclude = groupData.pedidos.some(order => {
-          const normalizedOrderNumber = removeLeadingZeros(order.PED_NUMPEDIDO);
-          const normalizedSearchNumber = removeLeadingZeros(searchQuery);
-          return normalizedOrderNumber.includes(normalizedSearchNumber);
-        });
-        break;
-      
-      case "cliente":
-        shouldInclude = clientName.toLowerCase().includes(normalizedSearchQuery);
-        break;
-      
-      case "representante":
-        shouldInclude = groupData.representante?.toLowerCase().includes(normalizedSearchQuery) || false;
-        break;
-    }
-
-    if (shouldInclude) {
-      filteredGroups[clientName] = groupData;
-    }
-  });
-
-  return filteredGroups;
-};
-
-export const calculateTotalSelected = (
-  selectedItemsDetails: Record<string, { qtde: number; valor: number }>
-): number => {
-  return Object.values(selectedItemsDetails).reduce((total, item) => {
-    return total + (item.qtde * item.valor);
-  }, 0);
-};
-
-export const getClientCodeFromItem = (item: any): number | null => {
-  let pesCodigoNumerico = null;
-  
-  if (typeof item.PES_CODIGO === 'number') {
-    pesCodigoNumerico = item.PES_CODIGO;
-  } else if (typeof item.PES_CODIGO === 'string') {
-    const parsed = parseInt(item.PES_CODIGO, 10);
-    if (!isNaN(parsed)) {
-      pesCodigoNumerico = parsed;
-    }
-  } else if (item.PES_CODIGO && typeof item.PES_CODIGO === 'object') {
-    const value = item.PES_CODIGO.value;
-    if (typeof value === 'string' || typeof value === 'number') {
-      const parsed = parseInt(String(value), 10);
-      if (!isNaN(parsed)) {
-        pesCodigoNumerico = parsed;
+        // Carrega o volume saudável do cliente (futuramente)
+        fetch(`/api/volume-saudavel?clienteCodigo=${order.PES_CODIGO}`)
+          .then(res => res.json())
+          .then(data => {
+            if (groups[clientName] && data.volumeSaudavel) {
+              groups[clientName].volumeSaudavel = data.volumeSaudavel;
+            }
+          })
+          .catch(() => {
+            // Silenciosamente falha se o endpoint não existir
+          });
       }
+    }
+
+    // Adiciona o pedido ao conjunto de pedidos do cliente
+    groups[clientName].pedidos.add(order.PED_NUMPEDIDO);
+
+    // Incrementa os totais para cada cliente
+    groups[clientName].totalQuantidadeSaldo += order.total_saldo || 0;
+    groups[clientName].totalValorSaldo += order.valor_total || 0;
+
+    // Processa cada item do pedido
+    for (const item of order.items || []) {
+      // Calcula os valores totais do pedido e faturados
+      const valorItem = (item.QTDE_PEDIDA || 0) * (item.VALOR_UNITARIO || 0);
+      const valorFaturado = (item.QTDE_ENTREGUE || 0) * (item.VALOR_UNITARIO || 0);
+      
+      // Incrementa os totais para cada cliente
+      groups[clientName].totalValorPedido += valorItem;
+      groups[clientName].totalValorFaturado += valorFaturado;
+
+      // Verifica se o item pode ser faturado com estoque
+      if (
+        (item.FISICO || 0) > 0 &&
+        (item.QTDE_SALDO || 0) > 0 &&
+        !item.emSeparacao
+      ) {
+        const valorPossivel = Math.min(item.FISICO || 0, item.QTDE_SALDO || 0) * (item.VALOR_UNITARIO || 0);
+        groups[clientName].totalValorFaturarComEstoque += valorPossivel;
+      }
+
+      // Adiciona o item à lista de itens do cliente com informações adicionais
+      groups[clientName].allItems.push({
+        ...item,
+        id: `${item.pedido}_${item.ITEM_CODIGO}`,
+        valor_total: (item.QTDE_SALDO || 0) * (item.VALOR_UNITARIO || 0),
+        qty_com_estoque: Math.min(item.FISICO || 0, item.QTDE_SALDO || 0),
+        valor_com_estoque:
+          Math.min(item.FISICO || 0, item.QTDE_SALDO || 0) * (item.VALOR_UNITARIO || 0),
+      });
     }
   }
 
-  return pesCodigoNumerico;
-};
+  return groups;
+}
+
+// Função para filtrar grupos por critérios de busca
+export function filterGroupsBySearchCriteria(
+  groups: Record<string, any>,
+  isSearching: boolean,
+  searchQuery: string,
+  searchType: 'client' | 'item'
+) {
+  // Se não estiver buscando, retorna todos os grupos
+  if (!isSearching || !searchQuery) {
+    return groups;
+  }
+
+  const normalizedQuery = searchQuery.toLowerCase();
+
+  // Filtra por cliente
+  if (searchType === 'client') {
+    return Object.entries(groups).reduce((filtered, [clientName, data]) => {
+      if (clientName.toLowerCase().includes(normalizedQuery)) {
+        filtered[clientName] = data;
+      }
+      return filtered;
+    }, {} as Record<string, any>);
+  }
+
+  // Filtra por item
+  if (searchType === 'item') {
+    return Object.entries(groups).reduce((filtered, [clientName, data]) => {
+      const hasMatchingItem = data.allItems.some((item: any) =>
+        (item.DESCRICAO || '').toLowerCase().includes(normalizedQuery) ||
+        (item.ITEM_CODIGO || '').toLowerCase().includes(normalizedQuery)
+      );
+
+      if (hasMatchingItem) {
+        // Inclui apenas os itens que correspondem à busca
+        const filteredItems = data.allItems.filter((item: any) =>
+          (item.DESCRICAO || '').toLowerCase().includes(normalizedQuery) ||
+          (item.ITEM_CODIGO || '').toLowerCase().includes(normalizedQuery)
+        );
+
+        filtered[clientName] = {
+          ...data,
+          allItems: filteredItems,
+        };
+      }
+
+      return filtered;
+    }, {} as Record<string, any>);
+  }
+
+  return groups;
+}
+
+// Helper para formatar valores para exibição
+export function formatarValor(valor: number | null | undefined): string {
+  if (valor === null || valor === undefined) return 'N/A';
+  return formatCurrency(valor);
+}
