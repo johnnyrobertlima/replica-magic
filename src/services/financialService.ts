@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 export const fetchFinancialTitles = async (clienteCodigos: readonly number[]): Promise<any[]> => {
   try {
     // Convert number array to string array for Supabase query
-    const clienteCodigosStrings = clienteCodigos.map(String);
+    const clienteCodigosStrings = clienteCodigos.map(codigo => String(codigo));
     
     const { data, error } = await supabase
       .from('BLUEBAY_TITULO')
@@ -25,7 +25,8 @@ export const fetchFinancialTitles = async (clienteCodigos: readonly number[]): P
 
 export const fetchClientInfo = async (clienteCodigos: readonly number[]): Promise<any[]> => {
   try {
-    const clienteCodigosStrings = clienteCodigos.map(String);
+    // Convert number array to string array for Supabase query
+    const clienteCodigosStrings = clienteCodigos.map(codigo => String(codigo));
     
     const { data, error } = await supabase
       .from('BLUEBAY_PESSOA')
@@ -116,7 +117,8 @@ export const processClientsData = (
       valoresTotais: valoresTotais,
       valoresEmAberto: valoresEmAberto,
       valoresVencidos: 0, // Initialize as 0, will be fetched later
-      volume_saudavel_faturamento: cliente.volume_saudavel_faturamento || null // Ensure this field is included
+      volume_saudavel_faturamento: cliente.volume_saudavel_faturamento || null, // Ensure this field is included
+      volumeSaudavel: cliente.volume_saudavel_faturamento || null // Add volumeSaudavel property explicitly
     };
   });
 };

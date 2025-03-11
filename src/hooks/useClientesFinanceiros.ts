@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useSeparacoes } from "@/hooks/useSeparacoes";
 import { useToast } from "@/hooks/use-toast";
@@ -22,17 +21,14 @@ export const useClientesFinanceiros = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [hiddenCards, setHiddenCards] = useState<Set<string>>(new Set());
 
-  // Get separações pendentes with memoization
   const getSeparacoesPendentesCallback = useCallback(() => {
     return getSeparacoesPendentes(separacoes, hiddenCards);
   }, [separacoes, hiddenCards]);
 
-  // Get unique client codes with memoization
   const getClientesCodigosCallback = useCallback((sepPendentes: any[]) => {
     return getClientesCodigos(sepPendentes);
   }, []);
 
-  // Hide a card
   const hideCard = (id: string) => {
     setHiddenCards(current => {
       const newSet = new Set(current);
@@ -41,12 +37,10 @@ export const useClientesFinanceiros = () => {
     });
   };
 
-  // Update volume saudavel
   const updateVolumeSaudavel = async (clienteCodigo: number, valor: number) => {
     const result = await updateVolumeSaudavelUtil(clienteCodigo, valor);
     
     if (result.success) {
-      // Update local state
       setClientesFinanceiros(prev => 
         prev.map(cliente => 
           cliente.PES_CODIGO === clienteCodigo
@@ -73,13 +67,9 @@ export const useClientesFinanceiros = () => {
           return;
         }
 
-        // Fetch financial titles
         const titulos = await fetchFinancialTitles(clientesCodigos);
-
-        // Fetch client info
         const clientes = await fetchClientInfo(clientesCodigos);
 
-        // Map clients to their separacoes
         const clienteSeparacoes: Record<number, any[]> = {};
         separacoesPendentes.forEach(sep => {
           if (!clienteSeparacoes[sep.cliente_codigo]) {
@@ -88,27 +78,22 @@ export const useClientesFinanceiros = () => {
           clienteSeparacoes[sep.cliente_codigo].push(sep);
         });
 
-        // Get unique pedido numbers from separações
         const numeroPedidos = separacoesPendentes
           .flatMap(sep => sep.separacao_itens.map((item: any) => item.pedido))
           .filter((value, index, self) => self.indexOf(value) === index);
 
-        // Initialize maps for representantes
         const representantesCodigos = new Set<number>();
         const clienteToRepresentanteMap = new Map<number, number>();
         const representantesInfo = new Map<number, string>();
 
         if (numeroPedidos.length > 0) {
-          // Fetch pedidos to get representantes
           const pedidos = await fetchPedidosForRepresentantes(numeroPedidos);
 
           if (pedidos && pedidos.length > 0) {
-            // Map each cliente to their representante
             pedidos.forEach(pedido => {
               if (pedido.REPRESENTANTE) {
                 representantesCodigos.add(pedido.REPRESENTANTE);
                 
-                // Find the separação with this pedido
                 separacoesPendentes.forEach(sep => {
                   if (sep.separacao_itens.some((item: any) => item.pedido === pedido.PED_NUMPEDIDO)) {
                     clienteToRepresentanteMap.set(sep.cliente_codigo, pedido.REPRESENTANTE);
@@ -117,7 +102,6 @@ export const useClientesFinanceiros = () => {
               }
             });
 
-            // Fetch representantes info if we have any
             if (representantesCodigos.size > 0) {
               const representantes = await fetchRepresentantesInfo(Array.from(representantesCodigos));
 
@@ -130,11 +114,9 @@ export const useClientesFinanceiros = () => {
           }
         }
 
-        // Create today's date with hours set to 0 to compare only dates
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        // Process and set clients data
         const clientesArray = processClientsData(
           clientes, 
           clienteSeparacoes, 
@@ -146,15 +128,15 @@ export const useClientesFinanceiros = () => {
         
         console.log("Buscando valores vencidos para cada cliente...");
         
-        // Now fetch overdue values directly for each client
         for (const cliente of clientesArray) {
           console.log(`Processando cliente ${cliente.PES_CODIGO} (${cliente.APELIDO})`);
           const valorVencido = await fetchValoresVencidos(cliente.PES_CODIGO);
           console.log(`Cliente ${cliente.PES_CODIGO}: valor vencido = ${valorVencido}`);
           cliente.valoresVencidos = valorVencido;
           
-          // Make sure volumeSaudavel is properly set for the UI
-          cliente.volumeSaudavel = cliente.volume_saudavel_faturamento;
+          if (cliente.volume_saudavel_faturamento !== undefined && cliente.volumeSaudavel === undefined) {
+            cliente.volumeSaudavel = cliente.volume_saudavel_faturamento;
+          }
           console.log(`Cliente ${cliente.PES_CODIGO}: volume saudável = ${cliente.volumeSaudavel}`);
         }
         
