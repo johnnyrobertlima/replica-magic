@@ -61,7 +61,7 @@ export const fetchClientsByIds = async (clientIds: (number | string)[]) => {
 export const fetchAllClients = async () => {
   const { data, error } = await supabase
     .from("BLUEBAY_PESSOA")
-    .select("*");
+    .select("PES_CODIGO, APELIDO, RAZAOSOCIAL, EMAIL, TELEFONE, CIDADE, UF, volume_saudavel_faturamento");
 
   if (error) throw error;
   return data || [];
@@ -71,7 +71,7 @@ export const fetchAllClients = async () => {
 export const fetchClientsByName = async (search: string) => {
   const { data, error } = await supabase
     .from("BLUEBAY_PESSOA")
-    .select("*")
+    .select("PES_CODIGO, APELIDO, RAZAOSOCIAL, EMAIL, TELEFONE, CIDADE, UF, volume_saudavel_faturamento")
     .ilike("APELIDO", `%${search}%`);
 
   if (error) throw error;
@@ -94,7 +94,7 @@ export const fetchClientsByRepIds = async (repIds: (number | string)[]) => {
 
   const { data, error } = await supabase
     .from("BLUEBAY_PESSOA")
-    .select("*")
+    .select("PES_CODIGO, APELIDO, RAZAOSOCIAL, EMAIL, TELEFONE, CIDADE, UF, volume_saudavel_faturamento")
     .in("REP_CODIGO", repIdStrings);
 
   if (error) throw error;
