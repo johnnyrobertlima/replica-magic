@@ -16,7 +16,7 @@ export function useBanners() {
         console.error("Error fetching banners:", error);
         throw error;
       }
-      return data as Banner[];
+      return data || [];
     },
   });
 }

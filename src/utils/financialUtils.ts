@@ -34,7 +34,7 @@ export const loadClientFinancialData = async (clientId: number | string) => {
     const { data: titulos = [], error } = await supabase
       .from("BLUEBAY_TITULO")
       .select("*")
-      .eq("PES_CODIGO", numericClientId.toString());
+      .eq("PES_CODIGO", String(numericClientId));
     
     if (error) throw error;
     
@@ -74,7 +74,7 @@ export const updateVolumeSaudavel = async (clienteCodigo: number | string, valor
     const { data, error } = await supabase
       .from('BLUEBAY_PESSOA')
       .update({ volume_saudavel_faturamento: valor })
-      .eq('PES_CODIGO', clienteCodigo.toString())
+      .eq('PES_CODIGO', String(clienteCodigo))
       .select();
 
     if (error) {
@@ -97,7 +97,7 @@ export const fetchTitulosVencidos = async (clientId: number | string) => {
     let { data, error } = await supabase
       .from('BLUEBAY_TITULO')
       .select('*')
-      .eq('PES_CODIGO', numericClientId.toString())
+      .eq('PES_CODIGO', String(numericClientId))
       .lt('DTVENCIMENTO', new Date().toISOString());
 
     if (error) throw error;

@@ -49,7 +49,7 @@ export const fetchClientsByIds = async (clientIds: (number | string)[]) => {
     .in("PES_CODIGO", numericClientIds);
 
   if (error) throw error;
-  return data as any[];
+  return data || [];
 };
 
 // Fetch all clients
@@ -59,7 +59,7 @@ export const fetchAllClients = async () => {
     .select("*");
 
   if (error) throw error;
-  return data as any[];
+  return data || [];
 };
 
 // Fetch clients by name search
@@ -70,7 +70,7 @@ export const fetchClientsByName = async (search: string) => {
     .ilike("APELIDO", `%${search}%`);
 
   if (error) throw error;
-  return data as any[];
+  return data || [];
 };
 
 // Fetch clients by rep ID(s)
@@ -90,5 +90,5 @@ export const fetchClientsByRepIds = async (repIds: (number | string)[]) => {
     .in("REP_CODIGO", numericRepIds);
 
   if (error) throw error;
-  return data as any[];
+  return data || [];
 };

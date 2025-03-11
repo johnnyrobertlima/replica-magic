@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useClienteFinanceiro } from "@/hooks/useClientesFinanceiros";
 import { useNavigate, useParams } from 'react-router-dom';
@@ -10,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import type { ClienteFinanceiro } from "@/types/financialClient";
 
 interface Titulo {
   BOL_CODIGO: number;
@@ -40,7 +42,17 @@ const AprovacaoFinanceira = () => {
       if (clienteId) {
         try {
           const titulos = await fetchTitulosVencidos(clienteId);
-          setTitulosVencidos(titulos);
+          // Map the returned data to match the Titulo interface
+          const formattedTitulos: Titulo[] = titulos.map(titulo => ({
+            BOL_CODIGO: titulo.NUMLCTO || 0,
+            BOL_DATAEMISSAO: titulo.DTEMISSAO || '',
+            BOL_DATAVENCIMENTO: titulo.DTVENCIMENTO || '',
+            BOL_VALOR: titulo.VLRTITULO || 0,
+            BOL_SITUACAO: titulo.STATUS || '',
+            DTVENCIMENTO: titulo.DTVENCIMENTO || '',
+            VLRSALDO: titulo.VLRSALDO || 0
+          }));
+          setTitulosVencidos(formattedTitulos);
         } catch (error) {
           console.error("Erro ao carregar títulos vencidos:", error);
         }
