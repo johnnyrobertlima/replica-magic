@@ -29,6 +29,7 @@ import { AdminGroups } from "@/pages/admin/groups";
 import { AdminPermissions } from "@/pages/admin/permissions";
 import { AdminLogin } from "@/pages/admin/login";
 import { UserGroupManagement } from "@/pages/admin/users/UserGroupManagement";
+import BluebayBanners from "@/pages/admin/bluebay-banners";
 import { Outlet } from "react-router-dom";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
 
@@ -111,6 +112,11 @@ function App() {
         <Route path="banners" element={
           <PermissionGuard resourcePath="/admin/banners">
             <AdminBanners />
+          </PermissionGuard>
+        } />
+        <Route path="bluebay-banners" element={
+          <PermissionGuard resourcePath="/admin/banners">
+            <BluebayBanners />
           </PermissionGuard>
         } />
         <Route path="clients" element={

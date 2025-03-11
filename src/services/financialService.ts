@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export const fetchFinancialTitles = async (clienteCodigos: Array<number | string>): Promise<any[]> => {
@@ -98,7 +99,7 @@ export const processClientsData = (
 ): any[] => {
   return clientes.map(cliente => {
     const separacoes = clienteSeparacoes[cliente.PES_CODIGO] || [];
-    const representanteCodigo = clienteToRepresentanteMap.get(cliente.PES_CODIGO);
+    const representanteCodigo = clienteToRepresentanteMap.get(Number(cliente.PES_CODIGO));
     const representanteNome = representanteCodigo ? representantesInfo.get(representanteCodigo) : null;
 
     // Filter titulos for the current client
