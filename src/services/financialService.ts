@@ -1,7 +1,6 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
-export const fetchFinancialTitles = async (clienteCodigos: number[] | string[]): Promise<any[]> => {
+export const fetchFinancialTitles = async (clienteCodigos: Array<number | string>): Promise<any[]> => {
   try {
     // Convert all codes to strings for Supabase query
     const clienteCodigosStrings = clienteCodigos.map(codigo => String(codigo));
@@ -23,7 +22,7 @@ export const fetchFinancialTitles = async (clienteCodigos: number[] | string[]):
   }
 };
 
-export const fetchClientInfo = async (clienteCodigos: number[] | string[]): Promise<any[]> => {
+export const fetchClientInfo = async (clienteCodigos: Array<number | string>): Promise<any[]> => {
   try {
     // Convert all codes to strings for Supabase query
     const clienteCodigosStrings = clienteCodigos.map(codigo => String(codigo));
@@ -45,7 +44,7 @@ export const fetchClientInfo = async (clienteCodigos: number[] | string[]): Prom
   }
 };
 
-export const fetchPedidosForRepresentantes = async (numeroPedidos: number[] | string[]): Promise<any[]> => {
+export const fetchPedidosForRepresentantes = async (numeroPedidos: Array<number | string>): Promise<any[]> => {
   try {
     // Convert all numbers to strings for Supabase query
     const numeroPedidosStrings = numeroPedidos.map(numero => String(numero));
@@ -67,7 +66,7 @@ export const fetchPedidosForRepresentantes = async (numeroPedidos: number[] | st
   }
 };
 
-export const fetchRepresentantesInfo = async (representantesCodigos: number[] | string[]): Promise<any[]> => {
+export const fetchRepresentantesInfo = async (representantesCodigos: Array<number | string>): Promise<any[]> => {
   try {
     // Convert all codes to strings for Supabase query
     const representantesCodigosStrings = representantesCodigos.map(codigo => String(codigo));
