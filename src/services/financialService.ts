@@ -22,7 +22,6 @@ export const fetchClient = async (clientId: number | string) => {
     .single();
 
   if (error) throw error;
-  // Use a simpler type cast to avoid deep instantiation
   return data as ClienteFinanceiro;
 };
 
@@ -99,5 +98,5 @@ export const fetchClientsByRepIds = async (repIds: (number | string)[]) => {
     .in("REP_CODIGO", repIdStrings);
 
   if (error) throw error;
-  return (data || []) as any[];
+  return data || [];
 };
