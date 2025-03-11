@@ -12,10 +12,13 @@ export const fetchClient = async (clientId: number | string) => {
     throw new Error(`Invalid client ID: ${clientId}`);
   }
 
+  // Convert to string for the query as PES_CODIGO is stored as text
+  const clientIdStr = String(numericClientId);
+
   const { data, error } = await supabase
     .from("BLUEBAY_PESSOA")
     .select("*")
-    .eq("PES_CODIGO", numericClientId)
+    .eq("PES_CODIGO", clientIdStr)
     .single();
 
   if (error) throw error;
@@ -43,10 +46,13 @@ export const fetchClientsByIds = async (clientIds: (number | string)[]) => {
     return [];
   }
 
+  // Convert IDs to strings for the query
+  const clientIdStrings = numericClientIds.map(id => String(id));
+
   const { data, error } = await supabase
     .from("BLUEBAY_PESSOA")
     .select("*")
-    .in("PES_CODIGO", numericClientIds);
+    .in("PES_CODIGO", clientIdStrings);
 
   if (error) throw error;
   return data || [];
@@ -84,10 +90,13 @@ export const fetchClientsByRepIds = async (repIds: (number | string)[]) => {
     return [];
   }
 
+  // Convert rep IDs to strings for the query
+  const repIdStrings = numericRepIds.map(id => String(id));
+
   const { data, error } = await supabase
     .from("BLUEBAY_PESSOA")
     .select("*")
-    .in("REP_CODIGO", numericRepIds);
+    .in("REP_CODIGO", repIdStrings);
 
   if (error) throw error;
   return data || [];
