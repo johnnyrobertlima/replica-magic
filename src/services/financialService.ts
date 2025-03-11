@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { ClienteFinanceiro } from "@/types/financialClient";
+import type { ClienteFinanceiro } from "@/types/financialClient";
 
 // Fetch a single client by ID
 export const fetchClient = async (clientId: number | string) => {
@@ -45,10 +45,10 @@ export const fetchClientsByIds = async (clientIds: (number | string)[]) => {
   const { data, error } = await supabase
     .from("BLUEBAY_PESSOA")
     .select("*")
-    .in("PES_CODIGO", numericClientIds.map(String));
+    .in("PES_CODIGO", numericClientIds);
 
   if (error) throw error;
-  return data as any[];
+  return data || [];
 };
 
 // Fetch all clients

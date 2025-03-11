@@ -7,10 +7,7 @@ import {
   processClientsData
 } from '@/services/financialService';
 import { supabase } from "@/integrations/supabase/client";
-import { ClienteFinanceiro } from "@/types/financialClient";
-import { JabOrdersResponse, JabOrderItem } from "@/types/jabOrders";
-import { formatCurrency } from "@/lib/utils";
-import { Separacao } from "@/types/separacao";
+import type { ClienteFinanceiro } from "@/types/financialClient";
 
 /**
  * Calculate valores vencidos (past due balance) for a client
@@ -26,12 +23,12 @@ export const calcularValoresVencidos = (titulos: any[], today: Date): number => 
 
 export const loadClientFinancialData = async (clientId: number | string) => {
   try {
-    const clientIdStr = String(clientId);
+    const numericClientId = typeof clientId === 'string' ? parseInt(clientId, 10) : clientId;
     
     const { data: titulos = [], error } = await supabase
       .from("BLUEBAY_TITULO")
       .select("*")
-      .eq("PES_CODIGO", clientIdStr);
+      .eq("PES_CODIGO", numericClientId);
     
     if (error) throw error;
     

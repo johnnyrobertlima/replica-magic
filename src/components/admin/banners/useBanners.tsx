@@ -1,7 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Banner } from "@/types/banner";
+import type { Banner } from "@/types/banner";
 
 export function useBanners() {
   return useQuery<Banner[]>({
@@ -9,7 +9,7 @@ export function useBanners() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("banners")
-        .select("*")
+        .select("id, title, description, button_text, button_link, image_url, youtube_url, is_active, duration")
         .eq("page", "home")
         .order("created_at", { ascending: false });
       
@@ -18,7 +18,7 @@ export function useBanners() {
         throw error;
       }
       
-      return (data || []) as Banner[];
+      return data || [];
     },
   });
 }
