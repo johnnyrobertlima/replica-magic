@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import type { DateRange } from "react-day-picker";
 import type { SearchType } from "@/components/jab-orders/SearchFilters";
 import { useJabOrders, useTotals } from "@/hooks/useJabOrders";
@@ -19,12 +19,8 @@ export const useOrdersState = () => {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [showOnlyWithStock, setShowOnlyWithStock] = useState(false);
   const [showZeroBalance, setShowZeroBalance] = useState(true);
-  const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set());
-  
-  // Placeholder for grouping data by client
-  const [filteredGroups, setFilteredGroups] = useState<Record<string, any>>({});
 
-  const { data: ordersData = { orders: [], totalCount: 0 }, isLoading: isLoadingOrders, error } = useJabOrders({
+  const { data: ordersData = { orders: [], totalCount: 0 }, isLoading: isLoadingOrders } = useJabOrders({
     dateRange: searchDate,
     page: currentPage,
     pageSize: ITEMS_PER_PAGE
@@ -47,36 +43,9 @@ export const useOrdersState = () => {
     setCurrentPage(1);
   }, [date]);
 
-  const toggleExpand = useCallback((clientName: string) => {
-    setExpandedClients(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(clientName)) {
-        newSet.delete(clientName);
-      } else {
-        newSet.add(clientName);
-      }
-      return newSet;
-    });
-  }, []);
-
   const removeLeadingZeros = useCallback((str: string) => {
     return str.replace(/^0+/, '');
   }, []);
-
-  const exportSelectedItemsToExcel = useCallback(() => {
-    console.log("Exporting selected items to Excel");
-    // Implementation would go here
-  }, [selectedItems]);
-
-  const sendToSeparacao = useCallback(() => {
-    console.log("Sending to separação");
-    // Implementation would go here
-  }, [selectedItems]);
-
-  const handleEnviarParaSeparacao = useCallback(() => {
-    console.log("Handling enviar para separação");
-    // Implementation would go here
-  }, [selectedItems]);
 
   const filteredOrders = ordersData.orders.filter((order) => {
     if (!["1", "2"].includes(order.STATUS)) {
@@ -107,53 +76,6 @@ export const useOrdersState = () => {
     
     return true;
   });
-
-  // Process orders and group them by client
-  useEffect(() => {
-    const groups: Record<string, any> = {};
-    
-    filteredOrders.forEach(order => {
-      const clientName = order.APELIDO || 'Unknown Client';
-      
-      if (!groups[clientName]) {
-        groups[clientName] = {
-          clienteCodigo: order.PES_CODIGO,
-          representante: order.REPRESENTANTE_NOME,
-          totalQuantidadeSaldo: 0,
-          totalValorSaldo: 0,
-          totalValorPedido: 0,
-          totalValorFaturado: 0,
-          totalValorFaturarComEstoque: 0,
-          allItems: [],
-          clienteFinanceiro: null
-        };
-      }
-      
-      order.items.forEach((item: any) => {
-        const qtdeSaldo = item.QTDE_SALDO || 0;
-        const valorUnitario = item.VALOR_UNITARIO || 0;
-        const valorTotal = qtdeSaldo * valorUnitario;
-        const temEstoque = (item.FISICO || 0) > 0;
-        
-        groups[clientName].totalQuantidadeSaldo += qtdeSaldo;
-        groups[clientName].totalValorSaldo += valorTotal;
-        groups[clientName].totalValorPedido += (item.QTDE_SOLICITADA || 0) * valorUnitario;
-        groups[clientName].totalValorFaturado += (item.QTDE_ENTREGUE || 0) * valorUnitario;
-        
-        if (temEstoque) {
-          groups[clientName].totalValorFaturarComEstoque += valorTotal;
-        }
-        
-        groups[clientName].allItems.push({
-          ...item,
-          pedido: order.PED_NUMPEDIDO,
-          clientName
-        });
-      });
-    });
-    
-    setFilteredGroups(groups);
-  }, [filteredOrders]);
 
   const selectedItemsTotals = filteredOrders.reduce((acc, order) => {
     const selectedOrderItems = order.items.filter(item => selectedItems.includes(item.ITEM_CODIGO));
@@ -192,13 +114,6 @@ export const useOrdersState = () => {
     isLoading: isLoadingOrders || isLoadingTotals,
     totalPages,
     handleItemSelect,
-    handleSearch,
-    toggleExpand,
-    expandedClients,
-    filteredGroups,
-    exportSelectedItemsToExcel,
-    sendToSeparacao,
-    handleEnviarParaSeparacao,
-    error
+    handleSearch
   };
 };

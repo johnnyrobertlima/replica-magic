@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrdersState } from "./useOrdersState";
@@ -6,37 +5,31 @@ import { useClientesFinanceiros } from "./useClientesFinanceiros";
 
 export const useClientOrders = () => {
   const {
-    date,
-    setDate,
-    currentPage,
-    setCurrentPage,
-    searchQuery,
-    setSearchQuery,
-    searchType,
-    setSearchType,
-    showZeroBalance,
-    setShowZeroBalance,
-    showOnlyWithStock,
-    setShowOnlyWithStock,
-    selectedItems,
-    ordersData,
-    totals,
-    filteredOrders,
-    selectedItemsTotals,
+    orders,
     isLoading: isLoadingOrders,
-    handleItemSelect,
+    error,
+    date,
+    searchQuery,
+    searchType,
+    showZeroBalance,
+    showOnlyWithStock,
+    selectedItems,
+    toggleItemSelection,
+    clearSelection,
+    isSending,
+    setIsSending,
+    currentPage,
+    itemsPerPage,
     handleSearch,
-    toggleExpand,
-    expandedClients,
+    filteredOrders,
     filteredGroups,
+    expandedClients,
+    toggleExpand,
     exportSelectedItemsToExcel,
-    sendToSeparacao,
-    handleEnviarParaSeparacao,
-    error
+    sendToSeparacao
   } = useOrdersState();
-
+  
   const { clientesFinanceiros, isLoading: isLoadingFinanceiros } = useClientesFinanceiros();
-  const [isSending, setIsSending] = useState(false);
   
   const processClienteFinanceiro = useCallback(() => {
     if (clientesFinanceiros.length > 0) {
@@ -56,6 +49,8 @@ export const useClientOrders = () => {
           }
         }
       });
+      
+      
     }
   }, [clientesFinanceiros, filteredGroups]);
   
@@ -66,35 +61,27 @@ export const useClientOrders = () => {
   const isLoading = isLoadingOrders || isLoadingFinanceiros;
 
   return {
-    orders: ordersData?.orders || [],
+    orders,
     isLoading,
     error,
     date,
-    setDate,
     searchQuery,
-    setSearchQuery,
     searchType,
-    setSearchType,
     showZeroBalance,
-    setShowZeroBalance,
     showOnlyWithStock,
-    setShowOnlyWithStock,
     selectedItems,
-    toggleItemSelection: handleItemSelect,
+    toggleItemSelection,
+    clearSelection,
     isSending,
     setIsSending,
     currentPage,
-    itemsPerPage: 15,
+    itemsPerPage,
     handleSearch,
     filteredOrders,
     filteredGroups,
     expandedClients,
     toggleExpand,
     exportSelectedItemsToExcel,
-    sendToSeparacao,
-    totals,
-    totalSelecionado: selectedItemsTotals,
-    handleEnviarParaSeparacao,
-    separacoes: []
+    sendToSeparacao
   };
 };
