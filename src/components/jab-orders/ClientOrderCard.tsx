@@ -88,6 +88,16 @@ export const ClientOrderCard = ({
                 Valores Vencidos: {formatCurrency(data.valoresVencidos)}
               </p>
             )}
+            {data.valoresTotais !== undefined && (
+              <p className="text-sm text-muted-foreground">
+                Valores Totais: {formatCurrency(data.valoresTotais)}
+              </p>
+            )}
+            {data.valoresEmAberto !== undefined && (
+              <p className="text-sm text-muted-foreground">
+                Valores em Aberto: {formatCurrency(data.valoresEmAberto)}
+              </p>
+            )}
           </div>
           {isExpanded ? (
             <ChevronUp className="h-6 w-6 text-muted-foreground" />
@@ -109,6 +119,9 @@ export const ClientOrderCard = ({
             totalValorFaturado={data.totalValorFaturado}
             totalValorFaturarComEstoque={data.totalValorFaturarComEstoque}
             volumeSaudavel={data.volumeSaudavel}
+            valoresTotais={data.valoresTotais}
+            valoresEmAberto={data.valoresEmAberto}
+            valoresVencidos={data.valoresVencidos}
           />
 
           {isExpanded && (
