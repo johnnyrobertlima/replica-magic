@@ -19,8 +19,8 @@ export const fetchClient = async (clientId: number | string) => {
     .single();
 
   if (error) throw error;
-  // Cast to ClienteFinanceiro type
-  return data as unknown as ClienteFinanceiro;
+  // Use a simple type cast to avoid deep instantiation
+  return data as any as ClienteFinanceiro;
 };
 
 // Process client data to add calculated properties

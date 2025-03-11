@@ -119,7 +119,7 @@ export const getClientById = async (clientId: number | string) => {
     const { data, error } = await supabase
       .from("BLUEBAY_PESSOA")
       .select("*")
-      .eq("PES_CODIGO", numericClientId)
+      .eq("PES_CODIGO", String(numericClientId))
       .single();
       
     if (error) throw error;
