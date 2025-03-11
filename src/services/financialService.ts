@@ -106,14 +106,15 @@ export const fetchValoresVencidos = async (clienteCodigo: number) => {
   
   try {
     // First try the database function we just created
+    const clienteCodigoStr = clienteCodigo.toString();
     const { data, error } = await supabase.rpc('calcular_valor_vencido', { 
-      cliente_codigo: clienteCodigo.toString() 
+      cliente_codigo: clienteCodigoStr 
     });
     
     if (error) {
       console.error("Erro ao calcular valor vencido via RPC:", error);
       // Fallback to the original method if RPC fails
-      return await fetchTitulosVencidos(clienteCodigo.toString());
+      return await fetchTitulosVencidos(clienteCodigoStr);
     }
     
     if (data && data[0]) {
@@ -123,7 +124,7 @@ export const fetchValoresVencidos = async (clienteCodigo: number) => {
     
     // Fallback to the original method
     console.log("Usando método alternativo para buscar valores vencidos");
-    return await fetchTitulosVencidos(clienteCodigo.toString());
+    return await fetchTitulosVencidos(clienteCodigoStr);
   } catch (error) {
     console.error("Erro ao buscar via RPC, tentando método alternativo:", error);
     return await fetchTitulosVencidos(clienteCodigo.toString());

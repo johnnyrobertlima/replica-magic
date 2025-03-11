@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { ClienteFinanceiro, TituloFinanceiro } from "@/types/financialClient";
 
@@ -78,16 +77,15 @@ export const calculateClientFinancialValues = (
 };
 
 // Função para buscar títulos vencidos diretamente do Supabase
-export const fetchTitulosVencidos = async (clienteCodigo: string) => {
+export const fetchTitulosVencidos = async (clienteCodigo: string | number) => {
   try {
-    console.log(`Executando busca de títulos vencidos para cliente ${clienteCodigo}`);
-    
-    // No need to convert clienteCodigo to string since it's already passed as string
+    const clienteCodigoStr = clienteCodigo.toString();
+    console.log(`Executando busca de títulos vencidos para cliente ${clienteCodigoStr}`);
     
     const { data, error, count } = await supabase
       .from('BLUEBAY_TITULO')
       .select('VLRSALDO', { count: 'exact' })
-      .eq('PES_CODIGO', clienteCodigo)
+      .eq('PES_CODIGO', clienteCodigoStr)
       .lt('DTVENCIMENTO', new Date().toISOString().split('T')[0]);
     
     if (error) {
@@ -95,7 +93,7 @@ export const fetchTitulosVencidos = async (clienteCodigo: string) => {
       throw error;
     }
     
-    console.log(`Encontrados ${count} títulos vencidos para cliente ${clienteCodigo}`);
+    console.log(`Encontrados ${count} títulos vencidos para cliente ${clienteCodigoStr}`);
     console.log(`Dados dos títulos:`, data);
     
     const valorVencido = data.reduce((total, titulo) => {
@@ -104,7 +102,7 @@ export const fetchTitulosVencidos = async (clienteCodigo: string) => {
       return total + valor;
     }, 0);
     
-    console.log(`Total valor vencido para cliente ${clienteCodigo}: ${valorVencido}`);
+    console.log(`Total valor vencido para cliente ${clienteCodigoStr}: ${valorVencido}`);
     
     return valorVencido;
   } catch (error) {
