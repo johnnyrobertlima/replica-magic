@@ -1,161 +1,94 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import type { ClienteFinanceiro } from "@/types/financialClient";
+import { ClienteFinanceiro } from "@/types/financialClient";
 
-export const fetchClientInfo = async (clienteCodigo: number | string) => {
-  const { data, error } = await supabase
-    .from('BLUEBAY_PESSOA')
-    .select('*')
-    .eq('PES_CODIGO', clienteCodigo.toString())
-    .maybeSingle();
-
-  if (error) {
-    console.error("Error fetching client info:", error);
-    return null;
-  }
-
-  return data;
-};
-
-export const fetchFinancialTitles = async (clientesCodigos: Array<string | number>) => {
-  const stringClientesCodigos = clientesCodigos.map(String);
-
-  const { data, error } = await supabase
-    .from('BLUEBAY_TITULO')
-    .select('*')
-    .in('PES_CODIGO', stringClientesCodigos);
-
-  if (error) {
-    console.error("Error fetching financial titles:", error);
-    return [];
-  }
-
-  return data || [];
-};
-
-export const fetchRepresentantesInfo = async (representantesCodigos?: Array<string | number>) => {
-  try {
-    if (representantesCodigos && representantesCodigos.length === 0) {
-      return [];
-    }
-
-    let query = supabase
-      .from('BLUEBAY_REPRESENTANTE')
-      .select('PES_CODIGO');
-    
-    if (representantesCodigos) {
-      const stringRepresentantesCodigos = representantesCodigos.map(String);
-      query = query.in('PES_CODIGO', stringRepresentantesCodigos);
-    }
-
-    const { data: representantesData, error: representantesError } = await query;
-
-    if (representantesError) throw representantesError;
-
-    if (!representantesData?.length) {
-      return [];
-    }
-
-    const representantesCodigos2 = representantesData.map(rep => String(rep.PES_CODIGO));
-
-    const { data: pessoasData, error: pessoasError } = await supabase
-      .from('BLUEBAY_PESSOA')
-      .select('PES_CODIGO, APELIDO, RAZAOSOCIAL')
-      .in('PES_CODIGO', representantesCodigos2);
-
-    if (pessoasError) throw pessoasError;
-
-    return pessoasData || [];
-  } catch (error) {
-    console.error("Error fetching representantes info:", error);
-    return [];
-  }
-};
-
-export const fetchPedidosForRepresentantes = async (representanteCodigos: Array<string | number>) => {
-  try {
-    const stringRepresentanteCodigos = representanteCodigos.map(String);
-
-    const { data, error } = await supabase
-      .from('BLUEBAY_PEDIDO')
-      .select('REPRESENTANTE, PES_CODIGO, PED_NUMPEDIDO')
-      .in('REPRESENTANTE', stringRepresentanteCodigos);
-
-    if (error) throw error;
-
-    return data || [];
-  } catch (error) {
-    console.error("Error fetching pedidos for representantes:", error);
-    return [];
-  }
-};
-
-export const fetchValoresVencidos = async (clienteCodigo: string | number): Promise<number> => {
-  try {
-    const { data, error } = await supabase
-      .from('BLUEBAY_TITULO')
-      .select('VLRSALDO')
-      .eq('PES_CODIGO', String(clienteCodigo))
-      .lt('DTVENCIMENTO', new Date().toISOString());
-
-    if (error) throw error;
-
-    return data?.reduce((acc, titulo) => acc + (titulo.VLRSALDO || 0), 0) || 0;
-  } catch (error) {
-    console.error('Error fetching valores vencidos:', error);
-    return 0;
-  }
-};
-
-// Add the missing processClientsData function
-export const processClientsData = (
-  clientes: any[],
-  clienteSeparacoes: Record<number, any[]>,
-  clienteToRepresentanteMap: Map<number, number>,
-  representantesInfo: Map<number, string>,
-  titulos: any[],
-  today: Date
-): ClienteFinanceiro[] => {
-  if (!clientes || clientes.length === 0) {
-    return [];
-  }
+// Fetch a single client by ID
+export const fetchClient = async (clientId: number) => {
+  // Convert to number if it's a string
+  const numericClientId = typeof clientId === 'string' ? parseInt(clientId, 10) : clientId;
   
-  return clientes.map(cliente => {
-    // Get the PES_CODIGO as number
-    const clienteCodigo = Number(cliente.PES_CODIGO);
-    
-    // Get separacoes for the client
-    const separacoes = clienteSeparacoes[clienteCodigo] || [];
-    
-    // Get representante info
-    const representanteCodigo = clienteToRepresentanteMap.get(clienteCodigo);
-    const representanteNome = representanteCodigo ? representantesInfo.get(representanteCodigo) : null;
-    
-    // Get titulos for the client
-    const clienteTitulos = titulos.filter(titulo => String(titulo.PES_CODIGO) === String(clienteCodigo));
-    
-    // Calculate financial values
-    const valoresTotais = clienteTitulos.reduce((acc, titulo) => acc + (titulo.VLRTITULO || 0), 0);
-    const valoresEmAberto = clienteTitulos.reduce((acc, titulo) => acc + (titulo.VLRSALDO || 0), 0);
-    
-    // Calculate valores vencidos
-    const valoresVencidos = clienteTitulos
-      .filter(titulo => {
-        const dtVencimento = titulo.DTVENCIMENTO ? new Date(titulo.DTVENCIMENTO) : null;
-        return dtVencimento && dtVencimento < today && titulo.VLRSALDO > 0;
-      })
-      .reduce((acc, titulo) => acc + (titulo.VLRSALDO || 0), 0);
-    
-    // Create the ClienteFinanceiro object
-    return {
-      PES_CODIGO: clienteCodigo,
-      APELIDO: cliente.APELIDO,
-      volume_saudavel_faturamento: cliente.volume_saudavel_faturamento,
-      valoresTotais,
-      valoresEmAberto,
-      valoresVencidos,
-      separacoes,
-      representanteNome
-    };
-  });
+  // Check if the ID is valid
+  if (isNaN(numericClientId)) {
+    throw new Error(`Invalid client ID: ${clientId}`);
+  }
+
+  const { data, error } = await supabase
+    .from("clientes")
+    .select("*")
+    .eq("PES_CODIGO", numericClientId)
+    .single();
+
+  if (error) throw error;
+  return data as ClienteFinanceiro;
+};
+
+// Process client data to add calculated properties
+export const processClientsData = (clients: ClienteFinanceiro[]) => {
+  return clients.map(client => ({
+    ...client,
+    valoresTotais: parseFloat((client.valoresTotais || 0).toFixed(2)),
+    valoresEmAberto: parseFloat((client.valoresEmAberto || 0).toFixed(2)),
+    valoresVencidos: parseFloat((client.valoresVencidos || 0).toFixed(2)),
+  }));
+};
+
+// Fetch multiple clients by their IDs
+export const fetchClientsByIds = async (clientIds: number[]) => {
+  // Convert array of potentially string IDs to numbers
+  const numericClientIds = clientIds.map(id => 
+    typeof id === 'string' ? parseInt(id, 10) : id
+  ).filter(id => !isNaN(id));
+  
+  if (numericClientIds.length === 0) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from("clientes")
+    .select("*")
+    .in("PES_CODIGO", numericClientIds as readonly number[]);
+
+  if (error) throw error;
+  return processClientsData(data as ClienteFinanceiro[]);
+};
+
+// Fetch all clients
+export const fetchAllClients = async () => {
+  const { data, error } = await supabase
+    .from("clientes")
+    .select("*");
+
+  if (error) throw error;
+  return processClientsData(data as ClienteFinanceiro[]);
+};
+
+// Fetch clients by name search
+export const fetchClientsByName = async (search: string) => {
+  const { data, error } = await supabase
+    .from("clientes")
+    .select("*")
+    .ilike("APELIDO", `%${search}%`);
+
+  if (error) throw error;
+  return processClientsData(data as ClienteFinanceiro[]);
+};
+
+// Fetch clients by rep ID(s)
+export const fetchClientsByRepIds = async (repIds: number[]) => {
+  // Convert array of potentially string IDs to numbers
+  const numericRepIds = repIds.map(id => 
+    typeof id === 'string' ? parseInt(id, 10) : id
+  ).filter(id => !isNaN(id));
+  
+  if (numericRepIds.length === 0) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from("clientes")
+    .select("*")
+    .in("REP_CODIGO", numericRepIds as readonly number[]);
+
+  if (error) throw error;
+  return processClientsData(data as ClienteFinanceiro[]);
 };

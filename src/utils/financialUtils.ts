@@ -1,4 +1,3 @@
-
 import { 
   fetchClientInfo, 
   fetchFinancialTitles, 
@@ -8,6 +7,10 @@ import {
   processClientsData
 } from '@/services/financialService';
 import { supabase } from "@/integrations/supabase/client";
+import { ClienteFinanceiro } from "@/types/financialClient";
+import { Orders, OrderItem } from "@/types/jabOrders";
+import { countStatusType, formatNumberToCurrency } from "@/lib/utils";
+import { Separacao } from "@/types/separacao";
 
 /**
  * Calculate valores vencidos (past due balance) for a client
@@ -91,5 +94,29 @@ export const fetchTitulosVencidos = async (clienteCodigo: number | string): Prom
   } catch (error) {
     console.error('Error fetching titulos vencidos:', error);
     return 0;
+  }
+};
+
+export const getClientById = async (clientId: number) => {
+  try {
+    // Convert to number if it's a string
+    const numericClientId = typeof clientId === 'string' ? parseInt(clientId, 10) : clientId;
+    
+    // Check if the ID is valid
+    if (isNaN(numericClientId)) {
+      throw new Error(`Invalid client ID: ${clientId}`);
+    }
+    
+    const { data, error } = await supabase
+      .from("clientes")
+      .select("*")
+      .eq("PES_CODIGO", numericClientId)
+      .single();
+      
+    if (error) throw error;
+    return data as ClienteFinanceiro;
+  } catch (error) {
+    console.error("Error fetching client data:", error);
+    throw error;
   }
 };

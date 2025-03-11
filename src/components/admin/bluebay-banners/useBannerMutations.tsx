@@ -1,0 +1,132 @@
+
+import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
+import { Banner } from "@/types/banner";
+
+export function useBannerMutations() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const createBanner = useMutation({
+    mutationFn: async (formData: FormData) => {
+      const file = formData.get("image") as File;
+      let imageUrl = "";
+
+      if (file.size > 0) {
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from("oni-media")
+          .upload(`bluebay-banners/${Date.now()}-${file.name}`, file);
+        if (uploadError) {
+          console.error("Error uploading image:", uploadError);
+          throw new Error(`Erro ao fazer upload da imagem: ${uploadError.message}`);
+        }
+        const { data: { publicUrl } } = supabase.storage
+          .from("oni-media")
+          .getPublicUrl(uploadData.path);
+        imageUrl = publicUrl;
+      }
+
+      const duration = Number(formData.get("duration")) * 1000; // Convert seconds to milliseconds
+
+      const bannerData = {
+        title: String(formData.get("title")),
+        description: String(formData.get("description")),
+        button_text: String(formData.get("button_text")),
+        button_link: String(formData.get("button_link")),
+        youtube_url: formData.get("youtube_url") ? String(formData.get("youtube_url")) : null,
+        image_url: imageUrl,
+        duration: duration,
+        page: "bluebay-home",
+      };
+
+      const { error } = await supabase.from("banners").insert([bannerData]);
+      if (error) {
+        console.error("Error creating banner:", error);
+        throw new Error(`Erro ao criar banner: ${error.message}`);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bluebay-banners"] });
+      toast({ title: "Banner criado com sucesso!" });
+      return true;
+    },
+    onError: (error: Error) => {
+      console.error("Error in createBanner mutation:", error);
+      toast({
+        title: "Erro ao criar banner",
+        description: error.message,
+        variant: "destructive",
+      });
+      return false;
+    },
+  });
+
+  const updateBanner = async (editingBanner: Banner, formData: FormData) => {
+    try {
+      const updatedData: any = {
+        title: String(formData.get("title")),
+        description: String(formData.get("description")),
+        button_text: String(formData.get("button_text")),
+        button_link: String(formData.get("button_link")),
+        youtube_url: formData.get("youtube_url") ? String(formData.get("youtube_url")) : null,
+        duration: Number(formData.get("duration")) * 1000, // Convert seconds to milliseconds
+      };
+
+      const file = formData.get("image") as File;
+      if (file?.size > 0) {
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from("oni-media")
+          .upload(`bluebay-banners/${Date.now()}-${file.name}`, file);
+        
+        if (uploadError) {
+          console.error("Error uploading image:", uploadError);
+          toast({
+            title: "Erro ao fazer upload da imagem",
+            description: uploadError.message,
+            variant: "destructive",
+          });
+          return false;
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from("oni-media")
+          .getPublicUrl(uploadData.path);
+        updatedData.image_url = publicUrl;
+      }
+
+      const { error } = await supabase
+        .from("banners")
+        .update(updatedData)
+        .eq("id", editingBanner.id);
+
+      if (error) {
+        console.error("Error updating banner:", error);
+        toast({
+          title: "Erro ao atualizar banner",
+          description: error.message,
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["bluebay-banners"] });
+      toast({ title: "Banner atualizado com sucesso!" });
+      return true;
+    } catch (error) {
+      console.error("Error updating banner:", error);
+      toast({
+        title: "Erro ao atualizar banner",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
+  return {
+    createBanner,
+    updateBanner
+  };
+}

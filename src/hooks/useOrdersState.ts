@@ -1,6 +1,6 @@
-
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import type { DateRange } from "react-day-picker";
+import type { SearchType } from "@/types/searchTypes";
 import type { SearchType } from "@/components/jab-orders/SearchFilters";
 import { useJabOrders, useTotals } from "@/hooks/useJabOrders";
 
