@@ -81,11 +81,13 @@ export const fetchTitulosVencidos = async (clienteCodigo: string | number) => {
   try {
     console.log(`Executando busca de títulos vencidos para cliente ${clienteCodigo}`);
     
-    // Use a SQL-like query to match exactly what you showed in your SQL query
+    // Convert clienteCodigo to string for the query
+    const clienteCodigoStr = clienteCodigo.toString();
+    
     const { data, error, count } = await supabase
       .from('BLUEBAY_TITULO')
       .select('VLRSALDO', { count: 'exact' })
-      .eq('PES_CODIGO', clienteCodigo.toString())
+      .eq('PES_CODIGO', clienteCodigoStr)
       .lt('DTVENCIMENTO', new Date().toISOString().split('T')[0]);
     
     if (error) {
@@ -96,7 +98,6 @@ export const fetchTitulosVencidos = async (clienteCodigo: string | number) => {
     console.log(`Encontrados ${count} títulos vencidos para cliente ${clienteCodigo}`);
     console.log(`Dados dos títulos:`, data);
     
-    // Soma os valores vencidos
     const valorVencido = data.reduce((total, titulo) => {
       const valor = parseFloat(titulo.VLRSALDO) || 0;
       console.log(`Valor saldo: ${valor}`);
