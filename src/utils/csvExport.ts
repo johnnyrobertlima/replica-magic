@@ -2,6 +2,7 @@
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
 import { format } from "date-fns";
+import * as XLSX from 'xlsx';
 
 export const exportOrderToCSV = (order: any, toast: ReturnType<typeof useToast>['toast']) => {
   try {
@@ -28,7 +29,7 @@ export const exportOrderToCSV = (order: any, toast: ReturnType<typeof useToast>[
       approvalDate = new Date();
     }
 
-    const clientInfo = {
+    const clientInfo = [{
       'Cliente': clienteData.APELIDO || 'N/A',
       'Código Cliente': clienteData.PES_CODIGO || 'N/A',
       'Representante': clienteData.representanteNome || 'N/A',
@@ -37,7 +38,7 @@ export const exportOrderToCSV = (order: any, toast: ReturnType<typeof useToast>[
       'Valores em Aberto': formatCurrency(clienteData.valoresEmAberto),
       'Valores Vencidos': formatCurrency(clienteData.valoresVencidos),
       'Data de Aprovação': approvalDate.toLocaleString('pt-BR')
-    };
+    }];
 
     if (!approvedSeparacao.separacao_itens || approvedSeparacao.separacao_itens.length === 0) {
       toast({
@@ -58,36 +59,37 @@ export const exportOrderToCSV = (order: any, toast: ReturnType<typeof useToast>[
       'Valor Total': formatCurrency((item.QTDE_SALDO || 1) * (item.VALOR_UNITARIO || item.valor_unitario || 0))
     }));
 
-    const clientHeaders = Object.keys(clientInfo);
-    const itemHeaders = Object.keys(items[0] || {});
+    // Criar workbook e adicionar as worksheets
+    const wb = XLSX.utils.book_new();
+    
+    // Adicionar informações do cliente
+    const wsClient = XLSX.utils.json_to_sheet(clientInfo);
+    XLSX.utils.book_append_sheet(wb, wsClient, "Informações do Cliente");
+    
+    // Adicionar itens do pedido
+    const wsItems = XLSX.utils.json_to_sheet(items);
+    XLSX.utils.book_append_sheet(wb, wsItems, "Itens do Pedido");
 
-    const csvContent = [
-      'INFORMAÇÕES DO CLIENTE',
-      clientHeaders.map(header => `"${header}"`).join(','),
-      Object.values(clientInfo).map(value => `"${value}"`).join(','),
-      '',
-      'ITENS DO PEDIDO',
-      itemHeaders.map(header => `"${header}"`).join(','),
-      ...items.map(item => 
-        Object.values(item).map(value => `"${value}"`).join(',')
-      )
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    // Gerar o arquivo Excel
+    const formattedDate = format(approvalDate, 'dd-MM-yyyy');
+    const fileName = `pedido-${clienteData.APELIDO || 'cliente'}-${formattedDate}.xlsx`;
+    
+    // Converter para um array buffer e criar o blob
+    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    
+    // Criar link de download e trigger o download
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.setAttribute('href', url);
-    
-    const formattedDate = format(approvalDate, 'dd-MM-yyyy');
-    link.setAttribute('download', `pedido-${clienteData.APELIDO || 'cliente'}-${formattedDate}.csv`);
-    
+    link.href = url;
+    link.download = fileName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     
     toast({
       title: "Exportação concluída",
-      description: "Dados exportados com sucesso",
+      description: "Dados exportados com sucesso em formato Excel",
     });
   } catch (error) {
     console.error("Erro ao exportar dados:", error);
