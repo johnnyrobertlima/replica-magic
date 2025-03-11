@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import type { ClienteFinanceiro } from "@/types/financialClient";
 
 export const fetchClientInfo = async (clienteCodigo: number | string) => {
   const { data, error } = await supabase
@@ -16,7 +17,7 @@ export const fetchClientInfo = async (clienteCodigo: number | string) => {
   return data;
 };
 
-export const fetchFinancialTitles = async (clientesCodigos: string[] | number[]) => {
+export const fetchFinancialTitles = async (clientesCodigos: Array<string | number>) => {
   const stringClientesCodigos = clientesCodigos.map(String);
 
   const { data, error } = await supabase
@@ -60,7 +61,7 @@ export const fetchRepresentantesInfo = async () => {
   }
 };
 
-export const fetchPedidosForRepresentantes = async (representanteCodigos: string[] | number[]) => {
+export const fetchPedidosForRepresentantes = async (representanteCodigos: Array<string | number>) => {
   try {
     const stringRepresentanteCodigos = representanteCodigos.map(String);
 
@@ -78,37 +79,19 @@ export const fetchPedidosForRepresentantes = async (representanteCodigos: string
   }
 };
 
-export const processClientsData = async (clients: any[]) => {
-  const clientesProcessados = [];
+export const fetchValoresVencidos = async (clienteCodigo: string | number): Promise<number> => {
+  try {
+    const { data, error } = await supabase
+      .from('BLUEBAY_TITULO')
+      .select('VLRSALDO')
+      .eq('PES_CODIGO', String(clienteCodigo))
+      .lt('DTVENCIMENTO', new Date().toISOString());
 
-  for (const cliente of clients) {
-    try {
-      const titulos = await fetchFinancialTitles([String(cliente.PES_CODIGO)]);
-      
-      const valoresEmAberto = titulos.reduce((acc, titulo) => acc + (titulo.VLRSALDO || 0), 0);
-      
-      const hoje = new Date();
-      const valoresVencidos = titulos
-        .filter(titulo => {
-          const dtVencimento = titulo.DTVENCIMENTO ? new Date(titulo.DTVENCIMENTO) : null;
-          return dtVencimento && dtVencimento < hoje && titulo.VLRSALDO > 0;
-        })
-        .reduce((acc, titulo) => acc + (titulo.VLRSALDO || 0), 0);
+    if (error) throw error;
 
-      clientesProcessados.push({
-        ...cliente,
-        valoresEmAberto,
-        valoresVencidos
-      });
-    } catch (error) {
-      console.error(`Error processing client ${cliente.PES_CODIGO}:`, error);
-      clientesProcessados.push({
-        ...cliente,
-        valoresEmAberto: 0,
-        valoresVencidos: 0
-      });
-    }
+    return data?.reduce((acc, titulo) => acc + (titulo.VLRSALDO || 0), 0) || 0;
+  } catch (error) {
+    console.error('Error fetching valores vencidos:', error);
+    return 0;
   }
-
-  return clientesProcessados;
 };
