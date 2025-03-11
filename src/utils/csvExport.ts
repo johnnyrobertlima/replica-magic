@@ -59,17 +59,63 @@ export const exportOrderToCSV = (order: any, toast: ReturnType<typeof useToast>[
       'Valor Total': formatCurrency((item.QTDE_SALDO || 1) * (item.VALOR_UNITARIO || item.valor_unitario || 0))
     }));
 
-    // Criar workbook e adicionar as worksheets
+    // Criar workbook
     const wb = XLSX.utils.book_new();
     
-    // Adicionar informações do cliente
-    const wsClient = XLSX.utils.json_to_sheet(clientInfo);
-    XLSX.utils.book_append_sheet(wb, wsClient, "Informações do Cliente");
+    // Criar uma única planilha para todas as informações
+    // Primeiro, vamos criar as células para as informações do cliente
+    const clientSheet = XLSX.utils.json_to_sheet(clientInfo);
     
-    // Adicionar itens do pedido
-    const wsItems = XLSX.utils.json_to_sheet(items);
-    XLSX.utils.book_append_sheet(wb, wsItems, "Itens do Pedido");
-
+    // Definir o range atual da planilha
+    const clientRange = XLSX.utils.decode_range(clientSheet['!ref'] || 'A1');
+    const lastRowClient = clientRange.e.r;
+    
+    // Calcular onde começar a seção de itens (2 linhas após as informações do cliente)
+    const itemsStartRow = lastRowClient + 3; // +3 para ter 2 linhas em branco
+    
+    // Converter os itens para um sheet sem incluir no workbook ainda
+    const itemsSheet = XLSX.utils.json_to_sheet(items);
+    
+    // Obter o range da planilha de itens
+    const itemsRange = XLSX.utils.decode_range(itemsSheet['!ref'] || 'A1');
+    
+    // Criar uma planilha combinada
+    const combinedSheet = clientSheet;
+    
+    // Adicionar título para a seção de itens (na linha após as 2 linhas em branco)
+    combinedSheet[XLSX.utils.encode_cell({r: lastRowClient + 2, c: 0})] = {t: 's', v: 'ITENS DO PEDIDO'};
+    
+    // Copiar os cabeçalhos dos itens
+    for (let c = 0; c <= itemsRange.e.c; c++) {
+      const cellAddress = XLSX.utils.encode_cell({r: 0, c: c});
+      const headerCell = itemsSheet[cellAddress];
+      if (headerCell) {
+        combinedSheet[XLSX.utils.encode_cell({r: itemsStartRow, c: c})] = headerCell;
+      }
+    }
+    
+    // Copiar os dados dos itens
+    for (let r = 1; r <= itemsRange.e.r; r++) {
+      for (let c = 0; c <= itemsRange.e.c; c++) {
+        const cellAddress = XLSX.utils.encode_cell({r: r, c: c});
+        const dataCell = itemsSheet[cellAddress];
+        if (dataCell) {
+          combinedSheet[XLSX.utils.encode_cell({r: itemsStartRow + r, c: c})] = dataCell;
+        }
+      }
+    }
+    
+    // Atualizar o range da planilha combinada
+    const newLastRow = itemsStartRow + itemsRange.e.r;
+    const newLastCol = Math.max(clientRange.e.c, itemsRange.e.c);
+    combinedSheet['!ref'] = XLSX.utils.encode_range({
+      s: {r: 0, c: 0},
+      e: {r: newLastRow, c: newLastCol}
+    });
+    
+    // Adicionar a planilha combinada ao workbook
+    XLSX.utils.book_append_sheet(wb, combinedSheet, "Pedido");
+    
     // Gerar o arquivo Excel
     const formattedDate = format(approvalDate, 'dd-MM-yyyy');
     const fileName = `pedido-${clienteData.APELIDO || 'cliente'}-${formattedDate}.xlsx`;
