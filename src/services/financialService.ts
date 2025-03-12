@@ -35,10 +35,14 @@ export const fetchClient = async (clientId: number | string) => {
   if (error) throw error;
   
   // Ensure PES_CODIGO is a string
-  return data ? {
-    ...data,
-    PES_CODIGO: String(data.PES_CODIGO)
-  } as Partial<ClienteFinanceiro> : null;
+  if (data) {
+    return {
+      ...data,
+      PES_CODIGO: String(data.PES_CODIGO)
+    } as Partial<ClienteFinanceiro>;
+  }
+  
+  return null;
 };
 
 // Process client data to add calculated properties
@@ -83,6 +87,41 @@ export const fetchClientsByIds = async (clientIds: (number | string)[]) => {
       NUMERO
     `)
     .in("PES_CODIGO", clientIdStrings);
+
+  if (error) throw error;
+  
+  // Convert PES_CODIGO to string for each client
+  return (data || []).map(client => ({
+    ...client,
+    PES_CODIGO: String(client.PES_CODIGO)
+  })) as Partial<ClienteFinanceiro>[];
+};
+
+// Adicionando a função fetchAllClients para resolver o erro de importação
+export const fetchAllClients = async () => {
+  const { data, error } = await supabase
+    .from("BLUEBAY_PESSOA")
+    .select(`
+      PES_CODIGO, 
+      APELIDO, 
+      RAZAOSOCIAL, 
+      EMAIL, 
+      TELEFONE, 
+      CIDADE, 
+      UF, 
+      volume_saudavel_faturamento,
+      BAIRRO, 
+      CATEGORIA, 
+      CEP, 
+      CNPJCPF, 
+      COMPLEMENTO, 
+      DATACADASTRO, 
+      ENDERECO, 
+      INSCRICAO_ESTADUAL, 
+      NOME_CATEGORIA, 
+      NUMERO
+    `)
+    .order("APELIDO", { ascending: true });
 
   if (error) throw error;
   

@@ -18,8 +18,7 @@ export function useBanners() {
         throw error;
       }
       
-      // Type assertion to avoid deep instantiation
-      return (data || []) as Banner[];
+      return data as Banner[];
     },
   });
 }

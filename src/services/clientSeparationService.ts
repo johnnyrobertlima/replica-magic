@@ -52,11 +52,14 @@ export const sendOrdersForSeparation = async (
   try {
     console.log('Sending orders for separation:', orderIds, clienteFinanceiro);
     
-    // Create a proper separation record - convert string PES_CODIGO to number for the database
+    // Converter o PES_CODIGO para número para inserção no banco de dados
+    const clienteCodigoNumber = parseInt(clienteFinanceiro.PES_CODIGO, 10);
+    
+    // Create a proper separation record
     const { data, error } = await supabase
       .from('separacoes')
       .insert({
-        cliente_codigo: Number(clienteFinanceiro.PES_CODIGO), // Convert string to number for the database
+        cliente_codigo: clienteCodigoNumber, // Usando o valor numérico convertido
         cliente_nome: clienteFinanceiro.APELIDO || `Cliente ${clienteFinanceiro.PES_CODIGO}`,
         status: 'pending',
         created_at: new Date().toISOString(),

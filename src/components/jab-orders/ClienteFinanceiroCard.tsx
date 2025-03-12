@@ -13,8 +13,8 @@ interface ClienteFinanceiroCardProps {
   onUpdateVolumeSaudavel: (clienteCodigo: string, valor: number) => Promise<{ success: boolean; error?: any }>;
   onHideCard: (id: string) => void;
   onApprove: (separacaoId: string, clienteData: ClienteFinanceiro) => void;
-  expandedView?: boolean; // Add the expandedView prop as an optional boolean
-  showApprovalButtons?: boolean; // Add this prop to control button visibility
+  expandedView?: boolean;
+  showApprovalButtons?: boolean;
 }
 
 export const ClienteFinanceiroCard = ({ 
@@ -22,8 +22,8 @@ export const ClienteFinanceiroCard = ({
   onUpdateVolumeSaudavel,
   onHideCard,
   onApprove,
-  expandedView = false, // Default to false if not provided
-  showApprovalButtons = true // Default to showing buttons if not specified
+  expandedView = false,
+  showApprovalButtons = true
 }: ClienteFinanceiroCardProps) => {
   const [isExpanded, setIsExpanded] = useState(expandedView);
   const [expandedSeparacoes, setExpandedSeparacoes] = useState<string[]>([]);

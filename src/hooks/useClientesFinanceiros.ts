@@ -1,6 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { fetchClient, fetchClientsByIds } from "@/services/financialService";
+import { fetchClient, fetchClientsByIds, fetchAllClients } from "@/services/financialService";
 import { loadClientFinancialData } from "@/utils/financialUtils";
 import type { ClienteFinanceiro } from "@/types/financialClient";
 
@@ -83,5 +83,34 @@ export const useClientesFinanceirosByIds = (clienteIds: (number | string)[]) => 
       }
     },
     enabled: clienteIds.length > 0,
+  });
+};
+
+// Get all clients
+export const useAllClientesFinanceiros = () => {
+  return useQuery({
+    queryKey: ["all-clientes-financeiros"],
+    queryFn: async () => {
+      try {
+        const clientes = await fetchAllClients();
+        
+        // Return just the basic data without loading financial details for all clients
+        // as that would be too many requests
+        return clientes.map(cliente => ({
+          ...cliente,
+          PES_CODIGO: String(cliente.PES_CODIGO || ""),
+          APELIDO: cliente.APELIDO || null,
+          volume_saudavel_faturamento: cliente.volume_saudavel_faturamento || null,
+          valoresTotais: 0, // These will be populated on demand
+          valoresEmAberto: 0,
+          valoresVencidos: 0,
+          separacoes: [],
+          representanteNome: null,
+        })) as ClienteFinanceiro[];
+      } catch (error) {
+        console.error("Error fetching all clientes financeiros:", error);
+        throw error;
+      }
+    },
   });
 };
