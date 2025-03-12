@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import type { ClienteFinanceiro } from "@/types/financialClient";
 
@@ -57,7 +56,6 @@ export const getClientesCodigos = (separacoes: any[]) => {
 
 export const updateVolumeSaudavel = async (clienteCodigo: number | string, valor: number) => {
   try {
-    // Ensure clienteCodigo is converted to string for the query
     const clienteCodigoStr = String(clienteCodigo);
     
     const { data, error } = await supabase
@@ -100,7 +98,6 @@ export const fetchTitulosVencidos = async (clientId: number | string) => {
 
 export const getClientById = async (clientId: number | string) => {
   try {
-    // Convert to string for query
     const clientIdStr = String(clientId);
     
     const { data, error } = await supabase
@@ -130,8 +127,10 @@ export const getClientById = async (clientId: number | string) => {
       
     if (error) throw error;
     
-    // Return as partial ClienteFinanceiro, as we don't have all required fields yet
-    return data as Partial<ClienteFinanceiro>;
+    return data ? {
+      ...data,
+      PES_CODIGO: String(data.PES_CODIGO)
+    } as Partial<ClienteFinanceiro> : null;
   } catch (error) {
     console.error("Error fetching client data:", error);
     throw error;
