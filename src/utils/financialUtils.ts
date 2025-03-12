@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { ClienteFinanceiro, TituloFinanceiro } from "@/types/financialClient";
 
@@ -74,7 +73,7 @@ export const calculateClientFinancialValues = (
   return cliente;
 };
 
-// Função para buscar títulos vencidos diretamente do Supabase
+// Function to fetch overdue titles directly from Supabase
 export const fetchTitulosVencidos = async (clienteCodigo: number | string): Promise<number> => {
   try {
     // Ensure clienteCodigo is a string as expected by the database
@@ -83,7 +82,6 @@ export const fetchTitulosVencidos = async (clienteCodigo: number | string): Prom
     
     const today = new Date().toISOString().split('T')[0];
     
-    // Fix: The .eq() method expects a string for the PES_CODIGO column
     const { data, error } = await supabase
       .from('BLUEBAY_TITULO')
       .select('VLRSALDO')
@@ -98,7 +96,7 @@ export const fetchTitulosVencidos = async (clienteCodigo: number | string): Prom
     
     console.log(`Encontrados ${data?.length || 0} títulos vencidos para cliente ${clienteCodigoStr}`);
     
-    // Soma os valores vencidos com validação adequada
+    // Sum up overdue values with proper validation
     const valorVencido = data?.reduce((total, titulo) => {
       const saldo = parseFloat(titulo.VLRSALDO) || 0;
       return total + saldo;
