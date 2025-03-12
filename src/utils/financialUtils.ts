@@ -77,10 +77,10 @@ export const calculateClientFinancialValues = (
 // Fetch overdue titles directly from Supabase
 export const fetchTitulosVencidos = async (clienteCodigo: string | number) => {
   try {
-    console.log(`Buscando valores vencidos para cliente: ${clienteCodigo}`);
-    
-    // Always convert clienteCodigo to string to match the PES_CODIGO type in the database
+    // Convert clienteCodigo to string to ensure type compatibility
     const clienteCodigoStr = String(clienteCodigo);
+    
+    console.log(`Buscando valores vencidos para cliente: ${clienteCodigoStr}`);
     
     // First try to use the RPC function for better performance
     const { data: rpcData, error: rpcError } = await supabase
