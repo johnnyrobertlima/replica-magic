@@ -1,6 +1,19 @@
+
 import type { JabOrder, JabOrderItem } from "@/types/jabOrders";
 import type { ClientOrderGroup } from "@/types/clientOrders";
 import type { SearchType } from "@/components/jab-orders/SearchFilters";
+
+// Helper function to calculate total selected from selected items details
+export const calculateTotalSelected = (selectedItemsDetails: Record<string, { qtde: number; valor: number }>): number => {
+  return Object.values(selectedItemsDetails).reduce((sum, item) => {
+    return sum + (item.qtde * item.valor);
+  }, 0);
+};
+
+// Helper function to get client code from an item
+export const getClientCodeFromItem = (item: any): number => {
+  return item.PES_CODIGO;
+};
 
 export const groupOrdersByClient = (
   ordersData: { 
@@ -42,10 +55,11 @@ export const groupOrdersByClient = (
     }
     
     groups[clientName].pedidos.push(order);
-    groups[clientName].representante = order.REPRESENTANTE;
+    // Use the 'REPRESENTANTE' property if it exists, otherwise use existing value or null
+    groups[clientName].representante = order.REPRESENTANTE ?? groups[clientName].representante;
 
     // Agrupar todos os itens do pedido
-    order.itens.forEach(item => {
+    order.items.forEach(item => {
       const allItem = {
         ...item,
         pedido: order.PED_NUMPEDIDO,
@@ -56,11 +70,11 @@ export const groupOrdersByClient = (
     });
 
     // Calcular os totais
-    groups[clientName].totalQuantidadeSaldo += order.itens.reduce((sum, item) => sum + item.QTDSALDO, 0);
-    groups[clientName].totalValorSaldo += order.itens.reduce((sum, item) => sum + item.VALORSALDO, 0);
-    groups[clientName].totalValorPedido += order.itens.reduce((sum, item) => sum + item.VLRVENDA, 0);
-    groups[clientName].totalValorFaturado += order.itens.reduce((sum, item) => sum + item.VLRFATURADO, 0);
-    groups[clientName].totalValorFaturarComEstoque += order.itens.reduce((sum, item) => sum + item.VLRFATURARCOMSTOQUE, 0);
+    groups[clientName].totalQuantidadeSaldo += order.items.reduce((sum, item) => sum + item.QTDE_SALDO, 0);
+    groups[clientName].totalValorSaldo += order.items.reduce((sum, item) => sum + item.VALORSALDO, 0);
+    groups[clientName].totalValorPedido += order.items.reduce((sum, item) => sum + item.VLRVENDA, 0);
+    groups[clientName].totalValorFaturado += order.items.reduce((sum, item) => sum + item.VLRFATURADO, 0);
+    groups[clientName].totalValorFaturarComEstoque += order.items.reduce((sum, item) => sum + item.VLRFATURARCOMSTOQUE, 0);
   });
 
   return groups;

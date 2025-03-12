@@ -48,7 +48,9 @@ export const useClientOrders = () => {
 
   // Add financial data to ordersData
   const ordersDataWithFinancial = useMemo(() => ({
-    ...ordersData,
+    orders: ordersData.orders,
+    totalCount: ordersData.totalCount,
+    itensSeparacao: ordersData.itensSeparacao || {},
     clientInfo: clientFinancialData
   }), [ordersData, clientFinancialData]);
 
