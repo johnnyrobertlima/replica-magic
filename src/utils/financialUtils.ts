@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { clientCodeToString } from "@/utils/client-orders/clientUtils";
 
@@ -13,19 +12,16 @@ export const formatDate = (date: string): string => {
   return new Date(date).toLocaleDateString('pt-BR');
 };
 
-// Function to calculate client financial values
 export const calculateClientFinancialValues = (cliente: any, titulo: any, today: Date) => {
   if (!titulo || !titulo.VLRSALDO) return;
   
   const saldo = parseFloat(titulo.VLRSALDO) || 0;
   cliente.valoresTotais += saldo;
   
-  // Check if open
   if (titulo.STATUS === '1' || titulo.STATUS === '2') {
     cliente.valoresEmAberto += saldo;
   }
   
-  // Check if overdue
   if (titulo.DTVENCIMENTO) {
     const vencimento = new Date(titulo.DTVENCIMENTO);
     vencimento.setHours(0, 0, 0, 0);
@@ -48,7 +44,6 @@ export const fetchTitulosVencidos = async (clientCode: string | number): Promise
       .not('VLRSALDO', 'is', null);
 
     if (error) throw error;
-
     if (!data || data.length === 0) return 0;
 
     return data.reduce((total, titulo) => {
@@ -61,7 +56,6 @@ export const fetchTitulosVencidos = async (clientCode: string | number): Promise
   }
 };
 
-// Function to get separations pending, filtering hidden cards
 export const getSeparacoesPendentes = (separacoes: any[], hiddenCards: Set<string>) => {
   return separacoes.filter(sep => 
     sep.status === 'pendente' && 
@@ -69,14 +63,12 @@ export const getSeparacoesPendentes = (separacoes: any[], hiddenCards: Set<strin
   );
 };
 
-// Function to get unique client codes from separations
 export const getClientesCodigos = (separacoesPendentes: any[]) => {
   return Array.from(new Set(
     separacoesPendentes.map(sep => sep.cliente_codigo)
   ));
 };
 
-// Function to update a client's healthy volume
 export const updateVolumeSaudavel = async (clienteCodigo: string | number, valor: number) => {
   try {
     const clienteCodigoStr = clientCodeToString(clienteCodigo);
