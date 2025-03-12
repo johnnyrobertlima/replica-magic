@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import type { DateRange } from "react-day-picker";
 import type { SearchType } from "@/components/jab-orders/SearchFilters";
 
@@ -11,56 +11,24 @@ export interface SearchState {
   isSearching: boolean;
 }
 
-export const useClientOrdersSearch = (initialDate: DateRange | undefined = {
-  from: new Date(),
-  to: new Date(),
-}) => {
-  const [state, setState] = useState<SearchState>({
-    date: initialDate,
-    searchDate: initialDate,
-    searchQuery: "",
-    searchType: "pedido",
-    isSearching: false,
-  });
-
-  // Destructure state for easier access
-  const {
-    date,
-    searchDate,
-    searchQuery,
-    searchType,
-    isSearching
-  } = state;
-
-  // State update methods
-  const setDate = (newDate: DateRange | undefined) => {
-    setState(prev => ({ ...prev, date: newDate }));
-  };
-
-  const setSearchQuery = (query: string) => {
-    setState(prev => ({ ...prev, searchQuery: query }));
-  };
-
-  const setSearchType = (type: SearchType) => {
-    setState(prev => ({ ...prev, searchType: type }));
-  };
+export const useClientOrdersSearch = () => {
+  const [date, setDate] = useState<DateRange | undefined>(undefined);
+  const [searchDate, setSearchDate] = useState<DateRange | undefined>(undefined);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchType, setSearchType] = useState<SearchType>("cliente");
+  const [isSearching, setIsSearching] = useState(false);
 
   const handleSearch = () => {
-    setState(prev => ({ 
-      ...prev, 
-      isSearching: true,
-      searchDate: prev.date
-    }));
+    setSearchDate(date);
+    setIsSearching(true);
   };
 
   return {
-    // State values
     date,
     searchDate,
     searchQuery,
     searchType,
     isSearching,
-    // State update methods
     setDate,
     setSearchQuery,
     setSearchType,

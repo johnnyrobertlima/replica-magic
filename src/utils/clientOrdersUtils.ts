@@ -1,3 +1,4 @@
+
 import type { JabOrder, JabOrderItem } from "@/types/jabOrders";
 import type { ClientOrderGroup } from "@/types/clientOrders";
 import type { SearchType } from "@/components/jab-orders/SearchFilters";
@@ -80,13 +81,15 @@ export const filterGroupsBySearchCriteria = (
       const matchesSearch = () => {
         if (!searchQuery) return true;
 
-        if (searchType === "client") {
+        if (searchType === "cliente") {
           return clientName.toLowerCase().includes(normalizedSearchQuery);
         } else if (searchType === "pedido") {
           return group.pedidos.some(pedido =>
             pedido.PED_NUMPEDIDO.toLowerCase().includes(normalizedSearchQuery) ||
             (pedido.PEDIDO_CLIENTE?.toLowerCase().includes(normalizedSearchQuery) ?? false)
           );
+        } else if (searchType === "representante") {
+          return group.representante?.toLowerCase().includes(normalizedSearchQuery) ?? false;
         } else if (searchType === "item") {
           return group.allItems.some(item =>
             item.ITEM_CODIGO.toLowerCase().includes(normalizedSearchQuery) ||
@@ -104,4 +107,15 @@ export const filterGroupsBySearchCriteria = (
   }
 
   return filteredGroups;
+};
+
+// Add missing functions
+export const calculateTotalSelected = (selectedItemsDetails: Record<string, { qtde: number; valor: number }>) => {
+  return Object.values(selectedItemsDetails).reduce((total, item) => {
+    return total + (item.qtde * item.valor);
+  }, 0);
+};
+
+export const getClientCodeFromItem = (item: any) => {
+  return item.PES_CODIGO;
 };
