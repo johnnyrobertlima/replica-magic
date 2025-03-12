@@ -166,7 +166,10 @@ const AprovacaoFinanceira = () => {
       </Card>
 
       {showSeparacaoPedidos && (
-        <SeparacaoDePedidos clienteId={cliente.PES_CODIGO} onClose={handleCloseSeparacaoPedidos} />
+        <SeparacaoDePedidos 
+          clienteId={cliente.PES_CODIGO} 
+          onClose={handleCloseSeparacaoPedidos} 
+        />
       )}
     </div>
   );

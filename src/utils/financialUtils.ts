@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import type { ClienteFinanceiro } from "@/types/financialClient";
 

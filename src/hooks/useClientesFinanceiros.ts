@@ -1,13 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { 
-  fetchClient, 
-  fetchAllClients,
-  fetchClientsByIds,
-  fetchClientsByName,
-  fetchClientsByRepIds
-} from "@/services/financialService";
-import { loadClientFinancialData, fetchTitulosVencidos } from "@/utils/financialUtils";
+import { fetchClient, fetchClientsByIds } from "@/services/financialService";
+import { loadClientFinancialData } from "@/utils/financialUtils";
 import type { ClienteFinanceiro } from "@/types/financialClient";
 
 // Get a single client by ID
@@ -24,17 +18,23 @@ export const useClienteFinanceiro = (clienteId: number | string | undefined) => 
         // Load financial data
         const financialData = await loadClientFinancialData(clienteId);
         
-        // Return combined data with default empty values for required fields
-        return {
-          ...cliente,
-          ...financialData,
-          separacoes: [],  // Default empty array for separacoes
-          representanteNome: null,  // Default null for representanteNome
-          // Default values for required fields if they don't exist yet
+        // Ensure we have all required fields and proper types
+        const fullCliente: ClienteFinanceiro = {
+          // Required fields
+          PES_CODIGO: cliente?.PES_CODIGO || String(clienteId),
+          APELIDO: cliente?.APELIDO || null,
+          volume_saudavel_faturamento: cliente?.volume_saudavel_faturamento || null,
           valoresTotais: financialData.valoresTotais || 0,
           valoresEmAberto: financialData.valoresEmAberto || 0,
-          valoresVencidos: financialData.valoresVencidos || 0
-        } as ClienteFinanceiro;
+          valoresVencidos: financialData.valoresVencidos || 0,
+          separacoes: [],
+          representanteNome: null,
+          
+          // Optional fields from cliente
+          ...cliente,
+        };
+        
+        return fullCliente;
       } catch (error) {
         console.error("Error fetching cliente financeiro:", error);
         throw error;
@@ -57,17 +57,19 @@ export const useClientesFinanceirosByIds = (clienteIds: (number | string)[]) => 
         // Enrich with financial data
         const clientesEnriquecidos = await Promise.all(
           clientes.map(async (cliente) => {
-            const financialData = await loadClientFinancialData(cliente.PES_CODIGO);
+            const financialData = await loadClientFinancialData(cliente.PES_CODIGO || "");
             
             // Construct a properly typed ClienteFinanceiro object
             const enrichedClient: ClienteFinanceiro = {
-              ...cliente,
-              PES_CODIGO: String(cliente.PES_CODIGO), // Ensure PES_CODIGO is a string
+              PES_CODIGO: String(cliente.PES_CODIGO || ""),
+              APELIDO: cliente.APELIDO || null,
+              volume_saudavel_faturamento: cliente.volume_saudavel_faturamento || null,
               valoresTotais: financialData.valoresTotais,
               valoresEmAberto: financialData.valoresEmAberto,
               valoresVencidos: financialData.valoresVencidos,
-              separacoes: [],  // Default empty array
-              representanteNome: null  // Default null
+              separacoes: [],
+              representanteNome: null,
+              ...cliente, // Include all other optional fields
             };
             
             return enrichedClient;
@@ -81,59 +83,5 @@ export const useClientesFinanceirosByIds = (clienteIds: (number | string)[]) => 
       }
     },
     enabled: clienteIds.length > 0,
-  });
-};
-
-// Get all clients
-export const useAllClientesFinanceiros = () => {
-  return useQuery({
-    queryKey: ["all-clientes-financeiros"],
-    queryFn: async () => {
-      try {
-        const clientes = await fetchAllClients();
-        return clientes;
-      } catch (error) {
-        console.error("Error fetching all clientes financeiros:", error);
-        throw error;
-      }
-    },
-  });
-};
-
-// Search clients by name
-export const useClientesFinanceirosByName = (searchQuery: string) => {
-  return useQuery({
-    queryKey: ["clientes-financeiros-by-name", searchQuery],
-    queryFn: async () => {
-      if (!searchQuery) return [];
-      
-      try {
-        const clientes = await fetchClientsByName(searchQuery);
-        return clientes;
-      } catch (error) {
-        console.error("Error searching clientes financeiros by name:", error);
-        throw error;
-      }
-    },
-    enabled: !!searchQuery,
-  });
-};
-
-// Get clients by representante IDs
-export const useClientesFinanceirosByRepIds = (repIds: (number | string)[]) => {
-  return useQuery({
-    queryKey: ["clientes-financeiros-by-rep-ids", repIds],
-    queryFn: async () => {
-      if (!repIds.length) return [];
-      
-      try {
-        const clientes = await fetchClientsByRepIds(repIds);
-        return clientes;
-      } catch (error) {
-        console.error("Error fetching clientes financeiros by rep ids:", error);
-        throw error;
-      }
-    },
-    enabled: repIds.length > 0,
   });
 };

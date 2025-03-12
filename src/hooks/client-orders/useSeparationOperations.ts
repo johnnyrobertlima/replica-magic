@@ -32,7 +32,7 @@ export const useSeparationOperations = (
       
       // Create a proper ClienteFinanceiro object from the groupedOrders
       const clienteFinanceiro: ClienteFinanceiro = {
-        PES_CODIGO: Number(clientData.clientId || 0),
+        PES_CODIGO: String(clientData.clientId || 0), // Ensure this is a string
         APELIDO: clientName,
         volume_saudavel_faturamento: clientData.volumeSaudavel || null,
         valoresTotais: clientData.valoresTotais || 0,

@@ -19,7 +19,6 @@ export interface ClienteFinanceiro {
   valoresVencidos: number;
   separacoes: any[];
   representanteNome: string | null;
-  volumeSaudavel?: number | null;
   
   // Add all other BLUEBAY_PESSOA fields as optional to avoid type errors
   BAIRRO?: string | null;

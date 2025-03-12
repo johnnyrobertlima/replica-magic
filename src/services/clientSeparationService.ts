@@ -52,7 +52,7 @@ export const sendOrdersForSeparation = async (
   try {
     console.log('Sending orders for separation:', orderIds, clienteFinanceiro);
     
-    // Create a proper separation record
+    // Create a proper separation record - convert string PES_CODIGO to number for the database
     const { data, error } = await supabase
       .from('separacoes')
       .insert({

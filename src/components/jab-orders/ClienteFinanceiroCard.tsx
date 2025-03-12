@@ -10,7 +10,7 @@ import { ClienteFinanceiro } from "@/types/financialClient";
 
 interface ClienteFinanceiroCardProps {
   cliente: ClienteFinanceiro;
-  onUpdateVolumeSaudavel: (clienteCodigo: string | number, valor: number) => Promise<{ success: boolean; error?: any }>;
+  onUpdateVolumeSaudavel: (clienteCodigo: string, valor: number) => Promise<{ success: boolean; error?: any }>;
   onHideCard: (id: string) => void;
   onApprove: (separacaoId: string, clienteData: ClienteFinanceiro) => void;
   expandedView?: boolean; // Add the expandedView prop as an optional boolean

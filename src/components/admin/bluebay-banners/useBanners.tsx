@@ -17,6 +17,8 @@ export function useBanners() {
         console.error("Error fetching banners:", error);
         throw error;
       }
+      
+      // Type assertion to avoid deep instantiation
       return (data || []) as Banner[];
     },
   });

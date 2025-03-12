@@ -34,7 +34,7 @@ export const fetchClient = async (clientId: number | string) => {
 
   if (error) throw error;
   
-  // Convert PES_CODIGO to string
+  // Ensure PES_CODIGO is a string
   return data ? {
     ...data,
     PES_CODIGO: String(data.PES_CODIGO)
@@ -92,4 +92,3 @@ export const fetchClientsByIds = async (clientIds: (number | string)[]) => {
     PES_CODIGO: String(client.PES_CODIGO)
   })) as Partial<ClienteFinanceiro>[];
 };
-
