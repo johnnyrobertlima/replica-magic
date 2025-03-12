@@ -56,9 +56,8 @@ export async function createSeparacao(
     const { data: separacao, error: separacaoError } = await supabase
       .from('separacoes')
       .insert({
-        nome: displayName || `Separação ${clientName} - ${new Date().toLocaleString('pt-BR')}`,
         cliente_nome: clientName,
-        cliente_codigo: clientCode, // This is now a string
+        cliente_codigo: clientCode, // Now correctly passed as string
         status: 'pendente',
         created_at: new Date().toISOString()
       })
@@ -77,12 +76,15 @@ export async function createSeparacao(
     // Add items to separacao
     const itensParaInserir = selectedItems.map(itemId => {
       const [pedido, itemCodigo] = itemId.split(':');
+      const details = selectedItemsDetails[itemId];
+      
       return {
         separacao_id: separacao.id,
         item_codigo: itemCodigo,
         pedido: pedido,
-        quantidade: selectedItemsDetails[itemId].qtde,
-        valor_unitario: selectedItemsDetails[itemId].valor,
+        quantidade_pedida: details.qtde, // Renamed from 'quantidade' to match DB schema
+        valor_unitario: details.valor,
+        valor_total: details.qtde * details.valor, // Add required field
         created_at: new Date().toISOString()
       };
     });

@@ -1,166 +1,81 @@
-
-import { renderHook } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { renderHook, act } from '@testing-library/react-hooks';
+import { vi } from 'vitest';
 import { useSeparationOperations } from '../useSeparationOperations';
-import { sendOrdersForSeparation } from '@/services/clientSeparationService';
-import { act } from 'react-dom/test-utils';
+import { createSeparacao } from '@/services/clientSeparationService';
 
-// Mock the services and React Query
+// Mock the dependencies
 vi.mock('@/services/clientSeparationService', () => ({
-  sendOrdersForSeparation: vi.fn()
+  createSeparacao: vi.fn()
 }));
 
-const mockInvalidateQueries = vi.fn();
-vi.mock('@tanstack/react-query', () => ({
-  useQueryClient: () => ({
-    invalidateQueries: mockInvalidateQueries
+vi.mock('@/components/ui/use-toast', () => ({
+  toast: vi.fn()
+}));
+
+vi.mock('react-router-dom', () => ({
+  useRouter: () => ({
+    push: vi.fn()
   })
 }));
 
 describe('useSeparationOperations', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
+  it('should call createSeparacao with correct parameters and handle success', async () => {
+    const mockCreateSeparacao = vi.mocked(createSeparacao);
+    mockCreateSeparacao.mockResolvedValue({ id: '123' });
 
-  it('should call sendOrdersForSeparation with correct parameters', async () => {
-    const state = {
-      selectedItems: ['item1', 'item2']
-    } as any;
-    
+    const mockPush = vi.fn();
+    vi.mock('react-router-dom', () => ({
+      useRouter: () => ({
+        push: mockPush
+      })
+    }));
+
     const setState = vi.fn();
-    const groupedOrders = {
-      client1: {
+    const clientGroups = {
+      'Client A': {
         allItems: [
-          { ITEM_CODIGO: 'item1', pedido: 'pedido1' },
-          { ITEM_CODIGO: 'item2', pedido: 'pedido1' }
+          { ITEM_CODIGO: 'item1', pedido: 'pedido1', QTDE_SALDO: 10, VALOR_UNITARIO: 5 },
+          { ITEM_CODIGO: 'item2', pedido: 'pedido2', QTDE_SALDO: 5, VALOR_UNITARIO: 10 }
         ]
       }
     };
-    
-    (sendOrdersForSeparation as ReturnType<typeof vi.fn>).mockResolvedValue({ success: true });
-    
-    const { result } = renderHook(() => 
-      useSeparationOperations(state, setState, groupedOrders)
-    );
-    
+    const { result } = renderHook(() => useSeparationOperations({ selectedItems: { 'pedido1:item1': true } }, setState, clientGroups));
+
     await act(async () => {
       await result.current.handleEnviarParaSeparacao();
     });
-    
-    expect(sendOrdersForSeparation).toHaveBeenCalledWith(
-      ['item1', 'item2'],
-      groupedOrders
-    );
+
+    expect(mockCreateSeparacao).toHaveBeenCalledWith({ 'pedido1:item1': { qtde: 10, valor: 5 } }, clientGroups, undefined);
+    expect(setState).toHaveBeenCalledWith(expect.objectContaining({ isSending: false, selectedItems: {} }));
+    expect(mockPush).toHaveBeenCalledWith('/client-area/bluebay/separacoes/123');
   });
 
-  it('should set isSending to true during operation and false after completion', async () => {
-    const state = {
-      selectedItems: ['item1']
-    } as any;
-    
-    const setState = vi.fn();
-    const groupedOrders = {};
-    
-    (sendOrdersForSeparation as ReturnType<typeof vi.fn>).mockResolvedValue({ success: true });
-    
-    const { result } = renderHook(() => 
-      useSeparationOperations(state, setState, groupedOrders)
-    );
-    
-    await act(async () => {
-      await result.current.handleEnviarParaSeparacao();
-    });
-    
-    // Check that isSending was set to true at the beginning
-    expect(setState).toHaveBeenCalledWith(expect.objectContaining({
-      isSending: true
+  it('should handle createSeparacao failure and display an error toast', async () => {
+    const mockCreateSeparacao = vi.mocked(createSeparacao);
+    mockCreateSeparacao.mockRejectedValue(new Error('Failed to create separation'));
+
+    const mockToast = vi.fn();
+    vi.mock('@/components/ui/use-toast', () => ({
+      toast: mockToast
     }));
-    
-    // Check that isSending was set to false at the end
-    expect(setState).toHaveBeenLastCalledWith(expect.objectContaining({
-      isSending: false
-    }));
-  });
 
-  it('should reset selection state when operation succeeds', async () => {
-    const state = {
-      selectedItems: ['item1', 'item2'],
-      selectedItemsDetails: {
-        item1: { qtde: 1, valor: 100 },
-        item2: { qtde: 2, valor: 200 }
-      },
-      expandedClients: new Set(['client1'])
-    } as any;
-    
     const setState = vi.fn();
-    const groupedOrders = {};
-    
-    (sendOrdersForSeparation as ReturnType<typeof vi.fn>).mockResolvedValue({ success: true });
-    
-    const { result } = renderHook(() => 
-      useSeparationOperations(state, setState, groupedOrders)
-    );
-    
-    await act(async () => {
-      await result.current.handleEnviarParaSeparacao();
-    });
-    
-    // Check that selection state was reset
-    expect(setState).toHaveBeenCalledWith(expect.objectContaining({
-      selectedItems: [],
-      selectedItemsDetails: {},
-      expandedClients: new Set()
-    }));
-  });
-
-  it('should invalidate queries when operation succeeds', async () => {
-    const state = {
-      selectedItems: ['item1']
-    } as any;
-    
-    const setState = vi.fn();
-    const groupedOrders = {};
-    
-    (sendOrdersForSeparation as ReturnType<typeof vi.fn>).mockResolvedValue({ success: true });
-    
-    const { result } = renderHook(() => 
-      useSeparationOperations(state, setState, groupedOrders)
-    );
-    
-    await act(async () => {
-      await result.current.handleEnviarParaSeparacao();
-    });
-    
-    // Check that queries were invalidated
-    expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ['separacoes'] });
-    expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ['jabOrders'] });
-  });
-
-  it('should set isSending to false even if operation fails', async () => {
-    const state = {
-      selectedItems: ['item1']
-    } as any;
-    
-    const setState = vi.fn();
-    const groupedOrders = {};
-    
-    (sendOrdersForSeparation as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Operation failed'));
-    
-    const { result } = renderHook(() => 
-      useSeparationOperations(state, setState, groupedOrders)
-    );
-    
-    await act(async () => {
-      try {
-        await result.current.handleEnviarParaSeparacao();
-      } catch (error) {
-        // Ignore error
+    const clientGroups = {
+      'Client A': {
+        allItems: [
+          { ITEM_CODIGO: 'item1', pedido: 'pedido1', QTDE_SALDO: 10, VALOR_UNITARIO: 5 },
+          { ITEM_CODIGO: 'item2', pedido: 'pedido2', QTDE_SALDO: 5, VALOR_UNITARIO: 10 }
+        ]
       }
+    };
+    const { result } = renderHook(() => useSeparationOperations({ selectedItems: { 'pedido1:item1': true } }, setState, clientGroups));
+
+    await act(async () => {
+      await result.current.handleEnviarParaSeparacao();
     });
-    
-    // Check that isSending was set to false at the end
-    expect(setState).toHaveBeenLastCalledWith(expect.objectContaining({
-      isSending: false
-    }));
+
+    expect(mockCreateSeparacao).toHaveBeenCalled();
+    expect(setState).toHaveBeenCalledWith(expect.objectContaining({ isSending: false }));
+    expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Erro ao enviar para separação', description: 'Error: Failed to create separation' }));
   });
 });

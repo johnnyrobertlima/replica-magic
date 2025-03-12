@@ -1,3 +1,4 @@
+
 import type { 
   JabOrder, 
   UseJabOrdersOptions,
@@ -53,7 +54,7 @@ export async function fetchJabOrders({
     return { orders: [], totalCount };
   }
 
-  return await processOrdersData(dataInicial, dataFinal, numeroPedidos, pedidosDetalhados, totalCount);
+  return await processOrdersFullData(dataInicial, dataFinal, numeroPedidos, pedidosDetalhados, totalCount);
 }
 
 /**
@@ -87,13 +88,13 @@ export async function fetchAllJabOrders({
   
   console.log(`Total de ${numeroPedidos.length} pedidos únicos encontrados`);
   
-  return await processOrdersData(dataInicial, dataFinal, numeroPedidos, pedidosDetalhados, numeroPedidos.length);
+  return await processOrdersFullData(dataInicial, dataFinal, numeroPedidos, pedidosDetalhados, numeroPedidos.length);
 }
 
 /**
  * Common function to process order data
  */
-async function processOrdersData(
+async function processOrdersFullData(
   dataInicial: string,
   dataFinal: string,
   numeroPedidos: string[],
