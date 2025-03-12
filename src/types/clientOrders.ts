@@ -11,6 +11,7 @@ export interface ClientOrderGroup {
   totalValorPedido: number;
   totalValorFaturado: number;
   totalValorFaturarComEstoque: number;
+  valoresVencidos: number;
   representante: string | null;
   allItems: (JabOrderItem & {
     pedido: string;

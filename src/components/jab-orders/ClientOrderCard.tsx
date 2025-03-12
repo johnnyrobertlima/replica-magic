@@ -7,6 +7,7 @@ import { OrderProgressBars } from "./OrderProgressBars";
 import { OrderSummaryGrid } from "./OrderSummaryGrid";
 import { ClientOrderFilters } from "./ClientOrderFilters";
 import { ClientOrderItemsTable } from "./ClientOrderItemsTable";
+import { formatCurrency } from "@/lib/utils";
 
 interface ClientOrderCardProps {
   clientName: string;
@@ -64,12 +65,17 @@ export const ClientOrderCard = ({
         >
           <div className="space-y-1">
             <h3 className="text-lg font-semibold">Cliente: {clientName}</h3>
-            <p className="text-sm text-muted-foreground">
-              Representante: {data.representante || "Não informado"}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Total de Pedidos: {pedidosCount}
-            </p>
+            <div className="space-y-0.5">
+              <p className="text-sm text-muted-foreground">
+                Representante: {data.representante || "Não informado"}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Total de Pedidos: {pedidosCount}
+              </p>
+              <p className="text-sm text-red-600 font-medium">
+                Valores Vencidos: {formatCurrency(data.valoresVencidos || 0)}
+              </p>
+            </div>
           </div>
           {isExpanded ? (
             <ChevronUp className="h-6 w-6 text-muted-foreground" />

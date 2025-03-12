@@ -4,13 +4,18 @@ import type { JabOrder, JabOrderItem, JabOrdersResponse } from "@/types/jabOrder
 
 // Group orders by client
 export const groupOrdersByClient = (ordersData: JabOrdersResponse): Record<string, ClientOrderGroup> => {
-  const { orders = [] } = ordersData;
+  const { orders = [], clientesFinanceiros = [] } = ordersData;
   const groups: Record<string, ClientOrderGroup> = {};
 
   // Process all orders
   orders.forEach(order => {
     const clientName = order.APELIDO || `Cliente ${order.PES_CODIGO}`;
     const clientCode = order.PES_CODIGO;
+    
+    // Find client financial data
+    const clienteFinanceiro = clientesFinanceiros.find(
+      c => c.PES_CODIGO === clientCode
+    );
 
     // Initialize group if it doesn't exist
     if (!groups[clientName]) {
@@ -21,6 +26,7 @@ export const groupOrdersByClient = (ordersData: JabOrdersResponse): Record<strin
         totalValorPedido: 0,
         totalValorFaturado: 0,
         totalValorFaturarComEstoque: 0,
+        valoresVencidos: clienteFinanceiro?.valoresVencidos || 0,
         representante: order.REPRESENTANTE_NOME,
         allItems: [],
         PES_CODIGO: clientCode
