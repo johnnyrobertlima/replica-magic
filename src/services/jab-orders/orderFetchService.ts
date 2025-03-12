@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { UseJabOrdersOptions } from "@/types/jabOrders";
 import { clientCodeToString } from "@/utils/client-orders/clientUtils";
 
-export const fetchOrdersForClients = async (clientIds: (string | number)[], fromDate: string, toDate: string) => {
+export const fetchOrdersForClients = async (clientIds: Array<string | number>, fromDate: string, toDate: string) => {
   try {
     const clientIdsStrings = clientIds.map(clientCodeToString);
     

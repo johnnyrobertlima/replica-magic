@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { clientCodeToString } from "./client-orders/clientUtils";
 
@@ -39,21 +38,17 @@ export const fetchTitulosVencidos = async (clientCode: number | string): Promise
   }
 };
 
-// Função para calcular valores financeiros do cliente
 export const calculateClientFinancialValues = (cliente: any, titulo: any, today: Date) => {
   if (!titulo) return;
   
   const valorTitulo = Number(titulo.VLRTITULO) || 0;
   const valorSaldo = Number(titulo.VLRSALDO) || 0;
   
-  // Adicionar ao total geral
   cliente.valoresTotais += valorTitulo;
   
-  // Se ainda em aberto, adicionar aos valores em aberto
   if (titulo.STATUS === '1' || titulo.STATUS === '2') {
     cliente.valoresEmAberto += valorSaldo;
     
-    // Verificar se está vencido
     const dataVencimento = new Date(titulo.DTVENCIMENTO);
     if (dataVencimento < today) {
       cliente.valoresVencidos += valorSaldo;
@@ -61,7 +56,6 @@ export const calculateClientFinancialValues = (cliente: any, titulo: any, today:
   }
 };
 
-// Funções de utilidade para separações
 export const getSeparacoesPendentes = (separacoes: any[], hiddenCards: Set<string>) => {
   return separacoes.filter(sep => 
     sep.status === 'pendente' && !hiddenCards.has(sep.id)
@@ -74,8 +68,7 @@ export const getClientesCodigos = (separacoesPendentes: any[]) => {
   ));
 };
 
-// Função para atualizar o volume saudável
-export const updateVolumeSaudavel = async (clienteCodigo: number, valor: number) => {
+export const updateVolumeSaudavel = async (clienteCodigo: number | string, valor: number) => {
   try {
     const clienteCodigoStr = clientCodeToString(clienteCodigo);
     
