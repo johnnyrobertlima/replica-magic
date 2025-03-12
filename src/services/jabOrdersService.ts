@@ -1,44 +1,21 @@
 
-import type { 
-  JabOrder, 
-  UseJabOrdersOptions,
-  JabOrdersResponse,
-} from "@/types/jabOrders";
-
+import type { UseJabOrdersOptions, JabOrdersResponse } from "@/types/jabOrders";
 import { 
-  fetchPedidosUnicos,
+  fetchPedidosUnicos, 
   fetchAllPedidosUnicos,
   fetchAllPedidosDireto,
   fetchPedidosDetalhados,
-  fetchItensSeparacao 
+  fetchItensSeparacao,
+  processOrdersFetch
 } from "./jab/fetchUtils";
-
-import {
-  fetchPedidosPorCliente,
-  fetchItensPorCliente,
-  fetchEstoqueParaItens
-} from "./jab/pedidosPorClienteUtils";
-
-import { 
-  fetchRelatedData 
-} from "./jab/entityUtils";
-
-import { 
-  processOrdersData,
-  groupOrdersByNumber,
-  processClientOrdersData 
-} from "./jab/orderProcessUtils";
 
 export { fetchTotals } from "./jab/totalsService";
 
-// Cache para armazenar resultados de pedidos por períodos
+// Cache configuration
 const ordersCache = new Map<string, { data: JabOrdersResponse; timestamp: number }>();
 const clientOrdersCache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-/**
- * Fetches JAB orders with pagination
- */
 export async function fetchJabOrders({ 
   dateRange, 
   page = 1, 
@@ -52,14 +29,14 @@ export async function fetchJabOrders({
   const dataFinal = dateRange.to.toISOString().split('T')[0];
   const cacheKey = `orders_${dataInicial}_${dataFinal}_${page}_${pageSize}`;
 
-  // Verificar cache
+  // Check cache
   const cachedData = ordersCache.get(cacheKey);
   if (cachedData && Date.now() - cachedData.timestamp < CACHE_TTL) {
-    console.log('Usando dados em cache para o período:', { dataInicial, dataFinal, page, pageSize });
+    console.log('Using cached data for period:', { dataInicial, dataFinal, page, pageSize });
     return cachedData.data;
   }
 
-  console.log('Buscando pedidos para o período:', { dataInicial, dataFinal, page, pageSize });
+  console.log('Fetching orders for period:', { dataInicial, dataFinal, page, pageSize });
 
   const { data: pedidosUnicos, totalCount } = await fetchPedidosUnicos(dataInicial, dataFinal, page, pageSize);
   const numeroPedidos = pedidosUnicos.map(p => p.ped_numpedido);
@@ -74,17 +51,14 @@ export async function fetchJabOrders({
     return { orders: [], totalCount };
   }
 
-  const resultado = await processOrdersFullData(dataInicial, dataFinal, numeroPedidos, pedidosDetalhados, totalCount);
+  const resultado = await processOrdersFetch(dataInicial, dataFinal, numeroPedidos, pedidosDetalhados, totalCount);
   
-  // Armazenar em cache
+  // Store in cache
   ordersCache.set(cacheKey, { data: resultado, timestamp: Date.now() });
   
   return resultado;
 }
 
-/**
- * Fetches all JAB orders for the given date range
- */
 export async function fetchAllJabOrders({ 
   dateRange 
 }: Omit<UseJabOrdersOptions, 'page' | 'pageSize'>): Promise<JabOrdersResponse> {
@@ -96,14 +70,12 @@ export async function fetchAllJabOrders({
   const dataFinal = dateRange.to.toISOString().split('T')[0];
   const cacheKey = `all_orders_${dataInicial}_${dataFinal}`;
 
-  // Verificar cache
+  // Check cache
   const cachedData = ordersCache.get(cacheKey);
   if (cachedData && Date.now() - cachedData.timestamp < CACHE_TTL) {
-    console.log('Usando todos os dados em cache para o período:', { dataInicial, dataFinal });
+    console.log('Using all cached data for period:', { dataInicial, dataFinal });
     return cachedData.data;
   }
-
-  console.log('Buscando todos os pedidos para o período:', { dataInicial, dataFinal });
 
   const pedidosDetalhados = await fetchAllPedidosDireto(dataInicial, dataFinal);
 
@@ -111,121 +83,18 @@ export async function fetchAllJabOrders({
     return { orders: [], totalCount: 0 };
   }
 
-  const numeroPedidosSet = new Set<string>();
-  pedidosDetalhados.forEach(pedido => {
-    if (pedido.PED_NUMPEDIDO) {
-      numeroPedidosSet.add(pedido.PED_NUMPEDIDO);
-    }
-  });
+  const numeroPedidosSet = new Set(pedidosDetalhados.map(pedido => pedido.PED_NUMPEDIDO).filter(Boolean));
   const numeroPedidos = Array.from(numeroPedidosSet);
+
+  console.log(`Found ${numeroPedidos.length} unique orders`);
+
+  const resultado = await processOrdersFetch(dataInicial, dataFinal, numeroPedidos, pedidosDetalhados, numeroPedidos.length);
   
-  console.log(`Total de ${numeroPedidos.length} pedidos únicos encontrados`);
-  
-  const resultado = await processOrdersFullData(dataInicial, dataFinal, numeroPedidos, pedidosDetalhados, numeroPedidos.length);
-  
-  // Armazenar em cache
+  // Store in cache
   ordersCache.set(cacheKey, { data: resultado, timestamp: Date.now() });
   
   return resultado;
 }
 
-/**
- * Fetches JAB orders grouped by client using optimized functions
- */
-export async function fetchJabOrdersByClient({
-  dateRange
-}: Omit<UseJabOrdersOptions, 'page' | 'pageSize'>): Promise<any> {
-  if (!dateRange?.from || !dateRange?.to) {
-    return { clientGroups: {}, totalCount: 0 };
-  }
-
-  const dataInicial = dateRange.from.toISOString().split('T')[0];
-  const dataFinal = dateRange.to.toISOString().split('T')[0];
-  const cacheKey = `client_orders_${dataInicial}_${dataFinal}`;
-
-  // Verificar cache
-  const cachedData = clientOrdersCache.get(cacheKey);
-  if (cachedData && Date.now() - cachedData.timestamp < CACHE_TTL) {
-    console.log('Usando dados por cliente em cache para o período:', { dataInicial, dataFinal });
-    return cachedData.data;
-  }
-
-  console.log('Buscando pedidos por cliente para o período:', { dataInicial, dataFinal });
-
-  // Buscar pedidos agrupados por cliente com a função otimizada
-  const clientesComPedidos = await fetchPedidosPorCliente(dataInicial, dataFinal);
-  
-  if (!clientesComPedidos || clientesComPedidos.length === 0) {
-    return { clientGroups: {}, totalCount: 0 };
-  }
-
-  // Buscar itens separação
-  const itensSeparacao = await fetchItensSeparacao();
-  
-  // Processar os dados por cliente usando a função otimizada
-  const clientGroups = await processClientOrdersData(dataInicial, dataFinal, clientesComPedidos, itensSeparacao);
-
-  const resultado = {
-    clientGroups,
-    totalCount: clientesComPedidos.length,
-    itensSeparacao
-  };
-
-  // Armazenar em cache
-  clientOrdersCache.set(cacheKey, { data: resultado, timestamp: Date.now() });
-
-  return resultado;
-}
-
-/**
- * Common function to process order data
- */
-async function processOrdersFullData(
-  dataInicial: string,
-  dataFinal: string,
-  numeroPedidos: string[],
-  pedidosDetalhados: any[],
-  totalCount: number
-): Promise<JabOrdersResponse> {
-  // Extrair IDs únicos para reduzir volume de dados
-  const pessoasIds = [...new Set(pedidosDetalhados.map(p => p.PES_CODIGO).filter(id => id !== null && id !== undefined))] as number[];
-  const itemCodigos = [...new Set(pedidosDetalhados.map(p => p.ITEM_CODIGO).filter(Boolean))];
-  const representantesCodigos = [...new Set(pedidosDetalhados.map(p => p.REPRESENTANTE).filter(id => id !== null && id !== undefined))] as number[];
-
-  console.log(`Encontrados ${pessoasIds.length} clientes, ${representantesCodigos.length} representantes e ${itemCodigos.length} itens diferentes`);
-
-  // Buscar dados relacionados em paralelo para melhorar desempenho
-  const [relatedData, itensSeparacao] = await Promise.all([
-    fetchRelatedData(pessoasIds, itemCodigos, representantesCodigos),
-    fetchItensSeparacao()
-  ]);
-
-  const { pessoas, itens, estoque, representantes } = relatedData;
-
-  // Criar Maps para acesso eficiente de dados
-  const pessoasMap = new Map(pessoas.map(p => [p.PES_CODIGO, p]));
-  const itemMap = new Map(itens.map(i => [i.ITEM_CODIGO, i.DESCRICAO]));
-  const estoqueMap = new Map(estoque.map(e => [e.ITEM_CODIGO, e.FISICO]));
-  const representantesMap = new Map(representantes.map(r => [r.PES_CODIGO, r.RAZAOSOCIAL]));
-
-  const pedidosAgrupados = groupOrdersByNumber(pedidosDetalhados);
-
-  const orders = processOrdersData(
-    numeroPedidos,
-    pedidosDetalhados,
-    pessoasMap,
-    itemMap,
-    estoqueMap,
-    representantesMap,
-    pedidosAgrupados,
-    itensSeparacao
-  );
-
-  return {
-    orders,
-    totalCount,
-    currentPage: 1,
-    pageSize: numeroPedidos.length,
-    itensSeparacao
-  };
-}
+// Re-export functions for client orders
+export { fetchJabOrdersByClient } from './jab/clientOrdersService';

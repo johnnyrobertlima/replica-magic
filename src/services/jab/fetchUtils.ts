@@ -5,7 +5,8 @@ export {
 } from './pedidosUtils';
 
 export {
-  fetchAllPedidosDireto
+  fetchAllPedidosDireto,
+  processOrdersFetch
 } from './pedidosDiretosUtils';
 
 export {
@@ -17,7 +18,17 @@ export {
 } from './separacaoUtils';
 
 export {
+  fetchRelatedData
+} from './entityUtils';
+
+export {
   fetchPedidosPorCliente,
   fetchItensPorCliente,
   fetchEstoqueParaItens
 } from './pedidosPorClienteUtils';
+
+export type { 
+  RelatedDataResponse,
+  PedidosDetalhadosResponse,
+  PedidosUnicosResponse 
+} from './types';
