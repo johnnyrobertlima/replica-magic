@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { ClienteFinanceiro, TituloFinanceiro } from "@/types/financialClient";
 
@@ -78,7 +79,7 @@ export const fetchTitulosVencidos = async (clienteCodigo: string | number) => {
   try {
     console.log(`Buscando valores vencidos para cliente: ${clienteCodigo}`);
     
-    // Convert clienteCodigo to string to match the PES_CODIGO type in the database
+    // Always convert clienteCodigo to string to match the PES_CODIGO type in the database
     const clienteCodigoStr = String(clienteCodigo);
     
     // First try to use the RPC function for better performance
