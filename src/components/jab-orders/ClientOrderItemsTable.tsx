@@ -31,9 +31,9 @@ export const ClientOrderItemsTable = ({
 }: ClientOrderItemsTableProps) => {
   // Safely filter items, ensuring all items have the required properties
   const filteredItems = (items || []).filter((item) => {
-    if (!item) return false;
-    if (!showZeroBalance && item.QTDE_SALDO <= 0) return false;
-    if (showOnlyWithStock && (item.FISICO || 0) <= 0) return false;
+    if (!item || typeof item !== 'object') return false;
+    if (!showZeroBalance && (item.QTDE_SALDO || 0) <= 0) return false;
+    if (showOnlyWithStock && (!item.FISICO || item.FISICO <= 0)) return false;
     return true;
   });
 
@@ -88,9 +88,9 @@ export const ClientOrderItemsTable = ({
                   <td className="p-2 text-right">{item.QTDE_PEDIDA || 0}</td>
                   <td className="p-2 text-right">{item.QTDE_ENTREGUE || 0}</td>
                   <td className="p-2 text-right">{item.QTDE_SALDO || 0}</td>
-                  <td className="p-2 text-right">{item.FISICO || '-'}</td>
+                  <td className="p-2 text-right">{item.FISICO ?? '-'}</td>
                   <td className="p-2 text-right">
-                    {formatCurrency(item.VALOR_UNITARIO)}
+                    {formatCurrency(item.VALOR_UNITARIO || 0)}
                   </td>
                   <td className="p-2 text-right">
                     {formatCurrency(faltaFaturarValue)}
