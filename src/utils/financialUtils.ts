@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { ClienteFinanceiro, TituloFinanceiro } from "@/types/financialClient";
 
@@ -82,15 +81,16 @@ export const fetchTitulosVencidos = async (clienteCodigo: string | number) => {
     // Format today's date as YYYY-MM-DD for comparison
     const today = new Date().toISOString().split('T')[0];
     
-    // Make sure clienteCodigo is converted to string for the query
-    const clienteCodigoStr = clienteCodigo.toString();
+    // Convert clienteCodigo to string for the query
+    const clienteCodigoStr = String(clienteCodigo);
+    console.log(`Usando código do cliente (convertido para string): ${clienteCodigoStr}`);
     
     const { data, error } = await supabase
       .from('BLUEBAY_TITULO')
       .select('VLRSALDO')
       .eq('PES_CODIGO', clienteCodigoStr)
       .lt('DTVENCIMENTO', today)
-      .not('VLRSALDO', 'is', null); // Ensure we only get records with non-null VLRSALDO
+      .not('VLRSALDO', 'is', null);
     
     if (error) {
       console.error("Erro ao buscar títulos vencidos:", error);
@@ -98,11 +98,11 @@ export const fetchTitulosVencidos = async (clienteCodigo: string | number) => {
     }
     
     if (!data || data.length === 0) {
-      console.log(`Nenhum título vencido encontrado para cliente ${clienteCodigo}`);
+      console.log(`Nenhum título vencido encontrado para cliente ${clienteCodigoStr}`);
       return 0;
     }
     
-    console.log(`Encontrados ${data.length} títulos vencidos para cliente ${clienteCodigo}`);
+    console.log(`Encontrados ${data.length} títulos vencidos para cliente ${clienteCodigoStr}`);
     
     // Calculate the total of overdue values
     const valorVencido = data.reduce((total, titulo) => {
@@ -111,7 +111,7 @@ export const fetchTitulosVencidos = async (clienteCodigo: string | number) => {
       return total + saldo;
     }, 0);
     
-    console.log(`Total valor vencido para cliente ${clienteCodigo}: ${valorVencido}`);
+    console.log(`Total valor vencido para cliente ${clienteCodigoStr}: ${valorVencido}`);
     
     return valorVencido;
   } catch (error) {
