@@ -2,6 +2,7 @@
 import type { DateRange } from "react-day-picker";
 import type { SearchType } from "./SearchFilters";
 import { SearchFilters } from "./SearchFilters";
+import { DateRangeFilter } from "./DateRangeFilter";
 
 interface OrdersHeaderProps {
   currentPage: number;
@@ -29,26 +30,33 @@ export const OrdersHeader = ({
   onSearchTypeChange,
 }: OrdersHeaderProps) => {
   return (
-    <div className="flex justify-between items-center mb-8">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold">Separação de Pedidos JAB</h1>
-        <p className="text-muted-foreground">
-          {totalCount > 0 ? (
-            `Exibindo página ${currentPage} de ${totalPages} (Total: ${totalCount} pedidos)`
-          ) : (
-            "Nenhum pedido encontrado"
-          )}
-        </p>
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold">Separação de Pedidos JAB</h1>
+          <p className="text-muted-foreground">
+            {totalCount > 0 ? (
+              `Exibindo página ${currentPage} de ${totalPages} (Total: ${totalCount} pedidos)`
+            ) : (
+              "Nenhum pedido encontrado"
+            )}
+          </p>
+        </div>
       </div>
-      <SearchFilters
-        searchQuery={searchQuery}
-        onSearchQueryChange={onSearchQueryChange}
-        onSearch={onSearch}
-        date={date}
-        onDateChange={onDateChange}
-        searchType={searchType}
-        onSearchTypeChange={onSearchTypeChange}
-      />
+      
+      <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+        <DateRangeFilter date={date} onDateChange={onDateChange} />
+        
+        <SearchFilters
+          searchQuery={searchQuery}
+          onSearchQueryChange={onSearchQueryChange}
+          onSearch={onSearch}
+          date={date}
+          onDateChange={onDateChange}
+          searchType={searchType}
+          onSearchTypeChange={onSearchTypeChange}
+        />
+      </div>
     </div>
   );
 };

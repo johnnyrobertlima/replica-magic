@@ -12,10 +12,20 @@ export interface SearchState {
 }
 
 export const useClientOrdersSearch = () => {
-  const [date, setDate] = useState<DateRange | undefined>(undefined);
-  const [searchDate, setSearchDate] = useState<DateRange | undefined>(undefined);
+  // Set default date range to current month
+  const today = new Date();
+  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  
+  const defaultDateRange: DateRange = {
+    from: firstDayOfMonth,
+    to: lastDayOfMonth
+  };
+
+  const [date, setDate] = useState<DateRange | undefined>(defaultDateRange);
+  const [searchDate, setSearchDate] = useState<DateRange | undefined>(defaultDateRange);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchType, setSearchType] = useState<SearchType>("cliente");
+  const [searchType, setSearchType] = useState<SearchType>("pedido");
   const [isSearching, setIsSearching] = useState(false);
 
   const handleSearch = () => {
