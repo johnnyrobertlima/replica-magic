@@ -23,8 +23,8 @@ export const fetchClientFinancialInfo = async (groupedOrders: Record<string, any
         const { data: volumeData, error: volumeError } = await supabase
           .from('BLUEBAY_PESSOA')
           .select('volume_saudavel_faturamento')
-          .eq('PES_CODIGO', clientCodeNum)
-          .single();
+          .eq('PES_CODIGO', clientCodeStr)
+          .maybeSingle();
           
         if (!volumeError && volumeData) {
           updatedGroups[clientName].volumeSaudavel = volumeData.volume_saudavel_faturamento;

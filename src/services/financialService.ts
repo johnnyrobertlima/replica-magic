@@ -1,8 +1,8 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { ClienteFinanceiro } from "@/types/financialClient";
-import { calculateClientFinancialValues, clientCodeToString } from "@/utils/financialUtils";
-import { clientCodeToNumber } from "@/utils/client-orders/clientUtils";
+import { calculateClientFinancialValues, fetchTitulosVencidos } from "@/utils/financialUtils";
+import { clientCodeToString, clientCodeToNumber } from "@/utils/client-orders/clientUtils";
 
 // Fetch financial titles for clients
 export const fetchFinancialTitles = async (clientesCodigos: (string | number)[]) => {
@@ -19,7 +19,7 @@ export const fetchFinancialTitles = async (clientesCodigos: (string | number)[])
 };
 
 // Fetch client info
-export const fetchClientInfo = async (clientesCodigos: number[]) => {
+export const fetchClientInfo = async (clientesCodigos: (string | number)[]) => {
   const clienteCodigosStrings = clientesCodigos.map(codigo => clientCodeToString(codigo));
 
   const { data: clientes, error } = await supabase
@@ -44,7 +44,7 @@ export const fetchPedidosForRepresentantes = async (numeroPedidos: string[]) => 
 };
 
 // Fetch representantes info
-export const fetchRepresentantesInfo = async (representantesCodigos: number[]) => {
+export const fetchRepresentantesInfo = async (representantesCodigos: (string | number)[]) => {
   const representanteCodigosStrings = representantesCodigos.map(codigo => clientCodeToString(codigo));
 
   const { data: representantes, error } = await supabase
@@ -108,7 +108,7 @@ export const processClientsData = (
 };
 
 // Fetch títulos vencidos for a specific client
-export const fetchValoresVencidos = async (clienteCodigo: number) => {
+export const fetchValoresVencidos = async (clienteCodigo: string | number) => {
   console.log(`Buscando valores vencidos para cliente ${clienteCodigo}`);
   try {
     const result = await fetchTitulosVencidos(clienteCodigo);

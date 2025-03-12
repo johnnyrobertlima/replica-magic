@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { clientCodeToString } from "@/utils/client-orders/clientUtils";
 
 export const formatCurrency = (value: number): string => {
   return value.toLocaleString('pt-BR', {
@@ -59,6 +60,7 @@ export const fetchTitulosVencidos = async (clientCode: string | number): Promise
   }
 };
 
+// Keep the clientCodeToString in client-orders/clientUtils.ts, but keep this function here for backwards compatibility
 export const clientCodeToString = (clientCode: string | number): string => {
   return String(clientCode);
 };
@@ -81,10 +83,12 @@ export const getClientesCodigos = (separacoesPendentes: any[]) => {
 // Function to update a client's healthy volume
 export const updateVolumeSaudavel = async (clienteCodigo: string | number, valor: number) => {
   try {
+    const clienteCodigoStr = clientCodeToString(clienteCodigo);
+    
     const { data, error } = await supabase
       .from('BLUEBAY_PESSOA')
       .update({ volume_saudavel_faturamento: valor })
-      .eq('PES_CODIGO', clientCodeToString(clienteCodigo))
+      .eq('PES_CODIGO', clienteCodigoStr)
       .select();
       
     if (error) throw error;
