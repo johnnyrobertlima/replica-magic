@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { clientCodeToString } from "./client-orders/clientUtils";
 
@@ -63,7 +62,7 @@ export const getSeparacoesPendentes = (separacoes: any[], hiddenCards: Set<strin
   );
 };
 
-export const getClientesCodigos = (separacoesPendentes: any[]) => {
+export const getClientesCodigos = (separacoesPendentes: any[]): (number | string)[] => {
   return Array.from(new Set(
     separacoesPendentes.map(sep => sep.cliente_codigo)
   ));
