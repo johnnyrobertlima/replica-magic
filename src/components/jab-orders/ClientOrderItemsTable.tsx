@@ -127,6 +127,7 @@ export const ClientOrderItemsTable = ({
               const emSeparacao = item.emSeparacao || false;
               
               const faltaFaturarValue = qtdeSaldo * valorUnitario;
+              const isSelected = selectedItems.includes(itemCode);
               
               return (
                 <tr 
@@ -138,9 +139,10 @@ export const ClientOrderItemsTable = ({
                 >
                   <td className="p-2">
                     <Checkbox
-                      checked={selectedItems.includes(itemCode)}
+                      checked={isSelected}
                       onCheckedChange={() => onItemSelect(item)}
                       disabled={emSeparacao}
+                      id={`checkbox-${itemCode}-${index}`}
                     />
                   </td>
                   <td className="p-2">{pedido || '-'}</td>
