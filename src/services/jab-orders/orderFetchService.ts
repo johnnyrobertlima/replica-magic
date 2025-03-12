@@ -3,9 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { UseJabOrdersOptions } from "@/types/jabOrders";
 import { 
   clientCodeToString, 
-  clientCodeToNumber, 
-  clientCodesToStrings, 
-  clientCodesToNumbers 
+  clientCodesToStrings 
 } from "@/utils/client-orders/clientUtils";
 
 export const fetchOrdersForClients = async (clientIds: (string | number)[], fromDate: string, toDate: string) => {
@@ -35,21 +33,22 @@ export const fetchAllJabOrders = async (options: Omit<UseJabOrdersOptions, 'page
 
   try {
     // Get order numbers for JAB orders with filter criteria
-    const { data: orderNumbers, error: orderNumbersError } = await supabase
+    const { data: orderNumbersResult, error: orderNumbersError } = await supabase
       .from('BLUEBAY_PEDIDO')
       .select('PED_NUMPEDIDO')
       .eq('CENTROCUSTO', 'JAB')
       .in('STATUS', ['1', '2'])
       .gte('DATA_PEDIDO', fromDate)
-      .lte('DATA_PEDIDO', toDate)
-      .order('PED_NUMPEDIDO');
+      .lte('DATA_PEDIDO', toDate);
       
-    // We need to get unique order numbers
-    const uniqueOrderNumbers = orderNumbers ? 
-      Array.from(new Set(orderNumbers.map(order => order.PED_NUMPEDIDO))) : 
-      [];
-
     if (orderNumbersError) throw orderNumbersError;
+    
+    // We need to get unique order numbers
+    const orderNumbers = orderNumbersResult || [];
+    const uniqueOrderNumbers = Array.from(new Set(
+      orderNumbers.map(order => order.PED_NUMPEDIDO)
+    ));
+
     if (!uniqueOrderNumbers.length) return { orders: [], totalCount: 0 };
 
     // Fetch all order items
@@ -65,7 +64,9 @@ export const fetchAllJabOrders = async (options: Omit<UseJabOrdersOptions, 'page
     if (!allOrderItems) return { orders: [], totalCount: 0 };
 
     // Get client info
-    const clientCodes = Array.from(new Set(allOrderItems.map(order => order.PES_CODIGO).filter(Boolean)));
+    const clientCodes = Array.from(new Set(
+      allOrderItems.map(order => order.PES_CODIGO).filter(Boolean)
+    ));
     const clientCodesStrings = clientCodesToStrings(clientCodes);
     
     const { data: clients, error: clientsError } = await supabase
@@ -78,7 +79,9 @@ export const fetchAllJabOrders = async (options: Omit<UseJabOrdersOptions, 'page
     }
 
     // Get representatives info
-    const repCodes = Array.from(new Set(allOrderItems.map(order => order.REPRESENTANTE).filter(Boolean)));
+    const repCodes = Array.from(new Set(
+      allOrderItems.map(order => order.REPRESENTANTE).filter(Boolean)
+    ));
     const repCodesStrings = clientCodesToStrings(repCodes);
     
     const { data: reps, error: repsError } = await supabase
@@ -131,26 +134,29 @@ export const fetchAllJabOrders = async (options: Omit<UseJabOrdersOptions, 'page
         }
         
         // Add the item to the order's items array
-        if (Array.isArray(ordersMap[item.PED_NUMPEDIDO].items)) {
-          ordersMap[item.PED_NUMPEDIDO].items.push({
-            ITEM_CODIGO: item.ITEM_CODIGO,
-            DESCRICAO: null, // Will be filled from BLUEBAY_ITEM if needed
-            QTDE_PEDIDA: item.QTDE_PEDIDA || 0,
-            QTDE_ENTREGUE: item.QTDE_ENTREGUE || 0,
-            QTDE_SALDO: item.QTDE_SALDO || 0,
-            VALOR_UNITARIO: item.VALOR_UNITARIO || 0,
-            FISICO: null // Will be filled from BLUEBAY_ESTOQUE if needed
-          });
-        }
+        ordersMap[item.PED_NUMPEDIDO].items.push({
+          ITEM_CODIGO: item.ITEM_CODIGO,
+          DESCRICAO: null, // Will be filled from BLUEBAY_ITEM if needed
+          QTDE_PEDIDA: item.QTDE_PEDIDA || 0,
+          QTDE_ENTREGUE: item.QTDE_ENTREGUE || 0,
+          QTDE_SALDO: item.QTDE_SALDO || 0,
+          VALOR_UNITARIO: item.VALOR_UNITARIO || 0,
+          FISICO: null // Will be filled from BLUEBAY_ESTOQUE if needed
+        });
       });
     }
 
     // Transform the orders map to an array and calculate totals
-    const processedOrders = Object.values(ordersMap).map((order: any) => {
+    const processedOrders = Object.entries(ordersMap).map(([_, order]) => {
       if (!order) return null;
       
-      const client = order.PES_CODIGO && clientMap[order.PES_CODIGO] ? clientMap[order.PES_CODIGO] : {};
-      const rep = order.REPRESENTANTE && repMap[order.REPRESENTANTE] ? repMap[order.REPRESENTANTE] : {};
+      const client = order.PES_CODIGO && clientMap[order.PES_CODIGO] 
+        ? clientMap[order.PES_CODIGO] 
+        : {};
+        
+      const rep = order.REPRESENTANTE && repMap[order.REPRESENTANTE] 
+        ? repMap[order.REPRESENTANTE] 
+        : {};
       
       // Calculate totals for each order
       let total_saldo = 0;

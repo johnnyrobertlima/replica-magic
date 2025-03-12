@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { fetchTitulosVencidos } from "@/utils/financialUtils";
-import { clientCodeToString, clientCodeToNumber } from "@/utils/client-orders/clientUtils";
+import { clientCodeToString } from "@/utils/client-orders/clientUtils";
 
 export const fetchClientFinancialInfo = async (groupedOrders: Record<string, any>) => {
   const updatedGroups = { ...groupedOrders };
@@ -13,7 +13,6 @@ export const fetchClientFinancialInfo = async (groupedOrders: Record<string, any
     if (clientCode) {
       try {
         const clientCodeStr = clientCodeToString(clientCode);
-        const clientCodeNum = clientCodeToNumber(clientCode);
         
         // Fetch valores vencidos
         const valoresVencidos = await fetchTitulosVencidos(clientCodeStr);

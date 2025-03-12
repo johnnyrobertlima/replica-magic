@@ -1,12 +1,10 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { ClienteFinanceiro } from "@/types/financialClient";
 import { calculateClientFinancialValues, fetchTitulosVencidos } from "@/utils/financialUtils";
 import { 
   clientCodeToString, 
   clientCodeToNumber, 
-  clientCodesToStrings, 
-  clientCodesToNumbers 
+  clientCodesToStrings 
 } from "@/utils/client-orders/clientUtils";
 
 // Fetch financial titles for clients
