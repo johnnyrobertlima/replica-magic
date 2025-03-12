@@ -42,7 +42,9 @@ export const ClientOrderCard = ({
     : 0;
     
   const pedidosCount = new Set(data.allItems.map((item: any) => item.pedido)).size;
-  const valoresVencidos = data.valoresVencidos || 0;
+  
+  // Ensure valoresVencidos is a number, with a fallback to 0
+  const valoresVencidos = typeof data.valoresVencidos === 'number' ? data.valoresVencidos : 0;
   const hasOverdueValues = valoresVencidos > 0;
 
   const handleZeroBalanceChange = (checked: boolean) => {

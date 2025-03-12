@@ -57,7 +57,6 @@ export const calculateClientFinancialValues = (
   cliente.valoresEmAberto += (titulo.VLRSALDO || 0);
   
   // Overdue values = VLRSALDO of overdue titles
-  // Note: This calculation is now supplemented by direct database query
   if (titulo.DTVENCIMENTO) {
     const vencimento = new Date(titulo.DTVENCIMENTO);
     const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -81,18 +80,50 @@ export const fetchTitulosVencidos = async (clienteCodigo: number | string): Prom
     const clienteCodigoStr = String(clienteCodigo);
     console.log(`Buscando títulos vencidos para cliente ${clienteCodigoStr}`);
     
-    const { data, error } = await supabase
+    // Method 1: Using RPC function (faster, more reliable)
+    const { data: rpcData, error: rpcError } = await supabase
       .rpc('calcular_valor_vencido', {
         cliente_codigo: clienteCodigoStr
       });
     
-    if (error) {
-      console.error("Erro ao buscar títulos vencidos:", error);
-      throw error;
+    if (rpcError) {
+      console.error("Erro ao buscar títulos vencidos via RPC:", rpcError);
+      
+      // Fallback method: Direct query (as backup)
+      const today = new Date().toISOString().split('T')[0];
+      console.log(`Usando consulta direta com data: ${today}`);
+      
+      const { data, error } = await supabase
+        .from('BLUEBAY_TITULO')
+        .select('VLRSALDO')
+        .eq('PES_CODIGO', clienteCodigoStr)
+        .lt('DTVENCIMENTO', today)
+        .not('VLRSALDO', 'is', null);
+      
+      if (error) {
+        console.error("Erro ao buscar títulos vencidos via consulta direta:", error);
+        return 0;
+      }
+      
+      if (!data || data.length === 0) {
+        console.log(`Nenhum título vencido encontrado para cliente ${clienteCodigoStr}`);
+        return 0;
+      }
+      
+      // Sum all overdue values
+      const valorVencido = data.reduce((total, titulo) => {
+        const saldo = typeof titulo.VLRSALDO === 'string' 
+          ? parseFloat(titulo.VLRSALDO) 
+          : (titulo.VLRSALDO || 0);
+        return total + saldo;
+      }, 0);
+      
+      console.log(`Total valor vencido (consulta direta) para cliente ${clienteCodigoStr}: ${valorVencido}`);
+      return valorVencido;
     }
     
-    const valorVencido = data?.[0]?.total_vlr_saldo || 0;
-    
+    // Process RPC result
+    const valorVencido = rpcData && rpcData.length > 0 ? Number(rpcData[0].total_vlr_saldo) || 0 : 0;
     console.log(`Total valor vencido para cliente ${clienteCodigoStr}: ${valorVencido}`);
     
     return valorVencido;

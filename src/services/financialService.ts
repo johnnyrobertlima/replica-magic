@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { ClienteFinanceiro } from "@/types/financialClient";
 import { calculateClientFinancialValues, fetchTitulosVencidos } from "@/utils/financialUtils";
@@ -102,7 +103,13 @@ export const processClientsData = (
 // Fetch títulos vencidos for a specific client
 export const fetchValoresVencidos = async (clienteCodigo: number) => {
   console.log(`Buscando valores vencidos para cliente ${clienteCodigo}`);
-  const result = await fetchTitulosVencidos(clienteCodigo);
-  console.log(`Resultado da busca: ${result}`);
-  return result;
+  
+  try {
+    const result = await fetchTitulosVencidos(clienteCodigo);
+    console.log(`Resultado da busca de valores vencidos: ${result}`);
+    return result;
+  } catch (error) {
+    console.error(`Erro ao buscar valores vencidos para cliente ${clienteCodigo}:`, error);
+    return 0;
+  }
 };
