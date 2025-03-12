@@ -12,7 +12,7 @@ export const formatDate = (date: string): string => {
   return new Date(date).toLocaleDateString('pt-BR');
 };
 
-export const fetchTitulosVencidos = async (clientCode: number | string): Promise<number> => {
+export const fetchTitulosVencidos = async (clientCode: string | number): Promise<number> => {
   const today = new Date().toISOString().split('T')[0];
   const clienteCodigoStr = clientCodeToString(clientCode);
 
@@ -62,13 +62,13 @@ export const getSeparacoesPendentes = (separacoes: any[], hiddenCards: Set<strin
   );
 };
 
-export const getClientesCodigos = (separacoesPendentes: any[]): (number | string)[] => {
+export const getClientesCodigos = (separacoesPendentes: any[]): Array<string | number> => {
   return Array.from(new Set(
     separacoesPendentes.map(sep => sep.cliente_codigo)
   ));
 };
 
-export const updateVolumeSaudavel = async (clienteCodigo: number | string, valor: number) => {
+export const updateVolumeSaudavel = async (clienteCodigo: string | number, valor: number) => {
   try {
     const clienteCodigoStr = clientCodeToString(clienteCodigo);
     

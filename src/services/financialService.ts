@@ -1,14 +1,13 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { ClienteFinanceiro } from "@/types/financialClient";
 import { calculateClientFinancialValues, fetchTitulosVencidos } from "@/utils/financialUtils";
 
 // Fetch financial titles for clients
-export const fetchFinancialTitles = async (clientesCodigos: number[]) => {
+export const fetchFinancialTitles = async (clientIds: Array<string | number>) => {
   const { data: titulos, error } = await supabase
     .from('BLUEBAY_TITULO')
     .select('*')
-    .in('PES_CODIGO', clientesCodigos.map(String))
+    .in('PES_CODIGO', clientIds.map(String))
     .in('STATUS', ['1', '2', '3']);
 
   if (error) throw error;
@@ -16,11 +15,11 @@ export const fetchFinancialTitles = async (clientesCodigos: number[]) => {
 };
 
 // Fetch client info
-export const fetchClientInfo = async (clientesCodigos: number[]) => {
+export const fetchClientInfo = async (clientIds: Array<string | number>) => {
   const { data: clientes, error } = await supabase
     .from('BLUEBAY_PESSOA')
     .select('PES_CODIGO, APELIDO, volume_saudavel_faturamento')
-    .in('PES_CODIGO', clientesCodigos);
+    .in('PES_CODIGO', clientIds);
 
   if (error) throw error;
   return clientes;
@@ -101,14 +100,14 @@ export const processClientsData = (
 };
 
 // Fetch títulos vencidos for a specific client
-export const fetchValoresVencidos = async (clienteCodigo: number) => {
-  console.log(`Buscando valores vencidos para cliente ${clienteCodigo}`);
+export const fetchValoresVencidos = async (clientCode: string | number) => {
+  console.log(`Buscando valores vencidos para cliente ${clientCode}`);
   try {
-    const result = await fetchTitulosVencidos(clienteCodigo);
+    const result = await fetchTitulosVencidos(clientCode);
     console.log(`Resultado da busca: ${result}`);
     return result;
   } catch (error) {
-    console.error(`Erro ao buscar valores vencidos para cliente ${clienteCodigo}:`, error);
+    console.error(`Erro ao buscar valores vencidos para cliente ${clientCode}:`, error);
     return 0;
   }
 };
