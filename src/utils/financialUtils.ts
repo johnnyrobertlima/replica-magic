@@ -1,6 +1,5 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { clientCodeToString } from "./client-orders/clientUtils";
 
 export const formatCurrency = (value: number): string => {
   return value.toLocaleString('pt-BR', {
@@ -33,6 +32,11 @@ export const calculateClientFinancialValues = (cliente: any, titulo: any, today:
       cliente.valoresVencidos += saldo;
     }
   }
+};
+
+// Convert client code to string for database queries
+export const clientCodeToString = (clientCode: string | number): string => {
+  return String(clientCode);
 };
 
 export const fetchTitulosVencidos = async (clientCode: number | string): Promise<number> => {
@@ -77,7 +81,7 @@ export const getClientesCodigos = (separacoesPendentes: any[]) => {
 };
 
 // Função para atualizar o volume saudável de um cliente
-export const updateVolumeSaudavel = async (clienteCodigo: number, valor: number) => {
+export const updateVolumeSaudavel = async (clienteCodigo: string | number, valor: number) => {
   try {
     const { data, error } = await supabase
       .from('BLUEBAY_PESSOA')

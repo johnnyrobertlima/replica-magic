@@ -9,7 +9,7 @@ export const fetchOrdersForClients = async (clientIds: (string | number)[], from
     
     const { data, error } = await supabase
       .from('BLUEBAY_PEDIDO')
-      .select('*, items:BLUEBAY_PEDIDO(*)')
+      .select('*')
       .in('PES_CODIGO', clientIdsStrings)
       .gte('DATA_PEDIDO', fromDate)
       .lte('DATA_PEDIDO', toDate);
@@ -28,35 +28,98 @@ export const fetchAllJabOrders = async (options: Omit<UseJabOrdersOptions, 'page
   const toDate = options.dateRange?.to?.toISOString() || '';
 
   try {
+    // First, get the orders
     const { data: orders, error } = await supabase
       .from('BLUEBAY_PEDIDO')
-      .select(`
-        *,
-        items:BLUEBAY_ITEMPEDIDO(
-          ITEM_CODIGO,
-          DESCRICAO,
-          QTDE_SALDO,
-          QTDE_PEDIDA,
-          QTDE_ENTREGUE,
-          VALOR_UNITARIO,
-          FISICO
-        )
-      `)
+      .select('*')
       .eq('CENTROCUSTO', 'JAB')
       .in('STATUS', ['1', '2'])
       .gte('DATA_PEDIDO', fromDate)
       .lte('DATA_PEDIDO', toDate);
 
     if (error) throw error;
+    if (!orders) return { orders: [], totalCount: 0 };
+
+    // Get all item codes from orders
+    const pedidoNums = orders.map(order => order.PED_NUMPEDIDO);
+
+    // Now get the items for these orders
+    const { data: items, error: itemsError } = await supabase
+      .from('BLUEBAY_ITEMPEDIDO')
+      .select('*')
+      .in('PED_NUMPEDIDO', pedidoNums);
+
+    if (itemsError) {
+      console.error('Error fetching items:', itemsError);
+    }
+
+    // Get client info for each order
+    const clientCodes = Array.from(new Set(orders.map(order => order.PES_CODIGO).filter(Boolean)));
+    const clientCodesStrings = clientCodes.map(clientCodeToString);
+    
+    const { data: clients, error: clientsError } = await supabase
+      .from('BLUEBAY_PESSOA')
+      .select('PES_CODIGO, APELIDO')
+      .in('PES_CODIGO', clientCodesStrings);
+
+    if (clientsError) {
+      console.error('Error fetching clients:', clientsError);
+    }
+
+    // Get representatives info
+    const repCodes = Array.from(new Set(orders.map(order => order.REPRESENTANTE).filter(Boolean)));
+    const { data: reps, error: repsError } = await supabase
+      .from('BLUEBAY_PESSOA')
+      .select('PES_CODIGO, APELIDO')
+      .in('PES_CODIGO', repCodes.map(String));
+
+    if (repsError) {
+      console.error('Error fetching representatives:', repsError);
+    }
+
+    // Process the orders
+    const clientMap = clients ? clients.reduce((map, client) => {
+      map[client.PES_CODIGO] = client;
+      return map;
+    }, {}) : {};
+
+    const repMap = reps ? reps.reduce((map, rep) => {
+      map[rep.PES_CODIGO] = rep;
+      return map;
+    }, {}) : {};
+
+    const itemsMap = items ? items.reduce((map, item) => {
+      if (!map[item.PED_NUMPEDIDO]) {
+        map[item.PED_NUMPEDIDO] = [];
+      }
+      map[item.PED_NUMPEDIDO].push(item);
+      return map;
+    }, {}) : {};
+
+    const processedOrders = orders.map(order => {
+      const orderItems = itemsMap[order.PED_NUMPEDIDO] || [];
+      const client = clientMap[order.PES_CODIGO] || {};
+      const rep = repMap[order.REPRESENTANTE] || {};
+
+      const total_saldo = orderItems.reduce((acc, item) => 
+        acc + (item.QTDE_SALDO || 0), 0);
+        
+      const valor_total = orderItems.reduce((acc, item) => 
+        acc + ((item.QTDE_PEDIDA || 0) * (item.VALOR_UNITARIO || 0)), 0);
+
+      return {
+        ...order,
+        APELIDO: client.APELIDO || null,
+        REPRESENTANTE_NOME: rep.APELIDO || null,
+        items: orderItems,
+        total_saldo,
+        valor_total
+      };
+    });
 
     return { 
-      orders: orders?.map(order => ({
-        ...order,
-        items: order.items || [], // Ensure items is always an array
-        total_saldo: order.items?.reduce((acc, item) => acc + (item.QTDE_SALDO || 0), 0) || 0,
-        valor_total: order.items?.reduce((acc, item) => acc + ((item.QTDE_PEDIDA || 0) * (item.VALOR_UNITARIO || 0)), 0) || 0
-      })) || [],
-      totalCount: orders?.length || 0 
+      orders: processedOrders, 
+      totalCount: processedOrders.length 
     };
   } catch (error) {
     console.error('Erro ao buscar todos os pedidos:', error);

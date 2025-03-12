@@ -11,6 +11,6 @@ export const getClientCodeFromItem = (item: any): number | null => {
 };
 
 // Convert client code to string for database queries
-export const clientCodeToString = (clientCode: number | string): string => {
+export const clientCodeToString = (clientCode: string | number): string => {
   return String(clientCode);
 };

@@ -1,11 +1,12 @@
+
 import { useMemo, useEffect, useState } from "react";
 import { useAllJabOrders, useTotals } from "@/hooks/useJabOrders";
 import { useSeparacoes } from "@/hooks/useSeparacoes";
-import { groupOrdersByClient, filterGroupsBySearchCriteria } from "@/utils/clientOrdersUtils";
+import { groupOrdersByClient } from "@/utils/client-orders/groupingUtils";
 import { useClientOrdersState } from "./client-orders/useClientOrdersState";
 import { useItemSelection } from "./client-orders/useItemSelection";
 import { useSeparationOperations } from "./client-orders/useSeparationOperations";
-import { fetchClientFinancialInfo } from "@/services/jab-orders";
+import { fetchClientFinancialInfo } from "@/services/jab-orders/clientFinancialService";
 import { ClientOrderGroup } from "@/types/clientOrders";
 import { JabOrder } from "@/types/jabOrders";
 
@@ -44,19 +45,16 @@ export const useClientOrders = () => {
 
   // Group orders by client
   const groupedOrders = useMemo(() => {
-    if (!ordersData || !ordersData.orders) {
+    if (!ordersData || !ordersData.orders || ordersData.orders.length === 0) {
       console.warn('No orders data available');
       return {};
     }
 
-    return groupOrdersByClient({
-      orders: ordersData.orders,
-      totalCount: ordersData.totalCount
-    });
+    return groupOrdersByClient(ordersData);
   }, [ordersData]);
 
   // State to store grouped orders with financial information
-  const [groupedOrdersWithFinancialInfo, setGroupedOrdersWithFinancialInfo] = useState<Record<string, ClientOrderGroup>>(groupedOrders);
+  const [groupedOrdersWithFinancialInfo, setGroupedOrdersWithFinancialInfo] = useState<Record<string, ClientOrderGroup>>({});
   const [isLoadingFinancialInfo, setIsLoadingFinancialInfo] = useState(false);
   
   // Fetch financial information when grouped orders change
@@ -78,11 +76,41 @@ export const useClientOrders = () => {
     getFinancialInfo();
   }, [groupedOrders]);
 
-  // Filter groups by search criteria using the enhanced data
-  const filteredGroups = useMemo(() => 
-    filterGroupsBySearchCriteria(groupedOrdersWithFinancialInfo, isSearching, searchQuery, searchType), 
-    [groupedOrdersWithFinancialInfo, isSearching, searchQuery, searchType]
-  );
+  // Filter groups by search criteria
+  const filteredGroups = useMemo(() => {
+    const groups = { ...groupedOrdersWithFinancialInfo };
+    
+    if (isSearching && searchQuery && searchQuery.trim()) {
+      const normalizedQuery = searchQuery.trim().toLowerCase();
+      
+      return Object.entries(groups).reduce((filtered, [clientName, group]) => {
+        let match = false;
+        
+        switch (searchType) {
+          case 'cliente':
+            match = clientName.toLowerCase().includes(normalizedQuery);
+            break;
+          case 'representante':
+            match = (group.representante || '').toLowerCase().includes(normalizedQuery);
+            break;
+          case 'pedido':
+            match = group.pedidos.some(pedido => 
+              pedido.PED_NUMPEDIDO.includes(normalizedQuery));
+            break;
+          default:
+            match = false;
+        }
+        
+        if (match) {
+          filtered[clientName] = group;
+        }
+        
+        return filtered;
+      }, {});
+    }
+    
+    return groups;
+  }, [groupedOrdersWithFinancialInfo, isSearching, searchQuery, searchType]);
 
   // Use the item selection hook
   const {

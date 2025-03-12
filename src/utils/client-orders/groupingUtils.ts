@@ -6,12 +6,14 @@ import type { ClientOrderGroup } from "@/types/clientOrders";
 export const groupOrdersByClient = (data: JabOrdersResponse): Record<string, ClientOrderGroup> => {
   const groupedOrders: Record<string, ClientOrderGroup> = {};
 
-  if (!data?.orders) {
+  if (!data?.orders || data.orders.length === 0) {
     console.warn('No orders data provided to groupOrdersByClient');
     return groupedOrders;
   }
 
   data.orders.forEach(order => {
+    if (!order) return;
+    
     const clientName = order.APELIDO || `Cliente ${order.PES_CODIGO}`;
     
     if (!groupedOrders[clientName]) {
@@ -40,7 +42,10 @@ export const groupOrdersByClient = (data: JabOrdersResponse): Record<string, Cli
       APELIDO: order.APELIDO,
       PES_CODIGO: order.PES_CODIGO
     }));
-    groupedOrders[clientName].allItems.push(...items);
+    
+    if (items && items.length > 0) {
+      groupedOrders[clientName].allItems.push(...items);
+    }
 
     // Update totals
     let orderTotalSaldo = 0;
@@ -48,6 +53,8 @@ export const groupOrdersByClient = (data: JabOrdersResponse): Record<string, Cli
     let orderTotalFaturarComEstoque = 0;
 
     (order.items || []).forEach(item => {
+      if (!item) return;
+      
       const saldo = item.QTDE_SALDO || 0;
       const valor = item.VALOR_UNITARIO || 0;
       const valorTotal = saldo * valor;
