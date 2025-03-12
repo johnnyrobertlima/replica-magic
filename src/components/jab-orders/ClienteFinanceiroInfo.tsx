@@ -28,7 +28,9 @@ export const ClienteFinanceiroInfo = ({
         </div>
         <div className="space-y-1">
           <span className="text-sm text-muted-foreground">Valores Vencidos</span>
-          <p className="font-medium text-red-500">{formatCurrency(valoresVencidos)}</p>
+          <p className={`font-medium ${valoresVencidos > 0 ? 'text-red-500' : ''}`}>
+            {formatCurrency(valoresVencidos)}
+          </p>
         </div>
         <div className="space-y-1">
           <span className="text-sm text-muted-foreground">Volume Saudável</span>
