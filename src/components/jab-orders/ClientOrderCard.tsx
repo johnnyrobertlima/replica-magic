@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -7,6 +7,9 @@ import { OrderProgressBars } from "./OrderProgressBars";
 import { OrderSummaryGrid } from "./OrderSummaryGrid";
 import { ClientOrderFilters } from "./ClientOrderFilters";
 import { ClientOrderItemsTable } from "./ClientOrderItemsTable";
+import { ClienteFinanceiroInfo } from "./ClienteFinanceiroInfo";
+import { fetchTitulosVencidos } from "@/utils/financialUtils";
+import { useToast } from "@/hooks/use-toast";
 
 interface ClientOrderCardProps {
   clientName: string;
@@ -31,6 +34,11 @@ export const ClientOrderCard = ({
 }: ClientOrderCardProps) => {
   const [localShowZeroBalance, setLocalShowZeroBalance] = useState(showZeroBalance);
   const [localShowOnlyWithStock, setLocalShowOnlyWithStock] = useState(showOnlyWithStock);
+  const [valoresVencidos, setValoresVencidos] = useState(0);
+  const [valoresEmAberto, setValoresEmAberto] = useState(0);
+  const [valoresTotais, setValoresTotais] = useState(0);
+  const [isLoadingFinancial, setIsLoadingFinancial] = useState(false);
+  const { toast } = useToast();
   
   const progressFaturamento = data.totalValorPedido > 0 
     ? (data.totalValorFaturado / data.totalValorPedido) * 100 
@@ -41,6 +49,38 @@ export const ClientOrderCard = ({
     : 0;
     
   const pedidosCount = new Set(data.allItems.map((item: any) => item.pedido)).size;
+
+  // Fetch financial data for this client
+  useEffect(() => {
+    const fetchFinancialData = async () => {
+      if (!data.PES_CODIGO) return;
+      
+      setIsLoadingFinancial(true);
+      try {
+        // Get overdue values using the specified function
+        const overdue = await fetchTitulosVencidos(data.PES_CODIGO);
+        setValoresVencidos(overdue);
+        
+        // For now, setting some placeholder values for the other financial fields
+        // These would be replaced with actual API calls in a complete implementation
+        setValoresTotais(data.totalValorPedido || 0);
+        setValoresEmAberto(data.totalValorSaldo || 0);
+      } catch (error) {
+        console.error("Error fetching financial data:", error);
+        toast({
+          title: "Erro",
+          description: "Falha ao carregar dados financeiros",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoadingFinancial(false);
+      }
+    };
+
+    if (isExpanded) {
+      fetchFinancialData();
+    }
+  }, [data.PES_CODIGO, isExpanded, data.totalValorPedido, data.totalValorSaldo, toast]);
 
   const handleZeroBalanceChange = (checked: boolean) => {
     setLocalShowZeroBalance(checked);
@@ -79,6 +119,15 @@ export const ClientOrderCard = ({
         </div>
 
         <div className="mt-4 space-y-4">
+          {isExpanded && (
+            <ClienteFinanceiroInfo
+              valoresTotais={valoresTotais}
+              valoresEmAberto={valoresEmAberto}
+              valoresVencidos={valoresVencidos}
+              volumeSaudavel={null}
+            />
+          )}
+
           <OrderProgressBars 
             progressFaturamento={progressFaturamento}
             progressPotencial={progressPotencial}
