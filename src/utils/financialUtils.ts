@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { ClienteFinanceiro, TituloFinanceiro } from "@/types/financialClient";
 
@@ -74,8 +75,9 @@ export const calculateClientFinancialValues = (
 };
 
 // Função para buscar títulos vencidos diretamente do Supabase
-export const fetchTitulosVencidos = async (clienteCodigo: string | number) => {
+export const fetchTitulosVencidos = async (clienteCodigo: number | string) => {
   try {
+    // Ensure clienteCodigo is a string as expected by the database
     const clienteCodigoStr = String(clienteCodigo);
     console.log(`Buscando títulos vencidos para cliente ${clienteCodigoStr}`);
     

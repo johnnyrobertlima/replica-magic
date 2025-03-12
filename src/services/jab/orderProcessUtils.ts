@@ -1,4 +1,6 @@
+
 import type { JabOrder } from "@/types/jabOrders";
+import { supabase } from "@/integrations/supabase/client";
 
 export function processOrdersData(
   numeroPedidos: string[],
@@ -66,12 +68,18 @@ export function processOrdersData(
       PED_NUMPEDIDO: numeroPedido,
       PES_CODIGO: PES_CODIGO,
       APELIDO: pessoa ? pessoa.APELIDO : 'Cliente não encontrado',
-      REPRESENTANTE: REPRESENTANTE,
+      REPRESENTANTE_CODIGO: REPRESENTANTE, // Changed from REPRESENTANTE to REPRESENTANTE_CODIGO to match JabOrder type
       REPRESENTANTE_NOME: representanteNome,
       valor_total: total_pedido,
       valor_faturado: total_faturado,
       total_saldo: total_saldo,
-      items: items
+      items: items,
+      // Adding required properties from the JabOrder type
+      MATRIZ: primeiroPedido.MATRIZ || 0,
+      FILIAL: primeiroPedido.FILIAL || 0,
+      PED_ANOBASE: primeiroPedido.PED_ANOBASE || 0,
+      PEDIDO_CLIENTE: primeiroPedido.PEDIDO_CLIENTE || null,
+      STATUS: primeiroPedido.STATUS || ''
     });
   });
   
@@ -99,4 +107,21 @@ export async function fetchClientesFinanceiros(pessoasIds: number[]) {
     console.error("Erro ao buscar clientes financeiros:", error);
     return [];
   }
+}
+
+// Adding the missing groupOrdersByNumber function
+export function groupOrdersByNumber(pedidos: any[]): Record<string, any[]> {
+  const pedidosAgrupados: Record<string, any[]> = {};
+  
+  pedidos.forEach(pedido => {
+    if (!pedido.PED_NUMPEDIDO) return;
+    
+    if (!pedidosAgrupados[pedido.PED_NUMPEDIDO]) {
+      pedidosAgrupados[pedido.PED_NUMPEDIDO] = [];
+    }
+    
+    pedidosAgrupados[pedido.PED_NUMPEDIDO].push(pedido);
+  });
+  
+  return pedidosAgrupados;
 }

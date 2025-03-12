@@ -117,6 +117,16 @@ async function processOrdersFullData(
   const estoqueMap = new Map(estoque.map(e => [e.ITEM_CODIGO, e.FISICO]));
   const representantesMap = new Map(representantes.map(r => [r.PES_CODIGO, r.RAZAOSOCIAL]));
 
+  // Convert Boolean Record to Number Record if needed
+  const processedItensSeparacao: Record<string, number> = {};
+  if (itensSeparacao) {
+    Object.keys(itensSeparacao).forEach(key => {
+      // Convert any boolean values to numbers (0 or 1)
+      const value = itensSeparacao[key];
+      processedItensSeparacao[key] = typeof value === 'boolean' ? (value ? 1 : 0) : value;
+    });
+  }
+
   const pedidosAgrupados = groupOrdersByNumber(pedidosDetalhados);
 
   const orders = processOrdersData(
@@ -127,7 +137,7 @@ async function processOrdersFullData(
     estoqueMap,
     representantesMap,
     pedidosAgrupados,
-    itensSeparacao
+    processedItensSeparacao
   );
 
   return {
@@ -135,7 +145,7 @@ async function processOrdersFullData(
     totalCount,
     currentPage: 1,
     pageSize: numeroPedidos.length,
-    itensSeparacao,
+    itensSeparacao: processedItensSeparacao,
     clientesFinanceiros
   };
 }
