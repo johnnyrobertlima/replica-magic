@@ -33,11 +33,45 @@ export const ClientOrderItemsTable = ({
   console.log('showZeroBalance:', showZeroBalance);
   console.log('showOnlyWithStock:', showOnlyWithStock);
   
+  // Log the first few items with their QTDE_SALDO values to debug filtering
+  if (items && items.length > 0) {
+    console.log('Sample items with QTDE_SALDO values:');
+    items.slice(0, 5).forEach((item, index) => {
+      console.log(`Item ${index}:`, {
+        ITEM_CODIGO: item.ITEM_CODIGO,
+        DESCRICAO: item.DESCRICAO,
+        QTDE_SALDO: item.QTDE_SALDO,
+        FISICO: item.FISICO,
+        type_QTDE_SALDO: typeof item.QTDE_SALDO
+      });
+    });
+  }
+  
   // Safely filter items, ensuring all items have the required properties
   const filteredItems = (items || []).filter((item) => {
-    if (!item || typeof item !== 'object') return false;
-    if (!showZeroBalance && (item.QTDE_SALDO || 0) <= 0) return false;
-    if (showOnlyWithStock && (!item.FISICO || item.FISICO <= 0)) return false;
+    if (!item || typeof item !== 'object') {
+      console.log('Filtering out item that is not an object');
+      return false;
+    }
+    
+    // Check for QTDE_SALDO value - if this is the issue, log it
+    if (!showZeroBalance) {
+      const saldo = Number(item.QTDE_SALDO) || 0;
+      if (saldo <= 0) {
+        console.log(`Filtering out item ${item.ITEM_CODIGO} due to zero balance: ${saldo}`);
+        return false;
+      }
+    }
+    
+    // Check for FISICO value - if this is the issue, log it
+    if (showOnlyWithStock) {
+      const fisico = Number(item.FISICO) || 0;
+      if (fisico <= 0) {
+        console.log(`Filtering out item ${item.ITEM_CODIGO} due to no stock: ${fisico}`);
+        return false;
+      }
+    }
+    
     return true;
   });
   
@@ -65,7 +99,7 @@ export const ClientOrderItemsTable = ({
         <tbody>
           {filteredItems.length > 0 ? (
             filteredItems.map((item, index) => {
-              const faltaFaturarValue = (item.QTDE_SALDO || 0) * (item.VALOR_UNITARIO || 0);
+              const faltaFaturarValue = (Number(item.QTDE_SALDO) || 0) * (Number(item.VALOR_UNITARIO) || 0);
               
               return (
                 <tr 
@@ -92,12 +126,12 @@ export const ClientOrderItemsTable = ({
                       </span>
                     )}
                   </td>
-                  <td className="p-2 text-right">{item.QTDE_PEDIDA || 0}</td>
-                  <td className="p-2 text-right">{item.QTDE_ENTREGUE || 0}</td>
-                  <td className="p-2 text-right">{item.QTDE_SALDO || 0}</td>
+                  <td className="p-2 text-right">{Number(item.QTDE_PEDIDA) || 0}</td>
+                  <td className="p-2 text-right">{Number(item.QTDE_ENTREGUE) || 0}</td>
+                  <td className="p-2 text-right">{Number(item.QTDE_SALDO) || 0}</td>
                   <td className="p-2 text-right">{item.FISICO ?? '-'}</td>
                   <td className="p-2 text-right">
-                    {formatCurrency(item.VALOR_UNITARIO || 0)}
+                    {formatCurrency(Number(item.VALOR_UNITARIO) || 0)}
                   </td>
                   <td className="p-2 text-right">
                     {formatCurrency(faltaFaturarValue)}

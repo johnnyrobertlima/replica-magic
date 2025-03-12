@@ -46,6 +46,13 @@ export const ClientOrderContent = ({
     console.log('ClientOrderContent - expanded data:', data);
     console.log('ClientOrderContent - allItems length:', data?.allItems?.length || 0);
     console.log('ClientOrderContent - first few allItems:', data?.allItems?.slice(0, 3));
+    
+    // Default localShowZeroBalance should be true for first expansion since we're
+    // having problems with items not showing up
+    if (!localShowZeroBalance) {
+      console.log('Setting showZeroBalance to true to ensure items display');
+      setTimeout(() => handleZeroBalanceChange(true), 0);
+    }
   }
   
   return (
@@ -83,7 +90,7 @@ export const ClientOrderContent = ({
           />
 
           <ClientOrderItemsTable
-            items={data.allItems}
+            items={data.allItems || []}
             showZeroBalance={localShowZeroBalance}
             showOnlyWithStock={localShowOnlyWithStock}
             selectedItems={selectedItems}

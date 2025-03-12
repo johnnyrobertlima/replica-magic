@@ -27,7 +27,8 @@ export const ClientOrderCard = ({
   selectedItems,
   onItemSelect
 }: ClientOrderCardProps) => {
-  const [localShowZeroBalance, setLocalShowZeroBalance] = useState(showZeroBalance);
+  // Start with localShowZeroBalance true to ensure items are displayed initially
+  const [localShowZeroBalance, setLocalShowZeroBalance] = useState(true);
   const [localShowOnlyWithStock, setLocalShowOnlyWithStock] = useState(showOnlyWithStock);
   
   const {
@@ -40,10 +41,12 @@ export const ClientOrderCard = ({
   } = useClientOrderCard(data);
 
   const handleZeroBalanceChange = (checked: boolean) => {
+    console.log(`Setting localShowZeroBalance to ${checked} for ${clientName}`);
     setLocalShowZeroBalance(checked);
   };
 
   const handleOnlyWithStockChange = (checked: boolean) => {
+    console.log(`Setting localShowOnlyWithStock to ${checked} for ${clientName}`);
     setLocalShowOnlyWithStock(checked);
   };
 
