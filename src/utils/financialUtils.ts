@@ -88,7 +88,7 @@ export const fetchTitulosVencidos = async (clienteCodigo: string | number) => {
     
     if (!rpcError && rpcData && rpcData.length > 0) {
       const valorVencido = rpcData[0]?.total_vlr_saldo || 0;
-      console.log(`Valor vencido via RPC para cliente ${clienteCodigo}: ${valorVencido}`);
+      console.log(`Valor vencido via RPC para cliente ${clienteCodigoStr}: ${valorVencido}`);
       return valorVencido;
     }
     
@@ -108,7 +108,7 @@ export const fetchTitulosVencidos = async (clienteCodigo: string | number) => {
       throw error;
     }
     
-    console.log(`Títulos vencidos encontrados para cliente ${clienteCodigo}:`, data?.length || 0);
+    console.log(`Títulos vencidos encontrados para cliente ${clienteCodigoStr}:`, data?.length || 0);
     
     // Sum the overdue values
     const valorVencido = (data || []).reduce((total, titulo) => {
@@ -116,7 +116,7 @@ export const fetchTitulosVencidos = async (clienteCodigo: string | number) => {
       return total + saldo;
     }, 0);
     
-    console.log(`Total valor vencido calculado para cliente ${clienteCodigo}: ${valorVencido}`);
+    console.log(`Total valor vencido calculado para cliente ${clienteCodigoStr}: ${valorVencido}`);
     
     return valorVencido;
   } catch (error) {
