@@ -5,10 +5,11 @@ import { calculateClientFinancialValues, fetchTitulosVencidos } from "@/utils/fi
 
 // Fetch financial titles for clients
 export const fetchFinancialTitles = async (clientesCodigos: number[]) => {
+  const clientesCodigosStr = clientesCodigos.map(code => code.toString());
   const { data: titulos, error } = await supabase
     .from('BLUEBAY_TITULO')
     .select('*')
-    .in('PES_CODIGO', clientesCodigos.map(String))
+    .in('PES_CODIGO', clientesCodigosStr)
     .in('STATUS', ['1', '2', '3']);
 
   if (error) throw error;
@@ -17,10 +18,11 @@ export const fetchFinancialTitles = async (clientesCodigos: number[]) => {
 
 // Fetch client info
 export const fetchClientInfo = async (clientesCodigos: number[]) => {
+  const clientesCodigosStr = clientesCodigos.map(code => code.toString());
   const { data: clientes, error } = await supabase
     .from('BLUEBAY_PESSOA')
     .select('PES_CODIGO, APELIDO, volume_saudavel_faturamento')
-    .in('PES_CODIGO', clientesCodigos);
+    .in('PES_CODIGO', clientesCodigosStr);
 
   if (error) throw error;
   return clientes;
@@ -40,10 +42,11 @@ export const fetchPedidosForRepresentantes = async (numeroPedidos: string[]) => 
 
 // Fetch representantes info
 export const fetchRepresentantesInfo = async (representantesCodigos: number[]) => {
+  const representantesCodigosStr = representantesCodigos.map(code => code.toString());
   const { data: representantes, error } = await supabase
     .from('BLUEBAY_PESSOA')
     .select('PES_CODIGO, RAZAOSOCIAL')
-    .in('PES_CODIGO', representantesCodigos);
+    .in('PES_CODIGO', representantesCodigosStr);
 
   if (error) throw error;
   return representantes;

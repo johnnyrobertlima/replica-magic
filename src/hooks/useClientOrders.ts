@@ -6,7 +6,7 @@ import { groupOrdersByClient, filterGroupsBySearchCriteria } from "@/utils/clien
 import { useClientOrdersState } from "./client-orders/useClientOrdersState";
 import { useItemSelection } from "./client-orders/useItemSelection";
 import { useSeparationOperations } from "./client-orders/useSeparationOperations";
-import { fetchClientFinancialInfo } from "@/services/jabOrdersService";
+import { fetchClientFinancialInfo } from "@/services/jab-orders";
 import { ClientOrderGroup } from "@/types/clientOrders";
 
 export const useClientOrders = () => {
