@@ -62,10 +62,10 @@ export const calculateClientFinancialValues = (
     const vencimento = new Date(titulo.DTVENCIMENTO);
     const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     
-    // Ajusta a data de vencimento para remover o horário
+    // Adjust vencimento date to remove time
     const vencimentoDateOnly = new Date(vencimento.getFullYear(), vencimento.getMonth(), vencimento.getDate());
     
-    // Compara apenas as datas (sem horas)
+    // Compare only dates (without hours)
     if (vencimentoDateOnly < todayDateOnly) {
       cliente.valoresVencidos += (titulo.VLRSALDO || 0);
     }

@@ -41,6 +41,7 @@ export const ClientOrderCard = ({
   const [isLoadingFinancial, setIsLoadingFinancial] = useState(false);
   const { toast } = useToast();
   
+  // Calculate progress percentages correctly
   const progressFaturamento = data.totalValorPedido > 0 
     ? (data.totalValorFaturado / data.totalValorPedido) * 100 
     : 0;
@@ -51,6 +52,7 @@ export const ClientOrderCard = ({
     
   const pedidosCount = new Set(data.allItems.map((item: any) => item.pedido)).size;
 
+  // Set border color based on financial status
   const getBorderColor = () => {
     if (valoresVencidos > 0) {
       return "border-l-red-500";
@@ -67,9 +69,11 @@ export const ClientOrderCard = ({
       
       setIsLoadingFinancial(true);
       try {
+        // Fetch overdue values directly for more accurate data
         const overdue = await fetchTitulosVencidos(data.PES_CODIGO);
         setValoresVencidos(overdue);
         
+        // Set other financial values
         setValoresTotais(data.totalValorPedido || 0);
         setValoresEmAberto(data.totalValorSaldo || 0);
       } catch (error) {
