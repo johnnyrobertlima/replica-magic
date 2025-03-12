@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -51,19 +50,25 @@ export const ClientOrderCard = ({
     
   const pedidosCount = new Set(data.allItems.map((item: any) => item.pedido)).size;
 
-  // Fetch financial data for this client - now fetches on component mount, not just when expanded
+  const getBorderColor = () => {
+    if (valoresVencidos > 0) {
+      return "border-l-red-500";
+    }
+    if (data.totalValorFaturarComEstoque > 1500) {
+      return "border-l-green-500";
+    }
+    return "border-l-blue-500";
+  };
+
   useEffect(() => {
     const fetchFinancialData = async () => {
       if (!data.PES_CODIGO) return;
       
       setIsLoadingFinancial(true);
       try {
-        // Get overdue values using the specified function
         const overdue = await fetchTitulosVencidos(data.PES_CODIGO);
         setValoresVencidos(overdue);
         
-        // For now, setting some placeholder values for the other financial fields
-        // These would be replaced with actual API calls in a complete implementation
         setValoresTotais(data.totalValorPedido || 0);
         setValoresEmAberto(data.totalValorSaldo || 0);
       } catch (error) {
@@ -78,7 +83,6 @@ export const ClientOrderCard = ({
       }
     };
 
-    // Always fetch financial data, not just when expanded
     fetchFinancialData();
   }, [data.PES_CODIGO, data.totalValorPedido, data.totalValorSaldo, toast]);
 
@@ -93,7 +97,8 @@ export const ClientOrderCard = ({
   return (
     <Card 
       className={cn(
-        "overflow-hidden",
+        "overflow-hidden border-l-4",
+        getBorderColor(),
         isExpanded && "col-span-full"
       )}
     >
@@ -110,8 +115,10 @@ export const ClientOrderCard = ({
             <p className="text-sm text-muted-foreground">
               Total de Pedidos: {pedidosCount}
             </p>
-            {/* Show overdue value directly in the header */}
-            <p className="text-sm font-medium text-red-600">
+            <p className={cn(
+              "text-sm font-medium",
+              valoresVencidos > 0 ? "text-red-600" : "text-gray-600"
+            )}>
               {isLoadingFinancial ? (
                 "Carregando valor vencido..."
               ) : (
