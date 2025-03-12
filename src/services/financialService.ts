@@ -4,11 +4,11 @@ import { ClienteFinanceiro } from "@/types/financialClient";
 import { calculateClientFinancialValues, fetchTitulosVencidos } from "@/utils/financialUtils";
 
 // Fetch financial titles for clients
-export const fetchFinancialTitles = async (clientIds: Array<string | number>) => {
+export const fetchFinancialTitles = async (clientesCodigos: number[]) => {
   const { data: titulos, error } = await supabase
     .from('BLUEBAY_TITULO')
     .select('*')
-    .in('PES_CODIGO', clientIds.map(String))
+    .in('PES_CODIGO', clientesCodigos.map(String))
     .in('STATUS', ['1', '2', '3']);
 
   if (error) throw error;
@@ -16,11 +16,11 @@ export const fetchFinancialTitles = async (clientIds: Array<string | number>) =>
 };
 
 // Fetch client info
-export const fetchClientInfo = async (clientIds: Array<string | number>) => {
+export const fetchClientInfo = async (clientesCodigos: number[]) => {
   const { data: clientes, error } = await supabase
     .from('BLUEBAY_PESSOA')
     .select('PES_CODIGO, APELIDO, volume_saudavel_faturamento')
-    .in('PES_CODIGO', clientIds.map(String));
+    .in('PES_CODIGO', clientesCodigos);
 
   if (error) throw error;
   return clientes;
@@ -43,7 +43,7 @@ export const fetchRepresentantesInfo = async (representantesCodigos: number[]) =
   const { data: representantes, error } = await supabase
     .from('BLUEBAY_PESSOA')
     .select('PES_CODIGO, RAZAOSOCIAL')
-    .in('PES_CODIGO', representantesCodigos.map(String));
+    .in('PES_CODIGO', representantesCodigos);
 
   if (error) throw error;
   return representantes;
@@ -101,14 +101,14 @@ export const processClientsData = (
 };
 
 // Fetch títulos vencidos for a specific client
-export const fetchValoresVencidos = async (clientCode: string | number) => {
-  console.log(`Buscando valores vencidos para cliente ${clientCode}`);
+export const fetchValoresVencidos = async (clienteCodigo: number) => {
+  console.log(`Buscando valores vencidos para cliente ${clienteCodigo}`);
   try {
-    const result = await fetchTitulosVencidos(clientCode);
+    const result = await fetchTitulosVencidos(clienteCodigo);
     console.log(`Resultado da busca: ${result}`);
     return result;
   } catch (error) {
-    console.error(`Erro ao buscar valores vencidos para cliente ${clientCode}:`, error);
+    console.error(`Erro ao buscar valores vencidos para cliente ${clienteCodigo}:`, error);
     return 0;
   }
 };

@@ -1,8 +1,9 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { UseJabOrdersOptions } from "@/types/jabOrders";
 import { clientCodeToString } from "@/utils/client-orders/clientUtils";
 
-export const fetchOrdersForClients = async (clientIds: Array<string | number>, fromDate: string, toDate: string) => {
+export const fetchOrdersForClients = async (clientIds: (string | number)[], fromDate: string, toDate: string) => {
   try {
     const clientIdsStrings = clientIds.map(clientCodeToString);
     
@@ -57,7 +58,7 @@ export const fetchAllJabOrders = async (options: Omit<UseJabOrdersOptions, 'page
   const toDate = options.dateRange?.to?.toISOString() || '';
 
   try {
-    const { data: rawOrders, error } = await supabase
+    const { data: orders, error } = await supabase
       .from('BLUEBAY_PEDIDO')
       .select('*')
       .eq('CENTROCUSTO', 'JAB')
@@ -66,33 +67,8 @@ export const fetchAllJabOrders = async (options: Omit<UseJabOrdersOptions, 'page
       .lte('DATA_PEDIDO', toDate);
 
     if (error) throw error;
-    
-    // Transform raw data to match JabOrder type
-    const orders = (rawOrders || []).map(order => {
-      // Get items for this order (in a real implementation, you'd fetch these)
-      const items = [];
-      
-      return {
-        MATRIZ: order.MATRIZ,
-        FILIAL: order.FILIAL,
-        PED_NUMPEDIDO: order.PED_NUMPEDIDO,
-        PED_ANOBASE: order.PED_ANOBASE,
-        total_saldo: 0, // Calculate this from items
-        valor_total: 0, // Calculate this from items
-        APELIDO: null, // Populate if available
-        PEDIDO_CLIENTE: order.PEDIDO_CLIENTE,
-        STATUS: order.STATUS,
-        REPRESENTANTE_NOME: null, // Populate if available
-        PES_CODIGO: order.PES_CODIGO,
-        items: items
-      };
-    });
 
-    return { 
-      orders: orders,
-      totalCount: orders.length || 0,
-      itensSeparacao: {}
-    };
+    return { orders: orders || [] };
   } catch (error) {
     console.error('Erro ao buscar todos os pedidos:', error);
     throw error;

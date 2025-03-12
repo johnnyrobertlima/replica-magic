@@ -3,7 +3,6 @@ import { useState, useCallback } from "react";
 import type { DateRange } from "react-day-picker";
 import type { SearchType } from "@/components/jab-orders/SearchFilters";
 import { useJabOrders, useTotals } from "@/hooks/useJabOrders";
-import { PedidoUnicoResult } from "@/types/jabOrders";
 
 const ITEMS_PER_PAGE = 15;
 
@@ -48,11 +47,49 @@ export const useOrdersState = () => {
     return str.replace(/^0+/, '');
   }, []);
 
-  // Since the API returns only ped_numpedido and total_count, we need to use an empty array
-  // for filtered orders until we get more data
-  const filteredOrders = [];
+  const filteredOrders = ordersData.orders.filter((order) => {
+    if (!["1", "2"].includes(order.STATUS)) {
+      return false;
+    }
 
-  const selectedItemsTotals = { totalSaldo: 0, totalValor: 0, totalComEstoque: 0 };
+    if (!isSearching) return true;
+    
+    if (searchQuery) {
+      const normalizedSearchQuery = searchQuery.toLowerCase().trim();
+      
+      switch (searchType) {
+        case "pedido":
+          const normalizedOrderNumber = removeLeadingZeros(order.PED_NUMPEDIDO);
+          const normalizedSearchNumber = removeLeadingZeros(searchQuery);
+          return normalizedOrderNumber.includes(normalizedSearchNumber);
+        
+        case "cliente":
+          return order.APELIDO?.toLowerCase().includes(normalizedSearchQuery) || false;
+        
+        case "representante":
+          return order.REPRESENTANTE_NOME?.toLowerCase().includes(normalizedSearchQuery) || false;
+        
+        default:
+          return false;
+      }
+    }
+    
+    return true;
+  });
+
+  const selectedItemsTotals = filteredOrders.reduce((acc, order) => {
+    const selectedOrderItems = order.items.filter(item => selectedItems.includes(item.ITEM_CODIGO));
+    
+    selectedOrderItems.forEach(item => {
+      acc.totalSaldo += item.QTDE_SALDO;
+      acc.totalValor += item.QTDE_SALDO * item.VALOR_UNITARIO;
+      if ((item.FISICO || 0) > 0) {
+        acc.totalComEstoque += item.QTDE_SALDO * item.VALOR_UNITARIO;
+      }
+    });
+    
+    return acc;
+  }, { totalSaldo: 0, totalValor: 0, totalComEstoque: 0 });
 
   const totalPages = Math.ceil(ordersData.totalCount / ITEMS_PER_PAGE);
 

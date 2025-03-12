@@ -51,27 +51,10 @@ export const ClientOrderCard = ({
     setLocalShowOnlyWithStock(checked);
   };
 
-  // Função para determinar a cor da borda baseada nas condições
-  const getBorderColorClass = () => {
-    const valoresVencidos = data.valoresVencidos || 0;
-    const valorFaturarComEstoque = data.totalValorFaturarComEstoque || 0;
-    
-    if (valoresVencidos > 0) {
-      return 'border-l-red-500';
-    }
-    
-    if (valorFaturarComEstoque > 1500) {
-      return 'border-l-green-500';
-    }
-    
-    return 'border-l-blue-500';
-  };
-
   return (
     <Card 
       className={cn(
-        "overflow-hidden border-l-4 shadow-lg",
-        getBorderColorClass(),
+        "overflow-hidden",
         isExpanded && "col-span-full"
       )}
     >

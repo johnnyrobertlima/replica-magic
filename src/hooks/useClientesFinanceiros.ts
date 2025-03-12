@@ -42,7 +42,7 @@ export const useClientesFinanceiros = () => {
   };
 
   // Update volume saudavel
-  const updateVolumeSaudavel = async (clienteCodigo: number | string, valor: number) => {
+  const updateVolumeSaudavel = async (clienteCodigo: number, valor: number) => {
     const result = await updateVolumeSaudavelUtil(clienteCodigo, valor);
     
     if (result.success) {
@@ -73,10 +73,10 @@ export const useClientesFinanceiros = () => {
           return;
         }
 
-        // Fetch financial titles - now with proper typing to accept string | number array
+        // Fetch financial titles
         const titulos = await fetchFinancialTitles(clientesCodigos);
 
-        // Fetch client info - now with proper typing to accept string | number array
+        // Fetch client info
         const clientes = await fetchClientInfo(clientesCodigos);
 
         // Map clients to their separacoes
