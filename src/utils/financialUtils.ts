@@ -75,7 +75,7 @@ export const calculateClientFinancialValues = (
 };
 
 // Fetch overdue titles directly from Supabase
-export const fetchTitulosVencidos = async (clienteCodigo: string | number) => {
+export const fetchTitulosVencidos = async (clienteCodigo: string | number): Promise<number> => {
   try {
     // Convert clienteCodigo to string to ensure type compatibility
     const clienteCodigoStr = String(clienteCodigo);
