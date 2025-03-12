@@ -58,3 +58,7 @@ export interface EstoqueItemResult {
   item_codigo: string;
   fisico: number;
 }
+
+export interface ValorVencidoResult {
+  total_vlr_saldo: number;
+}
