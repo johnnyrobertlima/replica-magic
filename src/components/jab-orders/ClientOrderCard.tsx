@@ -7,7 +7,6 @@ import { OrderProgressBars } from "./OrderProgressBars";
 import { OrderSummaryGrid } from "./OrderSummaryGrid";
 import { ClientOrderFilters } from "./ClientOrderFilters";
 import { ClientOrderItemsTable } from "./ClientOrderItemsTable";
-import { formatCurrency } from "@/lib/utils";
 
 interface ClientOrderCardProps {
   clientName: string;
@@ -42,10 +41,6 @@ export const ClientOrderCard = ({
     : 0;
     
   const pedidosCount = new Set(data.allItems.map((item: any) => item.pedido)).size;
-  
-  // Ensure valoresVencidos is a number, with a fallback to 0
-  const valoresVencidos = typeof data.valoresVencidos === 'number' ? data.valoresVencidos : 0;
-  const hasOverdueValues = valoresVencidos > 0;
 
   const handleZeroBalanceChange = (checked: boolean) => {
     setLocalShowZeroBalance(checked);
@@ -69,17 +64,12 @@ export const ClientOrderCard = ({
         >
           <div className="space-y-1">
             <h3 className="text-lg font-semibold">Cliente: {clientName}</h3>
-            <div className="space-y-0.5">
-              <p className="text-sm text-muted-foreground">
-                Representante: {data.representante || "Não informado"}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Total de Pedidos: {pedidosCount}
-              </p>
-              <p className={`text-sm ${hasOverdueValues ? 'text-red-600 font-medium' : 'text-muted-foreground'}`}>
-                Valores Vencidos: {formatCurrency(valoresVencidos)}
-              </p>
-            </div>
+            <p className="text-sm text-muted-foreground">
+              Representante: {data.representante || "Não informado"}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Total de Pedidos: {pedidosCount}
+            </p>
           </div>
           {isExpanded ? (
             <ChevronUp className="h-6 w-6 text-muted-foreground" />

@@ -14,10 +14,6 @@ export interface JabOrderItem {
   QTDE_ENTREGUE: number;
   VALOR_UNITARIO: number;
   FISICO: number | null;
-  valor_total_item?: number;
-  valor_faturado_item?: number;
-  valor_saldo_item?: number;
-  ITEM_SEPARACAO?: number;
   emSeparacao?: boolean;
 }
 
@@ -28,7 +24,6 @@ export interface JabOrder {
   PED_ANOBASE: number;
   total_saldo: number;
   valor_total: number;
-  valor_faturado?: number;
   APELIDO: string | null;
   PEDIDO_CLIENTE: string | null;
   STATUS: string;
@@ -36,7 +31,6 @@ export interface JabOrder {
   REPRESENTANTE_CODIGO?: number | null;
   PES_CODIGO: number;
   items: JabOrderItem[];
-  valoresVencidos?: number;
 }
 
 export interface UseJabOrdersOptions {
@@ -47,11 +41,10 @@ export interface UseJabOrdersOptions {
 
 export interface JabOrdersResponse {
   orders: JabOrder[];
-  totalCount?: number;
+  totalCount: number;
   currentPage?: number;
   pageSize?: number;
-  itensSeparacao?: Record<string, number>;
-  clientesFinanceiros?: any[];
+  itensSeparacao?: Record<string, boolean>;
 }
 
 export interface JabTotalsResponse {

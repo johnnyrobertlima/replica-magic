@@ -19,8 +19,7 @@ import {
 
 import { 
   processOrdersData,
-  groupOrdersByNumber,
-  fetchClientesFinanceiros
+  groupOrdersByNumber 
 } from "./jab/orderProcessUtils";
 
 export { fetchTotals } from "./jab/totalsService";
@@ -110,22 +109,11 @@ async function processOrdersFullData(
 
   const { pessoas, itens, estoque, representantes } = await fetchRelatedData(pessoasIds, itemCodigos, representantesCodigos);
   const itensSeparacao = await fetchItensSeparacao();
-  const clientesFinanceiros = await fetchClientesFinanceiros(pessoasIds);
 
   const pessoasMap = new Map(pessoas.map(p => [p.PES_CODIGO, p]));
   const itemMap = new Map(itens.map(i => [i.ITEM_CODIGO, i.DESCRICAO]));
   const estoqueMap = new Map(estoque.map(e => [e.ITEM_CODIGO, e.FISICO]));
   const representantesMap = new Map(representantes.map(r => [r.PES_CODIGO, r.RAZAOSOCIAL]));
-
-  // Convert Boolean Record to Number Record if needed
-  const processedItensSeparacao: Record<string, number> = {};
-  if (itensSeparacao) {
-    Object.keys(itensSeparacao).forEach(key => {
-      // Convert any boolean values to numbers (0 or 1)
-      const value = itensSeparacao[key];
-      processedItensSeparacao[key] = typeof value === 'boolean' ? (value ? 1 : 0) : value;
-    });
-  }
 
   const pedidosAgrupados = groupOrdersByNumber(pedidosDetalhados);
 
@@ -137,7 +125,7 @@ async function processOrdersFullData(
     estoqueMap,
     representantesMap,
     pedidosAgrupados,
-    processedItensSeparacao
+    itensSeparacao
   );
 
   return {
@@ -145,7 +133,6 @@ async function processOrdersFullData(
     totalCount,
     currentPage: 1,
     pageSize: numeroPedidos.length,
-    itensSeparacao: processedItensSeparacao,
-    clientesFinanceiros
+    itensSeparacao
   };
 }
