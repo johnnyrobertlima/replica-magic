@@ -1,5 +1,7 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { ClienteFinanceiro, TituloFinanceiro } from "@/types/financialClient";
+import { clientCodeToString } from "./client-orders/clientUtils";
 
 // Get separações pendentes
 export const getSeparacoesPendentes = (separacoes: any[], hiddenCards: Set<string>) => {
@@ -82,7 +84,7 @@ export const fetchTitulosVencidos = async (clienteCodigo: string | number) => {
     const today = new Date().toISOString().split('T')[0];
     
     // Convert clienteCodigo to string for the query
-    const clienteCodigoStr = String(clienteCodigo);
+    const clienteCodigoStr = clientCodeToString(clienteCodigo);
     console.log(`Usando código do cliente: ${clienteCodigoStr}`);
     
     const { data, error } = await supabase
