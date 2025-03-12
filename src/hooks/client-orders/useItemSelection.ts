@@ -27,7 +27,7 @@ export const useItemSelection = (
       return;
     }
     
-    console.log("handleItemSelect called with item:", itemCode);
+    console.log("handleItemSelect called with item:", itemCode, item);
     
     setState(prev => {
       const isAlreadySelected = prev.selectedItems.includes(itemCode);
@@ -43,9 +43,14 @@ export const useItemSelection = (
         // Add item to selection
         console.log(`Adding item ${itemCode} to selection`);
         newSelectedItems.push(itemCode);
+        
+        // Get qtde_saldo and valor_unitario from item (handling case sensitivity)
+        const saldo = item.QTDE_SALDO !== undefined ? item.QTDE_SALDO : (item.qtde_saldo || 0);
+        const valor = item.VALOR_UNITARIO !== undefined ? item.VALOR_UNITARIO : (item.valor_unitario || 0);
+        
         newSelectedItemsDetails[itemCode] = {
-          qtde: item.QTDE_SALDO || item.qtde_saldo || 0,
-          valor: item.VALOR_UNITARIO || item.valor_unitario || 0
+          qtde: saldo,
+          valor: valor
         };
       }
       
@@ -86,18 +91,27 @@ export const useItemSelection = (
       
       // Add each selected item to the export data
       selectedClientItems.forEach((item: any) => {
+        // Get values handling both upper and lowercase properties
+        const itemCode = item.ITEM_CODIGO || item.item_codigo;
+        const descricao = item.DESCRICAO || item.descricao || "-";
+        const qtdePedida = item.QTDE_PEDIDA || item.qtde_pedida || 0;
+        const qtdeEntregue = item.QTDE_ENTREGUE || item.qtde_entregue || 0;
+        const qtdeSaldo = item.QTDE_SALDO || item.qtde_saldo || 0;
+        const fisico = item.FISICO || item.fisico || 0;
+        const valorUnitario = item.VALOR_UNITARIO || item.valor_unitario || 0;
+        
         exportData.push({
           Cliente: clientName,
           Representante: clientGroup.representante || "Não informado",
           Pedido: item.pedido,
-          'Código do Item': item.ITEM_CODIGO || item.item_codigo,
-          Descrição: item.DESCRICAO || item.descricao || "-",
-          'Qtde. Pedida': item.QTDE_PEDIDA || item.qtde_pedida,
-          'Qtde. Entregue': item.QTDE_ENTREGUE || item.qtde_entregue,
-          'Qtde. Saldo': item.QTDE_SALDO || item.qtde_saldo,
-          'Estoque Físico': item.FISICO || item.fisico || 0,
-          'Valor Unitário': item.VALOR_UNITARIO || item.valor_unitario,
-          'Valor Total': ((item.QTDE_SALDO || item.qtde_saldo) * (item.VALOR_UNITARIO || item.valor_unitario))
+          'Código do Item': itemCode,
+          Descrição: descricao,
+          'Qtde. Pedida': qtdePedida,
+          'Qtde. Entregue': qtdeEntregue,
+          'Qtde. Saldo': qtdeSaldo,
+          'Estoque Físico': fisico,
+          'Valor Unitário': valorUnitario,
+          'Valor Total': qtdeSaldo * valorUnitario
         });
       });
     }

@@ -35,15 +35,17 @@ export function processOrdersData(
 
       const saldo = pedido.QTDE_SALDO || 0;
       const valorUnitario = pedido.VALOR_UNITARIO || 0;
+      const qtdePedida = pedido.QTDE_PEDIDA || 0;
       
+      // Correct calculation for total_saldo and valor_total
       total_saldo += saldo;
-      valor_total += saldo * valorUnitario;
+      valor_total += qtdePedida * valorUnitario; // Total value based on ordered quantity
 
       items.set(pedido.ITEM_CODIGO, {
         ITEM_CODIGO: pedido.ITEM_CODIGO,
         DESCRICAO: itemMap.get(pedido.ITEM_CODIGO) || null,
         QTDE_SALDO: saldo,
-        QTDE_PEDIDA: pedido.QTDE_PEDIDA || 0,
+        QTDE_PEDIDA: qtdePedida,
         QTDE_ENTREGUE: pedido.QTDE_ENTREGUE || 0,
         VALOR_UNITARIO: valorUnitario,
         FISICO: estoqueMap.get(pedido.ITEM_CODIGO) || null,
@@ -105,11 +107,6 @@ export async function processClientOrdersData(
     const clienteName = cliente.cliente_nome || `Cliente ${cliente.pes_codigo}`;
     const representanteName = cliente.representante_nome || 'Não informado';
     
-    // Calcular valores para potencial de faturamento
-    let totalValorFaturarComEstoque = 0;
-    let totalQuantidadeSaldo = cliente.total_quantidade_saldo || 0;
-    let totalValorSaldo = cliente.total_valor_saldo || 0;
-    
     // Buscar itens do cliente com a função otimizada
     const itensCliente = await fetchItensPorCliente(dataInicial, dataFinal, cliente.pes_codigo);
     
@@ -121,23 +118,47 @@ export async function processClientOrdersData(
       if (Array.isArray(estoqueData)) {
         const estoqueMap = new Map(estoqueData.map(e => [e.item_codigo, e.fisico]));
         
+        // Initialize tracking variables for client totals
+        let totalQuantidadeSaldo = 0;
+        let totalValorSaldo = 0;
+        let totalValorPedido = 0;
+        let totalValorFaturado = 0;
+        let totalValorFaturarComEstoque = 0;
+        
         // Processar itens com informações de estoque
         const itensProcessados = itensCliente.map(item => {
           const estoqueDisponivel = estoqueMap.get(item.item_codigo) || 0;
           const emSeparacao = itensSeparacao[item.item_codigo] || false;
-          const valorItem = (item.qtde_saldo || 0) * (item.valor_unitario || 0);
           
-          // Calcular valor que pode ser faturado com base no estoque disponível
-          if (estoqueDisponivel > 0 && item.qtde_saldo > 0) {
-            const quantidadePossivel = Math.min(estoqueDisponivel, item.qtde_saldo);
-            totalValorFaturarComEstoque += quantidadePossivel * (item.valor_unitario || 0);
-          }
+          // Get item properties
+          const qtdePedida = item.qtde_pedida || 0;
+          const qtdeEntregue = item.qtde_entregue || 0;
+          const qtdeSaldo = item.qtde_saldo || 0;
+          const valorUnitario = item.valor_unitario || 0;
+          
+          // Calculate values
+          const valorTotalPedido = qtdePedida * valorUnitario;
+          const valorTotalSaldo = qtdeSaldo * valorUnitario;
+          const valorFaturado = qtdeEntregue * valorUnitario;
+          
+          // Determinar se o item pode ser faturado com estoque
+          const valorFaturarComEstoque = (estoqueDisponivel > 0 && qtdeSaldo > 0) ? valorTotalSaldo : 0;
+          
+          // Update client totals
+          totalQuantidadeSaldo += qtdeSaldo;
+          totalValorSaldo += valorTotalSaldo;
+          totalValorPedido += valorTotalPedido;
+          totalValorFaturado += valorFaturado;
+          totalValorFaturarComEstoque += valorFaturarComEstoque;
           
           return {
             ...item,
             fisico: estoqueDisponivel,
             emSeparacao,
-            valor_total: valorItem
+            valor_total_pedido: valorTotalPedido,
+            valor_total_saldo: valorTotalSaldo,
+            valor_faturado: valorFaturado,
+            valor_faturar_com_estoque: valorFaturarComEstoque
           };
         });
         
@@ -148,8 +169,8 @@ export async function processClientOrdersData(
           representante_codigo: cliente.representante_codigo,
           totalQuantidadeSaldo,
           totalValorSaldo,
-          totalValorPedido: cliente.total_valor_pedido || 0,
-          totalValorFaturado: cliente.total_valor_faturado || 0,
+          totalValorPedido,
+          totalValorFaturado,
           totalValorFaturarComEstoque,
           volume_saudavel_faturamento: cliente.volume_saudavel_faturamento,
           allItems: itensProcessados

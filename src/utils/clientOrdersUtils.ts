@@ -29,21 +29,24 @@ export const groupOrdersByClient = (ordersData: JabOrdersResponse): Record<strin
 
     // Add order to group
     groups[clientName].pedidos.push(order);
-    groups[clientName].totalValorSaldo += order.total_saldo;
-    groups[clientName].totalValorPedido += order.valor_total;
 
     // Process each item in the order
     order.items.forEach(item => {
-      // Add to total quantity
+      // Add to total quantity saldo
       groups[clientName].totalQuantidadeSaldo += item.QTDE_SALDO;
 
-      // Calculate values
-      const valorTotal = item.QTDE_PEDIDA * item.VALOR_UNITARIO;
-      const valorFaturado = (item.QTDE_ENTREGUE || 0) * item.VALOR_UNITARIO;
-      const valorComEstoque = (item.FISICO && item.FISICO > 0 && item.QTDE_SALDO > 0) ? 
-        (Math.min(item.FISICO, item.QTDE_SALDO) * item.VALOR_UNITARIO) : 0;
+      // Calculate values based on the new requirements
+      const valorTotalPedido = item.QTDE_PEDIDA * item.VALOR_UNITARIO;
+      const valorTotalSaldo = item.QTDE_SALDO * item.VALOR_UNITARIO;
+      const valorFaturado = item.QTDE_ENTREGUE * item.VALOR_UNITARIO;
+      
+      // Calculate faturar com estoque only if there's physical stock available
+      const valorComEstoque = (item.FISICO && item.FISICO > 0) ? 
+        (item.QTDE_SALDO * item.VALOR_UNITARIO) : 0;
 
       // Update group totals
+      groups[clientName].totalValorPedido += valorTotalPedido;
+      groups[clientName].totalValorSaldo += valorTotalSaldo;
       groups[clientName].totalValorFaturado += valorFaturado;
       groups[clientName].totalValorFaturarComEstoque += valorComEstoque;
 

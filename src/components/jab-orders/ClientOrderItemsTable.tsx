@@ -79,13 +79,11 @@ export const ClientOrderItemsTable = ({
     
     // Check for QTDE_SALDO value
     if (!showZeroBalance && saldo <= 0) {
-      console.log(`Filtering out item due to zero balance: ${saldo}`);
       return false;
     }
     
     // Check for FISICO value
     if (showOnlyWithStock && fisico <= 0) {
-      console.log(`Filtering out item due to no stock: ${fisico}`);
       return false;
     }
     

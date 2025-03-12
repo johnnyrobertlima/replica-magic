@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useClientOrderCard } from "@/hooks/client-orders/useClientOrderCard";
@@ -27,9 +27,18 @@ export const ClientOrderCard = ({
   selectedItems,
   onItemSelect
 }: ClientOrderCardProps) => {
-  // Start with localShowZeroBalance true to ensure items are displayed initially
-  const [localShowZeroBalance, setLocalShowZeroBalance] = useState(true);
+  // Track local filter states
+  const [localShowZeroBalance, setLocalShowZeroBalance] = useState(showZeroBalance);
   const [localShowOnlyWithStock, setLocalShowOnlyWithStock] = useState(showOnlyWithStock);
+  
+  // Update local state when parent props change
+  useEffect(() => {
+    setLocalShowZeroBalance(showZeroBalance);
+  }, [showZeroBalance]);
+  
+  useEffect(() => {
+    setLocalShowOnlyWithStock(showOnlyWithStock);
+  }, [showOnlyWithStock]);
   
   const {
     valoresVencidos,
