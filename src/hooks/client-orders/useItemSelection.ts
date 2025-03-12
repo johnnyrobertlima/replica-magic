@@ -19,25 +19,38 @@ export const useItemSelection = (
   );
 
   const handleItemSelect = (item: any) => {
-    const itemCode = item.ITEM_CODIGO;
+    // Get the item code - handling both upper and lowercase properties
+    const itemCode = item.ITEM_CODIGO || item.item_codigo;
+    
+    if (!itemCode) {
+      console.error("Item selection failed: No item code found", item);
+      return;
+    }
+    
+    console.log("handleItemSelect called with item:", itemCode);
     
     setState(prev => {
       const isAlreadySelected = prev.selectedItems.includes(itemCode);
-      let newSelectedItems = prev.selectedItems;
+      let newSelectedItems = [...prev.selectedItems];
       let newSelectedItemsDetails = { ...prev.selectedItemsDetails };
       
       if (isAlreadySelected) {
         // Remove item from selection
+        console.log(`Removing item ${itemCode} from selection`);
         newSelectedItems = prev.selectedItems.filter(code => code !== itemCode);
         delete newSelectedItemsDetails[itemCode];
       } else {
         // Add item to selection
-        newSelectedItems = [...prev.selectedItems, itemCode];
+        console.log(`Adding item ${itemCode} to selection`);
+        newSelectedItems.push(itemCode);
         newSelectedItemsDetails[itemCode] = {
-          qtde: item.QTDE_SALDO,
-          valor: item.VALOR_UNITARIO
+          qtde: item.QTDE_SALDO || item.qtde_saldo || 0,
+          valor: item.VALOR_UNITARIO || item.valor_unitario || 0
         };
       }
+      
+      console.log("New selected items:", newSelectedItems);
+      console.log("New selected items details:", newSelectedItemsDetails);
       
       return { 
         ...prev, 
@@ -65,7 +78,10 @@ export const useItemSelection = (
       
       // Find all items in this client that match the selected items
       const selectedClientItems = clientGroup.allItems.filter(
-        (item: any) => selectedItems.includes(item.ITEM_CODIGO)
+        (item: any) => {
+          const code = item.ITEM_CODIGO || item.item_codigo;
+          return selectedItems.includes(code);
+        }
       );
       
       // Add each selected item to the export data
@@ -74,14 +90,14 @@ export const useItemSelection = (
           Cliente: clientName,
           Representante: clientGroup.representante || "Não informado",
           Pedido: item.pedido,
-          'Código do Item': item.ITEM_CODIGO,
-          Descrição: item.DESCRICAO || "-",
-          'Qtde. Pedida': item.QTDE_PEDIDA,
-          'Qtde. Entregue': item.QTDE_ENTREGUE,
-          'Qtde. Saldo': item.QTDE_SALDO,
-          'Estoque Físico': item.FISICO || 0,
-          'Valor Unitário': item.VALOR_UNITARIO,
-          'Valor Total': (item.QTDE_SALDO * item.VALOR_UNITARIO)
+          'Código do Item': item.ITEM_CODIGO || item.item_codigo,
+          Descrição: item.DESCRICAO || item.descricao || "-",
+          'Qtde. Pedida': item.QTDE_PEDIDA || item.qtde_pedida,
+          'Qtde. Entregue': item.QTDE_ENTREGUE || item.qtde_entregue,
+          'Qtde. Saldo': item.QTDE_SALDO || item.qtde_saldo,
+          'Estoque Físico': item.FISICO || item.fisico || 0,
+          'Valor Unitário': item.VALOR_UNITARIO || item.valor_unitario,
+          'Valor Total': ((item.QTDE_SALDO || item.qtde_saldo) * (item.VALOR_UNITARIO || item.valor_unitario))
         });
       });
     }

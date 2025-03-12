@@ -94,6 +94,9 @@ export const ClientOrderItemsTable = ({
   
   console.log('Filtered items count:', filteredItems.length);
   console.log('First 3 filtered items sample:', filteredItems.slice(0, 3));
+  
+  // Debug selected items
+  console.log('Currently selected items:', selectedItems);
 
   return (
     <div className="rounded-lg border overflow-x-auto">
@@ -129,9 +132,18 @@ export const ClientOrderItemsTable = ({
               const faltaFaturarValue = qtdeSaldo * valorUnitario;
               const isSelected = selectedItems.includes(itemCode);
               
+              // Create a unique key that combines pedido and itemCode for the row
+              const rowKey = `${pedido}-${itemCode}-${index}`;
+              
+              // Log when checkbox is clicked
+              const handleCheckboxChange = () => {
+                console.log(`Checkbox clicked for item: ${itemCode}, was selected: ${isSelected}`);
+                onItemSelect(item);
+              };
+              
               return (
                 <tr 
-                  key={`${pedido}-${itemCode}-${index}`} 
+                  key={rowKey} 
                   className={cn(
                     "border-t",
                     emSeparacao && "bg-[#FEF7CD]" // Fundo amarelo claro para itens em separação
@@ -140,7 +152,7 @@ export const ClientOrderItemsTable = ({
                   <td className="p-2">
                     <Checkbox
                       checked={isSelected}
-                      onCheckedChange={() => onItemSelect(item)}
+                      onCheckedChange={handleCheckboxChange}
                       disabled={emSeparacao}
                       id={`checkbox-${itemCode}-${index}`}
                     />
