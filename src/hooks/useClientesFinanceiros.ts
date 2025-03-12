@@ -24,9 +24,15 @@ export const useClienteFinanceiro = (clienteId: number | string | undefined) => 
         // Load financial data
         const financialData = await loadClientFinancialData(clienteId);
         
+        // Ensure PES_CODIGO is properly set as a number
+        const pesCodigoNumeric = typeof cliente.PES_CODIGO === 'string' 
+          ? parseInt(cliente.PES_CODIGO, 10) 
+          : cliente.PES_CODIGO;
+          
         // Return combined data with default empty values for required fields
         return {
           ...cliente,
+          PES_CODIGO: pesCodigoNumeric,
           ...financialData,
           separacoes: [],  // Default empty array for separacoes
           representanteNome: null  // Default null for representanteNome
@@ -55,10 +61,15 @@ export const useClientesFinanceirosByIds = (clienteIds: (number | string)[]) => 
           clientes.map(async (cliente) => {
             const financialData = await loadClientFinancialData(cliente.PES_CODIGO);
             
+            // Ensure PES_CODIGO is a number
+            const pesCodigoNumeric = typeof cliente.PES_CODIGO === 'string' 
+              ? parseInt(cliente.PES_CODIGO, 10) 
+              : cliente.PES_CODIGO;
+            
             // Construct a properly typed ClienteFinanceiro object
             const enrichedClient: ClienteFinanceiro = {
               ...cliente,
-              PES_CODIGO: Number(cliente.PES_CODIGO),
+              PES_CODIGO: pesCodigoNumeric,
               valoresTotais: financialData.valoresTotais,
               valoresEmAberto: financialData.valoresEmAberto,
               valoresVencidos: financialData.valoresVencidos,
