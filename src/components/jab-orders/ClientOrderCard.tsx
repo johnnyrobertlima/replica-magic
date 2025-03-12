@@ -42,6 +42,8 @@ export const ClientOrderCard = ({
     : 0;
     
   const pedidosCount = new Set(data.allItems.map((item: any) => item.pedido)).size;
+  const valoresVencidos = data.valoresVencidos || 0;
+  const hasOverdueValues = valoresVencidos > 0;
 
   const handleZeroBalanceChange = (checked: boolean) => {
     setLocalShowZeroBalance(checked);
@@ -72,8 +74,8 @@ export const ClientOrderCard = ({
               <p className="text-sm text-muted-foreground">
                 Total de Pedidos: {pedidosCount}
               </p>
-              <p className="text-sm text-red-600 font-medium">
-                Valores Vencidos: {formatCurrency(data.valoresVencidos || 0)}
+              <p className={`text-sm ${hasOverdueValues ? 'text-red-600 font-medium' : 'text-muted-foreground'}`}>
+                Valores Vencidos: {formatCurrency(valoresVencidos)}
               </p>
             </div>
           </div>

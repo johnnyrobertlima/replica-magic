@@ -19,7 +19,8 @@ import {
 
 import { 
   processOrdersData,
-  groupOrdersByNumber 
+  groupOrdersByNumber,
+  fetchClientesFinanceiros
 } from "./jab/orderProcessUtils";
 
 export { fetchTotals } from "./jab/totalsService";
@@ -109,6 +110,7 @@ async function processOrdersFullData(
 
   const { pessoas, itens, estoque, representantes } = await fetchRelatedData(pessoasIds, itemCodigos, representantesCodigos);
   const itensSeparacao = await fetchItensSeparacao();
+  const clientesFinanceiros = await fetchClientesFinanceiros(pessoasIds);
 
   const pessoasMap = new Map(pessoas.map(p => [p.PES_CODIGO, p]));
   const itemMap = new Map(itens.map(i => [i.ITEM_CODIGO, i.DESCRICAO]));
@@ -133,6 +135,7 @@ async function processOrdersFullData(
     totalCount,
     currentPage: 1,
     pageSize: numeroPedidos.length,
-    itensSeparacao
+    itensSeparacao,
+    clientesFinanceiros
   };
 }

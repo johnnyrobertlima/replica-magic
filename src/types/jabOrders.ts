@@ -1,4 +1,3 @@
-
 import type { DateRange as DayPickerDateRange } from "react-day-picker";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -41,10 +40,11 @@ export interface UseJabOrdersOptions {
 
 export interface JabOrdersResponse {
   orders: JabOrder[];
-  totalCount: number;
+  totalCount?: number;
   currentPage?: number;
   pageSize?: number;
-  itensSeparacao?: Record<string, boolean>;
+  itensSeparacao?: Record<string, number>;
+  clientesFinanceiros?: any[];
 }
 
 export interface JabTotalsResponse {

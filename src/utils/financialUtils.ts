@@ -76,22 +76,32 @@ export const calculateClientFinancialValues = (
 // Função para buscar títulos vencidos diretamente do Supabase
 export const fetchTitulosVencidos = async (clienteCodigo: string | number) => {
   try {
+    const clienteCodigoStr = String(clienteCodigo);
+    console.log(`Buscando títulos vencidos para cliente ${clienteCodigoStr}`);
+    
+    const today = new Date().toISOString().split('T')[0];
+    
     const { data, error } = await supabase
       .from('BLUEBAY_TITULO')
       .select('VLRSALDO')
-      .eq('PES_CODIGO', clienteCodigo.toString())
-      .lt('DTVENCIMENTO', new Date().toISOString().split('T')[0]);
+      .eq('PES_CODIGO', clienteCodigoStr)
+      .lt('DTVENCIMENTO', today)
+      .not('VLRSALDO', 'is', null);
     
     if (error) {
       console.error("Erro ao buscar títulos vencidos:", error);
       throw error;
     }
     
-    console.log(`Títulos vencidos para cliente ${clienteCodigo}:`, data);
+    console.log(`Encontrados ${data?.length || 0} títulos vencidos para cliente ${clienteCodigoStr}`);
     
-    // Soma os valores vencidos
-    const valorVencido = data.reduce((total, titulo) => total + (titulo.VLRSALDO || 0), 0);
-    console.log(`Total valor vencido para cliente ${clienteCodigo}:`, valorVencido);
+    // Soma os valores vencidos com validação adequada
+    const valorVencido = data?.reduce((total, titulo) => {
+      const saldo = parseFloat(titulo.VLRSALDO) || 0;
+      return total + saldo;
+    }, 0) || 0;
+    
+    console.log(`Total valor vencido para cliente ${clienteCodigoStr}: ${valorVencido}`);
     
     return valorVencido;
   } catch (error) {
