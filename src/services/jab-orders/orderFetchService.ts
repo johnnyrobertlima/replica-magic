@@ -68,7 +68,10 @@ export const fetchAllJabOrders = async (options: Omit<UseJabOrdersOptions, 'page
 
     if (error) throw error;
 
-    return { orders: orders || [] };
+    return { 
+      orders: orders || [],
+      totalCount: orders?.length || 0  // Adicionando totalCount para compatibilidade
+    };
   } catch (error) {
     console.error('Erro ao buscar todos os pedidos:', error);
     throw error;

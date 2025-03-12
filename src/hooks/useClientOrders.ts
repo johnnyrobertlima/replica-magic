@@ -6,8 +6,9 @@ import { groupOrdersByClient, filterGroupsBySearchCriteria } from "@/utils/clien
 import { useClientOrdersState } from "./client-orders/useClientOrdersState";
 import { useItemSelection } from "./client-orders/useItemSelection";
 import { useSeparationOperations } from "./client-orders/useSeparationOperations";
-import { fetchClientFinancialInfo } from "@/services/jabOrdersService";
+import { fetchClientFinancialInfo } from "@/services/jab-orders";
 import { ClientOrderGroup } from "@/types/clientOrders";
+import { JabOrder } from "@/types/jabOrders";
 
 export const useClientOrders = () => {
   // Use the state hook
@@ -43,7 +44,18 @@ export const useClientOrders = () => {
   const { data: separacoes = [], isLoading: isLoadingSeparacoes } = useSeparacoes();
 
   // Group orders by client
-  const groupedOrders = useMemo(() => groupOrdersByClient(ordersData), [ordersData]);
+  const groupedOrders = useMemo(() => {
+    // Verificar e converter dados se necessário, para compatibilidade com JabOrder
+    const adaptedOrders = ordersData.orders.map(order => {
+      // Esta adaptação não altera os dados originais, mas garante que estejam no formato esperado pelo groupOrdersByClient
+      return order as unknown as JabOrder;
+    });
+    
+    return groupOrdersByClient({ 
+      orders: adaptedOrders, 
+      totalCount: ordersData.totalCount 
+    });
+  }, [ordersData]);
   
   // State to store grouped orders with financial information
   const [groupedOrdersWithFinancialInfo, setGroupedOrdersWithFinancialInfo] = useState<Record<string, ClientOrderGroup>>(groupedOrders);
