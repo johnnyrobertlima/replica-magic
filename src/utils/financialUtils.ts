@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export const formatCurrency = (value: number): string => {
@@ -12,19 +11,19 @@ export const formatDate = (date: string): string => {
   return new Date(date).toLocaleDateString('pt-BR');
 };
 
-// Função para calcular valores financeiros do cliente
+// Function to calculate client financial values
 export const calculateClientFinancialValues = (cliente: any, titulo: any, today: Date) => {
   if (!titulo || !titulo.VLRSALDO) return;
   
   const saldo = parseFloat(titulo.VLRSALDO) || 0;
   cliente.valoresTotais += saldo;
   
-  // Verificar se está em aberto
+  // Check if open
   if (titulo.STATUS === '1' || titulo.STATUS === '2') {
     cliente.valoresEmAberto += saldo;
   }
   
-  // Verificar se está vencido
+  // Check if overdue
   if (titulo.DTVENCIMENTO) {
     const vencimento = new Date(titulo.DTVENCIMENTO);
     vencimento.setHours(0, 0, 0, 0);
@@ -34,12 +33,7 @@ export const calculateClientFinancialValues = (cliente: any, titulo: any, today:
   }
 };
 
-// Convert client code to string for database queries
-export const clientCodeToString = (clientCode: string | number): string => {
-  return String(clientCode);
-};
-
-export const fetchTitulosVencidos = async (clientCode: number | string): Promise<number> => {
+export const fetchTitulosVencidos = async (clientCode: string | number): Promise<number> => {
   const today = new Date().toISOString().split('T')[0];
   const clienteCodigoStr = clientCodeToString(clientCode);
 
@@ -65,7 +59,11 @@ export const fetchTitulosVencidos = async (clientCode: number | string): Promise
   }
 };
 
-// Função para obter separações pendentes, filtrando cards escondidos
+export const clientCodeToString = (clientCode: string | number): string => {
+  return String(clientCode);
+};
+
+// Function to get separations pending, filtering hidden cards
 export const getSeparacoesPendentes = (separacoes: any[], hiddenCards: Set<string>) => {
   return separacoes.filter(sep => 
     sep.status === 'pendente' && 
@@ -73,14 +71,14 @@ export const getSeparacoesPendentes = (separacoes: any[], hiddenCards: Set<strin
   );
 };
 
-// Função para obter códigos de clientes únicos das separações
+// Function to get unique client codes from separations
 export const getClientesCodigos = (separacoesPendentes: any[]) => {
   return Array.from(new Set(
     separacoesPendentes.map(sep => sep.cliente_codigo)
   ));
 };
 
-// Função para atualizar o volume saudável de um cliente
+// Function to update a client's healthy volume
 export const updateVolumeSaudavel = async (clienteCodigo: string | number, valor: number) => {
   try {
     const { data, error } = await supabase

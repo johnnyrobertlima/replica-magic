@@ -1,11 +1,11 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { ClienteFinanceiro } from "@/types/financialClient";
-import { calculateClientFinancialValues, fetchTitulosVencidos } from "@/utils/financialUtils";
-import { clientCodeToString } from "@/utils/client-orders/clientUtils";
+import { calculateClientFinancialValues, clientCodeToString } from "@/utils/financialUtils";
+import { clientCodeToNumber } from "@/utils/client-orders/clientUtils";
 
 // Fetch financial titles for clients
-export const fetchFinancialTitles = async (clientesCodigos: number[]) => {
+export const fetchFinancialTitles = async (clientesCodigos: (string | number)[]) => {
   const clienteCodigosStrings = clientesCodigos.map(codigo => clientCodeToString(codigo));
 
   const { data: titulos, error } = await supabase

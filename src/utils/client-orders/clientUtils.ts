@@ -1,4 +1,3 @@
-
 // Get client code from item, ensuring it's a number
 export const getClientCodeFromItem = (item: any): number | null => {
   if (!item.PES_CODIGO) return null;
@@ -10,7 +9,13 @@ export const getClientCodeFromItem = (item: any): number | null => {
   return isNaN(pesCodigoNumerico) ? null : pesCodigoNumerico;
 };
 
-// Convert client code to string for database queries
+// Convert any client code (string or number) to string for database queries
 export const clientCodeToString = (clientCode: string | number): string => {
   return String(clientCode);
+};
+
+// Convert any client code (string or number) to number for internal use
+export const clientCodeToNumber = (clientCode: string | number): number => {
+  const numericValue = typeof clientCode === 'string' ? parseInt(clientCode, 10) : clientCode;
+  return isNaN(numericValue) ? 0 : numericValue;
 };
