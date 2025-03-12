@@ -10,6 +10,7 @@ import { ClientOrderItemsTable } from "./ClientOrderItemsTable";
 import { ClienteFinanceiroInfo } from "./ClienteFinanceiroInfo";
 import { fetchTitulosVencidos } from "@/utils/financialUtils";
 import { useToast } from "@/hooks/use-toast";
+import { formatCurrency } from "@/lib/utils";
 
 interface ClientOrderCardProps {
   clientName: string;
@@ -50,7 +51,7 @@ export const ClientOrderCard = ({
     
   const pedidosCount = new Set(data.allItems.map((item: any) => item.pedido)).size;
 
-  // Fetch financial data for this client
+  // Fetch financial data for this client - now fetches on component mount, not just when expanded
   useEffect(() => {
     const fetchFinancialData = async () => {
       if (!data.PES_CODIGO) return;
@@ -77,10 +78,9 @@ export const ClientOrderCard = ({
       }
     };
 
-    if (isExpanded) {
-      fetchFinancialData();
-    }
-  }, [data.PES_CODIGO, isExpanded, data.totalValorPedido, data.totalValorSaldo, toast]);
+    // Always fetch financial data, not just when expanded
+    fetchFinancialData();
+  }, [data.PES_CODIGO, data.totalValorPedido, data.totalValorSaldo, toast]);
 
   const handleZeroBalanceChange = (checked: boolean) => {
     setLocalShowZeroBalance(checked);
@@ -109,6 +109,14 @@ export const ClientOrderCard = ({
             </p>
             <p className="text-sm text-muted-foreground">
               Total de Pedidos: {pedidosCount}
+            </p>
+            {/* Show overdue value directly in the header */}
+            <p className="text-sm font-medium text-red-600">
+              {isLoadingFinancial ? (
+                "Carregando valor vencido..."
+              ) : (
+                `Valor Vencido: ${formatCurrency(valoresVencidos)}`
+              )}
             </p>
           </div>
           {isExpanded ? (
