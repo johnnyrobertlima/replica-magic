@@ -3,14 +3,21 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { cn, formatCurrency } from "@/lib/utils";
 
 interface OrderItem {
-  pedido: string;
-  ITEM_CODIGO: string;
+  pedido?: string;
+  ITEM_CODIGO?: string;
+  item_codigo?: string;
   DESCRICAO?: string | null;
-  QTDE_PEDIDA: number;
-  QTDE_ENTREGUE: number;
-  QTDE_SALDO: number;
+  descricao?: string | null;
+  QTDE_PEDIDA?: number;
+  qtde_pedida?: number;
+  QTDE_ENTREGUE?: number;
+  qtde_entregue?: number;
+  QTDE_SALDO?: number;
+  qtde_saldo?: number;
   FISICO?: number | null;
-  VALOR_UNITARIO: number;
+  fisico?: number | null;
+  VALOR_UNITARIO?: number;
+  valor_unitario?: number;
   emSeparacao?: boolean;
 }
 
@@ -33,16 +40,28 @@ export const ClientOrderItemsTable = ({
   console.log('showZeroBalance:', showZeroBalance);
   console.log('showOnlyWithStock:', showOnlyWithStock);
   
-  // Log the first few items with their QTDE_SALDO values to debug filtering
+  // Helper function to access property regardless of case
+  const getProperty = (item: OrderItem, upperProp: string, lowerProp: string): any => {
+    return item[upperProp as keyof OrderItem] !== undefined 
+      ? item[upperProp as keyof OrderItem] 
+      : item[lowerProp as keyof OrderItem];
+  };
+  
+  // Log the first few items with their qtde_saldo values to debug filtering
   if (items && items.length > 0) {
-    console.log('Sample items with QTDE_SALDO values:');
+    console.log('Sample items with QTDE_SALDO/qtde_saldo values:');
     items.slice(0, 5).forEach((item, index) => {
+      const itemCode = getProperty(item, 'ITEM_CODIGO', 'item_codigo');
+      const desc = getProperty(item, 'DESCRICAO', 'descricao');
+      const saldo = getProperty(item, 'QTDE_SALDO', 'qtde_saldo');
+      const fisico = getProperty(item, 'FISICO', 'fisico');
+      
       console.log(`Item ${index}:`, {
-        ITEM_CODIGO: item.ITEM_CODIGO,
-        DESCRICAO: item.DESCRICAO,
-        QTDE_SALDO: item.QTDE_SALDO,
-        FISICO: item.FISICO,
-        type_QTDE_SALDO: typeof item.QTDE_SALDO
+        itemCode,
+        desc,
+        saldo,
+        fisico,
+        type_saldo: typeof saldo
       });
     });
   }
@@ -54,22 +73,20 @@ export const ClientOrderItemsTable = ({
       return false;
     }
     
-    // Check for QTDE_SALDO value - if this is the issue, log it
-    if (!showZeroBalance) {
-      const saldo = Number(item.QTDE_SALDO) || 0;
-      if (saldo <= 0) {
-        console.log(`Filtering out item ${item.ITEM_CODIGO} due to zero balance: ${saldo}`);
-        return false;
-      }
+    // Get saldo and fisico values using helper function
+    const saldo = Number(getProperty(item, 'QTDE_SALDO', 'qtde_saldo')) || 0;
+    const fisico = Number(getProperty(item, 'FISICO', 'fisico')) || 0;
+    
+    // Check for QTDE_SALDO value
+    if (!showZeroBalance && saldo <= 0) {
+      console.log(`Filtering out item due to zero balance: ${saldo}`);
+      return false;
     }
     
-    // Check for FISICO value - if this is the issue, log it
-    if (showOnlyWithStock) {
-      const fisico = Number(item.FISICO) || 0;
-      if (fisico <= 0) {
-        console.log(`Filtering out item ${item.ITEM_CODIGO} due to no stock: ${fisico}`);
-        return false;
-      }
+    // Check for FISICO value
+    if (showOnlyWithStock && fisico <= 0) {
+      console.log(`Filtering out item due to no stock: ${fisico}`);
+      return false;
     }
     
     return true;
@@ -99,39 +116,49 @@ export const ClientOrderItemsTable = ({
         <tbody>
           {filteredItems.length > 0 ? (
             filteredItems.map((item, index) => {
-              const faltaFaturarValue = (Number(item.QTDE_SALDO) || 0) * (Number(item.VALOR_UNITARIO) || 0);
+              const itemCode = getProperty(item, 'ITEM_CODIGO', 'item_codigo');
+              const desc = getProperty(item, 'DESCRICAO', 'descricao');
+              const qtdePedida = Number(getProperty(item, 'QTDE_PEDIDA', 'qtde_pedida')) || 0;
+              const qtdeEntregue = Number(getProperty(item, 'QTDE_ENTREGUE', 'qtde_entregue')) || 0;
+              const qtdeSaldo = Number(getProperty(item, 'QTDE_SALDO', 'qtde_saldo')) || 0;
+              const valorUnitario = Number(getProperty(item, 'VALOR_UNITARIO', 'valor_unitario')) || 0;
+              const fisico = getProperty(item, 'FISICO', 'fisico');
+              const pedido = getProperty(item, 'pedido', 'PED_NUMPEDIDO') || '-';
+              const emSeparacao = item.emSeparacao || false;
+              
+              const faltaFaturarValue = qtdeSaldo * valorUnitario;
               
               return (
                 <tr 
-                  key={`${item.pedido}-${item.ITEM_CODIGO}-${index}`} 
+                  key={`${pedido}-${itemCode}-${index}`} 
                   className={cn(
                     "border-t",
-                    item.emSeparacao && "bg-[#FEF7CD]" // Fundo amarelo claro para itens em separação
+                    emSeparacao && "bg-[#FEF7CD]" // Fundo amarelo claro para itens em separação
                   )}
                 >
                   <td className="p-2">
                     <Checkbox
-                      checked={selectedItems.includes(item.ITEM_CODIGO)}
+                      checked={selectedItems.includes(itemCode)}
                       onCheckedChange={() => onItemSelect(item)}
-                      disabled={item.emSeparacao}
+                      disabled={emSeparacao}
                     />
                   </td>
-                  <td className="p-2">{item.pedido || '-'}</td>
-                  <td className="p-2">{item.ITEM_CODIGO || '-'}</td>
+                  <td className="p-2">{pedido || '-'}</td>
+                  <td className="p-2">{itemCode || '-'}</td>
                   <td className="p-2">
-                    {item.DESCRICAO || '-'}
-                    {item.emSeparacao && (
+                    {desc || '-'}
+                    {emSeparacao && (
                       <span className="ml-2 text-amber-600 text-xs font-medium">
                         (Em separação)
                       </span>
                     )}
                   </td>
-                  <td className="p-2 text-right">{Number(item.QTDE_PEDIDA) || 0}</td>
-                  <td className="p-2 text-right">{Number(item.QTDE_ENTREGUE) || 0}</td>
-                  <td className="p-2 text-right">{Number(item.QTDE_SALDO) || 0}</td>
-                  <td className="p-2 text-right">{item.FISICO ?? '-'}</td>
+                  <td className="p-2 text-right">{qtdePedida}</td>
+                  <td className="p-2 text-right">{qtdeEntregue}</td>
+                  <td className="p-2 text-right">{qtdeSaldo}</td>
+                  <td className="p-2 text-right">{fisico ?? '-'}</td>
                   <td className="p-2 text-right">
-                    {formatCurrency(Number(item.VALOR_UNITARIO) || 0)}
+                    {formatCurrency(valorUnitario)}
                   </td>
                   <td className="p-2 text-right">
                     {formatCurrency(faltaFaturarValue)}
