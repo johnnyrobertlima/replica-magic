@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -124,6 +125,9 @@ export const ClientOrderCard = ({
               ) : (
                 `Valor Vencido: ${formatCurrency(valoresVencidos)}`
               )}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Volume Saudável: {data.volume_saudavel_faturamento ? formatCurrency(data.volume_saudavel_faturamento) : "Não definido"}
             </p>
           </div>
           {isExpanded ? (
