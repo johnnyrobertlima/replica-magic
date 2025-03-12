@@ -82,10 +82,13 @@ export const fetchTitulosVencidos = async (clienteCodigo: string | number) => {
     // Format today's date as YYYY-MM-DD for comparison
     const today = new Date().toISOString().split('T')[0];
     
+    // Make sure clienteCodigo is converted to string for the query
+    const clienteCodigoStr = clienteCodigo.toString();
+    
     const { data, error } = await supabase
       .from('BLUEBAY_TITULO')
       .select('VLRSALDO')
-      .eq('PES_CODIGO', clienteCodigo.toString())
+      .eq('PES_CODIGO', clienteCodigoStr)
       .lt('DTVENCIMENTO', today)
       .not('VLRSALDO', 'is', null); // Ensure we only get records with non-null VLRSALDO
     
