@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { ClienteFinanceiro, TituloFinanceiro } from "@/types/financialClient";
 
@@ -56,7 +57,7 @@ export const calculateClientFinancialValues = (
   cliente.valoresEmAberto += (titulo.VLRSALDO || 0);
   
   // Overdue values = VLRSALDO of overdue titles
-  // Note: This calculation is now supplemented by direct database query
+  // Note: This calculation is now primarily handled by fetchTitulosVencidos
   if (titulo.DTVENCIMENTO) {
     const vencimento = new Date(titulo.DTVENCIMENTO);
     const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -76,22 +77,38 @@ export const calculateClientFinancialValues = (
 // Função para buscar títulos vencidos diretamente do Supabase
 export const fetchTitulosVencidos = async (clienteCodigo: string | number) => {
   try {
+    console.log(`Buscando títulos vencidos para cliente ${clienteCodigo}`);
+    
+    // Format today's date as YYYY-MM-DD for comparison
+    const today = new Date().toISOString().split('T')[0];
+    
     const { data, error } = await supabase
       .from('BLUEBAY_TITULO')
       .select('VLRSALDO')
       .eq('PES_CODIGO', clienteCodigo.toString())
-      .lt('DTVENCIMENTO', new Date().toISOString().split('T')[0]);
+      .lt('DTVENCIMENTO', today)
+      .not('VLRSALDO', 'is', null); // Ensure we only get records with non-null VLRSALDO
     
     if (error) {
       console.error("Erro ao buscar títulos vencidos:", error);
       throw error;
     }
     
-    console.log(`Títulos vencidos para cliente ${clienteCodigo}:`, data);
+    if (!data || data.length === 0) {
+      console.log(`Nenhum título vencido encontrado para cliente ${clienteCodigo}`);
+      return 0;
+    }
     
-    // Soma os valores vencidos
-    const valorVencido = data.reduce((total, titulo) => total + (titulo.VLRSALDO || 0), 0);
-    console.log(`Total valor vencido para cliente ${clienteCodigo}:`, valorVencido);
+    console.log(`Encontrados ${data.length} títulos vencidos para cliente ${clienteCodigo}`);
+    
+    // Calculate the total of overdue values
+    const valorVencido = data.reduce((total, titulo) => {
+      const saldo = parseFloat(titulo.VLRSALDO) || 0;
+      console.log(`Título com VLRSALDO: ${saldo}`);
+      return total + saldo;
+    }, 0);
+    
+    console.log(`Total valor vencido para cliente ${clienteCodigo}: ${valorVencido}`);
     
     return valorVencido;
   } catch (error) {
