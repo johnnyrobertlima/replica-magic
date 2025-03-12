@@ -6,6 +6,11 @@ import type { ClientOrderGroup } from "@/types/clientOrders";
 export const groupOrdersByClient = (data: JabOrdersResponse): Record<string, ClientOrderGroup> => {
   const groupedOrders: Record<string, ClientOrderGroup> = {};
 
+  if (!data?.orders) {
+    console.warn('No orders data provided to groupOrdersByClient');
+    return groupedOrders;
+  }
+
   data.orders.forEach(order => {
     const clientName = order.APELIDO || `Cliente ${order.PES_CODIGO}`;
     
@@ -28,8 +33,8 @@ export const groupOrdersByClient = (data: JabOrdersResponse): Record<string, Cli
     // Add this order to the client's pedidos array
     groupedOrders[clientName].pedidos.push(order);
     
-    // Add the order's items to the allItems array 
-    const items = order.items.map(item => ({
+    // Add the order's items to the allItems array, ensuring items exists
+    const items = (order.items || []).map(item => ({
       ...item,
       pedido: order.PED_NUMPEDIDO,
       APELIDO: order.APELIDO,
@@ -42,9 +47,9 @@ export const groupOrdersByClient = (data: JabOrdersResponse): Record<string, Cli
     let orderTotalPedido = 0;
     let orderTotalFaturarComEstoque = 0;
 
-    order.items.forEach(item => {
-      const saldo = item.QTDE_SALDO;
-      const valor = item.VALOR_UNITARIO;
+    (order.items || []).forEach(item => {
+      const saldo = item.QTDE_SALDO || 0;
+      const valor = item.VALOR_UNITARIO || 0;
       const valorTotal = saldo * valor;
       
       groupedOrders[clientName].totalQuantidadeSaldo += saldo;
@@ -52,8 +57,8 @@ export const groupOrdersByClient = (data: JabOrdersResponse): Record<string, Cli
       
       orderTotalSaldo += valorTotal;
 
-      const totalPedido = (item.QTDE_PEDIDA * valor);
-      const totalFaturado = (item.QTDE_ENTREGUE * valor);
+      const totalPedido = ((item.QTDE_PEDIDA || 0) * valor);
+      const totalFaturado = ((item.QTDE_ENTREGUE || 0) * valor);
       
       groupedOrders[clientName].totalValorPedido += totalPedido;
       groupedOrders[clientName].totalValorFaturado += totalFaturado;

@@ -9,10 +9,10 @@ export const fetchOrdersForClients = async (clientIds: (string | number)[], from
     
     const { data, error } = await supabase
       .from('BLUEBAY_PEDIDO')
-      .select('*, items:BLUEBAY_ITEMPEDIDO(*)')
+      .select('*, items:BLUEBAY_PEDIDO(*)')
       .in('PES_CODIGO', clientIdsStrings)
-      .gte('DATAPED', fromDate)
-      .lte('DATAPED', toDate);
+      .gte('DATA_PEDIDO', fromDate)
+      .lte('DATA_PEDIDO', toDate);
       
     if (error) throw error;
     
@@ -23,36 +23,6 @@ export const fetchOrdersForClients = async (clientIds: (string | number)[], from
   }
 };
 
-export const fetchJabOrders = async (options: UseJabOrdersOptions) => {
-  const fromDate = options.dateRange?.from?.toISOString() || '';
-  const toDate = options.dateRange?.to?.toISOString() || '';
-  const page = options.page || 1;
-  const pageSize = options.pageSize || 10;
-  const offset = (page - 1) * pageSize;
-
-  try {
-    const { data: orders, error } = await supabase
-      .rpc('get_pedidos_unicos', {
-        data_inicial: fromDate,
-        data_final: toDate,
-        offset_val: offset,
-        limit_val: pageSize
-      });
-
-    if (error) throw error;
-    
-    return {
-      orders: orders || [],
-      totalCount: orders?.[0]?.total_count || 0,
-      currentPage: page,
-      pageSize
-    };
-  } catch (error) {
-    console.error('Erro ao buscar pedidos:', error);
-    throw error;
-  }
-};
-
 export const fetchAllJabOrders = async (options: Omit<UseJabOrdersOptions, 'page' | 'pageSize'>) => {
   const fromDate = options.dateRange?.from?.toISOString() || '';
   const toDate = options.dateRange?.to?.toISOString() || '';
@@ -60,7 +30,18 @@ export const fetchAllJabOrders = async (options: Omit<UseJabOrdersOptions, 'page
   try {
     const { data: orders, error } = await supabase
       .from('BLUEBAY_PEDIDO')
-      .select('*')
+      .select(`
+        *,
+        items:BLUEBAY_ITEMPEDIDO(
+          ITEM_CODIGO,
+          DESCRICAO,
+          QTDE_SALDO,
+          QTDE_PEDIDA,
+          QTDE_ENTREGUE,
+          VALOR_UNITARIO,
+          FISICO
+        )
+      `)
       .eq('CENTROCUSTO', 'JAB')
       .in('STATUS', ['1', '2'])
       .gte('DATA_PEDIDO', fromDate)
@@ -69,8 +50,13 @@ export const fetchAllJabOrders = async (options: Omit<UseJabOrdersOptions, 'page
     if (error) throw error;
 
     return { 
-      orders: orders || [],
-      totalCount: orders?.length || 0  // Adicionando totalCount para compatibilidade
+      orders: orders?.map(order => ({
+        ...order,
+        items: order.items || [], // Ensure items is always an array
+        total_saldo: order.items?.reduce((acc, item) => acc + (item.QTDE_SALDO || 0), 0) || 0,
+        valor_total: order.items?.reduce((acc, item) => acc + ((item.QTDE_PEDIDA || 0) * (item.VALOR_UNITARIO || 0)), 0) || 0
+      })) || [],
+      totalCount: orders?.length || 0 
     };
   } catch (error) {
     console.error('Erro ao buscar todos os pedidos:', error);

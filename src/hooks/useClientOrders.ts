@@ -1,4 +1,3 @@
-
 import { useMemo, useEffect, useState } from "react";
 import { useAllJabOrders, useTotals } from "@/hooks/useJabOrders";
 import { useSeparacoes } from "@/hooks/useSeparacoes";
@@ -35,7 +34,7 @@ export const useClientOrders = () => {
   } = useClientOrdersState();
 
   // Data fetching hooks
-  const { data: ordersData = { orders: [], totalCount: 0, itensSeparacao: {} }, isLoading: isLoadingOrders } = useAllJabOrders({
+  const { data: ordersData, isLoading: isLoadingOrders } = useAllJabOrders({
     dateRange: searchDate
   });
 
@@ -45,18 +44,17 @@ export const useClientOrders = () => {
 
   // Group orders by client
   const groupedOrders = useMemo(() => {
-    // Verificar e converter dados se necessário, para compatibilidade com JabOrder
-    const adaptedOrders = ordersData.orders.map(order => {
-      // Esta adaptação não altera os dados originais, mas garante que estejam no formato esperado pelo groupOrdersByClient
-      return order as unknown as JabOrder;
-    });
-    
-    return groupOrdersByClient({ 
-      orders: adaptedOrders, 
-      totalCount: ordersData.totalCount 
+    if (!ordersData || !ordersData.orders) {
+      console.warn('No orders data available');
+      return {};
+    }
+
+    return groupOrdersByClient({
+      orders: ordersData.orders,
+      totalCount: ordersData.totalCount
     });
   }, [ordersData]);
-  
+
   // State to store grouped orders with financial information
   const [groupedOrdersWithFinancialInfo, setGroupedOrdersWithFinancialInfo] = useState<Record<string, ClientOrderGroup>>(groupedOrders);
   const [isLoadingFinancialInfo, setIsLoadingFinancialInfo] = useState(false);
