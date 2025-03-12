@@ -1,16 +1,10 @@
 
-import { useState, useEffect, useMemo } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { OrderProgressBars } from "./OrderProgressBars";
-import { OrderSummaryGrid } from "./OrderSummaryGrid";
-import { ClientOrderFilters } from "./ClientOrderFilters";
-import { ClientOrderItemsTable } from "./ClientOrderItemsTable";
-import { ClienteFinanceiroInfo } from "./ClienteFinanceiroInfo";
-import { fetchTitulosVencidos } from "@/utils/financialUtils";
-import { useToast } from "@/hooks/use-toast";
-import { formatCurrency } from "@/lib/utils";
+import { useClientOrderCard } from "@/hooks/client-orders/useClientOrderCard";
+import { ClientHeader } from "./components/ClientHeader";
+import { ClientOrderContent } from "./components/ClientOrderContent";
 
 interface ClientOrderCardProps {
   clientName: string;
@@ -35,77 +29,15 @@ export const ClientOrderCard = ({
 }: ClientOrderCardProps) => {
   const [localShowZeroBalance, setLocalShowZeroBalance] = useState(showZeroBalance);
   const [localShowOnlyWithStock, setLocalShowOnlyWithStock] = useState(showOnlyWithStock);
-  const [valoresVencidos, setValoresVencidos] = useState(0);
-  const [valoresEmAberto, setValoresEmAberto] = useState(0);
-  const [valoresTotais, setValoresTotais] = useState(0);
-  const [isLoadingFinancial, setIsLoadingFinancial] = useState(false);
-  const { toast } = useToast();
   
-  // Calculate progress percentages correctly using memoization to avoid recalculation
-  const financialData = useMemo(() => {
-    const totalValorPedido = data.totalValorPedido || 0;
-    const totalValorFaturado = data.totalValorFaturado || 0;
-    const totalValorSaldo = data.totalValorSaldo || 0;
-    const totalValorFaturarComEstoque = data.totalValorFaturarComEstoque || 0;
-    
-    const progressFaturamento = totalValorPedido > 0 
-      ? (totalValorFaturado / totalValorPedido) * 100 
-      : 0;
-      
-    const progressPotencial = totalValorSaldo > 0 
-      ? (totalValorFaturarComEstoque / totalValorSaldo) * 100 
-      : 0;
-    
-    return {
-      progressFaturamento,
-      progressPotencial,
-      valoresTotais: totalValorPedido,
-      valoresEmAberto: totalValorSaldo
-    };
-  }, [data.totalValorPedido, data.totalValorFaturado, data.totalValorSaldo, data.totalValorFaturarComEstoque]);
-    
-  const pedidosCount = useMemo(() => 
-    new Set(data.allItems.map((item: any) => item.pedido)).size,
-  [data.allItems]);
-
-  // Set border color based on financial status
-  const getBorderColor = () => {
-    if (valoresVencidos > 0) {
-      return "border-l-red-500";
-    }
-    if (data.totalValorFaturarComEstoque > 1500) {
-      return "border-l-green-500";
-    }
-    return "border-l-blue-500";
-  };
-
-  useEffect(() => {
-    const fetchFinancialData = async () => {
-      if (!data.PES_CODIGO) return;
-      
-      setIsLoadingFinancial(true);
-      try {
-        // Fetch overdue values directly for more accurate data
-        const overdue = await fetchTitulosVencidos(data.PES_CODIGO);
-        setValoresVencidos(overdue);
-        
-        // Set other financial values from memoized data
-        setValoresTotais(financialData.valoresTotais);
-        setValoresEmAberto(financialData.valoresEmAberto);
-      } catch (error) {
-        console.error("Error fetching financial data:", error);
-        toast({
-          title: "Erro",
-          description: "Falha ao carregar dados financeiros",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoadingFinancial(false);
-      }
-    };
-
-    fetchFinancialData();
-  }, [data.PES_CODIGO, financialData.valoresTotais, financialData.valoresEmAberto, toast]);
+  const {
+    valoresVencidos,
+    valoresEmAberto,
+    valoresTotais,
+    isLoadingFinancial,
+    pedidosCount,
+    financialData
+  } = useClientOrderCard(data);
 
   const handleZeroBalanceChange = (checked: boolean) => {
     setLocalShowZeroBalance(checked);
@@ -113,6 +45,13 @@ export const ClientOrderCard = ({
 
   const handleOnlyWithStockChange = (checked: boolean) => {
     setLocalShowOnlyWithStock(checked);
+  };
+
+  // Set border color based on financial status
+  const getBorderColor = () => {
+    if (valoresVencidos > 0) return "border-l-red-500";
+    if (data.totalValorFaturarComEstoque > 1500) return "border-l-green-500";
+    return "border-l-blue-500";
   };
 
   return (
@@ -124,82 +63,31 @@ export const ClientOrderCard = ({
       )}
     >
       <CardContent className="p-6">
-        <div 
-          className="flex items-center justify-between cursor-pointer"
-          onClick={onToggleExpand}
-        >
-          <div className="space-y-1">
-            <h3 className="text-lg font-semibold">Cliente: {clientName}</h3>
-            <p className="text-sm text-muted-foreground">
-              Representante: {data.representante || "Não informado"}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Total de Pedidos: {pedidosCount}
-            </p>
-            <p className={cn(
-              "text-sm font-medium",
-              valoresVencidos > 0 ? "text-red-600" : "text-gray-600"
-            )}>
-              {isLoadingFinancial ? (
-                "Carregando valor vencido..."
-              ) : (
-                `Valor Vencido: ${formatCurrency(valoresVencidos)}`
-              )}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Volume Saudável: {data.volume_saudavel_faturamento ? formatCurrency(data.volume_saudavel_faturamento) : "Não definido"}
-            </p>
-          </div>
-          {isExpanded ? (
-            <ChevronUp className="h-6 w-6 text-muted-foreground" />
-          ) : (
-            <ChevronDown className="h-6 w-6 text-muted-foreground" />
-          )}
-        </div>
-
-        <div className="mt-4 space-y-4">
-          {isExpanded && (
-            <ClienteFinanceiroInfo
-              valoresTotais={valoresTotais}
-              valoresEmAberto={valoresEmAberto}
-              valoresVencidos={valoresVencidos}
-              volumeSaudavel={null}
-            />
-          )}
-
-          <OrderProgressBars 
-            progressFaturamento={financialData.progressFaturamento}
-            progressPotencial={financialData.progressPotencial}
-          />
-
-          <OrderSummaryGrid
-            totalQuantidadeSaldo={data.totalQuantidadeSaldo}
-            totalValorSaldo={data.totalValorSaldo}
-            totalValorPedido={data.totalValorPedido}
-            totalValorFaturado={data.totalValorFaturado}
-            totalValorFaturarComEstoque={data.totalValorFaturarComEstoque}
-          />
-
-          {isExpanded && (
-            <div className="mt-6">
-              <ClientOrderFilters
-                clientName={clientName}
-                showZeroBalance={localShowZeroBalance}
-                showOnlyWithStock={localShowOnlyWithStock}
-                onZeroBalanceChange={handleZeroBalanceChange}
-                onOnlyWithStockChange={handleOnlyWithStockChange}
-              />
-
-              <ClientOrderItemsTable
-                items={data.allItems}
-                showZeroBalance={localShowZeroBalance}
-                showOnlyWithStock={localShowOnlyWithStock}
-                selectedItems={selectedItems}
-                onItemSelect={onItemSelect}
-              />
-            </div>
-          )}
-        </div>
+        <ClientHeader
+          clientName={clientName}
+          data={data}
+          pedidosCount={pedidosCount}
+          valoresVencidos={valoresVencidos}
+          isLoadingFinancial={isLoadingFinancial}
+          isExpanded={isExpanded}
+          onToggleExpand={onToggleExpand}
+        />
+        
+        <ClientOrderContent
+          isExpanded={isExpanded}
+          data={data}
+          valoresTotais={valoresTotais}
+          valoresEmAberto={valoresEmAberto}
+          valoresVencidos={valoresVencidos}
+          financialData={financialData}
+          clientName={clientName}
+          localShowZeroBalance={localShowZeroBalance}
+          localShowOnlyWithStock={localShowOnlyWithStock}
+          handleZeroBalanceChange={handleZeroBalanceChange}
+          handleOnlyWithStockChange={handleOnlyWithStockChange}
+          selectedItems={selectedItems}
+          onItemSelect={onItemSelect}
+        />
       </CardContent>
     </Card>
   );
