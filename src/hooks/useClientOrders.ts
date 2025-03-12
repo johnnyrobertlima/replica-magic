@@ -6,6 +6,7 @@ import { groupOrdersByClient, filterGroupsBySearchCriteria } from "@/utils/clien
 import { useClientOrdersState } from "./client-orders/useClientOrdersState";
 import { useItemSelection } from "./client-orders/useItemSelection";
 import { useSeparationOperations } from "./client-orders/useSeparationOperations";
+import { useClientFinancialData } from "./client-orders/useClientFinancialData"; // New hook for financial data
 
 export const useClientOrders = () => {
   // Use the state hook
@@ -40,8 +41,19 @@ export const useClientOrders = () => {
 
   const { data: separacoes = [], isLoading: isLoadingSeparacoes } = useSeparacoes();
 
+  // Fetch financial data for clients
+  const { clientFinancialData, isLoading: isLoadingFinancialData } = useClientFinancialData(
+    ordersData.orders.map(order => order.PES_CODIGO)
+  );
+
+  // Add financial data to ordersData
+  const ordersDataWithFinancial = useMemo(() => ({
+    ...ordersData,
+    clientInfo: clientFinancialData
+  }), [ordersData, clientFinancialData]);
+
   // Group orders by client
-  const groupedOrders = useMemo(() => groupOrdersByClient(ordersData), [ordersData]);
+  const groupedOrders = useMemo(() => groupOrdersByClient(ordersDataWithFinancial), [ordersDataWithFinancial]);
 
   // Filter groups by search criteria
   const filteredGroups = useMemo(() => 
@@ -83,7 +95,7 @@ export const useClientOrders = () => {
     filteredGroups,
     totalSelecionado,
     // Loading states
-    isLoading: isLoadingOrders || isLoadingTotals || isLoadingSeparacoes,
+    isLoading: isLoadingOrders || isLoadingTotals || isLoadingSeparacoes || isLoadingFinancialData,
     // Methods
     toggleExpand,
     handleSearch,
