@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { getClientCodeFromItem } from "@/utils/client-orders/clientUtils";
+import { getClientCodeFromItem } from "@/utils/clientOrdersUtils";
 import type { ClientOrderGroup } from "@/types/clientOrders";
 
 export const createSeparation = async (

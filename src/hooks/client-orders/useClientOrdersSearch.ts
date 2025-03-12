@@ -1,5 +1,5 @@
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import type { DateRange } from "react-day-picker";
 import type { SearchType } from "@/components/jab-orders/SearchFilters";
 
@@ -11,34 +11,56 @@ export interface SearchState {
   isSearching: boolean;
 }
 
-export const useClientOrdersSearch = () => {
-  // Set default date range to current month
-  const today = new Date();
-  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-  const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-  
-  const defaultDateRange: DateRange = {
-    from: firstDayOfMonth,
-    to: lastDayOfMonth
+export const useClientOrdersSearch = (initialDate: DateRange | undefined = {
+  from: new Date(),
+  to: new Date(),
+}) => {
+  const [state, setState] = useState<SearchState>({
+    date: initialDate,
+    searchDate: initialDate,
+    searchQuery: "",
+    searchType: "pedido",
+    isSearching: false,
+  });
+
+  // Destructure state for easier access
+  const {
+    date,
+    searchDate,
+    searchQuery,
+    searchType,
+    isSearching
+  } = state;
+
+  // State update methods
+  const setDate = (newDate: DateRange | undefined) => {
+    setState(prev => ({ ...prev, date: newDate }));
   };
 
-  const [date, setDate] = useState<DateRange | undefined>(defaultDateRange);
-  const [searchDate, setSearchDate] = useState<DateRange | undefined>(defaultDateRange);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchType, setSearchType] = useState<SearchType>("pedido");
-  const [isSearching, setIsSearching] = useState(false);
+  const setSearchQuery = (query: string) => {
+    setState(prev => ({ ...prev, searchQuery: query }));
+  };
+
+  const setSearchType = (type: SearchType) => {
+    setState(prev => ({ ...prev, searchType: type }));
+  };
 
   const handleSearch = () => {
-    setSearchDate(date);
-    setIsSearching(true);
+    setState(prev => ({ 
+      ...prev, 
+      isSearching: true,
+      searchDate: prev.date
+    }));
   };
 
   return {
+    // State values
     date,
     searchDate,
     searchQuery,
     searchType,
     isSearching,
+    // State update methods
     setDate,
     setSearchQuery,
     setSearchType,

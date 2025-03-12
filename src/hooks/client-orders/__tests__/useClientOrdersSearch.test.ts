@@ -22,18 +22,15 @@ describe('useClientOrdersSearch', () => {
   });
 
   it('should initialize with custom date range', () => {
-    const { result } = renderHook(() => useClientOrdersSearch());
-    
     const customDate = {
       from: new Date(2023, 0, 1),
       to: new Date(2023, 0, 31)
     };
     
-    act(() => {
-      result.current.setDate(customDate);
-    });
+    const { result } = renderHook(() => useClientOrdersSearch(customDate));
     
     expect(result.current.date).toEqual(customDate);
+    expect(result.current.searchDate).toEqual(customDate);
   });
 
   it('should update date when setDate is called', () => {

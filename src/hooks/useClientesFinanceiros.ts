@@ -145,15 +145,9 @@ export const useClientesFinanceiros = () => {
         );
         
         // Now fetch overdue values directly for each client
-        console.log("Buscando valores vencidos para cada cliente...");
         for (const cliente of clientesArray) {
-          try {
-            const valorVencido = await fetchValoresVencidos(cliente.PES_CODIGO);
-            cliente.valoresVencidos = valorVencido;
-            console.log(`Cliente ${cliente.PES_CODIGO} (${cliente.APELIDO}) - Valores vencidos: ${valorVencido}`);
-          } catch (err) {
-            console.error(`Erro ao buscar valores vencidos para cliente ${cliente.PES_CODIGO}:`, err);
-          }
+          const valorVencido = await fetchValoresVencidos(cliente.PES_CODIGO);
+          cliente.valoresVencidos = valorVencido;
         }
         
         setClientesFinanceiros(clientesArray);

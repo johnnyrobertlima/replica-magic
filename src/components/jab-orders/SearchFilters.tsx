@@ -1,8 +1,12 @@
 
-import React from "react";
-import { Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Search, Calendar as CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import type { DateRange } from "react-day-picker";
 import {
   Select,
   SelectContent,
@@ -10,67 +14,105 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { DateRange } from "react-day-picker";
 
-export type SearchType = "cliente" | "pedido" | "item" | "representante";
+export type SearchType = "pedido" | "cliente" | "representante";
 
 interface SearchFiltersProps {
   searchQuery: string;
-  searchType: SearchType;
-  onSearchQueryChange: (query: string) => void;
-  onSearchTypeChange: (type: SearchType) => void;
+  onSearchQueryChange: (value: string) => void;
   onSearch: () => void;
-  date?: DateRange | undefined;
-  onDateChange?: (date: DateRange | undefined) => void;
+  date: DateRange | undefined;
+  onDateChange: (date: DateRange | undefined) => void;
+  searchType: SearchType;
+  onSearchTypeChange: (value: SearchType) => void;
 }
 
-export const SearchFilters = ({
+const SearchFilters: React.FC<SearchFiltersProps> = ({
   searchQuery,
-  searchType,
   onSearchQueryChange,
-  onSearchTypeChange,
   onSearch,
-  // We add the new props but don't use them yet - they'll be implemented later if needed
   date,
-  onDateChange
-}: SearchFiltersProps) => {
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      onSearch();
+  onDateChange,
+  searchType,
+  onSearchTypeChange,
+}) => {
+  const getPlaceholder = () => {
+    switch (searchType) {
+      case "pedido":
+        return "Buscar por número do pedido";
+      case "cliente":
+        return "Buscar por nome do cliente";
+      case "representante":
+        return "Buscar por nome do representante";
+      default:
+        return "Buscar...";
     }
   };
 
   return (
-    <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2">
-      <div className="w-full md:w-auto md:flex-1">
+    <div className="flex items-center gap-4">
+      <Select value={searchType} onValueChange={value => onSearchTypeChange(value as SearchType)}>
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder="Tipo de busca" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="pedido">Número do Pedido</SelectItem>
+          <SelectItem value="cliente">Nome do Cliente</SelectItem>
+          <SelectItem value="representante">Nome do Representante</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Buscar..."
+          placeholder={getPlaceholder()}
           value={searchQuery}
           onChange={(e) => onSearchQueryChange(e.target.value)}
-          onKeyDown={handleKeyPress}
-          className="w-full"
+          className="pl-9 w-[250px]"
         />
       </div>
-      <div className="w-full md:w-auto">
-        <Select
-          value={searchType}
-          onValueChange={(value) => onSearchTypeChange(value as SearchType)}
-        >
-          <SelectTrigger className="w-full md:w-[200px]">
-            <SelectValue placeholder="Tipo de busca" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="cliente">Cliente</SelectItem>
-            <SelectItem value="pedido">Nº Pedido</SelectItem>
-            <SelectItem value="item">Item</SelectItem>
-            <SelectItem value="representante">Representante</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <Button onClick={onSearch} className="w-full md:w-auto">
-        <Search className="h-4 w-4 mr-2" />
-        Buscar
+      
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant={"outline"}
+            className={cn(
+              "justify-start text-left font-normal w-[300px]",
+              !date && "text-muted-foreground"
+            )}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {date?.from ? (
+              date.to ? (
+                <>
+                  {format(date.from, "dd/MM/yyyy")} - {format(date.to, "dd/MM/yyyy")}
+                </>
+              ) : (
+                format(date.from, "dd/MM/yyyy")
+              )
+            ) : (
+              <span>Selecione um período</span>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="end">
+          <Calendar
+            initialFocus
+            mode="range"
+            defaultMonth={date?.from}
+            selected={date}
+            onSelect={onDateChange}
+            numberOfMonths={2}
+          />
+        </PopoverContent>
+      </Popover>
+
+      <Button onClick={onSearch} className="gap-2">
+        <Search className="h-4 w-4" />
+        Pesquisar
       </Button>
     </div>
   );
 };
+
+export default SearchFilters;

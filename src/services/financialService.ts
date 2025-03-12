@@ -1,16 +1,13 @@
 import { supabase } from "@/integrations/supabase/client";
 import { ClienteFinanceiro } from "@/types/financialClient";
 import { calculateClientFinancialValues, fetchTitulosVencidos } from "@/utils/financialUtils";
-import { clientCodesToStrings } from "@/utils/client-orders/clientUtils";
 
 // Fetch financial titles for clients
-export const fetchFinancialTitles = async (clientesCodigos: (string | number)[]) => {
-  const clienteCodigosStrings = clientCodesToStrings(clientesCodigos);
-
+export const fetchFinancialTitles = async (clientesCodigos: number[]) => {
   const { data: titulos, error } = await supabase
     .from('BLUEBAY_TITULO')
     .select('*')
-    .in('PES_CODIGO', clienteCodigosStrings)
+    .in('PES_CODIGO', clientesCodigos.map(String))
     .in('STATUS', ['1', '2', '3']);
 
   if (error) throw error;
@@ -18,13 +15,11 @@ export const fetchFinancialTitles = async (clientesCodigos: (string | number)[])
 };
 
 // Fetch client info
-export const fetchClientInfo = async (clientesCodigos: (string | number)[]) => {
-  const clienteCodigosStrings = clientCodesToStrings(clientesCodigos);
-
+export const fetchClientInfo = async (clientesCodigos: number[]) => {
   const { data: clientes, error } = await supabase
     .from('BLUEBAY_PESSOA')
     .select('PES_CODIGO, APELIDO, volume_saudavel_faturamento')
-    .in('PES_CODIGO', clienteCodigosStrings);
+    .in('PES_CODIGO', clientesCodigos);
 
   if (error) throw error;
   return clientes;
@@ -43,13 +38,11 @@ export const fetchPedidosForRepresentantes = async (numeroPedidos: string[]) => 
 };
 
 // Fetch representantes info
-export const fetchRepresentantesInfo = async (representantesCodigos: (string | number)[]) => {
-  const representanteCodigosStrings = clientCodesToStrings(representantesCodigos);
-
+export const fetchRepresentantesInfo = async (representantesCodigos: number[]) => {
   const { data: representantes, error } = await supabase
     .from('BLUEBAY_PESSOA')
     .select('PES_CODIGO, RAZAOSOCIAL')
-    .in('PES_CODIGO', representanteCodigosStrings);
+    .in('PES_CODIGO', representantesCodigos);
 
   if (error) throw error;
   return representantes;
@@ -107,14 +100,9 @@ export const processClientsData = (
 };
 
 // Fetch títulos vencidos for a specific client
-export const fetchValoresVencidos = async (clienteCodigo: string | number) => {
+export const fetchValoresVencidos = async (clienteCodigo: number) => {
   console.log(`Buscando valores vencidos para cliente ${clienteCodigo}`);
-  try {
-    const result = await fetchTitulosVencidos(clienteCodigo);
-    console.log(`Resultado da busca: ${result}`);
-    return result;
-  } catch (error) {
-    console.error(`Erro ao buscar valores vencidos para cliente ${clienteCodigo}:`, error);
-    return 0;
-  }
+  const result = await fetchTitulosVencidos(clienteCodigo);
+  console.log(`Resultado da busca: ${result}`);
+  return result;
 };

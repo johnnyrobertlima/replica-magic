@@ -3,7 +3,6 @@ import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { formatCurrency } from "@/lib/utils";
 import { OrderProgressBars } from "./OrderProgressBars";
 import { OrderSummaryGrid } from "./OrderSummaryGrid";
 import { ClientOrderFilters } from "./ClientOrderFilters";
@@ -65,14 +64,14 @@ export const ClientOrderCard = ({
         >
           <div className="space-y-1">
             <h3 className="text-lg font-semibold">Cliente: {clientName}</h3>
-            <div className="flex flex-col gap-1 text-sm text-muted-foreground">
-              {data.representante && (
-                <p>Representante: {data.representante}</p>
-              )}
-              <p>Total de Pedidos: {pedidosCount}</p>
-              <p>Valores Vencidos: {formatCurrency(data.valoresVencidos || 0)}</p>
-              <p>Volume Saudável: {data.volumeSaudavel ? formatCurrency(data.volumeSaudavel) : 'Não definido'}</p>
-            </div>
+            {data.representante && (
+              <p className="text-sm text-muted-foreground">
+                Representante: {data.representante}
+              </p>
+            )}
+            <p className="text-sm text-muted-foreground">
+              Total de Pedidos: {pedidosCount}
+            </p>
           </div>
           {isExpanded ? (
             <ChevronUp className="h-6 w-6 text-muted-foreground" />
