@@ -75,7 +75,7 @@ export const calculateClientFinancialValues = (
 };
 
 // Função para buscar títulos vencidos diretamente do Supabase
-export const fetchTitulosVencidos = async (clienteCodigo: number | string) => {
+export const fetchTitulosVencidos = async (clienteCodigo: number | string): Promise<number> => {
   try {
     // Ensure clienteCodigo is a string as expected by the database
     const clienteCodigoStr = String(clienteCodigo);
