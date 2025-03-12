@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { ClienteFinanceiro, TituloFinanceiro } from "@/types/financialClient";
 
@@ -98,7 +99,7 @@ export const fetchTitulosVencidos = async (clienteCodigo: number | string): Prom
     
     // Sum up overdue values with proper validation
     const valorVencido = data?.reduce((total, titulo) => {
-      const saldo = parseFloat(titulo.VLRSALDO) || 0;
+      const saldo = parseFloat(String(titulo.VLRSALDO)) || 0;
       return total + saldo;
     }, 0) || 0;
     
