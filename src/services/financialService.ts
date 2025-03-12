@@ -2,10 +2,11 @@
 import { supabase } from "@/integrations/supabase/client";
 import { ClienteFinanceiro } from "@/types/financialClient";
 import { calculateClientFinancialValues, fetchTitulosVencidos } from "@/utils/financialUtils";
+import { clientCodeToString } from "@/utils/client-orders/clientUtils";
 
 // Fetch financial titles for clients
-export const fetchFinancialTitles = async (clientesCodigos: number[]) => {
-  const clientesCodigosStr = clientesCodigos.map(code => code.toString());
+export const fetchFinancialTitles = async (clientesCodigos: Array<number | string>) => {
+  const clientesCodigosStr = clientesCodigos.map(code => clientCodeToString(code));
   const { data: titulos, error } = await supabase
     .from('BLUEBAY_TITULO')
     .select('*')
@@ -17,8 +18,8 @@ export const fetchFinancialTitles = async (clientesCodigos: number[]) => {
 };
 
 // Fetch client info
-export const fetchClientInfo = async (clientesCodigos: number[]) => {
-  const clientesCodigosStr = clientesCodigos.map(code => code.toString());
+export const fetchClientInfo = async (clientesCodigos: Array<number | string>) => {
+  const clientesCodigosStr = clientesCodigos.map(code => clientCodeToString(code));
   const { data: clientes, error } = await supabase
     .from('BLUEBAY_PESSOA')
     .select('PES_CODIGO, APELIDO, volume_saudavel_faturamento')
@@ -104,7 +105,7 @@ export const processClientsData = (
 };
 
 // Fetch títulos vencidos for a specific client
-export const fetchValoresVencidos = async (clienteCodigo: number) => {
+export const fetchValoresVencidos = async (clienteCodigo: number | string) => {
   console.log(`Buscando valores vencidos para cliente ${clienteCodigo}`);
   try {
     const result = await fetchTitulosVencidos(clienteCodigo);
