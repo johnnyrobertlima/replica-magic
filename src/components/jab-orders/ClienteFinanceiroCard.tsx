@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,7 @@ import { ClienteFinanceiro } from "@/types/financialClient";
 
 interface ClienteFinanceiroCardProps {
   cliente: ClienteFinanceiro;
-  onUpdateVolumeSaudavel: (clienteCodigo: number, valor: number) => Promise<{ success: boolean; error?: any }>;
+  onUpdateVolumeSaudavel: (clienteCodigo: string | number, valor: number) => Promise<{ success: boolean; error?: any }>;
   onHideCard: (id: string) => void;
   onApprove: (separacaoId: string, clienteData: ClienteFinanceiro) => void;
   expandedView?: boolean; // Add the expandedView prop as an optional boolean
@@ -46,7 +45,6 @@ export const ClienteFinanceiroCard = ({
   };
 
   const handleAprovar = (id: string) => {
-    // Call the onApprove function with the separacaoId and cliente data
     onApprove(id, cliente);
     
     toast({
@@ -55,7 +53,6 @@ export const ClienteFinanceiroCard = ({
       variant: "default",
     });
     
-    // Hide the card from the current view
     onHideCard(id);
   };
 
@@ -105,7 +102,6 @@ export const ClienteFinanceiroCard = ({
       </CardHeader>
       
       <CardContent className="space-y-6">
-        {/* Informações Financeiras */}
         <ClienteFinanceiroInfo
           valoresTotais={cliente.valoresTotais}
           valoresEmAberto={cliente.valoresEmAberto}
@@ -113,7 +109,6 @@ export const ClienteFinanceiroCard = ({
           volumeSaudavel={cliente.volume_saudavel_faturamento}
         />
 
-        {/* Pedidos do Cliente */}
         <div>
           <h3 className="font-semibold text-lg mb-2">Pedidos Pendentes</h3>
           <div className="space-y-4">

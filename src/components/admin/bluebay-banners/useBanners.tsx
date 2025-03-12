@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Banner } from "@/types/banner";
 
 export function useBanners() {
-  return useQuery<Banner[]>({
+  return useQuery({
     queryKey: ["bluebay-banners"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -16,7 +16,7 @@ export function useBanners() {
         console.error("Error fetching banners:", error);
         throw error;
       }
-      return data || [];
+      return (data || []) as Banner[];
     },
   });
 }

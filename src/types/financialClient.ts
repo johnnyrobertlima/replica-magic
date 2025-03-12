@@ -1,6 +1,6 @@
 
 export interface TituloFinanceiro {
-  PES_CODIGO: string;  // Changed to string to match Supabase
+  PES_CODIGO: string;
   VLRTITULO: number;
   VLRDESCONTO: number;
   VLRABATIMENTO: number;
@@ -11,7 +11,7 @@ export interface TituloFinanceiro {
 }
 
 export interface ClienteFinanceiro {
-  PES_CODIGO: string;  // Changed to string to match database
+  PES_CODIGO: string;
   APELIDO: string | null;
   volume_saudavel_faturamento: number | null;
   valoresTotais: number;

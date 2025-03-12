@@ -56,7 +56,7 @@ export const sendOrdersForSeparation = async (
     const { data, error } = await supabase
       .from('separacoes')
       .insert({
-        cliente_codigo: clienteFinanceiro.PES_CODIGO,
+        cliente_codigo: clienteFinanceiro.PES_CODIGO, // PES_CODIGO is now a string
         cliente_nome: clienteFinanceiro.APELIDO || `Cliente ${clienteFinanceiro.PES_CODIGO}`,
         status: 'pending',
         created_at: new Date().toISOString(),

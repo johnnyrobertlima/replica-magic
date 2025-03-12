@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import type { ClienteFinanceiro } from "@/types/financialClient";
 
@@ -129,7 +130,8 @@ export const getClientById = async (clientId: number | string) => {
       
     if (error) throw error;
     
-    return data as ClienteFinanceiro;
+    // Return as partial ClienteFinanceiro, as we don't have all required fields yet
+    return data as Partial<ClienteFinanceiro>;
   } catch (error) {
     console.error("Error fetching client data:", error);
     throw error;

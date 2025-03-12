@@ -6,7 +6,7 @@ import type { Banner } from "@/types/banner";
 export const useBanners = () => {
   return useQuery({
     queryKey: ["banners"],
-    queryFn: async (): Promise<Banner[]> => {
+    queryFn: async () => {
       const { data, error } = await supabase
         .from("banners")
         .select("id, title, description, image_url, button_text, button_link, youtube_url, is_active, created_at, updated_at, duration");
@@ -15,7 +15,7 @@ export const useBanners = () => {
         throw new Error(`Error fetching banners: ${error.message}`);
       }
 
-      return data || [];
+      return (data || []) as Banner[];
     },
   });
 };

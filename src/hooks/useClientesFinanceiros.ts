@@ -24,18 +24,16 @@ export const useClienteFinanceiro = (clienteId: number | string | undefined) => 
         // Load financial data
         const financialData = await loadClientFinancialData(clienteId);
         
-        // Ensure PES_CODIGO is properly set as a number
-        const pesCodigoNumeric = typeof cliente.PES_CODIGO === 'string' 
-          ? parseInt(cliente.PES_CODIGO, 10) 
-          : cliente.PES_CODIGO;
-          
         // Return combined data with default empty values for required fields
         return {
           ...cliente,
-          PES_CODIGO: pesCodigoNumeric,
           ...financialData,
           separacoes: [],  // Default empty array for separacoes
-          representanteNome: null  // Default null for representanteNome
+          representanteNome: null,  // Default null for representanteNome
+          // Default values for required fields if they don't exist yet
+          valoresTotais: financialData.valoresTotais || 0,
+          valoresEmAberto: financialData.valoresEmAberto || 0,
+          valoresVencidos: financialData.valoresVencidos || 0
         } as ClienteFinanceiro;
       } catch (error) {
         console.error("Error fetching cliente financeiro:", error);
@@ -61,15 +59,10 @@ export const useClientesFinanceirosByIds = (clienteIds: (number | string)[]) => 
           clientes.map(async (cliente) => {
             const financialData = await loadClientFinancialData(cliente.PES_CODIGO);
             
-            // Ensure PES_CODIGO is a number
-            const pesCodigoNumeric = typeof cliente.PES_CODIGO === 'string' 
-              ? parseInt(cliente.PES_CODIGO, 10) 
-              : cliente.PES_CODIGO;
-            
             // Construct a properly typed ClienteFinanceiro object
             const enrichedClient: ClienteFinanceiro = {
               ...cliente,
-              PES_CODIGO: pesCodigoNumeric,
+              PES_CODIGO: String(cliente.PES_CODIGO), // Ensure PES_CODIGO is a string
               valoresTotais: financialData.valoresTotais,
               valoresEmAberto: financialData.valoresEmAberto,
               valoresVencidos: financialData.valoresVencidos,

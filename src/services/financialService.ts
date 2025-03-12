@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import type { ClienteFinanceiro } from "@/types/financialClient";
 
@@ -32,7 +33,9 @@ export const fetchClient = async (clientId: number | string) => {
     .maybeSingle();
 
   if (error) throw error;
-  return data as ClienteFinanceiro;
+  
+  // Cast the data to ClienteFinanceiro, but only for the fields returned by the query
+  return data as Partial<ClienteFinanceiro>;
 };
 
 // Process client data to add calculated properties
@@ -79,7 +82,9 @@ export const fetchClientsByIds = async (clientIds: (number | string)[]) => {
     .in("PES_CODIGO", clientIdStrings);
 
   if (error) throw error;
-  return (data || []) as ClienteFinanceiro[];
+  
+  // Cast the data to ClienteFinanceiro[], but only for the fields returned by the query
+  return (data || []) as Partial<ClienteFinanceiro>[];
 };
 
 // Fetch all clients
@@ -123,17 +128,12 @@ export const fetchClientsByName = async (search: string) => {
 
 // Fetch clients by rep ID(s)
 export const fetchClientsByRepIds = async (repIds: (number | string)[]) => {
-  // Convert array of potentially string IDs to numbers
-  const numericRepIds = repIds.map(id => 
-    typeof id === 'string' ? parseInt(id, 10) : id
-  ).filter(id => !isNaN(id));
+  // Convert rep IDs to strings for the query
+  const repIdStrings = repIds.map(id => String(id));
   
-  if (numericRepIds.length === 0) {
+  if (repIdStrings.length === 0) {
     return [];
   }
-
-  // Convert rep IDs to strings for the query
-  const repIdStrings = numericRepIds.map(id => String(id));
 
   const { data, error } = await supabase
     .from("BLUEBAY_PESSOA")
