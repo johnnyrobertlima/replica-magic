@@ -25,7 +25,7 @@ export const updateVolumeSaudavel = async (clienteCodigo: number, valor: number)
     const { error } = await supabase
       .from('BLUEBAY_PESSOA')
       .update({ volume_saudavel_faturamento: valor })
-      .eq('PES_CODIGO', String(clienteCodigo));
+      .eq('PES_CODIGO', clienteCodigo);
     
     if (error) throw error;
     
@@ -71,4 +71,31 @@ export const calculateClientFinancialValues = (
   }
 
   return cliente;
+};
+
+// Função para buscar títulos vencidos diretamente do Supabase
+export const fetchTitulosVencidos = async (clienteCodigo: string | number) => {
+  try {
+    const { data, error } = await supabase
+      .from('BLUEBAY_TITULO')
+      .select('VLRSALDO')
+      .eq('PES_CODIGO', clienteCodigo.toString())
+      .lt('DTVENCIMENTO', new Date().toISOString().split('T')[0]);
+    
+    if (error) {
+      console.error("Erro ao buscar títulos vencidos:", error);
+      throw error;
+    }
+    
+    console.log(`Títulos vencidos para cliente ${clienteCodigo}:`, data);
+    
+    // Soma os valores vencidos
+    const valorVencido = data.reduce((total, titulo) => total + (titulo.VLRSALDO || 0), 0);
+    console.log(`Total valor vencido para cliente ${clienteCodigo}:`, valorVencido);
+    
+    return valorVencido;
+  } catch (error) {
+    console.error("Erro ao buscar títulos vencidos:", error);
+    return 0;
+  }
 };

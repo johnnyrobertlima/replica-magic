@@ -18,9 +18,6 @@ export interface ClientOrderGroup {
     PES_CODIGO: number;
   })[];
   PES_CODIGO: number;
-  valoresVencidos?: number;
-  volumeSaudavel?: number | null;
-  representanteNome?: string | null;
 }
 
 export interface ClientOrdersState extends SearchState {

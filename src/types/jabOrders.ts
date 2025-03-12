@@ -14,10 +14,6 @@ export interface JabOrderItem {
   QTDE_ENTREGUE: number;
   VALOR_UNITARIO: number;
   FISICO: number | null;
-  VALORSALDO: number;
-  VLRVENDA: number;
-  VLRFATURADO: number;
-  VLRFATURARCOMSTOQUE: number;
   emSeparacao?: boolean;
 }
 
@@ -32,7 +28,6 @@ export interface JabOrder {
   PEDIDO_CLIENTE: string | null;
   STATUS: string;
   REPRESENTANTE_NOME: string | null;
-  REPRESENTANTE?: number | null;
   PES_CODIGO: number;
   items: JabOrderItem[];
 }
