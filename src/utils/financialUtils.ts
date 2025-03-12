@@ -1,123 +1,39 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { ClienteFinanceiro, TituloFinanceiro } from "@/types/financialClient";
 import { clientCodeToString } from "./client-orders/clientUtils";
 
-// Get separações pendentes
-export const getSeparacoesPendentes = (separacoes: any[], hiddenCards: Set<string>) => {
-  const pendentes = separacoes
-    .filter(sep => sep.status === 'pendente')
-    .filter(sep => !hiddenCards.has(sep.id));
-  
-  return pendentes;
+export const formatCurrency = (value: number): string => {
+  return value.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  });
 };
 
-// Get unique client codes
-export const getClientesCodigos = (sepPendentes: any[]) => {
-  const codigos = sepPendentes
-    .map(sep => sep.cliente_codigo)
-    .filter((value, index, self) => self.indexOf(value) === index);
-  
-  return codigos;
+export const formatDate = (date: string): string => {
+  return new Date(date).toLocaleDateString('pt-BR');
 };
 
-// Update volume saudavel
-export const updateVolumeSaudavel = async (clienteCodigo: number, valor: number) => {
+export const fetchTitulosVencidos = async (clientCode: number | string): Promise<number> => {
+  const today = new Date().toISOString().split('T')[0];
+  const clienteCodigoStr = clientCodeToString(clientCode);
+
   try {
-    const { error } = await supabase
-      .from('BLUEBAY_PESSOA')
-      .update({ volume_saudavel_faturamento: valor })
-      .eq('PES_CODIGO', clienteCodigo);
-    
-    if (error) throw error;
-    
-    return { success: true };
-  } catch (error) {
-    console.error("Erro ao atualizar volume saudável:", error);
-    return { success: false, error };
-  }
-};
-
-// Calculate financial values for a client
-export const calculateClientFinancialValues = (
-  cliente: ClienteFinanceiro, 
-  titulo: TituloFinanceiro,
-  today: Date
-) => {
-  const pesCodigoNumerico = typeof titulo.PES_CODIGO === 'string' 
-    ? parseInt(titulo.PES_CODIGO, 10) 
-    : titulo.PES_CODIGO;
-  
-  if (isNaN(pesCodigoNumerico) || cliente.PES_CODIGO !== pesCodigoNumerico) return cliente;
-
-  // Total values = VLRTITULO - VLRDESCONTO - VLRABATIMENTO
-  const valorTotal = (titulo.VLRTITULO || 0) - (titulo.VLRDESCONTO || 0) - (titulo.VLRABATIMENTO || 0);
-  cliente.valoresTotais += valorTotal;
-  
-  // Open values = VLRSALDO
-  cliente.valoresEmAberto += (titulo.VLRSALDO || 0);
-  
-  // Overdue values = VLRSALDO of overdue titles
-  // Note: This calculation is now primarily handled by fetchTitulosVencidos
-  if (titulo.DTVENCIMENTO) {
-    const vencimento = new Date(titulo.DTVENCIMENTO);
-    const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    
-    // Ajusta a data de vencimento para remover o horário
-    const vencimentoDateOnly = new Date(vencimento.getFullYear(), vencimento.getMonth(), vencimento.getDate());
-    
-    // Compara apenas as datas (sem horas)
-    if (vencimentoDateOnly < todayDateOnly) {
-      cliente.valoresVencidos += (titulo.VLRSALDO || 0);
-    }
-  }
-
-  return cliente;
-};
-
-// Função para buscar títulos vencidos diretamente do Supabase
-export const fetchTitulosVencidos = async (clienteCodigo: string | number) => {
-  try {
-    console.log(`Buscando valores vencidos para cliente ${clienteCodigo}`);
-    
-    // Format today's date as YYYY-MM-DD for comparison
-    const today = new Date().toISOString().split('T')[0];
-    
-    // Convert clienteCodigo to string for the query
-    const clienteCodigoStr = clientCodeToString(clienteCodigo);
-    console.log(`Usando código do cliente: ${clienteCodigoStr}`);
-    
     const { data, error } = await supabase
       .from('BLUEBAY_TITULO')
       .select('VLRSALDO')
       .eq('PES_CODIGO', clienteCodigoStr)
       .lt('DTVENCIMENTO', today)
       .not('VLRSALDO', 'is', null);
-    
-    if (error) {
-      console.error("Erro ao buscar títulos vencidos:", error);
-      throw error;
-    }
-    
-    if (!data || data.length === 0) {
-      console.log(`Nenhum título vencido encontrado para cliente ${clienteCodigoStr}`);
-      return 0;
-    }
-    
-    console.log(`Encontrados ${data.length} títulos vencidos para cliente ${clienteCodigoStr}`);
-    
-    // Calculate the total of overdue values
-    const valorVencido = data.reduce((total, titulo) => {
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) return 0;
+
+    return data.reduce((total, titulo) => {
       const saldo = parseFloat(titulo.VLRSALDO) || 0;
-      console.log(`Título com VLRSALDO: ${saldo}`);
       return total + saldo;
     }, 0);
-    
-    console.log(`Total valor vencido para cliente ${clienteCodigoStr}: ${valorVencido}`);
-    
-    return valorVencido;
   } catch (error) {
-    console.error("Erro ao buscar títulos vencidos:", error);
+    console.error('Erro ao buscar títulos vencidos:', error);
     return 0;
   }
 };
