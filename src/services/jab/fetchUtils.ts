@@ -15,3 +15,9 @@ export {
 export {
   fetchItensSeparacao
 } from './separacaoUtils';
+
+export {
+  fetchPedidosPorCliente,
+  fetchItensPorCliente,
+  fetchEstoqueParaItens
+} from './pedidosPorClienteUtils';

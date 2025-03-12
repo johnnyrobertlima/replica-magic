@@ -118,6 +118,7 @@ export const fetchTitulosVencidos = async (clienteCodigo: string | number): Prom
       .select('VLRSALDO')
       .eq('PES_CODIGO', clienteCodigoStr)
       .lt('DTVENCIMENTO', today)
+      .gt('VLRSALDO', 0)
       .not('VLRSALDO', 'is', null);
     
     if (error) {

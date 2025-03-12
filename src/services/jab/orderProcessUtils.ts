@@ -1,5 +1,6 @@
 
 import type { JabOrder } from "@/types/jabOrders";
+import { fetchItensPorCliente, fetchEstoqueParaItens } from "./pedidosPorClienteUtils";
 
 /**
  * Processes the detailed order data into a structured format
@@ -86,4 +87,72 @@ export function groupOrdersByNumber(pedidosDetalhados: any[]): Map<string, any[]
   });
   
   return pedidosAgrupados;
+}
+
+/**
+ * Processes client orders data into a structured format
+ */
+export async function processClientOrdersData(
+  dataInicial: string,
+  dataFinal: string,
+  clientesComPedidos: any[],
+  itensSeparacao: Record<string, boolean>
+): Promise<Record<string, any>> {
+  const clientGroups: Record<string, any> = {};
+  
+  for (const cliente of clientesComPedidos) {
+    const clienteName = cliente.cliente_nome || `Cliente ${cliente.pes_codigo}`;
+    const representanteName = cliente.representante_nome || 'Não informado';
+    
+    // Calcular valores para potencial de faturamento
+    let totalValorFaturarComEstoque = 0;
+    let totalQuantidadeSaldo = cliente.total_quantidade_saldo || 0;
+    let totalValorSaldo = cliente.total_valor_saldo || 0;
+    
+    // Buscar itens do cliente
+    const itensCliente = await fetchItensPorCliente(dataInicial, dataFinal, cliente.pes_codigo);
+    
+    if (itensCliente.length > 0) {
+      // Buscar informações de estoque para os itens
+      const itemCodigos = itensCliente.map(item => item.item_codigo);
+      const estoqueData = await fetchEstoqueParaItens(itemCodigos);
+      const estoqueMap = new Map(estoqueData.map(e => [e.item_codigo, e.fisico]));
+      
+      // Processar itens com informações de estoque
+      const itensProcessados = itensCliente.map(item => {
+        const estoqueDisponivel = estoqueMap.get(item.item_codigo) || 0;
+        const emSeparacao = itensSeparacao[item.item_codigo] || false;
+        const valorItem = (item.qtde_saldo || 0) * (item.valor_unitario || 0);
+        
+        // Calcular valor que pode ser faturado com base no estoque disponível
+        if (estoqueDisponivel > 0 && item.qtde_saldo > 0) {
+          const quantidadePossivel = Math.min(estoqueDisponivel, item.qtde_saldo);
+          totalValorFaturarComEstoque += quantidadePossivel * (item.valor_unitario || 0);
+        }
+        
+        return {
+          ...item,
+          fisico: estoqueDisponivel,
+          emSeparacao,
+          valor_total: valorItem
+        };
+      });
+      
+      // Adicionar grupo de cliente
+      clientGroups[clienteName] = {
+        PES_CODIGO: cliente.pes_codigo,
+        representante: representanteName,
+        representante_codigo: cliente.representante_codigo,
+        totalQuantidadeSaldo,
+        totalValorSaldo,
+        totalValorPedido: cliente.total_valor_pedido || 0,
+        totalValorFaturado: cliente.total_valor_faturado || 0,
+        totalValorFaturarComEstoque,
+        volume_saudavel_faturamento: cliente.volume_saudavel_faturamento,
+        allItems: itensProcessados
+      };
+    }
+  }
+  
+  return clientGroups;
 }

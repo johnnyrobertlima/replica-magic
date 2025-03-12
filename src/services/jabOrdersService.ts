@@ -1,4 +1,3 @@
-
 import type { 
   JabOrder, 
   UseJabOrdersOptions,
@@ -13,19 +12,27 @@ import {
   fetchItensSeparacao 
 } from "./jab/fetchUtils";
 
+import {
+  fetchPedidosPorCliente,
+  fetchItensPorCliente,
+  fetchEstoqueParaItens
+} from "./jab/pedidosPorClienteUtils";
+
 import { 
   fetchRelatedData 
 } from "./jab/entityUtils";
 
 import { 
   processOrdersData,
-  groupOrdersByNumber 
+  groupOrdersByNumber,
+  processClientOrdersData 
 } from "./jab/orderProcessUtils";
 
 export { fetchTotals } from "./jab/totalsService";
 
 // Cache para armazenar resultados de pedidos por períodos
 const ordersCache = new Map<string, { data: JabOrdersResponse; timestamp: number }>();
+const clientOrdersCache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 
 /**
@@ -118,6 +125,54 @@ export async function fetchAllJabOrders({
   // Armazenar em cache
   ordersCache.set(cacheKey, { data: resultado, timestamp: Date.now() });
   
+  return resultado;
+}
+
+/**
+ * Fetches JAB orders grouped by client
+ */
+export async function fetchJabOrdersByClient({
+  dateRange
+}: Omit<UseJabOrdersOptions, 'page' | 'pageSize'>): Promise<any> {
+  if (!dateRange?.from || !dateRange?.to) {
+    return { clientGroups: {}, totalCount: 0 };
+  }
+
+  const dataInicial = dateRange.from.toISOString().split('T')[0];
+  const dataFinal = dateRange.to.toISOString().split('T')[0];
+  const cacheKey = `client_orders_${dataInicial}_${dataFinal}`;
+
+  // Verificar cache
+  const cachedData = clientOrdersCache.get(cacheKey);
+  if (cachedData && Date.now() - cachedData.timestamp < CACHE_TTL) {
+    console.log('Usando dados por cliente em cache para o período:', { dataInicial, dataFinal });
+    return cachedData.data;
+  }
+
+  console.log('Buscando pedidos por cliente para o período:', { dataInicial, dataFinal });
+
+  // Buscar pedidos agrupados por cliente
+  const clientesComPedidos = await fetchPedidosPorCliente(dataInicial, dataFinal);
+  
+  if (!clientesComPedidos.length) {
+    return { clientGroups: {}, totalCount: 0 };
+  }
+
+  // Buscar itens separação
+  const itensSeparacao = await fetchItensSeparacao();
+  
+  // Processar os dados por cliente
+  const clientGroups = await processClientOrdersData(dataInicial, dataFinal, clientesComPedidos, itensSeparacao);
+
+  const resultado = {
+    clientGroups,
+    totalCount: clientesComPedidos.length,
+    itensSeparacao
+  };
+
+  // Armazenar em cache
+  clientOrdersCache.set(cacheKey, { data: resultado, timestamp: Date.now() });
+
   return resultado;
 }
 
