@@ -1,10 +1,10 @@
 
 import { toast } from "@/components/ui/use-toast";
-import { useRouter } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { createSeparacao } from "@/services/clientSeparationService";
 
 export function useSeparationOperations(state: any, setState: any, clientGroups: Record<string, any>) {
-  const router = useRouter();
+  const navigate = useNavigate();
 
   const handleEnviarParaSeparacao = async (displayName?: string) => {
     try {
@@ -46,7 +46,7 @@ export function useSeparationOperations(state: any, setState: any, clientGroups:
         setState(prev => ({ ...prev, selectedItems: {} }));
 
         // Navigate to separation details
-        router.push(`/client-area/bluebay/separacoes/${result.id}`);
+        navigate(`/client-area/bluebay/separacoes/${result.id}`);
       }
     } catch (error) {
       console.error("Erro ao enviar para separação:", error);
