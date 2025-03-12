@@ -1,4 +1,3 @@
-
 import type { JabOrdersResponse } from "@/types/jabOrders";
 import type { ClientOrderGroup } from "@/types/clientOrders";
 import type { SearchType } from "@/components/jab-orders/SearchFilters";
@@ -214,4 +213,22 @@ export const filterGroupsBySearchCriteria = (
   }
 
   return groupedOrders;
+};
+
+// Calculate total value of selected items
+export const calculateTotalSelected = (selectedItemsDetails: Record<string, { qtde: number; valor: number }>) => {
+  return Object.values(selectedItemsDetails).reduce((total, item) => {
+    return total + (item.qtde * item.valor);
+  }, 0);
+};
+
+// Get client code from item, ensuring it's a number
+export const getClientCodeFromItem = (item: any): number | null => {
+  if (!item.PES_CODIGO) return null;
+  
+  const pesCodigoNumerico = typeof item.PES_CODIGO === 'string' 
+    ? parseInt(item.PES_CODIGO, 10) 
+    : item.PES_CODIGO;
+    
+  return isNaN(pesCodigoNumerico) ? null : pesCodigoNumerico;
 };

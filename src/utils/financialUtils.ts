@@ -76,14 +76,14 @@ export const calculateClientFinancialValues = (
 // Função para buscar títulos vencidos diretamente do Supabase
 export const fetchTitulosVencidos = async (clienteCodigo: string | number) => {
   try {
-    console.log(`Buscando títulos vencidos para cliente ${clienteCodigo}`);
+    console.log(`Buscando valores vencidos para cliente ${clienteCodigo}`);
     
     // Format today's date as YYYY-MM-DD for comparison
     const today = new Date().toISOString().split('T')[0];
     
     // Convert clienteCodigo to string for the query
     const clienteCodigoStr = String(clienteCodigo);
-    console.log(`Usando código do cliente (convertido para string): ${clienteCodigoStr}`);
+    console.log(`Usando código do cliente: ${clienteCodigoStr}`);
     
     const { data, error } = await supabase
       .from('BLUEBAY_TITULO')

@@ -39,12 +39,11 @@ async function fetchAllPedidosUnicos(
   dataInicial: string, 
   dataFinal: string
 ): Promise<{ data: PedidoUnicoResult[], totalCount: number }> {
-  // Esta função busca todos os pedidos sem paginação
   const { data, error } = await supabase.rpc('get_pedidos_unicos', {
     data_inicial: dataInicial,
     data_final: `${dataFinal} 23:59:59.999`,
     offset_val: 0,
-    limit_val: 9999 // Um número grande para pegar todos
+    limit_val: 9999
   });
 
   if (error) {
@@ -68,7 +67,6 @@ async function fetchAllPedidosDireto(
 ): Promise<any[]> {
   console.log('Buscando todos os pedidos diretamente para o período:', { dataInicial, dataFinal });
   
-  // Devido ao limite de 1000 registros por consulta, precisamos buscar em lotes
   let allPedidos: any[] = [];
   let hasMore = true;
   let page = 0;
@@ -111,7 +109,6 @@ async function fetchAllPedidosDireto(
       allPedidos = [...allPedidos, ...data];
       console.log(`Lote ${page + 1}: Recebidos ${data.length} pedidos. Total até agora: ${allPedidos.length}`);
       
-      // Verifica se ainda há mais dados para buscar
       if (data.length < pageSize) {
         hasMore = false;
       } else {
@@ -129,7 +126,6 @@ async function fetchAllPedidosDireto(
 async function fetchPedidosDetalhados(numeroPedidos: string[]) {
   if (!numeroPedidos.length) return [];
   
-  // Divide em lotes de 100 para não exceder limites de consulta
   const batchSize = 100;
   const batches = [];
   
@@ -139,7 +135,6 @@ async function fetchPedidosDetalhados(numeroPedidos: string[]) {
   
   console.log(`Buscando detalhes em ${batches.length} lotes`);
   
-  // Busca cada lote de pedidos
   const allResults = [];
   for (const batch of batches) {
     const { data, error } = await supabase
@@ -191,7 +186,6 @@ async function fetchRelatedData(pessoasIds: number[], itemCodigos: string[]) {
   const pessoasBatches = [];
   const itensBatches = [];
   
-  // Divide em lotes
   for (let i = 0; i < pessoasIds.length; i += batchSizePessoas) {
     pessoasBatches.push(pessoasIds.slice(i, i + batchSizePessoas));
   }
@@ -200,7 +194,6 @@ async function fetchRelatedData(pessoasIds: number[], itemCodigos: string[]) {
     itensBatches.push(itemCodigos.slice(i, i + batchSizeItens));
   }
   
-  // Busca pessoas
   const allPessoas = [];
   for (const batch of pessoasBatches) {
     const { data } = await supabase
@@ -213,7 +206,6 @@ async function fetchRelatedData(pessoasIds: number[], itemCodigos: string[]) {
     }
   }
   
-  // Busca itens
   const allItens = [];
   for (const batch of itensBatches) {
     const { data } = await supabase
@@ -226,7 +218,6 @@ async function fetchRelatedData(pessoasIds: number[], itemCodigos: string[]) {
     }
   }
   
-  // Busca estoque
   const allEstoque = [];
   for (const batch of itensBatches) {
     const { data } = await supabase
@@ -247,7 +238,6 @@ async function fetchRelatedData(pessoasIds: number[], itemCodigos: string[]) {
 }
 
 async function fetchItensSeparacao() {
-  // Busca itens em separação com status "pendente"
   const { data, error } = await supabase
     .from('separacao_itens')
     .select(`
@@ -261,7 +251,6 @@ async function fetchItensSeparacao() {
     return {};
   }
 
-  // Cria um mapa de códigos de item -> true para fácil verificação
   const itensSeparacaoMap: Record<string, boolean> = {};
   if (data) {
     data.forEach(item => {
@@ -275,15 +264,12 @@ async function fetchItensSeparacao() {
   return itensSeparacaoMap;
 }
 
-// Função auxiliar para buscar valores vencidos de um cliente
 async function fetchValoresVencidosForCliente(clienteCodigo: number) {
   try {
     console.log(`Buscando valores vencidos para cliente ${clienteCodigo}`);
     
-    // Format today's date as YYYY-MM-DD for comparison
     const today = new Date().toISOString().split('T')[0];
     
-    // Convert clienteCodigo to string for the query
     const clienteCodigoStr = String(clienteCodigo);
     console.log(`Usando código do cliente: ${clienteCodigoStr}`);
     
@@ -306,7 +292,6 @@ async function fetchValoresVencidosForCliente(clienteCodigo: number) {
     
     console.log(`Encontrados ${data.length} títulos vencidos para cliente ${clienteCodigoStr}`);
     
-    // Calculate the total of overdue values
     const valorVencido = data.reduce((total, titulo) => {
       const saldo = parseFloat(titulo.VLRSALDO) || 0;
       return total + saldo;
@@ -321,7 +306,6 @@ async function fetchValoresVencidosForCliente(clienteCodigo: number) {
   }
 }
 
-// Função para buscar volume saudável do cliente
 async function fetchVolumeSaudavel(clienteCodigo: number) {
   try {
     const { data, error } = await supabase
@@ -369,19 +353,16 @@ export async function fetchJabOrders({
     return { orders: [], totalCount };
   }
 
-  // Coleta todos os IDs únicos para buscar dados relacionados
   const pessoasIds = [...new Set(pedidosDetalhados.map(p => p.PES_CODIGO).filter(id => id !== null && id !== undefined))] as number[];
   const itemCodigos = [...new Set(pedidosDetalhados.map(p => p.ITEM_CODIGO).filter(Boolean))];
 
   const { pessoas, itens, estoque } = await fetchRelatedData(pessoasIds, itemCodigos);
   const itensSeparacao = await fetchItensSeparacao();
 
-  // Cria mapas para lookup rápido
   const pessoasMap = new Map(pessoas.map(p => [p.PES_CODIGO, p]));
   const itemMap = new Map(itens.map(i => [i.ITEM_CODIGO, i.DESCRICAO]));
   const estoqueMap = new Map(estoque.map(e => [e.ITEM_CODIGO, e.FISICO]));
 
-  // Agrupa os pedidos
   const pedidosAgrupados = new Map<string, any[]>();
   pedidosDetalhados.forEach(pedido => {
     const key = pedido.PED_NUMPEDIDO;
@@ -391,7 +372,6 @@ export async function fetchJabOrders({
     pedidosAgrupados.get(key)!.push(pedido);
   });
 
-  // Processa os pedidos agrupados mantendo a ordem original
   const orders: JabOrder[] = numeroPedidos.map(numPedido => {
     const pedidos = pedidosAgrupados.get(numPedido) || [];
     const primeiroPedido = pedidos[0];
@@ -468,14 +448,12 @@ export async function fetchAllJabOrders({
 
   console.log('Buscando todos os pedidos para o período:', { dataInicial, dataFinal });
 
-  // Buscar todos os pedidos diretamente em vez de usar a função intermediária
   const pedidosDetalhados = await fetchAllPedidosDireto(dataInicial, dataFinal);
 
   if (!pedidosDetalhados.length) {
     return { orders: [], totalCount: 0 };
   }
 
-  // Extrair números de pedidos únicos
   const numeroPedidosSet = new Set<string>();
   pedidosDetalhados.forEach(pedido => {
     if (pedido.PED_NUMPEDIDO) {
@@ -486,22 +464,17 @@ export async function fetchAllJabOrders({
   
   console.log(`Total de ${numeroPedidos.length} pedidos únicos encontrados`);
 
-  // Coleta todos os IDs únicos para buscar dados relacionados
   const pessoasIds = [...new Set(pedidosDetalhados.map(p => p.PES_CODIGO).filter(id => id !== null && id !== undefined))] as number[];
   const itemCodigos = [...new Set(pedidosDetalhados.map(p => p.ITEM_CODIGO).filter(Boolean))];
   const representantesCodigos = [...new Set(pedidosDetalhados.map(p => p.REPRESENTANTE).filter(id => id !== null && id !== undefined))] as number[];
 
-  console.log(`Encontrados ${pessoasIds.length} clientes, ${representantesCodigos.length} representantes e ${itemCodigos.length} itens diferentes`);
-
   const { pessoas, itens, estoque } = await fetchRelatedData(pessoasIds, itemCodigos);
   const itensSeparacao = await fetchItensSeparacao();
 
-  // Cria mapas para lookup rápido
   const pessoasMap = new Map(pessoas.map(p => [p.PES_CODIGO, p]));
   const itemMap = new Map(itens.map(i => [i.ITEM_CODIGO, i.DESCRICAO]));
   const estoqueMap = new Map(estoque.map(e => [e.ITEM_CODIGO, e.FISICO]));
   
-  // Buscar informações dos representantes
   const { data: representantes } = await supabase
     .from('BLUEBAY_PESSOA')
     .select('PES_CODIGO, RAZAOSOCIAL')
@@ -514,7 +487,6 @@ export async function fetchAllJabOrders({
     });
   }
 
-  // Agrupa os pedidos por número de pedido
   const pedidosAgrupados = new Map<string, any[]>();
   pedidosDetalhados.forEach(pedido => {
     const key = pedido.PED_NUMPEDIDO;
@@ -524,7 +496,6 @@ export async function fetchAllJabOrders({
     pedidosAgrupados.get(key)!.push(pedido);
   });
 
-  // Processa os pedidos agrupados
   const orders: JabOrder[] = numeroPedidos.map(numPedido => {
     const pedidos = pedidosAgrupados.get(numPedido) || [];
     if (!pedidos.length) {
@@ -536,7 +507,6 @@ export async function fetchAllJabOrders({
     
     const pessoa = pessoasMap.get(primeiroPedido.PES_CODIGO);
     
-    // Obter nome do representante
     const representanteNome = primeiroPedido.REPRESENTANTE ? 
       representantesMap.get(primeiroPedido.REPRESENTANTE) || null : null;
 
@@ -586,7 +556,6 @@ export async function fetchAllJabOrders({
 
   console.log(`Processados ${orders.length} pedidos`);
 
-  // Agrupar por cliente (usando PES_CODIGO como chave)
   const clientGroupsMap = new Map<number, JabOrder[]>();
   
   orders.forEach(order => {
@@ -601,7 +570,6 @@ export async function fetchAllJabOrders({
 
   console.log(`Agrupados em ${clientGroupsMap.size} clientes`);
 
-  // Transformar em uma lista plana
   const ordersFlat = Array.from(clientGroupsMap.values()).flat();
 
   return {
@@ -638,22 +606,19 @@ export async function fetchTotals(): Promise<JabTotalsResponse> {
   };
 }
 
-// Nova função para buscar valores vencidos e volume saudável para os clientes
 export async function fetchClientFinancialInfo(clientGroups: Record<string, any>) {
   console.log('Buscando informações financeiras para clientes...');
   
   const groupsWithFinancialInfo = { ...clientGroups };
   
-  // Processar cada grupo de cliente
   for (const clientName in groupsWithFinancialInfo) {
     const group = groupsWithFinancialInfo[clientName];
     if (group && group.PES_CODIGO) {
       try {
-        // Buscar valores vencidos
-        const valoresVencidos = await fetchValoresVencidosForCliente(group.PES_CODIGO);
+        const clienteCodigoStr = String(group.PES_CODIGO);
+        const valoresVencidos = await fetchValoresVencidosForCliente(clienteCodigoStr);
         group.valoresVencidos = valoresVencidos;
         
-        // Buscar volume saudável
         const volumeSaudavel = await fetchVolumeSaudavel(group.PES_CODIGO);
         group.volumeSaudavel = volumeSaudavel;
         
