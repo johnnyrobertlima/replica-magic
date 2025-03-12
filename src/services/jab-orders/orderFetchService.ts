@@ -58,7 +58,7 @@ export const fetchAllJabOrders = async (options: Omit<UseJabOrdersOptions, 'page
   const toDate = options.dateRange?.to?.toISOString() || '';
 
   try {
-    const { data: ordersData, error } = await supabase
+    const { data: orders, error } = await supabase
       .from('BLUEBAY_PEDIDO')
       .select('*')
       .eq('CENTROCUSTO', 'JAB')
@@ -68,21 +68,7 @@ export const fetchAllJabOrders = async (options: Omit<UseJabOrdersOptions, 'page
 
     if (error) throw error;
 
-    // Transform ordersData to match JabOrder type
-    const orders = ordersData.map(order => ({
-      ...order,
-      total_saldo: order.QTDE_SALDO || 0,
-      valor_total: order.TOTAL_PRODUTO || 0,
-      APELIDO: null, // Default value if not available
-      REPRESENTANTE_NOME: null, // Default value if not available
-      items: [] // Default empty array for items
-    }));
-
-    return { 
-      orders,
-      totalCount: orders.length || 0,
-      itensSeparacao: {} 
-    };
+    return { orders: orders || [] };
   } catch (error) {
     console.error('Erro ao buscar todos os pedidos:', error);
     throw error;

@@ -6,9 +6,8 @@ import { groupOrdersByClient, filterGroupsBySearchCriteria } from "@/utils/clien
 import { useClientOrdersState } from "./client-orders/useClientOrdersState";
 import { useItemSelection } from "./client-orders/useItemSelection";
 import { useSeparationOperations } from "./client-orders/useSeparationOperations";
-import { fetchClientFinancialInfo } from "@/services/jab-orders";
+import { fetchClientFinancialInfo } from "@/services/jabOrdersService";
 import { ClientOrderGroup } from "@/types/clientOrders";
-import { JabOrdersResponse } from "@/types/jabOrders";
 
 export const useClientOrders = () => {
   // Use the state hook
@@ -35,7 +34,7 @@ export const useClientOrders = () => {
   } = useClientOrdersState();
 
   // Data fetching hooks
-  const { data: ordersData = { orders: [], totalCount: 0, itensSeparacao: {} } as JabOrdersResponse, isLoading: isLoadingOrders } = useAllJabOrders({
+  const { data: ordersData = { orders: [], totalCount: 0, itensSeparacao: {} }, isLoading: isLoadingOrders } = useAllJabOrders({
     dateRange: searchDate
   });
 
