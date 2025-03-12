@@ -1,86 +1,141 @@
 
-import { useState, useCallback } from 'react';
-import { calculateTotalSelected } from '@/utils/clientOrdersUtils';
-import * as XLSX from 'xlsx';
-import { toast } from 'sonner';
+import { useMemo } from "react";
+import { calculateTotalSelected } from "@/utils/clientOrdersUtils";
+import { useToast } from "@/hooks/use-toast";
+import type { ClientOrdersState } from "@/types/clientOrders";
 
-export const useItemSelection = (state: any, setState: any, groups: Record<string, any>) => {
-  const [isExporting, setIsExporting] = useState(false);
+export const useItemSelection = (
+  state: ClientOrdersState, 
+  setState: React.Dispatch<React.SetStateAction<ClientOrdersState>>, 
+  filteredGroups: Record<string, any>
+) => {
+  const { toast } = useToast();
+  const { selectedItems, selectedItemsDetails } = state;
+  
+  // Calculate the total of selected items
+  const totalSelecionado = useMemo(() => 
+    calculateTotalSelected(selectedItemsDetails), 
+    [selectedItemsDetails]
+  );
 
-  // Handle item selection
-  const handleItemSelect = useCallback((item: any) => {
+  const handleItemSelect = (item: any) => {
+    const itemCode = item.ITEM_CODIGO;
+    
     setState(prev => {
-      const itemCode = item.ITEM_CODIGO;
-      const updatedItems = prev.selectedItems.includes(itemCode)
-        ? prev.selectedItems.filter((i: string) => i !== itemCode)
-        : [...prev.selectedItems, itemCode];
+      const isAlreadySelected = prev.selectedItems.includes(itemCode);
+      let newSelectedItems = prev.selectedItems;
+      let newSelectedItemsDetails = { ...prev.selectedItemsDetails };
       
-      return {
-        ...prev,
-        selectedItems: updatedItems
+      if (isAlreadySelected) {
+        // Remove item from selection
+        newSelectedItems = prev.selectedItems.filter(code => code !== itemCode);
+        delete newSelectedItemsDetails[itemCode];
+      } else {
+        // Add item to selection
+        newSelectedItems = [...prev.selectedItems, itemCode];
+        newSelectedItemsDetails[itemCode] = {
+          qtde: item.QTDE_SALDO,
+          valor: item.VALOR_UNITARIO
+        };
+      }
+      
+      return { 
+        ...prev, 
+        selectedItems: newSelectedItems,
+        selectedItemsDetails: newSelectedItemsDetails
       };
     });
-  }, [setState]);
+  };
 
-  // Calculate total value of selected items
-  const totalSelecionado = calculateTotalSelected(state.selectedItems, groups);
-
-  // Export selected items to Excel
-  const exportSelectedItemsToExcel = useCallback(() => {
-    if (state.selectedItems.length === 0) {
-      toast.error('Nenhum item selecionado para exportar');
+  const exportSelectedItemsToExcel = () => {
+    if (selectedItems.length === 0) {
+      toast({
+        title: "Nenhum item selecionado",
+        description: "Selecione itens para exportar",
+        variant: "destructive"
+      });
       return;
     }
 
-    setIsExporting(true);
-
-    try {
-      const selectedItemsData: any[] = [];
+    // Get selected items details
+    const exportData: any[] = [];
+    
+    for (const clientName in filteredGroups) {
+      const clientGroup = filteredGroups[clientName];
       
-      // Process each group to find selected items
-      Object.entries(groups).forEach(([clientName, data]: [string, any]) => {
-        data.allItems.forEach((item: any) => {
-          if (state.selectedItems.includes(item.ITEM_CODIGO)) {
-            selectedItemsData.push({
-              'Cliente': clientName,
-              'Código': item.ITEM_CODIGO,
-              'Descrição': item.DESCRICAO,
-              'Pedido': item.pedido,
-              'Qtde Saldo': item.QTDE_SALDO,
-              'Qtde Disponível': item.FISICO,
-              'Valor Unitário': item.VALOR_UNITARIO,
-              'Valor Total': item.valor_total,
-            });
-          }
+      // Find all items in this client that match the selected items
+      const selectedClientItems = clientGroup.allItems.filter(
+        (item: any) => selectedItems.includes(item.ITEM_CODIGO)
+      );
+      
+      // Add each selected item to the export data
+      selectedClientItems.forEach((item: any) => {
+        exportData.push({
+          Cliente: clientName,
+          Representante: clientGroup.representante || "Não informado",
+          Pedido: item.pedido,
+          'Código do Item': item.ITEM_CODIGO,
+          Descrição: item.DESCRICAO || "-",
+          'Qtde. Pedida': item.QTDE_PEDIDA,
+          'Qtde. Entregue': item.QTDE_ENTREGUE,
+          'Qtde. Saldo': item.QTDE_SALDO,
+          'Estoque Físico': item.FISICO || 0,
+          'Valor Unitário': item.VALOR_UNITARIO,
+          'Valor Total': (item.QTDE_SALDO * item.VALOR_UNITARIO)
         });
       });
-
-      // Create workbook and add worksheet
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(selectedItemsData);
-      
-      // Add worksheet to workbook
-      XLSX.utils.book_append_sheet(wb, ws, 'ItensJAB');
-      
-      // Generate filename with date
-      const date = new Date().toISOString().split('T')[0];
-      const filename = `Itens_Selecionados_JAB_${date}.xlsx`;
-      
-      // Write to file and download
-      XLSX.writeFile(wb, filename);
-      
-      toast.success('Itens exportados com sucesso!');
-    } catch (error) {
-      console.error('Erro ao exportar itens:', error);
-      toast.error('Erro ao exportar itens');
-    } finally {
-      setIsExporting(false);
     }
-  }, [groups, state.selectedItems]);
+
+    if (exportData.length === 0) {
+      toast({
+        title: "Erro ao exportar",
+        description: "Não foi possível encontrar os detalhes dos itens selecionados",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Convert data to CSV
+    const headers = Object.keys(exportData[0]);
+    const csvContent = [
+      headers.join(','), // Header row
+      ...exportData.map(row => 
+        headers.map(header => {
+          const value = row[header];
+          // Format values properly for CSV, handle commas, quotes, etc.
+          if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
+            return `"${value.replace(/"/g, '""')}"`;
+          }
+          // Format numeric values with proper decimal separator
+          if (typeof value === 'number') {
+            if (header === 'Valor Unitário' || header === 'Valor Total') {
+              return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace('.', ',');
+            }
+            return value.toString();
+          }
+          return value?.toString() || '';
+        }).join(',')
+      )
+    ].join('\n');
+
+    // Create and download the CSV file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `itens-selecionados-${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast({
+      title: "Exportação concluída",
+      description: `${exportData.length} itens exportados com sucesso`,
+    });
+  };
 
   return {
     totalSelecionado,
-    isExporting,
     handleItemSelect,
     exportSelectedItemsToExcel
   };

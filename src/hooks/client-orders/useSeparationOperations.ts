@@ -2,7 +2,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { sendOrdersForSeparation } from "@/services/clientSeparationService";
 import type { ClientOrdersState } from "@/types/clientOrders";
-import type { ClienteFinanceiro } from "@/types/financialClient";
 
 export const useSeparationOperations = (
   state: ClientOrdersState,
@@ -16,33 +15,7 @@ export const useSeparationOperations = (
     setState(prev => ({ ...prev, isSending: true }));
     
     try {
-      if (Object.keys(groupedOrders).length === 0 || selectedItems.length === 0) {
-        console.error("No orders or no items selected");
-        return;
-      }
-      
-      // Get the client name and data
-      const clientName = Object.keys(groupedOrders)[0] || '';
-      const clientData = groupedOrders[clientName];
-      
-      if (!clientData) {
-        console.error("No client data found");
-        return;
-      }
-      
-      // Create a proper ClienteFinanceiro object from the groupedOrders
-      const clienteFinanceiro: ClienteFinanceiro = {
-        PES_CODIGO: String(clientData.clientId || 0), // Ensure this is a string
-        APELIDO: clientName,
-        volume_saudavel_faturamento: clientData.volumeSaudavel || null,
-        valoresTotais: clientData.valoresTotais || 0,
-        valoresEmAberto: clientData.valoresEmAberto || 0,
-        valoresVencidos: clientData.valoresVencidos || 0,
-        separacoes: clientData.allItems ? [{ separacao_itens: clientData.allItems }] : [],
-        representanteNome: clientData.representanteNome || null
-      };
-
-      const result = await sendOrdersForSeparation(selectedItems, clienteFinanceiro);
+      const result = await sendOrdersForSeparation(selectedItems, groupedOrders);
       
       if (result.success) {
         await queryClient.invalidateQueries({ queryKey: ['separacoes'] });

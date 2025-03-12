@@ -30,7 +30,6 @@ describe('useSeparationOperations', () => {
     const setState = vi.fn();
     const groupedOrders = {
       client1: {
-        clientId: 123,
         allItems: [
           { ITEM_CODIGO: 'item1', pedido: 'pedido1' },
           { ITEM_CODIGO: 'item2', pedido: 'pedido1' }
@@ -48,13 +47,9 @@ describe('useSeparationOperations', () => {
       await result.current.handleEnviarParaSeparacao();
     });
     
-    // Check that the sendOrdersForSeparation was called with the right parameters
     expect(sendOrdersForSeparation).toHaveBeenCalledWith(
       ['item1', 'item2'],
-      expect.objectContaining({
-        PES_CODIGO: 123,
-        APELIDO: 'client1'
-      })
+      groupedOrders
     );
   });
 

@@ -6,8 +6,6 @@ import { groupOrdersByClient, filterGroupsBySearchCriteria } from "@/utils/clien
 import { useClientOrdersState } from "./client-orders/useClientOrdersState";
 import { useItemSelection } from "./client-orders/useItemSelection";
 import { useSeparationOperations } from "./client-orders/useSeparationOperations";
-import type { JabOrdersResponse } from "@/types/jabOrders";
-import type { SearchType } from "@/types/searchTypes";
 
 export const useClientOrders = () => {
   // Use the state hook
@@ -34,7 +32,7 @@ export const useClientOrders = () => {
   } = useClientOrdersState();
 
   // Data fetching hooks
-  const { data: ordersData = { orders: [], totalCount: 0, itensSeparacao: {} } as JabOrdersResponse, isLoading: isLoadingOrders } = useAllJabOrders({
+  const { data: ordersData = { orders: [], totalCount: 0, itensSeparacao: {} }, isLoading: isLoadingOrders } = useAllJabOrders({
     dateRange: searchDate
   });
 
@@ -42,37 +40,14 @@ export const useClientOrders = () => {
 
   const { data: separacoes = [], isLoading: isLoadingSeparacoes } = useSeparacoes();
 
-  // Create a full response object with default empty itensSeparacao if not provided
-  const fullOrdersData = useMemo(() => ({
-    ...ordersData,
-    itensSeparacao: ordersData.itensSeparacao || {}
-  }), [ordersData]);
-
   // Group orders by client
-  const groupedOrders = useMemo(() => groupOrdersByClient(fullOrdersData), [fullOrdersData]);
+  const groupedOrders = useMemo(() => groupOrdersByClient(ordersData), [ordersData]);
 
-  // Filter groups by search criteria - mapping the searchType to correct expected value
-  const filteredGroups = useMemo(() => {
-    // Map searchType to the expected value in the filterGroupsBySearchCriteria function
-    let mappedSearchType: "pedido" | "item" | "client" = "pedido";
-    
-    if (searchType === "item") {
-      mappedSearchType = "item";
-    } else if (searchType === "cliente" || searchType === "client") {
-      mappedSearchType = "client";
-    } else if (searchType === "representante") {
-      // For "representante", we'll use "client" as the closest match
-      mappedSearchType = "client";
-    }
-    
-    // Filter groups based on the mapped search type
-    return filterGroupsBySearchCriteria(
-      groupedOrders, 
-      isSearching, 
-      searchQuery, 
-      mappedSearchType
-    );
-  }, [groupedOrders, isSearching, searchQuery, searchType]);
+  // Filter groups by search criteria
+  const filteredGroups = useMemo(() => 
+    filterGroupsBySearchCriteria(groupedOrders, isSearching, searchQuery, searchType), 
+    [groupedOrders, isSearching, searchQuery, searchType]
+  );
 
   // Use the item selection hook
   const {
@@ -102,7 +77,7 @@ export const useClientOrders = () => {
     expandedClients,
     isSending,
     // Data
-    ordersData: fullOrdersData,
+    ordersData,
     totals,
     separacoes,
     filteredGroups,

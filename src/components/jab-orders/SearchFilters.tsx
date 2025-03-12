@@ -7,7 +7,6 @@ import { Search, Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
-import { SearchType } from "@/types/searchTypes";
 import {
   Select,
   SelectContent,
@@ -15,6 +14,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
+export type SearchType = "pedido" | "cliente" | "representante";
 
 interface SearchFiltersProps {
   searchQuery: string;
@@ -40,12 +41,9 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
       case "pedido":
         return "Buscar por número do pedido";
       case "cliente":
-      case "client":
         return "Buscar por nome do cliente";
       case "representante":
         return "Buscar por nome do representante";
-      case "item":
-        return "Buscar por código ou nome do item";
       default:
         return "Buscar...";
     }
@@ -61,7 +59,6 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
           <SelectItem value="pedido">Número do Pedido</SelectItem>
           <SelectItem value="cliente">Nome do Cliente</SelectItem>
           <SelectItem value="representante">Nome do Representante</SelectItem>
-          <SelectItem value="item">Item / Produto</SelectItem>
         </SelectContent>
       </Select>
 

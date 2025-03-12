@@ -15,7 +15,6 @@ export interface JabOrderItem {
   VALOR_UNITARIO: number;
   FISICO: number | null;
   emSeparacao?: boolean;
-  pedido?: string; // Added this property to support the existing use cases
 }
 
 export interface JabOrder {

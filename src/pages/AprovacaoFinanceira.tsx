@@ -1,177 +1,109 @@
-
-import { useState, useEffect } from "react";
-import { useClienteFinanceiro } from "@/hooks/useClientesFinanceiros";
-import { useNavigate, useParams } from 'react-router-dom';
-import { Button } from "@/components/ui/button";
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { SeparacaoDePedidos } from "@/components/SeparacaoDePedidos";
-import { fetchTitulosVencidos } from "@/utils/financialUtils";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ArrowLeft } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
-import type { ClienteFinanceiro } from "@/types/financialClient";
-
-interface Titulo {
-  BOL_CODIGO: number;
-  BOL_DATAEMISSAO: string;
-  BOL_DATAVENCIMENTO: string;
-  BOL_VALOR: number;
-  BOL_SITUACAO: string;
-  DTVENCIMENTO: string;
-  VLRSALDO: number;
-}
+import { Loader2 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Toaster } from "@/components/ui/toaster";
+import { useClientesFinanceiros } from "@/hooks/useClientesFinanceiros";
+import { ClienteFinanceiroCard } from "@/components/jab-orders/ClienteFinanceiroCard";
+import { useApprovedOrders } from "@/hooks/useApprovedOrders";
+import JabNavMenu from "@/components/jab-orders/JabNavMenu";
+import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 const AprovacaoFinanceira = () => {
-  const navigate = useNavigate();
-  const { clienteId } = useParams();
-  const [cliente, setCliente] = useState<ClienteFinanceiro | null>(null);
-  const [titulosVencidos, setTitulosVencidos] = useState<Titulo[]>([]);
-  const { data, isLoading, isError } = useClienteFinanceiro(clienteId);
-  const [showSeparacaoPedidos, setShowSeparacaoPedidos] = useState(false);
+  const { 
+    clientesFinanceiros, 
+    isLoading, 
+    isLoadingSeparacoes, 
+    hideCard, 
+    updateVolumeSaudavel 
+  } = useClientesFinanceiros();
 
+  const { addApprovedOrder, loadApprovedOrders, selectedYear, selectedMonth } = useApprovedOrders();
+  const [approvedSeparacaoIds, setApprovedSeparacaoIds] = useState<Set<string>>(new Set());
+  
   useEffect(() => {
-    if (data) {
-      setCliente(data);
-    }
-  }, [data]);
-
-  useEffect(() => {
-    const loadTitulosVencidos = async () => {
-      if (clienteId) {
-        try {
-          const titulos = await fetchTitulosVencidos(clienteId);
-          // Map the returned data to match the Titulo interface
-          const formattedTitulos: Titulo[] = titulos.map(titulo => ({
-            BOL_CODIGO: titulo.NUMLCTO || 0,
-            BOL_DATAEMISSAO: titulo.DTEMISSAO || '',
-            BOL_DATAVENCIMENTO: titulo.DTVENCIMENTO || '',
-            BOL_VALOR: titulo.VLRTITULO || 0,
-            BOL_SITUACAO: titulo.STATUS || '',
-            DTVENCIMENTO: titulo.DTVENCIMENTO || '',
-            VLRSALDO: titulo.VLRSALDO || 0
-          }));
-          setTitulosVencidos(formattedTitulos);
-        } catch (error) {
-          console.error("Erro ao carregar títulos vencidos:", error);
-        }
-      }
+    const loadApproved = async () => {
+      const approvedOrders = loadApprovedOrders(selectedYear, selectedMonth);
+      const approvedIds = new Set(approvedOrders.map(order => order.separacaoId));
+      setApprovedSeparacaoIds(approvedIds);
     };
+    
+    loadApproved();
+  }, [loadApprovedOrders, selectedYear, selectedMonth]);
 
-    loadTitulosVencidos();
-  }, [clienteId]);
+  const filteredClientesFinanceiros = clientesFinanceiros.filter(cliente => {
+    const pendingSeparacoes = cliente.separacoes.filter(
+      separacao => !approvedSeparacaoIds.has(separacao.id)
+    );
+    
+    return pendingSeparacoes.length > 0;
+  });
 
-  const handleGoBack = () => {
-    navigate(-1);
-  };
+  const clientesWithPendingSeparacoes = filteredClientesFinanceiros.map(cliente => ({
+    ...cliente,
+    separacoes: cliente.separacoes.filter(separacao => !approvedSeparacaoIds.has(separacao.id))
+  }));
 
-  const handleAprovarCliente = () => {
-    alert('Cliente Aprovado!');
-  };
-
-  const handleReprovarCliente = () => {
-    alert('Cliente Reprovado!');
-  };
-
-  const handleShowSeparacaoPedidos = () => {
-    setShowSeparacaoPedidos(true);
-  };
-
-  const handleCloseSeparacaoPedidos = () => {
-    setShowSeparacaoPedidos(false);
-  };
-
-  if (isLoading) return <div>Carregando...</div>;
-  if (isError) return <div>Erro ao carregar dados.</div>;
-  if (!cliente) return <div>Cliente não encontrado.</div>;
+  if (isLoading || isLoadingSeparacoes) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto py-10">
-      <Card className="w-full">
-        <CardHeader>
-          <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="sm" onClick={handleGoBack}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Voltar
-            </Button>
-            <CardTitle>Aprovação Financeira do Cliente</CardTitle>
-          </div>
-          <CardDescription>Detalhes financeiros e ações para o cliente.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="space-y-1">
-              <p className="text-sm font-medium">Código do Cliente</p>
-              <p>{cliente.PES_CODIGO}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium">Nome do Cliente</p>
-              <p>{cliente.APELIDO}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium">Total em Aberto</p>
-              <p>{formatCurrency(cliente.valoresEmAberto)}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium">Total Vencido</p>
-              <p>{formatCurrency(cliente.valoresVencidos)}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium">Total Pago</p>
-              <p>{formatCurrency(cliente.valoresTotais)}</p>
-            </div>
-          </div>
+    <main className="container mx-auto px-4 py-8">
+      <div className="flex flex-col md:flex-row md:justify-end md:items-center gap-4 mb-6">
+        <JabNavMenu />
+      </div>
 
-          <div>
-            <h2 className="text-xl font-semibold mb-2">Títulos Vencidos</h2>
-            {titulosVencidos && titulosVencidos.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr>
-                      <th className="text-left p-2">Código</th>
-                      <th className="text-left p-2">Data de Vencimento</th>
-                      <th className="text-left p-2">Valor</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {titulosVencidos.map((titulo) => (
-                      <tr key={titulo.BOL_CODIGO}>
-                        <td className="p-2">{titulo.BOL_CODIGO}</td>
-                        <td className="p-2">
-                          {titulo.DTVENCIMENTO ? format(new Date(titulo.DTVENCIMENTO), 'dd/MM/yyyy', { locale: ptBR }) : 'N/A'}
-                        </td>
-                        <td className="p-2">{formatCurrency(titulo.VLRSALDO)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <Badge variant="secondary">Nenhum título vencido encontrado.</Badge>
-            )}
-          </div>
-
-          <div className="flex justify-end space-x-2">
-            <Button onClick={handleShowSeparacaoPedidos}>
-              Liberar Separação de Pedidos
-            </Button>
-            <Button variant="secondary" onClick={handleReprovarCliente}>
-              Reprovar Cliente
-            </Button>
-            <Button onClick={handleAprovarCliente}>Aprovar Cliente</Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {showSeparacaoPedidos && (
-        <SeparacaoDePedidos 
-          clienteId={cliente.PES_CODIGO} 
-          onClose={handleCloseSeparacaoPedidos} 
-        />
-      )}
-    </div>
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold">Aprovação Financeira</h1>
+        <p className="text-muted-foreground">
+          Gerencie as aprovações financeiras dos pedidos e monitore informações financeiras dos clientes.
+        </p>
+        
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold">Pedidos Pendentes de Aprovação</h2>
+          <Link 
+            to="/client-area/bluebay/acompanhamento-faturamento" 
+            className="text-primary hover:underline"
+          >
+            Ver Pedidos Aprovados
+          </Link>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {clientesWithPendingSeparacoes.length > 0 ? (
+            clientesWithPendingSeparacoes.map((cliente) => (
+              <ClienteFinanceiroCard
+                key={cliente.PES_CODIGO}
+                cliente={cliente}
+                onUpdateVolumeSaudavel={updateVolumeSaudavel}
+                onHideCard={hideCard}
+                onApprove={(separacaoId) => {
+                  addApprovedOrder(separacaoId, cliente);
+                  setApprovedSeparacaoIds(prev => {
+                    const newSet = new Set(prev);
+                    newSet.add(separacaoId);
+                    return newSet;
+                  });
+                }}
+              />
+            ))
+          ) : (
+            <Card className="col-span-2">
+              <CardContent className="p-6">
+                <p className="text-center text-muted-foreground">
+                  Nenhum pedido pendente de aprovação financeira.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+      <Toaster />
+    </main>
   );
 };
 

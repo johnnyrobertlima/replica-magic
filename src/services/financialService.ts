@@ -1,133 +1,108 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import type { ClienteFinanceiro } from "@/types/financialClient";
+import { ClienteFinanceiro } from "@/types/financialClient";
+import { calculateClientFinancialValues, fetchTitulosVencidos } from "@/utils/financialUtils";
 
-// Fetch a single client by ID
-export const fetchClient = async (clientId: number | string) => {
-  // Convert to string for the query as PES_CODIGO is stored as text
-  const clientIdStr = String(clientId);
-  
-  const { data, error } = await supabase
-    .from("BLUEBAY_PESSOA")
-    .select(`
-      PES_CODIGO, 
-      APELIDO, 
-      RAZAOSOCIAL, 
-      EMAIL, 
-      TELEFONE, 
-      CIDADE, 
-      UF, 
-      volume_saudavel_faturamento,
-      BAIRRO, 
-      CATEGORIA, 
-      CEP, 
-      CNPJCPF, 
-      COMPLEMENTO, 
-      DATACADASTRO, 
-      ENDERECO, 
-      INSCRICAO_ESTADUAL, 
-      NOME_CATEGORIA, 
-      NUMERO
-    `)
-    .eq("PES_CODIGO", clientIdStr)
-    .maybeSingle();
+// Fetch financial titles for clients
+export const fetchFinancialTitles = async (clientesCodigos: number[]) => {
+  const { data: titulos, error } = await supabase
+    .from('BLUEBAY_TITULO')
+    .select('*')
+    .in('PES_CODIGO', clientesCodigos.map(String))
+    .in('STATUS', ['1', '2', '3']);
 
   if (error) throw error;
-  
-  // Ensure PES_CODIGO is a string
-  if (data) {
-    return {
-      ...data,
-      PES_CODIGO: String(data.PES_CODIGO)
-    } as Partial<ClienteFinanceiro>;
+  return titulos;
+};
+
+// Fetch client info
+export const fetchClientInfo = async (clientesCodigos: number[]) => {
+  const { data: clientes, error } = await supabase
+    .from('BLUEBAY_PESSOA')
+    .select('PES_CODIGO, APELIDO, volume_saudavel_faturamento')
+    .in('PES_CODIGO', clientesCodigos);
+
+  if (error) throw error;
+  return clientes;
+};
+
+// Fetch pedidos to get REPRESENTANTE codes
+export const fetchPedidosForRepresentantes = async (numeroPedidos: string[]) => {
+  const { data: pedidos, error } = await supabase
+    .from('BLUEBAY_PEDIDO')
+    .select('PED_NUMPEDIDO, REPRESENTANTE')
+    .eq('CENTROCUSTO', 'JAB')
+    .in('PED_NUMPEDIDO', numeroPedidos);
+
+  if (error) throw error;
+  return pedidos;
+};
+
+// Fetch representantes info
+export const fetchRepresentantesInfo = async (representantesCodigos: number[]) => {
+  const { data: representantes, error } = await supabase
+    .from('BLUEBAY_PESSOA')
+    .select('PES_CODIGO, RAZAOSOCIAL')
+    .in('PES_CODIGO', representantesCodigos);
+
+  if (error) throw error;
+  return representantes;
+};
+
+// Process clients data with financial information
+export const processClientsData = (
+  clientes: any[],
+  clienteSeparacoes: Record<number, any[]>,
+  clienteToRepresentanteMap: Map<number, number>,
+  representantesInfo: Map<number, string>,
+  titulos: any[],
+  today: Date
+) => {
+  const clientesMap = new Map<number, ClienteFinanceiro>();
+
+  // Initialize clients map
+  if (clientes) {
+    clientes.forEach(cliente => {
+      if (cliente.PES_CODIGO) {
+        // Get representante for this cliente
+        const representanteCodigo = clienteToRepresentanteMap.get(cliente.PES_CODIGO);
+        const representanteNome = representanteCodigo ? representantesInfo.get(representanteCodigo) || null : null;
+        
+        clientesMap.set(cliente.PES_CODIGO, {
+          PES_CODIGO: cliente.PES_CODIGO,
+          APELIDO: cliente.APELIDO,
+          volume_saudavel_faturamento: cliente.volume_saudavel_faturamento,
+          valoresTotais: 0,
+          valoresEmAberto: 0,
+          valoresVencidos: 0,
+          separacoes: clienteSeparacoes[cliente.PES_CODIGO] || [],
+          representanteNome: representanteNome
+        });
+      }
+    });
   }
-  
-  return null;
-};
 
-// Process client data to add calculated properties
-export const processClientsData = (clients: any[]) => {
-  return clients.map(client => ({
-    ...client,
-    PES_CODIGO: String(client.PES_CODIGO),
-    valoresTotais: parseFloat((client.valoresTotais || 0).toFixed(2)),
-    valoresEmAberto: parseFloat((client.valoresEmAberto || 0).toFixed(2)),
-    valoresVencidos: parseFloat((client.valoresVencidos || 0).toFixed(2)),
-  }));
-};
+  // Calculate values for each client
+  if (titulos) {
+    titulos.forEach(titulo => {
+      const pesCodigoNumerico = typeof titulo.PES_CODIGO === 'string' 
+        ? parseInt(titulo.PES_CODIGO, 10) 
+        : titulo.PES_CODIGO;
+      
+      if (isNaN(pesCodigoNumerico) || !clientesMap.has(pesCodigoNumerico)) return;
 
-// Fetch multiple clients by their IDs
-export const fetchClientsByIds = async (clientIds: (number | string)[]) => {
-  const clientIdStrings = clientIds.map(id => String(id));
-  
-  if (clientIdStrings.length === 0) {
-    return [];
+      const cliente = clientesMap.get(pesCodigoNumerico)!;
+      calculateClientFinancialValues(cliente, titulo, today);
+    });
   }
 
-  const { data, error } = await supabase
-    .from("BLUEBAY_PESSOA")
-    .select(`
-      PES_CODIGO, 
-      APELIDO, 
-      RAZAOSOCIAL, 
-      EMAIL, 
-      TELEFONE, 
-      CIDADE, 
-      UF, 
-      volume_saudavel_faturamento,
-      BAIRRO, 
-      CATEGORIA, 
-      CEP, 
-      CNPJCPF, 
-      COMPLEMENTO, 
-      DATACADASTRO, 
-      ENDERECO, 
-      INSCRICAO_ESTADUAL, 
-      NOME_CATEGORIA, 
-      NUMERO
-    `)
-    .in("PES_CODIGO", clientIdStrings);
-
-  if (error) throw error;
-  
-  // Convert PES_CODIGO to string for each client
-  return (data || []).map(client => ({
-    ...client,
-    PES_CODIGO: String(client.PES_CODIGO)
-  })) as Partial<ClienteFinanceiro>[];
+  // Convert map to array
+  return Array.from(clientesMap.values());
 };
 
-// Adicionando a função fetchAllClients para resolver o erro de importação
-export const fetchAllClients = async () => {
-  const { data, error } = await supabase
-    .from("BLUEBAY_PESSOA")
-    .select(`
-      PES_CODIGO, 
-      APELIDO, 
-      RAZAOSOCIAL, 
-      EMAIL, 
-      TELEFONE, 
-      CIDADE, 
-      UF, 
-      volume_saudavel_faturamento,
-      BAIRRO, 
-      CATEGORIA, 
-      CEP, 
-      CNPJCPF, 
-      COMPLEMENTO, 
-      DATACADASTRO, 
-      ENDERECO, 
-      INSCRICAO_ESTADUAL, 
-      NOME_CATEGORIA, 
-      NUMERO
-    `)
-    .order("APELIDO", { ascending: true });
-
-  if (error) throw error;
-  
-  // Convert PES_CODIGO to string for each client
-  return (data || []).map(client => ({
-    ...client,
-    PES_CODIGO: String(client.PES_CODIGO)
-  })) as Partial<ClienteFinanceiro>[];
+// Fetch títulos vencidos for a specific client
+export const fetchValoresVencidos = async (clienteCodigo: number) => {
+  console.log(`Buscando valores vencidos para cliente ${clienteCodigo}`);
+  const result = await fetchTitulosVencidos(clienteCodigo);
+  console.log(`Resultado da busca: ${result}`);
+  return result;
 };

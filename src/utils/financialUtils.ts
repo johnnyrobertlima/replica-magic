@@ -1,139 +1,101 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import type { ClienteFinanceiro } from "@/types/financialClient";
+import { ClienteFinanceiro, TituloFinanceiro } from "@/types/financialClient";
 
-/**
- * Calculate valores vencidos (past due balance) for a client
- */
-export const calcularValoresVencidos = (titulos: any[], today: Date): number => {
-  return titulos
-    .filter(titulo => {
-      const dtVencimento = titulo.DTVENCIMENTO ? new Date(titulo.DTVENCIMENTO) : null;
-      return dtVencimento && dtVencimento < today && titulo.VLRSALDO > 0;
-    })
-    .reduce((acc, titulo) => acc + (titulo.VLRSALDO || 0), 0);
-};
-
-export const loadClientFinancialData = async (clientId: number | string) => {
-  try {
-    // Convert to string for query
-    const clientIdStr = String(clientId);
-    
-    const { data: titulos = [], error } = await supabase
-      .from("BLUEBAY_TITULO")
-      .select("*")
-      .eq("PES_CODIGO", clientIdStr);
-    
-    if (error) throw error;
-    
-    const today = new Date();
-    
-    const valoresTotais = titulos.reduce((acc, titulo) => acc + (titulo.VLRTITULO || 0), 0);
-    const valoresEmAberto = titulos.reduce((acc, titulo) => acc + (titulo.VLRSALDO || 0), 0);
-    const valoresVencidos = calcularValoresVencidos(titulos, today);
-    
-    return {
-      valoresTotais,
-      valoresEmAberto,
-      valoresVencidos
-    };
-  } catch (error) {
-    console.error("Error loading client financial data:", error);
-    return {
-      valoresTotais: 0,
-      valoresEmAberto: 0,
-      valoresVencidos: 0
-    };
-  }
-};
-
+// Get separações pendentes
 export const getSeparacoesPendentes = (separacoes: any[], hiddenCards: Set<string>) => {
-  return separacoes.filter(sep => !hiddenCards.has(sep.id));
+  const pendentes = separacoes
+    .filter(sep => sep.status === 'pendente')
+    .filter(sep => !hiddenCards.has(sep.id));
+  
+  return pendentes;
 };
 
-export const getClientesCodigos = (separacoes: any[]) => {
-  return Array.from(new Set(separacoes.map(sep => sep.cliente_codigo)));
+// Get unique client codes
+export const getClientesCodigos = (sepPendentes: any[]) => {
+  const codigos = sepPendentes
+    .map(sep => sep.cliente_codigo)
+    .filter((value, index, self) => self.indexOf(value) === index);
+  
+  return codigos;
 };
 
-export const updateVolumeSaudavel = async (clienteCodigo: number | string, valor: number) => {
+// Update volume saudavel
+export const updateVolumeSaudavel = async (clienteCodigo: number, valor: number) => {
   try {
-    const clienteCodigoStr = String(clienteCodigo);
-    
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('BLUEBAY_PESSOA')
       .update({ volume_saudavel_faturamento: valor })
-      .eq('PES_CODIGO', clienteCodigoStr)
-      .select();
+      .eq('PES_CODIGO', clienteCodigo);
+    
+    if (error) throw error;
+    
+    return { success: true };
+  } catch (error) {
+    console.error("Erro ao atualizar volume saudável:", error);
+    return { success: false, error };
+  }
+};
 
-    if (error) {
-      console.error("Erro ao atualizar o volume saudável:", error);
-      return { success: false, error: error };
+// Calculate financial values for a client
+export const calculateClientFinancialValues = (
+  cliente: ClienteFinanceiro, 
+  titulo: TituloFinanceiro,
+  today: Date
+) => {
+  const pesCodigoNumerico = typeof titulo.PES_CODIGO === 'string' 
+    ? parseInt(titulo.PES_CODIGO, 10) 
+    : titulo.PES_CODIGO;
+  
+  if (isNaN(pesCodigoNumerico) || cliente.PES_CODIGO !== pesCodigoNumerico) return cliente;
+
+  // Total values = VLRTITULO - VLRDESCONTO - VLRABATIMENTO
+  const valorTotal = (titulo.VLRTITULO || 0) - (titulo.VLRDESCONTO || 0) - (titulo.VLRABATIMENTO || 0);
+  cliente.valoresTotais += valorTotal;
+  
+  // Open values = VLRSALDO
+  cliente.valoresEmAberto += (titulo.VLRSALDO || 0);
+  
+  // Overdue values = VLRSALDO of overdue titles
+  // Note: This calculation is now supplemented by direct database query
+  if (titulo.DTVENCIMENTO) {
+    const vencimento = new Date(titulo.DTVENCIMENTO);
+    const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    
+    // Ajusta a data de vencimento para remover o horário
+    const vencimentoDateOnly = new Date(vencimento.getFullYear(), vencimento.getMonth(), vencimento.getDate());
+    
+    // Compara apenas as datas (sem horas)
+    if (vencimentoDateOnly < todayDateOnly) {
+      cliente.valoresVencidos += (titulo.VLRSALDO || 0);
     }
-
-    return { success: true, data: data };
-  } catch (error) {
-    console.error("Erro ao atualizar o volume saudável:", error);
-    return { success: false, error: error };
   }
+
+  return cliente;
 };
 
-export const fetchTitulosVencidos = async (clientId: number | string) => {
+// Função para buscar títulos vencidos diretamente do Supabase
+export const fetchTitulosVencidos = async (clienteCodigo: string | number) => {
   try {
-    // Convert to string for the query as PES_CODIGO is stored as text
-    const clientIdStr = String(clientId);
-    
-    let { data, error } = await supabase
-      .from('BLUEBAY_TITULO')
-      .select('*')
-      .eq('PES_CODIGO', clientIdStr)
-      .lt('DTVENCIMENTO', new Date().toISOString());
-
-    if (error) throw error;
-
-    return data || [];
-  } catch (error) {
-    console.error('Error fetching titulos vencidos:', error);
-    return [];
-  }
-};
-
-export const getClientById = async (clientId: number | string) => {
-  try {
-    const clientIdStr = String(clientId);
-    
     const { data, error } = await supabase
-      .from("BLUEBAY_PESSOA")
-      .select(`
-        PES_CODIGO,
-        APELIDO, 
-        RAZAOSOCIAL, 
-        EMAIL, 
-        TELEFONE, 
-        CIDADE, 
-        UF, 
-        volume_saudavel_faturamento,
-        BAIRRO, 
-        CATEGORIA, 
-        CEP, 
-        CNPJCPF, 
-        COMPLEMENTO, 
-        DATACADASTRO, 
-        ENDERECO, 
-        INSCRICAO_ESTADUAL, 
-        NOME_CATEGORIA, 
-        NUMERO
-      `)
-      .eq("PES_CODIGO", clientIdStr)
-      .maybeSingle();
-      
-    if (error) throw error;
+      .from('BLUEBAY_TITULO')
+      .select('VLRSALDO')
+      .eq('PES_CODIGO', clienteCodigo.toString())
+      .lt('DTVENCIMENTO', new Date().toISOString().split('T')[0]);
     
-    return data ? {
-      ...data,
-      PES_CODIGO: String(data.PES_CODIGO)
-    } as Partial<ClienteFinanceiro> : null;
+    if (error) {
+      console.error("Erro ao buscar títulos vencidos:", error);
+      throw error;
+    }
+    
+    console.log(`Títulos vencidos para cliente ${clienteCodigo}:`, data);
+    
+    // Soma os valores vencidos
+    const valorVencido = data.reduce((total, titulo) => total + (titulo.VLRSALDO || 0), 0);
+    console.log(`Total valor vencido para cliente ${clienteCodigo}:`, valorVencido);
+    
+    return valorVencido;
   } catch (error) {
-    console.error("Error fetching client data:", error);
-    throw error;
+    console.error("Erro ao buscar títulos vencidos:", error);
+    return 0;
   }
 };

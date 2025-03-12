@@ -1,116 +1,176 @@
 
-import { useQuery } from "@tanstack/react-query";
-import { fetchClient, fetchClientsByIds, fetchAllClients } from "@/services/financialService";
-import { loadClientFinancialData } from "@/utils/financialUtils";
-import type { ClienteFinanceiro } from "@/types/financialClient";
+import { useState, useEffect, useCallback } from "react";
+import { useSeparacoes } from "@/hooks/useSeparacoes";
+import { useToast } from "@/hooks/use-toast";
+import { ClienteFinanceiro } from "@/types/financialClient";
+import { getSeparacoesPendentes, getClientesCodigos, updateVolumeSaudavel as updateVolumeSaudavelUtil } from "@/utils/financialUtils";
+import { 
+  fetchFinancialTitles, 
+  fetchClientInfo, 
+  fetchPedidosForRepresentantes, 
+  fetchRepresentantesInfo,
+  processClientsData,
+  fetchValoresVencidos
+} from "@/services/financialService";
 
-// Get a single client by ID
-export const useClienteFinanceiro = (clienteId: number | string | undefined) => {
-  return useQuery({
-    queryKey: ["cliente-financeiro", clienteId],
-    queryFn: async () => {
-      if (!clienteId) return null;
-      
-      try {
-        // Fetch basic client data
-        const cliente = await fetchClient(clienteId);
-        
-        // Load financial data
-        const financialData = await loadClientFinancialData(clienteId);
-        
-        // Ensure we have all required fields and proper types
-        const fullCliente: ClienteFinanceiro = {
-          // Required fields
-          PES_CODIGO: cliente?.PES_CODIGO || String(clienteId),
-          APELIDO: cliente?.APELIDO || null,
-          volume_saudavel_faturamento: cliente?.volume_saudavel_faturamento || null,
-          valoresTotais: financialData.valoresTotais || 0,
-          valoresEmAberto: financialData.valoresEmAberto || 0,
-          valoresVencidos: financialData.valoresVencidos || 0,
-          separacoes: [],
-          representanteNome: null,
-          
-          // Optional fields from cliente
-          ...cliente,
-        };
-        
-        return fullCliente;
-      } catch (error) {
-        console.error("Error fetching cliente financeiro:", error);
-        throw error;
-      }
-    },
-    enabled: !!clienteId,
-  });
-};
+export type { ClienteFinanceiro } from "@/types/financialClient";
 
-// Get multiple clients by their IDs
-export const useClientesFinanceirosByIds = (clienteIds: (number | string)[]) => {
-  return useQuery({
-    queryKey: ["clientes-financeiros-by-ids", clienteIds],
-    queryFn: async () => {
-      if (!clienteIds.length) return [];
-      
+export const useClientesFinanceiros = () => {
+  const { data: separacoes = [], isLoading: isLoadingSeparacoes } = useSeparacoes();
+  const { toast } = useToast();
+  const [clientesFinanceiros, setClientesFinanceiros] = useState<ClienteFinanceiro[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hiddenCards, setHiddenCards] = useState<Set<string>>(new Set());
+
+  // Get separações pendentes with memoization
+  const getSeparacoesPendentesCallback = useCallback(() => {
+    return getSeparacoesPendentes(separacoes, hiddenCards);
+  }, [separacoes, hiddenCards]);
+
+  // Get unique client codes with memoization
+  const getClientesCodigosCallback = useCallback((sepPendentes: any[]) => {
+    return getClientesCodigos(sepPendentes);
+  }, []);
+
+  // Hide a card
+  const hideCard = (id: string) => {
+    setHiddenCards(current => {
+      const newSet = new Set(current);
+      newSet.add(id);
+      return newSet;
+    });
+  };
+
+  // Update volume saudavel
+  const updateVolumeSaudavel = async (clienteCodigo: number, valor: number) => {
+    const result = await updateVolumeSaudavelUtil(clienteCodigo, valor);
+    
+    if (result.success) {
+      // Update local state
+      setClientesFinanceiros(prev => 
+        prev.map(cliente => 
+          cliente.PES_CODIGO === clienteCodigo
+            ? { ...cliente, volume_saudavel_faturamento: valor } 
+            : cliente
+        )
+      );
+    }
+    
+    return result;
+  };
+
+  useEffect(() => {
+    const fetchFinancialData = async () => {
       try {
-        const clientes = await fetchClientsByIds(clienteIds);
+        setIsLoading(true);
         
-        // Enrich with financial data
-        const clientesEnriquecidos = await Promise.all(
-          clientes.map(async (cliente) => {
-            const financialData = await loadClientFinancialData(cliente.PES_CODIGO || "");
-            
-            // Construct a properly typed ClienteFinanceiro object
-            const enrichedClient: ClienteFinanceiro = {
-              PES_CODIGO: String(cliente.PES_CODIGO || ""),
-              APELIDO: cliente.APELIDO || null,
-              volume_saudavel_faturamento: cliente.volume_saudavel_faturamento || null,
-              valoresTotais: financialData.valoresTotais,
-              valoresEmAberto: financialData.valoresEmAberto,
-              valoresVencidos: financialData.valoresVencidos,
-              separacoes: [],
-              representanteNome: null,
-              ...cliente, // Include all other optional fields
-            };
-            
-            return enrichedClient;
-          })
+        const separacoesPendentes = getSeparacoesPendentesCallback();
+        const clientesCodigos = getClientesCodigosCallback(separacoesPendentes);
+
+        if (clientesCodigos.length === 0) {
+          setClientesFinanceiros([]);
+          setIsLoading(false);
+          return;
+        }
+
+        // Fetch financial titles
+        const titulos = await fetchFinancialTitles(clientesCodigos);
+
+        // Fetch client info
+        const clientes = await fetchClientInfo(clientesCodigos);
+
+        // Map clients to their separacoes
+        const clienteSeparacoes: Record<number, any[]> = {};
+        separacoesPendentes.forEach(sep => {
+          if (!clienteSeparacoes[sep.cliente_codigo]) {
+            clienteSeparacoes[sep.cliente_codigo] = [];
+          }
+          clienteSeparacoes[sep.cliente_codigo].push(sep);
+        });
+
+        // Get unique pedido numbers from separações
+        const numeroPedidos = separacoesPendentes
+          .flatMap(sep => sep.separacao_itens.map((item: any) => item.pedido))
+          .filter((value, index, self) => self.indexOf(value) === index);
+
+        // Initialize maps for representantes
+        const representantesCodigos = new Set<number>();
+        const clienteToRepresentanteMap = new Map<number, number>();
+        const representantesInfo = new Map<number, string>();
+
+        if (numeroPedidos.length > 0) {
+          // Fetch pedidos to get representantes
+          const pedidos = await fetchPedidosForRepresentantes(numeroPedidos);
+
+          if (pedidos && pedidos.length > 0) {
+            // Map each cliente to their representante
+            pedidos.forEach(pedido => {
+              if (pedido.REPRESENTANTE) {
+                representantesCodigos.add(pedido.REPRESENTANTE);
+                
+                // Find the separação with this pedido
+                separacoesPendentes.forEach(sep => {
+                  if (sep.separacao_itens.some((item: any) => item.pedido === pedido.PED_NUMPEDIDO)) {
+                    clienteToRepresentanteMap.set(sep.cliente_codigo, pedido.REPRESENTANTE);
+                  }
+                });
+              }
+            });
+
+            // Fetch representantes info if we have any
+            if (representantesCodigos.size > 0) {
+              const representantes = await fetchRepresentantesInfo(Array.from(representantesCodigos));
+
+              if (representantes) {
+                representantes.forEach(rep => {
+                  representantesInfo.set(rep.PES_CODIGO, rep.RAZAOSOCIAL);
+                });
+              }
+            }
+          }
+        }
+
+        // Create today's date with hours set to 0 to compare only dates
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // Process and set clients data
+        const clientesArray = processClientsData(
+          clientes, 
+          clienteSeparacoes, 
+          clienteToRepresentanteMap, 
+          representantesInfo,
+          titulos,
+          today
         );
         
-        return clientesEnriquecidos;
-      } catch (error) {
-        console.error("Error fetching clientes financeiros by ids:", error);
-        throw error;
-      }
-    },
-    enabled: clienteIds.length > 0,
-  });
-};
-
-// Get all clients
-export const useAllClientesFinanceiros = () => {
-  return useQuery({
-    queryKey: ["all-clientes-financeiros"],
-    queryFn: async () => {
-      try {
-        const clientes = await fetchAllClients();
+        // Now fetch overdue values directly for each client
+        for (const cliente of clientesArray) {
+          const valorVencido = await fetchValoresVencidos(cliente.PES_CODIGO);
+          cliente.valoresVencidos = valorVencido;
+        }
         
-        // Return just the basic data without loading financial details for all clients
-        // as that would be too many requests
-        return clientes.map(cliente => ({
-          ...cliente,
-          PES_CODIGO: String(cliente.PES_CODIGO || ""),
-          APELIDO: cliente.APELIDO || null,
-          volume_saudavel_faturamento: cliente.volume_saudavel_faturamento || null,
-          valoresTotais: 0, // These will be populated on demand
-          valoresEmAberto: 0,
-          valoresVencidos: 0,
-          separacoes: [],
-          representanteNome: null,
-        })) as ClienteFinanceiro[];
+        setClientesFinanceiros(clientesArray);
       } catch (error) {
-        console.error("Error fetching all clientes financeiros:", error);
-        throw error;
+        console.error("Erro ao buscar dados financeiros:", error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar os dados financeiros.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
       }
-    },
-  });
+    };
+
+    fetchFinancialData();
+  }, [getSeparacoesPendentesCallback, getClientesCodigosCallback, toast]);
+
+  return {
+    clientesFinanceiros,
+    isLoading,
+    isLoadingSeparacoes,
+    hideCard,
+    updateVolumeSaudavel
+  };
 };

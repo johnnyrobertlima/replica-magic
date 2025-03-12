@@ -50,12 +50,6 @@ export const ClientOrderCard = ({
     setLocalShowOnlyWithStock(checked);
   };
 
-  // Format currency
-  const formatCurrency = (value: number | null | undefined) => {
-    if (value === null || value === undefined) return 'N/A';
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-  };
-
   return (
     <Card 
       className={cn(
@@ -70,39 +64,14 @@ export const ClientOrderCard = ({
         >
           <div className="space-y-1">
             <h3 className="text-lg font-semibold">Cliente: {clientName}</h3>
-            {data.representanteNome && (
+            {data.representante && (
               <p className="text-sm text-muted-foreground">
-                <span className="font-medium">Representante:</span> {data.representanteNome}
+                Representante: {data.representante}
               </p>
             )}
             <p className="text-sm text-muted-foreground">
               Total de Pedidos: {pedidosCount}
             </p>
-            {data.volumeSaudavel !== undefined && data.volumeSaudavel !== null && (
-              <p className="text-sm text-muted-foreground">
-                <span className="font-medium">Volume Saudável:</span> {formatCurrency(data.volumeSaudavel)}
-              </p>
-            )}
-            {data.volume_saudavel_faturamento !== undefined && data.volume_saudavel_faturamento !== null && (
-              <p className="text-sm text-muted-foreground">
-                <span className="font-medium">Volume Saudável:</span> {formatCurrency(data.volume_saudavel_faturamento)}
-              </p>
-            )}
-            {data.valoresVencidos !== undefined && (
-              <p className={`text-sm ${data.valoresVencidos > 0 ? 'text-red-500 font-medium' : 'text-muted-foreground'}`}>
-                <span className="font-medium">Valores Vencidos:</span> {formatCurrency(data.valoresVencidos)}
-              </p>
-            )}
-            {data.valoresTotais !== undefined && (
-              <p className="text-sm text-muted-foreground">
-                <span className="font-medium">Valores Totais:</span> {formatCurrency(data.valoresTotais)}
-              </p>
-            )}
-            {data.valoresEmAberto !== undefined && (
-              <p className="text-sm text-muted-foreground">
-                <span className="font-medium">Valores em Aberto:</span> {formatCurrency(data.valoresEmAberto)}
-              </p>
-            )}
           </div>
           {isExpanded ? (
             <ChevronUp className="h-6 w-6 text-muted-foreground" />
@@ -123,10 +92,6 @@ export const ClientOrderCard = ({
             totalValorPedido={data.totalValorPedido}
             totalValorFaturado={data.totalValorFaturado}
             totalValorFaturarComEstoque={data.totalValorFaturarComEstoque}
-            volumeSaudavel={data.volumeSaudavel || data.volume_saudavel_faturamento}
-            valoresTotais={data.valoresTotais}
-            valoresEmAberto={data.valoresEmAberto}
-            valoresVencidos={data.valoresVencidos}
           />
 
           {isExpanded && (
