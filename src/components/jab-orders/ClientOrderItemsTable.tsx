@@ -29,6 +29,10 @@ export const ClientOrderItemsTable = ({
   selectedItems,
   onItemSelect
 }: ClientOrderItemsTableProps) => {
+  console.log('ClientOrderItemsTable received items:', items);
+  console.log('showZeroBalance:', showZeroBalance);
+  console.log('showOnlyWithStock:', showOnlyWithStock);
+  
   // Safely filter items, ensuring all items have the required properties
   const filteredItems = (items || []).filter((item) => {
     if (!item || typeof item !== 'object') return false;
@@ -36,6 +40,9 @@ export const ClientOrderItemsTable = ({
     if (showOnlyWithStock && (!item.FISICO || item.FISICO <= 0)) return false;
     return true;
   });
+  
+  console.log('Filtered items count:', filteredItems.length);
+  console.log('First 3 filtered items sample:', filteredItems.slice(0, 3));
 
   return (
     <div className="rounded-lg border overflow-x-auto">

@@ -39,6 +39,15 @@ export const ClientOrderContent = ({
   selectedItems,
   onItemSelect,
 }: ClientOrderContentProps) => {
+  console.log('ClientOrderContent - isExpanded:', isExpanded);
+  console.log('ClientOrderContent - clientName:', clientName);
+  
+  if (isExpanded) {
+    console.log('ClientOrderContent - expanded data:', data);
+    console.log('ClientOrderContent - allItems length:', data?.allItems?.length || 0);
+    console.log('ClientOrderContent - first few allItems:', data?.allItems?.slice(0, 3));
+  }
+  
   return (
     <div className="mt-4 space-y-4">
       {isExpanded && (
