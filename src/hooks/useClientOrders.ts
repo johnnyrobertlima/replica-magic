@@ -1,11 +1,13 @@
 
-import { useMemo } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { useAllJabOrders, useTotals } from "@/hooks/useJabOrders";
 import { useSeparacoes } from "@/hooks/useSeparacoes";
 import { groupOrdersByClient, filterGroupsBySearchCriteria } from "@/utils/clientOrdersUtils";
 import { useClientOrdersState } from "./client-orders/useClientOrdersState";
 import { useItemSelection } from "./client-orders/useItemSelection";
 import { useSeparationOperations } from "./client-orders/useSeparationOperations";
+import { fetchClientFinancialInfo } from "@/services/jabOrdersService";
+import { ClientOrderGroup } from "@/types/clientOrders";
 
 export const useClientOrders = () => {
   // Use the state hook
@@ -42,11 +44,34 @@ export const useClientOrders = () => {
 
   // Group orders by client
   const groupedOrders = useMemo(() => groupOrdersByClient(ordersData), [ordersData]);
+  
+  // State to store grouped orders with financial information
+  const [groupedOrdersWithFinancialInfo, setGroupedOrdersWithFinancialInfo] = useState<Record<string, ClientOrderGroup>>(groupedOrders);
+  const [isLoadingFinancialInfo, setIsLoadingFinancialInfo] = useState(false);
+  
+  // Fetch financial information when grouped orders change
+  useEffect(() => {
+    const getFinancialInfo = async () => {
+      if (!groupedOrders || Object.keys(groupedOrders).length === 0) return;
+      
+      setIsLoadingFinancialInfo(true);
+      try {
+        const ordersWithFinancialInfo = await fetchClientFinancialInfo(groupedOrders);
+        setGroupedOrdersWithFinancialInfo(ordersWithFinancialInfo);
+      } catch (error) {
+        console.error("Erro ao buscar informações financeiras:", error);
+      } finally {
+        setIsLoadingFinancialInfo(false);
+      }
+    };
+    
+    getFinancialInfo();
+  }, [groupedOrders]);
 
-  // Filter groups by search criteria
+  // Filter groups by search criteria using the enhanced data
   const filteredGroups = useMemo(() => 
-    filterGroupsBySearchCriteria(groupedOrders, isSearching, searchQuery, searchType), 
-    [groupedOrders, isSearching, searchQuery, searchType]
+    filterGroupsBySearchCriteria(groupedOrdersWithFinancialInfo, isSearching, searchQuery, searchType), 
+    [groupedOrdersWithFinancialInfo, isSearching, searchQuery, searchType]
   );
 
   // Use the item selection hook
@@ -83,7 +108,7 @@ export const useClientOrders = () => {
     filteredGroups,
     totalSelecionado,
     // Loading states
-    isLoading: isLoadingOrders || isLoadingTotals || isLoadingSeparacoes,
+    isLoading: isLoadingOrders || isLoadingTotals || isLoadingSeparacoes || isLoadingFinancialInfo,
     // Methods
     toggleExpand,
     handleSearch,

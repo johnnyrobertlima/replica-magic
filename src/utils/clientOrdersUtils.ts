@@ -1,20 +1,17 @@
 
-import type { JabOrder, JabOrderItem } from "@/types/jabOrders";
+import type { JabOrdersResponse } from "@/types/jabOrders";
 import type { ClientOrderGroup } from "@/types/clientOrders";
 import type { SearchType } from "@/components/jab-orders/SearchFilters";
 
-export const groupOrdersByClient = (ordersData: { 
-  orders: JabOrder[],
-  totalCount: number,
-  itensSeparacao?: Record<string, boolean>
-}) => {
-  const groups: Record<string, ClientOrderGroup> = {};
+// Group orders by client
+export const groupOrdersByClient = (data: JabOrdersResponse): Record<string, ClientOrderGroup> => {
+  const groupedOrders: Record<string, ClientOrderGroup> = {};
 
-  ordersData.orders.forEach(order => {
-    if (!order.APELIDO || !order.PES_CODIGO) return;
-
-    if (!groups[order.APELIDO]) {
-      groups[order.APELIDO] = {
+  data.orders.forEach(order => {
+    const clientName = order.APELIDO || `Cliente ${order.PES_CODIGO}`;
+    
+    if (!groupedOrders[clientName]) {
+      groupedOrders[clientName] = {
         pedidos: [],
         totalQuantidadeSaldo: 0,
         totalValorSaldo: 0,
@@ -24,98 +21,197 @@ export const groupOrdersByClient = (ordersData: {
         representante: order.REPRESENTANTE_NOME,
         allItems: [],
         PES_CODIGO: order.PES_CODIGO,
-        valoresVencidos: 0, // Initialize new field
-        volumeSaudavel: null // Initialize new field
+        valoresVencidos: 0,
+        volumeSaudavel: null
       };
     }
 
-    groups[order.APELIDO].pedidos.push(order);
-    groups[order.APELIDO].totalQuantidadeSaldo += order.total_saldo;
-    groups[order.APELIDO].totalValorSaldo += order.valor_total;
-    groups[order.APELIDO].totalValorPedido += order.valor_total; // Assuming valor_total is the pedido value
+    // Add this order to the client's pedidos array
+    groupedOrders[clientName].pedidos.push(order);
     
-    // Calculate faturado based on items
-    let valorFaturado = 0;
-    order.items.forEach(item => {
-      valorFaturado += (item.QTDE_ENTREGUE || 0) * item.VALOR_UNITARIO;
-    });
-    groups[order.APELIDO].totalValorFaturado += valorFaturado;
+    // Add the order's items to the allItems array 
+    const items = order.items.map(item => ({
+      ...item,
+      pedido: order.PED_NUMPEDIDO,
+      APELIDO: order.APELIDO,
+      PES_CODIGO: order.PES_CODIGO
+    }));
+    groupedOrders[clientName].allItems.push(...items);
 
-    // Calculate potential faturamento with stock
-    let valorFaturarComEstoque = 0;
-    order.items.forEach(item => {
-      valorFaturarComEstoque += (item.QTDE_SALDO > 0 ? item.QTDE_SALDO : 0) * item.VALOR_UNITARIO;
-    });
-    groups[order.APELIDO].totalValorFaturarComEstoque += valorFaturarComEstoque;
+    // Update totals
+    let orderTotalSaldo = 0;
+    let orderTotalPedido = 0;
+    let orderTotalFaturarComEstoque = 0;
 
     order.items.forEach(item => {
-      groups[order.APELIDO].allItems.push({
-        ...item,
-        pedido: order.PED_NUMPEDIDO,
-        APELIDO: order.APELIDO,
-        PES_CODIGO: order.PES_CODIGO
-      });
+      const saldo = item.QTDE_SALDO;
+      const valor = item.VALOR_UNITARIO;
+      const valorTotal = saldo * valor;
+      
+      groupedOrders[clientName].totalQuantidadeSaldo += saldo;
+      groupedOrders[clientName].totalValorSaldo += valorTotal;
+      
+      orderTotalSaldo += valorTotal;
+
+      const totalPedido = (item.QTDE_PEDIDA * valor);
+      const totalFaturado = (item.QTDE_ENTREGUE * valor);
+      
+      groupedOrders[clientName].totalValorPedido += totalPedido;
+      groupedOrders[clientName].totalValorFaturado += totalFaturado;
+      
+      orderTotalPedido += totalPedido;
+
+      if (item.FISICO && item.FISICO > 0) {
+        const valorFaturarComEstoque = Math.min(saldo, item.FISICO) * valor;
+        groupedOrders[clientName].totalValorFaturarComEstoque += valorFaturarComEstoque;
+        orderTotalFaturarComEstoque += valorFaturarComEstoque;
+      }
     });
   });
 
-  return groups;
+  return groupedOrders;
 };
 
+// Filter groups by search criteria
 export const filterGroupsBySearchCriteria = (
-  groups: Record<string, ClientOrderGroup>,
+  groupedOrders: Record<string, ClientOrderGroup>,
   isSearching: boolean,
   searchQuery: string,
   searchType: SearchType
 ): Record<string, ClientOrderGroup> => {
-  if (!isSearching) {
-    return groups;
+  if (!isSearching || !searchQuery) {
+    return groupedOrders;
   }
 
-  const normalizedSearchQuery = searchQuery.toLowerCase();
   const filteredGroups: Record<string, ClientOrderGroup> = {};
+  const searchLower = searchQuery.toLowerCase();
 
-  for (const clientName in groups) {
-    if (Object.hasOwnProperty.call(groups, clientName)) {
-      const group = groups[clientName];
-
-      const matchesSearch = () => {
-        if (!searchQuery) return true;
-
-        if (searchType === "cliente") {
-          return clientName.toLowerCase().includes(normalizedSearchQuery);
-        } else if (searchType === "pedido") {
-          return group.pedidos.some(pedido =>
-            pedido.PED_NUMPEDIDO.toLowerCase().includes(normalizedSearchQuery) ||
-            (pedido.PEDIDO_CLIENTE?.toLowerCase().includes(normalizedSearchQuery) ?? false)
-          );
-        } else if (searchType === "representante") {
-          return group.representante?.toLowerCase().includes(normalizedSearchQuery) ?? false;
-        } else if (searchType === "item") {
-          return group.allItems.some(item =>
-            item.ITEM_CODIGO.toLowerCase().includes(normalizedSearchQuery) ||
-            (item.DESCRICAO?.toLowerCase().includes(normalizedSearchQuery) ?? false)
-          );
-        }
-
-        return false;
-      };
-
-      if (matchesSearch()) {
-        filteredGroups[clientName] = group;
+  // Search by client name
+  if (searchType === "cliente") {
+    Object.keys(groupedOrders).forEach(clientName => {
+      if (clientName.toLowerCase().includes(searchLower)) {
+        filteredGroups[clientName] = groupedOrders[clientName];
       }
-    }
+    });
+    return filteredGroups;
   }
 
-  return filteredGroups;
-};
+  // Search by order number
+  if (searchType === "pedido") {
+    Object.keys(groupedOrders).forEach(clientName => {
+      const group = groupedOrders[clientName];
+      const pedidos = group.pedidos.filter(pedido => 
+        pedido.PED_NUMPEDIDO.toLowerCase().includes(searchLower) ||
+        (pedido.PEDIDO_CLIENTE && pedido.PEDIDO_CLIENTE.toLowerCase().includes(searchLower))
+      );
+      
+      if (pedidos.length > 0) {
+        // Create a new filtered group
+        const items = group.allItems.filter(item => 
+          pedidos.some(pedido => pedido.PED_NUMPEDIDO === item.pedido)
+        );
+        
+        if (items.length > 0) {
+          // Calculate new totals based on filtered items
+          let totalQuantidadeSaldo = 0;
+          let totalValorSaldo = 0;
+          let totalValorPedido = 0;
+          let totalValorFaturado = 0;
+          let totalValorFaturarComEstoque = 0;
+          
+          items.forEach(item => {
+            const saldo = item.QTDE_SALDO;
+            const valor = item.VALOR_UNITARIO;
+            const valorTotal = saldo * valor;
+            
+            totalQuantidadeSaldo += saldo;
+            totalValorSaldo += valorTotal;
+            
+            const totalPedido = (item.QTDE_PEDIDA * valor);
+            const totalFaturado = (item.QTDE_ENTREGUE * valor);
+            
+            totalValorPedido += totalPedido;
+            totalValorFaturado += totalFaturado;
+            
+            if (item.FISICO && item.FISICO > 0) {
+              const valorFaturarComEstoque = Math.min(saldo, item.FISICO) * valor;
+              totalValorFaturarComEstoque += valorFaturarComEstoque;
+            }
+          });
+          
+          filteredGroups[clientName] = {
+            ...group,
+            pedidos,
+            allItems: items,
+            totalQuantidadeSaldo,
+            totalValorSaldo,
+            totalValorPedido,
+            totalValorFaturado,
+            totalValorFaturarComEstoque
+          };
+        }
+      }
+    });
+    return filteredGroups;
+  }
 
-// Add missing functions
-export const calculateTotalSelected = (selectedItemsDetails: Record<string, { qtde: number; valor: number }>) => {
-  return Object.values(selectedItemsDetails).reduce((total, item) => {
-    return total + (item.qtde * item.valor);
-  }, 0);
-};
+  // Search by item
+  if (searchType === "item") {
+    Object.keys(groupedOrders).forEach(clientName => {
+      const group = groupedOrders[clientName];
+      const items = group.allItems.filter(item => 
+        item.ITEM_CODIGO.toLowerCase().includes(searchLower) ||
+        (item.DESCRICAO && item.DESCRICAO.toLowerCase().includes(searchLower))
+      );
+      
+      if (items.length > 0) {
+        // Find unique pedidos that contain these items
+        const pedidoSet = new Set(items.map(item => item.pedido));
+        const pedidos = group.pedidos.filter(pedido => 
+          pedidoSet.has(pedido.PED_NUMPEDIDO)
+        );
+        
+        // Calculate new totals based on filtered items
+        let totalQuantidadeSaldo = 0;
+        let totalValorSaldo = 0;
+        let totalValorPedido = 0;
+        let totalValorFaturado = 0;
+        let totalValorFaturarComEstoque = 0;
+        
+        items.forEach(item => {
+          const saldo = item.QTDE_SALDO;
+          const valor = item.VALOR_UNITARIO;
+          const valorTotal = saldo * valor;
+          
+          totalQuantidadeSaldo += saldo;
+          totalValorSaldo += valorTotal;
+          
+          const totalPedido = (item.QTDE_PEDIDA * valor);
+          const totalFaturado = (item.QTDE_ENTREGUE * valor);
+          
+          totalValorPedido += totalPedido;
+          totalValorFaturado += totalFaturado;
+          
+          if (item.FISICO && item.FISICO > 0) {
+            const valorFaturarComEstoque = Math.min(saldo, item.FISICO) * valor;
+            totalValorFaturarComEstoque += valorFaturarComEstoque;
+          }
+        });
+        
+        filteredGroups[clientName] = {
+          ...group,
+          pedidos,
+          allItems: items,
+          totalQuantidadeSaldo,
+          totalValorSaldo,
+          totalValorPedido,
+          totalValorFaturado,
+          totalValorFaturarComEstoque
+        };
+      }
+    });
+    return filteredGroups;
+  }
 
-export const getClientCodeFromItem = (item: any) => {
-  return item.PES_CODIGO;
+  return groupedOrders;
 };

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import type { 
   PedidoUnicoResult, 
@@ -276,6 +275,73 @@ async function fetchItensSeparacao() {
   return itensSeparacaoMap;
 }
 
+// Função auxiliar para buscar valores vencidos de um cliente
+async function fetchValoresVencidosForCliente(clienteCodigo: number) {
+  try {
+    console.log(`Buscando valores vencidos para cliente ${clienteCodigo}`);
+    
+    // Format today's date as YYYY-MM-DD for comparison
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Convert clienteCodigo to string for the query
+    const clienteCodigoStr = String(clienteCodigo);
+    console.log(`Usando código do cliente: ${clienteCodigoStr}`);
+    
+    const { data, error } = await supabase
+      .from('BLUEBAY_TITULO')
+      .select('VLRSALDO')
+      .eq('PES_CODIGO', clienteCodigoStr)
+      .lt('DTVENCIMENTO', today)
+      .not('VLRSALDO', 'is', null);
+    
+    if (error) {
+      console.error("Erro ao buscar títulos vencidos:", error);
+      throw error;
+    }
+    
+    if (!data || data.length === 0) {
+      console.log(`Nenhum título vencido encontrado para cliente ${clienteCodigoStr}`);
+      return 0;
+    }
+    
+    console.log(`Encontrados ${data.length} títulos vencidos para cliente ${clienteCodigoStr}`);
+    
+    // Calculate the total of overdue values
+    const valorVencido = data.reduce((total, titulo) => {
+      const saldo = parseFloat(titulo.VLRSALDO) || 0;
+      return total + saldo;
+    }, 0);
+    
+    console.log(`Total valor vencido para cliente ${clienteCodigoStr}: ${valorVencido}`);
+    
+    return valorVencido;
+  } catch (error) {
+    console.error("Erro ao buscar títulos vencidos:", error);
+    return 0;
+  }
+}
+
+// Função para buscar volume saudável do cliente
+async function fetchVolumeSaudavel(clienteCodigo: number) {
+  try {
+    const { data, error } = await supabase
+      .from('BLUEBAY_PESSOA')
+      .select('volume_saudavel_faturamento')
+      .eq('PES_CODIGO', clienteCodigo)
+      .single();
+    
+    if (error) {
+      console.error("Erro ao buscar volume saudável:", error);
+      return null;
+    }
+    
+    return data?.volume_saudavel_faturamento || null;
+  } catch (error) {
+    console.error("Erro ao buscar volume saudável:", error);
+    return null;
+  }
+}
+
 export async function fetchJabOrders({ 
   dateRange, 
   page = 1, 
@@ -423,8 +489,9 @@ export async function fetchAllJabOrders({
   // Coleta todos os IDs únicos para buscar dados relacionados
   const pessoasIds = [...new Set(pedidosDetalhados.map(p => p.PES_CODIGO).filter(id => id !== null && id !== undefined))] as number[];
   const itemCodigos = [...new Set(pedidosDetalhados.map(p => p.ITEM_CODIGO).filter(Boolean))];
+  const representantesCodigos = [...new Set(pedidosDetalhados.map(p => p.REPRESENTANTE).filter(id => id !== null && id !== undefined))] as number[];
 
-  console.log(`Encontrados ${pessoasIds.length} clientes e ${itemCodigos.length} itens diferentes`);
+  console.log(`Encontrados ${pessoasIds.length} clientes, ${representantesCodigos.length} representantes e ${itemCodigos.length} itens diferentes`);
 
   const { pessoas, itens, estoque } = await fetchRelatedData(pessoasIds, itemCodigos);
   const itensSeparacao = await fetchItensSeparacao();
@@ -433,6 +500,19 @@ export async function fetchAllJabOrders({
   const pessoasMap = new Map(pessoas.map(p => [p.PES_CODIGO, p]));
   const itemMap = new Map(itens.map(i => [i.ITEM_CODIGO, i.DESCRICAO]));
   const estoqueMap = new Map(estoque.map(e => [e.ITEM_CODIGO, e.FISICO]));
+  
+  // Buscar informações dos representantes
+  const { data: representantes } = await supabase
+    .from('BLUEBAY_PESSOA')
+    .select('PES_CODIGO, RAZAOSOCIAL')
+    .in('PES_CODIGO', representantesCodigos);
+    
+  const representantesMap = new Map();
+  if (representantes) {
+    representantes.forEach(rep => {
+      representantesMap.set(rep.PES_CODIGO, rep.RAZAOSOCIAL);
+    });
+  }
 
   // Agrupa os pedidos por número de pedido
   const pedidosAgrupados = new Map<string, any[]>();
@@ -455,6 +535,10 @@ export async function fetchAllJabOrders({
     const primeiroPedido = pedidos[0];
     
     const pessoa = pessoasMap.get(primeiroPedido.PES_CODIGO);
+    
+    // Obter nome do representante
+    const representanteNome = primeiroPedido.REPRESENTANTE ? 
+      representantesMap.get(primeiroPedido.REPRESENTANTE) || null : null;
 
     let total_saldo = 0;
     let valor_total = 0;
@@ -494,7 +578,7 @@ export async function fetchAllJabOrders({
       APELIDO: pessoa?.APELIDO || null,
       PEDIDO_CLIENTE: primeiroPedido.PEDIDO_CLIENTE || null,
       STATUS: primeiroPedido.STATUS || '',
-      REPRESENTANTE_NOME: primeiroPedido.REPRESENTANTE || null,
+      REPRESENTANTE_NOME: representanteNome,
       PES_CODIGO: primeiroPedido.PES_CODIGO,
       items: Array.from(items.values())
     };
@@ -552,4 +636,33 @@ export async function fetchTotals(): Promise<JabTotalsResponse> {
     valorTotalSaldo,
     valorFaturarComEstoque
   };
+}
+
+// Nova função para buscar valores vencidos e volume saudável para os clientes
+export async function fetchClientFinancialInfo(clientGroups: Record<string, any>) {
+  console.log('Buscando informações financeiras para clientes...');
+  
+  const groupsWithFinancialInfo = { ...clientGroups };
+  
+  // Processar cada grupo de cliente
+  for (const clientName in groupsWithFinancialInfo) {
+    const group = groupsWithFinancialInfo[clientName];
+    if (group && group.PES_CODIGO) {
+      try {
+        // Buscar valores vencidos
+        const valoresVencidos = await fetchValoresVencidosForCliente(group.PES_CODIGO);
+        group.valoresVencidos = valoresVencidos;
+        
+        // Buscar volume saudável
+        const volumeSaudavel = await fetchVolumeSaudavel(group.PES_CODIGO);
+        group.volumeSaudavel = volumeSaudavel;
+        
+        console.log(`Cliente ${clientName} (${group.PES_CODIGO}): Valores vencidos = ${valoresVencidos}, Volume saudável = ${volumeSaudavel}`);
+      } catch (error) {
+        console.error(`Erro ao buscar informações financeiras para cliente ${clientName}:`, error);
+      }
+    }
+  }
+  
+  return groupsWithFinancialInfo;
 }
