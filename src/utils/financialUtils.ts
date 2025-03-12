@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { ClienteFinanceiro, TituloFinanceiro } from "@/types/financialClient";
 
@@ -84,24 +83,16 @@ export const fetchTitulosVencidos = async (clienteCodigo: number | string): Prom
     const today = new Date().toISOString().split('T')[0];
     
     const { data, error } = await supabase
-      .from('BLUEBAY_TITULO')
-      .select('VLRSALDO')
-      .eq('PES_CODIGO', clienteCodigoStr)
-      .lt('DTVENCIMENTO', today)
-      .not('VLRSALDO', 'is', null);
+      .rpc('calcular_valor_vencido', {
+        cliente_codigo: clienteCodigoStr
+      });
     
     if (error) {
       console.error("Erro ao buscar títulos vencidos:", error);
       throw error;
     }
     
-    console.log(`Encontrados ${data?.length || 0} títulos vencidos para cliente ${clienteCodigoStr}`);
-    
-    // Sum up overdue values with proper validation
-    const valorVencido = data?.reduce((total, titulo) => {
-      const saldo = parseFloat(String(titulo.VLRSALDO)) || 0;
-      return total + saldo;
-    }, 0) || 0;
+    const valorVencido = data?.[0]?.total_vlr_saldo || 0;
     
     console.log(`Total valor vencido para cliente ${clienteCodigoStr}: ${valorVencido}`);
     
