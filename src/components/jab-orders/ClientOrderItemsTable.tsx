@@ -29,7 +29,9 @@ export const ClientOrderItemsTable = ({
   selectedItems,
   onItemSelect
 }: ClientOrderItemsTableProps) => {
-  const filteredItems = items.filter((item) => {
+  // Safely filter items, ensuring all items have the required properties
+  const filteredItems = (items || []).filter((item) => {
+    if (!item) return false;
     if (!showZeroBalance && item.QTDE_SALDO <= 0) return false;
     if (showOnlyWithStock && (item.FISICO || 0) <= 0) return false;
     return true;
@@ -54,50 +56,58 @@ export const ClientOrderItemsTable = ({
           </tr>
         </thead>
         <tbody>
-          {filteredItems.map((item, index) => {
-            const faltaFaturarValue = item.QTDE_SALDO * item.VALOR_UNITARIO;
-            
-            return (
-              <tr 
-                key={`${item.pedido}-${item.ITEM_CODIGO}-${index}`} 
-                className={cn(
-                  "border-t",
-                  item.emSeparacao && "bg-[#FEF7CD]" // Fundo amarelo claro para itens em separação
-                )}
-              >
-                <td className="p-2">
-                  <Checkbox
-                    checked={selectedItems.includes(item.ITEM_CODIGO)}
-                    onCheckedChange={() => onItemSelect(item)}
-                    disabled={item.emSeparacao}
-                  />
-                </td>
-                <td className="p-2">{item.pedido}</td>
-                <td className="p-2">{item.ITEM_CODIGO}</td>
-                <td className="p-2">
-                  {item.DESCRICAO || '-'}
-                  {item.emSeparacao && (
-                    <span className="ml-2 text-amber-600 text-xs font-medium">
-                      (Em separação)
-                    </span>
+          {filteredItems.length > 0 ? (
+            filteredItems.map((item, index) => {
+              const faltaFaturarValue = (item.QTDE_SALDO || 0) * (item.VALOR_UNITARIO || 0);
+              
+              return (
+                <tr 
+                  key={`${item.pedido}-${item.ITEM_CODIGO}-${index}`} 
+                  className={cn(
+                    "border-t",
+                    item.emSeparacao && "bg-[#FEF7CD]" // Fundo amarelo claro para itens em separação
                   )}
-                </td>
-                <td className="p-2 text-right">{item.QTDE_PEDIDA}</td>
-                <td className="p-2 text-right">{item.QTDE_ENTREGUE}</td>
-                <td className="p-2 text-right">{item.QTDE_SALDO}</td>
-                <td className="p-2 text-right">{item.FISICO || '-'}</td>
-                <td className="p-2 text-right">
-                  {formatCurrency(item.VALOR_UNITARIO)}
-                </td>
-                <td className="p-2 text-right">
-                  {formatCurrency(faltaFaturarValue)}
-                </td>
-                <td className="p-2 text-right">
-                  {formatCurrency(faltaFaturarValue)}
-                </td>
-              </tr>
-            );
-          })}
+                >
+                  <td className="p-2">
+                    <Checkbox
+                      checked={selectedItems.includes(item.ITEM_CODIGO)}
+                      onCheckedChange={() => onItemSelect(item)}
+                      disabled={item.emSeparacao}
+                    />
+                  </td>
+                  <td className="p-2">{item.pedido || '-'}</td>
+                  <td className="p-2">{item.ITEM_CODIGO || '-'}</td>
+                  <td className="p-2">
+                    {item.DESCRICAO || '-'}
+                    {item.emSeparacao && (
+                      <span className="ml-2 text-amber-600 text-xs font-medium">
+                        (Em separação)
+                      </span>
+                    )}
+                  </td>
+                  <td className="p-2 text-right">{item.QTDE_PEDIDA || 0}</td>
+                  <td className="p-2 text-right">{item.QTDE_ENTREGUE || 0}</td>
+                  <td className="p-2 text-right">{item.QTDE_SALDO || 0}</td>
+                  <td className="p-2 text-right">{item.FISICO || '-'}</td>
+                  <td className="p-2 text-right">
+                    {formatCurrency(item.VALOR_UNITARIO)}
+                  </td>
+                  <td className="p-2 text-right">
+                    {formatCurrency(faltaFaturarValue)}
+                  </td>
+                  <td className="p-2 text-right">
+                    {formatCurrency(faltaFaturarValue)}
+                  </td>
+                </tr>
+              );
+            })
+          ) : (
+            <tr>
+              <td colSpan={11} className="text-center py-4">
+                Nenhum item encontrado.
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>
