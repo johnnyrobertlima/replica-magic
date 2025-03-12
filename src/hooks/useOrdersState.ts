@@ -48,10 +48,8 @@ export const useOrdersState = () => {
     return str.replace(/^0+/, '');
   }, []);
 
-  // Observação: O resultado da função get_pedidos_unicos retorna apenas as propriedades pedidos_numpedido e total_count.
-  // Os dados de STATUS, REPRESENTANTE_NOME, etc. não estão disponíveis neste resultado.
-  // Por isso, estamos definindo filteredOrders como um array vazio, pois os dados reais
-  // serão carregados após o filtro ser aplicado.
+  // Since the API returns only ped_numpedido and total_count, we need to use an empty array
+  // for filtered orders until we get more data
   const filteredOrders = [];
 
   const selectedItemsTotals = { totalSaldo: 0, totalValor: 0, totalComEstoque: 0 };

@@ -39,7 +39,7 @@ export interface UseJabOrdersOptions {
 }
 
 export interface JabOrdersResponse {
-  orders: JabOrder[];
+  orders: JabOrder[] | PedidoUnicoResult[];
   totalCount: number;
   currentPage?: number;
   pageSize?: number;

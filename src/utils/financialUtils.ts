@@ -77,10 +77,12 @@ export const getClientesCodigos = (separacoesPendentes: any[]) => {
 // Função para atualizar o volume saudável
 export const updateVolumeSaudavel = async (clienteCodigo: number, valor: number) => {
   try {
+    const clienteCodigoStr = clientCodeToString(clienteCodigo);
+    
     const { error } = await supabase
       .from('BLUEBAY_PESSOA')
       .update({ volume_saudavel_faturamento: valor })
-      .eq('PES_CODIGO', clienteCodigo);
+      .eq('PES_CODIGO', clienteCodigoStr);
       
     if (error) {
       console.error('Erro ao atualizar volume saudável:', error);
