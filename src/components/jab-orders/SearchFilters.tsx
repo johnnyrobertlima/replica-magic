@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { DateRange } from "react-day-picker";
 
 export type SearchType = "cliente" | "pedido" | "item" | "representante";
 
@@ -19,6 +20,8 @@ interface SearchFiltersProps {
   onSearchQueryChange: (query: string) => void;
   onSearchTypeChange: (type: SearchType) => void;
   onSearch: () => void;
+  date?: DateRange | undefined;
+  onDateChange?: (date: DateRange | undefined) => void;
 }
 
 export const SearchFilters = ({
@@ -26,7 +29,10 @@ export const SearchFilters = ({
   searchType,
   onSearchQueryChange,
   onSearchTypeChange,
-  onSearch
+  onSearch,
+  // We add the new props but don't use them yet - they'll be implemented later if needed
+  date,
+  onDateChange
 }: SearchFiltersProps) => {
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
