@@ -129,7 +129,7 @@ export async function fetchAllJabOrders({
 }
 
 /**
- * Fetches JAB orders grouped by client
+ * Fetches JAB orders grouped by client using optimized functions
  */
 export async function fetchJabOrdersByClient({
   dateRange
@@ -151,17 +151,17 @@ export async function fetchJabOrdersByClient({
 
   console.log('Buscando pedidos por cliente para o período:', { dataInicial, dataFinal });
 
-  // Buscar pedidos agrupados por cliente
+  // Buscar pedidos agrupados por cliente com a função otimizada
   const clientesComPedidos = await fetchPedidosPorCliente(dataInicial, dataFinal);
   
-  if (!clientesComPedidos.length) {
+  if (!clientesComPedidos || clientesComPedidos.length === 0) {
     return { clientGroups: {}, totalCount: 0 };
   }
 
   // Buscar itens separação
   const itensSeparacao = await fetchItensSeparacao();
   
-  // Processar os dados por cliente
+  // Processar os dados por cliente usando a função otimizada
   const clientGroups = await processClientOrdersData(dataInicial, dataFinal, clientesComPedidos, itensSeparacao);
 
   const resultado = {

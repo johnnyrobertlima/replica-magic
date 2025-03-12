@@ -91,6 +91,7 @@ export function groupOrdersByNumber(pedidosDetalhados: any[]): Map<string, any[]
 
 /**
  * Processes client orders data into a structured format
+ * Uses the optimized database functions
  */
 export async function processClientOrdersData(
   dataInicial: string,
@@ -109,11 +110,11 @@ export async function processClientOrdersData(
     let totalQuantidadeSaldo = cliente.total_quantidade_saldo || 0;
     let totalValorSaldo = cliente.total_valor_saldo || 0;
     
-    // Buscar itens do cliente
+    // Buscar itens do cliente com a função otimizada
     const itensCliente = await fetchItensPorCliente(dataInicial, dataFinal, cliente.pes_codigo);
     
-    if (itensCliente.length > 0) {
-      // Buscar informações de estoque para os itens
+    if (itensCliente && itensCliente.length > 0) {
+      // Buscar informações de estoque para os itens com a função otimizada
       const itemCodigos = itensCliente.map(item => item.item_codigo);
       const estoqueData = await fetchEstoqueParaItens(itemCodigos);
       const estoqueMap = new Map(estoqueData.map(e => [e.item_codigo, e.fisico]));

@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Busca os pedidos agrupados por cliente para o período especificado
+ * Utiliza a função otimizada no banco de dados
  */
 export async function fetchPedidosPorCliente(dataInicial: string, dataFinal: string) {
   console.log('Buscando pedidos agrupados por cliente para o período:', { dataInicial, dataFinal });
@@ -28,6 +29,7 @@ export async function fetchPedidosPorCliente(dataInicial: string, dataFinal: str
 
 /**
  * Busca os itens de um cliente específico para o período especificado
+ * Utiliza a função otimizada no banco de dados
  */
 export async function fetchItensPorCliente(dataInicial: string, dataFinal: string, clienteCodigo: number) {
   console.log('Buscando itens do cliente para o período:', { dataInicial, dataFinal, clienteCodigo });
@@ -54,6 +56,7 @@ export async function fetchItensPorCliente(dataInicial: string, dataFinal: strin
 
 /**
  * Busca o estoque disponível para os itens especificados
+ * Utiliza a função otimizada no banco de dados
  */
 export async function fetchEstoqueParaItens(itemCodigos: string[]) {
   if (!itemCodigos.length) return [];
