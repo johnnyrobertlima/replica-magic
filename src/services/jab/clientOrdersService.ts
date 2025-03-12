@@ -1,12 +1,13 @@
 
 import type { UseJabOrdersOptions } from "@/types/jabOrders";
+import type { ClientOrdersResult } from "./types";
 import { fetchPedidosPorCliente } from "./pedidosPorClienteUtils";
 import { processClientOrdersData } from "./orderProcessUtils";
 import { fetchItensSeparacao } from "./separacaoUtils";
 
 export async function fetchJabOrdersByClient({
   dateRange
-}: Omit<UseJabOrdersOptions, 'page' | 'pageSize'>): Promise<any> {
+}: Omit<UseJabOrdersOptions, 'page' | 'pageSize'>): Promise<ClientOrdersResult> {
   if (!dateRange?.from || !dateRange?.to) {
     return { clientGroups: {}, totalCount: 0 };
   }

@@ -2,6 +2,11 @@
 import { supabase } from "@/integrations/supabase/client";
 import { ClienteFinanceiro, TituloFinanceiro } from "@/types/financialClient";
 
+// Define the type for the RPC result
+interface ValorVencidoResult {
+  total_vlr_saldo: number;
+}
+
 // Get separações pendentes
 export const getSeparacoesPendentes = (separacoes: any[], hiddenCards: Set<string>) => {
   const pendentes = separacoes
@@ -96,7 +101,9 @@ export const fetchTitulosVencidos = async (clienteCodigo: string | number): Prom
     console.log(`Buscando valores vencidos para cliente: ${clienteCodigoStr}`);
     
     // First try to use the RPC function for better performance
-    const { data: rpcData, error: rpcError } = await supabase.rpc<{ total_vlr_saldo: number }[]>('calcular_valor_vencido', { 
+    const { data: rpcData, error: rpcError } = await supabase.rpc<ValorVencidoResult, {
+      cliente_codigo: string;
+    }>('calcular_valor_vencido', { 
       cliente_codigo: clienteCodigoStr 
     });
     
@@ -131,7 +138,7 @@ export const fetchTitulosVencidos = async (clienteCodigo: string | number): Prom
     
     // Sum the overdue values
     const valorVencido = (data || []).reduce((total, titulo) => {
-      const saldo = parseFloat(titulo.VLRSALDO) || 0;
+      const saldo = parseFloat(String(titulo.VLRSALDO)) || 0;
       return total + saldo;
     }, 0);
     

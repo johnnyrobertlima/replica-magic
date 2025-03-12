@@ -3,6 +3,14 @@ import { useState, useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { fetchTitulosVencidos } from "@/utils/financialUtils";
 
+// Define a proper type for financial data
+interface FinancialData {
+  progressFaturamento: number;
+  progressPotencial: number;
+  valoresTotais: number;
+  valoresEmAberto: number;
+}
+
 export const useClientOrderCard = (data: any) => {
   const [valoresVencidos, setValoresVencidos] = useState(0);
   const [valoresEmAberto, setValoresEmAberto] = useState(0);
@@ -14,7 +22,7 @@ export const useClientOrderCard = (data: any) => {
     new Set(data.allItems.map((item: any) => item.pedido)).size,
   [data.allItems]);
 
-  const financialData = useMemo(() => {
+  const financialData = useMemo((): FinancialData => {
     const totalValorPedido = data.totalValorPedido || 0;
     const totalValorFaturado = data.totalValorFaturado || 0;
     const totalValorSaldo = data.totalValorSaldo || 0;
@@ -26,7 +34,9 @@ export const useClientOrderCard = (data: any) => {
         : 0,
       progressPotencial: totalValorSaldo > 0 
         ? (totalValorFaturarComEstoque / totalValorSaldo) * 100 
-        : 0
+        : 0,
+      valoresTotais: totalValorPedido,
+      valoresEmAberto: totalValorSaldo
     };
   }, [data.totalValorPedido, data.totalValorFaturado, data.totalValorSaldo, data.totalValorFaturarComEstoque]);
 

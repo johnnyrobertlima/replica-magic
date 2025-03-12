@@ -113,7 +113,7 @@ export async function processClientOrdersData(
     // Buscar itens do cliente com a função otimizada
     const itensCliente = await fetchItensPorCliente(dataInicial, dataFinal, cliente.pes_codigo);
     
-    if (itensCliente && itensCliente.length > 0) {
+    if (itensCliente && Array.isArray(itensCliente) && itensCliente.length > 0) {
       // Buscar informações de estoque para os itens com a função otimizada
       const itemCodigos = itensCliente.map(item => item.item_codigo);
       const estoqueData = await fetchEstoqueParaItens(itemCodigos);
