@@ -1,7 +1,7 @@
 
 import type { DateRange } from "react-day-picker";
 import type { SearchType } from "./SearchFilters";
-import SearchFilters from "./SearchFilters";
+import { SearchFilters } from "./SearchFilters";
 
 interface OrdersHeaderProps {
   currentPage: number;

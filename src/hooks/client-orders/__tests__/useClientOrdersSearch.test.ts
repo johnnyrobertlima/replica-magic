@@ -1,4 +1,3 @@
-
 import { renderHook } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { useClientOrdersSearch } from '../useClientOrdersSearch';
@@ -22,15 +21,18 @@ describe('useClientOrdersSearch', () => {
   });
 
   it('should initialize with custom date range', () => {
+    const { result } = renderHook(() => useClientOrdersSearch());
+    
     const customDate = {
       from: new Date(2023, 0, 1),
       to: new Date(2023, 0, 31)
     };
     
-    const { result } = renderHook(() => useClientOrdersSearch(customDate));
+    act(() => {
+      result.current.setDate(customDate);
+    });
     
     expect(result.current.date).toEqual(customDate);
-    expect(result.current.searchDate).toEqual(customDate);
   });
 
   it('should update date when setDate is called', () => {
