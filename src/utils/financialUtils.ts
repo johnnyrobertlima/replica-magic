@@ -79,9 +79,12 @@ export const fetchTitulosVencidos = async (clienteCodigo: string | number) => {
   try {
     console.log(`Buscando valores vencidos para cliente: ${clienteCodigo}`);
     
+    // Convert clienteCodigo to string to match the PES_CODIGO type in the database
+    const clienteCodigoStr = String(clienteCodigo);
+    
     // First try to use the RPC function for better performance
     const { data: rpcData, error: rpcError } = await supabase
-      .rpc('calcular_valor_vencido', { cliente_codigo: String(clienteCodigo) });
+      .rpc('calcular_valor_vencido', { cliente_codigo: clienteCodigoStr });
     
     if (!rpcError && rpcData && rpcData.length > 0) {
       const valorVencido = rpcData[0]?.total_vlr_saldo || 0;
@@ -96,7 +99,7 @@ export const fetchTitulosVencidos = async (clienteCodigo: string | number) => {
     const { data, error } = await supabase
       .from('BLUEBAY_TITULO')
       .select('VLRSALDO')
-      .eq('PES_CODIGO', String(clienteCodigo))
+      .eq('PES_CODIGO', clienteCodigoStr)
       .lt('DTVENCIMENTO', today)
       .not('VLRSALDO', 'is', null);
     
