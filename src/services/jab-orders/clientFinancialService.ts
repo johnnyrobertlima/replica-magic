@@ -35,3 +35,4 @@ export const fetchClientFinancialInfo = async (groupedOrders: Record<string, any
   
   return updatedGroups;
 };
+

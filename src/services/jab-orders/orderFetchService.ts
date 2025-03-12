@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { UseJabOrdersOptions } from "@/types/jabOrders";
 import { clientCodeToString } from "@/utils/client-orders/clientUtils";
