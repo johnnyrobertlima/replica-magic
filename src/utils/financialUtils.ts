@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { clientCodeToString } from "@/utils/client-orders/clientUtils";
 
@@ -58,11 +59,6 @@ export const fetchTitulosVencidos = async (clientCode: string | number): Promise
     console.error('Erro ao buscar títulos vencidos:', error);
     return 0;
   }
-};
-
-// Keep the clientCodeToString in client-orders/clientUtils.ts, but keep this function here for backwards compatibility
-export const clientCodeToString = (clientCode: string | number): string => {
-  return String(clientCode);
 };
 
 // Function to get separations pending, filtering hidden cards

@@ -20,3 +20,13 @@ export const clientCodeToNumber = (clientCode: string | number): number => {
   const numericValue = typeof clientCode === 'string' ? parseInt(clientCode, 10) : clientCode;
   return isNaN(numericValue) ? 0 : numericValue;
 };
+
+// Convert an array of client codes to an array of strings
+export const clientCodesToStrings = (clientCodes: (string | number)[]): string[] => {
+  return clientCodes.map(code => clientCodeToString(code));
+};
+
+// Convert an array of client codes to an array of numbers
+export const clientCodesToNumbers = (clientCodes: (string | number)[]): number[] => {
+  return clientCodes.map(code => clientCodeToNumber(code));
+};

@@ -2,11 +2,16 @@
 import { supabase } from "@/integrations/supabase/client";
 import { ClienteFinanceiro } from "@/types/financialClient";
 import { calculateClientFinancialValues, fetchTitulosVencidos } from "@/utils/financialUtils";
-import { clientCodeToString, clientCodeToNumber } from "@/utils/client-orders/clientUtils";
+import { 
+  clientCodeToString, 
+  clientCodeToNumber, 
+  clientCodesToStrings, 
+  clientCodesToNumbers 
+} from "@/utils/client-orders/clientUtils";
 
 // Fetch financial titles for clients
 export const fetchFinancialTitles = async (clientesCodigos: (string | number)[]) => {
-  const clienteCodigosStrings = clientesCodigos.map(codigo => clientCodeToString(codigo));
+  const clienteCodigosStrings = clientCodesToStrings(clientesCodigos);
 
   const { data: titulos, error } = await supabase
     .from('BLUEBAY_TITULO')
@@ -20,7 +25,7 @@ export const fetchFinancialTitles = async (clientesCodigos: (string | number)[])
 
 // Fetch client info
 export const fetchClientInfo = async (clientesCodigos: (string | number)[]) => {
-  const clienteCodigosStrings = clientesCodigos.map(codigo => clientCodeToString(codigo));
+  const clienteCodigosStrings = clientCodesToStrings(clientesCodigos);
 
   const { data: clientes, error } = await supabase
     .from('BLUEBAY_PESSOA')
@@ -45,7 +50,7 @@ export const fetchPedidosForRepresentantes = async (numeroPedidos: string[]) => 
 
 // Fetch representantes info
 export const fetchRepresentantesInfo = async (representantesCodigos: (string | number)[]) => {
-  const representanteCodigosStrings = representantesCodigos.map(codigo => clientCodeToString(codigo));
+  const representanteCodigosStrings = clientCodesToStrings(representantesCodigos);
 
   const { data: representantes, error } = await supabase
     .from('BLUEBAY_PESSOA')
