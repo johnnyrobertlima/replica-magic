@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { ClienteFinanceiro } from "@/types/financialClient";
 import { calculateClientFinancialValues, fetchTitulosVencidos } from "@/utils/financialUtils";
@@ -19,7 +20,7 @@ export const fetchClientInfo = async (clientIds: Array<string | number>) => {
   const { data: clientes, error } = await supabase
     .from('BLUEBAY_PESSOA')
     .select('PES_CODIGO, APELIDO, volume_saudavel_faturamento')
-    .in('PES_CODIGO', clientIds);
+    .in('PES_CODIGO', clientIds.map(String));
 
   if (error) throw error;
   return clientes;
@@ -42,7 +43,7 @@ export const fetchRepresentantesInfo = async (representantesCodigos: number[]) =
   const { data: representantes, error } = await supabase
     .from('BLUEBAY_PESSOA')
     .select('PES_CODIGO, RAZAOSOCIAL')
-    .in('PES_CODIGO', representantesCodigos);
+    .in('PES_CODIGO', representantesCodigos.map(String));
 
   if (error) throw error;
   return representantes;
