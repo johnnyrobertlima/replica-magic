@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -41,16 +41,32 @@ export const ClientOrderCard = ({
   const [isLoadingFinancial, setIsLoadingFinancial] = useState(false);
   const { toast } = useToast();
   
-  // Calculate progress percentages correctly
-  const progressFaturamento = data.totalValorPedido > 0 
-    ? (data.totalValorFaturado / data.totalValorPedido) * 100 
-    : 0;
+  // Calculate progress percentages correctly using memoization to avoid recalculation
+  const financialData = useMemo(() => {
+    const totalValorPedido = data.totalValorPedido || 0;
+    const totalValorFaturado = data.totalValorFaturado || 0;
+    const totalValorSaldo = data.totalValorSaldo || 0;
+    const totalValorFaturarComEstoque = data.totalValorFaturarComEstoque || 0;
     
-  const progressPotencial = data.totalValorSaldo > 0 
-    ? (data.totalValorFaturarComEstoque / data.totalValorSaldo) * 100 
-    : 0;
+    const progressFaturamento = totalValorPedido > 0 
+      ? (totalValorFaturado / totalValorPedido) * 100 
+      : 0;
+      
+    const progressPotencial = totalValorSaldo > 0 
+      ? (totalValorFaturarComEstoque / totalValorSaldo) * 100 
+      : 0;
     
-  const pedidosCount = new Set(data.allItems.map((item: any) => item.pedido)).size;
+    return {
+      progressFaturamento,
+      progressPotencial,
+      valoresTotais: totalValorPedido,
+      valoresEmAberto: totalValorSaldo
+    };
+  }, [data.totalValorPedido, data.totalValorFaturado, data.totalValorSaldo, data.totalValorFaturarComEstoque]);
+    
+  const pedidosCount = useMemo(() => 
+    new Set(data.allItems.map((item: any) => item.pedido)).size,
+  [data.allItems]);
 
   // Set border color based on financial status
   const getBorderColor = () => {
@@ -73,9 +89,9 @@ export const ClientOrderCard = ({
         const overdue = await fetchTitulosVencidos(data.PES_CODIGO);
         setValoresVencidos(overdue);
         
-        // Set other financial values
-        setValoresTotais(data.totalValorPedido || 0);
-        setValoresEmAberto(data.totalValorSaldo || 0);
+        // Set other financial values from memoized data
+        setValoresTotais(financialData.valoresTotais);
+        setValoresEmAberto(financialData.valoresEmAberto);
       } catch (error) {
         console.error("Error fetching financial data:", error);
         toast({
@@ -89,7 +105,7 @@ export const ClientOrderCard = ({
     };
 
     fetchFinancialData();
-  }, [data.PES_CODIGO, data.totalValorPedido, data.totalValorSaldo, toast]);
+  }, [data.PES_CODIGO, financialData.valoresTotais, financialData.valoresEmAberto, toast]);
 
   const handleZeroBalanceChange = (checked: boolean) => {
     setLocalShowZeroBalance(checked);
@@ -152,8 +168,8 @@ export const ClientOrderCard = ({
           )}
 
           <OrderProgressBars 
-            progressFaturamento={progressFaturamento}
-            progressPotencial={progressPotencial}
+            progressFaturamento={financialData.progressFaturamento}
+            progressPotencial={financialData.progressPotencial}
           />
 
           <OrderSummaryGrid

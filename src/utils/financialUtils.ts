@@ -74,11 +74,24 @@ export const calculateClientFinancialValues = (
   return cliente;
 };
 
+// Cache para valores vencidos por cliente
+const valoresVencidosCache = new Map<string, { value: number; timestamp: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
+
 // Fetch overdue titles directly from Supabase
 export const fetchTitulosVencidos = async (clienteCodigo: string | number): Promise<number> => {
   try {
     // Convert clienteCodigo to string to ensure type compatibility
     const clienteCodigoStr = String(clienteCodigo);
+    
+    // Verificar se temos um valor em cache válido
+    const cacheKey = `vencido_${clienteCodigoStr}`;
+    const cachedData = valoresVencidosCache.get(cacheKey);
+    
+    if (cachedData && Date.now() - cachedData.timestamp < CACHE_TTL) {
+      console.log(`Usando valor vencido em cache para cliente ${clienteCodigoStr}: ${cachedData.value}`);
+      return cachedData.value;
+    }
     
     console.log(`Buscando valores vencidos para cliente: ${clienteCodigoStr}`);
     
@@ -89,6 +102,10 @@ export const fetchTitulosVencidos = async (clienteCodigo: string | number): Prom
     if (!rpcError && rpcData && rpcData.length > 0) {
       const valorVencido = rpcData[0]?.total_vlr_saldo || 0;
       console.log(`Valor vencido via RPC para cliente ${clienteCodigoStr}: ${valorVencido}`);
+      
+      // Armazenar valor em cache
+      valoresVencidosCache.set(cacheKey, { value: valorVencido, timestamp: Date.now() });
+      
       return valorVencido;
     }
     
@@ -117,6 +134,9 @@ export const fetchTitulosVencidos = async (clienteCodigo: string | number): Prom
     }, 0);
     
     console.log(`Total valor vencido calculado para cliente ${clienteCodigoStr}: ${valorVencido}`);
+    
+    // Armazenar valor em cache
+    valoresVencidosCache.set(cacheKey, { value: valorVencido, timestamp: Date.now() });
     
     return valorVencido;
   } catch (error) {
