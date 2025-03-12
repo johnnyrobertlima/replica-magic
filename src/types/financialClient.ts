@@ -1,25 +1,25 @@
 
 export interface TituloFinanceiro {
-  PES_CODIGO: string | number;
+  PES_CODIGO: string;  // Changed to string to match Supabase
   VLRTITULO: number;
   VLRDESCONTO: number;
   VLRABATIMENTO: number;
   VLRSALDO: number;
   DTVENCIMENTO: string;
-  DTVENCTO?: string; // Make this optional since we're only using DTVENCIMENTO
+  DTVENCTO?: string;
   STATUS: string;
 }
 
 export interface ClienteFinanceiro {
-  PES_CODIGO: number;
+  PES_CODIGO: string;  // Changed to string to match database
   APELIDO: string | null;
   volume_saudavel_faturamento: number | null;
   valoresTotais: number;
   valoresEmAberto: number;
   valoresVencidos: number;
-  separacoes: any[]; // Separações associadas a este cliente
-  representanteNome: string | null; // Campo adicional para o nome do representante
-  volumeSaudavel?: number | null; // Optional for backward compatibility
+  separacoes: any[];
+  representanteNome: string | null;
+  volumeSaudavel?: number | null;
   
   // Add all other BLUEBAY_PESSOA fields as optional to avoid type errors
   BAIRRO?: string | null;

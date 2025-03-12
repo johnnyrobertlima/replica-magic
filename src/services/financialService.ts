@@ -1,20 +1,11 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import type { ClienteFinanceiro } from "@/types/financialClient";
 
 // Fetch a single client by ID
 export const fetchClient = async (clientId: number | string) => {
-  // Convert to number if it's a string
-  const numericClientId = typeof clientId === 'string' ? parseInt(clientId, 10) : clientId;
-  
-  // Check if the ID is valid
-  if (isNaN(numericClientId)) {
-    throw new Error(`Invalid client ID: ${clientId}`);
-  }
-
   // Convert to string for the query as PES_CODIGO is stored as text
-  const clientIdStr = String(numericClientId);
-
+  const clientIdStr = String(clientId);
+  
   const { data, error } = await supabase
     .from("BLUEBAY_PESSOA")
     .select(`
@@ -25,7 +16,7 @@ export const fetchClient = async (clientId: number | string) => {
       TELEFONE, 
       CIDADE, 
       UF, 
-      volume_saudavel_faturamento, 
+      volume_saudavel_faturamento,
       BAIRRO, 
       CATEGORIA, 
       CEP, 
@@ -38,7 +29,7 @@ export const fetchClient = async (clientId: number | string) => {
       NUMERO
     `)
     .eq("PES_CODIGO", clientIdStr)
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data as ClienteFinanceiro;
@@ -56,16 +47,12 @@ export const processClientsData = (clients: any[]) => {
 
 // Fetch multiple clients by their IDs
 export const fetchClientsByIds = async (clientIds: (number | string)[]) => {
-  const numericClientIds = clientIds.map(id => 
-    typeof id === 'string' ? parseInt(id, 10) : id
-  ).filter(id => !isNaN(id));
+  // Convert all IDs to strings for the query
+  const clientIdStrings = clientIds.map(id => String(id));
   
-  if (numericClientIds.length === 0) {
+  if (clientIdStrings.length === 0) {
     return [];
   }
-
-  // Convert IDs to strings for the query
-  const clientIdStrings = numericClientIds.map(id => String(id));
 
   const { data, error } = await supabase
     .from("BLUEBAY_PESSOA")
@@ -77,7 +64,7 @@ export const fetchClientsByIds = async (clientIds: (number | string)[]) => {
       TELEFONE, 
       CIDADE, 
       UF, 
-      volume_saudavel_faturamento, 
+      volume_saudavel_faturamento,
       BAIRRO, 
       CATEGORIA, 
       CEP, 
@@ -92,7 +79,7 @@ export const fetchClientsByIds = async (clientIds: (number | string)[]) => {
     .in("PES_CODIGO", clientIdStrings);
 
   if (error) throw error;
-  return data || [];
+  return (data || []) as ClienteFinanceiro[];
 };
 
 // Fetch all clients

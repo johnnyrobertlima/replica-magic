@@ -1,12 +1,3 @@
-
-import { 
-  fetchClient, 
-  fetchAllClients,
-  fetchClientsByIds,
-  fetchClientsByName,
-  fetchClientsByRepIds,
-  processClientsData
-} from '@/services/financialService';
 import { supabase } from "@/integrations/supabase/client";
 import type { ClienteFinanceiro } from "@/types/financialClient";
 
@@ -24,10 +15,8 @@ export const calcularValoresVencidos = (titulos: any[], today: Date): number => 
 
 export const loadClientFinancialData = async (clientId: number | string) => {
   try {
-    const numericClientId = typeof clientId === 'string' ? parseInt(clientId, 10) : clientId;
-    
-    // Convert numericClientId to string for the query as PES_CODIGO appears to be stored as text in the database
-    const clientIdStr = String(numericClientId);
+    // Convert to string for query
+    const clientIdStr = String(clientId);
     
     const { data: titulos = [], error } = await supabase
       .from("BLUEBAY_TITULO")
@@ -110,14 +99,8 @@ export const fetchTitulosVencidos = async (clientId: number | string) => {
 
 export const getClientById = async (clientId: number | string) => {
   try {
-    const numericClientId = typeof clientId === 'string' ? parseInt(clientId, 10) : clientId;
-    
-    if (isNaN(numericClientId)) {
-      throw new Error(`Invalid client ID: ${clientId}`);
-    }
-    
-    // Convert to string for the query as PES_CODIGO is stored as text
-    const clientIdStr = String(numericClientId);
+    // Convert to string for query
+    const clientIdStr = String(clientId);
     
     const { data, error } = await supabase
       .from("BLUEBAY_PESSOA")
@@ -129,7 +112,7 @@ export const getClientById = async (clientId: number | string) => {
         TELEFONE, 
         CIDADE, 
         UF, 
-        volume_saudavel_faturamento, 
+        volume_saudavel_faturamento,
         BAIRRO, 
         CATEGORIA, 
         CEP, 
@@ -142,12 +125,11 @@ export const getClientById = async (clientId: number | string) => {
         NUMERO
       `)
       .eq("PES_CODIGO", clientIdStr)
-      .single();
+      .maybeSingle();
       
     if (error) throw error;
     
-    // Cast the data to ClienteFinanceiro to ensure type compatibility
-    return data as unknown as ClienteFinanceiro;
+    return data as ClienteFinanceiro;
   } catch (error) {
     console.error("Error fetching client data:", error);
     throw error;
