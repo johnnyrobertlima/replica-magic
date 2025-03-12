@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { ClienteFinanceiro, TituloFinanceiro } from "@/types/financialClient";
 
@@ -79,8 +80,6 @@ export const fetchTitulosVencidos = async (clienteCodigo: number | string): Prom
     // Ensure clienteCodigo is a string as expected by the database
     const clienteCodigoStr = String(clienteCodigo);
     console.log(`Buscando títulos vencidos para cliente ${clienteCodigoStr}`);
-    
-    const today = new Date().toISOString().split('T')[0];
     
     const { data, error } = await supabase
       .rpc('calcular_valor_vencido', {
