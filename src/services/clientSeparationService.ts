@@ -1,3 +1,4 @@
+
 import type { JabOrderItem } from "@/types/jabOrders";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
@@ -56,7 +57,7 @@ export async function createSeparacao(
       .from('separacoes')
       .insert({
         cliente_nome: clientName,
-        cliente_codigo: String(clientCode), // Convert to string explicitly
+        cliente_codigo: Number(clientCode), // Convert string to number explicitly
         status: 'pendente',
         created_at: new Date().toISOString()
       })
