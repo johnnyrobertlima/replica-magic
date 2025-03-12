@@ -333,6 +333,72 @@ export type Database = {
         }
         Relationships: []
       }
+      BLUEBAY_PEDIDO_ORG: {
+        Row: {
+          CENTROCUSTO: string | null
+          DATA_PEDIDO: string | null
+          FILIAL: number
+          ITEM_CODIGO: string | null
+          MATRIZ: number
+          MPED_NUMORDEM: number
+          PED_ANOBASE: string
+          PED_NUMPEDIDO: string
+          PEDIDO: string | null
+          PEDIDO_CLIENTE: string | null
+          PEDIDO_OUTRO: string | null
+          PES_CODIGO: number | null
+          QTDE_ENTREGUE: number | null
+          QTDE_PEDIDA: number | null
+          QTDE_SALDO: number | null
+          REPRESENTANTE: number | null
+          STATUS: string | null
+          TOTAL_PRODUTO: number | null
+          VALOR_UNITARIO: number | null
+        }
+        Insert: {
+          CENTROCUSTO?: string | null
+          DATA_PEDIDO?: string | null
+          FILIAL: number
+          ITEM_CODIGO?: string | null
+          MATRIZ: number
+          MPED_NUMORDEM: number
+          PED_ANOBASE: string
+          PED_NUMPEDIDO: string
+          PEDIDO?: string | null
+          PEDIDO_CLIENTE?: string | null
+          PEDIDO_OUTRO?: string | null
+          PES_CODIGO?: number | null
+          QTDE_ENTREGUE?: number | null
+          QTDE_PEDIDA?: number | null
+          QTDE_SALDO?: number | null
+          REPRESENTANTE?: number | null
+          STATUS?: string | null
+          TOTAL_PRODUTO?: number | null
+          VALOR_UNITARIO?: number | null
+        }
+        Update: {
+          CENTROCUSTO?: string | null
+          DATA_PEDIDO?: string | null
+          FILIAL?: number
+          ITEM_CODIGO?: string | null
+          MATRIZ?: number
+          MPED_NUMORDEM?: number
+          PED_ANOBASE?: string
+          PED_NUMPEDIDO?: string
+          PEDIDO?: string | null
+          PEDIDO_CLIENTE?: string | null
+          PEDIDO_OUTRO?: string | null
+          PES_CODIGO?: number | null
+          QTDE_ENTREGUE?: number | null
+          QTDE_PEDIDA?: number | null
+          QTDE_SALDO?: number | null
+          REPRESENTANTE?: number | null
+          STATUS?: string | null
+          TOTAL_PRODUTO?: number | null
+          VALOR_UNITARIO?: number | null
+        }
+        Relationships: []
+      }
       BLUEBAY_PESSOA: {
         Row: {
           APELIDO: string | null
@@ -1335,6 +1401,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: {
           valor_total_saldo: number
+        }[]
+      }
+      calcular_valor_vencido: {
+        Args: {
+          cliente_codigo: string
+        }
+        Returns: {
+          total_vlr_saldo: number
         }[]
       }
       check_admin_permission: {

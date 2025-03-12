@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import type { 
   PedidoUnicoResult, 
@@ -40,12 +39,11 @@ async function fetchAllPedidosUnicos(
   dataInicial: string, 
   dataFinal: string
 ): Promise<{ data: PedidoUnicoResult[], totalCount: number }> {
-  // Esta função busca todos os pedidos sem paginação
   const { data, error } = await supabase.rpc('get_pedidos_unicos', {
     data_inicial: dataInicial,
     data_final: `${dataFinal} 23:59:59.999`,
     offset_val: 0,
-    limit_val: 9999 // Um número grande para pegar todos
+    limit_val: 9999
   });
 
   if (error) {
@@ -69,7 +67,6 @@ async function fetchAllPedidosDireto(
 ): Promise<any[]> {
   console.log('Buscando todos os pedidos diretamente para o período:', { dataInicial, dataFinal });
   
-  // Devido ao limite de 1000 registros por consulta, precisamos buscar em lotes
   let allPedidos: any[] = [];
   let hasMore = true;
   let page = 0;
@@ -112,7 +109,6 @@ async function fetchAllPedidosDireto(
       allPedidos = [...allPedidos, ...data];
       console.log(`Lote ${page + 1}: Recebidos ${data.length} pedidos. Total até agora: ${allPedidos.length}`);
       
-      // Verifica se ainda há mais dados para buscar
       if (data.length < pageSize) {
         hasMore = false;
       } else {
@@ -130,7 +126,6 @@ async function fetchAllPedidosDireto(
 async function fetchPedidosDetalhados(numeroPedidos: string[]) {
   if (!numeroPedidos.length) return [];
   
-  // Divide em lotes de 100 para não exceder limites de consulta
   const batchSize = 100;
   const batches = [];
   
@@ -140,7 +135,6 @@ async function fetchPedidosDetalhados(numeroPedidos: string[]) {
   
   console.log(`Buscando detalhes em ${batches.length} lotes`);
   
-  // Busca cada lote de pedidos
   const allResults = [];
   for (const batch of batches) {
     const { data, error } = await supabase
@@ -178,21 +172,23 @@ async function fetchPedidosDetalhados(numeroPedidos: string[]) {
   return allResults;
 }
 
-async function fetchRelatedData(pessoasIds: number[], itemCodigos: string[]) {
+async function fetchRelatedData(pessoasIds: number[], itemCodigos: string[], representantesCodigos: number[] = []) {
   if (!pessoasIds.length || !itemCodigos.length) {
     return {
       pessoas: [],
       itens: [],
-      estoque: []
+      estoque: [],
+      representantes: []
     };
   }
   
   const batchSizePessoas = 100;
   const batchSizeItens = 100;
+  const batchSizeRepresentantes = 100;
   const pessoasBatches = [];
   const itensBatches = [];
+  const representantesBatches = [];
   
-  // Divide em lotes
   for (let i = 0; i < pessoasIds.length; i += batchSizePessoas) {
     pessoasBatches.push(pessoasIds.slice(i, i + batchSizePessoas));
   }
@@ -200,8 +196,13 @@ async function fetchRelatedData(pessoasIds: number[], itemCodigos: string[]) {
   for (let i = 0; i < itemCodigos.length; i += batchSizeItens) {
     itensBatches.push(itemCodigos.slice(i, i + batchSizeItens));
   }
+
+  if (representantesCodigos.length > 0) {
+    for (let i = 0; i < representantesCodigos.length; i += batchSizeRepresentantes) {
+      representantesBatches.push(representantesCodigos.slice(i, i + batchSizeRepresentantes));
+    }
+  }
   
-  // Busca pessoas
   const allPessoas = [];
   for (const batch of pessoasBatches) {
     const { data } = await supabase
@@ -214,7 +215,6 @@ async function fetchRelatedData(pessoasIds: number[], itemCodigos: string[]) {
     }
   }
   
-  // Busca itens
   const allItens = [];
   for (const batch of itensBatches) {
     const { data } = await supabase
@@ -227,7 +227,6 @@ async function fetchRelatedData(pessoasIds: number[], itemCodigos: string[]) {
     }
   }
   
-  // Busca estoque
   const allEstoque = [];
   for (const batch of itensBatches) {
     const { data } = await supabase
@@ -240,15 +239,29 @@ async function fetchRelatedData(pessoasIds: number[], itemCodigos: string[]) {
     }
   }
 
+  const allRepresentantes = [];
+  if (representantesBatches.length > 0) {
+    for (const batch of representantesBatches) {
+      const { data } = await supabase
+        .from('BLUEBAY_PESSOA')
+        .select('PES_CODIGO, RAZAOSOCIAL')
+        .in('PES_CODIGO', batch);
+      
+      if (data) {
+        allRepresentantes.push(...data);
+      }
+    }
+  }
+
   return {
     pessoas: allPessoas,
     itens: allItens,
-    estoque: allEstoque
+    estoque: allEstoque,
+    representantes: allRepresentantes
   };
 }
 
 async function fetchItensSeparacao() {
-  // Busca itens em separação com status "pendente"
   const { data, error } = await supabase
     .from('separacao_itens')
     .select(`
@@ -262,7 +275,6 @@ async function fetchItensSeparacao() {
     return {};
   }
 
-  // Cria um mapa de códigos de item -> true para fácil verificação
   const itensSeparacaoMap: Record<string, boolean> = {};
   if (data) {
     data.forEach(item => {
@@ -303,19 +315,20 @@ export async function fetchJabOrders({
     return { orders: [], totalCount };
   }
 
-  // Coleta todos os IDs únicos para buscar dados relacionados
   const pessoasIds = [...new Set(pedidosDetalhados.map(p => p.PES_CODIGO).filter(id => id !== null && id !== undefined))] as number[];
   const itemCodigos = [...new Set(pedidosDetalhados.map(p => p.ITEM_CODIGO).filter(Boolean))];
+  const representantesCodigos = [...new Set(pedidosDetalhados.map(p => p.REPRESENTANTE).filter(id => id !== null && id !== undefined))] as number[];
 
-  const { pessoas, itens, estoque } = await fetchRelatedData(pessoasIds, itemCodigos);
+  console.log(`Encontrados ${pessoasIds.length} clientes, ${representantesCodigos.length} representantes e ${itemCodigos.length} itens diferentes`);
+
+  const { pessoas, itens, estoque, representantes } = await fetchRelatedData(pessoasIds, itemCodigos, representantesCodigos);
   const itensSeparacao = await fetchItensSeparacao();
 
-  // Cria mapas para lookup rápido
   const pessoasMap = new Map(pessoas.map(p => [p.PES_CODIGO, p]));
   const itemMap = new Map(itens.map(i => [i.ITEM_CODIGO, i.DESCRICAO]));
   const estoqueMap = new Map(estoque.map(e => [e.ITEM_CODIGO, e.FISICO]));
+  const representantesMap = new Map(representantes.map(r => [r.PES_CODIGO, r.RAZAOSOCIAL]));
 
-  // Agrupa os pedidos
   const pedidosAgrupados = new Map<string, any[]>();
   pedidosDetalhados.forEach(pedido => {
     const key = pedido.PED_NUMPEDIDO;
@@ -325,126 +338,6 @@ export async function fetchJabOrders({
     pedidosAgrupados.get(key)!.push(pedido);
   });
 
-  // Processa os pedidos agrupados mantendo a ordem original
-  const orders: JabOrder[] = numeroPedidos.map(numPedido => {
-    const pedidos = pedidosAgrupados.get(numPedido) || [];
-    const primeiroPedido = pedidos[0];
-    
-    if (!primeiroPedido) {
-      console.log('Pedido não encontrado:', numPedido);
-      return null;
-    }
-
-    const pessoa = pessoasMap.get(primeiroPedido.PES_CODIGO);
-
-    let total_saldo = 0;
-    let valor_total = 0;
-    const items = new Map<string, any>();
-
-    pedidos.forEach(pedido => {
-      if (!pedido.ITEM_CODIGO) return;
-
-      const saldo = pedido.QTDE_SALDO || 0;
-      const valorUnitario = pedido.VALOR_UNITARIO || 0;
-      
-      total_saldo += saldo;
-      valor_total += saldo * valorUnitario;
-
-      items.set(pedido.ITEM_CODIGO, {
-        ITEM_CODIGO: pedido.ITEM_CODIGO,
-        DESCRICAO: itemMap.get(pedido.ITEM_CODIGO) || null,
-        QTDE_SALDO: saldo,
-        QTDE_PEDIDA: pedido.QTDE_PEDIDA || 0,
-        QTDE_ENTREGUE: pedido.QTDE_ENTREGUE || 0,
-        VALOR_UNITARIO: valorUnitario,
-        FISICO: estoqueMap.get(pedido.ITEM_CODIGO) || null,
-        emSeparacao: itensSeparacao[pedido.ITEM_CODIGO] || false,
-        pedido: pedido.PED_NUMPEDIDO,
-        APELIDO: pessoa?.APELIDO || null,
-        PES_CODIGO: primeiroPedido.PES_CODIGO
-      });
-    });
-
-    return {
-      MATRIZ: primeiroPedido.MATRIZ || 0,
-      FILIAL: primeiroPedido.FILIAL || 0,
-      PED_NUMPEDIDO: primeiroPedido.PED_NUMPEDIDO,
-      PED_ANOBASE: primeiroPedido.PED_ANOBASE || 0,
-      total_saldo,
-      valor_total,
-      APELIDO: pessoa?.APELIDO || null,
-      PEDIDO_CLIENTE: primeiroPedido.PEDIDO_CLIENTE || null,
-      STATUS: primeiroPedido.STATUS || '',
-      REPRESENTANTE_NOME: primeiroPedido.REPRESENTANTE || null,
-      PES_CODIGO: primeiroPedido.PES_CODIGO,
-      items: Array.from(items.values())
-    };
-  }).filter(Boolean) as JabOrder[];
-
-  return {
-    orders,
-    totalCount,
-    currentPage: page,
-    pageSize,
-    itensSeparacao
-  };
-}
-
-export async function fetchAllJabOrders({ 
-  dateRange 
-}: Omit<UseJabOrdersOptions, 'page' | 'pageSize'>): Promise<JabOrdersResponse> {
-  if (!dateRange?.from || !dateRange?.to) {
-    return { orders: [], totalCount: 0 };
-  }
-
-  const dataInicial = dateRange.from.toISOString().split('T')[0];
-  const dataFinal = dateRange.to.toISOString().split('T')[0];
-
-  console.log('Buscando todos os pedidos para o período:', { dataInicial, dataFinal });
-
-  // Buscar todos os pedidos diretamente em vez de usar a função intermediária
-  const pedidosDetalhados = await fetchAllPedidosDireto(dataInicial, dataFinal);
-
-  if (!pedidosDetalhados.length) {
-    return { orders: [], totalCount: 0 };
-  }
-
-  // Extrair números de pedidos únicos
-  const numeroPedidosSet = new Set<string>();
-  pedidosDetalhados.forEach(pedido => {
-    if (pedido.PED_NUMPEDIDO) {
-      numeroPedidosSet.add(pedido.PED_NUMPEDIDO);
-    }
-  });
-  const numeroPedidos = Array.from(numeroPedidosSet);
-  
-  console.log(`Total de ${numeroPedidos.length} pedidos únicos encontrados`);
-
-  // Coleta todos os IDs únicos para buscar dados relacionados
-  const pessoasIds = [...new Set(pedidosDetalhados.map(p => p.PES_CODIGO).filter(id => id !== null && id !== undefined))] as number[];
-  const itemCodigos = [...new Set(pedidosDetalhados.map(p => p.ITEM_CODIGO).filter(Boolean))];
-
-  console.log(`Encontrados ${pessoasIds.length} clientes e ${itemCodigos.length} itens diferentes`);
-
-  const { pessoas, itens, estoque } = await fetchRelatedData(pessoasIds, itemCodigos);
-  const itensSeparacao = await fetchItensSeparacao();
-
-  // Cria mapas para lookup rápido
-  const pessoasMap = new Map(pessoas.map(p => [p.PES_CODIGO, p]));
-  const itemMap = new Map(itens.map(i => [i.ITEM_CODIGO, i.DESCRICAO]));
-  const estoqueMap = new Map(estoque.map(e => [e.ITEM_CODIGO, e.FISICO]));
-
-  // Agrupa os pedidos por número de pedido
-  const pedidosAgrupados = new Map<string, any[]>();
-  pedidosDetalhados.forEach(pedido => {
-    const key = pedido.PED_NUMPEDIDO;
-    if (!pedidosAgrupados.has(key)) {
-      pedidosAgrupados.set(key, []);
-    }
-    pedidosAgrupados.get(key)!.push(pedido);
-  });
-
-  // Processa os pedidos agrupados
   const orders: JabOrder[] = numeroPedidos.map(numPedido => {
     const pedidos = pedidosAgrupados.get(numPedido) || [];
     if (!pedidos.length) {
@@ -494,7 +387,123 @@ export async function fetchAllJabOrders({
       APELIDO: pessoa?.APELIDO || null,
       PEDIDO_CLIENTE: primeiroPedido.PEDIDO_CLIENTE || null,
       STATUS: primeiroPedido.STATUS || '',
-      REPRESENTANTE_NOME: primeiroPedido.REPRESENTANTE || null,
+      REPRESENTANTE_NOME: primeiroPedido.REPRESENTANTE ? representantesMap.get(primeiroPedido.REPRESENTANTE) || null : null,
+      REPRESENTANTE_CODIGO: primeiroPedido.REPRESENTANTE || null,
+      PES_CODIGO: primeiroPedido.PES_CODIGO,
+      items: Array.from(items.values())
+    };
+  }).filter(Boolean) as JabOrder[];
+
+  return {
+    orders,
+    totalCount,
+    currentPage: page,
+    pageSize,
+    itensSeparacao
+  };
+}
+
+export async function fetchAllJabOrders({ 
+  dateRange 
+}: Omit<UseJabOrdersOptions, 'page' | 'pageSize'>): Promise<JabOrdersResponse> {
+  if (!dateRange?.from || !dateRange?.to) {
+    return { orders: [], totalCount: 0 };
+  }
+
+  const dataInicial = dateRange.from.toISOString().split('T')[0];
+  const dataFinal = dateRange.to.toISOString().split('T')[0];
+
+  console.log('Buscando todos os pedidos para o período:', { dataInicial, dataFinal });
+
+  const pedidosDetalhados = await fetchAllPedidosDireto(dataInicial, dataFinal);
+
+  if (!pedidosDetalhados.length) {
+    return { orders: [], totalCount: 0 };
+  }
+
+  const numeroPedidosSet = new Set<string>();
+  pedidosDetalhados.forEach(pedido => {
+    if (pedido.PED_NUMPEDIDO) {
+      numeroPedidosSet.add(pedido.PED_NUMPEDIDO);
+    }
+  });
+  const numeroPedidos = Array.from(numeroPedidosSet);
+  
+  console.log(`Total de ${numeroPedidos.length} pedidos únicos encontrados`);
+
+  const pessoasIds = [...new Set(pedidosDetalhados.map(p => p.PES_CODIGO).filter(id => id !== null && id !== undefined))] as number[];
+  const itemCodigos = [...new Set(pedidosDetalhados.map(p => p.ITEM_CODIGO).filter(Boolean))];
+
+  console.log(`Encontrados ${pessoasIds.length} clientes e ${itemCodigos.length} itens diferentes`);
+
+  const { pessoas, itens, estoque, representantes } = await fetchRelatedData(pessoasIds, itemCodigos);
+  const itensSeparacao = await fetchItensSeparacao();
+
+  const pessoasMap = new Map(pessoas.map(p => [p.PES_CODIGO, p]));
+  const itemMap = new Map(itens.map(i => [i.ITEM_CODIGO, i.DESCRICAO]));
+  const estoqueMap = new Map(estoque.map(e => [e.ITEM_CODIGO, e.FISICO]));
+  const representantesMap = new Map(representantes.map(r => [r.PES_CODIGO, r.RAZAOSOCIAL]));
+
+  const pedidosAgrupados = new Map<string, any[]>();
+  pedidosDetalhados.forEach(pedido => {
+    const key = pedido.PED_NUMPEDIDO;
+    if (!pedidosAgrupados.has(key)) {
+      pedidosAgrupados.set(key, []);
+    }
+    pedidosAgrupados.get(key)!.push(pedido);
+  });
+
+  const orders: JabOrder[] = numeroPedidos.map(numPedido => {
+    const pedidos = pedidosAgrupados.get(numPedido) || [];
+    if (!pedidos.length) {
+      console.log('Pedido sem detalhes:', numPedido);
+      return null;
+    }
+    
+    const primeiroPedido = pedidos[0];
+    
+    const pessoa = pessoasMap.get(primeiroPedido.PES_CODIGO);
+
+    let total_saldo = 0;
+    let valor_total = 0;
+    const items = new Map<string, any>();
+
+    pedidos.forEach(pedido => {
+      if (!pedido.ITEM_CODIGO) return;
+
+      const saldo = pedido.QTDE_SALDO || 0;
+      const valorUnitario = pedido.VALOR_UNITARIO || 0;
+      
+      total_saldo += saldo;
+      valor_total += saldo * valorUnitario;
+
+      items.set(pedido.ITEM_CODIGO, {
+        ITEM_CODIGO: pedido.ITEM_CODIGO,
+        DESCRICAO: itemMap.get(pedido.ITEM_CODIGO) || null,
+        QTDE_SALDO: saldo,
+        QTDE_PEDIDA: pedido.QTDE_PEDIDA || 0,
+        QTDE_ENTREGUE: pedido.QTDE_ENTREGUE || 0,
+        VALOR_UNITARIO: valorUnitario,
+        FISICO: estoqueMap.get(pedido.ITEM_CODIGO) || null,
+        emSeparacao: itensSeparacao[pedido.ITEM_CODIGO] || false,
+        pedido: pedido.PED_NUMPEDIDO,
+        APELIDO: pessoa?.APELIDO || null,
+        PES_CODIGO: primeiroPedido.PES_CODIGO
+      });
+    });
+
+    return {
+      MATRIZ: primeiroPedido.MATRIZ || 0,
+      FILIAL: primeiroPedido.FILIAL || 0,
+      PED_NUMPEDIDO: primeiroPedido.PED_NUMPEDIDO,
+      PED_ANOBASE: primeiroPedido.PED_ANOBASE || 0,
+      total_saldo,
+      valor_total,
+      APELIDO: pessoa?.APELIDO || null,
+      PEDIDO_CLIENTE: primeiroPedido.PEDIDO_CLIENTE || null,
+      STATUS: primeiroPedido.STATUS || '',
+      REPRESENTANTE_NOME: primeiroPedido.REPRESENTANTE ? representantesMap.get(primeiroPedido.REPRESENTANTE) || null : null,
+      REPRESENTANTE_CODIGO: primeiroPedido.REPRESENTANTE || null,
       PES_CODIGO: primeiroPedido.PES_CODIGO,
       items: Array.from(items.values())
     };
@@ -502,7 +511,6 @@ export async function fetchAllJabOrders({
 
   console.log(`Processados ${orders.length} pedidos`);
 
-  // Agrupar por cliente (usando PES_CODIGO como chave)
   const clientGroupsMap = new Map<number, JabOrder[]>();
   
   orders.forEach(order => {
@@ -517,7 +525,6 @@ export async function fetchAllJabOrders({
 
   console.log(`Agrupados em ${clientGroupsMap.size} clientes`);
 
-  // Transformar em uma lista plana
   const ordersFlat = Array.from(clientGroupsMap.values()).flat();
 
   return {

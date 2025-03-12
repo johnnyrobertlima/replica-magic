@@ -1,16 +1,20 @@
 
 import type { ClientOrderGroup } from "@/types/clientOrders";
-import type { JabOrdersResponse } from "@/types/jabOrders";
+import type { JabOrder, JabOrderItem, JabOrdersResponse } from "@/types/jabOrders";
 
+// Group orders by client
 export const groupOrdersByClient = (ordersData: JabOrdersResponse): Record<string, ClientOrderGroup> => {
+  const { orders = [] } = ordersData;
   const groups: Record<string, ClientOrderGroup> = {};
-  
-  ordersData.orders.forEach((order) => {
-    if (!["1", "2"].includes(order.STATUS)) return;
-    
-    const clientKey = order.APELIDO || "Sem Cliente";
-    if (!groups[clientKey]) {
-      groups[clientKey] = {
+
+  // Process all orders
+  orders.forEach(order => {
+    const clientName = order.APELIDO || `Cliente ${order.PES_CODIGO}`;
+    const clientCode = order.PES_CODIGO;
+
+    // Initialize group if it doesn't exist
+    if (!groups[clientName]) {
+      groups[clientName] = {
         pedidos: [],
         totalQuantidadeSaldo: 0,
         totalValorSaldo: 0,
@@ -19,108 +23,110 @@ export const groupOrdersByClient = (ordersData: JabOrdersResponse): Record<strin
         totalValorFaturarComEstoque: 0,
         representante: order.REPRESENTANTE_NOME,
         allItems: [],
-        PES_CODIGO: order.PES_CODIGO
+        PES_CODIGO: clientCode
       };
     }
 
-    groups[clientKey].pedidos.push(order);
-    groups[clientKey].totalQuantidadeSaldo += order.total_saldo || 0;
-    groups[clientKey].totalValorSaldo += order.valor_total || 0;
+    // Add order to group
+    groups[clientName].pedidos.push(order);
+    groups[clientName].totalValorSaldo += order.total_saldo;
+    groups[clientName].totalValorPedido += order.valor_total;
 
-    if (order.items) {
-      const items = order.items.map(item => ({
+    // Process each item in the order
+    order.items.forEach(item => {
+      // Add to total quantity
+      groups[clientName].totalQuantidadeSaldo += item.QTDE_SALDO;
+
+      // Calculate values
+      const valorTotal = item.QTDE_PEDIDA * item.VALOR_UNITARIO;
+      const valorFaturado = (item.QTDE_ENTREGUE || 0) * item.VALOR_UNITARIO;
+      const valorComEstoque = (item.FISICO && item.FISICO > 0 && item.QTDE_SALDO > 0) ? 
+        (Math.min(item.FISICO, item.QTDE_SALDO) * item.VALOR_UNITARIO) : 0;
+
+      // Update group totals
+      groups[clientName].totalValorFaturado += valorFaturado;
+      groups[clientName].totalValorFaturarComEstoque += valorComEstoque;
+
+      // Add to all items with extra properties
+      groups[clientName].allItems.push({
         ...item,
         pedido: order.PED_NUMPEDIDO,
         APELIDO: order.APELIDO,
         PES_CODIGO: order.PES_CODIGO
-      }));
-      
-      groups[clientKey].allItems.push(...items);
-      
-      order.items.forEach(item => {
-        groups[clientKey].totalValorPedido += item.QTDE_PEDIDA * item.VALOR_UNITARIO;
-        groups[clientKey].totalValorFaturado += item.QTDE_ENTREGUE * item.VALOR_UNITARIO;
-        if ((item.FISICO || 0) > 0) {
-          groups[clientKey].totalValorFaturarComEstoque += Math.min(item.QTDE_SALDO, item.FISICO || 0) * item.VALOR_UNITARIO;
-        }
       });
-    }
+    });
   });
 
   return groups;
 };
 
+// Filter groups by search criteria
 export const filterGroupsBySearchCriteria = (
-  groupedOrders: Record<string, ClientOrderGroup>,
+  groups: Record<string, ClientOrderGroup>,
   isSearching: boolean,
   searchQuery: string,
   searchType: string
 ): Record<string, ClientOrderGroup> => {
-  if (!isSearching || !searchQuery) return groupedOrders;
+  if (!isSearching || !searchQuery) return groups;
 
-  const normalizedSearchQuery = searchQuery.toLowerCase().trim();
   const filteredGroups: Record<string, ClientOrderGroup> = {};
+  const searchLower = searchQuery.toLowerCase();
 
-  const removeLeadingZeros = (str: string) => {
-    return str.replace(/^0+/, '');
-  };
-
-  Object.entries(groupedOrders).forEach(([clientName, groupData]) => {
-    let shouldInclude = false;
-
-    switch (searchType) {
-      case "pedido":
-        shouldInclude = groupData.pedidos.some(order => {
-          const normalizedOrderNumber = removeLeadingZeros(order.PED_NUMPEDIDO);
-          const normalizedSearchNumber = removeLeadingZeros(searchQuery);
-          return normalizedOrderNumber.includes(normalizedSearchNumber);
-        });
-        break;
-      
-      case "cliente":
-        shouldInclude = clientName.toLowerCase().includes(normalizedSearchQuery);
-        break;
-      
-      case "representante":
-        shouldInclude = groupData.representante?.toLowerCase().includes(normalizedSearchQuery) || false;
-        break;
+  Object.entries(groups).forEach(([clientName, group]) => {
+    // Search in client name
+    if (searchType === 'client' && clientName.toLowerCase().includes(searchLower)) {
+      filteredGroups[clientName] = group;
+      return;
     }
 
-    if (shouldInclude) {
-      filteredGroups[clientName] = groupData;
+    // Search in items
+    if (searchType === 'item') {
+      const filteredItems = group.allItems.filter(item => 
+        item.ITEM_CODIGO.toLowerCase().includes(searchLower) || 
+        (item.DESCRICAO && item.DESCRICAO.toLowerCase().includes(searchLower))
+      );
+
+      if (filteredItems.length > 0) {
+        filteredGroups[clientName] = {
+          ...group,
+          allItems: filteredItems
+        };
+      }
+    }
+
+    // Search in order numbers
+    if (searchType === 'order') {
+      const filteredOrders = group.pedidos.filter(order => 
+        order.PED_NUMPEDIDO.toLowerCase().includes(searchLower)
+      );
+
+      if (filteredOrders.length > 0) {
+        const orderItems = filterItemsByOrders(group.allItems, filteredOrders);
+        
+        filteredGroups[clientName] = {
+          ...group,
+          pedidos: filteredOrders,
+          allItems: orderItems
+        };
+      }
     }
   });
 
   return filteredGroups;
 };
 
-export const calculateTotalSelected = (
-  selectedItemsDetails: Record<string, { qtde: number; valor: number }>
-): number => {
-  return Object.values(selectedItemsDetails).reduce((total, item) => {
-    return total + (item.qtde * item.valor);
-  }, 0);
+// Helper function to filter items by orders
+const filterItemsByOrders = (items: (JabOrderItem & { pedido: string; APELIDO: string | null; PES_CODIGO: number })[], orders: JabOrder[]) => {
+  const orderNumbers = orders.map(order => order.PED_NUMPEDIDO);
+  return items.filter(item => orderNumbers.includes(item.pedido));
 };
 
-export const getClientCodeFromItem = (item: any): number | null => {
-  let pesCodigoNumerico = null;
-  
-  if (typeof item.PES_CODIGO === 'number') {
-    pesCodigoNumerico = item.PES_CODIGO;
-  } else if (typeof item.PES_CODIGO === 'string') {
-    const parsed = parseInt(item.PES_CODIGO, 10);
-    if (!isNaN(parsed)) {
-      pesCodigoNumerico = parsed;
-    }
-  } else if (item.PES_CODIGO && typeof item.PES_CODIGO === 'object') {
-    const value = item.PES_CODIGO.value;
-    if (typeof value === 'string' || typeof value === 'number') {
-      const parsed = parseInt(String(value), 10);
-      if (!isNaN(parsed)) {
-        pesCodigoNumerico = parsed;
-      }
-    }
-  }
+// Calculate total selected value
+export const calculateTotalSelected = (selectedItems: Record<string, { qtde: number; valor: number }>) => {
+  return Object.values(selectedItems).reduce((total, item) => total + (item.qtde * item.valor), 0);
+};
 
-  return pesCodigoNumerico;
+// Get client code from item
+export const getClientCodeFromItem = (item: any): string => {
+  return String(item.PES_CODIGO || '');
 };
