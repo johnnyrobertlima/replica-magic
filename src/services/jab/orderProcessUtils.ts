@@ -117,41 +117,44 @@ export async function processClientOrdersData(
       // Buscar informações de estoque para os itens com a função otimizada
       const itemCodigos = itensCliente.map(item => item.item_codigo);
       const estoqueData = await fetchEstoqueParaItens(itemCodigos);
-      const estoqueMap = new Map(estoqueData.map(e => [e.item_codigo, e.fisico]));
       
-      // Processar itens com informações de estoque
-      const itensProcessados = itensCliente.map(item => {
-        const estoqueDisponivel = estoqueMap.get(item.item_codigo) || 0;
-        const emSeparacao = itensSeparacao[item.item_codigo] || false;
-        const valorItem = (item.qtde_saldo || 0) * (item.valor_unitario || 0);
+      if (Array.isArray(estoqueData)) {
+        const estoqueMap = new Map(estoqueData.map(e => [e.item_codigo, e.fisico]));
         
-        // Calcular valor que pode ser faturado com base no estoque disponível
-        if (estoqueDisponivel > 0 && item.qtde_saldo > 0) {
-          const quantidadePossivel = Math.min(estoqueDisponivel, item.qtde_saldo);
-          totalValorFaturarComEstoque += quantidadePossivel * (item.valor_unitario || 0);
-        }
+        // Processar itens com informações de estoque
+        const itensProcessados = itensCliente.map(item => {
+          const estoqueDisponivel = estoqueMap.get(item.item_codigo) || 0;
+          const emSeparacao = itensSeparacao[item.item_codigo] || false;
+          const valorItem = (item.qtde_saldo || 0) * (item.valor_unitario || 0);
+          
+          // Calcular valor que pode ser faturado com base no estoque disponível
+          if (estoqueDisponivel > 0 && item.qtde_saldo > 0) {
+            const quantidadePossivel = Math.min(estoqueDisponivel, item.qtde_saldo);
+            totalValorFaturarComEstoque += quantidadePossivel * (item.valor_unitario || 0);
+          }
+          
+          return {
+            ...item,
+            fisico: estoqueDisponivel,
+            emSeparacao,
+            valor_total: valorItem
+          };
+        });
         
-        return {
-          ...item,
-          fisico: estoqueDisponivel,
-          emSeparacao,
-          valor_total: valorItem
+        // Adicionar grupo de cliente
+        clientGroups[clienteName] = {
+          PES_CODIGO: cliente.pes_codigo,
+          representante: representanteName,
+          representante_codigo: cliente.representante_codigo,
+          totalQuantidadeSaldo,
+          totalValorSaldo,
+          totalValorPedido: cliente.total_valor_pedido || 0,
+          totalValorFaturado: cliente.total_valor_faturado || 0,
+          totalValorFaturarComEstoque,
+          volume_saudavel_faturamento: cliente.volume_saudavel_faturamento,
+          allItems: itensProcessados
         };
-      });
-      
-      // Adicionar grupo de cliente
-      clientGroups[clienteName] = {
-        PES_CODIGO: cliente.pes_codigo,
-        representante: representanteName,
-        representante_codigo: cliente.representante_codigo,
-        totalQuantidadeSaldo,
-        totalValorSaldo,
-        totalValorPedido: cliente.total_valor_pedido || 0,
-        totalValorFaturado: cliente.total_valor_faturado || 0,
-        totalValorFaturarComEstoque,
-        volume_saudavel_faturamento: cliente.volume_saudavel_faturamento,
-        allItems: itensProcessados
-      };
+      }
     }
   }
   

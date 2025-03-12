@@ -96,10 +96,11 @@ export const fetchTitulosVencidos = async (clienteCodigo: string | number): Prom
     console.log(`Buscando valores vencidos para cliente: ${clienteCodigoStr}`);
     
     // First try to use the RPC function for better performance
-    const { data: rpcData, error: rpcError } = await supabase
-      .rpc('calcular_valor_vencido', { cliente_codigo: clienteCodigoStr });
+    const { data: rpcData, error: rpcError } = await supabase.rpc<{ total_vlr_saldo: number }[]>('calcular_valor_vencido', { 
+      cliente_codigo: clienteCodigoStr 
+    });
     
-    if (!rpcError && rpcData && rpcData.length > 0) {
+    if (!rpcError && rpcData && Array.isArray(rpcData) && rpcData.length > 0) {
       const valorVencido = rpcData[0]?.total_vlr_saldo || 0;
       console.log(`Valor vencido via RPC para cliente ${clienteCodigoStr}: ${valorVencido}`);
       
