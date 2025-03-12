@@ -83,6 +83,7 @@ export const fetchTitulosVencidos = async (clienteCodigo: number | string): Prom
     
     const today = new Date().toISOString().split('T')[0];
     
+    // Fix: The .eq() method expects a string for the PES_CODIGO column
     const { data, error } = await supabase
       .from('BLUEBAY_TITULO')
       .select('VLRSALDO')
