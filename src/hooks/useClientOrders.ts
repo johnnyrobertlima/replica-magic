@@ -34,13 +34,26 @@ export const useClientOrders = () => {
   } = useClientOrdersState();
 
   // Buscar dados de pedidos por cliente usando a nova função otimizada
-  const { data: ordersByClientData = { clientGroups: {}, totalCount: 0, itensSeparacao: {} }, isLoading: isLoadingOrders } = useQuery({
+  const { data: ordersByClientData = { clientGroups: {}, totalCount: 0, itensSeparacao: {} }, isLoading: isLoadingOrders, error: ordersError } = useQuery({
     queryKey: ['jab-orders-by-client', searchDate?.from?.toISOString(), searchDate?.to?.toISOString()],
     queryFn: () => fetchJabOrdersByClient({ dateRange: searchDate }),
     enabled: !!searchDate?.from && !!searchDate?.to,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    retry: 2, // Retry failed requests twice
   });
+
+  // Log query results
+  useMemo(() => {
+    if (ordersError) {
+      console.error('Error fetching client orders:', ordersError);
+    }
+    
+    if (ordersByClientData) {
+      const clientCount = Object.keys(ordersByClientData.clientGroups).length;
+      console.log(`Loaded data for ${clientCount} clients with ${ordersByClientData.totalCount} total orders`);
+    }
+  }, [ordersByClientData, ordersError]);
 
   const { data: totals = { valorTotalSaldo: 0, valorFaturarComEstoque: 0 }, isLoading: isLoadingTotals } = useTotals();
 
@@ -91,6 +104,8 @@ export const useClientOrders = () => {
     totalSelecionado,
     // Loading states
     isLoading: isLoadingOrders || isLoadingTotals || isLoadingSeparacoes,
+    // Errors
+    error: ordersError,
     // Methods
     toggleExpand,
     handleSearch,

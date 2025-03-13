@@ -46,9 +46,6 @@ export const ClientOrderContent = ({
     console.log('ClientOrderContent - expanded data:', data);
     console.log('ClientOrderContent - allItems length:', data?.allItems?.length || 0);
     console.log('ClientOrderContent - first few allItems:', data?.allItems?.slice(0, 3));
-    
-    // Removed the code that was forcing showZeroBalance to true
-    // Let the user control this with the switch
   }
   
   return (

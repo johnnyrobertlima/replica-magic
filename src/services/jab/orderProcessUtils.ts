@@ -101,83 +101,96 @@ export async function processClientOrdersData(
   clientesComPedidos: any[],
   itensSeparacao: Record<string, boolean>
 ): Promise<Record<string, any>> {
+  console.log(`Processing order data for ${clientesComPedidos.length} clients`);
   const clientGroups: Record<string, any> = {};
   
-  for (const cliente of clientesComPedidos) {
-    const clienteName = cliente.cliente_nome || `Cliente ${cliente.pes_codigo}`;
-    const representanteName = cliente.representante_nome || 'Não informado';
+  // Process clients in batches to avoid memory issues with large datasets
+  const batchSize = 5;
+  for (let i = 0; i < clientesComPedidos.length; i += batchSize) {
+    const batch = clientesComPedidos.slice(i, i + batchSize);
+    console.log(`Processing batch ${i/batchSize + 1} with ${batch.length} clients`);
     
-    // Buscar itens do cliente com a função otimizada
-    const itensCliente = await fetchItensPorCliente(dataInicial, dataFinal, cliente.pes_codigo);
-    
-    if (itensCliente && Array.isArray(itensCliente) && itensCliente.length > 0) {
-      // Buscar informações de estoque para os itens com a função otimizada
-      const itemCodigos = itensCliente.map(item => item.item_codigo);
-      const estoqueData = await fetchEstoqueParaItens(itemCodigos);
-      
-      if (Array.isArray(estoqueData)) {
-        const estoqueMap = new Map(estoqueData.map(e => [e.item_codigo, e.fisico]));
+    await Promise.all(batch.map(async (cliente) => {
+      try {
+        const clienteName = cliente.cliente_nome || `Cliente ${cliente.pes_codigo}`;
+        const representanteName = cliente.representante_nome || 'Não informado';
         
-        // Initialize tracking variables for client totals
-        let totalQuantidadeSaldo = 0;
-        let totalValorSaldo = 0;
-        let totalValorPedido = 0;
-        let totalValorFaturado = 0;
-        let totalValorFaturarComEstoque = 0;
+        // Buscar itens do cliente com a função otimizada
+        const itensCliente = await fetchItensPorCliente(dataInicial, dataFinal, cliente.pes_codigo);
         
-        // Processar itens com informações de estoque
-        const itensProcessados = itensCliente.map(item => {
-          const estoqueDisponivel = estoqueMap.get(item.item_codigo) || 0;
-          const emSeparacao = itensSeparacao[item.item_codigo] || false;
+        if (itensCliente && Array.isArray(itensCliente) && itensCliente.length > 0) {
+          // Buscar informações de estoque para os itens com a função otimizada
+          const itemCodigos = itensCliente.map(item => item.item_codigo);
+          const estoqueData = await fetchEstoqueParaItens(itemCodigos);
           
-          // Get item properties
-          const qtdePedida = item.qtde_pedida || 0;
-          const qtdeEntregue = item.qtde_entregue || 0;
-          const qtdeSaldo = item.qtde_saldo || 0;
-          const valorUnitario = item.valor_unitario || 0;
-          
-          // Calculate values
-          const valorTotalPedido = qtdePedida * valorUnitario;
-          const valorTotalSaldo = qtdeSaldo * valorUnitario;
-          const valorFaturado = qtdeEntregue * valorUnitario;
-          
-          // Determinar se o item pode ser faturado com estoque
-          const valorFaturarComEstoque = (estoqueDisponivel > 0 && qtdeSaldo > 0) ? valorTotalSaldo : 0;
-          
-          // Update client totals
-          totalQuantidadeSaldo += qtdeSaldo;
-          totalValorSaldo += valorTotalSaldo;
-          totalValorPedido += valorTotalPedido;
-          totalValorFaturado += valorFaturado;
-          totalValorFaturarComEstoque += valorFaturarComEstoque;
-          
-          return {
-            ...item,
-            fisico: estoqueDisponivel,
-            emSeparacao,
-            valor_total_pedido: valorTotalPedido,
-            valor_total_saldo: valorTotalSaldo,
-            valor_faturado: valorFaturado,
-            valor_faturar_com_estoque: valorFaturarComEstoque
-          };
-        });
-        
-        // Adicionar grupo de cliente
-        clientGroups[clienteName] = {
-          PES_CODIGO: cliente.pes_codigo,
-          representante: representanteName,
-          representante_codigo: cliente.representante_codigo,
-          totalQuantidadeSaldo,
-          totalValorSaldo,
-          totalValorPedido,
-          totalValorFaturado,
-          totalValorFaturarComEstoque,
-          volume_saudavel_faturamento: cliente.volume_saudavel_faturamento,
-          allItems: itensProcessados
-        };
+          if (Array.isArray(estoqueData)) {
+            const estoqueMap = new Map(estoqueData.map(e => [e.item_codigo, e.fisico]));
+            
+            // Initialize tracking variables for client totals
+            let totalQuantidadeSaldo = 0;
+            let totalValorSaldo = 0;
+            let totalValorPedido = 0;
+            let totalValorFaturado = 0;
+            let totalValorFaturarComEstoque = 0;
+            
+            // Processar itens com informações de estoque
+            const itensProcessados = itensCliente.map(item => {
+              const estoqueDisponivel = estoqueMap.get(item.item_codigo) || 0;
+              const emSeparacao = itensSeparacao[item.item_codigo] || false;
+              
+              // Get item properties
+              const qtdePedida = item.qtde_pedida || 0;
+              const qtdeEntregue = item.qtde_entregue || 0;
+              const qtdeSaldo = item.qtde_saldo || 0;
+              const valorUnitario = item.valor_unitario || 0;
+              
+              // Calculate values
+              const valorTotalPedido = qtdePedida * valorUnitario;
+              const valorTotalSaldo = qtdeSaldo * valorUnitario;
+              const valorFaturado = qtdeEntregue * valorUnitario;
+              
+              // Determinar se o item pode ser faturado com estoque
+              const valorFaturarComEstoque = (estoqueDisponivel > 0 && qtdeSaldo > 0) ? valorTotalSaldo : 0;
+              
+              // Update client totals
+              totalQuantidadeSaldo += qtdeSaldo;
+              totalValorSaldo += valorTotalSaldo;
+              totalValorPedido += valorTotalPedido;
+              totalValorFaturado += valorFaturado;
+              totalValorFaturarComEstoque += valorFaturarComEstoque;
+              
+              return {
+                ...item,
+                fisico: estoqueDisponivel,
+                emSeparacao,
+                valor_total_pedido: valorTotalPedido,
+                valor_total_saldo: valorTotalSaldo,
+                valor_faturado: valorFaturado,
+                valor_faturar_com_estoque: valorFaturarComEstoque
+              };
+            });
+            
+            // Adicionar grupo de cliente
+            clientGroups[clienteName] = {
+              PES_CODIGO: cliente.pes_codigo,
+              representante: representanteName,
+              representante_codigo: cliente.representante_codigo,
+              totalQuantidadeSaldo,
+              totalValorSaldo,
+              totalValorPedido,
+              totalValorFaturado,
+              totalValorFaturarComEstoque,
+              volume_saudavel_faturamento: cliente.volume_saudavel_faturamento,
+              allItems: itensProcessados
+            };
+          }
+        }
+      } catch (error) {
+        console.error(`Error processing client ${cliente.pes_codigo}:`, error);
       }
-    }
+    }));
   }
   
+  console.log(`Finished processing all clients. Total client groups: ${Object.keys(clientGroups).length}`);
   return clientGroups;
 }

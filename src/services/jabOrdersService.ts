@@ -11,10 +11,10 @@ import {
 
 export { fetchTotals } from "./jab/totalsService";
 
-// Cache configuration
+// Cache configuration - increased cache time for large date ranges
 const ordersCache = new Map<string, { data: JabOrdersResponse; timestamp: number }>();
 const clientOrdersCache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = 10 * 60 * 1000; // 10 minutes (increased from 5)
 
 export async function fetchJabOrders({ 
   dateRange, 
@@ -76,6 +76,8 @@ export async function fetchAllJabOrders({
     console.log('Using all cached data for period:', { dataInicial, dataFinal });
     return cachedData.data;
   }
+
+  console.log('Fetching all orders for period:', { dataInicial, dataFinal });
 
   const pedidosDetalhados = await fetchAllPedidosDireto(dataInicial, dataFinal);
 

@@ -10,10 +10,14 @@ export async function fetchPedidosPorCliente(dataInicial: string, dataFinal: str
   console.log('Buscando pedidos agrupados por cliente para o período:', { dataInicial, dataFinal });
   
   try {
+    // Ensure we include time in the dataFinal to capture the entire day
+    const dataFinalCompleta = `${dataFinal} 23:59:59.999`;
+    console.log(`Data inicial formatada: ${dataInicial}, Data final formatada: ${dataFinalCompleta}`);
+    
     // Use the correct function name as a string literal for the RPC call
     const { data, error } = await supabase.rpc('get_pedidos_por_cliente', {
       data_inicial: dataInicial,
-      data_final: `${dataFinal} 23:59:59.999`
+      data_final: dataFinalCompleta
     }) as { data: PedidosPorClienteResult[] | null, error: any };
 
     if (error) {
@@ -37,10 +41,13 @@ export async function fetchItensPorCliente(dataInicial: string, dataFinal: strin
   console.log('Buscando itens do cliente para o período:', { dataInicial, dataFinal, clienteCodigo });
   
   try {
+    // Ensure we include time in the dataFinal to capture the entire day
+    const dataFinalCompleta = `${dataFinal} 23:59:59.999`;
+    
     // Use the correct function name as a string literal for the RPC call
     const { data, error } = await supabase.rpc('get_itens_por_cliente', {
       data_inicial: dataInicial,
-      data_final: `${dataFinal} 23:59:59.999`,
+      data_final: dataFinalCompleta,
       cliente_codigo: clienteCodigo
     }) as { data: ItensPorClienteResult[] | null, error: any };
 
@@ -65,6 +72,8 @@ export async function fetchEstoqueParaItens(itemCodigos: string[]) {
   if (!itemCodigos.length) return [];
   
   try {
+    console.log(`Buscando estoque para ${itemCodigos.length} itens`);
+    
     // Use the correct function name as a string literal for the RPC call
     const { data, error } = await supabase.rpc('get_estoque_para_itens', {
       item_codigos: itemCodigos
@@ -75,6 +84,7 @@ export async function fetchEstoqueParaItens(itemCodigos: string[]) {
       throw error;
     }
     
+    console.log(`Encontrados dados de estoque para ${data?.length || 0} itens`);
     return data || [];
   } catch (error) {
     console.error('Erro ao buscar estoque para os itens:', error);
