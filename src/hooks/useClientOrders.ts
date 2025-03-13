@@ -2,7 +2,8 @@
 import { useMemo, useEffect, useState } from "react";
 import { useAllJabOrders, useTotals } from "@/hooks/useJabOrders";
 import { useSeparacoes } from "@/hooks/useSeparacoes";
-import { groupOrdersByClient, filterGroupsBySearchCriteria, enhanceGroupsWithRepresentanteNames } from "@/utils/clientOrdersUtils";
+import { groupOrdersByClient, filterGroupsBySearchCriteria } from "@/utils/clientOrdersUtils";
+import { enhanceGroupsWithRepresentanteNames } from "@/utils/representativeUtils";
 import { useClientOrdersState } from "./client-orders/useClientOrdersState";
 import { useItemSelection } from "./client-orders/useItemSelection";
 import { useSeparationOperations } from "./client-orders/useSeparationOperations";

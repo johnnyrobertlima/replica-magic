@@ -1,8 +1,13 @@
 
 import type { ClientOrderGroup } from "@/types/clientOrders";
 import type { JabOrdersResponse } from "@/types/jabOrders";
-import { supabase } from "@/integrations/supabase/client";
+import { enhanceGroupsWithRepresentanteNames } from "./representativeUtils";
 
+/**
+ * Groups orders by client
+ * @param ordersData The JabOrders API response
+ * @returns Record of client name to ClientOrderGroup
+ */
 export const groupOrdersByClient = (ordersData: JabOrdersResponse): Record<string, ClientOrderGroup> => {
   const groups: Record<string, ClientOrderGroup> = {};
   
@@ -51,6 +56,14 @@ export const groupOrdersByClient = (ordersData: JabOrdersResponse): Record<strin
   return groups;
 };
 
+/**
+ * Filters groups by search criteria
+ * @param groupedOrders The grouped orders
+ * @param isSearching Whether searching is active
+ * @param searchQuery The search query
+ * @param searchType The type of search (pedido, cliente, representante)
+ * @returns Filtered groups
+ */
 export const filterGroupsBySearchCriteria = (
   groupedOrders: Record<string, ClientOrderGroup>,
   isSearching: boolean,
@@ -95,113 +108,5 @@ export const filterGroupsBySearchCriteria = (
   return filteredGroups;
 };
 
-export const calculateTotalSelected = (
-  selectedItemsDetails: Record<string, { qtde: number; valor: number }>
-): number => {
-  return Object.values(selectedItemsDetails).reduce((total, item) => {
-    return total + (item.qtde * item.valor);
-  }, 0);
-};
-
-export const getClientCodeFromItem = (item: any): number | null => {
-  let pesCodigoNumerico = null;
-  
-  if (typeof item.PES_CODIGO === 'number') {
-    pesCodigoNumerico = item.PES_CODIGO;
-  } else if (typeof item.PES_CODIGO === 'string') {
-    const parsed = parseInt(item.PES_CODIGO, 10);
-    if (!isNaN(parsed)) {
-      pesCodigoNumerico = parsed;
-    }
-  } else if (item.PES_CODIGO && typeof item.PES_CODIGO === 'object') {
-    const value = item.PES_CODIGO.value;
-    if (typeof value === 'string' || typeof value === 'number') {
-      const parsed = parseInt(String(value), 10);
-      if (!isNaN(parsed)) {
-        pesCodigoNumerico = parsed;
-      }
-    }
-  }
-
-  return pesCodigoNumerico;
-};
-
-/**
- * Fetches representative names for the given representative codes
- * @param representanteCodes Array of representative codes
- * @returns Map of representative code to representative name
- */
-export const fetchRepresentanteNames = async (representanteCodes: number[]): Promise<Map<number, string>> => {
-  try {
-    if (!representanteCodes.length) return new Map();
-    
-    // Filter out any null or undefined codes
-    const validCodes = representanteCodes.filter(Boolean);
-    if (!validCodes.length) return new Map();
-    
-    console.log("Fetching representative names for codes:", validCodes);
-    
-    const { data, error } = await supabase
-      .from('vw_representantes')
-      .select('codigo_representante, nome_representante')
-      .in('codigo_representante', validCodes);
-    
-    if (error) {
-      console.error("Error fetching representative names:", error);
-      return new Map();
-    }
-    
-    console.log("Fetched representative data:", data);
-    
-    const representanteMap = new Map<number, string>();
-    data.forEach((rep: { codigo_representante: number, nome_representante: string }) => {
-      representanteMap.set(rep.codigo_representante, rep.nome_representante);
-    });
-    
-    return representanteMap;
-  } catch (error) {
-    console.error("Error in fetchRepresentanteNames:", error);
-    return new Map();
-  }
-};
-
-/**
- * Enhances client order groups with representative names
- * @param groups Client order groups
- * @returns Enhanced client order groups with representative names
- */
-export const enhanceGroupsWithRepresentanteNames = async (groups: Record<string, any>) => {
-  try {
-    // Extract unique representative codes from all orders within groups
-    const representanteCodes: number[] = [];
-    
-    Object.values(groups).forEach(group => {
-      // Check for representante in group pedidos
-      group.pedidos.forEach((pedido: any) => {
-        if (pedido.REPRESENTANTE && !representanteCodes.includes(pedido.REPRESENTANTE)) {
-          representanteCodes.push(pedido.REPRESENTANTE);
-        }
-      });
-    });
-    
-    // Fetch all representative names at once
-    const representanteMap = await fetchRepresentanteNames(representanteCodes);
-    
-    // Enhance each group with the representative name
-    const enhancedGroups = { ...groups };
-    
-    Object.entries(enhancedGroups).forEach(([key, group]) => {
-      // For each group, find the first pedido with a representante
-      const firstPedidoWithRep = group.pedidos.find((p: any) => p.REPRESENTANTE && representanteMap.has(p.REPRESENTANTE));
-      
-      if (firstPedidoWithRep) {
-        group.representanteNome = representanteMap.get(firstPedidoWithRep.REPRESENTANTE);
-      }
-    });
-    
-    return enhancedGroups;
-  } catch (error) {
-    console.error("Error enhancing groups with representative names:", error);
-    return groups;
-  }
-};
+// Re-export for backward compatibility
+export { enhanceGroupsWithRepresentanteNames };

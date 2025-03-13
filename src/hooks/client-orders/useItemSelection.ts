@@ -1,6 +1,6 @@
 
 import { useMemo } from "react";
-import { calculateTotalSelected } from "@/utils/clientOrdersUtils";
+import { calculateTotalSelected } from "@/utils/selectionUtils";
 import { useToast } from "@/hooks/use-toast";
 import type { ClientOrdersState } from "@/types/clientOrders";
 
