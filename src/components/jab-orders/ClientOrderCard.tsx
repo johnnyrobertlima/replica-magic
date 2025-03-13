@@ -33,12 +33,14 @@ export const ClientOrderCard = ({
   
   // Update local state when parent props change
   useEffect(() => {
+    console.log(`ClientOrderCard useEffect - showZeroBalance changed to ${showZeroBalance} for ${clientName}`);
     setLocalShowZeroBalance(showZeroBalance);
-  }, [showZeroBalance]);
+  }, [showZeroBalance, clientName]);
   
   useEffect(() => {
+    console.log(`ClientOrderCard useEffect - showOnlyWithStock changed to ${showOnlyWithStock} for ${clientName}`);
     setLocalShowOnlyWithStock(showOnlyWithStock);
-  }, [showOnlyWithStock]);
+  }, [showOnlyWithStock, clientName]);
   
   const {
     valoresVencidos,

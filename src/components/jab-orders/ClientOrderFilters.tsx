@@ -16,12 +16,24 @@ export const ClientOrderFilters = ({
   onZeroBalanceChange,
   onOnlyWithStockChange
 }: ClientOrderFiltersProps) => {
+  console.log(`ClientOrderFilters - clientName: ${clientName}, showZeroBalance: ${showZeroBalance}`);
+  
+  const handleZeroBalanceChange = (checked: boolean) => {
+    console.log(`Switch clicked: showZeroBalance changing to ${checked} for ${clientName}`);
+    onZeroBalanceChange(checked);
+  };
+  
+  const handleOnlyWithStockChange = (checked: boolean) => {
+    console.log(`Switch clicked: showOnlyWithStock changing to ${checked} for ${clientName}`);
+    onOnlyWithStockChange(checked);
+  };
+
   return (
     <div className="mb-4 space-y-3">
       <div className="flex items-center gap-2">
         <Switch
           checked={showZeroBalance}
-          onCheckedChange={onZeroBalanceChange}
+          onCheckedChange={handleZeroBalanceChange}
           id={`show-zero-balance-${clientName}`}
           className="data-[state=checked]:bg-[#8B5CF6]"
         />
@@ -35,7 +47,7 @@ export const ClientOrderFilters = ({
       <div className="flex items-center gap-2">
         <Switch
           checked={showOnlyWithStock}
-          onCheckedChange={onOnlyWithStockChange}
+          onCheckedChange={handleOnlyWithStockChange}
           id={`show-only-with-stock-${clientName}`}
           className="data-[state=checked]:bg-[#8B5CF6]"
         />
