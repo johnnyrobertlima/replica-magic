@@ -1,5 +1,7 @@
+
 import type { ClientOrderGroup } from "@/types/clientOrders";
 import type { JabOrdersResponse } from "@/types/jabOrders";
+import { supabase } from "@/integrations/supabase/client";
 
 export const groupOrdersByClient = (ordersData: JabOrdersResponse): Record<string, ClientOrderGroup> => {
   const groups: Record<string, ClientOrderGroup> = {};
@@ -170,12 +172,16 @@ export const fetchRepresentanteNames = async (representanteCodes: number[]): Pro
  */
 export const enhanceGroupsWithRepresentanteNames = async (groups: Record<string, any>) => {
   try {
-    // Extract unique representative codes from all groups
+    // Extract unique representative codes from all orders within groups
     const representanteCodes: number[] = [];
+    
     Object.values(groups).forEach(group => {
-      if (group.representante && !representanteCodes.includes(group.representante)) {
-        representanteCodes.push(group.representante);
-      }
+      // Check for representante in group pedidos
+      group.pedidos.forEach((pedido: any) => {
+        if (pedido.REPRESENTANTE && !representanteCodes.includes(pedido.REPRESENTANTE)) {
+          representanteCodes.push(pedido.REPRESENTANTE);
+        }
+      });
     });
     
     // Fetch all representative names at once
@@ -183,10 +189,13 @@ export const enhanceGroupsWithRepresentanteNames = async (groups: Record<string,
     
     // Enhance each group with the representative name
     const enhancedGroups = { ...groups };
-    Object.keys(enhancedGroups).forEach(key => {
-      const group = enhancedGroups[key];
-      if (group.representante && representanteMap.has(group.representante)) {
-        group.representanteNome = representanteMap.get(group.representante);
+    
+    Object.entries(enhancedGroups).forEach(([key, group]) => {
+      // For each group, find the first pedido with a representante
+      const firstPedidoWithRep = group.pedidos.find((p: any) => p.REPRESENTANTE && representanteMap.has(p.REPRESENTANTE));
+      
+      if (firstPedidoWithRep) {
+        group.representanteNome = representanteMap.get(firstPedidoWithRep.REPRESENTANTE);
       }
     });
     
