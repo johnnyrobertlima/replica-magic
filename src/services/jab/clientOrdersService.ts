@@ -26,8 +26,8 @@ export async function fetchJabOrdersByClient({
     
     console.log(`Date range spans ${daysDifference} days`);
     
-    // For very large date ranges, we need to use a different approach
-    // since the database function might time out or return too much data
+    // Remove the batch size limiter for large date ranges - we want ALL data
+    // Instead, we'll optimize the handling in the processing functions
     const clientesComPedidos = await fetchPedidosPorCliente(dataInicial, dataFinal);
     
     if (!clientesComPedidos || !Array.isArray(clientesComPedidos) || clientesComPedidos.length === 0) {
@@ -40,8 +40,9 @@ export async function fetchJabOrdersByClient({
     // Fetch separation items
     const itensSeparacao = await fetchItensSeparacao();
     
-    // Process client data using optimized function with a higher batch size for large date ranges
-    const batchSize = daysDifference > 90 ? 3 : 5; // Reduce batch size for large date ranges
+    // Process client data - adjust batch size for optimal processing based on date range
+    // For larger date ranges, use smaller batch sizes to avoid memory issues
+    const batchSize = daysDifference > 100 ? 2 : (daysDifference > 30 ? 3 : 5);
     console.log(`Using batch size: ${batchSize} for processing client data`);
     
     const clientGroups = await processClientOrdersData(
@@ -49,7 +50,8 @@ export async function fetchJabOrdersByClient({
       dataFinal, 
       clientesComPedidos, 
       itensSeparacao,
-      batchSize
+      batchSize,
+      false // disable the limiting of results for large queries
     );
 
     console.log(`Processed client groups: ${Object.keys(clientGroups).length}`);

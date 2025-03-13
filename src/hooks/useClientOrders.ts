@@ -38,8 +38,8 @@ export const useClientOrders = () => {
     queryKey: ['jab-orders-by-client', searchDate?.from?.toISOString(), searchDate?.to?.toISOString()],
     queryFn: () => fetchJabOrdersByClient({ dateRange: searchDate }),
     enabled: !!searchDate?.from && !!searchDate?.to,
-    staleTime: 10 * 60 * 1000, // 10 minutes (increased from 5)
-    gcTime: 20 * 60 * 1000, // 20 minutes (increased from 10)
+    staleTime: 15 * 60 * 1000, // 15 minutes (increased from 10)
+    gcTime: 30 * 60 * 1000, // 30 minutes (increased from 20)
     retry: 2, // Retry failed requests twice
     refetchOnWindowFocus: false, // Don't refetch when window gets focus
   });
@@ -60,6 +60,27 @@ export const useClientOrders = () => {
         0
       );
       console.log(`Total items across all clients: ${allItemsCount}`);
+      
+      // Check specifically for "Laguna" client
+      const lagunaClient = Object.entries(ordersByClientData.clientGroups).find(
+        ([name]) => name.toLowerCase().includes('laguna')
+      );
+      
+      if (lagunaClient) {
+        const [name, data] = lagunaClient;
+        console.log(`Found Laguna client: ${name}`);
+        console.log(`Laguna items count: ${data.allItems?.length || 0}`);
+        console.log(`Laguna unique orders count: ${data.uniquePedidosCount || 'N/A'}`);
+        
+        // Count unique orders for verification
+        if (data.allItems?.length) {
+          const uniquePedidos = new Set(data.allItems.map((item: any) => item.pedido));
+          console.log(`Manually counted unique orders for Laguna: ${uniquePedidos.size}`);
+          console.log(`First 5 order numbers: ${[...uniquePedidos].slice(0, 5).join(', ')}`);
+        }
+      } else {
+        console.log(`Laguna client not found in the results`);
+      }
       
       // Print out some client names for debugging
       const clientNames = Object.keys(ordersByClientData.clientGroups).slice(0, 5);

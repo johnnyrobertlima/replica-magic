@@ -18,9 +18,10 @@ export const useClientOrderCard = (data: any) => {
   const [isLoadingFinancial, setIsLoadingFinancial] = useState(false);
   const { toast } = useToast();
 
+  // Calculate how many unique pedidos we have for this client
   const pedidosCount = useMemo(() => 
-    new Set(data.allItems.map((item: any) => item.pedido)).size,
-  [data.allItems]);
+    data.uniquePedidosCount || new Set(data.allItems.map((item: any) => item.pedido)).size,
+  [data.allItems, data.uniquePedidosCount]);
 
   const financialData = useMemo((): FinancialData => {
     const totalValorPedido = data.totalValorPedido || 0;
@@ -46,8 +47,12 @@ export const useClientOrderCard = (data: any) => {
       
       setIsLoadingFinancial(true);
       try {
+        // We want to fetch valores vencidos independently of the date filter
+        // This data should always be current, regardless of the date range selection
         const overdue = await fetchTitulosVencidos(data.PES_CODIGO);
         setValoresVencidos(overdue);
+        
+        // These values are date-dependent and come from the filtered order data
         setValoresTotais(financialData.valoresTotais);
         setValoresEmAberto(financialData.valoresEmAberto);
       } catch (error) {

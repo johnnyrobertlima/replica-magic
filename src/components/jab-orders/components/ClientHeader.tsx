@@ -7,6 +7,7 @@ interface ClientHeaderProps {
   data: {
     representante: string;
     volume_saudavel_faturamento: number;
+    uniquePedidosCount?: number; // Add this to support the direct count from DB
   };
   pedidosCount: number;
   valoresVencidos: number;
@@ -24,6 +25,9 @@ export const ClientHeader = ({
   isExpanded,
   onToggleExpand,
 }: ClientHeaderProps) => {
+  // Use uniquePedidosCount if available (from DB), otherwise fallback to calculated pedidosCount
+  const displayPedidosCount = data.uniquePedidosCount || pedidosCount;
+  
   return (
     <div 
       className="flex items-center justify-between cursor-pointer"
@@ -35,7 +39,7 @@ export const ClientHeader = ({
           Representante: {data.representante || "Não informado"}
         </p>
         <p className="text-sm text-muted-foreground">
-          Total de Pedidos: {pedidosCount}
+          Total de Pedidos: {displayPedidosCount}
         </p>
         <p className={`text-sm font-medium ${valoresVencidos > 0 ? "text-red-600" : "text-gray-600"}`}>
           {isLoadingFinancial ? (

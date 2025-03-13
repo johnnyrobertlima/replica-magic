@@ -100,7 +100,8 @@ export async function processClientOrdersData(
   dataFinal: string,
   clientesComPedidos: any[],
   itensSeparacao: Record<string, boolean>,
-  batchSize: number = 5
+  batchSize: number = 5,
+  limitResults: boolean = false
 ): Promise<Record<string, any>> {
   console.log(`Processing order data for ${clientesComPedidos.length} clients with batch size ${batchSize}`);
   const clientGroups: Record<string, any> = {};
@@ -126,8 +127,18 @@ export async function processClientOrdersData(
         if (itensCliente && Array.isArray(itensCliente) && itensCliente.length > 0) {
           console.log(`Found ${itensCliente.length} items for client ${clienteName}`);
           
+          // Check if we need to limit results for this client (for very large datasets)
+          // IMPORTANT: We've disabled this limiter for now as per user requirements
+          let itensProcessar = itensCliente;
+          if (limitResults && itensCliente.length > 1000) {
+            console.log(`Limiting items for client ${clienteName} due to large dataset (${itensCliente.length} -> 1000)`);
+            itensProcessar = itensCliente.slice(0, 1000);
+          } else {
+            console.log(`Processing all ${itensCliente.length} items for client ${clienteName}`);
+          }
+          
           // Buscar informações de estoque para os itens com a função otimizada
-          const itemCodigos = itensCliente.map(item => item.item_codigo);
+          const itemCodigos = itensProcessar.map(item => item.item_codigo);
           console.log(`Fetching stock info for ${itemCodigos.length} items`);
           const estoqueData = await fetchEstoqueParaItens(itemCodigos);
           
@@ -142,8 +153,13 @@ export async function processClientOrdersData(
             let totalValorFaturado = 0;
             let totalValorFaturarComEstoque = 0;
             
+            // Count unique pedidos for this client
+            const uniquePedidos = new Set();
+            itensProcessar.forEach(item => uniquePedidos.add(item.pedido));
+            console.log(`Client ${clienteName} has ${uniquePedidos.size} unique orders`);
+            
             // Processar itens com informações de estoque
-            const itensProcessados = itensCliente.map(item => {
+            const itensProcessados = itensProcessar.map(item => {
               const estoqueDisponivel = estoqueMap.get(item.item_codigo) || 0;
               const emSeparacao = itensSeparacao[item.item_codigo] || false;
               
@@ -190,7 +206,8 @@ export async function processClientOrdersData(
               totalValorFaturado,
               totalValorFaturarComEstoque,
               volume_saudavel_faturamento: cliente.volume_saudavel_faturamento,
-              allItems: itensProcessados
+              allItems: itensProcessados,
+              uniquePedidosCount: uniquePedidos.size, // Add this to track the number of unique orders
             };
           }
         } else {
