@@ -5,7 +5,7 @@ import {
   fetchPedidosDetalhados,
   fetchRelatedData,
   fetchItensSeparacao
-} from "./dbOperations";
+} from "./db";
 import { 
   processOrdersData,
   processAllOrdersData
