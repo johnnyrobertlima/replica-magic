@@ -333,72 +333,6 @@ export type Database = {
         }
         Relationships: []
       }
-      BLUEBAY_PEDIDO_ORG: {
-        Row: {
-          CENTROCUSTO: string | null
-          DATA_PEDIDO: string | null
-          FILIAL: number
-          ITEM_CODIGO: string | null
-          MATRIZ: number
-          MPED_NUMORDEM: number
-          PED_ANOBASE: string
-          PED_NUMPEDIDO: string
-          PEDIDO: string | null
-          PEDIDO_CLIENTE: string | null
-          PEDIDO_OUTRO: string | null
-          PES_CODIGO: number | null
-          QTDE_ENTREGUE: number | null
-          QTDE_PEDIDA: number | null
-          QTDE_SALDO: number | null
-          REPRESENTANTE: number | null
-          STATUS: string | null
-          TOTAL_PRODUTO: number | null
-          VALOR_UNITARIO: number | null
-        }
-        Insert: {
-          CENTROCUSTO?: string | null
-          DATA_PEDIDO?: string | null
-          FILIAL: number
-          ITEM_CODIGO?: string | null
-          MATRIZ: number
-          MPED_NUMORDEM: number
-          PED_ANOBASE: string
-          PED_NUMPEDIDO: string
-          PEDIDO?: string | null
-          PEDIDO_CLIENTE?: string | null
-          PEDIDO_OUTRO?: string | null
-          PES_CODIGO?: number | null
-          QTDE_ENTREGUE?: number | null
-          QTDE_PEDIDA?: number | null
-          QTDE_SALDO?: number | null
-          REPRESENTANTE?: number | null
-          STATUS?: string | null
-          TOTAL_PRODUTO?: number | null
-          VALOR_UNITARIO?: number | null
-        }
-        Update: {
-          CENTROCUSTO?: string | null
-          DATA_PEDIDO?: string | null
-          FILIAL?: number
-          ITEM_CODIGO?: string | null
-          MATRIZ?: number
-          MPED_NUMORDEM?: number
-          PED_ANOBASE?: string
-          PED_NUMPEDIDO?: string
-          PEDIDO?: string | null
-          PEDIDO_CLIENTE?: string | null
-          PEDIDO_OUTRO?: string | null
-          PES_CODIGO?: number | null
-          QTDE_ENTREGUE?: number | null
-          QTDE_PEDIDA?: number | null
-          QTDE_SALDO?: number | null
-          REPRESENTANTE?: number | null
-          STATUS?: string | null
-          TOTAL_PRODUTO?: number | null
-          VALOR_UNITARIO?: number | null
-        }
-        Relationships: []
-      }
       BLUEBAY_PESSOA: {
         Row: {
           APELIDO: string | null
@@ -1382,21 +1316,6 @@ export type Database = {
           },
         ]
       }
-      vw_representantes: {
-        Row: {
-          codigo_representante: number | null
-          nome_representante: string | null
-        }
-        Relationships: []
-      }
-      vw_titulos_vencidos_cliente: {
-        Row: {
-          PES_CODIGO: string | null
-          quantidade_titulos: number | null
-          total_vencido: number | null
-        }
-        Relationships: []
-      }
     }
     Functions: {
       add_user_to_group: {
@@ -1416,14 +1335,6 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: {
           valor_total_saldo: number
-        }[]
-      }
-      calcular_valor_vencido: {
-        Args: {
-          cliente_codigo: string
-        }
-        Returns: {
-          total_vlr_saldo: number
         }[]
       }
       check_admin_permission: {
@@ -1446,32 +1357,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      get_estoque_para_itens: {
-        Args: {
-          item_codigos: string[]
-        }
-        Returns: {
-          item_codigo: string
-          fisico: number
-        }[]
-      }
-      get_itens_por_cliente: {
-        Args: {
-          data_inicial: string
-          data_final: string
-          cliente_codigo: number
-        }
-        Returns: {
-          item_codigo: string
-          descricao: string
-          qtde_pedida: number
-          qtde_entregue: number
-          qtde_saldo: number
-          valor_unitario: number
-          pedido: string
-          representante: number
-        }[]
-      }
       get_pedidos_agrupados: {
         Args: {
           data_inicial: string
@@ -1482,24 +1367,6 @@ export type Database = {
           quantidade_pedidos: number
           quantidade_itens_com_saldo: number
           valor_do_saldo: number
-        }[]
-      }
-      get_pedidos_por_cliente: {
-        Args: {
-          data_inicial: string
-          data_final: string
-        }
-        Returns: {
-          pes_codigo: number
-          cliente_nome: string
-          representante_codigo: number
-          representante_nome: string
-          total_valor_pedido: number
-          total_valor_faturado: number
-          total_valor_saldo: number
-          total_quantidade_saldo: number
-          volume_saudavel_faturamento: number
-          total_pedidos_distintos: number
         }[]
       }
       get_pedidos_unicos: {
