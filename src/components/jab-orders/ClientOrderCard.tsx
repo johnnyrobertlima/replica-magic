@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -7,6 +7,7 @@ import { OrderProgressBars } from "./OrderProgressBars";
 import { OrderSummaryGrid } from "./OrderSummaryGrid";
 import { ClientOrderFilters } from "./ClientOrderFilters";
 import { ClientOrderItemsTable } from "./ClientOrderItemsTable";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ClientOrderCardProps {
   clientName: string;
@@ -31,6 +32,30 @@ export const ClientOrderCard = ({
 }: ClientOrderCardProps) => {
   const [localShowZeroBalance, setLocalShowZeroBalance] = useState(showZeroBalance);
   const [localShowOnlyWithStock, setLocalShowOnlyWithStock] = useState(showOnlyWithStock);
+  const [representanteName, setRepresentanteName] = useState<string | null>(data.representante || null);
+  
+  useEffect(() => {
+    const fetchRepresentanteName = async () => {
+      // Only fetch if we have a PES_CODIGO and don't already have a representante name
+      if (data.PES_CODIGO && !representanteName) {
+        try {
+          const { data: repData, error } = await supabase
+            .from('vw_representantes')
+            .select('nome_representante')
+            .eq('codigo_representante', data.PES_CODIGO)
+            .single();
+            
+          if (repData && !error) {
+            setRepresentanteName(repData.nome_representante);
+          }
+        } catch (error) {
+          console.error("Error fetching representative:", error);
+        }
+      }
+    };
+    
+    fetchRepresentanteName();
+  }, [data.PES_CODIGO, representanteName]);
   
   const progressFaturamento = data.totalValorPedido > 0 
     ? (data.totalValorFaturado / data.totalValorPedido) * 100 
@@ -64,9 +89,9 @@ export const ClientOrderCard = ({
         >
           <div className="space-y-1">
             <h3 className="text-lg font-semibold">Cliente: {clientName}</h3>
-            {data.representante && (
+            {representanteName && (
               <p className="text-sm text-muted-foreground">
-                Representante: {data.representante}
+                Representante: {representanteName}
               </p>
             )}
             <p className="text-sm text-muted-foreground">
