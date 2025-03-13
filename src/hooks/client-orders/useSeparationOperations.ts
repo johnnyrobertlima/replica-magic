@@ -1,60 +1,33 @@
 
-import { toast } from "@/components/ui/use-toast";
-import { useNavigate } from "react-router-dom";
-import { createSeparacao } from "@/services/clientSeparationService";
+import { useQueryClient } from "@tanstack/react-query";
+import { sendOrdersForSeparation } from "@/services/clientSeparationService";
+import type { ClientOrdersState } from "@/types/clientOrders";
 
-export function useSeparationOperations(state: any, setState: any, clientGroups: Record<string, any>) {
-  const navigate = useNavigate();
+export const useSeparationOperations = (
+  state: ClientOrdersState,
+  setState: React.Dispatch<React.SetStateAction<ClientOrdersState>>,
+  groupedOrders: Record<string, any>
+) => {
+  const queryClient = useQueryClient();
+  const { selectedItems } = state;
 
-  const handleEnviarParaSeparacao = async (displayName?: string) => {
+  const handleEnviarParaSeparacao = async () => {
+    setState(prev => ({ ...prev, isSending: true }));
+    
     try {
-      setState(prev => ({ ...prev, isSending: true }));
-
-      // Get the details of selected items
-      const selectedItemsDetails: Record<string, { qtde: number; valor: number }> = {};
-
-      Object.entries(state.selectedItems).forEach(([key]) => {
-        const [pedido, itemCodigo] = key.split(':');
+      const result = await sendOrdersForSeparation(selectedItems, groupedOrders);
+      
+      if (result.success) {
+        await queryClient.invalidateQueries({ queryKey: ['separacoes'] });
+        await queryClient.invalidateQueries({ queryKey: ['jabOrders'] });
         
-        // Find the item in the client groups
-        for (const groupData of Object.values(clientGroups)) {
-          const foundItem = groupData.allItems.find((item: any) => 
-            item.ITEM_CODIGO === itemCodigo && item.pedido === pedido
-          );
-          
-          if (foundItem) {
-            selectedItemsDetails[key] = {
-              qtde: foundItem.QTDE_SALDO,
-              valor: foundItem.VALOR_UNITARIO
-            };
-            break;
-          }
-        }
-      });
-
-      // Send the orders for separation
-      const result = await createSeparacao(selectedItemsDetails, clientGroups, displayName);
-
-      if (result) {
-        toast({
-          title: "Separação criada com sucesso",
-          description: "Os itens foram enviados para separação.",
-          variant: "default"
-        });
-
-        // Clear selection
-        setState(prev => ({ ...prev, selectedItems: {} }));
-
-        // Navigate to separation details
-        navigate(`/client-area/bluebay/separacoes/${result.id}`);
+        setState(prev => ({ 
+          ...prev, 
+          selectedItems: [],
+          selectedItemsDetails: {},
+          expandedClients: new Set()
+        }));
       }
-    } catch (error) {
-      console.error("Erro ao enviar para separação:", error);
-      toast({
-        title: "Erro ao enviar para separação",
-        description: String(error),
-        variant: "destructive"
-      });
     } finally {
       setState(prev => ({ ...prev, isSending: false }));
     }
@@ -63,4 +36,4 @@ export function useSeparationOperations(state: any, setState: any, clientGroups:
   return {
     handleEnviarParaSeparacao
   };
-}
+};
