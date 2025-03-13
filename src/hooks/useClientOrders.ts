@@ -1,5 +1,5 @@
 
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSeparacoes } from "@/hooks/useSeparacoes";
 import { useTotals } from "@/hooks/useJabOrders";
@@ -33,6 +33,10 @@ export const useClientOrders = () => {
     toggleExpand,
     handleSearch
   } = useClientOrdersState();
+
+  // Paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(50); // Mostrar 50 clientes por página
 
   // Buscar dados de pedidos por cliente usando a nova função otimizada
   const { data: ordersByClientData = { clientGroups: {}, totalCount: 0, itensSeparacao: {} }, isLoading: isLoadingOrders, error: ordersError, refetch } = useQuery({
@@ -111,6 +115,40 @@ export const useClientOrders = () => {
     return filtered;
   }, [ordersByClientData.clientGroups, isSearching, searchQuery, searchType]);
 
+  // Calcular paginação
+  const paginatedData = useMemo(() => {
+    const allClientNames = Object.keys(filteredGroups);
+    const totalClients = allClientNames.length;
+    const totalPages = Math.ceil(totalClients / itemsPerPage);
+
+    // Garantir que a página atual é válida
+    const validCurrentPage = Math.max(1, Math.min(currentPage, totalPages || 1));
+    if (validCurrentPage !== currentPage) {
+      setCurrentPage(validCurrentPage);
+    }
+
+    // Calcular índices para página atual
+    const startIndex = (validCurrentPage - 1) * itemsPerPage;
+    const endIndex = Math.min(startIndex + itemsPerPage, totalClients);
+    
+    // Selecionar clientes para a página atual
+    const clientsForCurrentPage = allClientNames.slice(startIndex, endIndex);
+    
+    // Criar objeto com apenas os clientes da página atual
+    const paginatedGroups: Record<string, any> = {};
+    clientsForCurrentPage.forEach(clientName => {
+      paginatedGroups[clientName] = filteredGroups[clientName];
+    });
+
+    console.log(`DIAGNOSTIC LOG: Pagination - Page ${validCurrentPage}/${totalPages}, showing ${clientsForCurrentPage.length} of ${totalClients} clients`);
+    
+    return {
+      paginatedGroups,
+      totalPages,
+      totalClients
+    };
+  }, [filteredGroups, currentPage, itemsPerPage]);
+
   // Use the item selection hook
   const {
     totalSelecionado,
@@ -133,6 +171,9 @@ export const useClientOrders = () => {
     - search criteria active: ${isSearching ? 'yes' : 'no'}
     - search query: ${searchQuery || 'none'}
     - search type: ${searchType || 'none'}
+    - current page: ${currentPage}
+    - total pages: ${paginatedData.totalPages}
+    - paginated clients: ${Object.keys(paginatedData.paginatedGroups).length}
     `);
     
     // Force a refresh if we detect a mismatch
@@ -143,7 +184,8 @@ export const useClientOrders = () => {
   }, [
     isLoadingOrders, isLoadingTotals, isLoadingSeparacoes, 
     ordersByClientData, filteredGroups, 
-    isSearching, searchQuery, searchType
+    isSearching, searchQuery, searchType,
+    currentPage, paginatedData
   ]);
 
   return {
@@ -171,6 +213,14 @@ export const useClientOrders = () => {
     separacoes,
     filteredGroups,
     totalSelecionado,
+    // Paginação
+    currentPage,
+    setCurrentPage,
+    itemsPerPage,
+    setItemsPerPage,
+    paginatedGroups: paginatedData.paginatedGroups,
+    totalPages: paginatedData.totalPages,
+    totalClients: paginatedData.totalClients,
     // Loading states
     isLoading: isLoadingOrders || isLoadingTotals || isLoadingSeparacoes,
     // Errors

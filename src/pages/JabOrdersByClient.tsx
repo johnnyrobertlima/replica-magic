@@ -9,7 +9,12 @@ import { toast } from "@/components/ui/use-toast";
 
 const JabOrdersByClient = () => {
   const clientOrders = useClientOrders();
-  const { isLoading, ordersData, filteredGroups } = clientOrders;
+  const { 
+    isLoading, 
+    ordersData, 
+    filteredGroups, 
+    totalClients
+  } = clientOrders;
 
   // Log key metrics for debugging
   useEffect(() => {
@@ -18,20 +23,21 @@ const JabOrdersByClient = () => {
       totalCount: ordersData.totalCount,
       clientCount: Object.keys(filteredGroups).length,
       allClientsCount: Object.keys(clientOrders.filteredGroups).length,
+      totalClients: totalClients
     });
 
     // Check if we're missing clients
-    if (ordersData.totalCount > 0 && Object.keys(filteredGroups).length < ordersData.totalCount) {
-      console.warn(`DIAGNOSTIC WARNING: Expected ${ordersData.totalCount} clients but only showing ${Object.keys(filteredGroups).length}`);
+    if (ordersData.totalCount > 0 && totalClients < ordersData.totalCount) {
+      console.warn(`DIAGNOSTIC WARNING: Expected ${ordersData.totalCount} clientes/pedidos mas mostrando apenas ${totalClients} clientes`);
       
       // Show toast with diagnostic information
       toast({
         title: "Atenção",
-        description: `Mostrando ${Object.keys(filteredGroups).length} de ${ordersData.totalCount} esperados`,
+        description: `Mostrando ${totalClients} de ${ordersData.totalCount} clientes/pedidos esperados. Use a paginação para ver todos.`,
         variant: "destructive",
       });
     }
-  }, [isLoading, ordersData.totalCount, filteredGroups, clientOrders.filteredGroups]);
+  }, [isLoading, ordersData.totalCount, filteredGroups, clientOrders.filteredGroups, totalClients]);
 
   if (isLoading) {
     return (
