@@ -1,3 +1,4 @@
+
 /**
  * Processes client orders data into a structured format
  * Uses the optimized database functions
@@ -29,24 +30,31 @@ export async function processClientOrdersData(
         const clienteName = cliente.cliente_nome || `Cliente ${cliente.pes_codigo}`;
         const representanteName = cliente.representante_nome || 'Não informado';
         
-        // Buscar itens do cliente com a função otimizada
+        // Special debug for LAGUNA client
+        const isLaguna = clienteName.toLowerCase().includes('laguna');
+        if (isLaguna) {
+          console.log(`LAGUNA client found (${cliente.pes_codigo}): Processing in batch ${currentBatch}`);
+        }
+        
+        // Fetch client items with the optimized function
         console.log(`Fetching items for client ${clienteName} (${cliente.pes_codigo})`);
         const itensCliente = await fetchItensPorCliente(dataInicial, dataFinal, cliente.pes_codigo);
         
         if (itensCliente && Array.isArray(itensCliente) && itensCliente.length > 0) {
           console.log(`Found ${itensCliente.length} items for client ${clienteName}`);
           
-          // Check if we need to limit results for this client (for very large datasets)
-          // IMPORTANT: We've disabled this limiter for now as per user requirements
-          let itensProcessar = itensCliente;
-          if (limitResults && itensCliente.length > 1000) {
-            console.log(`Limiting items for client ${clienteName} due to large dataset (${itensCliente.length} -> 1000)`);
-            itensProcessar = itensCliente.slice(0, 1000);
-          } else {
-            console.log(`Processing all ${itensCliente.length} items for client ${clienteName}`);
+          // For LAGUNA: log extra information
+          if (isLaguna) {
+            const uniquePedidos = new Set(itensCliente.map(item => item.pedido));
+            console.log(`LAGUNA: Found ${uniquePedidos.size} unique orders with ${itensCliente.length} items`);
+            console.log('First 10 order numbers:', [...uniquePedidos].slice(0, 10).join(', '));
           }
           
-          // Buscar informações de estoque para os itens com a função otimizada
+          // IMPORTANT: Always process all items - no limitation!
+          let itensProcessar = itensCliente;
+          console.log(`Processing all ${itensCliente.length} items for client ${clienteName}`);
+          
+          // Fetch stock information for items with the optimized function
           const itemCodigos = itensProcessar.map(item => item.item_codigo);
           console.log(`Fetching stock info for ${itemCodigos.length} items`);
           const estoqueData = await fetchEstoqueParaItens(itemCodigos);
@@ -67,7 +75,7 @@ export async function processClientOrdersData(
             itensProcessar.forEach(item => uniquePedidos.add(item.pedido));
             console.log(`Client ${clienteName} has ${uniquePedidos.size} unique orders`);
             
-            // Processar itens com informações de estoque
+            // Process items with stock information
             const itensProcessados = itensProcessar.map(item => {
               const estoqueDisponivel = estoqueMap.get(item.item_codigo) || 0;
               const emSeparacao = itensSeparacao[item.item_codigo] || false;
@@ -83,7 +91,7 @@ export async function processClientOrdersData(
               const valorTotalSaldo = qtdeSaldo * valorUnitario;
               const valorFaturado = qtdeEntregue * valorUnitario;
               
-              // Determinar se o item pode ser faturado com estoque
+              // Determine if the item can be billed with available stock
               const valorFaturarComEstoque = (estoqueDisponivel > 0 && qtdeSaldo > 0) ? valorTotalSaldo : 0;
               
               // Update client totals
@@ -104,7 +112,7 @@ export async function processClientOrdersData(
               };
             });
             
-            // Adicionar grupo de cliente
+            // Add client group
             clientGroups[clienteName] = {
               PES_CODIGO: cliente.pes_codigo,
               representante: representanteName,

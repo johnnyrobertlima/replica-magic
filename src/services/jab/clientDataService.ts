@@ -1,6 +1,6 @@
 
 /**
- * Module that re-exports client data service functions
+ * Module that exports client data service functions
  * to maintain a clean import structure
  */
 

@@ -48,6 +48,17 @@ export const ClientOrderContent = ({
     console.log('ClientOrderContent - first few allItems:', data?.allItems?.slice(0, 3));
   }
   
+  // For LAGUNA client, add special logging
+  if (clientName.toLowerCase().includes('laguna')) {
+    console.log(`LAGUNA CLIENT - uniquePedidosCount: ${data?.uniquePedidosCount || 0}`);
+    console.log(`LAGUNA CLIENT - allItems length: ${data?.allItems?.length || 0}`);
+    
+    if (data?.allItems?.length) {
+      const uniquePedidos = new Set(data.allItems.map((item: any) => item.pedido));
+      console.log(`LAGUNA CLIENT - manually counted unique pedidos: ${uniquePedidos.size}`);
+    }
+  }
+  
   return (
     <div className="mt-4 space-y-4">
       {isExpanded && (

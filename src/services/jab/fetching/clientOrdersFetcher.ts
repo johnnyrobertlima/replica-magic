@@ -37,9 +37,8 @@ export async function fetchPedidosPorCliente(dataInicial: string, dataFinal: str
     
     console.log(`Encontrados ${data?.length || 0} clientes com pedidos no período`);
     
-    // Log some debugging info for large datasets
+    // Specifically look for LAGUNA client and log detailed info
     if (data && data.length > 0) {
-      // Check for specific clients like "Laguna"
       const laguna = data.find(cliente => 
         cliente.cliente_nome?.toLowerCase().includes('laguna'));
       
