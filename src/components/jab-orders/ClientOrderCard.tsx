@@ -37,9 +37,9 @@ export const ClientOrderCard = ({
   useEffect(() => {
     const fetchRepresentanteName = async () => {
       if (data.REPRESENTANTE) {
-        console.log("Representative code to look up:", data.REPRESENTANTE, typeof data.REPRESENTANTE);
-        
         try {
+          console.log("Fetching representative with code:", data.REPRESENTANTE);
+          
           // Fetch representative name from vw_representantes view
           const { data: repData, error } = await supabase
             .from('vw_representantes')
@@ -48,17 +48,26 @@ export const ClientOrderCard = ({
 
           if (error) {
             console.error("Error fetching representative from view:", error);
-            setRepresentanteName(data.REPRESENTANTE_NOME || `Representante ${data.REPRESENTANTE} não encontrado`);
             return;
           }
 
-          console.log("Representative query result from view:", repData);
+          console.log("Representative data from view:", repData);
 
           if (repData && repData.length > 0) {
             setRepresentanteName(repData[0].nome_representante);
+            console.log("Representative name set to:", repData[0].nome_representante);
           } else {
             console.log("No representative found in view for code:", data.REPRESENTANTE);
-            setRepresentanteName(data.REPRESENTANTE_NOME || `Representante ${data.REPRESENTANTE} não encontrado`);
+            
+            // Fallback to REPRESENTANTE_NOME or a message
+            if (data.REPRESENTANTE_NOME) {
+              setRepresentanteName(data.REPRESENTANTE_NOME);
+              console.log("Fallback to REPRESENTANTE_NOME:", data.REPRESENTANTE_NOME);
+            } else {
+              const fallbackMsg = `Representante ${data.REPRESENTANTE}`;
+              setRepresentanteName(fallbackMsg);
+              console.log("Using fallback message:", fallbackMsg);
+            }
           }
         } catch (error) {
           console.error("Error in representative fetch:", error);
@@ -105,7 +114,7 @@ export const ClientOrderCard = ({
           <div className="space-y-1">
             <h3 className="text-lg font-semibold">Cliente: {clientName}</h3>
             {representanteName && (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground font-medium">
                 Representante: {representanteName}
               </p>
             )}
