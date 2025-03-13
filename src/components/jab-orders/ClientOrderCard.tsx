@@ -50,6 +50,9 @@ export const ClientOrderCard = ({
     setLocalShowOnlyWithStock(checked);
   };
 
+  // Display the proper representante name from the data
+  const representanteName = data.representanteNome || 'Não informado';
+
   return (
     <Card 
       className={cn(
@@ -64,11 +67,9 @@ export const ClientOrderCard = ({
         >
           <div className="space-y-1">
             <h3 className="text-lg font-semibold">Cliente: {clientName}</h3>
-            {data.representante && (
-              <p className="text-sm text-muted-foreground">
-                Representante: {data.representante}
-              </p>
-            )}
+            <p className="text-sm text-muted-foreground">
+              Representante: {representanteName}
+            </p>
             <p className="text-sm text-muted-foreground">
               Total de Pedidos: {pedidosCount}
             </p>

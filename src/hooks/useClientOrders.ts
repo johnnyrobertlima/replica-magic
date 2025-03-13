@@ -2,7 +2,7 @@
 import { useMemo } from "react";
 import { useAllJabOrders, useTotals } from "@/hooks/useJabOrders";
 import { useSeparacoes } from "@/hooks/useSeparacoes";
-import { groupOrdersByClient, filterGroupsBySearchCriteria } from "@/utils/clientOrdersUtils";
+import { groupOrdersByClient, filterGroupsBySearchCriteria, enhanceGroupsWithRepresentanteNames } from "@/utils/clientOrdersUtils";
 import { useClientOrdersState } from "./client-orders/useClientOrdersState";
 import { useItemSelection } from "./client-orders/useItemSelection";
 import { useSeparationOperations } from "./client-orders/useSeparationOperations";
@@ -41,7 +41,11 @@ export const useClientOrders = () => {
   const { data: separacoes = [], isLoading: isLoadingSeparacoes } = useSeparacoes();
 
   // Group orders by client
-  const groupedOrders = useMemo(() => groupOrdersByClient(ordersData), [ordersData]);
+  const groupedOrders = useMemo(async () => {
+    const groups = groupOrdersByClient(ordersData);
+    // Enhance the groups with representative names
+    return await enhanceGroupsWithRepresentanteNames(groups);
+  }, [ordersData]);
 
   // Filter groups by search criteria
   const filteredGroups = useMemo(() => 

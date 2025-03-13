@@ -29,6 +29,7 @@ export interface JabOrder {
   STATUS: string;
   REPRESENTANTE_NOME: string | null;
   PES_CODIGO: number;
+  REPRESENTANTE: number | null; // Added to ensure we have the representante code
   items: JabOrderItem[];
 }
 
