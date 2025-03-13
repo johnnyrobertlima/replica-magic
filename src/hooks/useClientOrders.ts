@@ -57,7 +57,7 @@ export const useClientOrders = () => {
         toast({
           title: "Atenção",
           description: `Mostrando ${clientCount} clientes de ${ordersByClientData.totalCount} esperados`,
-          variant: "warning", 
+          variant: "destructive", // Changed from "warning" to "destructive"
         });
       }
       
@@ -104,7 +104,7 @@ export const useClientOrders = () => {
       toast({
         title: "Sem resultados",
         description: "Nenhum cliente encontrado com os critérios de busca.",
-        variant: "warning",
+        variant: "default", // Changed from "warning" to "default" 
       });
     }
     

@@ -108,11 +108,11 @@ export async function fetchJabOrdersByClient({
         console.log(`${idx + 1}. Missing client: ${cliente.cliente_nome || 'NO NAME'} (${cliente.pes_codigo}): ${cliente.total_pedidos_distintos} orders`);
       });
       
-      // Show toast with error information
+      // Show toast with error information - using destructive variant instead of warning
       toast({
         title: "Erro ao processar clientes",
         description: `${missingClients.length} clientes não foram processados corretamente.`,
-        variant: "destructive",
+        variant: "destructive", 
       });
     }
     
