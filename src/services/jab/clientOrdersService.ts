@@ -1,7 +1,7 @@
 
 import type { UseJabOrdersOptions } from "@/types/jabOrders";
 import type { ClientOrdersResult } from "./types";
-import { fetchPedidosPorCliente } from "./pedidosPorClienteUtils";
+import { fetchPedidosPorCliente } from "./clientDataService";
 import { processClientOrdersData } from "./processing/clientOrdersProcessor";
 import { fetchItensSeparacao } from "./separacaoUtils";
 

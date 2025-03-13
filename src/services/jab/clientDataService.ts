@@ -1,10 +1,9 @@
 
 /**
- * This file re-exports the client data utilities from their dedicated modules
- * to maintain backward compatibility while keeping the codebase modular.
+ * Module that re-exports client data service functions
+ * to maintain a clean import structure
  */
 
-// Re-export all functions from their dedicated modules
 export { fetchPedidosPorCliente } from './fetching/clientOrdersFetcher';
 export { fetchItensPorCliente } from './fetching/clientItemsFetcher';
 export { fetchEstoqueParaItens } from './fetching/stockFetcher';

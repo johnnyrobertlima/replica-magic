@@ -1,9 +1,8 @@
-
 /**
  * Processes client orders data into a structured format
  * Uses the optimized database functions
  */
-import { fetchItensPorCliente, fetchEstoqueParaItens } from "../pedidosPorClienteUtils";
+import { fetchItensPorCliente, fetchEstoqueParaItens } from "../clientDataService";
 
 export async function processClientOrdersData(
   dataInicial: string,

@@ -25,7 +25,7 @@ export {
   fetchPedidosPorCliente,
   fetchItensPorCliente,
   fetchEstoqueParaItens
-} from './pedidosPorClienteUtils';
+} from './clientDataService';
 
 export {
   processOrdersData,
