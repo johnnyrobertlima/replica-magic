@@ -25,7 +25,12 @@ export const OrdersTabs = ({ clientOrders }: OrdersTabsProps) => {
     totals,
     separacoes,
     filteredGroups,
+    paginatedGroups,
     totalSelecionado,
+    currentPage,
+    totalPages,
+    totalClients,
+    setCurrentPage,
     toggleExpand,
     handleSearch,
     handleItemSelect,
@@ -54,8 +59,13 @@ export const OrdersTabs = ({ clientOrders }: OrdersTabsProps) => {
           selectedItems={selectedItems}
           expandedClients={expandedClients}
           filteredGroups={filteredGroups}
+          paginatedGroups={paginatedGroups}
           totalSelecionado={totalSelecionado}
           isSending={isSending}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalClients={totalClients}
+          setCurrentPage={setCurrentPage}
           toggleExpand={toggleExpand}
           handleSearch={handleSearch}
           handleItemSelect={handleItemSelect}
