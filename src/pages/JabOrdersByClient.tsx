@@ -5,6 +5,7 @@ import { OrdersTabs } from "@/components/jab-orders/OrdersTabs";
 import { Toaster } from "@/components/ui/toaster";
 import JabNavMenu from "@/components/jab-orders/JabNavMenu";
 import { useEffect } from "react";
+import { toast } from "@/components/ui/use-toast";
 
 const JabOrdersByClient = () => {
   const clientOrders = useClientOrders();
@@ -22,8 +23,15 @@ const JabOrdersByClient = () => {
     // Check if we're missing clients
     if (ordersData.totalCount > 0 && Object.keys(filteredGroups).length < ordersData.totalCount) {
       console.warn(`DIAGNOSTIC WARNING: Expected ${ordersData.totalCount} clients but only showing ${Object.keys(filteredGroups).length}`);
+      
+      // Show toast with diagnostic information
+      toast({
+        title: "Atenção",
+        description: `Mostrando ${Object.keys(filteredGroups).length} de ${ordersData.totalCount} esperados`,
+        variant: "destructive",
+      });
     }
-  }, [isLoading, ordersData.totalCount, filteredGroups]);
+  }, [isLoading, ordersData.totalCount, filteredGroups, clientOrders.filteredGroups]);
 
   if (isLoading) {
     return (

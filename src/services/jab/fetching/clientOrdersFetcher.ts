@@ -18,16 +18,17 @@ export async function fetchPedidosPorCliente(dataInicial: string, dataFinal: str
     const startTime = Date.now();
     console.log(`DIAGNOSTIC LOG: Starting RPC call to get_pedidos_por_cliente at ${new Date().toISOString()}`);
     
-    const { data, error } = await supabase.rpc('get_pedidos_por_cliente', {
+    const { data, error, count, status } = await supabase.rpc('get_pedidos_por_cliente', {
       data_inicial: dataInicial,
       data_final: dataFinalCompleta
     }, {
       head: false, // Não use HEAD request para evitar timeout em resultados grandes
       count: 'exact' // Get exact count of rows
-    }) as { data: PedidosPorClienteResult[] | null, error: any };
+    }) as { data: PedidosPorClienteResult[] | null, error: any, count: number | null, status: number };
 
     const endTime = Date.now();
-    console.log(`DIAGNOSTIC LOG: RPC call completed in ${endTime - startTime}ms`);
+    console.log(`DIAGNOSTIC LOG: RPC call completed in ${endTime - startTime}ms with status ${status}`);
+    console.log(`DIAGNOSTIC LOG: Count from API: ${count}`);
 
     if (error) {
       console.error('ERROR in fetchPedidosPorCliente:', error);
@@ -40,10 +41,10 @@ export async function fetchPedidosPorCliente(dataInicial: string, dataFinal: str
       return [];
     }
     
-    // Verificando número total de registros retornados 
-    console.log(`DIAGNOSTIC LOG: Total de clientes retornados da função get_pedidos_por_cliente: ${data.length || 0}`);
+    // Log count of returned records 
+    console.log(`DIAGNOSTIC LOG: Total clients returned from database: ${data.length || 0}`);
     
-    // Contando número total de pedidos para verificação
+    // Count total distinct orders for verification
     let totalPedidosDistintosBanco = 0;
     data.forEach(cliente => {
       if (cliente.total_pedidos_distintos) {
@@ -51,13 +52,13 @@ export async function fetchPedidosPorCliente(dataInicial: string, dataFinal: str
       }
     });
     
-    console.log(`DIAGNOSTIC LOG: Total de pedidos distintos do banco: ${totalPedidosDistintosBanco}`);
+    console.log(`DIAGNOSTIC LOG: Sum of total_pedidos_distintos from database: ${totalPedidosDistintosBanco}`);
     
     // Verify data integrity
     const clientesComProblemas = data.filter(c => !c.cliente_nome || !c.pes_codigo || !c.total_pedidos_distintos);
     if (clientesComProblemas.length > 0) {
       console.warn(`ALERTA: Encontrados ${clientesComProblemas.length} clientes com dados incompletos`);
-      clientesComProblemas.slice(0, 5).forEach((c, i) => {
+      clientesComProblemas.forEach((c, i) => {
         console.warn(`Problema ${i+1}:`, {
           pes_codigo: c.pes_codigo || 'MISSING',
           cliente_nome: c.cliente_nome || 'MISSING', 
@@ -66,22 +67,14 @@ export async function fetchPedidosPorCliente(dataInicial: string, dataFinal: str
       });
     }
     
-    // Log complete client list with their order counts in groups of 50
-    if (data && data.length > 0) {
-      // Ordenar por nome para facilitar a leitura
-      const sortedData = [...data].sort((a, b) => {
-        return (a.cliente_nome || '').localeCompare(b.cliente_nome || '');
-      });
-      
-      const chunkSize = 50;
-      for (let i = 0; i < sortedData.length; i += chunkSize) {
-        const chunk = sortedData.slice(i, i + chunkSize);
-        console.log(`=== LISTA DE CLIENTES E PEDIDOS (${i+1} - ${Math.min(i+chunkSize, sortedData.length)}) ===`);
-        chunk.forEach((cliente, idx) => {
-          console.log(`${i+idx+1}. ${cliente.cliente_nome || 'SEM NOME'} (${cliente.pes_codigo}): ${cliente.total_pedidos_distintos || 0} pedidos`);
-        });
-      }
-    }
+    // Log all client codes and names to help identify any issues
+    console.log(`DIAGNOSTIC LOG: All client codes and names (${data.length}):`);
+    const clientsInfo = data.map(c => ({ 
+      code: c.pes_codigo, 
+      name: c.cliente_nome || 'MISSING NAME', 
+      orders: c.total_pedidos_distintos || 0 
+    }));
+    console.log(JSON.stringify(clientsInfo));
     
     return data;
   } catch (error) {

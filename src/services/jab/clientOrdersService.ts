@@ -4,6 +4,7 @@ import type { ClientOrdersResult } from "./types";
 import { fetchPedidosPorCliente } from "./fetching/clientOrdersFetcher";
 import { processClientOrdersData } from "./processing/clientOrdersProcessor";
 import { fetchItensSeparacao } from "./separacaoUtils";
+import { toast } from "@/components/ui/use-toast";
 
 export async function fetchJabOrdersByClient({
   dateRange
@@ -36,24 +37,30 @@ export async function fetchJabOrdersByClient({
       return { clientGroups: {}, totalCount: 0 };
     }
     
-    // Contar o número total de pedidos distintos
+    // Count total unique pedidos from the database
     let totalPedidosDistintos = 0;
+    const clientesPorCodigo = new Map();
+    
     clientesComPedidos.forEach(cliente => {
       if (cliente.total_pedidos_distintos) {
         totalPedidosDistintos += cliente.total_pedidos_distintos;
       }
+      // Store clients by code to check for duplicates
+      clientesPorCodigo.set(cliente.pes_codigo, cliente);
     });
     
     console.log(`DIAGNOSTIC LOG: Found ${clientesComPedidos.length} clients with orders from database`);
-    console.log(`DIAGNOSTIC LOG: Total distinct orders according to database: ${totalPedidosDistintos}`);
-    console.log(`DIAGNOSTIC LOG: First 10 clients from database:`);
-    clientesComPedidos.slice(0, 10).forEach((cliente, idx) => {
-      console.log(`${idx + 1}. ${cliente.cliente_nome || 'NO NAME'} (${cliente.pes_codigo}): ${cliente.total_pedidos_distintos} orders`);
-    });
-    console.log(`DIAGNOSTIC LOG: Last 10 clients from database:`);
-    clientesComPedidos.slice(-10).forEach((cliente, idx) => {
-      console.log(`${clientesComPedidos.length - 10 + idx + 1}. ${cliente.cliente_nome || 'NO NAME'} (${cliente.pes_codigo}): ${cliente.total_pedidos_distintos} orders`);
-    });
+    console.log(`DIAGNOSTIC LOG: Database reports ${totalPedidosDistintos} total distinct orders`);
+    
+    // Check for and log potential duplicate clients
+    if (clientesPorCodigo.size !== clientesComPedidos.length) {
+      console.warn(`DIAGNOSTIC WARNING: Found ${clientesComPedidos.length} client records but only ${clientesPorCodigo.size} unique client codes`);
+    }
+    
+    // Log all database clients for comparison
+    console.log(`DIAGNOSTIC LOG: All clients from database (${clientesComPedidos.length}):`);
+    const clienteNomes = clientesComPedidos.map(c => c.cliente_nome || `Cliente ${c.pes_codigo}`);
+    console.log(JSON.stringify(clienteNomes));
 
     // Fetch separation items
     const itensSeparacao = await fetchItensSeparacao();
@@ -78,10 +85,10 @@ export async function fetchJabOrdersByClient({
     // Double check the number of clients processed
     const processedClientCount = Object.keys(clientGroups).length;
     console.log(`DIAGNOSTIC LOG: Processed ${processedClientCount} clients out of ${clientesComPedidos.length} from database`);
-    console.log(`DIAGNOSTIC LOG: First 10 clients after processing:`);
-    Object.entries(clientGroups).slice(0, 10).forEach(([clientName, data], idx) => {
-      console.log(`${idx + 1}. ${clientName}: total_pedidos_distintos=${(data as any).total_pedidos_distintos}`);
-    });
+    
+    // Log all processed client names for comparison
+    console.log(`DIAGNOSTIC LOG: All processed clients (${processedClientCount}):`);
+    console.log(JSON.stringify(Object.keys(clientGroups)));
     
     if (processedClientCount !== clientesComPedidos.length) {
       console.error(`ERROR: We lost ${clientesComPedidos.length - processedClientCount} clients during processing!`);
@@ -89,32 +96,36 @@ export async function fetchJabOrdersByClient({
       // Let's check which clients are missing
       console.log("DIAGNOSTIC LOG: Looking for missing clients...");
       const processedClientNames = new Set(Object.keys(clientGroups));
-      const missingClients = clientesComPedidos.filter(cliente => 
-        !processedClientNames.has(cliente.cliente_nome || `Cliente ${cliente.pes_codigo}`)
-      );
       
-      console.log(`DIAGNOSTIC LOG: Found ${missingClients.length} missing clients, first 10 shown below:`);
-      missingClients.slice(0, 10).forEach((cliente, idx) => {
+      // Find clients that were in the database but missing from processed results
+      const missingClients = clientesComPedidos.filter(cliente => {
+        const clienteName = cliente.cliente_nome || `Cliente ${cliente.pes_codigo}`;
+        return !processedClientNames.has(clienteName);
+      });
+      
+      console.log(`DIAGNOSTIC LOG: Found ${missingClients.length} missing clients, showing below:`);
+      missingClients.forEach((cliente, idx) => {
         console.log(`${idx + 1}. Missing client: ${cliente.cliente_nome || 'NO NAME'} (${cliente.pes_codigo}): ${cliente.total_pedidos_distintos} orders`);
+      });
+      
+      // Show toast with error information
+      toast({
+        title: "Erro ao processar clientes",
+        description: `${missingClients.length} clientes não foram processados corretamente.`,
+        variant: "destructive",
       });
     }
     
-    // After processing, verify the total orders processed
-    let pedidosProcessados = 0;
-    Object.values(clientGroups).forEach((client: any) => {
-      if (client.uniquePedidosCount) {
-        pedidosProcessados += client.uniquePedidosCount;
-      } else if (client.total_pedidos_distintos) {
-        pedidosProcessados += client.total_pedidos_distintos;
-      }
-    });
-
-    console.log(`DIAGNOSTIC LOG: Total distinct orders after processing: ${pedidosProcessados}`);
+    // Log discrepancies if any
+    const totalPedidosProcessados = Object.values(clientGroups).reduce((acc: number, client: any) => {
+      return acc + (client.total_pedidos_distintos || 0);
+    }, 0);
+    
+    console.log(`DIAGNOSTIC LOG: Total distinct orders after processing: ${totalPedidosProcessados}`);
     console.log(`DIAGNOSTIC LOG: Total received from database: ${totalPedidosDistintos}`);
     
-    // Log discrepancies if any
-    if (pedidosProcessados !== totalPedidosDistintos) {
-      console.warn(`IMPORTANTE: Discrepância entre pedidos do banco (${totalPedidosDistintos}) e processados (${pedidosProcessados})`);
+    if (totalPedidosProcessados !== totalPedidosDistintos) {
+      console.warn(`IMPORTANTE: Discrepância entre pedidos do banco (${totalPedidosDistintos}) e processados (${totalPedidosProcessados})`);
     }
     
     return {
@@ -124,6 +135,15 @@ export async function fetchJabOrdersByClient({
     };
   } catch (error) {
     console.error('Error fetching client orders:', error);
+    console.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace available');
+    
+    // Show toast with error information
+    toast({
+      title: "Erro ao buscar pedidos",
+      description: "Ocorreu um erro ao buscar os pedidos dos clientes.",
+      variant: "destructive",
+    });
+    
     throw error;
   }
 }

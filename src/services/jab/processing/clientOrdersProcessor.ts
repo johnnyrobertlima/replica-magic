@@ -21,7 +21,16 @@ export async function processClientOrdersData(
     console.warn('AVISO: limitResults está ativado, mas será IGNORADO para garantir que todos os resultados sejam exibidos');
   }
   
-  console.log('Processando todos os pedidos sem limitação');
+  // Create a map of client codes to client names for quick lookup
+  // This helps ensure we don't miss any clients due to name formatting issues
+  const clienteCodigoParaNome = new Map();
+  clientesComPedidos.forEach(cliente => {
+    // Handle undefined client names 
+    const clienteName = cliente.cliente_nome || `Cliente ${cliente.pes_codigo}`;
+    clienteCodigoParaNome.set(cliente.pes_codigo, clienteName);
+  });
+  
+  console.log(`DIAGNOSTIC LOG: Created client code to name mapping for ${clienteCodigoParaNome.size} clients`);
   
   // Process clients in batches to avoid memory issues with large datasets
   const totalBatches = Math.ceil(clientesComPedidos.length / batchSize);
@@ -30,6 +39,7 @@ export async function processClientOrdersData(
   // Tracking for processed clients
   let successfullyProcessed = 0;
   let failedToProcess = 0;
+  const failedClientCodes = new Set();
   
   for (let i = 0; i < clientesComPedidos.length; i += batchSize) {
     const batch = clientesComPedidos.slice(i, i + batchSize);
@@ -38,16 +48,35 @@ export async function processClientOrdersData(
     
     const batchResults = await Promise.allSettled(batch.map(async (cliente) => {
       try {
+        // Get client name, ensuring we have a fallback
         const clienteName = cliente.cliente_nome || `Cliente ${cliente.pes_codigo}`;
         const representanteName = cliente.representante_nome || 'Não informado';
         const pedidosDistintosDoBanco = cliente.total_pedidos_distintos || 0;
+        const clienteCodigo = cliente.pes_codigo;
         
-        // Debug para TODOS os clientes
-        console.log(`Cliente: ${clienteName} (${cliente.pes_codigo}) - ${pedidosDistintosDoBanco} pedidos no banco`);
+        // Debug info for each client
+        console.log(`DIAGNOSTIC LOG: Processing client: ${clienteName} (${clienteCodigo}) - ${pedidosDistintosDoBanco} pedidos no banco`);
+        
+        // Add client to groups even before fetching items
+        // This ensures we don't lose clients just because they might not have items
+        clientGroups[clienteName] = {
+          PES_CODIGO: clienteCodigo,
+          representante: representanteName,
+          representante_codigo: cliente.representante_codigo,
+          totalQuantidadeSaldo: 0,
+          totalValorSaldo: 0,
+          totalValorPedido: 0,
+          totalValorFaturado: 0,
+          totalValorFaturarComEstoque: 0,
+          volume_saudavel_faturamento: cliente.volume_saudavel_faturamento,
+          allItems: [],
+          uniquePedidosCount: 0,
+          total_pedidos_distintos: pedidosDistintosDoBanco
+        };
         
         // Fetch client items using optimized function
-        console.log(`Fetching items for client ${clienteName} (${cliente.pes_codigo})`);
-        const itensCliente = await fetchItensPorCliente(dataInicial, dataFinal, cliente.pes_codigo);
+        console.log(`Fetching items for client ${clienteName} (${clienteCodigo})`);
+        const itensCliente = await fetchItensPorCliente(dataInicial, dataFinal, clienteCodigo);
         
         if (itensCliente && Array.isArray(itensCliente) && itensCliente.length > 0) {
           console.log(`Found ${itensCliente.length} items for client ${clienteName}`);
@@ -113,34 +142,41 @@ export async function processClientOrdersData(
               };
             });
             
-            // Add client group - use the total_pedidos_distintos from database as source of truth
+            // Update client group with processed items and totals
             clientGroups[clienteName] = {
-              PES_CODIGO: cliente.pes_codigo,
-              representante: representanteName,
-              representante_codigo: cliente.representante_codigo,
+              ...clientGroups[clienteName],
               totalQuantidadeSaldo,
               totalValorSaldo,
               totalValorPedido,
               totalValorFaturado,
               totalValorFaturarComEstoque,
-              volume_saudavel_faturamento: cliente.volume_saudavel_faturamento,
               allItems: itensProcessados,
-              uniquePedidosCount: uniquePedidos.size,
-              total_pedidos_distintos: pedidosDistintosDoBanco
+              uniquePedidosCount: uniquePedidos.size
             };
             
             // Log discrepancies
             if (uniquePedidos.size !== pedidosDistintosDoBanco) {
               console.warn(`DISCREPÂNCIA: Cliente ${clienteName} - ${pedidosDistintosDoBanco} pedidos no banco vs ${uniquePedidos.size} calculados pelos itens`);
             }
-            
-            successfullyProcessed++;
-            return { success: true, clientName: clienteName };
           }
         } else {
-          console.log(`No items found for client ${clienteName} (${cliente.pes_codigo})`);
+          console.log(`No items found for client ${clienteName} (${clienteCodigo}), keeping basic entry`);
+        }
+        
+        successfullyProcessed++;
+        return { success: true, clientName: clienteName, clienteCodigo };
+      } catch (error) {
+        console.error(`Error processing client ${cliente.pes_codigo}:`, error);
+        failedToProcess++;
+        failedClientCodes.add(cliente.pes_codigo);
+        
+        // Despite the error, add a basic entry for this client to ensure it appears in the UI
+        try {
+          const clienteName = cliente.cliente_nome || `Cliente ${cliente.pes_codigo}`;
+          const representanteName = cliente.representante_nome || 'Não informado';
+          const pedidosDistintosDoBanco = cliente.total_pedidos_distintos || 0;
           
-          // Adicionar cliente mesmo sem itens, mantendo a contagem de pedidos do banco
+          // Add a basic client record even when there's an error
           clientGroups[clienteName] = {
             PES_CODIGO: cliente.pes_codigo,
             representante: representanteName,
@@ -156,46 +192,75 @@ export async function processClientOrdersData(
             total_pedidos_distintos: pedidosDistintosDoBanco
           };
           
-          successfullyProcessed++;
-          return { success: true, clientName: clienteName };
+          console.log(`Added basic entry for client ${clienteName} despite processing error`);
+          return { success: false, clientName: clienteName, error, recoveryAttempted: true };
+        } catch (recoveryError) {
+          console.error(`Failed to add basic client entry for ${cliente.pes_codigo}:`, recoveryError);
+          return { success: false, clientName: cliente.cliente_nome || `Cliente ${cliente.pes_codigo}`, error, recoveryAttempted: false };
         }
-      } catch (error) {
-        console.error(`Error processing client ${cliente.pes_codigo}:`, error);
-        failedToProcess++;
-        return { success: false, clientName: cliente.cliente_nome || `Cliente ${cliente.pes_codigo}`, error };
       }
     }));
     
     // Log batch results
     const batchSuccesses = batchResults.filter(r => r.status === 'fulfilled' && r.value?.success).length;
     const batchFails = batchResults.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value?.success)).length;
+    const batchRecoveries = batchResults.filter(r => r.status === 'fulfilled' && !r.value?.success && r.value?.recoveryAttempted).length;
     
-    console.log(`Batch ${currentBatch} results: ${batchSuccesses} successes, ${batchFails} failures`);
+    console.log(`Batch ${currentBatch} results: ${batchSuccesses} successes, ${batchFails} failures (${batchRecoveries} recovered)`);
     console.log(`Current client groups count: ${Object.keys(clientGroups).length}`);
   }
   
   console.log(`Processing complete: ${successfullyProcessed} clients processed successfully, ${failedToProcess} failures`);
   console.log(`Final client groups count: ${Object.keys(clientGroups).length}`);
   
-  // Contar pedidos únicos após processamento
-  let totalPedidosDistintosProcessados = 0;
-  let totalPedidosDistintosBanco = 0;
-  Object.values(clientGroups).forEach((client: any) => {
-    if (client.uniquePedidosCount) {
-      totalPedidosDistintosProcessados += client.uniquePedidosCount;
-    }
-    if (client.total_pedidos_distintos) {
-      totalPedidosDistintosBanco += client.total_pedidos_distintos;
-    }
-  });
+  // Now check for any clients in the database that are missing from our processed results
+  // This helps catch any clients we might have missed due to processing errors or bugs
+  console.log("DIAGNOSTIC LOG: Checking for clients that may have been missed during processing");
+  let missingClientsAdded = 0;
   
-  console.log(`Finished processing all clients. Total client groups: ${Object.keys(clientGroups).length}`);
-  console.log(`Total pedidos distintos calculados pelos itens: ${totalPedidosDistintosProcessados}`);
-  console.log(`Total pedidos distintos conforme banco de dados: ${totalPedidosDistintosBanco}`);
+  for (const cliente of clientesComPedidos) {
+    const clienteName = cliente.cliente_nome || `Cliente ${cliente.pes_codigo}`;
+    if (!clientGroups[clienteName]) {
+      console.warn(`DIAGNOSTIC LOG: Client ${clienteName} (${cliente.pes_codigo}) is missing from processed results, adding basic entry`);
+      
+      // Add a basic entry for this client
+      clientGroups[clienteName] = {
+        PES_CODIGO: cliente.pes_codigo,
+        representante: cliente.representante_nome || 'Não informado',
+        representante_codigo: cliente.representante_codigo,
+        totalQuantidadeSaldo: 0,
+        totalValorSaldo: 0,
+        totalValorPedido: 0,
+        totalValorFaturado: 0,
+        totalValorFaturarComEstoque: 0,
+        volume_saudavel_faturamento: cliente.volume_saudavel_faturamento,
+        allItems: [],
+        uniquePedidosCount: 0,
+        total_pedidos_distintos: cliente.total_pedidos_distintos || 0
+      };
+      
+      missingClientsAdded++;
+    }
+  }
   
-  // Verificar se todos os clientes estão presentes
-  if (Object.keys(clientGroups).length !== clientesComPedidos.length) {
-    console.error(`ALERTA: Nem todos os clientes foram processados! Esperados: ${clientesComPedidos.length}, Processados: ${Object.keys(clientGroups).length}`);
+  if (missingClientsAdded > 0) {
+    console.log(`DIAGNOSTIC LOG: Added ${missingClientsAdded} clients that were missing from processed results`);
+  }
+  
+  // Final verification count
+  const finalClientCount = Object.keys(clientGroups).length;
+  console.log(`DIAGNOSTIC LOG: Final client count: ${finalClientCount} (expected ${clientesComPedidos.length})`);
+  
+  if (finalClientCount !== clientesComPedidos.length) {
+    console.error(`DIAGNOSTIC ERROR: Still missing ${clientesComPedidos.length - finalClientCount} clients after all processing`);
+    
+    // Compare the two sets to find which clients are still missing
+    const processedClientNames = new Set(Object.keys(clientGroups));
+    const missingClientNames = clientesComPedidos
+      .map(c => c.cliente_nome || `Cliente ${c.pes_codigo}`)
+      .filter(name => !processedClientNames.has(name));
+    
+    console.error(`DIAGNOSTIC ERROR: Missing clients: ${JSON.stringify(missingClientNames)}`);
   }
   
   return clientGroups;

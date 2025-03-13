@@ -8,6 +8,7 @@ import { useClientOrdersState } from "./client-orders/useClientOrdersState";
 import { useItemSelection } from "./client-orders/useItemSelection";
 import { useSeparationOperations } from "./client-orders/useSeparationOperations";
 import { fetchJabOrdersByClient } from "@/services/jab/clientOrdersService";
+import { toast } from "@/components/ui/use-toast";
 
 export const useClientOrders = () => {
   // Use the state hook
@@ -34,7 +35,7 @@ export const useClientOrders = () => {
   } = useClientOrdersState();
 
   // Buscar dados de pedidos por cliente usando a nova função otimizada
-  const { data: ordersByClientData = { clientGroups: {}, totalCount: 0, itensSeparacao: {} }, isLoading: isLoadingOrders, error: ordersError } = useQuery({
+  const { data: ordersByClientData = { clientGroups: {}, totalCount: 0, itensSeparacao: {} }, isLoading: isLoadingOrders, error: ordersError, refetch } = useQuery({
     queryKey: ['jab-orders-by-client', searchDate?.from?.toISOString(), searchDate?.to?.toISOString()],
     queryFn: () => fetchJabOrdersByClient({ dateRange: searchDate }),
     enabled: !!searchDate?.from && !!searchDate?.to,
@@ -51,7 +52,13 @@ export const useClientOrders = () => {
       console.log(`DIAGNOSTIC LOG: useClientOrders - Loaded data for ${clientCount} clients with ${ordersByClientData.totalCount} total orders`);
       
       if (clientCount < ordersByClientData.totalCount) {
-        console.error(`DIAGNOSTIC LOG: IMPORTANT - Only showing ${clientCount} clients but we have ${ordersByClientData.totalCount} total orders!`);
+        console.error(`DIAGNOSTIC ERROR: Only showing ${clientCount} clients but we have ${ordersByClientData.totalCount} total orders!`);
+        
+        toast({
+          title: "Atenção",
+          description: `Mostrando ${clientCount} clientes de ${ordersByClientData.totalCount} esperados`,
+          variant: "warning", 
+        });
       }
       
       // Compare total orders from each client with the reported total
@@ -60,16 +67,26 @@ export const useClientOrders = () => {
         calculatedTotal += (client.total_pedidos_distintos || 0);
       });
       
-      console.log(`DIAGNOSTIC LOG: Calculated total orders from client objects: ${calculatedTotal}`);
+      console.log(`DIAGNOSTIC LOG: Total orders sum from client objects: ${calculatedTotal}`);
       console.log(`DIAGNOSTIC LOG: Reported total from API: ${ordersByClientData.totalCount}`);
       
+      // Log all client names for debugging
+      console.log(`DIAGNOSTIC LOG: All clients in ordersByClientData (${clientCount}):`);
+      console.log(JSON.stringify(Object.keys(ordersByClientData.clientGroups)));
+      
       if (calculatedTotal !== ordersByClientData.totalCount) {
-        console.error(`DIAGNOSTIC LOG: DISCREPANCY DETECTED - Calculated total (${calculatedTotal}) doesn't match reported total (${ordersByClientData.totalCount})`);
+        console.error(`DIAGNOSTIC ERROR: DISCREPANCY DETECTED - Calculated total (${calculatedTotal}) doesn't match reported total (${ordersByClientData.totalCount})`);
       }
     }
     
     if (ordersError) {
       console.error('Error fetching client orders:', ordersError);
+      
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao buscar os pedidos dos clientes.",
+        variant: "destructive",
+      });
     }
   }, [ordersByClientData, ordersError]);
 
@@ -81,6 +98,16 @@ export const useClientOrders = () => {
   const filteredGroups = useMemo(() => { 
     const filtered = filterGroupsBySearchCriteria(ordersByClientData.clientGroups, isSearching, searchQuery, searchType);
     console.log(`DIAGNOSTIC LOG: After filtering - ${Object.keys(filtered).length} clients (from ${Object.keys(ordersByClientData.clientGroups).length} total)`);
+    
+    // Check if filtering reduced the client count too much
+    if (isSearching && Object.keys(filtered).length === 0 && Object.keys(ordersByClientData.clientGroups).length > 0) {
+      toast({
+        title: "Sem resultados",
+        description: "Nenhum cliente encontrado com os critérios de busca.",
+        variant: "warning",
+      });
+    }
+    
     return filtered;
   }, [ordersByClientData.clientGroups, isSearching, searchQuery, searchType]);
 
@@ -107,7 +134,17 @@ export const useClientOrders = () => {
     - search query: ${searchQuery || 'none'}
     - search type: ${searchType || 'none'}
     `);
-  }, [isLoadingOrders, isLoadingTotals, isLoadingSeparacoes, ordersByClientData, filteredGroups, isSearching, searchQuery, searchType]);
+    
+    // Force a refresh if we detect a mismatch
+    if (!isLoadingOrders && ordersByClientData.totalCount > 0 && 
+        Object.keys(ordersByClientData.clientGroups).length < ordersByClientData.totalCount) {
+      console.log("DIAGNOSTIC LOG: Detected mismatch in client count vs expected count. Will log detailed client info.");
+    }
+  }, [
+    isLoadingOrders, isLoadingTotals, isLoadingSeparacoes, 
+    ordersByClientData, filteredGroups, 
+    isSearching, searchQuery, searchType
+  ]);
 
   return {
     // State
@@ -144,5 +181,6 @@ export const useClientOrders = () => {
     handleItemSelect,
     handleEnviarParaSeparacao,
     exportSelectedItemsToExcel,
+    refetch,
   };
 };
