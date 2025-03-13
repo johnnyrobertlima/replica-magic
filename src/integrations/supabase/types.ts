@@ -1484,6 +1484,7 @@ export type Database = {
           total_valor_saldo: number
           total_quantidade_saldo: number
           volume_saudavel_faturamento: number
+          total_pedidos_distintos: number
         }[]
       }
       get_pedidos_unicos: {
