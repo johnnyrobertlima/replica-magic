@@ -27,6 +27,12 @@ export {
   fetchEstoqueParaItens
 } from './pedidosPorClienteUtils';
 
+export {
+  processOrdersData,
+  groupOrdersByNumber,
+  processClientOrdersData
+} from './orderProcessUtils';
+
 export type { 
   RelatedDataResponse,
   PedidosDetalhadosResponse,

@@ -2,7 +2,7 @@
 import type { UseJabOrdersOptions } from "@/types/jabOrders";
 import type { ClientOrdersResult } from "./types";
 import { fetchPedidosPorCliente } from "./pedidosPorClienteUtils";
-import { processClientOrdersData } from "./orderProcessUtils";
+import { processClientOrdersData } from "./processing/clientOrdersProcessor";
 import { fetchItensSeparacao } from "./separacaoUtils";
 
 export async function fetchJabOrdersByClient({
