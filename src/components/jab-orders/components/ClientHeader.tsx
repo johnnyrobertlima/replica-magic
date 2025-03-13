@@ -1,15 +1,11 @@
 
-import { ChevronDown, ChevronUp } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { ExternalLink } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface ClientHeaderProps {
   clientName: string;
-  data: {
-    representante: string;
-    volume_saudavel_faturamento: number;
-    uniquePedidosCount?: number;
-    total_pedidos_distintos?: number; // Campo da base de dados
-  };
+  data: any;
   pedidosCount: number;
   valoresVencidos: number;
   isLoadingFinancial: boolean;
@@ -26,41 +22,79 @@ export const ClientHeader = ({
   isExpanded,
   onToggleExpand,
 }: ClientHeaderProps) => {
-  // Usar prioritariamente o valor do banco de dados (total_pedidos_distintos)
-  // Se não disponível, usar valores calculados localmente
-  const displayPedidosCount = data.total_pedidos_distintos || data.uniquePedidosCount || pedidosCount;
-  
-  // Logging específico para o ClientHeader
-  console.log(`ClientHeader - ${clientName}: total_pedidos_distintos=${data.total_pedidos_distintos}, uniquePedidosCount=${data.uniquePedidosCount}, pedidosCount=${pedidosCount}, display=${displayPedidosCount}`);
+  // For debugging - log all available pedidos count metrics  
+  console.log(`ClientHeader - ${clientName}: total_pedidos_distintos=${data.total_pedidos_distintos || 0}, uniquePedidosCount=${data.uniquePedidosCount || 0}, pedidosCount=${pedidosCount}, display=${data.total_pedidos_distintos || pedidosCount || 0}`);
+
+  // Use the total_pedidos_distintos directly from the database when available
+  const displayPedidosCount = data.total_pedidos_distintos || pedidosCount || 0;
   
   return (
-    <div 
-      className="flex items-center justify-between cursor-pointer"
+    <div
       onClick={onToggleExpand}
+      className="flex flex-col gap-4 cursor-pointer"
     >
-      <div className="space-y-1">
-        <h3 className="text-lg font-semibold">Cliente: {clientName}</h3>
-        <p className="text-sm text-muted-foreground">
-          Representante: {data.representante || "Não informado"}
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Total de Pedidos: {displayPedidosCount}
-        </p>
-        <p className={`text-sm font-medium ${valoresVencidos > 0 ? "text-red-600" : "text-gray-600"}`}>
-          {isLoadingFinancial ? (
-            "Carregando valor vencido..."
-          ) : (
-            `Valor Vencido: ${formatCurrency(valoresVencidos)}`
+      <div className="flex justify-between items-center">
+        <div className="flex items-center gap-1">
+          <h3 className="text-lg font-semibold truncate max-w-[260px]">{clientName}</h3>
+          {data.representante && (
+            <Badge variant="outline" className="text-[10px]">
+              {data.representante}
+            </Badge>
           )}
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Volume Saudável: {data.volume_saudavel_faturamento ? formatCurrency(data.volume_saudavel_faturamento) : "Não definido"}
-        </p>
+          {displayPedidosCount > 1 && (
+            <Badge variant="secondary" className="text-[10px]">
+              {displayPedidosCount} pedidos
+            </Badge>
+          )}
+        </div>
+        <button
+          className="p-1 hover:bg-muted rounded"
+          onClick={(e) => {
+            e.stopPropagation();
+            window.open(
+              `https://app.jubileuartesanais.com.br/pessoa/${data.PES_CODIGO}/financeiro`,
+              "_blank"
+            );
+          }}
+          aria-label="Abrir link externo"
+        >
+          <ExternalLink className="h-4 w-4" />
+        </button>
       </div>
-      {isExpanded ? (
-        <ChevronUp className="h-6 w-6 text-muted-foreground" />
-      ) : (
-        <ChevronDown className="h-6 w-6 text-muted-foreground" />
+
+      {!isLoadingFinancial && (
+        <div className="flex flex-wrap gap-2 text-xs">
+          <div>
+            <span className="font-medium">Valor Faturamento: </span>
+            <span
+              className={cn({
+                "text-green-600":
+                  data.totalValorFaturarComEstoque > 1500,
+                "text-muted-foreground":
+                  data.totalValorFaturarComEstoque <= 1500,
+              })}
+            >
+              {new Intl.NumberFormat("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+              }).format(data.totalValorFaturarComEstoque || 0)}
+            </span>
+          </div>
+          <div>
+            <span className="font-medium">Valores em aberto: </span>
+            <span
+              className={cn({
+                "text-red-600": valoresVencidos > 0,
+                "text-muted-foreground": valoresVencidos === 0,
+              })}
+            >
+              {new Intl.NumberFormat("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+              }).format(valoresVencidos || 0)}
+            </span>
+          </div>
+        </div>
       )}
     </div>
   );

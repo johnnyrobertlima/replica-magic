@@ -1,5 +1,5 @@
 
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSeparacoes } from "@/hooks/useSeparacoes";
 import { useTotals } from "@/hooks/useJabOrders";
@@ -45,32 +45,31 @@ export const useClientOrders = () => {
   });
 
   // Log complete results after fetching
-  useMemo(() => {
-    if (ordersError) {
-      console.error('Error fetching client orders:', ordersError);
-    }
-    
+  useEffect(() => {
     if (ordersByClientData) {
       const clientCount = Object.keys(ordersByClientData.clientGroups).length;
-      console.log(`Loaded data for ${clientCount} clients with ${ordersByClientData.totalCount} total orders`);
+      console.log(`DIAGNOSTIC LOG: useClientOrders - Loaded data for ${clientCount} clients with ${ordersByClientData.totalCount} total orders`);
       
-      // Log all client names to verify we have all of them
-      console.log("=== ALL CLIENTS LOADED ===");
-      const clientNames = Object.keys(ordersByClientData.clientGroups).sort();
-      console.log(`Total clients: ${clientNames.length}`);
-      clientNames.forEach(name => {
-        const client = ordersByClientData.clientGroups[name];
-        console.log(`${name}: ${client.total_pedidos_distintos || 0} pedidos`);
+      if (clientCount < ordersByClientData.totalCount) {
+        console.error(`DIAGNOSTIC LOG: IMPORTANT - Only showing ${clientCount} clients but we have ${ordersByClientData.totalCount} total orders!`);
+      }
+      
+      // Compare total orders from each client with the reported total
+      let calculatedTotal = 0;
+      Object.values(ordersByClientData.clientGroups).forEach((client: any) => {
+        calculatedTotal += (client.total_pedidos_distintos || 0);
       });
       
-      // Check if total matches what we expect
-      console.log(`Total calculated from clients: ${
-        Object.values(ordersByClientData.clientGroups).reduce(
-          (sum: number, client: any) => sum + (client.total_pedidos_distintos || 0), 
-          0
-        )
-      }`);
-      console.log(`Total from API: ${ordersByClientData.totalCount}`);
+      console.log(`DIAGNOSTIC LOG: Calculated total orders from client objects: ${calculatedTotal}`);
+      console.log(`DIAGNOSTIC LOG: Reported total from API: ${ordersByClientData.totalCount}`);
+      
+      if (calculatedTotal !== ordersByClientData.totalCount) {
+        console.error(`DIAGNOSTIC LOG: DISCREPANCY DETECTED - Calculated total (${calculatedTotal}) doesn't match reported total (${ordersByClientData.totalCount})`);
+      }
+    }
+    
+    if (ordersError) {
+      console.error('Error fetching client orders:', ordersError);
     }
   }, [ordersByClientData, ordersError]);
 
@@ -79,10 +78,11 @@ export const useClientOrders = () => {
   const { data: separacoes = [], isLoading: isLoadingSeparacoes } = useSeparacoes();
 
   // Filter groups by search criteria
-  const filteredGroups = useMemo(() => 
-    filterGroupsBySearchCriteria(ordersByClientData.clientGroups, isSearching, searchQuery, searchType), 
-    [ordersByClientData.clientGroups, isSearching, searchQuery, searchType]
-  );
+  const filteredGroups = useMemo(() => { 
+    const filtered = filterGroupsBySearchCriteria(ordersByClientData.clientGroups, isSearching, searchQuery, searchType);
+    console.log(`DIAGNOSTIC LOG: After filtering - ${Object.keys(filtered).length} clients (from ${Object.keys(ordersByClientData.clientGroups).length} total)`);
+    return filtered;
+  }, [ordersByClientData.clientGroups, isSearching, searchQuery, searchType]);
 
   // Use the item selection hook
   const {
@@ -95,6 +95,19 @@ export const useClientOrders = () => {
   const {
     handleEnviarParaSeparacao
   } = useSeparationOperations(state, setState, filteredGroups);
+  
+  // Additional logging for debugging
+  useEffect(() => {
+    console.log(`DIAGNOSTIC LOG: JabOrdersByClient rendering status:
+    - isLoading: ${isLoadingOrders || isLoadingTotals || isLoadingSeparacoes}
+    - clientGroups count: ${Object.keys(ordersByClientData.clientGroups).length}
+    - filteredGroups count: ${Object.keys(filteredGroups).length}
+    - reported totalCount: ${ordersByClientData.totalCount}
+    - search criteria active: ${isSearching ? 'yes' : 'no'}
+    - search query: ${searchQuery || 'none'}
+    - search type: ${searchType || 'none'}
+    `);
+  }, [isLoadingOrders, isLoadingTotals, isLoadingSeparacoes, ordersByClientData, filteredGroups, isSearching, searchQuery, searchType]);
 
   return {
     // State

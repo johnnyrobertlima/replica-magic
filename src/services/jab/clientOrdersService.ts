@@ -27,7 +27,9 @@ export async function fetchJabOrdersByClient({
     console.log(`Date range spans ${daysDifference} days`);
     
     // Fetch all clients with orders - NO LIMITS
+    console.log("DIAGNOSTIC LOG: About to fetch client orders from database");
     const clientesComPedidos = await fetchPedidosPorCliente(dataInicial, dataFinal);
+    console.log("DIAGNOSTIC LOG: Completed fetchPedidosPorCliente");
     
     if (!clientesComPedidos || !Array.isArray(clientesComPedidos) || clientesComPedidos.length === 0) {
       console.log('No clients with orders found for the selected period');
@@ -42,9 +44,16 @@ export async function fetchJabOrdersByClient({
       }
     });
     
-    console.log(`Found ${clientesComPedidos.length} clients with orders`);
-    console.log(`Total distinct orders according to database: ${totalPedidosDistintos}`);
-    console.log(`This should match the expected 450 orders`);
+    console.log(`DIAGNOSTIC LOG: Found ${clientesComPedidos.length} clients with orders from database`);
+    console.log(`DIAGNOSTIC LOG: Total distinct orders according to database: ${totalPedidosDistintos}`);
+    console.log(`DIAGNOSTIC LOG: First 10 clients from database:`);
+    clientesComPedidos.slice(0, 10).forEach((cliente, idx) => {
+      console.log(`${idx + 1}. ${cliente.cliente_nome || 'NO NAME'} (${cliente.pes_codigo}): ${cliente.total_pedidos_distintos} orders`);
+    });
+    console.log(`DIAGNOSTIC LOG: Last 10 clients from database:`);
+    clientesComPedidos.slice(-10).forEach((cliente, idx) => {
+      console.log(`${clientesComPedidos.length - 10 + idx + 1}. ${cliente.cliente_nome || 'NO NAME'} (${cliente.pes_codigo}): ${cliente.total_pedidos_distintos} orders`);
+    });
 
     // Fetch separation items
     const itensSeparacao = await fetchItensSeparacao();
@@ -55,6 +64,7 @@ export async function fetchJabOrdersByClient({
     console.log(`Using batch size: ${batchSize} for processing client data`);
     
     // Process client data - NEVER limit results
+    console.log("DIAGNOSTIC LOG: About to process client data with processClientOrdersData");
     const clientGroups = await processClientOrdersData(
       dataInicial, 
       dataFinal, 
@@ -63,13 +73,30 @@ export async function fetchJabOrdersByClient({
       batchSize,
       false // Always disable the limiting of results!
     );
+    console.log("DIAGNOSTIC LOG: Completed processClientOrdersData");
 
     // Double check the number of clients processed
     const processedClientCount = Object.keys(clientGroups).length;
-    console.log(`Processed ${processedClientCount} clients out of ${clientesComPedidos.length} from database`);
+    console.log(`DIAGNOSTIC LOG: Processed ${processedClientCount} clients out of ${clientesComPedidos.length} from database`);
+    console.log(`DIAGNOSTIC LOG: First 10 clients after processing:`);
+    Object.entries(clientGroups).slice(0, 10).forEach(([clientName, data], idx) => {
+      console.log(`${idx + 1}. ${clientName}: total_pedidos_distintos=${(data as any).total_pedidos_distintos}`);
+    });
     
     if (processedClientCount !== clientesComPedidos.length) {
-      console.error(`WARNING: We lost ${clientesComPedidos.length - processedClientCount} clients during processing!`);
+      console.error(`ERROR: We lost ${clientesComPedidos.length - processedClientCount} clients during processing!`);
+      
+      // Let's check which clients are missing
+      console.log("DIAGNOSTIC LOG: Looking for missing clients...");
+      const processedClientNames = new Set(Object.keys(clientGroups));
+      const missingClients = clientesComPedidos.filter(cliente => 
+        !processedClientNames.has(cliente.cliente_nome || `Cliente ${cliente.pes_codigo}`)
+      );
+      
+      console.log(`DIAGNOSTIC LOG: Found ${missingClients.length} missing clients, first 10 shown below:`);
+      missingClients.slice(0, 10).forEach((cliente, idx) => {
+        console.log(`${idx + 1}. Missing client: ${cliente.cliente_nome || 'NO NAME'} (${cliente.pes_codigo}): ${cliente.total_pedidos_distintos} orders`);
+      });
     }
     
     // After processing, verify the total orders processed
@@ -82,8 +109,8 @@ export async function fetchJabOrdersByClient({
       }
     });
 
-    console.log(`Total distinct orders after processing: ${pedidosProcessados}`);
-    console.log(`Total received from database: ${totalPedidosDistintos}`);
+    console.log(`DIAGNOSTIC LOG: Total distinct orders after processing: ${pedidosProcessados}`);
+    console.log(`DIAGNOSTIC LOG: Total received from database: ${totalPedidosDistintos}`);
     
     // Log discrepancies if any
     if (pedidosProcessados !== totalPedidosDistintos) {
