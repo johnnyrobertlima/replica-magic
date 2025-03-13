@@ -103,6 +103,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
             selected={date}
             onSelect={onDateChange}
             numberOfMonths={2}
+            className="bg-white" // This is the key change to fix the background issue
           />
         </PopoverContent>
       </Popover>

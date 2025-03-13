@@ -39,14 +39,17 @@ export const ClientOrderCard = ({
       // Only fetch if we have a PES_CODIGO
       if (data.PES_CODIGO) {
         try {
+          // Using .select('*') instead of .select('nome_representante') to avoid the 406 error
           const { data: repData, error } = await supabase
             .from('vw_representantes')
-            .select('nome_representante')
+            .select('*')
             .eq('codigo_representante', data.PES_CODIGO)
-            .single();
+            .maybeSingle();
             
           if (repData && !error) {
             setRepresentanteName(repData.nome_representante);
+          } else if (error) {
+            console.error("Error fetching representative:", error);
           }
         } catch (error) {
           console.error("Error fetching representative:", error);
