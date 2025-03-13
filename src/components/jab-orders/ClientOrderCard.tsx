@@ -32,12 +32,12 @@ export const ClientOrderCard = ({
 }: ClientOrderCardProps) => {
   const [localShowZeroBalance, setLocalShowZeroBalance] = useState(showZeroBalance);
   const [localShowOnlyWithStock, setLocalShowOnlyWithStock] = useState(showOnlyWithStock);
-  const [representanteName, setRepresentanteName] = useState<string | null>(data.representante || null);
+  const [representanteName, setRepresentanteName] = useState<string | null>(null);
   
   useEffect(() => {
     const fetchRepresentanteName = async () => {
-      // Only fetch if we have a PES_CODIGO and don't already have a representante name
-      if (data.PES_CODIGO && !representanteName) {
+      // Only fetch if we have a PES_CODIGO
+      if (data.PES_CODIGO) {
         try {
           const { data: repData, error } = await supabase
             .from('vw_representantes')
@@ -55,7 +55,7 @@ export const ClientOrderCard = ({
     };
     
     fetchRepresentanteName();
-  }, [data.PES_CODIGO, representanteName]);
+  }, [data.PES_CODIGO]);
   
   const progressFaturamento = data.totalValorPedido > 0 
     ? (data.totalValorFaturado / data.totalValorPedido) * 100 
