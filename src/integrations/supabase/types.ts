@@ -1431,32 +1431,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      get_estoque_para_itens: {
-        Args: {
-          item_codigos: string[]
-        }
-        Returns: {
-          item_codigo: string
-          fisico: number
-        }[]
-      }
-      get_itens_por_cliente: {
-        Args: {
-          data_inicial: string
-          data_final: string
-          cliente_codigo: number
-        }
-        Returns: {
-          item_codigo: string
-          descricao: string
-          qtde_pedida: number
-          qtde_entregue: number
-          qtde_saldo: number
-          valor_unitario: number
-          pedido: string
-          representante: number
-        }[]
-      }
       get_pedidos_agrupados: {
         Args: {
           data_inicial: string
@@ -1467,24 +1441,6 @@ export type Database = {
           quantidade_pedidos: number
           quantidade_itens_com_saldo: number
           valor_do_saldo: number
-        }[]
-      }
-      get_pedidos_por_cliente: {
-        Args: {
-          data_inicial: string
-          data_final: string
-        }
-        Returns: {
-          pes_codigo: number
-          cliente_nome: string
-          representante_codigo: number
-          representante_nome: string
-          total_valor_pedido: number
-          total_valor_faturado: number
-          total_valor_saldo: number
-          total_quantidade_saldo: number
-          volume_saudavel_faturamento: number
-          total_pedidos_distintos: number
         }[]
       }
       get_pedidos_unicos: {

@@ -1,10 +1,12 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { useClientOrderCard } from "@/hooks/client-orders/useClientOrderCard";
-import { ClientHeader } from "./components/ClientHeader";
-import { ClientOrderContent } from "./components/ClientOrderContent";
+import { OrderProgressBars } from "./OrderProgressBars";
+import { OrderSummaryGrid } from "./OrderSummaryGrid";
+import { ClientOrderFilters } from "./ClientOrderFilters";
+import { ClientOrderItemsTable } from "./ClientOrderItemsTable";
 
 interface ClientOrderCardProps {
   clientName: string;
@@ -27,81 +29,89 @@ export const ClientOrderCard = ({
   selectedItems,
   onItemSelect
 }: ClientOrderCardProps) => {
-  // Track local filter states - initialize with parent props
   const [localShowZeroBalance, setLocalShowZeroBalance] = useState(showZeroBalance);
   const [localShowOnlyWithStock, setLocalShowOnlyWithStock] = useState(showOnlyWithStock);
   
-  // Update local state when parent props change
-  useEffect(() => {
-    console.log(`ClientOrderCard useEffect - showZeroBalance changed to ${showZeroBalance} for ${clientName}`);
-    setLocalShowZeroBalance(showZeroBalance);
-  }, [showZeroBalance, clientName]);
-  
-  useEffect(() => {
-    console.log(`ClientOrderCard useEffect - showOnlyWithStock changed to ${showOnlyWithStock} for ${clientName}`);
-    setLocalShowOnlyWithStock(showOnlyWithStock);
-  }, [showOnlyWithStock, clientName]);
-  
-  const {
-    valoresVencidos,
-    valoresEmAberto,
-    valoresTotais,
-    isLoadingFinancial,
-    pedidosCount,
-    financialData
-  } = useClientOrderCard(data);
+  const progressFaturamento = data.totalValorPedido > 0 
+    ? (data.totalValorFaturado / data.totalValorPedido) * 100 
+    : 0;
+    
+  const progressPotencial = data.totalValorSaldo > 0 
+    ? (data.totalValorFaturarComEstoque / data.totalValorSaldo) * 100 
+    : 0;
+    
+  const pedidosCount = new Set(data.allItems.map((item: any) => item.pedido)).size;
 
   const handleZeroBalanceChange = (checked: boolean) => {
-    console.log(`Setting localShowZeroBalance to ${checked} for ${clientName}`);
     setLocalShowZeroBalance(checked);
   };
 
   const handleOnlyWithStockChange = (checked: boolean) => {
-    console.log(`Setting localShowOnlyWithStock to ${checked} for ${clientName}`);
     setLocalShowOnlyWithStock(checked);
-  };
-
-  // Set border color based on financial status
-  const getBorderColor = () => {
-    if (valoresVencidos > 0) return "border-l-red-500";
-    if (data.totalValorFaturarComEstoque > 1500) return "border-l-green-500";
-    return "border-l-blue-500";
   };
 
   return (
     <Card 
       className={cn(
-        "overflow-hidden border-l-4",
-        getBorderColor(),
+        "overflow-hidden",
         isExpanded && "col-span-full"
       )}
     >
       <CardContent className="p-6">
-        <ClientHeader
-          clientName={clientName}
-          data={data}
-          pedidosCount={pedidosCount}
-          valoresVencidos={valoresVencidos}
-          isLoadingFinancial={isLoadingFinancial}
-          isExpanded={isExpanded}
-          onToggleExpand={onToggleExpand}
-        />
-        
-        <ClientOrderContent
-          isExpanded={isExpanded}
-          data={data}
-          valoresTotais={valoresTotais}
-          valoresEmAberto={valoresEmAberto}
-          valoresVencidos={valoresVencidos}
-          financialData={financialData}
-          clientName={clientName}
-          localShowZeroBalance={localShowZeroBalance}
-          localShowOnlyWithStock={localShowOnlyWithStock}
-          handleZeroBalanceChange={handleZeroBalanceChange}
-          handleOnlyWithStockChange={handleOnlyWithStockChange}
-          selectedItems={selectedItems}
-          onItemSelect={onItemSelect}
-        />
+        <div 
+          className="flex items-center justify-between cursor-pointer"
+          onClick={onToggleExpand}
+        >
+          <div className="space-y-1">
+            <h3 className="text-lg font-semibold">Cliente: {clientName}</h3>
+            <p className="text-sm text-muted-foreground">
+              Representante: {data.representante || "Não informado"}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Total de Pedidos: {pedidosCount}
+            </p>
+          </div>
+          {isExpanded ? (
+            <ChevronUp className="h-6 w-6 text-muted-foreground" />
+          ) : (
+            <ChevronDown className="h-6 w-6 text-muted-foreground" />
+          )}
+        </div>
+
+        <div className="mt-4 space-y-4">
+          <OrderProgressBars 
+            progressFaturamento={progressFaturamento}
+            progressPotencial={progressPotencial}
+          />
+
+          <OrderSummaryGrid
+            totalQuantidadeSaldo={data.totalQuantidadeSaldo}
+            totalValorSaldo={data.totalValorSaldo}
+            totalValorPedido={data.totalValorPedido}
+            totalValorFaturado={data.totalValorFaturado}
+            totalValorFaturarComEstoque={data.totalValorFaturarComEstoque}
+          />
+
+          {isExpanded && (
+            <div className="mt-6">
+              <ClientOrderFilters
+                clientName={clientName}
+                showZeroBalance={localShowZeroBalance}
+                showOnlyWithStock={localShowOnlyWithStock}
+                onZeroBalanceChange={handleZeroBalanceChange}
+                onOnlyWithStockChange={handleOnlyWithStockChange}
+              />
+
+              <ClientOrderItemsTable
+                items={data.allItems}
+                showZeroBalance={localShowZeroBalance}
+                showOnlyWithStock={localShowOnlyWithStock}
+                selectedItems={selectedItems}
+                onItemSelect={onItemSelect}
+              />
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

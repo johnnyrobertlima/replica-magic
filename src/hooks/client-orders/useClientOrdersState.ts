@@ -8,7 +8,7 @@ export const useClientOrdersState = () => {
 
   const [state, setState] = useState<Omit<ClientOrdersState, 'date' | 'searchDate' | 'searchQuery' | 'searchType' | 'isSearching'>>({
     expandedClients: new Set<string>(),
-    showZeroBalance: false, // Default to false, so items with zero balance are hidden
+    showZeroBalance: false,
     showOnlyWithStock: false,
     selectedItems: [],
     selectedItemsDetails: {},
@@ -27,7 +27,6 @@ export const useClientOrdersState = () => {
 
   // State update methods
   const setShowZeroBalance = (show: boolean) => {
-    console.log(`setShowZeroBalance called with value: ${show}`); // Debug log
     setState(prev => ({ ...prev, showZeroBalance: show }));
   };
 

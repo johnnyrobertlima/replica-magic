@@ -3,7 +3,6 @@ import { TotalCards } from "./TotalCards";
 import { OrdersHeader } from "./OrdersHeader";
 import { ClientOrderCard } from "./ClientOrderCard";
 import { SelectionSummary } from "./SelectionSummary";
-import { OrdersPagination } from "./OrdersPagination";
 
 interface PedidosTabContentProps {
   totals: {
@@ -21,13 +20,8 @@ interface PedidosTabContentProps {
   selectedItems: string[];
   expandedClients: Set<string>;
   filteredGroups: Record<string, any>;
-  paginatedGroups: Record<string, any>;
   totalSelecionado: number;
   isSending: boolean;
-  currentPage: number;
-  totalPages: number;
-  totalClients: number;
-  setCurrentPage: (page: number) => void;
   toggleExpand: (clientName: string) => void;
   handleSearch: () => void;
   handleItemSelect: (item: any) => void;
@@ -48,22 +42,14 @@ export const PedidosTabContent = ({
   selectedItems,
   expandedClients,
   filteredGroups,
-  paginatedGroups,
   totalSelecionado,
   isSending,
-  currentPage,
-  totalPages,
-  totalClients,
-  setCurrentPage,
   toggleExpand,
   handleSearch,
   handleItemSelect,
   handleEnviarParaSeparacao,
   exportSelectedItemsToExcel
 }: PedidosTabContentProps) => {
-  // Log client count for verification
-  console.log(`PedidosTabContent rendering with ${Object.keys(paginatedGroups).length} paginados de ${totalClients} clientes totais`);
-  
   return (
     <>
       <TotalCards
@@ -72,9 +58,9 @@ export const PedidosTabContent = ({
       />
 
       <OrdersHeader
-        currentPage={currentPage}
-        totalPages={totalPages}
-        totalCount={totalClients}
+        currentPage={1}
+        totalPages={1}
+        totalCount={Object.keys(filteredGroups).length}
         searchQuery={searchQuery}
         onSearchQueryChange={setSearchQuery}
         onSearch={handleSearch}
@@ -85,7 +71,7 @@ export const PedidosTabContent = ({
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {Object.entries(paginatedGroups).map(([clientName, data]) => (
+        {Object.entries(filteredGroups).map(([clientName, data]) => (
           <ClientOrderCard
             key={clientName}
             clientName={clientName}
@@ -99,14 +85,6 @@ export const PedidosTabContent = ({
           />
         ))}
       </div>
-
-      {totalPages > 1 && (
-        <OrdersPagination
-          currentPage={currentPage} 
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-        />
-      )}
 
       <SelectionSummary
         selectedItems={selectedItems}

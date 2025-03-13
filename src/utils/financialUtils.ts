@@ -1,7 +1,5 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { ClienteFinanceiro, TituloFinanceiro } from "@/types/financialClient";
-import { ValorVencidoResult } from "@/services/jab/types";
 
 // Get separações pendentes
 export const getSeparacoesPendentes = (separacoes: any[], hiddenCards: Set<string>) => {
@@ -63,10 +61,10 @@ export const calculateClientFinancialValues = (
     const vencimento = new Date(titulo.DTVENCIMENTO);
     const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     
-    // Adjust vencimento date to remove time
+    // Ajusta a data de vencimento para remover o horário
     const vencimentoDateOnly = new Date(vencimento.getFullYear(), vencimento.getMonth(), vencimento.getDate());
     
-    // Compare only dates (without hours)
+    // Compara apenas as datas (sem horas)
     if (vencimentoDateOnly < todayDateOnly) {
       cliente.valoresVencidos += (titulo.VLRSALDO || 0);
     }
@@ -75,71 +73,25 @@ export const calculateClientFinancialValues = (
   return cliente;
 };
 
-// Cache para valores vencidos por cliente
-const valoresVencidosCache = new Map<string, { value: number; timestamp: number }>();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
-
-// Fetch overdue titles directly from Supabase
-export const fetchTitulosVencidos = async (clienteCodigo: string | number): Promise<number> => {
+// Função para buscar títulos vencidos diretamente do Supabase
+export const fetchTitulosVencidos = async (clienteCodigo: string | number) => {
   try {
-    // Convert clienteCodigo to string to ensure type compatibility
-    const clienteCodigoStr = String(clienteCodigo);
-    
-    // Verificar se temos um valor em cache válido
-    const cacheKey = `vencido_${clienteCodigoStr}`;
-    const cachedData = valoresVencidosCache.get(cacheKey);
-    
-    if (cachedData && Date.now() - cachedData.timestamp < CACHE_TTL) {
-      console.log(`Usando valor vencido em cache para cliente ${clienteCodigoStr}: ${cachedData.value}`);
-      return cachedData.value;
-    }
-    
-    console.log(`Buscando valores vencidos para cliente: ${clienteCodigoStr}`);
-    
-    // First try to use the RPC function for better performance
-    const { data: rpcData, error: rpcError } = await supabase.rpc('calcular_valor_vencido', { 
-      cliente_codigo: clienteCodigoStr 
-    }) as { data: ValorVencidoResult[] | null, error: any };
-    
-    if (!rpcError && rpcData && Array.isArray(rpcData) && rpcData.length > 0) {
-      const valorVencido = rpcData[0]?.total_vlr_saldo || 0;
-      console.log(`Valor vencido via RPC para cliente ${clienteCodigoStr}: ${valorVencido}`);
-      
-      // Armazenar valor em cache
-      valoresVencidosCache.set(cacheKey, { value: valorVencido, timestamp: Date.now() });
-      
-      return valorVencido;
-    }
-    
-    // Fallback to direct query if RPC fails
-    console.log("Fallback para consulta direta ao banco de dados");
-    const today = new Date().toISOString().split('T')[0];
-    
     const { data, error } = await supabase
       .from('BLUEBAY_TITULO')
       .select('VLRSALDO')
-      .eq('PES_CODIGO', clienteCodigoStr)
-      .lt('DTVENCIMENTO', today)
-      .gt('VLRSALDO', 0)
-      .not('VLRSALDO', 'is', null);
+      .eq('PES_CODIGO', clienteCodigo.toString())
+      .lt('DTVENCIMENTO', new Date().toISOString().split('T')[0]);
     
     if (error) {
       console.error("Erro ao buscar títulos vencidos:", error);
       throw error;
     }
     
-    console.log(`Títulos vencidos encontrados para cliente ${clienteCodigoStr}:`, data?.length || 0);
+    console.log(`Títulos vencidos para cliente ${clienteCodigo}:`, data);
     
-    // Sum the overdue values
-    const valorVencido = (data || []).reduce((total, titulo) => {
-      const saldo = parseFloat(String(titulo.VLRSALDO)) || 0;
-      return total + saldo;
-    }, 0);
-    
-    console.log(`Total valor vencido calculado para cliente ${clienteCodigoStr}: ${valorVencido}`);
-    
-    // Armazenar valor em cache
-    valoresVencidosCache.set(cacheKey, { value: valorVencido, timestamp: Date.now() });
+    // Soma os valores vencidos
+    const valorVencido = data.reduce((total, titulo) => total + (titulo.VLRSALDO || 0), 0);
+    console.log(`Total valor vencido para cliente ${clienteCodigo}:`, valorVencido);
     
     return valorVencido;
   } catch (error) {

@@ -34,11 +34,9 @@ export const OrdersHeader = ({
         <h1 className="text-3xl font-bold">Separação de Pedidos JAB</h1>
         <p className="text-muted-foreground">
           {totalCount > 0 ? (
-            totalPages > 1 
-              ? `Exibindo página ${currentPage} de ${totalPages} (Total: ${totalCount} clientes)`
-              : `Exibindo ${totalCount} clientes`
+            `Exibindo página ${currentPage} de ${totalPages} (Total: ${totalCount} pedidos)`
           ) : (
-            "Nenhum cliente encontrado"
+            "Nenhum pedido encontrado"
           )}
         </p>
       </div>

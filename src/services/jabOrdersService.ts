@@ -1,21 +1,32 @@
 
-import type { UseJabOrdersOptions, JabOrdersResponse } from "@/types/jabOrders";
+import type { 
+  JabOrder, 
+  UseJabOrdersOptions,
+  JabOrdersResponse,
+} from "@/types/jabOrders";
+
 import { 
-  fetchPedidosUnicos, 
+  fetchPedidosUnicos,
   fetchAllPedidosUnicos,
   fetchAllPedidosDireto,
   fetchPedidosDetalhados,
-  fetchItensSeparacao,
-  processOrdersFetch
+  fetchItensSeparacao 
 } from "./jab/fetchUtils";
+
+import { 
+  fetchRelatedData 
+} from "./jab/entityUtils";
+
+import { 
+  processOrdersData,
+  groupOrdersByNumber 
+} from "./jab/orderProcessUtils";
 
 export { fetchTotals } from "./jab/totalsService";
 
-// Cache configuration - increased cache time for large date ranges
-const ordersCache = new Map<string, { data: JabOrdersResponse; timestamp: number }>();
-const clientOrdersCache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_TTL = 10 * 60 * 1000; // 10 minutes (increased from 5)
-
+/**
+ * Fetches JAB orders with pagination
+ */
 export async function fetchJabOrders({ 
   dateRange, 
   page = 1, 
@@ -27,16 +38,8 @@ export async function fetchJabOrders({
 
   const dataInicial = dateRange.from.toISOString().split('T')[0];
   const dataFinal = dateRange.to.toISOString().split('T')[0];
-  const cacheKey = `orders_${dataInicial}_${dataFinal}_${page}_${pageSize}`;
 
-  // Check cache
-  const cachedData = ordersCache.get(cacheKey);
-  if (cachedData && Date.now() - cachedData.timestamp < CACHE_TTL) {
-    console.log('Using cached data for period:', { dataInicial, dataFinal, page, pageSize });
-    return cachedData.data;
-  }
-
-  console.log('Fetching orders for period:', { dataInicial, dataFinal, page, pageSize });
+  console.log('Buscando pedidos para o período:', { dataInicial, dataFinal, page, pageSize });
 
   const { data: pedidosUnicos, totalCount } = await fetchPedidosUnicos(dataInicial, dataFinal, page, pageSize);
   const numeroPedidos = pedidosUnicos.map(p => p.ped_numpedido);
@@ -51,14 +54,12 @@ export async function fetchJabOrders({
     return { orders: [], totalCount };
   }
 
-  const resultado = await processOrdersFetch(dataInicial, dataFinal, numeroPedidos, pedidosDetalhados, totalCount);
-  
-  // Store in cache
-  ordersCache.set(cacheKey, { data: resultado, timestamp: Date.now() });
-  
-  return resultado;
+  return await processOrdersFullData(dataInicial, dataFinal, numeroPedidos, pedidosDetalhados, totalCount);
 }
 
+/**
+ * Fetches all JAB orders for the given date range
+ */
 export async function fetchAllJabOrders({ 
   dateRange 
 }: Omit<UseJabOrdersOptions, 'page' | 'pageSize'>): Promise<JabOrdersResponse> {
@@ -68,16 +69,8 @@ export async function fetchAllJabOrders({
 
   const dataInicial = dateRange.from.toISOString().split('T')[0];
   const dataFinal = dateRange.to.toISOString().split('T')[0];
-  const cacheKey = `all_orders_${dataInicial}_${dataFinal}`;
 
-  // Check cache
-  const cachedData = ordersCache.get(cacheKey);
-  if (cachedData && Date.now() - cachedData.timestamp < CACHE_TTL) {
-    console.log('Using all cached data for period:', { dataInicial, dataFinal });
-    return cachedData.data;
-  }
-
-  console.log('Fetching all orders for period:', { dataInicial, dataFinal });
+  console.log('Buscando todos os pedidos para o período:', { dataInicial, dataFinal });
 
   const pedidosDetalhados = await fetchAllPedidosDireto(dataInicial, dataFinal);
 
@@ -85,18 +78,61 @@ export async function fetchAllJabOrders({
     return { orders: [], totalCount: 0 };
   }
 
-  const numeroPedidosSet = new Set(pedidosDetalhados.map(pedido => pedido.PED_NUMPEDIDO).filter(Boolean));
+  const numeroPedidosSet = new Set<string>();
+  pedidosDetalhados.forEach(pedido => {
+    if (pedido.PED_NUMPEDIDO) {
+      numeroPedidosSet.add(pedido.PED_NUMPEDIDO);
+    }
+  });
   const numeroPedidos = Array.from(numeroPedidosSet);
-
-  console.log(`Found ${numeroPedidos.length} unique orders`);
-
-  const resultado = await processOrdersFetch(dataInicial, dataFinal, numeroPedidos, pedidosDetalhados, numeroPedidos.length);
   
-  // Store in cache
-  ordersCache.set(cacheKey, { data: resultado, timestamp: Date.now() });
+  console.log(`Total de ${numeroPedidos.length} pedidos únicos encontrados`);
   
-  return resultado;
+  return await processOrdersFullData(dataInicial, dataFinal, numeroPedidos, pedidosDetalhados, numeroPedidos.length);
 }
 
-// Re-export functions for client orders
-export { fetchJabOrdersByClient } from './jab/clientOrdersService';
+/**
+ * Common function to process order data
+ */
+async function processOrdersFullData(
+  dataInicial: string,
+  dataFinal: string,
+  numeroPedidos: string[],
+  pedidosDetalhados: any[],
+  totalCount: number
+): Promise<JabOrdersResponse> {
+  const pessoasIds = [...new Set(pedidosDetalhados.map(p => p.PES_CODIGO).filter(id => id !== null && id !== undefined))] as number[];
+  const itemCodigos = [...new Set(pedidosDetalhados.map(p => p.ITEM_CODIGO).filter(Boolean))];
+  const representantesCodigos = [...new Set(pedidosDetalhados.map(p => p.REPRESENTANTE).filter(id => id !== null && id !== undefined))] as number[];
+
+  console.log(`Encontrados ${pessoasIds.length} clientes, ${representantesCodigos.length} representantes e ${itemCodigos.length} itens diferentes`);
+
+  const { pessoas, itens, estoque, representantes } = await fetchRelatedData(pessoasIds, itemCodigos, representantesCodigos);
+  const itensSeparacao = await fetchItensSeparacao();
+
+  const pessoasMap = new Map(pessoas.map(p => [p.PES_CODIGO, p]));
+  const itemMap = new Map(itens.map(i => [i.ITEM_CODIGO, i.DESCRICAO]));
+  const estoqueMap = new Map(estoque.map(e => [e.ITEM_CODIGO, e.FISICO]));
+  const representantesMap = new Map(representantes.map(r => [r.PES_CODIGO, r.RAZAOSOCIAL]));
+
+  const pedidosAgrupados = groupOrdersByNumber(pedidosDetalhados);
+
+  const orders = processOrdersData(
+    numeroPedidos,
+    pedidosDetalhados,
+    pessoasMap,
+    itemMap,
+    estoqueMap,
+    representantesMap,
+    pedidosAgrupados,
+    itensSeparacao
+  );
+
+  return {
+    orders,
+    totalCount,
+    currentPage: 1,
+    pageSize: numeroPedidos.length,
+    itensSeparacao
+  };
+}
