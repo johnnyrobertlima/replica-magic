@@ -27,12 +27,16 @@ export async function processClientOrdersData(
   const totalBatches = Math.ceil(clientesComPedidos.length / batchSize);
   console.log(`Will process data in ${totalBatches} batches`);
   
+  // Tracking for processed clients
+  let successfullyProcessed = 0;
+  let failedToProcess = 0;
+  
   for (let i = 0; i < clientesComPedidos.length; i += batchSize) {
     const batch = clientesComPedidos.slice(i, i + batchSize);
     const currentBatch = Math.floor(i / batchSize) + 1;
     console.log(`Processing batch ${currentBatch}/${totalBatches} with ${batch.length} clients`);
     
-    await Promise.all(batch.map(async (cliente) => {
+    const batchResults = await Promise.allSettled(batch.map(async (cliente) => {
       try {
         const clienteName = cliente.cliente_nome || `Cliente ${cliente.pes_codigo}`;
         const representanteName = cliente.representante_nome || 'Não informado';
@@ -51,7 +55,7 @@ export async function processClientOrdersData(
           // Count unique orders for this client
           const uniquePedidos = new Set(itensCliente.map(item => item.pedido));
           console.log(`Client ${clienteName} has ${uniquePedidos.size} unique orders from items`);
-          console.log(`Database reported ${pedidosDistintosDoBanco} unique orders`);
+          console.log(`Database reported ${pedidosDistintosDoBanco} unique orders for client ${clienteName}`);
           
           // NUNCA limitar itens a processar
           const itensProcessar = itensCliente;
@@ -129,6 +133,9 @@ export async function processClientOrdersData(
             if (uniquePedidos.size !== pedidosDistintosDoBanco) {
               console.warn(`DISCREPÂNCIA: Cliente ${clienteName} - ${pedidosDistintosDoBanco} pedidos no banco vs ${uniquePedidos.size} calculados pelos itens`);
             }
+            
+            successfullyProcessed++;
+            return { success: true, clientName: clienteName };
           }
         } else {
           console.log(`No items found for client ${clienteName} (${cliente.pes_codigo})`);
@@ -148,14 +155,27 @@ export async function processClientOrdersData(
             uniquePedidosCount: 0,
             total_pedidos_distintos: pedidosDistintosDoBanco
           };
+          
+          successfullyProcessed++;
+          return { success: true, clientName: clienteName };
         }
       } catch (error) {
         console.error(`Error processing client ${cliente.pes_codigo}:`, error);
+        failedToProcess++;
+        return { success: false, clientName: cliente.cliente_nome || `Cliente ${cliente.pes_codigo}`, error };
       }
     }));
     
-    console.log(`Completed batch ${currentBatch}/${totalBatches}. Current client groups: ${Object.keys(clientGroups).length}`);
+    // Log batch results
+    const batchSuccesses = batchResults.filter(r => r.status === 'fulfilled' && r.value?.success).length;
+    const batchFails = batchResults.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value?.success)).length;
+    
+    console.log(`Batch ${currentBatch} results: ${batchSuccesses} successes, ${batchFails} failures`);
+    console.log(`Current client groups count: ${Object.keys(clientGroups).length}`);
   }
+  
+  console.log(`Processing complete: ${successfullyProcessed} clients processed successfully, ${failedToProcess} failures`);
+  console.log(`Final client groups count: ${Object.keys(clientGroups).length}`);
   
   // Contar pedidos únicos após processamento
   let totalPedidosDistintosProcessados = 0;
@@ -172,6 +192,11 @@ export async function processClientOrdersData(
   console.log(`Finished processing all clients. Total client groups: ${Object.keys(clientGroups).length}`);
   console.log(`Total pedidos distintos calculados pelos itens: ${totalPedidosDistintosProcessados}`);
   console.log(`Total pedidos distintos conforme banco de dados: ${totalPedidosDistintosBanco}`);
+  
+  // Verificar se todos os clientes estão presentes
+  if (Object.keys(clientGroups).length !== clientesComPedidos.length) {
+    console.error(`ALERTA: Nem todos os clientes foram processados! Esperados: ${clientesComPedidos.length}, Processados: ${Object.keys(clientGroups).length}`);
+  }
   
   return clientGroups;
 }

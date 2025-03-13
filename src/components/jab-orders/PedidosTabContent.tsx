@@ -50,6 +50,9 @@ export const PedidosTabContent = ({
   handleEnviarParaSeparacao,
   exportSelectedItemsToExcel
 }: PedidosTabContentProps) => {
+  // Log client count for verification
+  console.log(`PedidosTabContent rendering with ${Object.keys(filteredGroups).length} clients`);
+  
   return (
     <>
       <TotalCards

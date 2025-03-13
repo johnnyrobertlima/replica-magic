@@ -7,7 +7,14 @@ import JabNavMenu from "@/components/jab-orders/JabNavMenu";
 
 const JabOrdersByClient = () => {
   const clientOrders = useClientOrders();
-  const { isLoading } = clientOrders;
+  const { isLoading, ordersData } = clientOrders;
+
+  // Log key metrics for debugging
+  console.log("JabOrdersByClient rendering with:", {
+    isLoading,
+    totalCount: ordersData.totalCount,
+    clientCount: Object.keys(clientOrders.filteredGroups).length,
+  });
 
   if (isLoading) {
     return (

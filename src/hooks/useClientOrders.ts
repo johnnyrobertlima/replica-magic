@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSeparacoes } from "@/hooks/useSeparacoes";
 import { useTotals } from "@/hooks/useJabOrders";
-import { groupOrdersByClient, filterGroupsBySearchCriteria } from "@/utils/clientOrdersUtils";
+import { filterGroupsBySearchCriteria } from "@/utils/clientOrdersUtils";
 import { useClientOrdersState } from "./client-orders/useClientOrdersState";
 import { useItemSelection } from "./client-orders/useItemSelection";
 import { useSeparationOperations } from "./client-orders/useSeparationOperations";
@@ -38,13 +38,13 @@ export const useClientOrders = () => {
     queryKey: ['jab-orders-by-client', searchDate?.from?.toISOString(), searchDate?.to?.toISOString()],
     queryFn: () => fetchJabOrdersByClient({ dateRange: searchDate }),
     enabled: !!searchDate?.from && !!searchDate?.to,
-    staleTime: 15 * 60 * 1000, // 15 minutes (increased from 10)
-    gcTime: 30 * 60 * 1000, // 30 minutes (increased from 20)
+    staleTime: 15 * 60 * 1000, // 15 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
     retry: 2, // Retry failed requests twice
     refetchOnWindowFocus: false, // Don't refetch when window gets focus
   });
 
-  // Log query results
+  // Log complete results after fetching
   useMemo(() => {
     if (ordersError) {
       console.error('Error fetching client orders:', ordersError);
@@ -54,37 +54,23 @@ export const useClientOrders = () => {
       const clientCount = Object.keys(ordersByClientData.clientGroups).length;
       console.log(`Loaded data for ${clientCount} clients with ${ordersByClientData.totalCount} total orders`);
       
-      // Log some statistics about the data
-      const allItemsCount = Object.values(ordersByClientData.clientGroups).reduce(
-        (total, client: any) => total + (client.allItems?.length || 0), 
-        0
-      );
-      console.log(`Total items across all clients: ${allItemsCount}`);
+      // Log all client names to verify we have all of them
+      console.log("=== ALL CLIENTS LOADED ===");
+      const clientNames = Object.keys(ordersByClientData.clientGroups).sort();
+      console.log(`Total clients: ${clientNames.length}`);
+      clientNames.forEach(name => {
+        const client = ordersByClientData.clientGroups[name];
+        console.log(`${name}: ${client.total_pedidos_distintos || 0} pedidos`);
+      });
       
-      // Check specifically for "Laguna" client
-      const lagunaClient = Object.entries(ordersByClientData.clientGroups).find(
-        ([name]) => name.toLowerCase().includes('laguna')
-      );
-      
-      if (lagunaClient) {
-        const [name, data] = lagunaClient;
-        console.log(`Found Laguna client: ${name}`);
-        console.log(`Laguna items count: ${data.allItems?.length || 0}`);
-        console.log(`Laguna unique orders count: ${data.uniquePedidosCount || 'N/A'}`);
-        
-        // Count unique orders for verification
-        if (data.allItems?.length) {
-          const uniquePedidos = new Set(data.allItems.map((item: any) => item.pedido));
-          console.log(`Manually counted unique orders for Laguna: ${uniquePedidos.size}`);
-          console.log(`First 5 order numbers: ${[...uniquePedidos].slice(0, 5).join(', ')}`);
-        }
-      } else {
-        console.log(`Laguna client not found in the results`);
-      }
-      
-      // Print out some client names for debugging
-      const clientNames = Object.keys(ordersByClientData.clientGroups).slice(0, 5);
-      console.log(`First few clients: ${clientNames.join(', ')}${clientNames.length < Object.keys(ordersByClientData.clientGroups).length ? '...' : ''}`);
+      // Check if total matches what we expect
+      console.log(`Total calculated from clients: ${
+        Object.values(ordersByClientData.clientGroups).reduce(
+          (sum: number, client: any) => sum + (client.total_pedidos_distintos || 0), 
+          0
+        )
+      }`);
+      console.log(`Total from API: ${ordersByClientData.totalCount}`);
     }
   }, [ordersByClientData, ordersError]);
 

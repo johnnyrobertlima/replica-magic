@@ -44,6 +44,7 @@ export async function fetchJabOrdersByClient({
     
     console.log(`Found ${clientesComPedidos.length} clients with orders`);
     console.log(`Total distinct orders according to database: ${totalPedidosDistintos}`);
+    console.log(`This should match the expected 450 orders`);
 
     // Fetch separation items
     const itensSeparacao = await fetchItensSeparacao();
@@ -63,7 +64,15 @@ export async function fetchJabOrdersByClient({
       false // Always disable the limiting of results!
     );
 
-    // Após processar, verificar quantos pedidos distintos foram realmente processados
+    // Double check the number of clients processed
+    const processedClientCount = Object.keys(clientGroups).length;
+    console.log(`Processed ${processedClientCount} clients out of ${clientesComPedidos.length} from database`);
+    
+    if (processedClientCount !== clientesComPedidos.length) {
+      console.error(`WARNING: We lost ${clientesComPedidos.length - processedClientCount} clients during processing!`);
+    }
+    
+    // After processing, verify the total orders processed
     let pedidosProcessados = 0;
     Object.values(clientGroups).forEach((client: any) => {
       if (client.uniquePedidosCount) {
@@ -73,13 +82,12 @@ export async function fetchJabOrdersByClient({
       }
     });
 
-    console.log(`Processed client groups: ${Object.keys(clientGroups).length}`);
     console.log(`Total distinct orders after processing: ${pedidosProcessados}`);
     console.log(`Total received from database: ${totalPedidosDistintos}`);
     
     // Log discrepancies if any
     if (pedidosProcessados !== totalPedidosDistintos) {
-      console.warn(`ATENÇÃO: Discrepância entre pedidos do banco (${totalPedidosDistintos}) e processados (${pedidosProcessados})`);
+      console.warn(`IMPORTANTE: Discrepância entre pedidos do banco (${totalPedidosDistintos}) e processados (${pedidosProcessados})`);
     }
     
     return {
