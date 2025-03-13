@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -36,27 +37,27 @@ export const ClientOrderCard = ({
   useEffect(() => {
     const fetchRepresentanteName = async () => {
       if (data.REPRESENTANTE) {
-        console.log("Representative code:", data.REPRESENTANTE, typeof data.REPRESENTANTE);
+        console.log("Representative code to look up:", data.REPRESENTANTE, typeof data.REPRESENTANTE);
         
         try {
+          // Fetch representative name from vw_representantes view
           const { data: repData, error } = await supabase
-            .from('BLUEBAY_PESSOA')
-            .select('APELIDO, RAZAOSOCIAL')
-            .eq('PES_CODIGO', data.REPRESENTANTE)
-            .limit(1);
+            .from('vw_representantes')
+            .select('nome_representante')
+            .eq('codigo_representante', data.REPRESENTANTE);
 
           if (error) {
-            console.error("Error fetching representative:", error);
+            console.error("Error fetching representative from view:", error);
             setRepresentanteName(data.REPRESENTANTE_NOME || `Representante ${data.REPRESENTANTE} não encontrado`);
             return;
           }
 
-          console.log("Representative query result:", repData);
+          console.log("Representative query result from view:", repData);
 
           if (repData && repData.length > 0) {
-            setRepresentanteName(repData[0].RAZAOSOCIAL || repData[0].APELIDO);
+            setRepresentanteName(repData[0].nome_representante);
           } else {
-            console.log("No representative found for PES_CODIGO:", data.REPRESENTANTE);
+            console.log("No representative found in view for code:", data.REPRESENTANTE);
             setRepresentanteName(data.REPRESENTANTE_NOME || `Representante ${data.REPRESENTANTE} não encontrado`);
           }
         } catch (error) {
