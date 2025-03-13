@@ -7,7 +7,7 @@ import { groupOrdersByClient, filterGroupsBySearchCriteria } from "@/utils/clien
 import { useClientOrdersState } from "./client-orders/useClientOrdersState";
 import { useItemSelection } from "./client-orders/useItemSelection";
 import { useSeparationOperations } from "./client-orders/useSeparationOperations";
-import { fetchJabOrdersByClient } from "@/services/jabOrdersService";
+import { fetchJabOrdersByClient } from "@/services/jab/clientOrdersService";
 
 export const useClientOrders = () => {
   // Use the state hook
@@ -38,9 +38,10 @@ export const useClientOrders = () => {
     queryKey: ['jab-orders-by-client', searchDate?.from?.toISOString(), searchDate?.to?.toISOString()],
     queryFn: () => fetchJabOrdersByClient({ dateRange: searchDate }),
     enabled: !!searchDate?.from && !!searchDate?.to,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 10 * 60 * 1000, // 10 minutes (increased from 5)
+    gcTime: 20 * 60 * 1000, // 20 minutes (increased from 10)
     retry: 2, // Retry failed requests twice
+    refetchOnWindowFocus: false, // Don't refetch when window gets focus
   });
 
   // Log query results
@@ -52,6 +53,17 @@ export const useClientOrders = () => {
     if (ordersByClientData) {
       const clientCount = Object.keys(ordersByClientData.clientGroups).length;
       console.log(`Loaded data for ${clientCount} clients with ${ordersByClientData.totalCount} total orders`);
+      
+      // Log some statistics about the data
+      const allItemsCount = Object.values(ordersByClientData.clientGroups).reduce(
+        (total, client: any) => total + (client.allItems?.length || 0), 
+        0
+      );
+      console.log(`Total items across all clients: ${allItemsCount}`);
+      
+      // Print out some client names for debugging
+      const clientNames = Object.keys(ordersByClientData.clientGroups).slice(0, 5);
+      console.log(`First few clients: ${clientNames.join(', ')}${clientNames.length < Object.keys(ordersByClientData.clientGroups).length ? '...' : ''}`);
     }
   }, [ordersByClientData, ordersError]);
 

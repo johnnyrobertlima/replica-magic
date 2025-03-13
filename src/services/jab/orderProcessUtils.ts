@@ -99,16 +99,20 @@ export async function processClientOrdersData(
   dataInicial: string,
   dataFinal: string,
   clientesComPedidos: any[],
-  itensSeparacao: Record<string, boolean>
+  itensSeparacao: Record<string, boolean>,
+  batchSize: number = 5
 ): Promise<Record<string, any>> {
-  console.log(`Processing order data for ${clientesComPedidos.length} clients`);
+  console.log(`Processing order data for ${clientesComPedidos.length} clients with batch size ${batchSize}`);
   const clientGroups: Record<string, any> = {};
   
   // Process clients in batches to avoid memory issues with large datasets
-  const batchSize = 5;
+  const totalBatches = Math.ceil(clientesComPedidos.length / batchSize);
+  console.log(`Will process data in ${totalBatches} batches`);
+  
   for (let i = 0; i < clientesComPedidos.length; i += batchSize) {
     const batch = clientesComPedidos.slice(i, i + batchSize);
-    console.log(`Processing batch ${i/batchSize + 1} with ${batch.length} clients`);
+    const currentBatch = Math.floor(i / batchSize) + 1;
+    console.log(`Processing batch ${currentBatch}/${totalBatches} with ${batch.length} clients`);
     
     await Promise.all(batch.map(async (cliente) => {
       try {
@@ -116,14 +120,19 @@ export async function processClientOrdersData(
         const representanteName = cliente.representante_nome || 'Não informado';
         
         // Buscar itens do cliente com a função otimizada
+        console.log(`Fetching items for client ${clienteName} (${cliente.pes_codigo})`);
         const itensCliente = await fetchItensPorCliente(dataInicial, dataFinal, cliente.pes_codigo);
         
         if (itensCliente && Array.isArray(itensCliente) && itensCliente.length > 0) {
+          console.log(`Found ${itensCliente.length} items for client ${clienteName}`);
+          
           // Buscar informações de estoque para os itens com a função otimizada
           const itemCodigos = itensCliente.map(item => item.item_codigo);
+          console.log(`Fetching stock info for ${itemCodigos.length} items`);
           const estoqueData = await fetchEstoqueParaItens(itemCodigos);
           
           if (Array.isArray(estoqueData)) {
+            console.log(`Got stock info for ${estoqueData.length} items`);
             const estoqueMap = new Map(estoqueData.map(e => [e.item_codigo, e.fisico]));
             
             // Initialize tracking variables for client totals
@@ -184,11 +193,15 @@ export async function processClientOrdersData(
               allItems: itensProcessados
             };
           }
+        } else {
+          console.log(`No items found for client ${clienteName} (${cliente.pes_codigo})`);
         }
       } catch (error) {
         console.error(`Error processing client ${cliente.pes_codigo}:`, error);
       }
     }));
+    
+    console.log(`Completed batch ${currentBatch}/${totalBatches}. Current client groups: ${Object.keys(clientGroups).length}`);
   }
   
   console.log(`Finished processing all clients. Total client groups: ${Object.keys(clientGroups).length}`);
