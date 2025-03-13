@@ -49,9 +49,19 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
     }
   };
 
+  const handleSearchTypeChange = (value: string) => {
+    console.log("Search type changed to:", value);
+    onSearchTypeChange(value as SearchType);
+  };
+
+  const handleSearch = () => {
+    console.log("Searching with query:", searchQuery, "and type:", searchType);
+    onSearch();
+  };
+
   return (
     <div className="flex items-center gap-4">
-      <Select value={searchType} onValueChange={value => onSearchTypeChange(value as SearchType)}>
+      <Select value={searchType} onValueChange={handleSearchTypeChange}>
         <SelectTrigger className="w-[180px]">
           <SelectValue placeholder="Tipo de busca" />
         </SelectTrigger>
@@ -103,12 +113,12 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
             selected={date}
             onSelect={onDateChange}
             numberOfMonths={2}
-            className="bg-white" // This is the key change to fix the background issue
+            className="bg-white"
           />
         </PopoverContent>
       </Popover>
 
-      <Button onClick={onSearch} className="gap-2">
+      <Button onClick={handleSearch} className="gap-2">
         <Search className="h-4 w-4" />
         Pesquisar
       </Button>
