@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, UserCheck } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { OrderProgressBars } from "./OrderProgressBars";
@@ -131,11 +131,15 @@ export const ClientOrderCard = ({
         >
           <div className="space-y-1">
             <h3 className="text-lg font-semibold">Cliente: {clientName}</h3>
+            
+            {/* Added representative information with icon */}
             {representanteName && (
-              <p className="text-sm text-muted-foreground font-medium">
-                Representante: {representanteName}
-              </p>
+              <div className="flex items-center gap-1 text-sm text-muted-foreground font-medium">
+                <UserCheck className="h-4 w-4" />
+                <span>Representante: {representanteName}</span>
+              </div>
             )}
+            
             <p className="text-sm text-muted-foreground">
               Total de Pedidos: {pedidosCount}
             </p>
