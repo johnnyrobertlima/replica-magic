@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -36,35 +35,30 @@ export const ClientOrderCard = ({
   
   useEffect(() => {
     const fetchRepresentanteName = async () => {
-      // Only fetch if we have a REPRESENTANTE code
       if (data.REPRESENTANTE) {
         try {
-          // Use 'select=*' with content-type application/json to avoid 406 errors
           const { data: repData, error } = await supabase
             .from('vw_representantes')
-            .select('*')
+            .select('nome_representante')
             .eq('codigo_representante', data.REPRESENTANTE)
-            .maybeSingle();
+            .single();
 
           if (error) {
             console.error("Error fetching representative:", error);
+            setRepresentanteName(data.REPRESENTANTE_NOME || "Representante não encontrado");
             return;
           }
 
-          // Check if data was returned and has nome_representante
           if (repData) {
             setRepresentanteName(repData.nome_representante);
           } else {
-            // Fallback to using REPRESENTANTE_NOME if available in data
             setRepresentanteName(data.REPRESENTANTE_NOME || "Representante não encontrado");
           }
         } catch (error) {
           console.error("Error in representative fetch:", error);
-          // Fallback to REPRESENTANTE_NOME
           setRepresentanteName(data.REPRESENTANTE_NOME || "Erro ao buscar representante");
         }
       } else {
-        // If no REPRESENTANTE, use REPRESENTANTE_NOME if available
         setRepresentanteName(data.REPRESENTANTE_NOME || null);
       }
     };
