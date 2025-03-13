@@ -33,18 +33,3 @@ export function batchArray<T>(array: T[], batchSize: number): T[][] {
   
   return batches;
 }
-
-/**
- * Create maps for quick data lookup
- */
-export function createDataMaps(
-  pessoas: any[],
-  itens: any[],
-  estoque: any[]
-) {
-  return {
-    pessoasMap: new Map(pessoas.map(p => [p.PES_CODIGO, p])),
-    itemMap: new Map(itens.map(i => [i.ITEM_CODIGO, i.DESCRICAO])),
-    estoqueMap: new Map(estoque.map(e => [e.ITEM_CODIGO, e.FISICO]))
-  };
-}
