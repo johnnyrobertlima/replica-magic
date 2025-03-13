@@ -34,6 +34,7 @@ export const useClientOrdersSearch = (initialDate: DateRange | undefined = {
 
   // State update methods
   const setDate = (newDate: DateRange | undefined) => {
+    console.log("Setting new date:", newDate);
     setState(prev => ({ ...prev, date: newDate }));
   };
 
@@ -46,6 +47,7 @@ export const useClientOrdersSearch = (initialDate: DateRange | undefined = {
   };
 
   const handleSearch = () => {
+    console.log("Handling search with date:", state.date);
     setState(prev => ({ 
       ...prev, 
       isSearching: true,

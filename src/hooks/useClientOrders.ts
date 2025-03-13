@@ -46,6 +46,7 @@ export const useClientOrders = () => {
 
   // Group orders by client and process them
   useEffect(() => {
+    console.log("Processing orders with searchDate:", searchDate);
     const processGroups = async () => {
       // First group the orders by client
       const groups = groupOrdersByClient(ordersData);

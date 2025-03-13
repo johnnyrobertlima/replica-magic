@@ -49,6 +49,16 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
     }
   };
 
+  const handleDateChange = (newDate: DateRange | undefined) => {
+    console.log("Date selected in Calendar:", newDate);
+    onDateChange(newDate);
+  };
+
+  const handleSearch = () => {
+    console.log("Search button clicked with date:", date);
+    onSearch();
+  };
+
   return (
     <div className="flex items-center gap-4">
       <Select value={searchType} onValueChange={value => onSearchTypeChange(value as SearchType)}>
@@ -101,13 +111,13 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
             mode="range"
             defaultMonth={date?.from}
             selected={date}
-            onSelect={onDateChange}
+            onSelect={handleDateChange}
             numberOfMonths={2}
           />
         </PopoverContent>
       </Popover>
 
-      <Button onClick={onSearch} className="gap-2">
+      <Button onClick={handleSearch} className="gap-2">
         <Search className="h-4 w-4" />
         Pesquisar
       </Button>
