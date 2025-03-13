@@ -38,16 +38,18 @@ export const ClientOrderCard = ({
     const fetchRepresentanteName = async () => {
       if (data.REPRESENTANTE) {
         try {
-          console.log("Fetching representative with code:", data.REPRESENTANTE);
+          // Log the representative data we're trying to look up
+          console.log("Fetching representative with code:", data.REPRESENTANTE, typeof data.REPRESENTANTE);
           
           // Fetch representative name from vw_representantes view
           const { data: repData, error } = await supabase
             .from('vw_representantes')
-            .select('nome_representante')
+            .select('nome_representante, codigo_representante')
             .eq('codigo_representante', data.REPRESENTANTE);
 
           if (error) {
             console.error("Error fetching representative from view:", error);
+            setRepresentanteName(null);
             return;
           }
 
@@ -59,14 +61,30 @@ export const ClientOrderCard = ({
           } else {
             console.log("No representative found in view for code:", data.REPRESENTANTE);
             
-            // Fallback to REPRESENTANTE_NOME or a message
-            if (data.REPRESENTANTE_NOME) {
-              setRepresentanteName(data.REPRESENTANTE_NOME);
-              console.log("Fallback to REPRESENTANTE_NOME:", data.REPRESENTANTE_NOME);
-            } else {
+            // Try fetching directly from BLUEBAY_PESSOA as fallback
+            const { data: pessoaData, error: pessoaError } = await supabase
+              .from('BLUEBAY_PESSOA')
+              .select('RAZAOSOCIAL, APELIDO')
+              .eq('PES_CODIGO', data.REPRESENTANTE)
+              .single();
+            
+            if (pessoaError) {
+              console.error("Error fetching from BLUEBAY_PESSOA:", pessoaError);
+              // Use fallback text
               const fallbackMsg = `Representante ${data.REPRESENTANTE}`;
               setRepresentanteName(fallbackMsg);
-              console.log("Using fallback message:", fallbackMsg);
+              console.log("Using fallback message after PESSOA error:", fallbackMsg);
+            } else if (pessoaData) {
+              console.log("Found representative in BLUEBAY_PESSOA:", pessoaData);
+              // Prefer RAZAOSOCIAL, fall back to APELIDO
+              const name = pessoaData.RAZAOSOCIAL || pessoaData.APELIDO || `Representante ${data.REPRESENTANTE}`;
+              setRepresentanteName(name);
+              console.log("Using name from BLUEBAY_PESSOA:", name);
+            } else {
+              // Final fallback
+              const fallbackMsg = data.REPRESENTANTE_NOME || `Representante ${data.REPRESENTANTE}`;
+              setRepresentanteName(fallbackMsg);
+              console.log("Using final fallback:", fallbackMsg);
             }
           }
         } catch (error) {

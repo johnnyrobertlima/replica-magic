@@ -27,6 +27,7 @@ export interface JabOrder {
   APELIDO: string | null;
   PEDIDO_CLIENTE: string | null;
   STATUS: string;
+  REPRESENTANTE: number | null;
   REPRESENTANTE_NOME: string | null;
   PES_CODIGO: number;
   items: JabOrderItem[];

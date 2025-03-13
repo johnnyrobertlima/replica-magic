@@ -73,7 +73,8 @@ export function processOrdersData(
       APELIDO: pessoa?.APELIDO || null,
       PEDIDO_CLIENTE: primeiroPedido.PEDIDO_CLIENTE || null,
       STATUS: primeiroPedido.STATUS || '',
-      REPRESENTANTE_NOME: primeiroPedido.REPRESENTANTE || null,
+      REPRESENTANTE: primeiroPedido.REPRESENTANTE,
+      REPRESENTANTE_NOME: primeiroPedido.REPRESENTANTE_NOME || null,
       PES_CODIGO: primeiroPedido.PES_CODIGO,
       items: Array.from(items.values())
     };
