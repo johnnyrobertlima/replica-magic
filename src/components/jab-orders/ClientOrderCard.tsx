@@ -39,26 +39,38 @@ export const ClientOrderCard = ({
       // Only fetch if we have a PES_CODIGO
       if (data.PES_CODIGO) {
         try {
-          // Using .select('*') instead of .select('nome_representante') to avoid the 406 error
+          // Use 'select=*' with content-type application/json to avoid 406 errors
           const { data: repData, error } = await supabase
             .from('vw_representantes')
             .select('*')
             .eq('codigo_representante', data.PES_CODIGO)
             .maybeSingle();
-            
-          if (repData && !error) {
-            setRepresentanteName(repData.nome_representante);
-          } else if (error) {
+
+          if (error) {
             console.error("Error fetching representative:", error);
+            return;
+          }
+
+          // Check if data was returned and has nome_representante
+          if (repData) {
+            setRepresentanteName(repData.nome_representante);
+          } else {
+            // Fallback to using REPRESENTANTE_NOME if available in data
+            setRepresentanteName(data.REPRESENTANTE_NOME || "Representante não encontrado");
           }
         } catch (error) {
-          console.error("Error fetching representative:", error);
+          console.error("Error in representative fetch:", error);
+          // Fallback to REPRESENTANTE_NOME
+          setRepresentanteName(data.REPRESENTANTE_NOME || "Erro ao buscar representante");
         }
+      } else {
+        // If no PES_CODIGO, use REPRESENTANTE_NOME if available
+        setRepresentanteName(data.REPRESENTANTE_NOME || null);
       }
     };
     
     fetchRepresentanteName();
-  }, [data.PES_CODIGO]);
+  }, [data.PES_CODIGO, data.REPRESENTANTE_NOME]);
   
   const progressFaturamento = data.totalValorPedido > 0 
     ? (data.totalValorFaturado / data.totalValorPedido) * 100 
