@@ -36,14 +36,14 @@ export const ClientOrderCard = ({
   
   useEffect(() => {
     const fetchRepresentanteName = async () => {
-      // Only fetch if we have a PES_CODIGO
-      if (data.PES_CODIGO) {
+      // Only fetch if we have a REPRESENTANTE code
+      if (data.REPRESENTANTE) {
         try {
           // Use 'select=*' with content-type application/json to avoid 406 errors
           const { data: repData, error } = await supabase
             .from('vw_representantes')
             .select('*')
-            .eq('codigo_representante', data.PES_CODIGO)
+            .eq('codigo_representante', data.REPRESENTANTE)
             .maybeSingle();
 
           if (error) {
@@ -64,13 +64,13 @@ export const ClientOrderCard = ({
           setRepresentanteName(data.REPRESENTANTE_NOME || "Erro ao buscar representante");
         }
       } else {
-        // If no PES_CODIGO, use REPRESENTANTE_NOME if available
+        // If no REPRESENTANTE, use REPRESENTANTE_NOME if available
         setRepresentanteName(data.REPRESENTANTE_NOME || null);
       }
     };
     
     fetchRepresentanteName();
-  }, [data.PES_CODIGO, data.REPRESENTANTE_NOME]);
+  }, [data.REPRESENTANTE, data.REPRESENTANTE_NOME]);
   
   const progressFaturamento = data.totalValorPedido > 0 
     ? (data.totalValorFaturado / data.totalValorPedido) * 100 
