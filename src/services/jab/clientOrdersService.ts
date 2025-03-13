@@ -34,7 +34,16 @@ export async function fetchJabOrdersByClient({
       return { clientGroups: {}, totalCount: 0 };
     }
     
+    // Contar o número total de pedidos distintos
+    let totalPedidosDistintos = 0;
+    clientesComPedidos.forEach(cliente => {
+      if (cliente.total_pedidos_distintos) {
+        totalPedidosDistintos += cliente.total_pedidos_distintos;
+      }
+    });
+    
     console.log(`Found ${clientesComPedidos.length} clients with orders`);
+    console.log(`Total distinct orders according to database: ${totalPedidosDistintos}`);
 
     // Fetch separation items
     const itensSeparacao = await fetchItensSeparacao();
@@ -53,11 +62,20 @@ export async function fetchJabOrdersByClient({
       false // Always disable the limiting of results!
     );
 
+    // Após processar, verificar quantos pedidos distintos foram realmente processados
+    let pedidosProcessados = 0;
+    Object.values(clientGroups).forEach((client: any) => {
+      if (client.uniquePedidosCount) {
+        pedidosProcessados += client.uniquePedidosCount;
+      }
+    });
+
     console.log(`Processed client groups: ${Object.keys(clientGroups).length}`);
+    console.log(`Total distinct orders after processing: ${pedidosProcessados}`);
     
     return {
       clientGroups,
-      totalCount: clientesComPedidos.length,
+      totalCount: totalPedidosDistintos, // Use a contagem de pedidos distintos aqui
       itensSeparacao
     };
   } catch (error) {

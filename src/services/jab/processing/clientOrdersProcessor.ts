@@ -16,6 +16,13 @@ export async function processClientOrdersData(
   console.log(`Processing order data for ${clientesComPedidos.length} clients with batch size ${batchSize}`);
   const clientGroups: Record<string, any> = {};
   
+  // Log se alguma limitação estiver sendo aplicada
+  if (limitResults) {
+    console.warn('ATENÇÃO: limitResults está ativado, o que pode reduzir o número de resultados exibidos!');
+  } else {
+    console.log('Processando todos os pedidos sem limitação de resultados.');
+  }
+  
   // Process clients in batches to avoid memory issues with large datasets
   const totalBatches = Math.ceil(clientesComPedidos.length / batchSize);
   console.log(`Will process data in ${totalBatches} batches`);
@@ -34,6 +41,7 @@ export async function processClientOrdersData(
         const isLaguna = clienteName.toLowerCase().includes('laguna');
         if (isLaguna) {
           console.log(`LAGUNA client found (${cliente.pes_codigo}): Processing in batch ${currentBatch}`);
+          console.log(`LAGUNA DB total_pedidos_distintos: ${cliente.total_pedidos_distintos || 'N/A'}`);
         }
         
         // Fetch client items with the optimized function
@@ -124,8 +132,15 @@ export async function processClientOrdersData(
               totalValorFaturarComEstoque,
               volume_saudavel_faturamento: cliente.volume_saudavel_faturamento,
               allItems: itensProcessados,
-              uniquePedidosCount: uniquePedidos.size, // Add this to track the number of unique orders
+              uniquePedidosCount: uniquePedidos.size,
+              total_pedidos_distintos: cliente.total_pedidos_distintos || uniquePedidos.size
             };
+            
+            // For LAGUNA: verificar resultados finais
+            if (isLaguna) {
+              console.log(`LAGUNA final result: ${uniquePedidos.size} pedidos processados`);
+              console.log(`LAGUNA allItems count: ${itensProcessados.length}`);
+            }
           }
         } else {
           console.log(`No items found for client ${clienteName} (${cliente.pes_codigo})`);
@@ -138,6 +153,16 @@ export async function processClientOrdersData(
     console.log(`Completed batch ${currentBatch}/${totalBatches}. Current client groups: ${Object.keys(clientGroups).length}`);
   }
   
+  // Contar pedidos únicos após processamento
+  let totalPedidosDistintos = 0;
+  Object.values(clientGroups).forEach((client: any) => {
+    if (client.uniquePedidosCount) {
+      totalPedidosDistintos += client.uniquePedidosCount;
+    }
+  });
+  
   console.log(`Finished processing all clients. Total client groups: ${Object.keys(clientGroups).length}`);
+  console.log(`Total pedidos distintos após processamento: ${totalPedidosDistintos}`);
+  
   return clientGroups;
 }

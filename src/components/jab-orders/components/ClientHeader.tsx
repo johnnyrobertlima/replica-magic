@@ -7,7 +7,8 @@ interface ClientHeaderProps {
   data: {
     representante: string;
     volume_saudavel_faturamento: number;
-    uniquePedidosCount?: number; // Add this to support the direct count from DB
+    uniquePedidosCount?: number;
+    total_pedidos_distintos?: number; // Novo campo da base de dados
   };
   pedidosCount: number;
   valoresVencidos: number;
@@ -25,8 +26,10 @@ export const ClientHeader = ({
   isExpanded,
   onToggleExpand,
 }: ClientHeaderProps) => {
-  // Use uniquePedidosCount if available (from DB), otherwise fallback to calculated pedidosCount
-  const displayPedidosCount = data.uniquePedidosCount || pedidosCount;
+  // Priorizar o total_pedidos_distintos da base de dados, se disponível
+  // Caso contrário, usar uniquePedidosCount calculado localmente
+  // Se nenhum estiver disponível, usar o pedidosCount calculado
+  const displayPedidosCount = data.total_pedidos_distintos || data.uniquePedidosCount || pedidosCount;
   
   return (
     <div 

@@ -14,17 +14,16 @@ export async function fetchPedidosPorCliente(dataInicial: string, dataFinal: str
     const dataFinalCompleta = `${dataFinal} 23:59:59.999`;
     console.log(`Data inicial formatada: ${dataInicial}, Data final formatada: ${dataFinalCompleta}`);
     
-    // Use the correct function name as a string literal for the RPC call
-    // For long date ranges, we need to make sure we don't timeout
+    // Log SQL query being executed (for debugging)
+    console.log(`Executando RPC: get_pedidos_por_cliente(${dataInicial}, ${dataFinalCompleta})`);
+    
+    // Execute the RPC call with debugging info
     const startTime = Date.now();
     console.log(`Starting RPC call to get_pedidos_por_cliente at ${new Date().toISOString()}`);
     
     const { data, error } = await supabase.rpc('get_pedidos_por_cliente', {
       data_inicial: dataInicial,
       data_final: dataFinalCompleta
-    }, { 
-      count: 'exact',
-      head: false // Don't use head request to avoid timeout issues with large results
     }) as { data: PedidosPorClienteResult[] | null, error: any };
 
     const endTime = Date.now();
@@ -35,7 +34,18 @@ export async function fetchPedidosPorCliente(dataInicial: string, dataFinal: str
       throw error;
     }
     
-    console.log(`Encontrados ${data?.length || 0} clientes com pedidos no período`);
+    // Verificando número total de registros retornados 
+    console.log(`Total de clientes retornados da função get_pedidos_por_cliente: ${data?.length || 0}`);
+    
+    // Contando número total de pedidos para comparação com a consulta SQL
+    let totalPedidosClient = 0;
+    data?.forEach(cliente => {
+      if (cliente.total_pedidos_distintos) {
+        totalPedidosClient += cliente.total_pedidos_distintos;
+      }
+    });
+    
+    console.log(`Total de pedidos distintos calculado pelo client: ${totalPedidosClient}`);
     
     // Specifically look for LAGUNA client and log detailed info
     if (data && data.length > 0) {
@@ -47,7 +57,8 @@ export async function fetchPedidosPorCliente(dataInicial: string, dataFinal: str
           codigo: laguna.pes_codigo,
           nome: laguna.cliente_nome,
           total_quantidade_saldo: laguna.total_quantidade_saldo,
-          total_valor_saldo: laguna.total_valor_saldo
+          total_valor_saldo: laguna.total_valor_saldo,
+          total_pedidos_distintos: laguna.total_pedidos_distintos
         });
       } else {
         console.log('Cliente Laguna não encontrado nos resultados');
