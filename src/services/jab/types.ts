@@ -1,3 +1,4 @@
+
 import type { JabOrder } from "@/types/jabOrders";
 
 export interface PedidosUnicosResponse {
@@ -40,7 +41,7 @@ export interface PedidosPorClienteResult {
   total_valor_saldo: number;
   total_quantidade_saldo: number;
   volume_saudavel_faturamento: number | null;
-  total_pedidos_distintos?: number;
+  total_pedidos_distintos: number;
 }
 
 export interface ItensPorClienteResult {

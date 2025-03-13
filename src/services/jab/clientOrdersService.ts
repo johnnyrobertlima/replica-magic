@@ -1,7 +1,7 @@
 
 import type { UseJabOrdersOptions } from "@/types/jabOrders";
 import type { ClientOrdersResult } from "./types";
-import { fetchPedidosPorCliente } from "./clientDataService";
+import { fetchPedidosPorCliente } from "./fetching/clientOrdersFetcher";
 import { processClientOrdersData } from "./processing/clientOrdersProcessor";
 import { fetchItensSeparacao } from "./separacaoUtils";
 
@@ -48,11 +48,12 @@ export async function fetchJabOrdersByClient({
     // Fetch separation items
     const itensSeparacao = await fetchItensSeparacao();
     
-    // Process client data - adjust batch size for optimal processing based on date range
-    // For larger date ranges, use smaller batch sizes to avoid memory issues
-    const batchSize = daysDifference > 100 ? 2 : (daysDifference > 30 ? 3 : 5);
+    // Adjust batch size for optimal processing based on date range
+    // Usar batchSize menor para intervalos de datas maiores
+    const batchSize = Math.max(1, Math.min(5, Math.floor(100 / Math.max(1, daysDifference))));
     console.log(`Using batch size: ${batchSize} for processing client data`);
     
+    // Process client data - NEVER limit results
     const clientGroups = await processClientOrdersData(
       dataInicial, 
       dataFinal, 
@@ -67,15 +68,23 @@ export async function fetchJabOrdersByClient({
     Object.values(clientGroups).forEach((client: any) => {
       if (client.uniquePedidosCount) {
         pedidosProcessados += client.uniquePedidosCount;
+      } else if (client.total_pedidos_distintos) {
+        pedidosProcessados += client.total_pedidos_distintos;
       }
     });
 
     console.log(`Processed client groups: ${Object.keys(clientGroups).length}`);
     console.log(`Total distinct orders after processing: ${pedidosProcessados}`);
+    console.log(`Total received from database: ${totalPedidosDistintos}`);
+    
+    // Log discrepancies if any
+    if (pedidosProcessados !== totalPedidosDistintos) {
+      console.warn(`ATENÇÃO: Discrepância entre pedidos do banco (${totalPedidosDistintos}) e processados (${pedidosProcessados})`);
+    }
     
     return {
       clientGroups,
-      totalCount: totalPedidosDistintos, // Use a contagem de pedidos distintos aqui
+      totalCount: totalPedidosDistintos, // Use a contagem de pedidos distintos do banco
       itensSeparacao
     };
   } catch (error) {

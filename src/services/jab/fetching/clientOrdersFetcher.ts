@@ -14,9 +14,6 @@ export async function fetchPedidosPorCliente(dataInicial: string, dataFinal: str
     const dataFinalCompleta = `${dataFinal} 23:59:59.999`;
     console.log(`Data inicial formatada: ${dataInicial}, Data final formatada: ${dataFinalCompleta}`);
     
-    // Log SQL query being executed (for debugging)
-    console.log(`Executando RPC: get_pedidos_por_cliente(${dataInicial}, ${dataFinalCompleta})`);
-    
     // Execute the RPC call with debugging info
     const startTime = Date.now();
     console.log(`Starting RPC call to get_pedidos_por_cliente at ${new Date().toISOString()}`);
@@ -24,6 +21,8 @@ export async function fetchPedidosPorCliente(dataInicial: string, dataFinal: str
     const { data, error } = await supabase.rpc('get_pedidos_por_cliente', {
       data_inicial: dataInicial,
       data_final: dataFinalCompleta
+    }, {
+      head: false // Não use HEAD request para evitar timeout em resultados grandes
     }) as { data: PedidosPorClienteResult[] | null, error: any };
 
     const endTime = Date.now();
@@ -37,18 +36,29 @@ export async function fetchPedidosPorCliente(dataInicial: string, dataFinal: str
     // Verificando número total de registros retornados 
     console.log(`Total de clientes retornados da função get_pedidos_por_cliente: ${data?.length || 0}`);
     
-    // Contando número total de pedidos para comparação com a consulta SQL
-    let totalPedidosClient = 0;
+    // Contando número total de pedidos para verificação
+    let totalPedidosDistintos = 0;
     data?.forEach(cliente => {
       if (cliente.total_pedidos_distintos) {
-        totalPedidosClient += cliente.total_pedidos_distintos;
+        totalPedidosDistintos += cliente.total_pedidos_distintos;
       }
     });
     
-    console.log(`Total de pedidos distintos calculado pelo client: ${totalPedidosClient}`);
+    console.log(`Total de pedidos distintos: ${totalPedidosDistintos}`);
     
-    // Specifically look for LAGUNA client and log detailed info
+    // Verificar números por cliente para debugging
     if (data && data.length > 0) {
+      // Ordenar por nome para facilitar a leitura
+      const sortedData = [...data].sort((a, b) => {
+        return (a.cliente_nome || '').localeCompare(b.cliente_nome || '');
+      });
+      
+      console.log("=== RESUMO DE CLIENTES E PEDIDOS RETORNADOS ===");
+      sortedData.forEach(cliente => {
+        console.log(`${cliente.cliente_nome || 'SEM NOME'}: ${cliente.total_pedidos_distintos || 0} pedidos`);
+      });
+      
+      // Busca específica por LAGUNA
       const laguna = data.find(cliente => 
         cliente.cliente_nome?.toLowerCase().includes('laguna'));
       

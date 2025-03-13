@@ -8,7 +8,7 @@ interface ClientHeaderProps {
     representante: string;
     volume_saudavel_faturamento: number;
     uniquePedidosCount?: number;
-    total_pedidos_distintos?: number; // Novo campo da base de dados
+    total_pedidos_distintos?: number; // Campo da base de dados
   };
   pedidosCount: number;
   valoresVencidos: number;
@@ -26,10 +26,12 @@ export const ClientHeader = ({
   isExpanded,
   onToggleExpand,
 }: ClientHeaderProps) => {
-  // Priorizar o total_pedidos_distintos da base de dados, se disponível
-  // Caso contrário, usar uniquePedidosCount calculado localmente
-  // Se nenhum estiver disponível, usar o pedidosCount calculado
+  // Usar prioritariamente o valor do banco de dados (total_pedidos_distintos)
+  // Se não disponível, usar valores calculados localmente
   const displayPedidosCount = data.total_pedidos_distintos || data.uniquePedidosCount || pedidosCount;
+  
+  // Logging específico para o ClientHeader
+  console.log(`ClientHeader - ${clientName}: total_pedidos_distintos=${data.total_pedidos_distintos}, uniquePedidosCount=${data.uniquePedidosCount}, pedidosCount=${pedidosCount}, display=${displayPedidosCount}`);
   
   return (
     <div 

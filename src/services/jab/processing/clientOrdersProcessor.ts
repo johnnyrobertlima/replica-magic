@@ -16,12 +16,12 @@ export async function processClientOrdersData(
   console.log(`Processing order data for ${clientesComPedidos.length} clients with batch size ${batchSize}`);
   const clientGroups: Record<string, any> = {};
   
-  // Log se alguma limitação estiver sendo aplicada
+  // NUNCA limitar resultados
   if (limitResults) {
-    console.warn('ATENÇÃO: limitResults está ativado, o que pode reduzir o número de resultados exibidos!');
-  } else {
-    console.log('Processando todos os pedidos sem limitação de resultados.');
+    console.warn('AVISO: limitResults está ativado, mas será IGNORADO para garantir que todos os resultados sejam exibidos');
   }
+  
+  console.log('Processando todos os pedidos sem limitação');
   
   // Process clients in batches to avoid memory issues with large datasets
   const totalBatches = Math.ceil(clientesComPedidos.length / batchSize);
@@ -36,33 +36,27 @@ export async function processClientOrdersData(
       try {
         const clienteName = cliente.cliente_nome || `Cliente ${cliente.pes_codigo}`;
         const representanteName = cliente.representante_nome || 'Não informado';
+        const pedidosDistintosDoBanco = cliente.total_pedidos_distintos || 0;
         
-        // Special debug for LAGUNA client
-        const isLaguna = clienteName.toLowerCase().includes('laguna');
-        if (isLaguna) {
-          console.log(`LAGUNA client found (${cliente.pes_codigo}): Processing in batch ${currentBatch}`);
-          console.log(`LAGUNA DB total_pedidos_distintos: ${cliente.total_pedidos_distintos || 'N/A'}`);
-        }
+        // Debug para TODOS os clientes
+        console.log(`Cliente: ${clienteName} (${cliente.pes_codigo}) - ${pedidosDistintosDoBanco} pedidos no banco`);
         
-        // Fetch client items with the optimized function
+        // Fetch client items using optimized function
         console.log(`Fetching items for client ${clienteName} (${cliente.pes_codigo})`);
         const itensCliente = await fetchItensPorCliente(dataInicial, dataFinal, cliente.pes_codigo);
         
         if (itensCliente && Array.isArray(itensCliente) && itensCliente.length > 0) {
           console.log(`Found ${itensCliente.length} items for client ${clienteName}`);
           
-          // For LAGUNA: log extra information
-          if (isLaguna) {
-            const uniquePedidos = new Set(itensCliente.map(item => item.pedido));
-            console.log(`LAGUNA: Found ${uniquePedidos.size} unique orders with ${itensCliente.length} items`);
-            console.log('First 10 order numbers:', [...uniquePedidos].slice(0, 10).join(', '));
-          }
+          // Count unique orders for this client
+          const uniquePedidos = new Set(itensCliente.map(item => item.pedido));
+          console.log(`Client ${clienteName} has ${uniquePedidos.size} unique orders from items`);
+          console.log(`Database reported ${pedidosDistintosDoBanco} unique orders`);
           
-          // IMPORTANT: Always process all items - no limitation!
-          let itensProcessar = itensCliente;
-          console.log(`Processing all ${itensCliente.length} items for client ${clienteName}`);
+          // NUNCA limitar itens a processar
+          const itensProcessar = itensCliente;
           
-          // Fetch stock information for items with the optimized function
+          // Fetch stock information for items
           const itemCodigos = itensProcessar.map(item => item.item_codigo);
           console.log(`Fetching stock info for ${itemCodigos.length} items`);
           const estoqueData = await fetchEstoqueParaItens(itemCodigos);
@@ -77,11 +71,6 @@ export async function processClientOrdersData(
             let totalValorPedido = 0;
             let totalValorFaturado = 0;
             let totalValorFaturarComEstoque = 0;
-            
-            // Count unique pedidos for this client
-            const uniquePedidos = new Set();
-            itensProcessar.forEach(item => uniquePedidos.add(item.pedido));
-            console.log(`Client ${clienteName} has ${uniquePedidos.size} unique orders`);
             
             // Process items with stock information
             const itensProcessados = itensProcessar.map(item => {
@@ -120,7 +109,7 @@ export async function processClientOrdersData(
               };
             });
             
-            // Add client group
+            // Add client group - use the total_pedidos_distintos from database as source of truth
             clientGroups[clienteName] = {
               PES_CODIGO: cliente.pes_codigo,
               representante: representanteName,
@@ -133,17 +122,32 @@ export async function processClientOrdersData(
               volume_saudavel_faturamento: cliente.volume_saudavel_faturamento,
               allItems: itensProcessados,
               uniquePedidosCount: uniquePedidos.size,
-              total_pedidos_distintos: cliente.total_pedidos_distintos || uniquePedidos.size
+              total_pedidos_distintos: pedidosDistintosDoBanco
             };
             
-            // For LAGUNA: verificar resultados finais
-            if (isLaguna) {
-              console.log(`LAGUNA final result: ${uniquePedidos.size} pedidos processados`);
-              console.log(`LAGUNA allItems count: ${itensProcessados.length}`);
+            // Log discrepancies
+            if (uniquePedidos.size !== pedidosDistintosDoBanco) {
+              console.warn(`DISCREPÂNCIA: Cliente ${clienteName} - ${pedidosDistintosDoBanco} pedidos no banco vs ${uniquePedidos.size} calculados pelos itens`);
             }
           }
         } else {
           console.log(`No items found for client ${clienteName} (${cliente.pes_codigo})`);
+          
+          // Adicionar cliente mesmo sem itens, mantendo a contagem de pedidos do banco
+          clientGroups[clienteName] = {
+            PES_CODIGO: cliente.pes_codigo,
+            representante: representanteName,
+            representante_codigo: cliente.representante_codigo,
+            totalQuantidadeSaldo: 0,
+            totalValorSaldo: 0,
+            totalValorPedido: 0,
+            totalValorFaturado: 0,
+            totalValorFaturarComEstoque: 0,
+            volume_saudavel_faturamento: cliente.volume_saudavel_faturamento,
+            allItems: [],
+            uniquePedidosCount: 0,
+            total_pedidos_distintos: pedidosDistintosDoBanco
+          };
         }
       } catch (error) {
         console.error(`Error processing client ${cliente.pes_codigo}:`, error);
@@ -154,15 +158,20 @@ export async function processClientOrdersData(
   }
   
   // Contar pedidos únicos após processamento
-  let totalPedidosDistintos = 0;
+  let totalPedidosDistintosProcessados = 0;
+  let totalPedidosDistintosBanco = 0;
   Object.values(clientGroups).forEach((client: any) => {
     if (client.uniquePedidosCount) {
-      totalPedidosDistintos += client.uniquePedidosCount;
+      totalPedidosDistintosProcessados += client.uniquePedidosCount;
+    }
+    if (client.total_pedidos_distintos) {
+      totalPedidosDistintosBanco += client.total_pedidos_distintos;
     }
   });
   
   console.log(`Finished processing all clients. Total client groups: ${Object.keys(clientGroups).length}`);
-  console.log(`Total pedidos distintos após processamento: ${totalPedidosDistintos}`);
+  console.log(`Total pedidos distintos calculados pelos itens: ${totalPedidosDistintosProcessados}`);
+  console.log(`Total pedidos distintos conforme banco de dados: ${totalPedidosDistintosBanco}`);
   
   return clientGroups;
 }
