@@ -78,13 +78,13 @@ export const ClientOrderItemsTable = ({
     const saldo = Number(getProperty(item, 'QTDE_SALDO', 'qtde_saldo')) || 0;
     const fisico = Number(getProperty(item, 'FISICO', 'fisico')) || 0;
     
-    // Check for items with zero saldo and if showZeroBalance is false, filter them out
+    // Only filter out items with zero balance if showZeroBalance is false
     if (!showZeroBalance && saldo <= 0) {
       console.log(`Filtering out item with zero balance: ${getProperty(item, 'ITEM_CODIGO', 'item_codigo')}`);
       return false;
     }
     
-    // Check for FISICO value - only show items with stock if that filter is on
+    // Only show items with physical stock if that filter is on
     if (showOnlyWithStock && fisico <= 0) {
       console.log(`Filtering out item with no stock: ${getProperty(item, 'ITEM_CODIGO', 'item_codigo')}`);
       return false;
@@ -95,8 +95,6 @@ export const ClientOrderItemsTable = ({
   
   console.log('Filtered items count:', filteredItems.length);
   console.log('First 3 filtered items sample:', filteredItems.slice(0, 3));
-  
-  // Debug selected items
   console.log('Currently selected items:', selectedItems);
 
   return (

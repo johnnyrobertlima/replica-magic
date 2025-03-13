@@ -27,7 +27,7 @@ export const ClientOrderCard = ({
   selectedItems,
   onItemSelect
 }: ClientOrderCardProps) => {
-  // Track local filter states
+  // Track local filter states - initialize with parent props
   const [localShowZeroBalance, setLocalShowZeroBalance] = useState(showZeroBalance);
   const [localShowOnlyWithStock, setLocalShowOnlyWithStock] = useState(showOnlyWithStock);
   
