@@ -4,7 +4,7 @@ import { ApprovedOrder, MonthSelection } from './types';
 import { ClienteFinanceiro } from '@/types/financialClient';
 import { supabase } from '@/integrations/supabase/client';
 
-// Define a completely flat type for what we store in the database to avoid circular references
+// Define a fully flattened type structure to avoid circular references
 type StoredClienteData = {
   PES_CODIGO: number;
   APELIDO: string | null;
@@ -13,17 +13,17 @@ type StoredClienteData = {
   valoresEmAberto: number;
   valoresVencidos: number;
   representanteNome: string | null;
-  // Store only minimal separacoes data to avoid deep nesting
+  // Store only minimal required data
   separacoes: Array<{
     id: string;
-    valor_total?: number | null;
-    quantidade_itens?: number | null;
-    // Flatten the structure by making separacao_itens a simple array of objects
-    separacao_itens?: Array<{
+    valor_total: number | null;
+    quantidade_itens: number | null;
+    // Simplify the structure completely
+    separacao_itens_flat: Array<{
       pedido: string;
-      item_codigo?: string | null;
-      quantidade_pedida?: number | null;
-      valor_unitario?: number | null;
+      item_codigo: string | null;
+      quantidade_pedida: number | null;
+      valor_unitario: number | null;
     }> | null;
   }>;
 };
@@ -38,8 +38,8 @@ export const useApprovedOrdersStorage = () => {
       const { data: supabaseOrders, error } = await supabase
         .from('approved_orders')
         .select('*')
-        .eq('extract(year from approved_at)', selectedYear)
-        .eq('extract(month from approved_at)', selectedMonth);
+        .eq('approved_at::text', `${selectedYear}-%${selectedMonth < 10 ? '0' : ''}${selectedMonth}-%`)
+        .order('approved_at', { ascending: false });
 
       if (error) {
         console.error('Error loading approved orders from Supabase:', error);
@@ -107,7 +107,7 @@ export const useApprovedOrdersStorage = () => {
         action
       };
       
-      // Create simplified version of clienteData for storage
+      // Create flattened version of clienteData for storage
       const simplifiedClienteData: StoredClienteData = {
         PES_CODIGO: clienteData.PES_CODIGO,
         APELIDO: clienteData.APELIDO,
@@ -120,18 +120,24 @@ export const useApprovedOrdersStorage = () => {
           if (sep.id === separacaoId) {
             return {
               id: sep.id,
-              valor_total: sep.valor_total,
-              quantidade_itens: sep.quantidade_itens,
-              separacao_itens: sep.separacao_itens ? 
+              valor_total: sep.valor_total || null,
+              quantidade_itens: sep.quantidade_itens || null,
+              // Flatten separacao_itens to avoid deep nesting
+              separacao_itens_flat: sep.separacao_itens ? 
                 sep.separacao_itens.map(item => ({
                   pedido: item.pedido,
-                  item_codigo: item.item_codigo,
-                  quantidade_pedida: item.quantidade_pedida,
-                  valor_unitario: item.valor_unitario
+                  item_codigo: item.item_codigo || null,
+                  quantidade_pedida: item.quantidade_pedida || null,
+                  valor_unitario: item.valor_unitario || null
                 })) : null
             };
           }
-          return { id: sep.id };
+          return { 
+            id: sep.id, 
+            valor_total: null, 
+            quantidade_itens: null, 
+            separacao_itens_flat: null 
+          };
         })
       };
       

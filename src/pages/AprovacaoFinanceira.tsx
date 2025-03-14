@@ -22,9 +22,10 @@ const AprovacaoFinanceira = () => {
   const { addApprovedOrder, loadApprovedOrders, selectedYear, selectedMonth } = useApprovedOrders();
   const [approvedSeparacaoIds, setApprovedSeparacaoIds] = useState<Set<string>>(new Set());
   const [currentUser, setCurrentUser] = useState<{ id?: string; email?: string } | null>(null);
+  const [loadedApproved, setLoadedApproved] = useState(false);
   
+  // Get current user only once
   useEffect(() => {
-    // Get current user
     const getCurrentUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -38,15 +39,28 @@ const AprovacaoFinanceira = () => {
     getCurrentUser();
   }, []);
   
+  // Fix the infinite loop by controlling when we load approved orders
   useEffect(() => {
+    if (loadedApproved) return;
+    
     const loadApproved = async () => {
-      const approvedOrders = await loadApprovedOrders(selectedYear, selectedMonth);
-      const approvedIds = new Set(approvedOrders.map(order => order.separacaoId));
-      setApprovedSeparacaoIds(approvedIds);
+      try {
+        const approvedOrders = await loadApprovedOrders(selectedYear, selectedMonth);
+        const approvedIds = new Set(approvedOrders.map(order => order.separacaoId));
+        setApprovedSeparacaoIds(approvedIds);
+        setLoadedApproved(true);
+      } catch (error) {
+        console.error("Error loading approved orders:", error);
+      }
     };
     
     loadApproved();
-  }, [loadApprovedOrders, selectedYear, selectedMonth]);
+  }, [loadApprovedOrders, selectedYear, selectedMonth, loadedApproved]);
+
+  // Reset loaded flag when month/year changes
+  useEffect(() => {
+    setLoadedApproved(false);
+  }, [selectedYear, selectedMonth]);
 
   const filteredClientesFinanceiros = clientesFinanceiros.filter(cliente => {
     const pendingSeparacoes = cliente.separacoes.filter(
