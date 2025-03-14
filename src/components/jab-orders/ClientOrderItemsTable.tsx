@@ -49,13 +49,14 @@ export const ClientOrderItemsTable = ({
             <th className="text-right p-2">Saldo</th>
             <th className="text-right p-2">Qt. Físico</th>
             <th className="text-right p-2">Valor Unit.</th>
-            <th className="text-right p-2">Falta Faturar</th>
-            <th className="text-right p-2">Total</th>
+            <th className="text-right p-2">Valor Pedido</th>
+            <th className="text-right p-2">Valor Saldo</th>
           </tr>
         </thead>
         <tbody>
           {filteredItems.map((item, index) => {
-            const faltaFaturarValue = item.QTDE_SALDO * item.VALOR_UNITARIO;
+            const valorPedido = item.QTDE_PEDIDA * item.VALOR_UNITARIO;
+            const valorSaldo = item.QTDE_SALDO * item.VALOR_UNITARIO;
             
             return (
               <tr 
@@ -90,10 +91,10 @@ export const ClientOrderItemsTable = ({
                   {formatCurrency(item.VALOR_UNITARIO)}
                 </td>
                 <td className="p-2 text-right">
-                  {formatCurrency(faltaFaturarValue)}
+                  {formatCurrency(valorPedido)}
                 </td>
                 <td className="p-2 text-right">
-                  {formatCurrency(faltaFaturarValue)}
+                  {formatCurrency(valorSaldo)}
                 </td>
               </tr>
             );

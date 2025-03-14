@@ -33,24 +33,29 @@ export const groupOrdersByClient = async (ordersData: { orders: JabOrder[]; tota
       };
     }
 
-    // Use the calculated value from JabDataProcessor or default to 0
-    const valorFaturarComEstoque = order.VALOR_FATURAR_COM_ESTOQUE || 0;
-    const valorSaldo = order.valor_total || 0;
-
     groupedOrders[clientName].pedidos.push(order);
-    groupedOrders[clientName].totalValorFaturarComEstoque += valorFaturarComEstoque;
-    groupedOrders[clientName].totalValorSaldo += valorSaldo;
 
     // Add items to the allItems array
     if (order.items) {
-      order.items.forEach(item => {
+      for (const item of order.items) {
         groupedOrders[clientName].allItems.push({
           ...item,
           pedido: order.PED_NUMPEDIDO,
           APELIDO: order.APELIDO,
           PES_CODIGO: order.PES_CODIGO
         });
-      });
+        
+        // Update the calculations based on the new requirements
+        groupedOrders[clientName].totalQuantidadeSaldo += item.QTDE_SALDO;
+        groupedOrders[clientName].totalValorSaldo += item.QTDE_SALDO * item.VALOR_UNITARIO;
+        groupedOrders[clientName].totalValorPedido += item.QTDE_PEDIDA * item.VALOR_UNITARIO;
+        groupedOrders[clientName].totalValorFaturado += item.QTDE_ENTREGUE * item.VALOR_UNITARIO;
+        
+        // For "Faturar com Estoque", only count if the physical quantity is > 0
+        if ((item.FISICO || 0) > 0) {
+          groupedOrders[clientName].totalValorFaturarComEstoque += item.QTDE_SALDO * item.VALOR_UNITARIO;
+        }
+      }
     }
   }
 
@@ -136,9 +141,10 @@ export const filterGroupsBySearchCriteria = (
           case "cliente":
             return clientName.toLowerCase().includes(normalizedSearchQuery);
           case "representante":
-            return group.pedidos.some(order =>
-              order.REPRESENTANTE_NOME?.toLowerCase().includes(normalizedSearchQuery)
-            );
+            return group.pedidos.some(order => {
+              const repName = order.REPRESENTANTE_NOME;
+              return repName && typeof repName === 'string' && repName.toLowerCase().includes(normalizedSearchQuery);
+            });
           default:
             return false;
         }
