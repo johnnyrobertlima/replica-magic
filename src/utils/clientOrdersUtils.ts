@@ -1,148 +1,131 @@
+import { supabase } from "@/integrations/supabase/client";
+import { ClientOrder, ClientOrderGroup, JabOrder } from "@/types/clientOrders";
+import { formatCurrency } from "@/lib/utils";
 
-import type { ClientOrderGroup } from "@/types/clientOrders";
-import type { JabOrdersResponse } from "@/types/jabOrders";
-import { enhanceGroupsWithRepresentanteNames } from "./representativeUtils";
-import { supabase } from "@/services/jab/base/supabaseClient";
+// Function to group orders by client
+export const groupOrdersByClient = async (ordersData: { orders: JabOrder[]; totalCount: number; itensSeparacao: Record<string, any>; }): Promise<Record<string, ClientOrderGroup>> => {
+  const { orders } = ordersData;
+  const groupedOrders: Record<string, ClientOrderGroup> = {};
+  const clientCodes: any[] = [];
 
-/**
- * Groups orders by client
- * @param ordersData The JabOrders API response
- * @returns Record of client name to ClientOrderGroup
- */
-export const groupOrdersByClient = async (ordersData: JabOrdersResponse): Promise<Record<string, ClientOrderGroup>> => {
-  const groups: Record<string, ClientOrderGroup> = {};
-  
-  // First, create groups with basic data
-  ordersData.orders.forEach((order) => {
-    if (!["1", "2"].includes(order.STATUS)) return;
-    
-    const clientKey = order.APELIDO || "Sem Cliente";
-    if (!groups[clientKey]) {
-      groups[clientKey] = {
-        pedidos: [],
-        totalQuantidadeSaldo: 0,
-        totalValorSaldo: 0,
-        totalValorPedido: 0,
-        totalValorFaturado: 0,
+  for (const order of orders) {
+    const clientName = order.CLI_NOME;
+    const clientCode = order.PES_CODIGO;
+
+    if (!clientCodes.find(cli => cli.PES_CODIGO === clientCode)) {
+      clientCodes.push({ PES_CODIGO: clientCode, CLI_NOME: clientName });
+    }
+
+    if (!groupedOrders[clientName]) {
+      groupedOrders[clientName] = {
+        clientCode: clientCode,
+        clientName: clientName,
+        orders: [],
         totalValorFaturarComEstoque: 0,
-        representante: order.REPRESENTANTE_NOME,
-        allItems: [],
-        PES_CODIGO: order.PES_CODIGO,
-        volume_saudavel_faturamento: order.volume_saudavel_faturamento,
-        valorVencido: null,
-        quantidadeTitulosVencidos: null
+        totalValorSaldo: 0,
+        totalItens: 0,
+        valorVencido: 0,
+        titulosVencidos: 0,
       };
     }
 
-    groups[clientKey].pedidos.push(order);
-    groups[clientKey].totalQuantidadeSaldo += order.total_saldo || 0;
-    groups[clientKey].totalValorSaldo += order.valor_total || 0;
+    const valorFaturarComEstoque = order.VALOR_FATURAR_COM_ESTOQUE || 0;
+    const valorSaldo = order.VALOR_SALDO || 0;
 
-    if (order.items) {
-      const items = order.items.map(item => ({
-        ...item,
-        pedido: order.PED_NUMPEDIDO,
-        APELIDO: order.APELIDO,
-        PES_CODIGO: order.PES_CODIGO
-      }));
-      
-      groups[clientKey].allItems.push(...items);
-      
-      order.items.forEach(item => {
-        groups[clientKey].totalValorPedido += item.QTDE_PEDIDA * item.VALOR_UNITARIO;
-        groups[clientKey].totalValorFaturado += item.QTDE_ENTREGUE * item.VALOR_UNITARIO;
-        if ((item.FISICO || 0) > 0) {
-          groups[clientKey].totalValorFaturarComEstoque += Math.min(item.QTDE_SALDO, item.FISICO || 0) * item.VALOR_UNITARIO;
-        }
-      });
-    }
-  });
-
-  // Now fetch overdue titles for all clients
-  // Convert all PES_CODIGO values to strings for the database query
-  const clientCodes = Object.values(groups).map(group => group.PES_CODIGO.toString());
-  const { data: overdueData, error } = await supabase
-    .from('vw_titulos_vencidos_cliente')
-    .select('PES_CODIGO, total_vencido, quantidade_titulos')
-    .in('PES_CODIGO', clientCodes);
-
-  if (error) {
-    console.error('Error fetching overdue titles:', error);
-  } else if (overdueData) {
-    // Create a map for quick lookups - make sure all keys in the map are strings
-    const overdueMap = new Map(
-      overdueData.map(item => [item.PES_CODIGO.toString(), { 
-        total_vencido: item.total_vencido, 
-        quantidade_titulos: item.quantidade_titulos 
-      }])
-    );
-
-    // Update each group with overdue data
-    Object.values(groups).forEach(group => {
-      // Convert PES_CODIGO to string when accessing the map
-      const pesCodigoAsString = group.PES_CODIGO.toString();
-      const overdueInfo = overdueMap.get(pesCodigoAsString);
-      if (overdueInfo) {
-        group.valorVencido = parseFloat(overdueInfo.total_vencido) || 0;
-        group.quantidadeTitulosVencidos = parseInt(overdueInfo.quantidade_titulos) || 0;
-      }
-    });
+    groupedOrders[clientName].orders.push(order);
+    groupedOrders[clientName].totalValorFaturarComEstoque += valorFaturarComEstoque;
+    groupedOrders[clientName].totalValorSaldo += valorSaldo;
+    groupedOrders[clientName].totalItens += 1;
   }
 
-  return groups;
+  const overdueMap = await fetchClientOverdueStatus(clientCodes);
+
+  for (const clientName in groupedOrders) {
+    const clientCode = String(groupedOrders[clientName].clientCode);
+    if (overdueMap[clientCode]) {
+      groupedOrders[clientName].valorVencido = overdueMap[clientCode].valorVencido;
+      groupedOrders[clientName].titulosVencidos = overdueMap[clientCode].titulosVencidos;
+    } else {
+      groupedOrders[clientName].valorVencido = 0;
+      groupedOrders[clientName].titulosVencidos = 0;
+    }
+  }
+
+  return groupedOrders;
 };
 
-/**
- * Filters groups by search criteria
- * @param groupedOrders The grouped orders
- * @param isSearching Whether searching is active
- * @param searchQuery The search query
- * @param searchType The type of search (pedido, cliente, representante)
- * @returns Filtered groups
- */
+// Function to fetch client overdue status
+export const fetchClientOverdueStatus = async (clientCodes: any[]) => {
+  try {
+    // Extract unique client codes
+    const uniqueClientCodes = [...new Set(clientCodes.map(client => String(client.PES_CODIGO)))];
+    
+    if (uniqueClientCodes.length === 0) {
+      console.log("No client codes to check for overdue status");
+      return {};
+    }
+
+    console.log(`Fetching overdue status for ${uniqueClientCodes.length} clients`);
+    
+    // Fetch overdue titles from Supabase
+    const { data, error } = await supabase
+      .from('vw_titulos_vencidos_por_cliente')
+      .select('*')
+      .in('cliente_id', uniqueClientCodes);
+    
+    if (error) {
+      console.error("Error fetching overdue titles:", error);
+      return {};
+    }
+    
+    // Create a map of client codes to their overdue status
+    const overdueMap: Record<string, { valorVencido: number; titulosVencidos: number }> = {};
+    
+    data.forEach(item => {
+      const clientId = String(item.cliente_id);
+      overdueMap[clientId] = {
+        valorVencido: item.valor_vencido || 0,
+        titulosVencidos: item.titulos_vencidos || 0
+      };
+    });
+    
+    return overdueMap;
+  } catch (error) {
+    console.error("Error in fetchClientOverdueStatus:", error);
+    return {};
+  }
+};
+
+// Function to filter groups by search criteria
 export const filterGroupsBySearchCriteria = (
-  groupedOrders: Record<string, ClientOrderGroup>,
+  groups: Record<string, ClientOrderGroup>,
   isSearching: boolean,
   searchQuery: string,
   searchType: string
 ): Record<string, ClientOrderGroup> => {
-  if (!isSearching || !searchQuery) return groupedOrders;
+  if (!isSearching) {
+    return groups;
+  }
 
-  const normalizedSearchQuery = searchQuery.toLowerCase().trim();
-  const filteredGroups: Record<string, ClientOrderGroup> = {};
+  const normalizedSearchQuery = searchQuery.toLowerCase();
 
-  const removeLeadingZeros = (str: string) => {
-    return str.replace(/^0+/, '');
-  };
+  return Object.fromEntries(
+    Object.entries(groups)
+      .filter(([clientName, group]) => {
+        if (!normalizedSearchQuery) return true;
 
-  Object.entries(groupedOrders).forEach(([clientName, groupData]) => {
-    let shouldInclude = false;
-
-    switch (searchType) {
-      case "pedido":
-        shouldInclude = groupData.pedidos.some(order => {
-          const normalizedOrderNumber = removeLeadingZeros(order.PED_NUMPEDIDO);
-          const normalizedSearchNumber = removeLeadingZeros(searchQuery);
-          return normalizedOrderNumber.includes(normalizedSearchNumber);
-        });
-        break;
-      
-      case "cliente":
-        shouldInclude = clientName.toLowerCase().includes(normalizedSearchQuery);
-        break;
-      
-      case "representante":
-        shouldInclude = groupData.representante?.toLowerCase().includes(normalizedSearchQuery) || false;
-        break;
-    }
-
-    if (shouldInclude) {
-      filteredGroups[clientName] = groupData;
-    }
-  });
-
-  return filteredGroups;
+        switch (searchType) {
+          case "pedido":
+            return group.orders.some(order => String(order.PED_NUMERO).includes(normalizedSearchQuery));
+          case "cliente":
+            return clientName.toLowerCase().includes(normalizedSearchQuery);
+          case "representante":
+            return group.orders.some(order =>
+              order.REP_NOME?.toLowerCase().includes(normalizedSearchQuery)
+            );
+          default:
+            return false;
+        }
+      })
+  );
 };
-
-// Re-export for backward compatibility
-export { enhanceGroupsWithRepresentanteNames };

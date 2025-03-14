@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
@@ -16,6 +17,11 @@
   h1, h2, h3, h4, h5, h6 {
     @apply font-sans font-semibold;
   }
+  
+  /* Ensure form controls have white backgrounds */
+  input, select, textarea, button, .bg-input {
+    @apply bg-white;
+  }
 }
 
 @layer components {
@@ -31,6 +37,11 @@
 
   .container-custom {
     @apply max-w-7xl mx-auto;
+  }
+  
+  /* Ensure popover and dropdown content has white background */
+  .popover-content, .dropdown-content, .select-content {
+    @apply bg-white;
   }
 }
 

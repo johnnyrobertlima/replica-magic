@@ -52,10 +52,10 @@ export const MonthFilterSelect = ({ onMonthSelect }: MonthFilterSelectProps) => 
         defaultValue={months[0]?.value} 
         onValueChange={handleChange}
       >
-        <SelectTrigger className="w-full">
+        <SelectTrigger className="w-full bg-white">
           <SelectValue placeholder="Selecione um mês" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="bg-white">
           {months.map((month) => (
             <SelectItem key={month.value} value={month.value}>
               {month.label}

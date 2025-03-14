@@ -68,10 +68,10 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
   return (
     <div className="flex flex-col md:flex-row items-center gap-4">
       <Select value={searchType} onValueChange={value => onSearchTypeChange(value as SearchType)}>
-        <SelectTrigger className="w-[180px]">
+        <SelectTrigger className="w-[180px] bg-white">
           <SelectValue placeholder="Tipo de busca" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="bg-white">
           <SelectItem value="pedido">Número do Pedido</SelectItem>
           <SelectItem value="cliente">Nome do Cliente</SelectItem>
           <SelectItem value="representante">Nome do Representante</SelectItem>
@@ -85,7 +85,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
           value={searchQuery}
           onChange={(e) => onSearchQueryChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="pl-9 w-full md:w-[250px]"
+          className="pl-9 w-full md:w-[250px] bg-white"
         />
       </div>
       
@@ -94,7 +94,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
           <Button
             variant={"outline"}
             className={cn(
-              "justify-start text-left font-normal w-full md:w-[300px]",
+              "justify-start text-left font-normal w-full md:w-[300px] bg-white",
               !date && "text-muted-foreground"
             )}
           >
@@ -112,7 +112,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="end">
+        <PopoverContent className="w-auto p-0 bg-white" align="end">
           <Calendar
             initialFocus
             mode="range"
@@ -120,6 +120,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
             selected={date}
             onSelect={handleDateChange}
             numberOfMonths={2}
+            className="bg-white pointer-events-auto"
           />
         </PopoverContent>
       </Popover>
