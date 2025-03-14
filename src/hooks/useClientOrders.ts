@@ -84,6 +84,29 @@ export const useClientOrders = () => {
     [processedGroups, isSearching, searchQuery, searchType]
   );
 
+  // Calculate period-specific totals based on filtered groups
+  const periodTotals = useMemo(() => {
+    let valorTotalSaldoPeriodo = 0;
+    let valorFaturarComEstoquePeriodo = 0;
+    let valoresLiberadosParaFaturamento = 0;
+
+    Object.values(filteredGroups).forEach(group => {
+      valorTotalSaldoPeriodo += group.totalValorSaldo || 0;
+      valorFaturarComEstoquePeriodo += group.totalValorFaturarComEstoque || 0;
+      
+      // Only count for valoresLiberadosParaFaturamento if client has no overdue titles
+      if ((group.valorVencido || 0) <= 0) {
+        valoresLiberadosParaFaturamento += group.totalValorFaturarComEstoque || 0;
+      }
+    });
+
+    return {
+      valorTotalSaldoPeriodo,
+      valorFaturarComEstoquePeriodo,
+      valoresLiberadosParaFaturamento
+    };
+  }, [filteredGroups]);
+
   // Use the item selection hook
   const {
     totalSelecionado,
@@ -95,6 +118,12 @@ export const useClientOrders = () => {
   const {
     handleEnviarParaSeparacao
   } = useSeparationOperations(state, setState, processedGroups);
+
+  // Combine all totals
+  const combinedTotals = {
+    ...totals,
+    ...periodTotals
+  };
 
   return {
     // State
@@ -113,7 +142,7 @@ export const useClientOrders = () => {
     isSending,
     // Data
     ordersData,
-    totals,
+    totals: combinedTotals,
     separacoes,
     filteredGroups,
     totalSelecionado,

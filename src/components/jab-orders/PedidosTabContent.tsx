@@ -8,6 +8,9 @@ interface PedidosTabContentProps {
   totals: {
     valorTotalSaldo: number;
     valorFaturarComEstoque: number;
+    valorTotalSaldoPeriodo: number;
+    valorFaturarComEstoquePeriodo: number;
+    valoresLiberadosParaFaturamento: number;
   };
   date: any;
   setDate: (date: any) => void;
@@ -55,6 +58,9 @@ export const PedidosTabContent = ({
       <TotalCards
         valorTotalSaldo={totals.valorTotalSaldo}
         valorFaturarComEstoque={totals.valorFaturarComEstoque}
+        valorTotalSaldoPeriodo={totals.valorTotalSaldoPeriodo}
+        valorFaturarComEstoquePeriodo={totals.valorFaturarComEstoquePeriodo}
+        valoresLiberadosParaFaturamento={totals.valoresLiberadosParaFaturamento}
       />
 
       <OrdersHeader
