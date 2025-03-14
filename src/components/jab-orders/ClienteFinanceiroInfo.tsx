@@ -1,5 +1,6 @@
 
 import { formatCurrency } from "@/lib/utils";
+import { ArrowTrendingUp, Ban, CreditCard, Wallet } from "lucide-react";
 
 interface ClienteFinanceiroInfoProps {
   valoresTotais: number;
@@ -15,26 +16,41 @@ export const ClienteFinanceiroInfo = ({
   volumeSaudavel 
 }: ClienteFinanceiroInfoProps) => {
   return (
-    <div>
-      <h3 className="font-semibold text-lg mb-2">Informações Financeiras</h3>
+    <div className="bg-slate-50 p-4 rounded-lg border">
+      <h3 className="font-semibold text-lg mb-3">Informações Financeiras</h3>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="space-y-1">
-          <span className="text-sm text-muted-foreground">Valores Totais</span>
-          <p className="font-medium">{formatCurrency(valoresTotais)}</p>
+        <div className="bg-white p-3 rounded-lg border space-y-1.5 shadow-sm">
+          <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+            <Wallet className="h-4 w-4 text-blue-500" />
+            Valores Totais
+          </span>
+          <p className="font-medium text-lg">{formatCurrency(valoresTotais)}</p>
         </div>
-        <div className="space-y-1">
-          <span className="text-sm text-muted-foreground">Valores em Aberto</span>
-          <p className="font-medium">{formatCurrency(valoresEmAberto)}</p>
+        
+        <div className="bg-white p-3 rounded-lg border space-y-1.5 shadow-sm">
+          <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+            <CreditCard className="h-4 w-4 text-amber-500" />
+            Valores em Aberto
+          </span>
+          <p className="font-medium text-lg">{formatCurrency(valoresEmAberto)}</p>
         </div>
-        <div className="space-y-1">
-          <span className="text-sm text-muted-foreground">Valores Vencidos</span>
-          <p className={`font-medium ${valoresVencidos > 0 ? "text-red-500" : ""}`}>
+        
+        <div className="bg-white p-3 rounded-lg border space-y-1.5 shadow-sm">
+          <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+            <Ban className="h-4 w-4 text-red-500" />
+            Valores Vencidos
+          </span>
+          <p className={`font-medium text-lg ${valoresVencidos > 0 ? "text-red-500" : ""}`}>
             {formatCurrency(valoresVencidos)}
           </p>
         </div>
-        <div className="space-y-1">
-          <span className="text-sm text-muted-foreground">Volume Saudável</span>
-          <p className="font-medium">
+        
+        <div className="bg-white p-3 rounded-lg border space-y-1.5 shadow-sm">
+          <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+            <ArrowTrendingUp className="h-4 w-4 text-green-500" />
+            Volume Saudável
+          </span>
+          <p className="font-medium text-lg">
             {volumeSaudavel 
               ? formatCurrency(volumeSaudavel) 
               : "Não definido"}

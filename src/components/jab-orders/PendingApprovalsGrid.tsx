@@ -23,7 +23,7 @@ export const PendingApprovalsGrid = ({
   }
 
   return (
-    <>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 fade-up">
       {clientes.map((cliente) => (
         <ClienteFinanceiroCard
           key={cliente.PES_CODIGO}
@@ -34,6 +34,6 @@ export const PendingApprovalsGrid = ({
           onReject={(separacaoId) => onReject(separacaoId, cliente)}
         />
       ))}
-    </>
+    </div>
   );
 };

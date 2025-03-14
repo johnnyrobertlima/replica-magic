@@ -15,15 +15,13 @@ const AprovacaoFinanceira = () => {
     updateVolumeSaudavel
   } = useFinancialApproval();
 
-  if (isLoading) {
-    return <FinanceiroLoading />;
-  }
-
   return (
-    <main className="container mx-auto px-4 py-8">
+    <main className="container mx-auto px-4 py-8 max-w-7xl">
       <AprovacaoFinanceiraHeader />
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {isLoading ? (
+        <FinanceiroLoading />
+      ) : (
         <PendingApprovalsGrid 
           clientes={clientesWithPendingSeparacoes}
           onUpdateVolumeSaudavel={updateVolumeSaudavel}
@@ -31,7 +29,7 @@ const AprovacaoFinanceira = () => {
           onApprove={handleApprove}
           onReject={handleReject}
         />
-      </div>
+      )}
       
       <Toaster />
     </main>
