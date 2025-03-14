@@ -5,17 +5,18 @@ import { cn } from "@/lib/utils";
 interface StatCardProps {
   title: string;
   value: React.ReactNode;
-  color: "green" | "blue" | "amber" | "purple" | "indigo";
+  color: "green" | "blue" | "amber" | "purple" | "indigo" | "red";
   className?: string;
 }
 
 export const StatCard = ({ title, value, color, className }: StatCardProps) => {
   const colorClasses = {
-    green: "border-l-green-600 text-green-600",
-    blue: "border-l-blue-600 text-blue-600",
-    amber: "border-l-amber-600 text-amber-600",
-    purple: "border-l-purple-600 text-purple-600",
-    indigo: "border-l-indigo-600 text-indigo-600"
+    green: "border-l-green-500 text-green-600",
+    blue: "border-l-blue-500 text-blue-600",
+    amber: "border-l-amber-500 text-amber-600",
+    purple: "border-l-purple-500 text-purple-600",
+    indigo: "border-l-indigo-500 text-indigo-600",
+    red: "border-l-red-500 text-red-600"
   };
 
   return (

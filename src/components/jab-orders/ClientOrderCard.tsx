@@ -7,7 +7,7 @@ import { OrderProgressBars } from "./OrderProgressBars";
 import { OrderSummaryGrid } from "./OrderSummaryGrid";
 import { ClientOrderFilters } from "./ClientOrderFilters";
 import { ClientOrderItemsTable } from "./ClientOrderItemsTable";
-import { formatCurrency, formatNumber } from "@/utils/formatters";
+import { formatCurrency, formatNumber, getCardBorderClass } from "@/utils/formatters";
 
 interface ClientOrderCardProps {
   clientName: string;
@@ -60,15 +60,21 @@ export const ClientOrderCard = ({
     : 'Não definido';
 
   // Format overdue values
-  const valoresVencidos = formatCurrency(data.valorVencido);
-  const titulosVencidos = data.quantidadeTitulosVencidos !== null && data.quantidadeTitulosVencidos !== undefined
-    ? formatNumber(data.quantidadeTitulosVencidos)
-    : '0';
+  const valoresVencidos = data.valorVencido || 0;
+  const titulosVencidos = data.quantidadeTitulosVencidos || 0;
+  
+  // Determine if values are greater than zero for conditional formatting
+  const hasOverdueValues = valoresVencidos > 0;
+  const hasOverdueTitles = titulosVencidos > 0;
+  
+  // Get border color class based on conditions
+  const borderColorClass = getCardBorderClass(valoresVencidos, data.totalValorFaturarComEstoque);
 
   return (
     <Card 
       className={cn(
         "overflow-hidden",
+        borderColorClass,
         isExpanded && "col-span-full"
       )}
     >
@@ -90,10 +96,10 @@ export const ClientOrderCard = ({
                 Volume Saudável: {volumeSaudavel}
               </p>
               <p className="text-sm text-muted-foreground">
-                Valores Vencidos: <span className="text-red-500 font-medium">{valoresVencidos}</span>
+                Valores Vencidos: <span className={hasOverdueValues ? "text-red-500 font-medium" : "font-medium"}>{formatCurrency(valoresVencidos)}</span>
               </p>
               <p className="text-sm text-muted-foreground">
-                Títulos Vencidos: <span className="text-red-500 font-medium">{titulosVencidos}</span>
+                Títulos Vencidos: <span className={hasOverdueTitles ? "text-red-500 font-medium" : "font-medium"}>{formatNumber(titulosVencidos)}</span>
               </p>
             </div>
           </div>
