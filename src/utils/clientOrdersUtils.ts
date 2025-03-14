@@ -1,3 +1,4 @@
+
 import type { ClientOrderGroup } from "@/types/clientOrders";
 import type { JabOrdersResponse } from "@/types/jabOrders";
 import { enhanceGroupsWithRepresentanteNames } from "./representativeUtils";
@@ -68,7 +69,7 @@ export const groupOrdersByClient = async (ordersData: JabOrdersResponse): Promis
   if (error) {
     console.error('Error fetching overdue titles:', error);
   } else if (overdueData) {
-    // Create a map for quick lookups
+    // Create a map for quick lookups - make sure all keys in the map are strings
     const overdueMap = new Map(
       overdueData.map(item => [item.PES_CODIGO.toString(), { 
         total_vencido: item.total_vencido, 
@@ -79,7 +80,8 @@ export const groupOrdersByClient = async (ordersData: JabOrdersResponse): Promis
     // Update each group with overdue data
     Object.values(groups).forEach(group => {
       // Convert PES_CODIGO to string when accessing the map
-      const overdueInfo = overdueMap.get(group.PES_CODIGO.toString());
+      const pesCodigoAsString = group.PES_CODIGO.toString();
+      const overdueInfo = overdueMap.get(pesCodigoAsString);
       if (overdueInfo) {
         group.valorVencido = parseFloat(overdueInfo.total_vencido) || 0;
         group.quantidadeTitulosVencidos = parseInt(overdueInfo.quantidade_titulos) || 0;
