@@ -23,18 +23,19 @@ export const useSeparationOperations = (
         await queryClient.invalidateQueries({ queryKey: ['separacoes'] });
         await queryClient.invalidateQueries({ queryKey: ['jabOrders'] });
         
-        // Reset selection state to ensure no checkboxes remain selected
+        // Clear selections automatically after successful separation
         setState(prev => ({ 
           ...prev, 
           selectedItems: [],
           selectedItemsDetails: {},
-          expandedClients: new Set()
         }));
 
         toast({
           title: "Separação concluída",
           description: `${result.count || 0} separação(ões) criada(s) com sucesso!`,
         });
+
+        // Don't need to reset expandedClients here as it was causing issues
       }
     } finally {
       setState(prev => ({ ...prev, isSending: false }));
