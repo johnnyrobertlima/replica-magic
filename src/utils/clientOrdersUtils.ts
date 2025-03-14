@@ -59,7 +59,7 @@ export const groupOrdersByClient = async (ordersData: JabOrdersResponse): Promis
   });
 
   // Now fetch overdue titles for all clients
-  const clientCodes = Object.values(groups).map(group => group.PES_CODIGO);
+  const clientCodes = Object.values(groups).map(group => group.PES_CODIGO.toString());
   const { data: overdueData, error } = await supabase
     .from('vw_titulos_vencidos_cliente')
     .select('PES_CODIGO, total_vencido, quantidade_titulos')
