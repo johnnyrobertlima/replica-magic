@@ -30,16 +30,33 @@ export const ClienteFinanceiroCard = ({
   showApprovalButtons = true
 }: ClienteFinanceiroCardProps) => {
   const [isExpanded, setIsExpanded] = useState(expandedView);
-  const [expandedSeparacoes, setExpandedSeparacoes] = useState<string[]>([]);
+  const [expandedSeparacoes, setExpandedSeparacoes] = useState<string[]>(
+    expandedView && cliente.separacoes && cliente.separacoes.length > 0 
+      ? [cliente.separacoes[0].id] 
+      : []
+  );
   const { toast } = useToast();
 
   const borderClass = getCardBorderClass(cliente.valoresVencidos, cliente.valoresEmAberto);
+
+  // Update expandedSeparacoes when expandedView changes from parent
+  useEffect(() => {
+    if (expandedView && cliente.separacoes && cliente.separacoes.length > 0) {
+      // Automatically expand the first separação when card is expanded
+      setExpandedSeparacoes([cliente.separacoes[0].id]);
+    } else if (!expandedView) {
+      setExpandedSeparacoes([]);
+    }
+    
+    setIsExpanded(expandedView);
+  }, [expandedView, cliente.separacoes]);
 
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);
   };
 
   const handleExpandToggle = (id: string, expanded: boolean) => {
+    console.log("Handling expand toggle for separacao:", id, "to state:", expanded);
     setExpandedSeparacoes(current => {
       if (expanded && !current.includes(id)) {
         return [...current, id];
@@ -145,6 +162,7 @@ export const ClienteFinanceiroCard = ({
               <p className="text-sm text-muted-foreground italic">Nenhum pedido pendente encontrado.</p>
             ) : (
               cliente.separacoes.map(separacao => {
+                console.log("Rendering separacao:", separacao.id, "expanded:", expandedSeparacoes.includes(separacao.id));
                 const isSeparacaoExpanded = expandedSeparacoes.includes(separacao.id);
                 
                 return (

@@ -14,7 +14,7 @@ interface SeparacaoCardProps {
     created_at: string;
     valor_total: number;
     quantidade_itens: number;
-    separacao_itens: Array<{
+    separacao_itens?: Array<{
       id: string;
       item_codigo: string;
       descricao: string | null;
@@ -22,6 +22,14 @@ interface SeparacaoCardProps {
       valor_unitario: number;
       valor_total: number;
       pedido: string;
+    }>;
+    separacao_itens_flat?: Array<{
+      pedido: string;
+      item_codigo: string;
+      descricao?: string | null;
+      quantidade_pedida: number;
+      valor_unitario: number;
+      valor_total?: number;
     }>;
   };
   expandedView?: boolean;
@@ -72,6 +80,27 @@ export const SeparacaoCard = ({ separacao, expandedView = false, onExpandToggle 
         : 'bg-green-100 text-green-800';
   };
 
+  // Get items from either separacao_itens or separacao_itens_flat
+  const getItems = () => {
+    if (separacao?.separacao_itens && separacao.separacao_itens.length > 0) {
+      return separacao.separacao_itens;
+    } else if (separacao?.separacao_itens_flat && separacao.separacao_itens_flat.length > 0) {
+      // Map flat items to the expected format
+      return separacao.separacao_itens_flat.map(item => ({
+        id: `${item.pedido}-${item.item_codigo}`,
+        item_codigo: item.item_codigo,
+        descricao: item.descricao || null,
+        quantidade_pedida: item.quantidade_pedida,
+        valor_unitario: item.valor_unitario,
+        valor_total: item.valor_total || (item.quantidade_pedida * item.valor_unitario),
+        pedido: item.pedido
+      }));
+    }
+    return [];
+  };
+
+  const items = getItems();
+
   return (
     <Card className={`overflow-hidden transition-all duration-300 ${isExpanded ? 'col-span-full' : ''}`}>
       <CardHeader>
@@ -112,7 +141,7 @@ export const SeparacaoCard = ({ separacao, expandedView = false, onExpandToggle 
             </div>
           </div>
 
-          {isExpanded && separacao?.separacao_itens && separacao.separacao_itens.length > 0 && (
+          {isExpanded && items.length > 0 && (
             <div className="rounded-lg border overflow-x-auto mt-4">
               <Table>
                 <TableHeader>
@@ -128,8 +157,8 @@ export const SeparacaoCard = ({ separacao, expandedView = false, onExpandToggle 
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {separacao.separacao_itens.map((item) => (
-                    <TableRow key={item.id}>
+                  {items.map((item, index) => (
+                    <TableRow key={item.id || `${item.pedido}-${item.item_codigo}-${index}`}>
                       <TableCell className="font-medium">{item.pedido || '-'}</TableCell>
                       <TableCell className="font-medium">{item.item_codigo || '-'}</TableCell>
                       <TableCell>{item.descricao || '-'}</TableCell>

@@ -101,7 +101,7 @@ const AcompanhamentoFaturamento = () => {
     // Prepare items data (with 2 empty rows after header)
     let itemsData = [];
     
-    if (approvedSeparacao.separacao_itens && approvedSeparacao.separacao_itens.length > 0) {
+    if (approvedSeparacao.separacao_itens_flat && approvedSeparacao.separacao_itens_flat.length > 0) {
       // Add empty rows
       itemsData.push({ 'Pedido': '', 'SKU': '', 'Descrição': '' });
       itemsData.push({ 'Pedido': '', 'SKU': '', 'Descrição': '' });
@@ -109,13 +109,13 @@ const AcompanhamentoFaturamento = () => {
       // Add items
       itemsData = [
         ...itemsData,
-        ...approvedSeparacao.separacao_itens.map(item => ({
+        ...approvedSeparacao.separacao_itens_flat.map(item => ({
           'Pedido': item.pedido || '-',
           'SKU': item.item_codigo || '-',
           'Descrição': item.descricao || '-',
           'Quantidade': item.quantidade_pedida || 0,
           'Valor Unitário': item.valor_unitario || 0,
-          'Valor Total': item.valor_total || 0
+          'Valor Total': item.valor_total || (item.quantidade_pedida * item.valor_unitario) || 0
         }))
       ];
     }
@@ -197,6 +197,8 @@ const AcompanhamentoFaturamento = () => {
                 ) : null;
               
               if (!approvedSeparacao) return null;
+              
+              console.log("Rendering card for separacao:", approvedSeparacao);
               
               const clienteWithApprovedSeparacao = {
                 ...order.clienteData,
