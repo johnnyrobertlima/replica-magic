@@ -7,7 +7,7 @@ import { OrderProgressBars } from "./OrderProgressBars";
 import { OrderSummaryGrid } from "./OrderSummaryGrid";
 import { ClientOrderFilters } from "./ClientOrderFilters";
 import { ClientOrderItemsTable } from "./ClientOrderItemsTable";
-import { formatCurrency } from "@/utils/formatters";
+import { formatCurrency, formatNumber } from "@/utils/formatters";
 
 interface ClientOrderCardProps {
   clientName: string;
@@ -52,12 +52,18 @@ export const ClientOrderCard = ({
   };
 
   // Display the proper representante name from the data
-  const representanteName = data.representanteNome || 'Não informado';
+  const representanteName = data.representanteNome || data.representante || 'Não informado';
   
   // Format volume saudável if available
   const volumeSaudavel = data.volume_saudavel_faturamento !== undefined && data.volume_saudavel_faturamento !== null
     ? formatCurrency(data.volume_saudavel_faturamento)
     : 'Não definido';
+
+  // Format overdue values
+  const valoresVencidos = formatCurrency(data.valorVencido);
+  const titulosVencidos = data.quantidadeTitulosVencidos !== null && data.quantidadeTitulosVencidos !== undefined
+    ? formatNumber(data.quantidadeTitulosVencidos)
+    : '0';
 
   return (
     <Card 
@@ -79,9 +85,17 @@ export const ClientOrderCard = ({
             <p className="text-sm text-muted-foreground">
               Total de Pedidos: {pedidosCount}
             </p>
-            <p className="text-sm text-muted-foreground">
-              Volume Saudável: {volumeSaudavel}
-            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+              <p className="text-sm text-muted-foreground">
+                Volume Saudável: {volumeSaudavel}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Valores Vencidos: <span className="text-red-500 font-medium">{valoresVencidos}</span>
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Títulos Vencidos: <span className="text-red-500 font-medium">{titulosVencidos}</span>
+              </p>
+            </div>
           </div>
           {isExpanded ? (
             <ChevronUp className="h-6 w-6 text-muted-foreground" />

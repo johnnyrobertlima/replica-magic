@@ -1,4 +1,5 @@
 
+
 /**
  * Formats a number as currency (BRL)
  * @param value Number to format
@@ -11,4 +12,15 @@ export const formatCurrency = (value: number | null | undefined): string => {
     style: 'currency',
     currency: 'BRL',
   }).format(value);
+};
+
+/**
+ * Format number with thousand separators
+ * @param value Number to format
+ * @returns Formatted number string
+ */
+export const formatNumber = (value: number | null | undefined): string => {
+  if (value === null || value === undefined) return '0';
+  
+  return new Intl.NumberFormat('pt-BR').format(value);
 };

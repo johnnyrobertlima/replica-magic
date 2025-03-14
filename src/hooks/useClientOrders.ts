@@ -44,6 +44,7 @@ export const useClientOrders = () => {
 
   // State to hold the processed groups
   const [processedGroups, setProcessedGroups] = useState<Record<string, ClientOrderGroup>>({});
+  const [isProcessingGroups, setIsProcessingGroups] = useState(false);
 
   // Group orders by client and process them
   useEffect(() => {
@@ -56,8 +57,10 @@ export const useClientOrders = () => {
     
     const processGroups = async () => {
       try {
-        // First group the orders by client
-        const groups = groupOrdersByClient(ordersData);
+        setIsProcessingGroups(true);
+        
+        // First group the orders by client - now this is async to fetch overdue data
+        const groups = await groupOrdersByClient(ordersData);
         
         // Then enhance the groups with representative names
         const enhancedGroups = await enhanceGroupsWithRepresentanteNames(groups);
@@ -67,6 +70,8 @@ export const useClientOrders = () => {
       } catch (error) {
         console.error("Erro ao processar grupos de pedidos:", error);
         setProcessedGroups({});
+      } finally {
+        setIsProcessingGroups(false);
       }
     };
     
@@ -113,7 +118,7 @@ export const useClientOrders = () => {
     filteredGroups,
     totalSelecionado,
     // Loading states
-    isLoading: isLoadingOrders || isLoadingTotals || isLoadingSeparacoes,
+    isLoading: isLoadingOrders || isLoadingTotals || isLoadingSeparacoes || isProcessingGroups,
     // Methods
     toggleExpand,
     handleSearch,

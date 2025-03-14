@@ -2,15 +2,17 @@
 import type { ClientOrderGroup } from "@/types/clientOrders";
 import type { JabOrdersResponse } from "@/types/jabOrders";
 import { enhanceGroupsWithRepresentanteNames } from "./representativeUtils";
+import { supabase } from "@/services/jab/base/supabaseClient";
 
 /**
  * Groups orders by client
  * @param ordersData The JabOrders API response
  * @returns Record of client name to ClientOrderGroup
  */
-export const groupOrdersByClient = (ordersData: JabOrdersResponse): Record<string, ClientOrderGroup> => {
+export const groupOrdersByClient = async (ordersData: JabOrdersResponse): Promise<Record<string, ClientOrderGroup>> => {
   const groups: Record<string, ClientOrderGroup> = {};
   
+  // First, create groups with basic data
   ordersData.orders.forEach((order) => {
     if (!["1", "2"].includes(order.STATUS)) return;
     
@@ -26,7 +28,9 @@ export const groupOrdersByClient = (ordersData: JabOrdersResponse): Record<strin
         representante: order.REPRESENTANTE_NOME,
         allItems: [],
         PES_CODIGO: order.PES_CODIGO,
-        volume_saudavel_faturamento: order.volume_saudavel_faturamento
+        volume_saudavel_faturamento: order.volume_saudavel_faturamento,
+        valorVencido: null,
+        quantidadeTitulosVencidos: null
       };
     }
 
@@ -53,6 +57,34 @@ export const groupOrdersByClient = (ordersData: JabOrdersResponse): Record<strin
       });
     }
   });
+
+  // Now fetch overdue titles for all clients
+  const clientCodes = Object.values(groups).map(group => group.PES_CODIGO);
+  const { data: overdueData, error } = await supabase
+    .from('vw_titulos_vencidos_cliente')
+    .select('PES_CODIGO, total_vencido, quantidade_titulos')
+    .in('PES_CODIGO', clientCodes);
+
+  if (error) {
+    console.error('Error fetching overdue titles:', error);
+  } else if (overdueData) {
+    // Create a map for quick lookups
+    const overdueMap = new Map(
+      overdueData.map(item => [item.PES_CODIGO, { 
+        total_vencido: item.total_vencido, 
+        quantidade_titulos: item.quantidade_titulos 
+      }])
+    );
+
+    // Update each group with overdue data
+    Object.values(groups).forEach(group => {
+      const overdueInfo = overdueMap.get(group.PES_CODIGO.toString());
+      if (overdueInfo) {
+        group.valorVencido = parseFloat(overdueInfo.total_vencido) || 0;
+        group.quantidadeTitulosVencidos = parseInt(overdueInfo.quantidade_titulos) || 0;
+      }
+    });
+  }
 
   return groups;
 };
