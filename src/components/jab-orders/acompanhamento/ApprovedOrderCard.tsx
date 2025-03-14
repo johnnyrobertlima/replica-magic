@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
-import { ClienteFinanceiroCard } from "@/components/jab-orders/ClienteFinanceiroCard";
 import { formatCurrency } from "@/lib/utils";
 import { PedidosIncluidos } from "./PedidosIncluidos";
 
@@ -24,15 +23,16 @@ export const ApprovedOrderCard = ({ order, onExport }: ApprovedOrderCardProps) =
     ) : null;
   
   if (!approvedSeparacao) return null;
-  
-  const clienteWithApprovedSeparacao = {
-    ...order.clienteData,
-    separacoes: [approvedSeparacao]
-  };
 
   const handleExpandToggle = () => {
     setIsExpanded(!isExpanded);
   };
+
+  // Calcular o valor total dos itens
+  const valorTotal = approvedSeparacao.separacao_itens_flat ? 
+    approvedSeparacao.separacao_itens_flat.reduce((total, item) => {
+      return total + ((item.quantidade_pedida || 0) * (item.valor_unitario || 0));
+    }, 0) : 0;
 
   return (
     <Card 
@@ -74,15 +74,22 @@ export const ApprovedOrderCard = ({ order, onExport }: ApprovedOrderCardProps) =
       </CardHeader>
       
       <CardContent className="p-4">
-        <ClienteFinanceiroCard
-          cliente={clienteWithApprovedSeparacao}
-          onUpdateVolumeSaudavel={() => Promise.resolve({ success: true })}
-          onHideCard={() => {}}
-          onApprove={() => {}}
-          onReject={() => {}}
-          expandedView={isExpanded}
-          showApprovalButtons={false}
-        />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div className="bg-gray-50 p-3 rounded-md">
+            <p className="text-xs text-gray-500">Representante</p>
+            <p className="font-medium">{order.clienteData.representanteNome || 'Não informado'}</p>
+          </div>
+          
+          <div className="bg-gray-50 p-3 rounded-md">
+            <p className="text-xs text-gray-500">Código do Cliente</p>
+            <p className="font-medium">{order.clienteData.PES_CODIGO || 'N/A'}</p>
+          </div>
+          
+          <div className="bg-gray-50 p-3 rounded-md">
+            <p className="text-xs text-gray-500">Valor Total</p>
+            <p className="font-medium">{formatCurrency(valorTotal)}</p>
+          </div>
+        </div>
         
         <PedidosIncluidos approvedSeparacao={approvedSeparacao} />
       </CardContent>
