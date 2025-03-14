@@ -1,3 +1,4 @@
+
 import { Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Toaster } from "@/components/ui/toaster";
@@ -22,6 +23,7 @@ const AprovacaoFinanceira = () => {
   const [approvedSeparacaoIds, setApprovedSeparacaoIds] = useState<Set<string>>(new Set());
   const [currentUser, setCurrentUser] = useState<{ id?: string; email?: string } | null>(null);
   const [loadedApproved, setLoadedApproved] = useState(false);
+  const [hiddenCardIds, setHiddenCardIds] = useState<Set<string>>(new Set());
   
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -59,17 +61,22 @@ const AprovacaoFinanceira = () => {
     setLoadedApproved(false);
   }, [selectedYear, selectedMonth]);
 
+  // Filter out clients with no pending separations or with all separations hidden
   const filteredClientesFinanceiros = clientesFinanceiros.filter(cliente => {
+    // Only consider separations that are not approved and not manually hidden
     const pendingSeparacoes = cliente.separacoes.filter(
-      separacao => !approvedSeparacaoIds.has(separacao.id)
+      separacao => !approvedSeparacaoIds.has(separacao.id) && !hiddenCardIds.has(separacao.id)
     );
     
     return pendingSeparacoes.length > 0;
   });
 
+  // For each client, only include separations that are pending and not hidden
   const clientesWithPendingSeparacoes = filteredClientesFinanceiros.map(cliente => ({
     ...cliente,
-    separacoes: cliente.separacoes.filter(separacao => !approvedSeparacaoIds.has(separacao.id))
+    separacoes: cliente.separacoes.filter(
+      separacao => !approvedSeparacaoIds.has(separacao.id) && !hiddenCardIds.has(separacao.id)
+    )
   }));
 
   const handleApprove = (separacaoId: string, cliente: any) => {
@@ -100,6 +107,17 @@ const AprovacaoFinanceira = () => {
     setApprovedSeparacaoIds(prev => {
       const newSet = new Set(prev);
       newSet.add(separacaoId);
+      return newSet;
+    });
+  };
+
+  const handleHideCard = (id: string) => {
+    hideCard(id);
+    
+    // Also track locally hidden cards
+    setHiddenCardIds(prev => {
+      const newSet = new Set(prev);
+      newSet.add(id);
       return newSet;
     });
   };
@@ -141,7 +159,7 @@ const AprovacaoFinanceira = () => {
                 key={cliente.PES_CODIGO}
                 cliente={cliente}
                 onUpdateVolumeSaudavel={updateVolumeSaudavel}
-                onHideCard={hideCard}
+                onHideCard={handleHideCard}
                 onApprove={(separacaoId) => handleApprove(separacaoId, cliente)}
                 onReject={(separacaoId) => handleReject(separacaoId, cliente)}
               />
