@@ -20,12 +20,26 @@ export const useClientesFinanceiros = () => {
 
   // Get separações pendentes with memoization
   const getSeparacoesPendentesCallback = useCallback(() => {
-    return getSeparacoesPendentes(separacoes, hiddenCards);
+    const pendentes = getSeparacoesPendentes(separacoes, hiddenCards);
+    console.log(`Found ${pendentes.length} pending separacoes after filtering with ${hiddenCards.size} hidden cards`);
+    
+    // Log example of first pending separation if available
+    if (pendentes.length > 0) {
+      console.log('Example pending separation:', {
+        id: pendentes[0].id,
+        status: pendentes[0].status,
+        cliente: pendentes[0].cliente_nome
+      });
+    }
+    
+    return pendentes;
   }, [separacoes, hiddenCards]);
 
   // Get unique client codes with memoization
   const getClientesCodigosCallback = useCallback((sepPendentes: any[]) => {
-    return getClientesCodigos(sepPendentes);
+    const clientCodes = getClientesCodigos(sepPendentes);
+    console.log(`Found ${clientCodes.length} unique client codes from pending separations`);
+    return clientCodes;
   }, []);
 
   useEffect(() => {
@@ -40,6 +54,7 @@ export const useClientesFinanceiros = () => {
         const clientesCodigos = getClientesCodigosCallback(separacoesPendentes);
 
         if (clientesCodigos.length === 0) {
+          console.log('No client codes found, setting empty clientesFinanceiros');
           setClientesFinanceiros([]);
           setDataLoadingComplete(true);
           return;
@@ -55,6 +70,8 @@ export const useClientesFinanceiros = () => {
         });
 
         const updatedClientes = await fetchFinancialData(clientesCodigos, clienteSeparacoes);
+        console.log(`Fetched financial data for ${updatedClientes.length} clients`);
+        
         setClientesFinanceiros(updatedClientes);
         setDataLoadingComplete(true);
       } catch (error) {

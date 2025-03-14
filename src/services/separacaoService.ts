@@ -17,6 +17,24 @@ export const fetchSeparacoes = async (): Promise<Separacao[]> => {
   }
 
   console.log(`Fetched ${separacoes?.length || 0} separacoes from database`);
+  
+  // Log separation status to check if there are pending separations
+  if (separacoes && separacoes.length > 0) {
+    const statusCounts = separacoes.reduce((acc, sep) => {
+      const status = sep.status || 'unknown';
+      acc[status] = (acc[status] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    console.log('Separation status counts:', statusCounts);
+    console.log('First separation example:', { 
+      id: separacoes[0].id,
+      status: separacoes[0].status,
+      cliente_nome: separacoes[0].cliente_nome,
+      valor_total: separacoes[0].valor_total,
+      items_count: separacoes[0].separacao_itens?.length || 0
+    });
+  }
 
   // If we have separations, fetch representative information
   if (separacoes && separacoes.length > 0) {

@@ -3,10 +3,15 @@ import { ClienteFinanceiro, TituloFinanceiro } from "@/types/financialClient";
 
 // Get separações pendentes
 export const getSeparacoesPendentes = (separacoes: any[], hiddenCards: Set<string>) => {
-  const pendentes = separacoes
-    .filter(sep => sep.status === 'pendente')
-    .filter(sep => !hiddenCards.has(sep.id));
+  const pendentes = separacoes.filter(
+    sep => 
+      // Ensure we only consider pending separations
+      sep.status === 'pendente' && 
+      // And not hidden cards
+      !hiddenCards.has(sep.id)
+  );
   
+  console.log(`Filtered ${separacoes.length} separations to ${pendentes.length} pending separations`);
   return pendentes;
 };
 
