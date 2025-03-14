@@ -39,14 +39,18 @@ export const processSelectedItems = (
     });
   });
 
+  // Group items by PES_CODIGO (client code) instead of by client name
+  // This ensures we get one separation per client, not per client name
   const itemsByClient: Record<string, typeof allSelectedItems> = {};
   
   allSelectedItems.forEach(item => {
-    const clientName = item.APELIDO || "Sem Cliente";
-    if (!itemsByClient[clientName]) {
-      itemsByClient[clientName] = [];
+    // Use the client code as the key instead of the name
+    const clientKey = item.PES_CODIGO ? `client_${item.PES_CODIGO}` : "sem_codigo";
+    
+    if (!itemsByClient[clientKey]) {
+      itemsByClient[clientKey] = [];
     }
-    itemsByClient[clientName].push(item);
+    itemsByClient[clientKey].push(item);
   });
 
   return { 
@@ -70,14 +74,18 @@ export const createSeparationsForClients = async (
   let successCount = 0;
   let errors: Array<{ client: string, message: string }> = [];
 
-  for (const [clientName, items] of Object.entries(itemsByClient)) {
-    console.log(`Processando cliente: ${clientName}`);
+  for (const [clientKey, items] of Object.entries(itemsByClient)) {
+    if (items.length === 0) continue;
     
-    const clientItem = items.find(item => item.PES_CODIGO !== null);
-    const clienteCode = clientItem?.PES_CODIGO;
+    // All items in this group should have the same client code/name
+    const clientItem = items[0];
+    const clienteCode = clientItem.PES_CODIGO;
+    const clientName = clientItem.APELIDO || "Cliente Sem Nome";
 
+    console.log(`Processando cliente: ${clientName} (código: ${clienteCode})`);
+    
     if (!clienteCode) {
-      console.error(`Cliente ${clientName} sem código válido:`, items[0]);
+      console.error(`Cliente ${clientName} sem código válido:`, clientItem);
       errors.push({
         client: clientName,
         message: `Cliente ${clientName} não possui código válido`
