@@ -9,7 +9,8 @@ import { processSelectedItems, createSeparationsForClients } from "./separation/
 export const sendOrdersForSeparation = async (
   selectedItems: string[],
   groupedOrders: Record<string, ClientOrderGroup>,
-  showToast = true
+  showToast = true,
+  selectedItemsDetails?: Record<string, { qtde: number; valor: number; clientName?: string; clientCode?: number }>
 ) => {
   if (selectedItems.length === 0) {
     if (showToast) {
@@ -24,7 +25,7 @@ export const sendOrdersForSeparation = async (
 
   try {
     // Process and group the selected items by client
-    const { success, message, itemsByClient } = processSelectedItems(selectedItems, groupedOrders);
+    const { success, message, itemsByClient } = processSelectedItems(selectedItems, groupedOrders, selectedItemsDetails);
     
     if (!success || !itemsByClient) {
       if (showToast) {

@@ -8,7 +8,8 @@ import { createSeparation, createSeparationItems } from "./separationDbService";
  */
 export const processSelectedItems = (
   selectedItems: string[],
-  groupedOrders: Record<string, ClientOrderGroup>
+  groupedOrders: Record<string, ClientOrderGroup>,
+  selectedItemsDetails?: Record<string, { qtde: number; valor: number; clientName?: string; clientCode?: number }>
 ) => {
   if (selectedItems.length === 0) {
     return { success: false, message: "Nenhum item selecionado", items: [] };
@@ -19,33 +20,72 @@ export const processSelectedItems = (
     item: any;
     PES_CODIGO: number | null;
     APELIDO: string | null;
+    clientCardName?: string; // Novo campo para o nome do cliente do card
   }> = [];
 
-  // Only collect items that are specifically in the selectedItems array
-  Object.values(groupedOrders).forEach(group => {
+  // Coletar informações sobre os clientes que contêm os itens selecionados
+  const clientsForItems: Record<string, { clientName: string; PES_CODIGO: number }> = {};
+  
+  // Primeiro identifica a qual cliente cada item pertence (do card de onde foi selecionado)
+  if (selectedItemsDetails) {
+    Object.entries(selectedItemsDetails).forEach(([itemCode, details]) => {
+      if (details.clientName && details.clientCode) {
+        clientsForItems[itemCode] = {
+          clientName: details.clientName,
+          PES_CODIGO: details.clientCode
+        };
+      }
+    });
+  }
+
+  // Agora coleta apenas os itens correspondentes ao cliente apropriado
+  Object.entries(groupedOrders).forEach(([clientName, group]) => {
     group.allItems.forEach(item => {
       if (selectedItems.includes(item.ITEM_CODIGO)) {
-        const pesCodigoNumerico = getClientCodeFromItem(item);
+        const itemClient = clientsForItems[item.ITEM_CODIGO];
         
-        console.log('PES_CODIGO original:', item.PES_CODIGO);
-        console.log('PES_CODIGO processado:', pesCodigoNumerico);
+        // Se temos informações do cliente para esse item e ele pertence a este cliente
+        if (itemClient && itemClient.clientName === clientName) {
+          const pesCodigoNumerico = getClientCodeFromItem(item);
+          
+          console.log('PES_CODIGO original:', item.PES_CODIGO);
+          console.log('PES_CODIGO processado:', pesCodigoNumerico);
 
-        allSelectedItems.push({
-          pedido: item.pedido,
-          item: item,
-          PES_CODIGO: pesCodigoNumerico,
-          APELIDO: item.APELIDO
-        });
+          allSelectedItems.push({
+            pedido: item.pedido,
+            item: item,
+            PES_CODIGO: pesCodigoNumerico,
+            APELIDO: item.APELIDO,
+            clientCardName: clientName
+          });
+        }
+        // Se não temos informações de cliente para este item (retrocompatibilidade)
+        else if (!itemClient) {
+          const pesCodigoNumerico = getClientCodeFromItem(item);
+          
+          console.log('PES_CODIGO original:', item.PES_CODIGO);
+          console.log('PES_CODIGO processado:', pesCodigoNumerico);
+
+          allSelectedItems.push({
+            pedido: item.pedido,
+            item: item,
+            PES_CODIGO: pesCodigoNumerico,
+            APELIDO: item.APELIDO,
+            clientCardName: clientName
+          });
+        }
       }
     });
   });
 
-  // Group items by PES_CODIGO (client code)
+  // Group items by PES_CODIGO (client code) and clientCardName
   const itemsByClient: Record<string, typeof allSelectedItems> = {};
   
   allSelectedItems.forEach(item => {
-    // Use a consistent key format based on client code
-    const clientKey = item.PES_CODIGO ? `client_${item.PES_CODIGO}` : "sem_codigo";
+    // Use a consistent key format based on client code AND card name
+    const clientKey = item.clientCardName 
+      ? `client_${item.PES_CODIGO}_${item.clientCardName}`
+      : `client_${item.PES_CODIGO}`;
     
     if (!itemsByClient[clientKey]) {
       itemsByClient[clientKey] = [];
@@ -69,6 +109,7 @@ export const createSeparationsForClients = async (
     item: any;
     PES_CODIGO: number | null;
     APELIDO: string | null;
+    clientCardName?: string;
   }>>
 ) => {
   let successCount = 0;

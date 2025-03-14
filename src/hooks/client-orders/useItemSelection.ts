@@ -1,151 +1,117 @@
 
-import { useMemo } from "react";
-import { calculateTotalSelected } from "@/utils/selectionUtils";
+import { useState, useMemo, useCallback } from "react";
+import { ClientOrdersState } from "@/types/clientOrders";
+import { exportToExcel } from "@/utils/excelUtils";
 import { useToast } from "@/hooks/use-toast";
-import type { ClientOrdersState } from "@/types/clientOrders";
 
 export const useItemSelection = (
-  state: ClientOrdersState, 
-  setState: React.Dispatch<React.SetStateAction<ClientOrdersState>>, 
-  filteredGroups: Record<string, any>
+  state: ClientOrdersState,
+  setState: React.Dispatch<React.SetStateAction<ClientOrdersState>>,
+  groupedOrders: Record<string, any>
 ) => {
   const { toast } = useToast();
-  const { selectedItems, selectedItemsDetails } = state;
-  
-  // Calculate the total of selected items
-  const totalSelecionado = useMemo(() => 
-    calculateTotalSelected(selectedItemsDetails), 
-    [selectedItemsDetails]
-  );
 
-  const handleItemSelect = (item: any) => {
+  // Calcular o total selecionado com base no estado atual
+  const totalSelecionado = useMemo(() => {
+    return Object.values(state.selectedItemsDetails).reduce((total, { valor }) => total + valor, 0);
+  }, [state.selectedItemsDetails]);
+
+  // Manipulador para seleção/desseleção de itens
+  const handleItemSelect = useCallback((item: any) => {
     const itemCode = item.ITEM_CODIGO;
     
-    setState(prev => {
-      const isAlreadySelected = prev.selectedItems.includes(itemCode);
-      let newSelectedItems = prev.selectedItems;
-      let newSelectedItemsDetails = { ...prev.selectedItemsDetails };
+    setState(prevState => {
+      // Verificar se o item já está selecionado
+      const isSelected = prevState.selectedItems.includes(itemCode);
       
-      if (isAlreadySelected) {
-        // Remove item from selection
-        newSelectedItems = prev.selectedItems.filter(code => code !== itemCode);
+      // Atualizar o array selectedItems
+      const newSelectedItems = isSelected
+        ? prevState.selectedItems.filter(id => id !== itemCode)
+        : [...prevState.selectedItems, itemCode];
+      
+      // Atualizar o objeto selectedItemsDetails
+      const newSelectedItemsDetails = { ...prevState.selectedItemsDetails };
+      
+      if (isSelected) {
+        // Remover o item
         delete newSelectedItemsDetails[itemCode];
       } else {
-        // Add item to selection
-        newSelectedItems = [...prev.selectedItems, itemCode];
-        newSelectedItemsDetails[itemCode] = {
-          qtde: item.QTDE_SALDO,
-          valor: item.VALOR_UNITARIO
+        // Adicionar o item com os detalhes
+        const qtde = item.QTDE_SALDO;
+        const valor = qtde * item.VALOR_UNITARIO;
+        const clientName = item.APELIDO;
+        const clientCode = item.PES_CODIGO;
+        
+        newSelectedItemsDetails[itemCode] = { 
+          qtde, 
+          valor,
+          clientName, // Armazenar o nome do cliente
+          clientCode  // Armazenar o código do cliente
         };
       }
       
-      return { 
-        ...prev, 
+      return {
+        ...prevState,
         selectedItems: newSelectedItems,
         selectedItemsDetails: newSelectedItemsDetails
       };
     });
-  };
+  }, [setState]);
 
-  const clearSelections = () => {
-    setState(prev => ({
-      ...prev,
+  // Função para exportar itens selecionados para Excel
+  const exportSelectedItemsToExcel = useCallback(() => {
+    if (state.selectedItems.length === 0) {
+      toast({
+        title: "Aviso",
+        description: "Selecione pelo menos um item para exportar",
+      });
+      return;
+    }
+
+    const selectedItemsData: any[] = [];
+
+    // Coletar dados dos itens selecionados
+    Object.entries(groupedOrders).forEach(([clientName, group]) => {
+      group.allItems.forEach((item: any) => {
+        if (state.selectedItems.includes(item.ITEM_CODIGO)) {
+          selectedItemsData.push({
+            Cliente: clientName,
+            Pedido: item.pedido,
+            SKU: item.ITEM_CODIGO,
+            Descrição: item.DESCRICAO || '-',
+            Solicitado: item.QTDE_PEDIDA,
+            Entregue: item.QTDE_ENTREGUE,
+            Saldo: item.QTDE_SALDO,
+            "Qt. Físico": item.FISICO || '-',
+            "Valor Unit.": item.VALOR_UNITARIO,
+            "Valor Saldo": item.QTDE_SALDO * item.VALOR_UNITARIO
+          });
+        }
+      });
+    });
+
+    // Exportar para Excel
+    exportToExcel(selectedItemsData, 'Itens_Selecionados');
+  }, [state.selectedItems, groupedOrders, toast]);
+  
+  // Função para limpar todas as seleções
+  const clearSelections = useCallback(() => {
+    setState(prevState => ({
+      ...prevState,
       selectedItems: [],
       selectedItemsDetails: {}
     }));
-  };
-
-  const exportSelectedItemsToExcel = () => {
-    if (selectedItems.length === 0) {
-      toast({
-        title: "Nenhum item selecionado",
-        description: "Selecione itens para exportar",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Get selected items details
-    const exportData: any[] = [];
     
-    for (const clientName in filteredGroups) {
-      const clientGroup = filteredGroups[clientName];
-      
-      // Find all items in this client that match the selected items
-      const selectedClientItems = clientGroup.allItems.filter(
-        (item: any) => selectedItems.includes(item.ITEM_CODIGO)
-      );
-      
-      // Add each selected item to the export data
-      selectedClientItems.forEach((item: any) => {
-        exportData.push({
-          Cliente: clientName,
-          Representante: clientGroup.representante || "Não informado",
-          Pedido: item.pedido,
-          'Código do Item': item.ITEM_CODIGO,
-          Descrição: item.DESCRICAO || "-",
-          'Qtde. Pedida': item.QTDE_PEDIDA,
-          'Qtde. Entregue': item.QTDE_ENTREGUE,
-          'Qtde. Saldo': item.QTDE_SALDO,
-          'Estoque Físico': item.FISICO || 0,
-          'Valor Unitário': item.VALOR_UNITARIO,
-          'Valor Total': (item.QTDE_SALDO * item.VALOR_UNITARIO)
-        });
-      });
-    }
-
-    if (exportData.length === 0) {
-      toast({
-        title: "Erro ao exportar",
-        description: "Não foi possível encontrar os detalhes dos itens selecionados",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Convert data to CSV
-    const headers = Object.keys(exportData[0]);
-    const csvContent = [
-      headers.join(','), // Header row
-      ...exportData.map(row => 
-        headers.map(header => {
-          const value = row[header];
-          // Format values properly for CSV, handle commas, quotes, etc.
-          if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
-            return `"${value.replace(/"/g, '""')}"`;
-          }
-          // Format numeric values with proper decimal separator
-          if (typeof value === 'number') {
-            if (header === 'Valor Unitário' || header === 'Valor Total') {
-              return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace('.', ',');
-            }
-            return value.toString();
-          }
-          return value?.toString() || '';
-        }).join(',')
-      )
-    ].join('\n');
-
-    // Create and download the CSV file
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `itens-selecionados-${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
     toast({
-      title: "Exportação concluída",
-      description: `${exportData.length} itens exportados com sucesso`,
+      title: "Limpeza concluída",
+      description: "Todas as seleções foram removidas"
     });
-  };
+  }, [setState, toast]);
 
   return {
     totalSelecionado,
     handleItemSelect,
     exportSelectedItemsToExcel,
-    clearSelections
+    clearSelections,
   };
 };

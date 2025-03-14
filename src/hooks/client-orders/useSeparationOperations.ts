@@ -11,13 +11,14 @@ export const useSeparationOperations = (
 ) => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { selectedItems } = state;
+  const { selectedItems, selectedItemsDetails } = state;
 
   const handleEnviarParaSeparacao = async () => {
     setState(prev => ({ ...prev, isSending: true }));
     
     try {
-      const result = await sendOrdersForSeparation(selectedItems, groupedOrders);
+      // Passamos o contexto do cliente selecionado a partir do selectedItemsDetails
+      const result = await sendOrdersForSeparation(selectedItems, groupedOrders, true, selectedItemsDetails);
       
       if (result.success) {
         await queryClient.invalidateQueries({ queryKey: ['separacoes'] });
