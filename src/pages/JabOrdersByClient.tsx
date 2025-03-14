@@ -4,16 +4,10 @@ import { useClientOrders } from "@/hooks/useClientOrders";
 import { OrdersTabs } from "@/components/jab-orders/OrdersTabs";
 import { Toaster } from "@/components/ui/toaster";
 import JabNavMenu from "@/components/jab-orders/JabNavMenu";
-import { useEffect } from "react";
 
 const JabOrdersByClient = () => {
   const clientOrders = useClientOrders();
-  const { isLoading, selectedItems } = clientOrders;
-
-  // Add debug useEffect
-  useEffect(() => {
-    console.log("JabOrdersByClient - selectedItems:", selectedItems);
-  }, [selectedItems]);
+  const { isLoading } = clientOrders;
 
   if (isLoading) {
     return (

@@ -82,7 +82,7 @@ export const useClientOrders = () => {
     };
     
     processGroups();
-  }, [ordersData, selectedItems.length]); // Added selectedItems.length as a dependency
+  }, [ordersData]);
 
   // Filter groups by search criteria
   const filteredGroups = useMemo(() => 
@@ -130,11 +130,6 @@ export const useClientOrders = () => {
     ...totals,
     ...periodTotals
   };
-
-  // Debug log for state updates
-  useEffect(() => {
-    console.log("Current selection state:", selectedItems.length, "items selected");
-  }, [selectedItems]);
 
   return {
     // State
