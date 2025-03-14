@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Separacao } from "@/types/separacao";
 
 export const fetchSeparacoes = async (): Promise<Separacao[]> => {
+  console.log('Fetching separations from database...');
+  
   const { data: separacoes, error } = await supabase
     .from('separacoes')
     .select(`

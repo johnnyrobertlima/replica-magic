@@ -66,6 +66,14 @@ export const useFinancialApproval = () => {
     setLoadedApproved(false);
   }, [selectedYear, selectedMonth]);
 
+  // Log clientesFinanceiros to debug
+  useEffect(() => {
+    console.log("Current clientesFinanceiros:", clientesFinanceiros);
+    console.log("Pending separations count before filtering:", 
+      clientesFinanceiros.reduce((acc, client) => acc + client.separacoes.length, 0)
+    );
+  }, [clientesFinanceiros]);
+
   // Filter out clients with no pending separations or with all separations hidden
   const filteredClientesFinanceiros = clientesFinanceiros.filter(cliente => {
     // Only consider separations that are not approved and not manually hidden
@@ -89,6 +97,14 @@ export const useFinancialApproval = () => {
         !hiddenCardIds.has(separacao.id)
     )
   }));
+
+  // Log filtered results
+  useEffect(() => {
+    console.log("Filtered clientesFinanceiros:", filteredClientesFinanceiros);
+    console.log("Clients with pending separacoes:", clientesWithPendingSeparacoes);
+    console.log("Approved separacao IDs:", [...approvedSeparacaoIds]);
+    console.log("Hidden card IDs:", [...hiddenCardIds]);
+  }, [filteredClientesFinanceiros, clientesWithPendingSeparacoes, approvedSeparacaoIds, hiddenCardIds]);
 
   const handleApprove = (separacaoId: string, cliente: any) => {
     addApprovedOrder(

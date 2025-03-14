@@ -1,8 +1,25 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { ClienteFinanceiro, TituloFinanceiro } from "@/types/financialClient";
 
 // Get separações pendentes
 export const getSeparacoesPendentes = (separacoes: any[], hiddenCards: Set<string>) => {
+  console.log(`Processing ${separacoes.length} separacoes to find pendentes`);
+  
+  // Check if we even have any separations
+  if (separacoes.length === 0) {
+    console.log('No separations found');
+    return [];
+  }
+  
+  // Log all statuses to see what's coming in
+  const statusCount: Record<string, number> = {};
+  separacoes.forEach(sep => {
+    const status = sep.status || 'unknown';
+    statusCount[status] = (statusCount[status] || 0) + 1;
+  });
+  console.log('Separation statuses:', statusCount);
+  
   const pendentes = separacoes.filter(
     sep => 
       // Ensure we only consider pending separations

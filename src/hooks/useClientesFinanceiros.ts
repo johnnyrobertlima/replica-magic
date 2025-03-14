@@ -20,6 +20,17 @@ export const useClientesFinanceiros = () => {
 
   // Get separações pendentes with memoization
   const getSeparacoesPendentesCallback = useCallback(() => {
+    // Log separations to debug
+    console.log(`Processing ${separacoes.length} separations with ${hiddenCards.size} hidden cards`);
+    
+    if (separacoes.length > 0) {
+      console.log("Sample separations:", {
+        first: separacoes[0],
+        status: separacoes[0].status,
+        id: separacoes[0].id
+      });
+    }
+    
     const pendentes = getSeparacoesPendentes(separacoes, hiddenCards);
     console.log(`Found ${pendentes.length} pending separacoes after filtering with ${hiddenCards.size} hidden cards`);
     
@@ -41,6 +52,13 @@ export const useClientesFinanceiros = () => {
     console.log(`Found ${clientCodes.length} unique client codes from pending separations`);
     return clientCodes;
   }, []);
+
+  useEffect(() => {
+    // To avoid infinite loops, clear previous state to force reload when dependencies change
+    if (separacoes.length > 0) {
+      setDataLoadingComplete(false);
+    }
+  }, [separacoes]);
 
   useEffect(() => {
     // Prevent repeated data fetching
@@ -90,13 +108,6 @@ export const useClientesFinanceiros = () => {
     fetchFinancialData,
     setIsLoading
   ]);
-
-  // Reset dataLoadingComplete if dependencies change
-  useEffect(() => {
-    if (separacoes.length > 0 && hiddenCards.size > 0) {
-      setDataLoadingComplete(false);
-    }
-  }, [separacoes, hiddenCards]);
 
   return {
     clientesFinanceiros,
