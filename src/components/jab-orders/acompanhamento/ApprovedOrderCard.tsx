@@ -36,7 +36,7 @@ export const ApprovedOrderCard = ({ order, onExport }: ApprovedOrderCardProps) =
 
   return (
     <Card 
-      className="border-l-4 border-l-green-500 shadow-md"
+      className={`border-l-4 border-l-green-500 shadow-md ${isExpanded ? 'col-span-full' : ''}`}
     >
       <CardHeader className="pb-0 pt-4 px-4">
         <div className="flex justify-between items-start">
@@ -110,3 +110,4 @@ export const ApprovedOrderCard = ({ order, onExport }: ApprovedOrderCardProps) =
     </Card>
   );
 };
+

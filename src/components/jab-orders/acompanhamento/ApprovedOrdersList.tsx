@@ -26,3 +26,4 @@ export const ApprovedOrdersList = ({ approvedOrders }: ApprovedOrdersListProps) 
     </div>
   );
 };
+
