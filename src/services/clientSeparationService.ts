@@ -26,11 +26,11 @@ export const sendOrdersForSeparation = async (
     // Process and group the selected items by client
     const { success, message, itemsByClient } = processSelectedItems(selectedItems, groupedOrders);
     
-    if (!success) {
+    if (!success || !itemsByClient) {
       if (showToast) {
         toast({
           title: "Aviso",
-          description: message,
+          description: message || "Erro ao processar itens",
           variant: "default",
         });
       }

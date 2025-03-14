@@ -2,6 +2,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { sendOrdersForSeparation } from "@/services/clientSeparationService";
 import type { ClientOrdersState } from "@/types/clientOrders";
+import { useToast } from "@/hooks/use-toast";
 
 export const useSeparationOperations = (
   state: ClientOrdersState,
@@ -9,6 +10,7 @@ export const useSeparationOperations = (
   groupedOrders: Record<string, any>
 ) => {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const { selectedItems } = state;
 
   const handleEnviarParaSeparacao = async () => {
@@ -21,12 +23,18 @@ export const useSeparationOperations = (
         await queryClient.invalidateQueries({ queryKey: ['separacoes'] });
         await queryClient.invalidateQueries({ queryKey: ['jabOrders'] });
         
+        // Reset selection state to ensure no checkboxes remain selected
         setState(prev => ({ 
           ...prev, 
           selectedItems: [],
           selectedItemsDetails: {},
           expandedClients: new Set()
         }));
+
+        toast({
+          title: "Separação concluída",
+          description: `${result.count || 0} separação(ões) criada(s) com sucesso!`,
+        });
       }
     } finally {
       setState(prev => ({ ...prev, isSending: false }));

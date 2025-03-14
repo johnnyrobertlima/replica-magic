@@ -40,11 +40,11 @@ export const processSelectedItems = (
     });
   });
 
-  // Group items by PES_CODIGO (client code) instead of by client name
+  // Group items by PES_CODIGO (client code)
   const itemsByClient: Record<string, typeof allSelectedItems> = {};
   
   allSelectedItems.forEach(item => {
-    // Use the client code as the key instead of the name or other attributes
+    // Use a consistent key format based on client code
     const clientKey = item.PES_CODIGO ? `client_${item.PES_CODIGO}` : "sem_codigo";
     
     if (!itemsByClient[clientKey]) {

@@ -59,20 +59,24 @@ export const ClientOrderItemsTable = ({
           {filteredItems.map((item, index) => {
             const valorPedido = item.QTDE_PEDIDA * item.VALOR_UNITARIO;
             const valorSaldo = item.QTDE_SALDO * item.VALOR_UNITARIO;
+            const isSelected = selectedItems.includes(item.ITEM_CODIGO);
             
             return (
               <tr 
                 key={`${item.pedido}-${item.ITEM_CODIGO}-${index}`} 
                 className={cn(
                   "border-t",
-                  item.emSeparacao && "bg-[#FEF7CD]" // Fundo amarelo claro para itens em separação
+                  item.emSeparacao && "bg-[#FEF7CD]", // Fundo amarelo claro para itens em separação
+                  isSelected && !item.emSeparacao && "bg-blue-50" // Destaque visual para itens selecionados
                 )}
               >
                 <td className="p-2">
                   <Checkbox
-                    checked={selectedItems.includes(item.ITEM_CODIGO)}
+                    checked={isSelected}
                     onCheckedChange={() => onItemSelect(item)}
                     disabled={item.emSeparacao}
+                    id={`item-${item.ITEM_CODIGO}-${index}`}
+                    aria-label={`Selecionar item ${item.ITEM_CODIGO}`}
                   />
                 </td>
                 <td className="p-2">{item.pedido}</td>
