@@ -5,7 +5,14 @@ import { ClienteFinanceiro } from '@/types/financialClient';
 import { supabase } from '@/integrations/supabase/client';
 
 // Define a simpler type for what we store in the database to avoid circular references
-type StoredClienteData = Omit<ClienteFinanceiro, 'separacoes'> & {
+type StoredClienteData = {
+  PES_CODIGO: number;
+  APELIDO: string | null;
+  volume_saudavel_faturamento: number | null;
+  valoresTotais: number;
+  valoresEmAberto: number;
+  valoresVencidos: number;
+  representanteNome: string | null;
   separacoes: Array<{
     id: string;
     valor_total?: number;
@@ -98,8 +105,7 @@ export const useApprovedOrdersStorage = () => {
         action
       };
       
-      // Prepare a simplified version of clienteData for storage
-      // This breaks the circular reference by only storing what we need
+      // Create simplified version of clienteData for storage
       const simplifiedClienteData: StoredClienteData = {
         PES_CODIGO: clienteData.PES_CODIGO,
         APELIDO: clienteData.APELIDO,
@@ -132,7 +138,7 @@ export const useApprovedOrdersStorage = () => {
         .from('approved_orders')
         .insert({
           separacao_id: separacaoId,
-          cliente_data: simplifiedClienteData as any, // Cast to any to avoid type issues
+          cliente_data: simplifiedClienteData,
           approved_at: newOrder.approvedAt.toISOString(),
           user_id: userId,
           user_email: userEmail,
