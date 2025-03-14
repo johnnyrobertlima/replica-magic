@@ -2,10 +2,10 @@
 import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, FileText } from "lucide-react";
+import { Download } from "lucide-react";
 import { ClienteFinanceiroCard } from "@/components/jab-orders/ClienteFinanceiroCard";
-import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
+import { PedidosIncluidos } from "./PedidosIncluidos";
 
 interface ApprovedOrderCardProps {
   order: any;
@@ -14,7 +14,6 @@ interface ApprovedOrderCardProps {
 
 export const ApprovedOrderCard = ({ order, onExport }: ApprovedOrderCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const { toast } = useToast();
 
   if (!order || !order.clienteData) return null;
   
@@ -88,37 +87,5 @@ export const ApprovedOrderCard = ({ order, onExport }: ApprovedOrderCardProps) =
         <PedidosIncluidos approvedSeparacao={approvedSeparacao} />
       </CardContent>
     </Card>
-  );
-};
-
-interface PedidosIncluidosProps {
-  approvedSeparacao: any;
-}
-
-const PedidosIncluidos = ({ approvedSeparacao }: PedidosIncluidosProps) => {
-  if (!approvedSeparacao.separacao_itens_flat || approvedSeparacao.separacao_itens_flat.length === 0) {
-    return null;
-  }
-
-  return (
-    <div className="mt-4 pt-4 border-t border-gray-200">
-      <h4 className="text-sm font-medium flex items-center gap-1 mb-2">
-        <FileText className="h-4 w-4" /> 
-        Pedidos incluídos:
-      </h4>
-      <div className="flex flex-wrap gap-2">
-        {Array.from(
-          new Set(
-            approvedSeparacao.separacao_itens_flat
-              .filter(item => item && item.pedido)
-              .map(item => item.pedido)
-          )
-        ).map((pedido, index) => (
-          <span key={`pedido-${index}`} className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded">
-            {String(pedido)}
-          </span>
-        ))}
-      </div>
-    </div>
   );
 };
