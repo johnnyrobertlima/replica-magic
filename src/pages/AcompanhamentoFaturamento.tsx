@@ -1,3 +1,4 @@
+
 import { Loader2, FileText } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Toaster } from "@/components/ui/toaster";
@@ -9,7 +10,6 @@ import { MonthFilterSelect } from "@/components/jab-orders/MonthFilterSelect";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState, useEffect } from "react";
-import { CleanupButton } from "@/components/jab-orders/CleanupButton";
 
 const AcompanhamentoFaturamento = () => {
   const { 
@@ -65,7 +65,6 @@ const AcompanhamentoFaturamento = () => {
     <main className="container mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
         <JabNavMenu />
-        <CleanupButton />
       </div>
 
       <div className="space-y-6">

@@ -8,7 +8,6 @@ import JabNavMenu from "@/components/jab-orders/JabNavMenu";
 import { Link } from "react-router-dom";
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { CleanupButton } from "@/components/jab-orders/CleanupButton";
 
 const AprovacaoFinanceira = () => {
   const { 
@@ -115,9 +114,8 @@ const AprovacaoFinanceira = () => {
 
   return (
     <main className="container mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
+      <div className="flex flex-col md:flex-row md:justify-end md:items-center gap-4 mb-6">
         <JabNavMenu />
-        <CleanupButton />
       </div>
 
       <div className="space-y-6">
