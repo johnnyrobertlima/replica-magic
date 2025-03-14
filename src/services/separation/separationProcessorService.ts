@@ -41,11 +41,10 @@ export const processSelectedItems = (
   });
 
   // Group items by PES_CODIGO (client code) instead of by client name
-  // This ensures we get one separation per client, not per client name
   const itemsByClient: Record<string, typeof allSelectedItems> = {};
   
   allSelectedItems.forEach(item => {
-    // Use the client code as the key instead of the name
+    // Use the client code as the key instead of the name or other attributes
     const clientKey = item.PES_CODIGO ? `client_${item.PES_CODIGO}` : "sem_codigo";
     
     if (!itemsByClient[clientKey]) {
