@@ -4,6 +4,21 @@ import { ApprovedOrder, MonthSelection } from './types';
 import { ClienteFinanceiro } from '@/types/financialClient';
 import { supabase } from '@/integrations/supabase/client';
 
+// Define a simpler type for what we store in the database to avoid circular references
+type StoredClienteData = Omit<ClienteFinanceiro, 'separacoes'> & {
+  separacoes: Array<{
+    id: string;
+    valor_total?: number;
+    quantidade_itens?: number;
+    separacao_itens?: Array<{
+      pedido: string;
+      item_codigo?: string;
+      quantidade_pedida?: number;
+      valor_unitario?: number;
+    }>;
+  }>;
+};
+
 export const useApprovedOrdersStorage = () => {
   const [approvedOrders, setApprovedOrders] = useState<ApprovedOrder[]>([]);
 
@@ -83,12 +98,41 @@ export const useApprovedOrdersStorage = () => {
         action
       };
       
-      // Save to Supabase - convert clienteData to a JSON object
+      // Prepare a simplified version of clienteData for storage
+      // This breaks the circular reference by only storing what we need
+      const simplifiedClienteData = {
+        PES_CODIGO: clienteData.PES_CODIGO,
+        APELIDO: clienteData.APELIDO,
+        volume_saudavel_faturamento: clienteData.volume_saudavel_faturamento,
+        valoresTotais: clienteData.valoresTotais,
+        valoresEmAberto: clienteData.valoresEmAberto,
+        valoresVencidos: clienteData.valoresVencidos,
+        representanteNome: clienteData.representanteNome,
+        separacoes: clienteData.separacoes.map(sep => {
+          if (sep.id === separacaoId) {
+            return {
+              id: sep.id,
+              valor_total: sep.valor_total,
+              quantidade_itens: sep.quantidade_itens,
+              separacao_itens: sep.separacao_itens ? 
+                sep.separacao_itens.map(item => ({
+                  pedido: item.pedido,
+                  item_codigo: item.item_codigo,
+                  quantidade_pedida: item.quantidade_pedida,
+                  valor_unitario: item.valor_unitario
+                })) : []
+            };
+          }
+          return { id: sep.id };
+        })
+      };
+      
+      // Save to Supabase with simplified data
       const { error } = await supabase
         .from('approved_orders')
         .insert({
           separacao_id: separacaoId,
-          cliente_data: clienteData as any, // Cast to any to avoid type issues
+          cliente_data: simplifiedClienteData as any, // Cast to any to avoid type issues
           approved_at: newOrder.approvedAt.toISOString(),
           user_id: userId,
           user_email: userEmail,
