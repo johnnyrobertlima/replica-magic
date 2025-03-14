@@ -1,7 +1,8 @@
 
-import { Loader2, FileText } from "lucide-react";
+import { Loader2, FileText, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Toaster } from "@/components/ui/toaster";
+import { Button } from "@/components/ui/button";
 import { useApprovedOrders } from "@/hooks/useApprovedOrders";
 import { ApprovedOrdersCockpit } from "@/components/jab-orders/ApprovedOrdersCockpit";
 import { ClienteFinanceiroCard } from "@/components/jab-orders/ClienteFinanceiroCard";
@@ -11,6 +12,8 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState, useEffect } from "react";
 import { EmptyPendingApprovals } from "@/components/jab-orders/EmptyPendingApprovals";
+import { exportToExcel } from "@/utils/excelUtils";
+import { useToast } from "@/hooks/use-toast";
 
 const AcompanhamentoFaturamento = () => {
   const { 
@@ -22,6 +25,8 @@ const AcompanhamentoFaturamento = () => {
     selectedYear,
     selectedMonth
   } = useApprovedOrders();
+  
+  const { toast } = useToast();
   
   const [totals, setTotals] = useState({
     valorTotal: 0,
@@ -52,6 +57,91 @@ const AcompanhamentoFaturamento = () => {
 
   const handleExpandToggle = (id: string) => {
     setExpandedCard(expandedCard === id ? null : id);
+  };
+  
+  const handleExportToExcel = (orderId: string) => {
+    const orderToExport = approvedOrders.find(order => order.separacaoId === orderId);
+    
+    if (!orderToExport || !orderToExport.clienteData) {
+      toast({
+        title: "Erro ao exportar",
+        description: "Dados insuficientes para exportação",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const approvedSeparacao = orderToExport.clienteData.separacoes && 
+      orderToExport.clienteData.separacoes.length > 0 ? 
+      orderToExport.clienteData.separacoes.find(
+        sep => sep && sep.id === orderToExport.separacaoId
+      ) : null;
+    
+    if (!approvedSeparacao) {
+      toast({
+        title: "Erro ao exportar",
+        description: "Não foi possível encontrar os dados da separação",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Prepare header data
+    const headerData = [
+      {
+        Cliente: orderToExport.clienteData.APELIDO || 'Cliente sem nome',
+        'Data de Aprovação': new Date(orderToExport.approvedAt).toLocaleString('pt-BR'),
+        'Aprovado por': orderToExport.userEmail || 'Não informado',
+        Status: 'Aprovado',
+        'Valor Total': approvedSeparacao.valor_total || 0,
+        'Quantidade de Itens': approvedSeparacao.quantidade_itens || 0
+      }
+    ];
+    
+    // Prepare items data (with 2 empty rows after header)
+    let itemsData = [];
+    
+    if (approvedSeparacao.separacao_itens && approvedSeparacao.separacao_itens.length > 0) {
+      // Add empty rows
+      itemsData.push({ 'Pedido': '', 'SKU': '', 'Descrição': '' });
+      itemsData.push({ 'Pedido': '', 'SKU': '', 'Descrição': '' });
+      
+      // Add items
+      itemsData = [
+        ...itemsData,
+        ...approvedSeparacao.separacao_itens.map(item => ({
+          'Pedido': item.pedido || '-',
+          'SKU': item.item_codigo || '-',
+          'Descrição': item.descricao || '-',
+          'Quantidade': item.quantidade_pedida || 0,
+          'Valor Unitário': item.valor_unitario || 0,
+          'Valor Total': item.valor_total || 0
+        }))
+      ];
+    }
+    
+    // Combine data
+    const exportData = [...headerData, ...itemsData];
+    
+    // Export to Excel
+    const clientName = orderToExport.clienteData.APELIDO || 'cliente';
+    const fileName = `pedido-aprovado-${clientName}-${format(new Date(), 'dd-MM-yyyy')}`;
+    
+    const exportedCount = exportToExcel(exportData, fileName);
+    
+    if (exportedCount > 0) {
+      toast({
+        title: "Exportação concluída",
+        description: `${exportedCount} registros exportados com sucesso`,
+        variant: "default",
+      });
+    } else {
+      toast({
+        title: "Erro na exportação",
+        description: "Não foi possível exportar os dados",
+        variant: "destructive",
+      });
+    }
   };
 
   if (isLoading) {
@@ -135,11 +225,22 @@ const AcompanhamentoFaturamento = () => {
                           </p>
                         )}
                       </div>
-                      <div 
-                        className="bg-green-100 text-green-800 font-medium py-1 px-3 rounded-full text-xs cursor-pointer"
-                        onClick={() => handleExpandToggle(order.separacaoId)}
-                      >
-                        {isExpanded ? 'Recolher' : 'Expandir'}
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 px-2 flex items-center gap-1 text-xs"
+                          onClick={() => handleExportToExcel(order.separacaoId)}
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                          Exportar
+                        </Button>
+                        <div 
+                          className="bg-green-100 text-green-800 font-medium py-1 px-3 rounded-full text-xs cursor-pointer"
+                          onClick={() => handleExpandToggle(order.separacaoId)}
+                        >
+                          {isExpanded ? 'Recolher' : 'Expandir'}
+                        </div>
                       </div>
                     </div>
                   </CardHeader>

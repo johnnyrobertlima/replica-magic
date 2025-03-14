@@ -51,12 +51,12 @@ export const SeparacaoCard = ({ separacao, expandedView = false, onExpandToggle 
     const newExpandedState = !isExpanded;
     setIsExpanded(newExpandedState);
     
-    if (onExpandToggle) {
+    if (onExpandToggle && separacao) {
       onExpandToggle(separacao.id, newExpandedState);
     }
   };
 
-  // Safe access to status
+  // Safe access to status with fallback
   const statusDisplay = separacao && separacao.status 
     ? separacao.status.replace('_', ' ') 
     : 'pendente';
