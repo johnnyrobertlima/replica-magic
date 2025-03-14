@@ -124,6 +124,11 @@ const AcompanhamentoFaturamento = () => {
                         <p className="text-sm text-gray-500 mt-1">
                           Aprovado em: {order.approvedAt.toLocaleString('pt-BR')}
                         </p>
+                        {order.userEmail && (
+                          <p className="text-xs text-gray-500">
+                            Por: {order.userEmail} ({order.action === 'approved' ? 'Aprovado' : 'Reprovado'})
+                          </p>
+                        )}
                       </div>
                       <div 
                         className="bg-green-100 text-green-800 font-medium py-1 px-3 rounded-full text-xs cursor-pointer"
@@ -140,6 +145,7 @@ const AcompanhamentoFaturamento = () => {
                       onUpdateVolumeSaudavel={() => Promise.resolve({ success: true })}
                       onHideCard={() => {}}
                       onApprove={() => {}}
+                      onReject={() => {}}
                       expandedView={isExpanded}
                       showApprovalButtons={false}
                     />

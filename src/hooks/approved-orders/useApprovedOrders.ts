@@ -29,7 +29,7 @@ export const useApprovedOrders = () => {
         setIsLoading(true);
         
         // Load orders for the selected month
-        const filteredOrders = loadApprovedOrders(selectedYear, selectedMonth);
+        const filteredOrders = await loadApprovedOrders(selectedYear, selectedMonth);
         console.log(`useApprovedOrders: Loaded ${filteredOrders.length} orders for ${selectedYear}-${selectedMonth}`, filteredOrders);
         
         // Get all pedido numbers and item codes from the filtered orders

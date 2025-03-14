@@ -48,7 +48,7 @@ export const useApprovedOrdersStorage = () => {
       // Process Supabase orders
       const processedOrders = supabaseOrders.map(order => ({
         separacaoId: order.separacao_id,
-        clienteData: order.cliente_data as ClienteFinanceiro,
+        clienteData: order.cliente_data as unknown as ClienteFinanceiro,
         approvedAt: new Date(order.approved_at),
         userId: order.user_id,
         userEmail: order.user_email,
@@ -83,12 +83,12 @@ export const useApprovedOrdersStorage = () => {
         action
       };
       
-      // Save to Supabase
+      // Save to Supabase - convert clienteData to a JSON object
       const { error } = await supabase
         .from('approved_orders')
         .insert({
           separacao_id: separacaoId,
-          cliente_data: clienteData,
+          cliente_data: clienteData as any, // Cast to any to avoid type issues
           approved_at: newOrder.approvedAt.toISOString(),
           user_id: userId,
           user_email: userEmail,
@@ -125,6 +125,8 @@ export const useApprovedOrdersStorage = () => {
           separacaoId,
           clienteData,
           approvedAt: new Date(),
+          userId,
+          userEmail,
           action
         };
         
