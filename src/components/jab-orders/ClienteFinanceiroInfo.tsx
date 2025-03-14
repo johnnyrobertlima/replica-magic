@@ -1,6 +1,6 @@
 
 import { formatCurrency } from "@/lib/utils";
-import { ArrowTrendingUp, Ban, CreditCard, Wallet } from "lucide-react";
+import { TrendingUp, Ban, CreditCard, Wallet } from "lucide-react";
 
 interface ClienteFinanceiroInfoProps {
   valoresTotais: number;
@@ -47,7 +47,7 @@ export const ClienteFinanceiroInfo = ({
         
         <div className="bg-white p-3 rounded-lg border space-y-1.5 shadow-sm">
           <span className="text-sm text-muted-foreground flex items-center gap-1.5">
-            <ArrowTrendingUp className="h-4 w-4 text-green-500" />
+            <TrendingUp className="h-4 w-4 text-green-500" />
             Volume Saudável
           </span>
           <p className="font-medium text-lg">
