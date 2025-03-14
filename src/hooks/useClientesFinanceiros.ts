@@ -21,6 +21,7 @@ export const useClientesFinanceiros = () => {
   const [clientesFinanceiros, setClientesFinanceiros] = useState<ClienteFinanceiro[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hiddenCards, setHiddenCards] = useState<Set<string>>(new Set());
+  const [dataLoadingComplete, setDataLoadingComplete] = useState(false);
 
   // Get separações pendentes with memoization
   const getSeparacoesPendentesCallback = useCallback(() => {
@@ -60,6 +61,9 @@ export const useClientesFinanceiros = () => {
   };
 
   useEffect(() => {
+    // Prevent repeated data fetching
+    if (dataLoadingComplete) return;
+
     const fetchFinancialData = async () => {
       try {
         setIsLoading(true);
@@ -70,6 +74,7 @@ export const useClientesFinanceiros = () => {
         if (clientesCodigos.length === 0) {
           setClientesFinanceiros([]);
           setIsLoading(false);
+          setDataLoadingComplete(true);
           return;
         }
 
@@ -118,8 +123,10 @@ export const useClientesFinanceiros = () => {
           }
         }
         
-        // Use the shared utility function to fetch representante names
+        // Fetch representante names
+        console.log("Fetching representative names for codes:", Array.from(representantesCodigos));
         const representantesInfo = await fetchRepresentanteNames(Array.from(representantesCodigos));
+        console.log("Fetched representative data:", Array.from(representantesInfo.entries()));
 
         // Create today's date with hours set to 0 to compare only dates
         const today = new Date();
@@ -136,12 +143,14 @@ export const useClientesFinanceiros = () => {
         );
         
         // Now fetch overdue values directly for each client
-        for (const cliente of clientesArray) {
+        const updatedClientes = [...clientesArray];
+        for (const cliente of updatedClientes) {
           const valorVencido = await fetchValoresVencidos(cliente.PES_CODIGO);
           cliente.valoresVencidos = valorVencido;
         }
         
-        setClientesFinanceiros(clientesArray);
+        setClientesFinanceiros(updatedClientes);
+        setDataLoadingComplete(true);
       } catch (error) {
         console.error("Erro ao buscar dados financeiros:", error);
         toast({
@@ -149,13 +158,26 @@ export const useClientesFinanceiros = () => {
           description: "Não foi possível carregar os dados financeiros.",
           variant: "destructive",
         });
+        setDataLoadingComplete(true);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchFinancialData();
-  }, [getSeparacoesPendentesCallback, getClientesCodigosCallback, toast]);
+  }, [
+    getSeparacoesPendentesCallback, 
+    getClientesCodigosCallback, 
+    toast, 
+    dataLoadingComplete
+  ]);
+
+  // Reset dataLoadingComplete if dependencies change
+  useEffect(() => {
+    if (separacoes.length > 0 && hiddenCards.size > 0) {
+      setDataLoadingComplete(false);
+    }
+  }, [separacoes, hiddenCards]);
 
   return {
     clientesFinanceiros,

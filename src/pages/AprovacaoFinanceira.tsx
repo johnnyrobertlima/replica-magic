@@ -7,7 +7,7 @@ import { ClienteFinanceiroCard } from "@/components/jab-orders/ClienteFinanceiro
 import { useApprovedOrders } from "@/hooks/useApprovedOrders";
 import JabNavMenu from "@/components/jab-orders/JabNavMenu";
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 const AprovacaoFinanceira = () => {
@@ -39,23 +39,24 @@ const AprovacaoFinanceira = () => {
     getCurrentUser();
   }, []);
   
-  // Fix the infinite loop by controlling when we load approved orders
-  useEffect(() => {
+  // Load approved orders only when year/month changes or component mounts
+  const loadApproved = useCallback(async () => {
     if (loadedApproved) return;
     
-    const loadApproved = async () => {
-      try {
-        const approvedOrders = await loadApprovedOrders(selectedYear, selectedMonth);
-        const approvedIds = new Set(approvedOrders.map(order => order.separacaoId));
-        setApprovedSeparacaoIds(approvedIds);
-        setLoadedApproved(true);
-      } catch (error) {
-        console.error("Error loading approved orders:", error);
-      }
-    };
-    
-    loadApproved();
+    try {
+      const approvedOrders = await loadApprovedOrders(selectedYear, selectedMonth);
+      const approvedIds = new Set(approvedOrders.map(order => order.separacaoId));
+      setApprovedSeparacaoIds(approvedIds);
+      setLoadedApproved(true);
+    } catch (error) {
+      console.error("Error loading approved orders:", error);
+      setLoadedApproved(true); // Still mark as loaded to prevent endless retry
+    }
   }, [loadApprovedOrders, selectedYear, selectedMonth, loadedApproved]);
+
+  useEffect(() => {
+    loadApproved();
+  }, [loadApproved]);
 
   // Reset loaded flag when month/year changes
   useEffect(() => {

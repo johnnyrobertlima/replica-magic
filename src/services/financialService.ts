@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { ClienteFinanceiro } from "@/types/financialClient";
 import { calculateClientFinancialValues, fetchTitulosVencidos } from "@/utils/financialUtils";
@@ -37,17 +38,6 @@ export const fetchPedidosForRepresentantes = async (numeroPedidos: string[]) => 
   return pedidos;
 };
 
-// Fetch representantes info
-export const fetchRepresentantesInfo = async (representantesCodigos: number[]) => {
-  const { data: representantes, error } = await supabase
-    .from('BLUEBAY_PESSOA')
-    .select('PES_CODIGO, RAZAOSOCIAL')
-    .in('PES_CODIGO', representantesCodigos);
-
-  if (error) throw error;
-  return representantes;
-};
-
 // Process clients data with financial information
 export const processClientsData = (
   clientes: any[],
@@ -65,7 +55,12 @@ export const processClientsData = (
       if (cliente.PES_CODIGO) {
         // Get representante for this cliente
         const representanteCodigo = clienteToRepresentanteMap.get(cliente.PES_CODIGO);
-        const representanteNome = representanteCodigo ? representantesInfo.get(representanteCodigo) || null : null;
+        const representanteNome = representanteCodigo 
+          ? representantesInfo.get(representanteCodigo) || `Rep. ${representanteCodigo}` 
+          : "Não informado";
+        
+        // Debug log to check what's being assigned
+        console.log(`Cliente ${cliente.PES_CODIGO}: Rep.code=${representanteCodigo}, Rep.name=${representanteNome}`);
         
         clientesMap.set(cliente.PES_CODIGO, {
           PES_CODIGO: cliente.PES_CODIGO,

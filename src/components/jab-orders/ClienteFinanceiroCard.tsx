@@ -1,7 +1,8 @@
+
 import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, User } from "lucide-react";
 import { SeparacaoCard } from "@/components/jab-orders/SeparacaoCard";
 import { ClienteFinanceiroInfo } from "@/components/jab-orders/ClienteFinanceiroInfo";
 import { VolumeSaudavelDialog } from "@/components/jab-orders/VolumeSaudavelDialog";
@@ -79,8 +80,9 @@ export const ClienteFinanceiroCard = ({
         <div className="flex items-center justify-between">
           <div>
             <CardTitle>{clienteNome}</CardTitle>
-            <CardDescription>
-              Representante: {representanteNome}
+            <CardDescription className="flex items-center gap-1 mt-1">
+              <User className="h-3.5 w-3.5" />
+              <span>Representante: {representanteNome}</span>
             </CardDescription>
           </div>
           <div className="flex flex-col items-end gap-2">
