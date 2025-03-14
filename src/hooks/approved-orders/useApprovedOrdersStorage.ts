@@ -1,33 +1,16 @@
 
 import { useState, useCallback } from 'react';
 import { ApprovedOrder } from './types';
-import { supabase } from '@/integrations/supabase/client';
-
-// Create simple flat types to avoid deep instantiation issues
-type SeparacaoItemFlat = {
-  pedido: string;
-  item_codigo: string | null;
-  quantidade_pedida: number | null;
-  valor_unitario: number | null;
-};
-
-type SeparacaoFlat = {
-  id: string;
-  valor_total: number | null;
-  quantidade_itens: number | null;
-  separacao_itens_flat: SeparacaoItemFlat[] | null;
-};
-
-type StoredClienteData = {
-  PES_CODIGO: number;
-  APELIDO: string | null;
-  volume_saudavel_faturamento: number | null;
-  valoresTotais: number;
-  valoresEmAberto: number;
-  valoresVencidos: number;
-  representanteNome: string | null;
-  separacoes: SeparacaoFlat[];
-};
+import { 
+  fetchApprovedOrdersFromSupabase, 
+  processSupabaseOrders,
+  saveToSupabase,
+  createSimplifiedClienteData
+} from './utils/supabaseUtils';
+import {
+  loadFromLocalStorage,
+  saveToLocalStorage
+} from './utils/localStorageUtils';
 
 export const useApprovedOrdersStorage = () => {
   const [approvedOrders, setApprovedOrders] = useState<ApprovedOrder[]>([]);
@@ -35,66 +18,27 @@ export const useApprovedOrdersStorage = () => {
   // Load approved orders with month filtering
   const loadApprovedOrders = useCallback(async (selectedYear: number, selectedMonth: number) => {
     try {
-      // Format month with leading zero for single-digit months
-      const formattedMonth = selectedMonth < 10 ? `0${selectedMonth}` : selectedMonth.toString();
-      const startDateStr = `${selectedYear}-${formattedMonth}-01`;
-      const endMonthDay = new Date(selectedYear, selectedMonth, 0).getDate();
-      const endDateStr = `${selectedYear}-${formattedMonth}-${endMonthDay}`;
-      
-      console.log(`Buscando aprovações entre ${startDateStr} e ${endDateStr}`);
-      
-      // Use between dates instead of LIKE pattern for proper type handling
-      const { data: supabaseOrders, error } = await supabase
-        .from('approved_orders')
-        .select('*')
-        .gte('approved_at', startDateStr)
-        .lte('approved_at', endDateStr)
-        .order('approved_at', { ascending: false });
-
-      if (error) {
-        console.error('Error loading approved orders from Supabase:', error);
-        
-        // Fallback to localStorage if Supabase fails
-        const savedOrders = localStorage.getItem('approvedOrders');
-        
-        if (savedOrders) {
-          // Convert string dates back to Date objects
-          const allOrders = JSON.parse(savedOrders, (key, value) => {
-            if (key === 'approvedAt') return new Date(value);
-            return value;
-          }) as ApprovedOrder[];
-          
-          // Filter by selected month and year
-          const filteredOrders = allOrders.filter(order => {
-            const approvalDate = new Date(order.approvedAt);
-            return approvalDate.getFullYear() === selectedYear && 
-                   approvalDate.getMonth() + 1 === selectedMonth;
-          });
-          
-          setApprovedOrders(filteredOrders);
-          return filteredOrders;
-        }
-        
-        setApprovedOrders([]);
-        return [];
-      }
+      // Try to get from Supabase first
+      const supabaseOrders = await fetchApprovedOrdersFromSupabase(selectedYear, selectedMonth);
       
       // Process Supabase orders
-      const processedOrders = supabaseOrders.map(order => ({
-        separacaoId: order.separacao_id,
-        clienteData: order.cliente_data as unknown as any, // Use any to break the circular reference
-        approvedAt: new Date(order.approved_at),
-        userId: order.user_id,
-        userEmail: order.user_email,
-        action: order.action
-      }));
+      const processedOrders = processSupabaseOrders(supabaseOrders);
       
       setApprovedOrders(processedOrders);
       return processedOrders;
     } catch (error) {
-      console.error('Error loading approved orders:', error);
-      setApprovedOrders([]);
-      return [];
+      console.error('Error loading from Supabase, falling back to localStorage');
+      
+      // Fallback to localStorage if Supabase fails
+      try {
+        const localStorageOrders = loadFromLocalStorage(selectedYear, selectedMonth);
+        setApprovedOrders(localStorageOrders);
+        return localStorageOrders;
+      } catch (localStorageError) {
+        console.error('Error loading from localStorage:', localStorageError);
+        setApprovedOrders([]);
+        return [];
+      }
     }
   }, []);
 
@@ -117,48 +61,21 @@ export const useApprovedOrdersStorage = () => {
         action
       };
       
-      // Extract only the needed separacao data
-      const relevantSeparacao = clienteData.separacoes.find((sep: any) => sep.id === separacaoId);
+      // Create simplified client data for storage
+      const simplifiedClienteData = createSimplifiedClienteData(clienteData, separacaoId);
       
-      // Create flattened version of clienteData for storage
-      const simplifiedClienteData: StoredClienteData = {
-        PES_CODIGO: clienteData.PES_CODIGO,
-        APELIDO: clienteData.APELIDO,
-        volume_saudavel_faturamento: clienteData.volume_saudavel_faturamento,
-        valoresTotais: clienteData.valoresTotais,
-        valoresEmAberto: clienteData.valoresEmAberto,
-        valoresVencidos: clienteData.valoresVencidos,
-        representanteNome: clienteData.representanteNome,
-        separacoes: relevantSeparacao ? [{
-          id: relevantSeparacao.id,
-          valor_total: relevantSeparacao.valor_total || null,
-          quantidade_itens: relevantSeparacao.quantidade_itens || null,
-          // Flatten separacao_itens to avoid deep nesting
-          separacao_itens_flat: relevantSeparacao.separacao_itens ? 
-            relevantSeparacao.separacao_itens.map((item: any) => ({
-              pedido: item.pedido,
-              item_codigo: item.item_codigo || null,
-              quantidade_pedida: item.quantidade_pedida || null,
-              valor_unitario: item.valor_unitario || null
-            })) : null
-        }] : []
-      };
-      
-      // Save to Supabase with simplified data
-      const { error } = await supabase
-        .from('approved_orders')
-        .insert({
-          separacao_id: separacaoId,
-          cliente_data: simplifiedClienteData,
-          approved_at: newOrder.approvedAt.toISOString(),
-          user_id: userId,
-          user_email: userEmail,
-          action: action
-        });
-      
-      if (error) {
-        console.error('Error saving to Supabase:', error);
-        // Continue with localStorage as fallback
+      // Save to Supabase
+      try {
+        await saveToSupabase(
+          separacaoId,
+          simplifiedClienteData,
+          newOrder.approvedAt,
+          userId,
+          userEmail,
+          action
+        );
+      } catch (error) {
+        console.error('Supabase save failed, continuing with localStorage:', error);
       }
       
       // Update local state
@@ -171,13 +88,13 @@ export const useApprovedOrdersStorage = () => {
         const newOrders = [...prevOrders, newOrder];
         
         // Save to localStorage as backup
-        localStorage.setItem('approvedOrders', JSON.stringify(newOrders));
+        saveToLocalStorage(newOrders);
         
         return newOrders;
       });
     } catch (error) {
       console.error('Error adding approved order:', error);
-      // Fall back to previous implementation
+      // Fall back to simpler implementation
       setApprovedOrders(prevOrders => {
         const exists = prevOrders.some(order => order.separacaoId === separacaoId);
         if (exists) return prevOrders;
@@ -192,7 +109,7 @@ export const useApprovedOrdersStorage = () => {
         };
         
         const newOrders = [...prevOrders, newOrder];
-        localStorage.setItem('approvedOrders', JSON.stringify(newOrders));
+        saveToLocalStorage(newOrders);
         
         return newOrders;
       });
