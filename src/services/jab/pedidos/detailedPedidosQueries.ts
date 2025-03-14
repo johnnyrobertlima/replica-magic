@@ -20,7 +20,8 @@ export async function fetchPedidosDetalhados(numeroPedidos: string[]) {
   // Busca cada lote de pedidos
   const allResults = [];
   for (const batch of batches) {
-    const { data, error } = await supabase
+    // Get the pedido data first
+    const { data: pedidosData, error: pedidosError } = await supabase
       .from('BLUEBAY_PEDIDO')
       .select(`
         MATRIZ,
@@ -36,30 +37,50 @@ export async function fetchPedidosDetalhados(numeroPedidos: string[]) {
         QTDE_PEDIDA,
         QTDE_ENTREGUE,
         DATA_PEDIDO,
-        REPRESENTANTE,
-        BLUEBAY_ITEM!inner (
-          DESCRICAO
-        )
+        REPRESENTANTE
       `)
       .eq('CENTROCUSTO', 'JAB')
       .in('STATUS', ['1', '2'])
       .in('PED_NUMPEDIDO', batch);
 
-    if (error) {
-      console.error('Erro ao buscar detalhes dos pedidos:', error);
-      throw error;
+    if (pedidosError) {
+      console.error('Erro ao buscar detalhes dos pedidos:', pedidosError);
+      throw pedidosError;
     }
     
-    if (data) {
-      // Flatten the response to include the description directly
-      const flattenedData = data.map(pedido => ({
+    if (pedidosData) {
+      // Now for each item, get the description from BLUEBAY_ITEM
+      const itemCodes = pedidosData
+        .map(pedido => pedido.ITEM_CODIGO)
+        .filter(Boolean);
+      
+      // Create a map of item codes to descriptions
+      const itemDescriptions: Record<string, string> = {};
+      
+      if (itemCodes.length > 0) {
+        const { data: itemsData, error: itemsError } = await supabase
+          .from('BLUEBAY_ITEM')
+          .select('ITEM_CODIGO, DESCRICAO')
+          .in('ITEM_CODIGO', itemCodes);
+          
+        if (itemsError) {
+          console.error('Erro ao buscar descrições dos itens:', itemsError);
+        } else if (itemsData) {
+          itemsData.forEach(item => {
+            if (item.ITEM_CODIGO) {
+              itemDescriptions[item.ITEM_CODIGO] = item.DESCRICAO || '';
+            }
+          });
+        }
+      }
+      
+      // Merge the data
+      const mergedData = pedidosData.map(pedido => ({
         ...pedido,
-        DESCRICAO: pedido.BLUEBAY_ITEM?.DESCRICAO || null,
-        // Remove the nested BLUEBAY_ITEM object
-        BLUEBAY_ITEM: undefined
+        DESCRICAO: pedido.ITEM_CODIGO ? itemDescriptions[pedido.ITEM_CODIGO] || null : null
       }));
       
-      allResults.push(...flattenedData);
+      allResults.push(...mergedData);
     }
   }
 
