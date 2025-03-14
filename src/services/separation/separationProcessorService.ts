@@ -21,6 +21,7 @@ export const processSelectedItems = (
     APELIDO: string | null;
   }> = [];
 
+  // Only collect items that are specifically in the selectedItems array
   Object.values(groupedOrders).forEach(group => {
     group.allItems.forEach(item => {
       if (selectedItems.includes(item.ITEM_CODIGO)) {

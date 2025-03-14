@@ -12,6 +12,8 @@ interface OrderItem {
   FISICO?: number | null;
   VALOR_UNITARIO: number;
   emSeparacao?: boolean;
+  PES_CODIGO?: string | number | null;
+  APELIDO?: string | null;
 }
 
 interface ClientOrderItemsTableProps {
