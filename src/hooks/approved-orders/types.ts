@@ -5,6 +5,9 @@ export interface ApprovedOrder {
   separacaoId: string;
   clienteData: ClienteFinanceiro;
   approvedAt: Date;
+  userId?: string | null;
+  userEmail?: string | null;
+  action?: string;
 }
 
 export interface OrderTotals {

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,9 +12,10 @@ interface ClienteFinanceiroCardProps {
   cliente: ClienteFinanceiro;
   onUpdateVolumeSaudavel: (clienteCodigo: number, valor: number) => Promise<{ success: boolean; error?: any }>;
   onHideCard: (id: string) => void;
-  onApprove: (separacaoId: string, clienteData: ClienteFinanceiro) => void;
-  expandedView?: boolean; // Add the expandedView prop as an optional boolean
-  showApprovalButtons?: boolean; // Add this prop to control button visibility
+  onApprove: (separacaoId: string) => void;
+  onReject: (separacaoId: string) => void;
+  expandedView?: boolean;
+  showApprovalButtons?: boolean;
 }
 
 export const ClienteFinanceiroCard = ({ 
@@ -23,8 +23,9 @@ export const ClienteFinanceiroCard = ({
   onUpdateVolumeSaudavel,
   onHideCard,
   onApprove,
-  expandedView = false, // Default to false if not provided
-  showApprovalButtons = true // Default to showing buttons if not specified
+  onReject,
+  expandedView = false,
+  showApprovalButtons = true
 }: ClienteFinanceiroCardProps) => {
   const [isExpanded, setIsExpanded] = useState(expandedView);
   const [expandedSeparacoes, setExpandedSeparacoes] = useState<string[]>([]);
@@ -46,8 +47,7 @@ export const ClienteFinanceiroCard = ({
   };
 
   const handleAprovar = (id: string) => {
-    // Call the onApprove function with the separacaoId and cliente data
-    onApprove(id, cliente);
+    onApprove(id);
     
     toast({
       title: "Sucesso",
@@ -55,16 +55,18 @@ export const ClienteFinanceiroCard = ({
       variant: "default",
     });
     
-    // Hide the card from the current view
     onHideCard(id);
   };
 
   const handleReprovar = (id: string) => {
+    onReject(id);
+    
     toast({
       title: "Aviso",
       description: "Pedido reprovado!",
       variant: "destructive",
     });
+    
     onHideCard(id);
   };
 
@@ -105,7 +107,6 @@ export const ClienteFinanceiroCard = ({
       </CardHeader>
       
       <CardContent className="space-y-6">
-        {/* Informações Financeiras */}
         <ClienteFinanceiroInfo
           valoresTotais={cliente.valoresTotais}
           valoresEmAberto={cliente.valoresEmAberto}
@@ -113,7 +114,6 @@ export const ClienteFinanceiroCard = ({
           volumeSaudavel={cliente.volume_saudavel_faturamento}
         />
 
-        {/* Pedidos do Cliente */}
         <div>
           <h3 className="font-semibold text-lg mb-2">Pedidos Pendentes</h3>
           <div className="space-y-4">

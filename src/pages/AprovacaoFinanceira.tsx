@@ -1,3 +1,4 @@
+
 import { Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Toaster } from "@/components/ui/toaster";
@@ -7,6 +8,7 @@ import { useApprovedOrders } from "@/hooks/useApprovedOrders";
 import JabNavMenu from "@/components/jab-orders/JabNavMenu";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const AprovacaoFinanceira = () => {
   const { 
@@ -19,10 +21,26 @@ const AprovacaoFinanceira = () => {
 
   const { addApprovedOrder, loadApprovedOrders, selectedYear, selectedMonth } = useApprovedOrders();
   const [approvedSeparacaoIds, setApprovedSeparacaoIds] = useState<Set<string>>(new Set());
+  const [currentUser, setCurrentUser] = useState<{ id?: string; email?: string } | null>(null);
+  
+  useEffect(() => {
+    // Get current user
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUser({
+          id: user.id,
+          email: user.email || undefined
+        });
+      }
+    };
+    
+    getCurrentUser();
+  }, []);
   
   useEffect(() => {
     const loadApproved = async () => {
-      const approvedOrders = loadApprovedOrders(selectedYear, selectedMonth);
+      const approvedOrders = await loadApprovedOrders(selectedYear, selectedMonth);
       const approvedIds = new Set(approvedOrders.map(order => order.separacaoId));
       setApprovedSeparacaoIds(approvedIds);
     };
@@ -42,6 +60,38 @@ const AprovacaoFinanceira = () => {
     ...cliente,
     separacoes: cliente.separacoes.filter(separacao => !approvedSeparacaoIds.has(separacao.id))
   }));
+
+  const handleApprove = (separacaoId: string, cliente: any) => {
+    addApprovedOrder(
+      separacaoId, 
+      cliente, 
+      currentUser?.email || null,
+      currentUser?.id || null,
+      'approved'
+    );
+    
+    setApprovedSeparacaoIds(prev => {
+      const newSet = new Set(prev);
+      newSet.add(separacaoId);
+      return newSet;
+    });
+  };
+  
+  const handleReject = (separacaoId: string, cliente: any) => {
+    addApprovedOrder(
+      separacaoId, 
+      cliente, 
+      currentUser?.email || null,
+      currentUser?.id || null,
+      'rejected'
+    );
+    
+    setApprovedSeparacaoIds(prev => {
+      const newSet = new Set(prev);
+      newSet.add(separacaoId);
+      return newSet;
+    });
+  };
 
   if (isLoading || isLoadingSeparacoes) {
     return (
@@ -81,14 +131,8 @@ const AprovacaoFinanceira = () => {
                 cliente={cliente}
                 onUpdateVolumeSaudavel={updateVolumeSaudavel}
                 onHideCard={hideCard}
-                onApprove={(separacaoId) => {
-                  addApprovedOrder(separacaoId, cliente);
-                  setApprovedSeparacaoIds(prev => {
-                    const newSet = new Set(prev);
-                    newSet.add(separacaoId);
-                    return newSet;
-                  });
-                }}
+                onApprove={(separacaoId) => handleApprove(separacaoId, cliente)}
+                onReject={(separacaoId) => handleReject(separacaoId, cliente)}
               />
             ))
           ) : (

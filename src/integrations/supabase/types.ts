@@ -93,6 +93,36 @@ export type Database = {
         }
         Relationships: []
       }
+      approved_orders: {
+        Row: {
+          action: string | null
+          approved_at: string | null
+          cliente_data: Json
+          id: string
+          separacao_id: string
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action?: string | null
+          approved_at?: string | null
+          cliente_data: Json
+          id?: string
+          separacao_id: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string | null
+          approved_at?: string | null
+          cliente_data?: Json
+          id?: string
+          separacao_id?: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       banners: {
         Row: {
           button_link: string | null
