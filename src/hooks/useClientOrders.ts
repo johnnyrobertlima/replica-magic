@@ -117,7 +117,8 @@ export const useClientOrders = () => {
   const {
     totalSelecionado,
     handleItemSelect,
-    exportSelectedItemsToExcel
+    exportSelectedItemsToExcel,
+    clearSelections
   } = useItemSelection(state, setState, filteredGroups);
 
   // Use the separation operations hook
@@ -160,5 +161,6 @@ export const useClientOrders = () => {
     handleItemSelect,
     handleEnviarParaSeparacao,
     exportSelectedItemsToExcel,
+    clearSelections,
   };
 };

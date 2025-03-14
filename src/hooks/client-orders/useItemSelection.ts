@@ -47,6 +47,14 @@ export const useItemSelection = (
     });
   };
 
+  const clearSelections = () => {
+    setState(prev => ({
+      ...prev,
+      selectedItems: [],
+      selectedItemsDetails: {}
+    }));
+  };
+
   const exportSelectedItemsToExcel = () => {
     if (selectedItems.length === 0) {
       toast({
@@ -137,6 +145,7 @@ export const useItemSelection = (
   return {
     totalSelecionado,
     handleItemSelect,
-    exportSelectedItemsToExcel
+    exportSelectedItemsToExcel,
+    clearSelections
   };
 };

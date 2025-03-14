@@ -1,5 +1,5 @@
 
-import { Loader2, FileSpreadsheet } from "lucide-react";
+import { Loader2, FileSpreadsheet, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
@@ -10,6 +10,7 @@ interface SelectionSummaryProps {
   isSending: boolean;
   onSendToSeparacao: () => void;
   onExportToExcel: () => void;
+  onClearSelections: () => void;
 }
 
 export const SelectionSummary = ({
@@ -17,7 +18,8 @@ export const SelectionSummary = ({
   totalSelecionado,
   isSending,
   onSendToSeparacao,
-  onExportToExcel
+  onExportToExcel,
+  onClearSelections
 }: SelectionSummaryProps) => {
   if (selectedItems.length === 0) {
     return null;
@@ -42,6 +44,15 @@ export const SelectionSummary = ({
       </Card>
       
       <div className="flex gap-2">
+        <Button
+          onClick={onClearSelections}
+          variant="outline"
+          className="bg-white text-destructive border-destructive hover:bg-destructive/10"
+        >
+          <X className="mr-2 h-4 w-4" />
+          Limpar Seleções
+        </Button>
+        
         <Button
           onClick={onExportToExcel}
           variant="outline"

@@ -30,6 +30,7 @@ interface PedidosTabContentProps {
   handleItemSelect: (item: any) => void;
   handleEnviarParaSeparacao: () => void;
   exportSelectedItemsToExcel: () => void;
+  clearSelections: () => void;
 }
 
 export const PedidosTabContent = ({
@@ -51,7 +52,8 @@ export const PedidosTabContent = ({
   handleSearch,
   handleItemSelect,
   handleEnviarParaSeparacao,
-  exportSelectedItemsToExcel
+  exportSelectedItemsToExcel,
+  clearSelections
 }: PedidosTabContentProps) => {
   return (
     <>
@@ -98,6 +100,7 @@ export const PedidosTabContent = ({
         isSending={isSending}
         onSendToSeparacao={handleEnviarParaSeparacao}
         onExportToExcel={exportSelectedItemsToExcel}
+        onClearSelections={clearSelections}
       />
     </>
   );
