@@ -19,6 +19,8 @@ interface SeparacaoCardProps {
       item_codigo: string;
       descricao: string | null;
       quantidade_pedida: number;
+      quantidade_entregue?: number;
+      quantidade_saldo?: number;
       valor_unitario: number;
       valor_total: number;
       pedido: string;
@@ -28,6 +30,8 @@ interface SeparacaoCardProps {
       item_codigo: string;
       descricao?: string | null;
       quantidade_pedida: number;
+      quantidade_entregue?: number;
+      quantidade_saldo?: number;
       valor_unitario: number;
       valor_total?: number;
     }>;
@@ -91,6 +95,8 @@ export const SeparacaoCard = ({ separacao, expandedView = false, onExpandToggle 
         item_codigo: item.item_codigo,
         descricao: item.descricao || null,
         quantidade_pedida: item.quantidade_pedida,
+        quantidade_entregue: item.quantidade_entregue || 0,
+        quantidade_saldo: item.quantidade_saldo || 0,
         valor_unitario: item.valor_unitario,
         valor_total: item.valor_total || (item.quantidade_pedida * item.valor_unitario),
         pedido: item.pedido
@@ -150,10 +156,10 @@ export const SeparacaoCard = ({ separacao, expandedView = false, onExpandToggle 
                     <TableHead>SKU</TableHead>
                     <TableHead>Descrição</TableHead>
                     <TableHead className="text-right">Solicitado</TableHead>
+                    <TableHead className="text-right">Faturado</TableHead>
                     <TableHead className="text-right">Saldo</TableHead>
                     <TableHead className="text-right">Valor Unit.</TableHead>
-                    <TableHead className="text-right">Falta Faturar</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
+                    <TableHead className="text-right">Valor Total</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -163,13 +169,10 @@ export const SeparacaoCard = ({ separacao, expandedView = false, onExpandToggle 
                       <TableCell className="font-medium">{item.item_codigo || '-'}</TableCell>
                       <TableCell>{item.descricao || '-'}</TableCell>
                       <TableCell className="text-right">{item.quantidade_pedida || 0}</TableCell>
-                      {/* For now we'll just use quantidade_pedida as saldo too - this will be replaced in real data */}
-                      <TableCell className="text-right">{item.quantidade_pedida || 0}</TableCell> 
+                      <TableCell className="text-right">{item.quantidade_entregue || 0}</TableCell>
+                      <TableCell className="text-right">{item.quantidade_saldo || 0}</TableCell>
                       <TableCell className="text-right">
                         {formatCurrency(item.valor_unitario || 0)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency((item.quantidade_pedida || 0) * (item.valor_unitario || 0))}
                       </TableCell>
                       <TableCell className="text-right">
                         {formatCurrency(item.valor_total || 0)}

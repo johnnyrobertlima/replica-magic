@@ -1,5 +1,14 @@
 
 import { FileText } from "lucide-react";
+import { 
+  Table, 
+  TableHeader, 
+  TableRow, 
+  TableHead, 
+  TableBody, 
+  TableCell 
+} from "@/components/ui/table";
+import { formatCurrency } from "@/lib/utils";
 
 interface PedidosIncluidosProps {
   approvedSeparacao: any;
@@ -16,18 +25,41 @@ export const PedidosIncluidos = ({ approvedSeparacao }: PedidosIncluidosProps) =
         <FileText className="h-4 w-4" /> 
         Pedidos incluídos:
       </h4>
-      <div className="flex flex-wrap gap-2">
-        {Array.from(
-          new Set(
-            approvedSeparacao.separacao_itens_flat
+      
+      <div className="overflow-x-auto">
+        <Table className="text-xs w-full">
+          <TableHeader>
+            <TableRow>
+              <TableHead>Pedido</TableHead>
+              <TableHead>SKU</TableHead>
+              <TableHead>Descrição</TableHead>
+              <TableHead className="text-right">Solicitado</TableHead>
+              <TableHead className="text-right">Faturado</TableHead>
+              <TableHead className="text-right">Saldo</TableHead>
+              <TableHead className="text-right">Valor Unit.</TableHead>
+              <TableHead className="text-right">Valor Total</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {approvedSeparacao.separacao_itens_flat
               .filter(item => item && item.pedido)
-              .map(item => item.pedido)
-          )
-        ).map((pedido, index) => (
-          <span key={`pedido-${index}`} className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded">
-            {String(pedido)}
-          </span>
-        ))}
+              .map((item, index) => {
+                const valorTotal = (item.quantidade_pedida || 0) * (item.valor_unitario || 0);
+                return (
+                  <TableRow key={`item-${item.pedido}-${item.item_codigo}-${index}`}>
+                    <TableCell>{item.pedido}</TableCell>
+                    <TableCell>{item.item_codigo}</TableCell>
+                    <TableCell>{item.descricao || 'Sem descrição'}</TableCell>
+                    <TableCell className="text-right">{item.quantidade_pedida || 0}</TableCell>
+                    <TableCell className="text-right">{item.quantidade_entregue || 0}</TableCell>
+                    <TableCell className="text-right">{item.quantidade_saldo || (item.quantidade_pedida - (item.quantidade_entregue || 0))}</TableCell>
+                    <TableCell className="text-right">{formatCurrency(item.valor_unitario || 0)}</TableCell>
+                    <TableCell className="text-right">{formatCurrency(valorTotal)}</TableCell>
+                  </TableRow>
+                );
+              })}
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

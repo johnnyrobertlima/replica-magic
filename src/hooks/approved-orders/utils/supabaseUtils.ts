@@ -6,8 +6,12 @@ import { ApprovedOrder } from '../types';
 type SeparacaoItemFlat = {
   pedido: string;
   item_codigo: string | null;
+  descricao: string | null;
   quantidade_pedida: number | null;
+  quantidade_entregue: number | null;
+  quantidade_saldo: number | null;
   valor_unitario: number | null;
+  valor_total?: number | null;
 };
 
 type SeparacaoFlat = {
@@ -128,8 +132,12 @@ export const createSimplifiedClienteData = (
         relevantSeparacao.separacao_itens.map((item: any) => ({
           pedido: item.pedido,
           item_codigo: item.item_codigo || null,
+          descricao: item.descricao || null,
           quantidade_pedida: item.quantidade_pedida || null,
-          valor_unitario: item.valor_unitario || null
+          quantidade_entregue: item.quantidade_entregue || null,
+          quantidade_saldo: item.quantidade_saldo || null,
+          valor_unitario: item.valor_unitario || null,
+          valor_total: item.valor_total || null
         })) : null
     }] : []
   };

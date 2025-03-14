@@ -36,7 +36,10 @@ export async function fetchPedidosDetalhados(numeroPedidos: string[]) {
         QTDE_PEDIDA,
         QTDE_ENTREGUE,
         DATA_PEDIDO,
-        REPRESENTANTE
+        REPRESENTANTE,
+        BLUEBAY_ITEM!inner (
+          DESCRICAO
+        )
       `)
       .eq('CENTROCUSTO', 'JAB')
       .in('STATUS', ['1', '2'])
@@ -48,7 +51,15 @@ export async function fetchPedidosDetalhados(numeroPedidos: string[]) {
     }
     
     if (data) {
-      allResults.push(...data);
+      // Flatten the response to include the description directly
+      const flattenedData = data.map(pedido => ({
+        ...pedido,
+        DESCRICAO: pedido.BLUEBAY_ITEM?.DESCRICAO || null,
+        // Remove the nested BLUEBAY_ITEM object
+        BLUEBAY_ITEM: undefined
+      }));
+      
+      allResults.push(...flattenedData);
     }
   }
 
