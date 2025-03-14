@@ -11,6 +11,7 @@ import WhatsAppClientRegistration from "@/pages/WhatsAppClientRegistration";
 import WhatsAppService from "@/pages/WhatsAppService";
 import ClientLogin from "@/pages/ClientLogin";
 import AprovacaoFinanceira from "@/pages/AprovacaoFinanceira";
+import AcompanhamentoFaturamento from "@/pages/AcompanhamentoFaturamento";
 import UserGroupManagement from "@/pages/admin/users/UserGroupManagement";
 
 export const routes = [
@@ -37,6 +38,10 @@ export const routes = [
   {
     path: "/client-area/bluebay/aprovacao-financeira",
     element: <AprovacaoFinanceira />,
+  },
+  {
+    path: "/client-area/bluebay/acompanhamento-faturamento",
+    element: <AcompanhamentoFaturamento />,
   },
   {
     path: "/client-area/content-management",

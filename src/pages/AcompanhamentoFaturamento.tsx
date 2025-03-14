@@ -10,6 +10,7 @@ import { MonthFilterSelect } from "@/components/jab-orders/MonthFilterSelect";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState, useEffect } from "react";
+import { EmptyPendingApprovals } from "@/components/jab-orders/EmptyPendingApprovals";
 
 const AcompanhamentoFaturamento = () => {
   const { 
@@ -97,9 +98,13 @@ const AcompanhamentoFaturamento = () => {
         {approvedOrders.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {approvedOrders.map((order) => {
-              const approvedSeparacao = order.clienteData.separacoes.find(
-                sep => sep.id === order.separacaoId
-              );
+              if (!order || !order.clienteData) return null;
+              
+              const approvedSeparacao = order.clienteData.separacoes && 
+                order.clienteData.separacoes.length > 0 ? 
+                order.clienteData.separacoes.find(
+                  sep => sep && sep.id === order.separacaoId
+                ) : null;
               
               if (!approvedSeparacao) return null;
               
@@ -122,7 +127,7 @@ const AcompanhamentoFaturamento = () => {
                           {order.clienteData.APELIDO || 'Cliente sem nome'}
                         </CardTitle>
                         <p className="text-sm text-gray-500 mt-1">
-                          Aprovado em: {order.approvedAt.toLocaleString('pt-BR')}
+                          Aprovado em: {new Date(order.approvedAt).toLocaleString('pt-BR')}
                         </p>
                         {order.userEmail && (
                           <p className="text-xs text-gray-500">
@@ -150,37 +155,34 @@ const AcompanhamentoFaturamento = () => {
                       showApprovalButtons={false}
                     />
                     
-                    {approvedSeparacao.separacao_itens && approvedSeparacao.separacao_itens.length > 0 && (
+                    {approvedSeparacao.separacao_itens_flat && approvedSeparacao.separacao_itens_flat.length > 0 ? (
                       <div className="mt-4 pt-4 border-t border-gray-200">
                         <h4 className="text-sm font-medium flex items-center gap-1 mb-2">
                           <FileText className="h-4 w-4" /> 
                           Pedidos incluídos:
                         </h4>
                         <div className="flex flex-wrap gap-2">
-                          {Array.from(new Set(approvedSeparacao.separacao_itens.map(item => item.pedido))).map((pedido, index) => (
+                          {Array.from(
+                            new Set(
+                              approvedSeparacao.separacao_itens_flat
+                                .filter(item => item && item.pedido)
+                                .map(item => item.pedido)
+                            )
+                          ).map((pedido, index) => (
                             <span key={`pedido-${index}`} className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded">
                               {String(pedido)}
                             </span>
                           ))}
                         </div>
                       </div>
-                    )}
+                    ) : null}
                   </CardContent>
                 </Card>
               );
             })}
           </div>
         ) : (
-          <Card className="col-span-2">
-            <CardContent className="p-6 text-center">
-              <p className="text-muted-foreground mb-2">
-                Nenhum pedido aprovado para faturamento neste período.
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Aprove pedidos na página de aprovação financeira para visualizá-los aqui.
-              </p>
-            </CardContent>
-          </Card>
+          <EmptyPendingApprovals />
         )}
       </div>
       <Toaster />
