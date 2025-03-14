@@ -1,10 +1,23 @@
 
 import { useState, useCallback } from 'react';
-import { ApprovedOrder, MonthSelection } from './types';
-import { ClienteFinanceiro } from '@/types/financialClient';
+import { ApprovedOrder } from './types';
 import { supabase } from '@/integrations/supabase/client';
 
-// Define a fully flattened type structure to avoid circular references
+// Create simple flat types to avoid deep instantiation issues
+type SeparacaoItemFlat = {
+  pedido: string;
+  item_codigo: string | null;
+  quantidade_pedida: number | null;
+  valor_unitario: number | null;
+};
+
+type SeparacaoFlat = {
+  id: string;
+  valor_total: number | null;
+  quantidade_itens: number | null;
+  separacao_itens_flat: SeparacaoItemFlat[] | null;
+};
+
 type StoredClienteData = {
   PES_CODIGO: number;
   APELIDO: string | null;
@@ -13,19 +26,7 @@ type StoredClienteData = {
   valoresEmAberto: number;
   valoresVencidos: number;
   representanteNome: string | null;
-  // Store only minimal required data
-  separacoes: Array<{
-    id: string;
-    valor_total: number | null;
-    quantidade_itens: number | null;
-    // Simplify the structure completely
-    separacao_itens_flat: Array<{
-      pedido: string;
-      item_codigo: string | null;
-      quantidade_pedida: number | null;
-      valor_unitario: number | null;
-    }> | null;
-  }>;
+  separacoes: SeparacaoFlat[];
 };
 
 export const useApprovedOrdersStorage = () => {
@@ -34,11 +35,15 @@ export const useApprovedOrdersStorage = () => {
   // Load approved orders with month filtering
   const loadApprovedOrders = useCallback(async (selectedYear: number, selectedMonth: number) => {
     try {
-      // Try to get from Supabase first
+      // Format month with leading zero for single-digit months
+      const formattedMonth = selectedMonth < 10 ? `0${selectedMonth}` : selectedMonth.toString();
+      const monthPattern = `${selectedYear}-${formattedMonth}-%`;
+      
+      // Try to get from Supabase first with simpler query approach
       const { data: supabaseOrders, error } = await supabase
         .from('approved_orders')
         .select('*')
-        .eq('approved_at::text', `${selectedYear}-%${selectedMonth < 10 ? '0' : ''}${selectedMonth}-%`)
+        .like('approved_at', monthPattern)
         .order('approved_at', { ascending: false });
 
       if (error) {
@@ -72,7 +77,7 @@ export const useApprovedOrdersStorage = () => {
       // Process Supabase orders
       const processedOrders = supabaseOrders.map(order => ({
         separacaoId: order.separacao_id,
-        clienteData: order.cliente_data as unknown as ClienteFinanceiro,
+        clienteData: order.cliente_data as unknown as any, // Use any to break the circular reference
         approvedAt: new Date(order.approved_at),
         userId: order.user_id,
         userEmail: order.user_email,
@@ -91,7 +96,7 @@ export const useApprovedOrdersStorage = () => {
   // Save to Supabase and localStorage whenever approvedOrders changes
   const addApprovedOrder = useCallback(async (
     separacaoId: string, 
-    clienteData: ClienteFinanceiro, 
+    clienteData: any, // Use any to break the circular reference
     userEmail: string | null = null,
     userId: string | null = null,
     action: string = 'approved'
@@ -107,6 +112,9 @@ export const useApprovedOrdersStorage = () => {
         action
       };
       
+      // Extract only the needed separacao data
+      const relevantSeparacao = clienteData.separacoes.find((sep: any) => sep.id === separacaoId);
+      
       // Create flattened version of clienteData for storage
       const simplifiedClienteData: StoredClienteData = {
         PES_CODIGO: clienteData.PES_CODIGO,
@@ -116,29 +124,19 @@ export const useApprovedOrdersStorage = () => {
         valoresEmAberto: clienteData.valoresEmAberto,
         valoresVencidos: clienteData.valoresVencidos,
         representanteNome: clienteData.representanteNome,
-        separacoes: clienteData.separacoes.map(sep => {
-          if (sep.id === separacaoId) {
-            return {
-              id: sep.id,
-              valor_total: sep.valor_total || null,
-              quantidade_itens: sep.quantidade_itens || null,
-              // Flatten separacao_itens to avoid deep nesting
-              separacao_itens_flat: sep.separacao_itens ? 
-                sep.separacao_itens.map(item => ({
-                  pedido: item.pedido,
-                  item_codigo: item.item_codigo || null,
-                  quantidade_pedida: item.quantidade_pedida || null,
-                  valor_unitario: item.valor_unitario || null
-                })) : null
-            };
-          }
-          return { 
-            id: sep.id, 
-            valor_total: null, 
-            quantidade_itens: null, 
-            separacao_itens_flat: null 
-          };
-        })
+        separacoes: relevantSeparacao ? [{
+          id: relevantSeparacao.id,
+          valor_total: relevantSeparacao.valor_total || null,
+          quantidade_itens: relevantSeparacao.quantidade_itens || null,
+          // Flatten separacao_itens to avoid deep nesting
+          separacao_itens_flat: relevantSeparacao.separacao_itens ? 
+            relevantSeparacao.separacao_itens.map((item: any) => ({
+              pedido: item.pedido,
+              item_codigo: item.item_codigo || null,
+              quantidade_pedida: item.quantidade_pedida || null,
+              valor_unitario: item.valor_unitario || null
+            })) : null
+        }] : []
       };
       
       // Save to Supabase with simplified data
