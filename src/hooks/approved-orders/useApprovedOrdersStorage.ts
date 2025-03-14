@@ -15,14 +15,14 @@ type StoredClienteData = {
   representanteNome: string | null;
   separacoes: Array<{
     id: string;
-    valor_total?: number;
-    quantidade_itens?: number;
+    valor_total?: number | undefined;
+    quantidade_itens?: number | undefined;
     separacao_itens?: Array<{
       pedido: string;
-      item_codigo?: string;
-      quantidade_pedida?: number;
-      valor_unitario?: number;
-    }>;
+      item_codigo?: string | undefined;
+      quantidade_pedida?: number | undefined;
+      valor_unitario?: number | undefined;
+    }> | undefined;
   }>;
 };
 
@@ -126,7 +126,7 @@ export const useApprovedOrdersStorage = () => {
                   item_codigo: item.item_codigo,
                   quantidade_pedida: item.quantidade_pedida,
                   valor_unitario: item.valor_unitario
-                })) : []
+                })) : undefined
             };
           }
           return { id: sep.id };
