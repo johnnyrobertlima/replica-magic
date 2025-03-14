@@ -1,5 +1,6 @@
+
 import { supabase } from "@/integrations/supabase/client";
-import { ClientOrder, ClientOrderGroup, JabOrder } from "@/types/clientOrders";
+import { ClientOrderGroup, JabOrder } from "@/types/clientOrders";
 import { formatCurrency } from "@/lib/utils";
 
 // Function to group orders by client
@@ -9,7 +10,7 @@ export const groupOrdersByClient = async (ordersData: { orders: JabOrder[]; tota
   const clientCodes: any[] = [];
 
   for (const order of orders) {
-    const clientName = order.CLI_NOME;
+    const clientName = order.APELIDO || `Cliente ${order.PES_CODIGO}`;
     const clientCode = order.PES_CODIGO;
 
     if (!clientCodes.find(cli => cli.PES_CODIGO === clientCode)) {
@@ -18,36 +19,50 @@ export const groupOrdersByClient = async (ordersData: { orders: JabOrder[]; tota
 
     if (!groupedOrders[clientName]) {
       groupedOrders[clientName] = {
-        clientCode: clientCode,
-        clientName: clientName,
-        orders: [],
-        totalValorFaturarComEstoque: 0,
+        PES_CODIGO: clientCode,
+        pedidos: [],
+        allItems: [],
+        totalQuantidadeSaldo: 0,
         totalValorSaldo: 0,
-        totalItens: 0,
+        totalValorPedido: 0,
+        totalValorFaturado: 0,
+        totalValorFaturarComEstoque: 0,
+        representante: null,
         valorVencido: 0,
-        titulosVencidos: 0,
+        quantidadeTitulosVencidos: 0,
       };
     }
 
     const valorFaturarComEstoque = order.VALOR_FATURAR_COM_ESTOQUE || 0;
-    const valorSaldo = order.VALOR_SALDO || 0;
+    const valorSaldo = order.valor_total || 0;
 
-    groupedOrders[clientName].orders.push(order);
+    groupedOrders[clientName].pedidos.push(order);
     groupedOrders[clientName].totalValorFaturarComEstoque += valorFaturarComEstoque;
     groupedOrders[clientName].totalValorSaldo += valorSaldo;
-    groupedOrders[clientName].totalItens += 1;
+
+    // Add items to the allItems array
+    if (order.items) {
+      order.items.forEach(item => {
+        groupedOrders[clientName].allItems.push({
+          ...item,
+          pedido: order.PED_NUMPEDIDO,
+          APELIDO: order.APELIDO,
+          PES_CODIGO: order.PES_CODIGO
+        });
+      });
+    }
   }
 
   const overdueMap = await fetchClientOverdueStatus(clientCodes);
 
   for (const clientName in groupedOrders) {
-    const clientCode = String(groupedOrders[clientName].clientCode);
+    const clientCode = String(groupedOrders[clientName].PES_CODIGO);
     if (overdueMap[clientCode]) {
       groupedOrders[clientName].valorVencido = overdueMap[clientCode].valorVencido;
-      groupedOrders[clientName].titulosVencidos = overdueMap[clientCode].titulosVencidos;
+      groupedOrders[clientName].quantidadeTitulosVencidos = overdueMap[clientCode].titulosVencidos;
     } else {
       groupedOrders[clientName].valorVencido = 0;
-      groupedOrders[clientName].titulosVencidos = 0;
+      groupedOrders[clientName].quantidadeTitulosVencidos = 0;
     }
   }
 
@@ -67,11 +82,11 @@ export const fetchClientOverdueStatus = async (clientCodes: any[]) => {
 
     console.log(`Fetching overdue status for ${uniqueClientCodes.length} clients`);
     
-    // Fetch overdue titles from Supabase
+    // Fetch overdue titles from Supabase using the correct view name
     const { data, error } = await supabase
-      .from('vw_titulos_vencidos_por_cliente')
+      .from('vw_titulos_vencidos_cliente')
       .select('*')
-      .in('cliente_id', uniqueClientCodes);
+      .in('PES_CODIGO', uniqueClientCodes);
     
     if (error) {
       console.error("Error fetching overdue titles:", error);
@@ -82,10 +97,10 @@ export const fetchClientOverdueStatus = async (clientCodes: any[]) => {
     const overdueMap: Record<string, { valorVencido: number; titulosVencidos: number }> = {};
     
     data.forEach(item => {
-      const clientId = String(item.cliente_id);
+      const clientId = String(item.PES_CODIGO);
       overdueMap[clientId] = {
-        valorVencido: item.valor_vencido || 0,
-        titulosVencidos: item.titulos_vencidos || 0
+        valorVencido: item.total_vencido || 0,
+        titulosVencidos: item.quantidade_titulos || 0
       };
     });
     
@@ -116,12 +131,12 @@ export const filterGroupsBySearchCriteria = (
 
         switch (searchType) {
           case "pedido":
-            return group.orders.some(order => String(order.PED_NUMERO).includes(normalizedSearchQuery));
+            return group.pedidos.some(order => String(order.PED_NUMPEDIDO).includes(normalizedSearchQuery));
           case "cliente":
             return clientName.toLowerCase().includes(normalizedSearchQuery);
           case "representante":
-            return group.orders.some(order =>
-              order.REP_NOME?.toLowerCase().includes(normalizedSearchQuery)
+            return group.pedidos.some(order =>
+              order.REPRESENTANTE_NOME?.toLowerCase().includes(normalizedSearchQuery)
             );
           default:
             return false;

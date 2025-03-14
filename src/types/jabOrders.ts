@@ -29,8 +29,8 @@ export interface JabOrder {
   STATUS: string;
   REPRESENTANTE_NOME: string | null;
   PES_CODIGO: number;
-  REPRESENTANTE: number | null; // Added to ensure we have the representante code
-  volume_saudavel_faturamento?: number | null; // Added this field to fix the type error
+  REPRESENTANTE: number | null;
+  volume_saudavel_faturamento?: number | null;
   items: JabOrderItem[];
 }
 
@@ -43,9 +43,9 @@ export interface UseJabOrdersOptions {
 export interface JabOrdersResponse {
   orders: JabOrder[];
   totalCount: number;
+  itensSeparacao: Record<string, boolean>; // Changed from optional to required
   currentPage?: number;
   pageSize?: number;
-  itensSeparacao?: Record<string, boolean>;
 }
 
 export interface JabTotalsResponse {

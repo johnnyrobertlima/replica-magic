@@ -12,6 +12,7 @@ export interface ClientOrderGroup {
   totalValorFaturado: number;
   totalValorFaturarComEstoque: number;
   representante: string | null;
+  representanteNome?: string | null;
   allItems: (JabOrderItem & {
     pedido: string;
     APELIDO: string | null;
@@ -35,3 +36,5 @@ export interface ClientOrdersState extends SearchState {
 export interface ClientOrdersTotals {
   totalSelecionado: number;
 }
+
+export { type JabOrder, type JabOrderItem } from "@/types/jabOrders";

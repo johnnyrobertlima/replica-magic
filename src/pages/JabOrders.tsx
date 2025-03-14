@@ -52,6 +52,9 @@ const JabOrders = () => {
         <TotalCards
           valorTotalSaldo={selectedItems.length > 0 ? selectedItemsTotals.totalValor : totals.valorTotalSaldo}
           valorFaturarComEstoque={selectedItems.length > 0 ? selectedItemsTotals.totalComEstoque : totals.valorFaturarComEstoque}
+          valorTotalSaldoPeriodo={totals.valorTotalSaldoPeriodo || 0}
+          valorFaturarComEstoquePeriodo={totals.valorFaturarComEstoquePeriodo || 0}
+          valoresLiberadosParaFaturamento={totals.valoresLiberadosParaFaturamento || 0}
         />
 
         <OrdersHeader

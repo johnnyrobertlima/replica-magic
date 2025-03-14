@@ -60,7 +60,13 @@ export const useClientOrders = () => {
         setIsProcessingGroups(true);
         
         // First group the orders by client - now this is async to fetch overdue data
-        const groups = await groupOrdersByClient(ordersData);
+        const processableOrdersData = {
+          orders: ordersData.orders,
+          totalCount: ordersData.totalCount,
+          itensSeparacao: ordersData.itensSeparacao || {}
+        };
+        
+        const groups = await groupOrdersByClient(processableOrdersData);
         
         // Then enhance the groups with representative names
         const enhancedGroups = await enhanceGroupsWithRepresentanteNames(groups);
