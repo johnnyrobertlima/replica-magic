@@ -59,6 +59,12 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
     onSearch();
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
   return (
     <div className="flex flex-col md:flex-row items-center gap-4">
       <Select value={searchType} onValueChange={value => onSearchTypeChange(value as SearchType)}>
@@ -78,6 +84,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
           placeholder={getPlaceholder()}
           value={searchQuery}
           onChange={(e) => onSearchQueryChange(e.target.value)}
+          onKeyDown={handleKeyDown}
           className="pl-9 w-full md:w-[250px]"
         />
       </div>

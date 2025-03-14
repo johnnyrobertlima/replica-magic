@@ -47,16 +47,27 @@ export const useClientOrders = () => {
 
   // Group orders by client and process them
   useEffect(() => {
-    console.log("Processing orders with searchDate:", searchDate);
+    if (!ordersData || !ordersData.orders || ordersData.orders.length === 0) {
+      setProcessedGroups({});
+      return;
+    }
+    
+    console.log(`Processando ${ordersData.orders.length} pedidos para criar grupos de clientes`);
+    
     const processGroups = async () => {
-      // First group the orders by client
-      const groups = groupOrdersByClient(ordersData);
-      
-      // Then enhance the groups with representative names
-      const enhancedGroups = await enhanceGroupsWithRepresentanteNames(groups);
-      
-      // Store the processed groups in state
-      setProcessedGroups(enhancedGroups);
+      try {
+        // First group the orders by client
+        const groups = groupOrdersByClient(ordersData);
+        
+        // Then enhance the groups with representative names
+        const enhancedGroups = await enhanceGroupsWithRepresentanteNames(groups);
+        
+        // Store the processed groups in state
+        setProcessedGroups(enhancedGroups);
+      } catch (error) {
+        console.error("Erro ao processar grupos de pedidos:", error);
+        setProcessedGroups({});
+      }
     };
     
     processGroups();
