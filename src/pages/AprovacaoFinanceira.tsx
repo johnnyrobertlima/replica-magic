@@ -1,4 +1,3 @@
-
 import { Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Toaster } from "@/components/ui/toaster";
@@ -24,7 +23,6 @@ const AprovacaoFinanceira = () => {
   const [currentUser, setCurrentUser] = useState<{ id?: string; email?: string } | null>(null);
   const [loadedApproved, setLoadedApproved] = useState(false);
   
-  // Get current user only once
   useEffect(() => {
     const getCurrentUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -39,7 +37,6 @@ const AprovacaoFinanceira = () => {
     getCurrentUser();
   }, []);
   
-  // Load approved orders only when year/month changes or component mounts
   const loadApproved = useCallback(async () => {
     if (loadedApproved) return;
     
@@ -50,7 +47,7 @@ const AprovacaoFinanceira = () => {
       setLoadedApproved(true);
     } catch (error) {
       console.error("Error loading approved orders:", error);
-      setLoadedApproved(true); // Still mark as loaded to prevent endless retry
+      setLoadedApproved(true);
     }
   }, [loadApprovedOrders, selectedYear, selectedMonth, loadedApproved]);
 
@@ -58,7 +55,6 @@ const AprovacaoFinanceira = () => {
     loadApproved();
   }, [loadApproved]);
 
-  // Reset loaded flag when month/year changes
   useEffect(() => {
     setLoadedApproved(false);
   }, [selectedYear, selectedMonth]);
