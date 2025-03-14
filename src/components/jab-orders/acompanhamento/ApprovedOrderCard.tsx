@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Download, ChevronDown, ChevronUp } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { PedidosIncluidos } from "./PedidosIncluidos";
 
@@ -36,7 +36,7 @@ export const ApprovedOrderCard = ({ order, onExport }: ApprovedOrderCardProps) =
 
   return (
     <Card 
-      className={`border-l-4 border-l-green-500 shadow-md ${isExpanded ? 'col-span-full' : ''}`}
+      className="border-l-4 border-l-green-500 shadow-md"
     >
       <CardHeader className="pb-0 pt-4 px-4">
         <div className="flex justify-between items-start">
@@ -63,12 +63,24 @@ export const ApprovedOrderCard = ({ order, onExport }: ApprovedOrderCardProps) =
               <Download className="h-3.5 w-3.5" />
               Exportar
             </Button>
-            <div 
-              className="bg-green-100 text-green-800 font-medium py-1 px-3 rounded-full text-xs cursor-pointer"
+            <Button 
+              variant="ghost"
+              size="sm"
+              className="h-8 px-3 flex items-center gap-1 text-xs bg-green-100 text-green-800 hover:bg-green-200 hover:text-green-900"
               onClick={handleExpandToggle}
             >
-              {isExpanded ? 'Recolher' : 'Expandir'}
-            </div>
+              {isExpanded ? (
+                <>
+                  <ChevronUp className="h-3.5 w-3.5" />
+                  Recolher
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-3.5 w-3.5" />
+                  Expandir
+                </>
+              )}
+            </Button>
           </div>
         </div>
       </CardHeader>
@@ -91,7 +103,9 @@ export const ApprovedOrderCard = ({ order, onExport }: ApprovedOrderCardProps) =
           </div>
         </div>
         
-        <PedidosIncluidos approvedSeparacao={approvedSeparacao} />
+        {isExpanded && (
+          <PedidosIncluidos approvedSeparacao={approvedSeparacao} />
+        )}
       </CardContent>
     </Card>
   );
