@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,7 @@ import { ClienteFinanceiroInfo } from "@/components/jab-orders/ClienteFinanceiro
 import { VolumeSaudavelDialog } from "@/components/jab-orders/VolumeSaudavelDialog";
 import { useToast } from "@/hooks/use-toast";
 import { ClienteFinanceiro } from "@/types/financialClient";
+import { getCardBorderClass } from "@/utils/formatters";
 
 interface ClienteFinanceiroCardProps {
   cliente: ClienteFinanceiro;
@@ -31,6 +31,8 @@ export const ClienteFinanceiroCard = ({
   const [isExpanded, setIsExpanded] = useState(expandedView);
   const [expandedSeparacoes, setExpandedSeparacoes] = useState<string[]>([]);
   const { toast } = useToast();
+
+  const borderClass = getCardBorderClass(cliente.valoresVencidos, cliente.valoresEmAberto);
 
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);
@@ -75,7 +77,7 @@ export const ClienteFinanceiroCard = ({
   const representanteNome = cliente.representanteNome || "Não informado";
 
   return (
-    <Card className={`overflow-hidden transition-all duration-300 ${isExpanded ? "md:col-span-2" : ""}`}>
+    <Card className={`overflow-hidden transition-all duration-300 ${isExpanded ? "md:col-span-2" : ""} ${borderClass}`}>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
