@@ -11,13 +11,20 @@ export const fetchSeparacoes = async (): Promise<Separacao[]> => {
     `)
     .order('created_at', { ascending: false });
 
-  if (error) throw error;
+  if (error) {
+    console.error('Error fetching separacoes:', error);
+    throw error;
+  }
+
+  console.log(`Fetched ${separacoes?.length || 0} separacoes from database`);
 
   // If we have separations, fetch representative information
-  if (separacoes) {
+  if (separacoes && separacoes.length > 0) {
     const uniquePedidos = Array.from(new Set(
       separacoes.flatMap(sep => sep.separacao_itens?.map(item => item.pedido) || [])
     ));
+
+    console.log(`Found ${uniquePedidos.length} unique pedidos in separations`);
 
     // First fetch orders to get representative codes
     const { data: pedidosReps } = await supabase
@@ -27,6 +34,8 @@ export const fetchSeparacoes = async (): Promise<Separacao[]> => {
       .in('PED_NUMPEDIDO', uniquePedidos);
 
     if (pedidosReps && pedidosReps.length > 0) {
+      console.log(`Found ${pedidosReps.length} matching pedidos with representatives`);
+      
       // Then fetch representatives info
       const { data: representantes } = await supabase
         .from('BLUEBAY_PESSOA')

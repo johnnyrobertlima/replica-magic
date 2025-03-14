@@ -19,7 +19,15 @@ const AprovacaoFinanceira = () => {
     updateVolumeSaudavel 
   } = useClientesFinanceiros();
 
-  const { addApprovedOrder, loadApprovedOrders, selectedYear, selectedMonth } = useApprovedOrders();
+  const { 
+    addApprovedOrder, 
+    loadApprovedOrders, 
+    selectedYear, 
+    selectedMonth, 
+    calculateTotals, 
+    isLoading: isLoadingApproved 
+  } = useApprovedOrders();
+  
   const [approvedSeparacaoIds, setApprovedSeparacaoIds] = useState<Set<string>>(new Set());
   const [currentUser, setCurrentUser] = useState<{ id?: string; email?: string } | null>(null);
   const [loadedApproved, setLoadedApproved] = useState(false);
@@ -44,6 +52,9 @@ const AprovacaoFinanceira = () => {
     
     try {
       const approvedOrders = await loadApprovedOrders(selectedYear, selectedMonth);
+      console.log(`Loaded ${approvedOrders.length} approved orders for ${selectedYear}-${selectedMonth}`);
+      
+      // Create a set of approved separation IDs for efficient lookups
       const approvedIds = new Set(approvedOrders.map(order => order.separacaoId));
       setApprovedSeparacaoIds(approvedIds);
       setLoadedApproved(true);
@@ -65,7 +76,10 @@ const AprovacaoFinanceira = () => {
   const filteredClientesFinanceiros = clientesFinanceiros.filter(cliente => {
     // Only consider separations that are not approved and not manually hidden
     const pendingSeparacoes = cliente.separacoes.filter(
-      separacao => !approvedSeparacaoIds.has(separacao.id) && !hiddenCardIds.has(separacao.id)
+      separacao => 
+        separacao.status === 'pendente' && 
+        !approvedSeparacaoIds.has(separacao.id) && 
+        !hiddenCardIds.has(separacao.id)
     );
     
     return pendingSeparacoes.length > 0;
@@ -75,7 +89,10 @@ const AprovacaoFinanceira = () => {
   const clientesWithPendingSeparacoes = filteredClientesFinanceiros.map(cliente => ({
     ...cliente,
     separacoes: cliente.separacoes.filter(
-      separacao => !approvedSeparacaoIds.has(separacao.id) && !hiddenCardIds.has(separacao.id)
+      separacao => 
+        separacao.status === 'pendente' && 
+        !approvedSeparacaoIds.has(separacao.id) && 
+        !hiddenCardIds.has(separacao.id)
     )
   }));
 
@@ -122,7 +139,7 @@ const AprovacaoFinanceira = () => {
     });
   };
 
-  if (isLoading || isLoadingSeparacoes) {
+  if (isLoading || isLoadingSeparacoes || isLoadingApproved) {
     return (
       <div className="flex items-center justify-center p-8">
         <Loader2 className="h-8 w-8 animate-spin" />
