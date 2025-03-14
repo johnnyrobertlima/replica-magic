@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,7 @@ import { ClienteFinanceiroCard } from "@/components/jab-orders/ClienteFinanceiro
 import { EmptyPendingApprovals } from "@/components/jab-orders/EmptyPendingApprovals";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
-import { exportToExcel } from "@/utils/excelUtils";
+import { exportToExcelWithSections } from "@/utils/excelUtils";
 
 interface ApprovedOrdersListProps {
   approvedOrders: any[];
@@ -60,36 +59,26 @@ export const ApprovedOrdersList = ({ approvedOrders }: ApprovedOrdersListProps) 
       }
     ];
     
-    // Prepare items data (with 2 empty rows after header)
+    // Prepare items data (the rows will be added automatically with 2 empty rows in between)
     let itemsData = [];
     
     if (approvedSeparacao.separacao_itens_flat && approvedSeparacao.separacao_itens_flat.length > 0) {
-      // Add empty rows
-      itemsData.push({ 'Pedido': '', 'SKU': '', 'Descrição': '' });
-      itemsData.push({ 'Pedido': '', 'SKU': '', 'Descrição': '' });
-      
       // Add items
-      itemsData = [
-        ...itemsData,
-        ...approvedSeparacao.separacao_itens_flat.map(item => ({
-          'Pedido': item.pedido || '-',
-          'SKU': item.item_codigo || '-',
-          'Descrição': item.descricao || '-',
-          'Quantidade': item.quantidade_pedida || 0,
-          'Valor Unitário': item.valor_unitario || 0,
-          'Valor Total': item.valor_total || (item.quantidade_pedida * item.valor_unitario) || 0
-        }))
-      ];
+      itemsData = approvedSeparacao.separacao_itens_flat.map(item => ({
+        'Pedido': item.pedido || '-',
+        'SKU': item.item_codigo || '-',
+        'Descrição': item.descricao || '-',
+        'Quantidade': item.quantidade_pedida || 0,
+        'Valor Unitário': item.valor_unitario || 0,
+        'Valor Total': item.valor_total || (item.quantidade_pedida * item.valor_unitario) || 0
+      }));
     }
     
-    // Combine data
-    const exportData = [...headerData, ...itemsData];
-    
-    // Export to Excel
+    // Export to Excel with sections
     const clientName = orderToExport.clienteData.APELIDO || 'cliente';
     const fileName = `pedido-aprovado-${clientName}-${format(new Date(), 'dd-MM-yyyy')}`;
     
-    const exportedCount = exportToExcel(exportData, fileName);
+    const exportedCount = exportToExcelWithSections(headerData, itemsData, fileName);
     
     if (exportedCount > 0) {
       toast({

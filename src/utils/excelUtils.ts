@@ -1,70 +1,123 @@
 
+import * as XLSX from 'xlsx';
+
 /**
- * Utility functions for exporting data to Excel/CSV format
+ * Utility functions for exporting data to Excel format
  */
 
 /**
- * Export data to Excel file
+ * Export data to Excel file (.xlsx)
  * @param data Array of objects to export
  * @param fileName Filename for the exported file (without extension)
+ * @returns The number of exported items
  */
 export const exportToExcel = (data: any[], fileName: string) => {
   if (!data || data.length === 0) {
     console.error('No data to export');
-    return;
+    return 0;
   }
 
   try {
-    // Create CSV content
-    const headers = Object.keys(data[0]);
-    const csvContent = [
-      // Headers row
-      headers.join(','),
-      // Data rows
-      ...data.map(row => 
-        headers.map(header => {
-          let cell = row[header] === null || row[header] === undefined ? '' : row[header];
-          
-          // Handle numbers
-          if (typeof cell === 'number') {
-            return cell;
-          }
-          
-          // Handle strings (escape quotes and wrap in quotes if contains commas)
-          if (typeof cell === 'string') {
-            // Replace double quotes with two double quotes
-            cell = cell.replace(/"/g, '""');
-            
-            // Wrap in quotes if contains commas, quotes, or newlines
-            if (cell.includes(',') || cell.includes('"') || cell.includes('\n')) {
-              cell = `"${cell}"`;
-            }
-            
-            return cell;
-          }
-          
-          return cell;
-        }).join(',')
-      )
-    ].join('\n');
-
-    // Create a Blob with the CSV content
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    // Create worksheet from JSON data
+    const worksheet = XLSX.utils.json_to_sheet(data);
     
-    // Create a link element and trigger download
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
+    // Create workbook and add the worksheet
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Data');
     
-    link.setAttribute('href', url);
-    link.setAttribute('download', `${fileName}.csv`);
-    link.style.visibility = 'hidden';
-    
-    document.body.appendChild(link);
-    link.click();
-    
-    document.body.removeChild(link);
+    // Generate Excel file and trigger download
+    XLSX.writeFile(workbook, `${fileName}.xlsx`);
     
     return data.length; // Return the number of exported items
+  } catch (error) {
+    console.error('Error exporting data to Excel:', error);
+    return 0;
+  }
+};
+
+/**
+ * Export data with headers and items (separated by empty rows) to Excel file
+ * @param headerData Array of header objects to export
+ * @param itemsData Array of item objects to export
+ * @param fileName Filename for the exported file (without extension)
+ * @returns The total number of exported rows
+ */
+export const exportToExcelWithSections = (
+  headerData: any[], 
+  itemsData: any[], 
+  fileName: string
+) => {
+  if ((!headerData || headerData.length === 0) && (!itemsData || itemsData.length === 0)) {
+    console.error('No data to export');
+    return 0;
+  }
+
+  try {
+    // Create workbook
+    const workbook = XLSX.utils.book_new();
+    
+    // If we have both header and items data, we combine them with empty rows in between
+    if (headerData.length > 0 && itemsData.length > 0) {
+      // First convert all data to worksheets
+      const headerWorksheet = XLSX.utils.json_to_sheet(headerData);
+      const itemsWorksheet = XLSX.utils.json_to_sheet(itemsData);
+      
+      // Get A1-style ranges for both
+      const headerRange = XLSX.utils.decode_range(headerWorksheet['!ref'] || 'A1');
+      const itemsRange = XLSX.utils.decode_range(itemsWorksheet['!ref'] || 'A1');
+      
+      // Create a new worksheet for combined data
+      const combinedWorksheet = XLSX.utils.json_to_sheet(headerData);
+      
+      // Calculate where to place the items data (after header data + 2 empty rows)
+      const startRow = headerRange.e.r + 3; // +3 because we start at 0 and want 2 empty rows
+      
+      // Add items data to the combined worksheet with offset
+      for (let R = 0; R <= itemsRange.e.r; ++R) {
+        for (let C = 0; C <= itemsRange.e.c; ++C) {
+          const itemsCellRef = XLSX.utils.encode_cell({r: R, c: C});
+          const targetCellRef = XLSX.utils.encode_cell({r: R + startRow, c: C});
+          
+          if (itemsWorksheet[itemsCellRef]) {
+            combinedWorksheet[targetCellRef] = itemsWorksheet[itemsCellRef];
+          }
+        }
+      }
+      
+      // Update range of combined worksheet
+      const newRange = {
+        s: {r: 0, c: 0},
+        e: {r: startRow + itemsRange.e.r, c: Math.max(headerRange.e.c, itemsRange.e.c)}
+      };
+      combinedWorksheet['!ref'] = XLSX.utils.encode_range(newRange);
+      
+      // If there are merged cells, adjust their row indices and add them to the combined sheet
+      if (itemsWorksheet['!merges']) {
+        if (!combinedWorksheet['!merges']) combinedWorksheet['!merges'] = [];
+        itemsWorksheet['!merges'].forEach(merge => {
+          combinedWorksheet['!merges']?.push({
+            s: {r: merge.s.r + startRow, c: merge.s.c},
+            e: {r: merge.e.r + startRow, c: merge.e.c}
+          });
+        });
+      }
+      
+      // Add the worksheet to the workbook
+      XLSX.utils.book_append_sheet(workbook, combinedWorksheet, 'Data');
+    } else if (headerData.length > 0) {
+      // Only header data
+      const worksheet = XLSX.utils.json_to_sheet(headerData);
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Data');
+    } else {
+      // Only items data
+      const worksheet = XLSX.utils.json_to_sheet(itemsData);
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Data');
+    }
+    
+    // Generate Excel file and trigger download
+    XLSX.writeFile(workbook, `${fileName}.xlsx`);
+    
+    return headerData.length + itemsData.length;
   } catch (error) {
     console.error('Error exporting data to Excel:', error);
     return 0;

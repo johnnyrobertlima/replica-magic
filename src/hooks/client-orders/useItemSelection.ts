@@ -1,4 +1,3 @@
-
 import { useState, useMemo, useCallback } from "react";
 import { ClientOrdersState } from "@/types/clientOrders";
 import { exportToExcel } from "@/utils/excelUtils";
@@ -58,7 +57,7 @@ export const useItemSelection = (
     });
   }, [setState]);
 
-  // Função para exportar itens selecionados para Excel
+  // Function to export selected items to Excel
   const exportSelectedItemsToExcel = useCallback(() => {
     if (state.selectedItems.length === 0) {
       toast({
@@ -70,7 +69,7 @@ export const useItemSelection = (
 
     const selectedItemsData: any[] = [];
 
-    // Coletar dados dos itens selecionados
+    // Collect data for selected items
     Object.entries(groupedOrders).forEach(([clientName, group]) => {
       group.allItems.forEach((item: any) => {
         if (state.selectedItems.includes(item.ITEM_CODIGO)) {
@@ -90,7 +89,7 @@ export const useItemSelection = (
       });
     });
 
-    // Exportar para Excel
+    // Export to Excel (.xlsx)
     const exportedCount = exportToExcel(selectedItemsData, 'Itens_Selecionados');
     
     if (exportedCount) {
