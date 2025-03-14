@@ -100,7 +100,7 @@ export const useApprovedOrdersStorage = () => {
       
       // Prepare a simplified version of clienteData for storage
       // This breaks the circular reference by only storing what we need
-      const simplifiedClienteData = {
+      const simplifiedClienteData: StoredClienteData = {
         PES_CODIGO: clienteData.PES_CODIGO,
         APELIDO: clienteData.APELIDO,
         volume_saudavel_faturamento: clienteData.volume_saudavel_faturamento,

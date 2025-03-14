@@ -8,10 +8,10 @@ import {
   fetchFinancialTitles, 
   fetchClientInfo, 
   fetchPedidosForRepresentantes, 
-  fetchRepresentantesInfo,
   processClientsData,
   fetchValoresVencidos
 } from "@/services/financialService";
+import { supabase } from "@/integrations/supabase/client";
 
 export type { ClienteFinanceiro } from "@/types/financialClient";
 
@@ -31,6 +31,41 @@ export const useClientesFinanceiros = () => {
   const getClientesCodigosCallback = useCallback((sepPendentes: any[]) => {
     return getClientesCodigos(sepPendentes);
   }, []);
+
+  // Fetch representative names from vw_representantes view
+  const fetchRepresentanteNames = async (representanteCodes: number[]) => {
+    try {
+      if (!representanteCodes.length) return new Map();
+      
+      // Filter out any null or undefined codes
+      const validCodes = representanteCodes.filter(Boolean);
+      if (!validCodes.length) return new Map();
+      
+      console.log("Fetching representative names for codes:", validCodes);
+      
+      const { data, error } = await supabase
+        .from('vw_representantes')
+        .select('codigo_representante, nome_representante')
+        .in('codigo_representante', validCodes);
+      
+      if (error) {
+        console.error("Error fetching representative names:", error);
+        return new Map();
+      }
+      
+      console.log("Fetched representative data:", data);
+      
+      const representanteMap = new Map<number, string>();
+      data.forEach((rep: { codigo_representante: number, nome_representante: string }) => {
+        representanteMap.set(rep.codigo_representante, rep.nome_representante);
+      });
+      
+      return representanteMap;
+    } catch (error) {
+      console.error("Error in fetchRepresentanteNames:", error);
+      return new Map();
+    }
+  };
 
   // Hide a card
   const hideCard = (id: string) => {
@@ -96,7 +131,6 @@ export const useClientesFinanceiros = () => {
         // Initialize maps for representantes
         const representantesCodigos = new Set<number>();
         const clienteToRepresentanteMap = new Map<number, number>();
-        const representantesInfo = new Map<number, string>();
 
         if (numeroPedidos.length > 0) {
           // Fetch pedidos to get representantes
@@ -116,19 +150,11 @@ export const useClientesFinanceiros = () => {
                 });
               }
             });
-
-            // Fetch representantes info if we have any
-            if (representantesCodigos.size > 0) {
-              const representantes = await fetchRepresentantesInfo(Array.from(representantesCodigos));
-
-              if (representantes) {
-                representantes.forEach(rep => {
-                  representantesInfo.set(rep.PES_CODIGO, rep.RAZAOSOCIAL);
-                });
-              }
-            }
           }
         }
+        
+        // Fetch representante names directly from vw_representantes
+        const representantesInfo = await fetchRepresentanteNames(Array.from(representantesCodigos));
 
         // Create today's date with hours set to 0 to compare only dates
         const today = new Date();
