@@ -62,7 +62,7 @@ function App() {
         </PermissionGuard>
       } />
       <Route path="/client-area/bluebay/jab-orders-by-client" element={
-        <PermissionGuard resourcePath="/client-area/bluebay/jab-orders">
+        <PermissionGuard resourcePath="/client-area/bluebay/jab-orders-by-client">
           <JabOrdersByClient />
         </PermissionGuard>
       } />
