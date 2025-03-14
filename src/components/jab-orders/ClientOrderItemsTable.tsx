@@ -37,6 +37,9 @@ export const ClientOrderItemsTable = ({
     return true;
   });
 
+  // Add console log to debug the selected items
+  console.log('ClientOrderItemsTable - selectedItems:', selectedItems);
+
   return (
     <div className="rounded-lg border overflow-x-auto">
       <table className="w-full">

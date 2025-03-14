@@ -20,10 +20,14 @@ export const useSeparationOperations = (
       const result = await sendOrdersForSeparation(selectedItems, groupedOrders);
       
       if (result.success) {
+        // Invalidate queries to refresh data
         await queryClient.invalidateQueries({ queryKey: ['separacoes'] });
         await queryClient.invalidateQueries({ queryKey: ['jabOrders'] });
         
+        console.log('Clearing selection state after successful separation');
+        
         // Reset selection state to ensure no checkboxes remain selected
+        // Explicitly set these values to ensure UI updates
         setState(prev => ({ 
           ...prev, 
           selectedItems: [],
@@ -35,7 +39,11 @@ export const useSeparationOperations = (
           title: "Separação concluída",
           description: `${result.count || 0} separação(ões) criada(s) com sucesso!`,
         });
+      } else {
+        console.error('Separation failed:', result.message);
       }
+    } catch (error) {
+      console.error('Error in handleEnviarParaSeparacao:', error);
     } finally {
       setState(prev => ({ ...prev, isSending: false }));
     }

@@ -1,5 +1,5 @@
 
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import type { ClientOrderGroup } from "@/types/clientOrders";
 import { processSelectedItems, createSeparationsForClients } from "./separation/separationProcessorService";
 
@@ -11,6 +11,8 @@ export const sendOrdersForSeparation = async (
   groupedOrders: Record<string, ClientOrderGroup>,
   showToast = true
 ) => {
+  const { toast } = useToast();
+  
   if (selectedItems.length === 0) {
     if (showToast) {
       toast({
@@ -23,6 +25,8 @@ export const sendOrdersForSeparation = async (
   }
 
   try {
+    console.log('Processing selected items:', selectedItems.length);
+    
     // Process and group the selected items by client
     const { success, message, itemsByClient } = processSelectedItems(selectedItems, groupedOrders);
     
@@ -43,7 +47,9 @@ export const sendOrdersForSeparation = async (
     // Handle the results
     if (successCount > 0) {
       console.log(`Sucesso! ${successCount} separações criadas`);
-      if (showToast) {
+      
+      // Don't show toast here, we'll handle it in the hook
+      if (showToast && false) {
         toast({
           title: "Sucesso",
           description: `${successCount} separação(ões) criada(s) com sucesso!`,
