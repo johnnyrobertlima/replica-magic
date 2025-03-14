@@ -85,6 +85,7 @@ export async function processJabOrders(
       REPRESENTANTE_NOME: primeiroPedido.REPRESENTANTE || null,
       PES_CODIGO: primeiroPedido.PES_CODIGO,
       REPRESENTANTE: primeiroPedido.REPRESENTANTE,
+      volume_saudavel_faturamento: pessoa?.volume_saudavel_faturamento || null,
       items: Array.from(items.values())
     };
   }).filter(Boolean) as JabOrder[];

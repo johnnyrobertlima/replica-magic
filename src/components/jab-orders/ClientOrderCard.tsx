@@ -7,6 +7,7 @@ import { OrderProgressBars } from "./OrderProgressBars";
 import { OrderSummaryGrid } from "./OrderSummaryGrid";
 import { ClientOrderFilters } from "./ClientOrderFilters";
 import { ClientOrderItemsTable } from "./ClientOrderItemsTable";
+import { formatCurrency } from "@/utils/formatters";
 
 interface ClientOrderCardProps {
   clientName: string;
@@ -52,6 +53,11 @@ export const ClientOrderCard = ({
 
   // Display the proper representante name from the data
   const representanteName = data.representanteNome || 'Não informado';
+  
+  // Format volume saudável if available
+  const volumeSaudavel = data.volume_saudavel_faturamento !== undefined && data.volume_saudavel_faturamento !== null
+    ? formatCurrency(data.volume_saudavel_faturamento)
+    : 'Não definido';
 
   return (
     <Card 
@@ -72,6 +78,9 @@ export const ClientOrderCard = ({
             </p>
             <p className="text-sm text-muted-foreground">
               Total de Pedidos: {pedidosCount}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Volume Saudável: {volumeSaudavel}
             </p>
           </div>
           {isExpanded ? (

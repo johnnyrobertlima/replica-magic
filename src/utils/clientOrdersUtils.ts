@@ -25,7 +25,8 @@ export const groupOrdersByClient = (ordersData: JabOrdersResponse): Record<strin
         totalValorFaturarComEstoque: 0,
         representante: order.REPRESENTANTE_NOME,
         allItems: [],
-        PES_CODIGO: order.PES_CODIGO
+        PES_CODIGO: order.PES_CODIGO,
+        volume_saudavel_faturamento: order.volume_saudavel_faturamento
       };
     }
 

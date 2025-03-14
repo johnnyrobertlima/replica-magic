@@ -1,4 +1,3 @@
-
 import type { DateRange } from "react-day-picker";
 import type { SearchType } from "@/components/jab-orders/SearchFilters";
 import type { JabOrder, JabOrderItem } from "@/types/jabOrders";
@@ -18,6 +17,7 @@ export interface ClientOrderGroup {
     PES_CODIGO: number;
   })[];
   PES_CODIGO: number;
+  volume_saudavel_faturamento?: number | null;
 }
 
 export interface ClientOrdersState extends SearchState {
