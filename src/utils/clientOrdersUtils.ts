@@ -33,6 +33,7 @@ export const groupOrdersByClient = async (ordersData: { orders: JabOrder[]; tota
       };
     }
 
+    // Use the calculated value from JabDataProcessor or default to 0
     const valorFaturarComEstoque = order.VALOR_FATURAR_COM_ESTOQUE || 0;
     const valorSaldo = order.valor_total || 0;
 

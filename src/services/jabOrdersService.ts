@@ -24,7 +24,7 @@ export async function fetchJabOrders({
 }: UseJabOrdersOptions): Promise<JabOrdersResponse> {
   if (!dateRange?.from || !dateRange?.to) {
     console.warn('fetchJabOrders: Data range is missing from or to', dateRange);
-    return { orders: [], totalCount: 0 };
+    return { orders: [], totalCount: 0, itensSeparacao: {} };
   }
 
   const dataInicial = dateRange.from.toISOString().split('T')[0];
@@ -37,14 +37,14 @@ export async function fetchJabOrders({
 
   if (!numeroPedidos.length) {
     console.log('Nenhum pedido único encontrado para o período');
-    return { orders: [], totalCount };
+    return { orders: [], totalCount, itensSeparacao: {} };
   }
 
   const pedidosDetalhados = await fetchPedidosDetalhados(numeroPedidos);
 
   if (!pedidosDetalhados.length) {
     console.log('Nenhum detalhe de pedido encontrado');
-    return { orders: [], totalCount };
+    return { orders: [], totalCount, itensSeparacao: {} };
   }
 
   const result = await processJabOrders(pedidosDetalhados, numeroPedidos);
@@ -62,7 +62,7 @@ export async function fetchAllJabOrders({
 }: Omit<UseJabOrdersOptions, 'page' | 'pageSize'>): Promise<JabOrdersResponse> {
   if (!dateRange?.from || !dateRange?.to) {
     console.warn('fetchAllJabOrders: Data range is missing from or to', dateRange);
-    return { orders: [], totalCount: 0 };
+    return { orders: [], totalCount: 0, itensSeparacao: {} };
   }
 
   const dataInicial = dateRange.from.toISOString().split('T')[0];
@@ -75,7 +75,7 @@ export async function fetchAllJabOrders({
 
   if (!pedidosDetalhados.length) {
     console.log('Nenhum pedido detalhado encontrado para o período via busca direta');
-    return { orders: [], totalCount: 0 };
+    return { orders: [], totalCount: 0, itensSeparacao: {} };
   }
 
   const result = await processAllJabOrders(pedidosDetalhados);

@@ -25,6 +25,10 @@ export async function fetchTotals() {
 
   return {
     valorTotalSaldo,
-    valorFaturarComEstoque
+    valorFaturarComEstoque,
+    // Add default values for the period fields to prevent undefined errors
+    valorTotalSaldoPeriodo: 0,
+    valorFaturarComEstoquePeriodo: 0,
+    valoresLiberadosParaFaturamento: 0
   };
 }

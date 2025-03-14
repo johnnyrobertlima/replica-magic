@@ -31,6 +31,7 @@ export interface JabOrder {
   PES_CODIGO: number;
   REPRESENTANTE: number | null;
   volume_saudavel_faturamento?: number | null;
+  VALOR_FATURAR_COM_ESTOQUE?: number; // Added this field
   items: JabOrderItem[];
 }
 
@@ -51,4 +52,7 @@ export interface JabOrdersResponse {
 export interface JabTotalsResponse {
   valorTotalSaldo: number;
   valorFaturarComEstoque: number;
+  valorTotalSaldoPeriodo?: number; // Added these fields to match the usage in JabOrders.tsx
+  valorFaturarComEstoquePeriodo?: number;
+  valoresLiberadosParaFaturamento?: number;
 }

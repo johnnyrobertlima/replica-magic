@@ -7,7 +7,7 @@ export async function processJabOrders(
   numeroPedidos: string[]
 ): Promise<JabOrdersResponse> {
   if (!pedidosDetalhados.length) {
-    return { orders: [], totalCount: 0 };
+    return { orders: [], totalCount: 0, itensSeparacao: {} };
   }
 
   // Coleta todos os IDs únicos para buscar dados relacionados
@@ -46,6 +46,7 @@ export async function processJabOrders(
 
     let total_saldo = 0;
     let valor_total = 0;
+    let valor_faturar_com_estoque = 0;
     const items = new Map<string, any>();
 
     pedidos.forEach(pedido => {
@@ -53,9 +54,15 @@ export async function processJabOrders(
 
       const saldo = pedido.QTDE_SALDO || 0;
       const valorUnitario = pedido.VALOR_UNITARIO || 0;
+      const fisico = estoqueMap.get(pedido.ITEM_CODIGO) || 0;
       
       total_saldo += saldo;
       valor_total += saldo * valorUnitario;
+      
+      // Calcular o valor a faturar com estoque
+      if (fisico > 0) {
+        valor_faturar_com_estoque += saldo * valorUnitario;
+      }
 
       items.set(pedido.ITEM_CODIGO, {
         ITEM_CODIGO: pedido.ITEM_CODIGO,
@@ -79,6 +86,7 @@ export async function processJabOrders(
       PED_ANOBASE: primeiroPedido.PED_ANOBASE || 0,
       total_saldo,
       valor_total,
+      VALOR_FATURAR_COM_ESTOQUE: valor_faturar_com_estoque,
       APELIDO: pessoa?.APELIDO || null,
       PEDIDO_CLIENTE: primeiroPedido.PEDIDO_CLIENTE || null,
       STATUS: primeiroPedido.STATUS || '',
@@ -101,7 +109,7 @@ export async function processAllJabOrders(
   pedidosDetalhados: any[]
 ): Promise<JabOrdersResponse> {
   if (!pedidosDetalhados.length) {
-    return { orders: [], totalCount: 0 };
+    return { orders: [], totalCount: 0, itensSeparacao: {} };
   }
 
   // Extrair números de pedidos únicos
