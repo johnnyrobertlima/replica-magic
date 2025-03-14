@@ -1,4 +1,3 @@
-
 import type { ClientOrderGroup } from "@/types/clientOrders";
 import type { JabOrdersResponse } from "@/types/jabOrders";
 import { enhanceGroupsWithRepresentanteNames } from "./representativeUtils";
@@ -59,6 +58,7 @@ export const groupOrdersByClient = async (ordersData: JabOrdersResponse): Promis
   });
 
   // Now fetch overdue titles for all clients
+  // Convert all PES_CODIGO values to strings for the database query
   const clientCodes = Object.values(groups).map(group => group.PES_CODIGO.toString());
   const { data: overdueData, error } = await supabase
     .from('vw_titulos_vencidos_cliente')
@@ -78,6 +78,7 @@ export const groupOrdersByClient = async (ordersData: JabOrdersResponse): Promis
 
     // Update each group with overdue data
     Object.values(groups).forEach(group => {
+      // Convert PES_CODIGO to string when accessing the map
       const overdueInfo = overdueMap.get(group.PES_CODIGO.toString());
       if (overdueInfo) {
         group.valorVencido = parseFloat(overdueInfo.total_vencido) || 0;
