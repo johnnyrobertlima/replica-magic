@@ -70,7 +70,7 @@ export const groupOrdersByClient = async (ordersData: JabOrdersResponse): Promis
   } else if (overdueData) {
     // Create a map for quick lookups
     const overdueMap = new Map(
-      overdueData.map(item => [item.PES_CODIGO, { 
+      overdueData.map(item => [item.PES_CODIGO.toString(), { 
         total_vencido: item.total_vencido, 
         quantidade_titulos: item.quantidade_titulos 
       }])
