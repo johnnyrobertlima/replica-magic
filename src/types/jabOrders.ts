@@ -30,6 +30,7 @@ export interface JabOrder {
   REPRESENTANTE_NOME: string | null;
   PES_CODIGO: number;
   REPRESENTANTE: number | null; // Added to ensure we have the representante code
+  volume_saudavel_faturamento?: number | null; // Added this field to fix the type error
   items: JabOrderItem[];
 }
 
