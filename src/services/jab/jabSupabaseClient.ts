@@ -1,0 +1,294 @@
+
+import { supabase } from "@/integrations/supabase/client";
+
+// Base fetch functions for pedidos
+export async function fetchPedidosUnicos(
+  dataInicial: string, 
+  dataFinal: string, 
+  page: number, 
+  pageSize: number
+) {
+  const { data: todosPedidos, error } = await supabase.rpc('get_pedidos_unicos', {
+    data_inicial: dataInicial,
+    data_final: `${dataFinal} 23:59:59.999`,
+    offset_val: (page - 1) * pageSize,
+    limit_val: pageSize
+  });
+
+  if (error) {
+    console.error('Erro ao buscar pedidos:', error);
+    throw error;
+  }
+
+  if (!todosPedidos?.length) {
+    return { data: [], totalCount: 0 };
+  }
+
+  return { 
+    data: todosPedidos, 
+    totalCount: todosPedidos[0].total_count 
+  };
+}
+
+export async function fetchAllPedidosUnicos(
+  dataInicial: string, 
+  dataFinal: string
+) {
+  const { data, error } = await supabase.rpc('get_pedidos_unicos', {
+    data_inicial: dataInicial,
+    data_final: `${dataFinal} 23:59:59.999`,
+    offset_val: 0,
+    limit_val: 9999 // Um número grande para pegar todos
+  });
+
+  if (error) {
+    console.error('Erro ao buscar todos os pedidos:', error);
+    throw error;
+  }
+
+  if (!data?.length) {
+    return { data: [], totalCount: 0 };
+  }
+
+  return {
+    data: data,
+    totalCount: data[0].total_count
+  };
+}
+
+export async function fetchAllPedidosDireto(
+  dataInicial: string, 
+  dataFinal: string
+): Promise<any[]> {
+  console.log('Buscando todos os pedidos diretamente para o período:', { dataInicial, dataFinal });
+  
+  let allPedidos: any[] = [];
+  let hasMore = true;
+  let page = 0;
+  const pageSize = 1000;
+  
+  while (hasMore) {
+    console.log(`Buscando lote ${page + 1} de pedidos (${pageSize} por lote)`);
+    
+    const { data, error } = await supabase
+      .from('BLUEBAY_PEDIDO')
+      .select(`
+        MATRIZ,
+        FILIAL,
+        PED_NUMPEDIDO,
+        PED_ANOBASE,
+        QTDE_SALDO,
+        VALOR_UNITARIO,
+        PES_CODIGO,
+        PEDIDO_CLIENTE,
+        STATUS,
+        ITEM_CODIGO,
+        QTDE_PEDIDA,
+        QTDE_ENTREGUE,
+        DATA_PEDIDO,
+        REPRESENTANTE
+      `)
+      .eq('CENTROCUSTO', 'JAB')
+      .in('STATUS', ['1', '2'])
+      .gte('DATA_PEDIDO', dataInicial)
+      .lte('DATA_PEDIDO', `${dataFinal} 23:59:59.999`)
+      .range(page * pageSize, (page + 1) * pageSize - 1)
+      .order('PED_NUMPEDIDO');
+
+    if (error) {
+      console.error(`Erro ao buscar lote ${page + 1} de pedidos:`, error);
+      throw error;
+    }
+
+    if (data && data.length > 0) {
+      allPedidos = [...allPedidos, ...data];
+      console.log(`Lote ${page + 1}: Recebidos ${data.length} pedidos. Total até agora: ${allPedidos.length}`);
+      
+      // Verifica se ainda há mais dados para buscar
+      if (data.length < pageSize) {
+        hasMore = false;
+      } else {
+        page++;
+      }
+    } else {
+      hasMore = false;
+    }
+  }
+
+  console.log(`Encontrados ${allPedidos.length} registros de pedidos diretamente em ${page + 1} lotes`);
+  return allPedidos;
+}
+
+export async function fetchPedidosDetalhados(numeroPedidos: string[]) {
+  if (!numeroPedidos.length) return [];
+  
+  // Divide em lotes de 100 para não exceder limites de consulta
+  const batchSize = 100;
+  const batches = [];
+  
+  for (let i = 0; i < numeroPedidos.length; i += batchSize) {
+    batches.push(numeroPedidos.slice(i, i + batchSize));
+  }
+  
+  console.log(`Buscando detalhes em ${batches.length} lotes`);
+  
+  // Busca cada lote de pedidos
+  const allResults = [];
+  for (const batch of batches) {
+    const { data, error } = await supabase
+      .from('BLUEBAY_PEDIDO')
+      .select(`
+        MATRIZ,
+        FILIAL,
+        PED_NUMPEDIDO,
+        PED_ANOBASE,
+        QTDE_SALDO,
+        VALOR_UNITARIO,
+        PES_CODIGO,
+        PEDIDO_CLIENTE,
+        STATUS,
+        ITEM_CODIGO,
+        QTDE_PEDIDA,
+        QTDE_ENTREGUE,
+        DATA_PEDIDO,
+        REPRESENTANTE
+      `)
+      .eq('CENTROCUSTO', 'JAB')
+      .in('STATUS', ['1', '2'])
+      .in('PED_NUMPEDIDO', batch);
+
+    if (error) {
+      console.error('Erro ao buscar detalhes dos pedidos:', error);
+      throw error;
+    }
+    
+    if (data) {
+      allResults.push(...data);
+    }
+  }
+
+  return allResults;
+}
+
+export async function fetchTotals() {
+  const valorTotalResponse = await supabase.rpc('calcular_valor_total_jab');
+  const valorFaturarResponse = await supabase.rpc('calcular_valor_faturar_com_estoque');
+
+  if (valorTotalResponse.error) {
+    console.error('Erro ao calcular valor total:', valorTotalResponse.error);
+    throw valorTotalResponse.error;
+  }
+
+  if (valorFaturarResponse.error) {
+    console.error('Erro ao calcular valor para faturar:', valorFaturarResponse.error);
+    throw valorFaturarResponse.error;
+  }
+
+  const valorTotalSaldo = valorTotalResponse.data?.[0]?.valor_total_saldo || 0;
+  const valorFaturarComEstoque = Number(valorFaturarResponse.data?.[0]?.valor_total_faturavel || 0);
+
+  console.log('Valores calculados:', { valorTotalSaldo, valorFaturarComEstoque });
+
+  return {
+    valorTotalSaldo,
+    valorFaturarComEstoque
+  };
+}
+
+export async function fetchRelatedData(pessoasIds: number[], itemCodigos: string[]) {
+  if (!pessoasIds.length || !itemCodigos.length) {
+    return {
+      pessoas: [],
+      itens: [],
+      estoque: []
+    };
+  }
+  
+  const batchSizePessoas = 100;
+  const batchSizeItens = 100;
+  const pessoasBatches = [];
+  const itensBatches = [];
+  
+  // Divide em lotes
+  for (let i = 0; i < pessoasIds.length; i += batchSizePessoas) {
+    pessoasBatches.push(pessoasIds.slice(i, i + batchSizePessoas));
+  }
+  
+  for (let i = 0; i < itemCodigos.length; i += batchSizeItens) {
+    itensBatches.push(itemCodigos.slice(i, i + batchSizeItens));
+  }
+  
+  // Busca pessoas
+  const allPessoas = [];
+  for (const batch of pessoasBatches) {
+    const { data } = await supabase
+      .from('BLUEBAY_PESSOA')
+      .select('PES_CODIGO, APELIDO')
+      .in('PES_CODIGO', batch);
+    
+    if (data) {
+      allPessoas.push(...data);
+    }
+  }
+  
+  // Busca itens
+  const allItens = [];
+  for (const batch of itensBatches) {
+    const { data } = await supabase
+      .from('BLUEBAY_ITEM')
+      .select('ITEM_CODIGO, DESCRICAO')
+      .in('ITEM_CODIGO', batch);
+    
+    if (data) {
+      allItens.push(...data);
+    }
+  }
+  
+  // Busca estoque
+  const allEstoque = [];
+  for (const batch of itensBatches) {
+    const { data } = await supabase
+      .from('BLUEBAY_ESTOQUE')
+      .select('ITEM_CODIGO, FISICO')
+      .in('ITEM_CODIGO', batch);
+    
+    if (data) {
+      allEstoque.push(...data);
+    }
+  }
+
+  return {
+    pessoas: allPessoas,
+    itens: allItens,
+    estoque: allEstoque
+  };
+}
+
+export async function fetchItensSeparacao() {
+  // Busca itens em separação com status "pendente"
+  const { data, error } = await supabase
+    .from('separacao_itens')
+    .select(`
+      item_codigo,
+      separacoes(status)
+    `)
+    .eq('separacoes.status', 'pendente');
+
+  if (error) {
+    console.error('Erro ao buscar itens em separação:', error);
+    return {};
+  }
+
+  // Cria um mapa de códigos de item -> true para fácil verificação
+  const itensSeparacaoMap: Record<string, boolean> = {};
+  if (data) {
+    data.forEach(item => {
+      if (item.item_codigo) {
+        itensSeparacaoMap[item.item_codigo] = true;
+      }
+    });
+  }
+
+  console.log(`Encontrados ${Object.keys(itensSeparacaoMap).length} itens em separação`);
+  return itensSeparacaoMap;
+}
