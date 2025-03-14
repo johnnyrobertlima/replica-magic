@@ -48,10 +48,13 @@ export const useClientOrdersSearch = (initialDate: DateRange | undefined = {
 
   const handleSearch = () => {
     console.log("Handling search with date:", state.date);
+    // Forçar uma nova referência do objeto searchDate para garantir que o hook useEffect detecte a mudança
+    const newSearchDate = state.date ? { ...state.date } : undefined;
+    
     setState(prev => ({ 
       ...prev, 
       isSearching: true,
-      searchDate: prev.date
+      searchDate: newSearchDate
     }));
   };
 

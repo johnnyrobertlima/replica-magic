@@ -16,11 +16,14 @@ export function useJabOrders(options: UseJabOrdersOptions = {}) {
 }
 
 export function useAllJabOrders(options: Omit<UseJabOrdersOptions, 'page' | 'pageSize'> = {}) {
+  const from = options.dateRange?.from;
+  const to = options.dateRange?.to;
+  
   return useQuery({
-    queryKey: ['all-jab-orders', options.dateRange?.from?.toISOString(), options.dateRange?.to?.toISOString()],
+    queryKey: ['all-jab-orders', from?.toISOString(), to?.toISOString()],
     queryFn: () => fetchAllJabOrders(options),
-    enabled: !!options.dateRange?.from && !!options.dateRange?.to,
-    staleTime: 5 * 60 * 1000,
+    enabled: !!from && !!to,
+    staleTime: 5 * 60 * 1000, 
     gcTime: 10 * 60 * 1000,
   });
 }

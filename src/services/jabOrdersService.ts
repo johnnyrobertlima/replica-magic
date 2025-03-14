@@ -23,6 +23,7 @@ export async function fetchJabOrders({
   pageSize = 15 
 }: UseJabOrdersOptions): Promise<JabOrdersResponse> {
   if (!dateRange?.from || !dateRange?.to) {
+    console.warn('fetchJabOrders: Data range is missing from or to', dateRange);
     return { orders: [], totalCount: 0 };
   }
 
@@ -35,12 +36,14 @@ export async function fetchJabOrders({
   const numeroPedidos = pedidosUnicos.map(p => p.ped_numpedido);
 
   if (!numeroPedidos.length) {
+    console.log('Nenhum pedido único encontrado para o período');
     return { orders: [], totalCount };
   }
 
   const pedidosDetalhados = await fetchPedidosDetalhados(numeroPedidos);
 
   if (!pedidosDetalhados.length) {
+    console.log('Nenhum detalhe de pedido encontrado');
     return { orders: [], totalCount };
   }
 
@@ -58,6 +61,7 @@ export async function fetchAllJabOrders({
   dateRange 
 }: Omit<UseJabOrdersOptions, 'page' | 'pageSize'>): Promise<JabOrdersResponse> {
   if (!dateRange?.from || !dateRange?.to) {
+    console.warn('fetchAllJabOrders: Data range is missing from or to', dateRange);
     return { orders: [], totalCount: 0 };
   }
 
@@ -70,13 +74,16 @@ export async function fetchAllJabOrders({
   const pedidosDetalhados = await fetchAllPedidosDireto(dataInicial, dataFinal);
 
   if (!pedidosDetalhados.length) {
+    console.log('Nenhum pedido detalhado encontrado para o período via busca direta');
     return { orders: [], totalCount: 0 };
   }
 
   const result = await processAllJabOrders(pedidosDetalhados);
+  console.log(`Processados ${result.orders.length} pedidos no total`);
   
   return {
     ...result,
+    totalCount: result.orders.length,
     currentPage: 1,
     pageSize: result.orders.length
   };

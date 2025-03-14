@@ -60,7 +60,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
   };
 
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex flex-col md:flex-row items-center gap-4">
       <Select value={searchType} onValueChange={value => onSearchTypeChange(value as SearchType)}>
         <SelectTrigger className="w-[180px]">
           <SelectValue placeholder="Tipo de busca" />
@@ -78,7 +78,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
           placeholder={getPlaceholder()}
           value={searchQuery}
           onChange={(e) => onSearchQueryChange(e.target.value)}
-          className="pl-9 w-[250px]"
+          className="pl-9 w-full md:w-[250px]"
         />
       </div>
       
@@ -87,7 +87,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
           <Button
             variant={"outline"}
             className={cn(
-              "justify-start text-left font-normal w-[300px]",
+              "justify-start text-left font-normal w-full md:w-[300px]",
               !date && "text-muted-foreground"
             )}
           >
@@ -117,7 +117,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
         </PopoverContent>
       </Popover>
 
-      <Button onClick={handleSearch} className="gap-2">
+      <Button onClick={handleSearch} className="gap-2 w-full md:w-auto">
         <Search className="h-4 w-4" />
         Pesquisar
       </Button>
