@@ -37,13 +37,18 @@ export const useApprovedOrdersStorage = () => {
     try {
       // Format month with leading zero for single-digit months
       const formattedMonth = selectedMonth < 10 ? `0${selectedMonth}` : selectedMonth.toString();
-      const monthPattern = `${selectedYear}-${formattedMonth}-%`;
+      const startDateStr = `${selectedYear}-${formattedMonth}-01`;
+      const endMonthDay = new Date(selectedYear, selectedMonth, 0).getDate();
+      const endDateStr = `${selectedYear}-${formattedMonth}-${endMonthDay}`;
       
-      // Try to get from Supabase first with simpler query approach
+      console.log(`Buscando aprovações entre ${startDateStr} e ${endDateStr}`);
+      
+      // Use between dates instead of LIKE pattern for proper type handling
       const { data: supabaseOrders, error } = await supabase
         .from('approved_orders')
         .select('*')
-        .like('approved_at', monthPattern)
+        .gte('approved_at', startDateStr)
+        .lte('approved_at', endDateStr)
         .order('approved_at', { ascending: false });
 
       if (error) {
