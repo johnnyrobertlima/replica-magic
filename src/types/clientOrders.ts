@@ -29,7 +29,12 @@ export interface ClientOrdersState extends SearchState {
   showZeroBalance: boolean;
   showOnlyWithStock: boolean;
   selectedItems: string[];
-  selectedItemsDetails: Record<string, { qtde: number; valor: number }>;
+  selectedItemsDetails: Record<string, { 
+    qtde: number; 
+    valor: number; 
+    clientName?: string; 
+    clientCode?: number;
+  }>;
   isSending: boolean;
 }
 

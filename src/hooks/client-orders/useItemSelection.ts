@@ -91,7 +91,14 @@ export const useItemSelection = (
     });
 
     // Exportar para Excel
-    exportToExcel(selectedItemsData, 'Itens_Selecionados');
+    const exportedCount = exportToExcel(selectedItemsData, 'Itens_Selecionados');
+    
+    if (exportedCount) {
+      toast({
+        title: "Exportação concluída",
+        description: `${exportedCount} itens exportados com sucesso`
+      });
+    }
   }, [state.selectedItems, groupedOrders, toast]);
   
   // Função para limpar todas as seleções
