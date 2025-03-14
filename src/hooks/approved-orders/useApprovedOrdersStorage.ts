@@ -4,7 +4,7 @@ import { ApprovedOrder, MonthSelection } from './types';
 import { ClienteFinanceiro } from '@/types/financialClient';
 import { supabase } from '@/integrations/supabase/client';
 
-// Define a simpler type for what we store in the database to avoid circular references
+// Define a completely flat type for what we store in the database to avoid circular references
 type StoredClienteData = {
   PES_CODIGO: number;
   APELIDO: string | null;
@@ -13,16 +13,18 @@ type StoredClienteData = {
   valoresEmAberto: number;
   valoresVencidos: number;
   representanteNome: string | null;
+  // Store only minimal separacoes data to avoid deep nesting
   separacoes: Array<{
     id: string;
-    valor_total?: number | undefined;
-    quantidade_itens?: number | undefined;
+    valor_total?: number | null;
+    quantidade_itens?: number | null;
+    // Flatten the structure by making separacao_itens a simple array of objects
     separacao_itens?: Array<{
       pedido: string;
-      item_codigo?: string | undefined;
-      quantidade_pedida?: number | undefined;
-      valor_unitario?: number | undefined;
-    }> | undefined;
+      item_codigo?: string | null;
+      quantidade_pedida?: number | null;
+      valor_unitario?: number | null;
+    }> | null;
   }>;
 };
 
@@ -126,7 +128,7 @@ export const useApprovedOrdersStorage = () => {
                   item_codigo: item.item_codigo,
                   quantidade_pedida: item.quantidade_pedida,
                   valor_unitario: item.valor_unitario
-                })) : undefined
+                })) : null
             };
           }
           return { id: sep.id };
