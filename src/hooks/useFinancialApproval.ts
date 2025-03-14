@@ -1,144 +1,111 @@
 
-import { useState, useEffect, useCallback } from "react";
 import { useClientesFinanceiros } from "@/hooks/useClientesFinanceiros";
-import { useApprovedOrders } from "@/hooks/useApprovedOrders";
+import { useMemo } from "react";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 export const useFinancialApproval = () => {
   const { 
-    clientesFinanceiros, 
+    clientesFinanceiros,
     isLoading, 
-    isLoadingSeparacoes, 
-    hideCard, 
-    updateVolumeSaudavel 
+    hideCard,
+    updateVolumeSaudavel
   } = useClientesFinanceiros();
+  const { toast } = useToast();
 
-  const { 
-    addApprovedOrder, 
-    loadApprovedOrders, 
-    selectedYear, 
-    selectedMonth, 
-    calculateTotals, 
-    isLoading: isLoadingApproved 
-  } = useApprovedOrders();
-  
-  const [approvedSeparacaoIds, setApprovedSeparacaoIds] = useState<Set<string>>(new Set());
-  const [currentUser, setCurrentUser] = useState<{ id?: string; email?: string } | null>(null);
-  const [loadedApproved, setLoadedApproved] = useState(false);
-  const [hiddenCardIds, setHiddenCardIds] = useState<Set<string>>(new Set());
-  
-  useEffect(() => {
-    const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setCurrentUser({
-          id: user.id,
-          email: user.email || undefined
-        });
-      }
-    };
-    
-    getCurrentUser();
-  }, []);
-  
-  const loadApproved = useCallback(async () => {
-    if (loadedApproved) return;
-    
+  // Memoize clientes with pending separacoes
+  const clientesWithPendingSeparacoes = useMemo(() => {
+    return clientesFinanceiros.filter(cliente => 
+      cliente.separacoes && cliente.separacoes.length > 0
+    );
+  }, [clientesFinanceiros]);
+
+  // Handler for approving a separação
+  const handleApprove = async (separacaoId: string, cliente: any) => {
     try {
-      const approvedOrders = await loadApprovedOrders(selectedYear, selectedMonth);
-      console.log(`Loaded ${approvedOrders.length} approved orders for ${selectedYear}-${selectedMonth}`);
-      
-      // Create a set of approved separation IDs for efficient lookups
-      const approvedIds = new Set(approvedOrders.map(order => order.separacaoId));
-      setApprovedSeparacaoIds(approvedIds);
-      setLoadedApproved(true);
+      // Update the separacao status to 'aprovado'
+      const { error } = await supabase
+        .from('separacoes')
+        .update({ status: 'aprovado' })
+        .eq('id', separacaoId);
+
+      if (error) throw error;
+
+      // Store the approval record
+      const { error: approvalError } = await supabase
+        .from('approved_orders')
+        .insert({
+          separacao_id: separacaoId,
+          cliente_data: cliente,
+          action: 'aprovado'
+        });
+
+      if (approvalError) throw approvalError;
+
+      // Hide the card
+      hideCard(separacaoId);
+
+      toast({
+        title: "Sucesso",
+        description: "Pedido aprovado com sucesso!",
+        variant: "default",
+      });
     } catch (error) {
-      console.error("Error loading approved orders:", error);
-      setLoadedApproved(true);
+      console.error("Erro ao aprovar pedido:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível aprovar o pedido.",
+        variant: "destructive",
+      });
     }
-  }, [loadApprovedOrders, selectedYear, selectedMonth, loadedApproved]);
-
-  useEffect(() => {
-    loadApproved();
-  }, [loadApproved]);
-
-  useEffect(() => {
-    setLoadedApproved(false);
-  }, [selectedYear, selectedMonth]);
-
-  // Filter out clients with no pending separations or with all separations hidden
-  const filteredClientesFinanceiros = clientesFinanceiros.filter(cliente => {
-    // Only consider separations that are not approved and not manually hidden
-    const pendingSeparacoes = cliente.separacoes.filter(
-      separacao => 
-        separacao.status === 'pendente' && 
-        !approvedSeparacaoIds.has(separacao.id) && 
-        !hiddenCardIds.has(separacao.id)
-    );
-    
-    return pendingSeparacoes.length > 0;
-  });
-
-  // For each client, only include separations that are pending and not hidden
-  const clientesWithPendingSeparacoes = filteredClientesFinanceiros.map(cliente => ({
-    ...cliente,
-    separacoes: cliente.separacoes.filter(
-      separacao => 
-        separacao.status === 'pendente' && 
-        !approvedSeparacaoIds.has(separacao.id) && 
-        !hiddenCardIds.has(separacao.id)
-    )
-  }));
-
-  const handleApprove = (separacaoId: string, cliente: any) => {
-    addApprovedOrder(
-      separacaoId, 
-      cliente, 
-      currentUser?.email || null,
-      currentUser?.id || null,
-      'approved'
-    );
-    
-    setApprovedSeparacaoIds(prev => {
-      const newSet = new Set(prev);
-      newSet.add(separacaoId);
-      return newSet;
-    });
-  };
-  
-  const handleReject = (separacaoId: string, cliente: any) => {
-    addApprovedOrder(
-      separacaoId, 
-      cliente, 
-      currentUser?.email || null,
-      currentUser?.id || null,
-      'rejected'
-    );
-    
-    setApprovedSeparacaoIds(prev => {
-      const newSet = new Set(prev);
-      newSet.add(separacaoId);
-      return newSet;
-    });
   };
 
-  const handleHideCard = (id: string) => {
-    hideCard(id);
-    
-    // Also track locally hidden cards
-    setHiddenCardIds(prev => {
-      const newSet = new Set(prev);
-      newSet.add(id);
-      return newSet;
-    });
+  // Handler for rejecting a separação
+  const handleReject = async (separacaoId: string, cliente: any) => {
+    try {
+      // Update the separacao status to 'rejeitado'
+      const { error } = await supabase
+        .from('separacoes')
+        .update({ status: 'rejeitado' })
+        .eq('id', separacaoId);
+
+      if (error) throw error;
+
+      // Store the rejection record
+      const { error: rejectionError } = await supabase
+        .from('approved_orders')
+        .insert({
+          separacao_id: separacaoId,
+          cliente_data: cliente,
+          action: 'rejeitado'
+        });
+
+      if (rejectionError) throw rejectionError;
+
+      // Hide the card
+      hideCard(separacaoId);
+
+      toast({
+        title: "Sucesso",
+        description: "Pedido rejeitado com sucesso!",
+        variant: "default",
+      });
+    } catch (error) {
+      console.error("Erro ao rejeitar pedido:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível rejeitar o pedido.",
+        variant: "destructive",
+      });
+    }
   };
 
   return {
     clientesWithPendingSeparacoes,
-    isLoading: isLoading || isLoadingSeparacoes || isLoadingApproved,
+    isLoading,
     handleApprove,
     handleReject,
-    handleHideCard,
+    handleHideCard: hideCard,
     updateVolumeSaudavel
   };
 };
