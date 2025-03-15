@@ -42,11 +42,7 @@ export const fetchBkFaturamentoData = async (
   // Build the query with optional date filters
   let query = supabase
     .from('BLUEBAY_FATURAMENTO')
-    .select(`
-      *,
-      BLUEBAY_PESSOA:PES_CODIGO (APELIDO, RAZAOSOCIAL)
-    `)
-    .in('PED_NUMPEDIDO', pedidosNums);
+    .select('*');
 
   // Add date range filters if provided
   if (startDate) {
@@ -57,6 +53,9 @@ export const fetchBkFaturamentoData = async (
     query = query.lte('DATA_EMISSAO', endDate);
   }
 
+  // Add filter for PED_NUMPEDIDO
+  query = query.in('PED_NUMPEDIDO', pedidosNums);
+
   // Execute the query
   const { data, error } = await query;
 
@@ -66,6 +65,43 @@ export const fetchBkFaturamentoData = async (
   }
 
   console.log(`Fetched ${data?.length} faturamento records`);
+  
+  // Let's separately get the cliente names
+  if (data && data.length > 0) {
+    const clienteIds = data
+      .map(item => item.PES_CODIGO)
+      .filter((id): id is number => id !== null && !isNaN(Number(id)));
+    
+    if (clienteIds.length > 0) {
+      const { data: clientesData, error: clientesError } = await supabase
+        .from('BLUEBAY_PESSOA')
+        .select('PES_CODIGO, APELIDO, RAZAOSOCIAL')
+        .in('PES_CODIGO', clienteIds);
+      
+      if (!clientesError && clientesData) {
+        // Create a map of cliente IDs to their names
+        const clienteMap = new Map<number, { APELIDO: string | null, RAZAOSOCIAL: string | null }>();
+        clientesData.forEach(cliente => {
+          clienteMap.set(cliente.PES_CODIGO, {
+            APELIDO: cliente.APELIDO,
+            RAZAOSOCIAL: cliente.RAZAOSOCIAL
+          });
+        });
+        
+        // Attach cliente info to each faturamento record
+        data.forEach(item => {
+          if (item.PES_CODIGO !== null) {
+            const clienteInfo = clienteMap.get(item.PES_CODIGO);
+            if (clienteInfo) {
+              // Adding cliente info to the faturamento item
+              (item as any).CLIENTE_INFO = clienteInfo;
+            }
+          }
+        });
+      }
+    }
+  }
+  
   return data || [];
 };
 
@@ -81,6 +117,11 @@ export const consolidateByNota = (data: BkFaturamento[]): ConsolidatedInvoice[] 
       // Update the existing invoice
       existingInvoice.ITEMS_COUNT += 1;
     } else {
+      // Get cliente name if available
+      const clienteInfo = (item as any).CLIENTE_INFO;
+      const clienteNome = clienteInfo ? 
+        (clienteInfo.APELIDO || clienteInfo.RAZAOSOCIAL || null) : null;
+      
       // Create a new invoice entry
       invoiceMap.set(item.NOTA, {
         NOTA: item.NOTA,
@@ -89,7 +130,7 @@ export const consolidateByNota = (data: BkFaturamento[]): ConsolidatedInvoice[] 
         STATUS: item.STATUS,
         VALOR_NOTA: item.VALOR_NOTA,
         ITEMS_COUNT: 1,
-        CLIENTE_NOME: item.BLUEBAY_PESSOA?.APELIDO || item.BLUEBAY_PESSOA?.RAZAOSOCIAL || null
+        CLIENTE_NOME: clienteNome
       });
     }
   });
