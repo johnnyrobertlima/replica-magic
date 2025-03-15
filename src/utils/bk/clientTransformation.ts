@@ -2,7 +2,7 @@
  * Utility functions for client data transformation
  */
 
-import { BkClient } from "@/hooks/bk/useClients";
+import { BkClient } from "@/types/bk/client";
 
 /**
  * Transforms client data for API operations

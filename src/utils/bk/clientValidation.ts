@@ -1,9 +1,8 @@
-
 /**
  * Utility functions for client form validation
  */
 
-import { BkClient } from "@/hooks/bk/useClients";
+import { BkClient } from "@/types/bk/client";
 
 export interface ValidationError {
   field: string;

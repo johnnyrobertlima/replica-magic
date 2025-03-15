@@ -1,4 +1,3 @@
-
 import { 
   Table,
   TableBody,
@@ -9,7 +8,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Loader2, Edit, Trash2, Building } from "lucide-react";
-import { BkClient } from "@/hooks/bk/useClients";
+import { BkClient } from "@/types/bk/client";
 
 interface ClientListProps {
   clients: BkClient[];
