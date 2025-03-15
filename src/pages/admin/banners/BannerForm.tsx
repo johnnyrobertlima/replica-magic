@@ -86,7 +86,8 @@ export const BannerForm = ({
             <SelectContent>
               <SelectItem value="index">Página Inicial</SelectItem>
               <SelectItem value="bluebay">Bluebay</SelectItem>
-              <SelectItem value="both">Ambos</SelectItem>
+              <SelectItem value="bk">B&K</SelectItem>
+              <SelectItem value="both">Todas</SelectItem>
             </SelectContent>
           </Select>
         </div>

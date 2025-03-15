@@ -35,8 +35,10 @@ export const BannerList = ({
         return 'Página Inicial';
       case 'bluebay':
         return 'Bluebay';
+      case 'bk':
+        return 'B&K';
       case 'both':
-        return 'Ambos';
+        return 'Todas';
       default:
         return location;
     }
@@ -48,8 +50,10 @@ export const BannerList = ({
         return 'bg-blue-100 text-blue-800';
       case 'bluebay':
         return 'bg-green-100 text-green-800';
-      case 'both':
+      case 'bk':
         return 'bg-purple-100 text-purple-800';
+      case 'both':
+        return 'bg-amber-100 text-amber-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
