@@ -1,17 +1,16 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 // Define the types for BkFaturamento and consolidated invoices
 export interface BkFaturamento {
   NOTA: string;
-  SERIE: string | null;
+  SERIE?: string | null;  // Made optional with ?
   DATA_EMISSAO: string | null;
   PES_CODIGO: string | null;
   PED_NUMPEDIDO: string | null;
   VALOR_UNITARIO: number | null;
   QUANTIDADE: number | null;
-  ST_CODIGO: string | null;
-  CFOP: string | null;
+  ST_CODIGO?: string | null;  // Made optional with ?
+  CFOP?: string | null;  // Made optional with ?
   STATUS: string | null;
   ITEM_CODIGO: string | null;
 }
@@ -29,7 +28,8 @@ export const fetchBkFaturamentoData = async (startDate: string, endDate: string)
     throw error;
   }
 
-  return data as BkFaturamento[];
+  // Use type assertion to handle the conversion safely
+  return data as unknown as BkFaturamento[];
 };
 
 // Fetch invoice items for a specific invoice
