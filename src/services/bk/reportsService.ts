@@ -41,7 +41,33 @@ export const fetchBkItemsReport = async (
   // Reuse the same data fetching logic from financial service
   const faturamentoData = await fetchBkFaturamentoData(startDate, endDate);
   
-  return processItemsReport(faturamentoData);
+  // Get unique item codes from the faturamento data
+  const itemCodes = [...new Set(faturamentoData
+    .filter(item => item.ITEM_CODIGO)
+    .map(item => item.ITEM_CODIGO as string))];
+  
+  // Fetch item descriptions from BLUEBAY_ITEM table
+  const { data: itemData, error: itemError } = await supabase
+    .from('BLUEBAY_ITEM')
+    .select('ITEM_CODIGO, DESCRICAO')
+    .in('ITEM_CODIGO', itemCodes);
+  
+  if (itemError) {
+    console.error("Error fetching item descriptions:", itemError);
+  }
+  
+  // Create a map of item codes to descriptions
+  const itemDescMap = new Map<string, string>();
+  if (itemData) {
+    itemData.forEach(item => {
+      if (item.ITEM_CODIGO && item.DESCRICAO) {
+        itemDescMap.set(item.ITEM_CODIGO, item.DESCRICAO);
+      }
+    });
+  }
+  
+  // Process the faturamento data with the item descriptions from our map
+  return processItemsReport(faturamentoData, itemDescMap);
 };
 
 /**
@@ -91,7 +117,10 @@ export const fetchItemDetails = async (
 /**
  * Processes raw faturamento data into item report
  */
-const processItemsReport = (data: BkFaturamento[]): ItemReport[] => {
+const processItemsReport = (
+  data: BkFaturamento[], 
+  itemDescMap: Map<string, string>
+): ItemReport[] => {
   const itemsMap = new Map<string, ItemReport>();
   
   data.forEach(item => {
@@ -117,10 +146,12 @@ const processItemsReport = (data: BkFaturamento[]): ItemReport[] => {
       existingItem.TOTAL_VALOR += itemValue;
       existingItem.OCORRENCIAS += 1;
     } else {
-      // Fetch item description from database if available
+      // Get item description from the map we created earlier
+      const description = itemDescMap.get(item.ITEM_CODIGO) || '';
+      
       itemsMap.set(item.ITEM_CODIGO, {
         ITEM_CODIGO: item.ITEM_CODIGO,
-        DESCRICAO: item.DESCRICAO || '',
+        DESCRICAO: description,
         TOTAL_QUANTIDADE: item.QUANTIDADE || 0,
         TOTAL_VALOR: itemValue,
         OCORRENCIAS: 1
