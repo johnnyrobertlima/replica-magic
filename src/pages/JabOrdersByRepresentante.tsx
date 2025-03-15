@@ -4,6 +4,7 @@ import { useRepresentanteOrders } from "@/hooks/useRepresentanteOrders";
 import { OrdersTabs } from "@/components/jab-orders/OrdersTabs";
 import { Toaster } from "@/components/ui/toaster";
 import JabNavMenu from "@/components/jab-orders/JabNavMenu";
+import { RepresentanteOrdersTabs } from "@/components/jab-orders/RepresentanteOrdersTabs";
 
 const JabOrdersByRepresentante = () => {
   const representanteOrders = useRepresentanteOrders();
@@ -26,7 +27,7 @@ const JabOrdersByRepresentante = () => {
       <h1 className="text-2xl font-bold mb-6">Separação por Representante</h1>
 
       <div className="space-y-6">
-        <OrdersTabs clientOrders={representanteOrders} />
+        <RepresentanteOrdersTabs clientOrders={representanteOrders} />
       </div>
       <Toaster />
     </main>
