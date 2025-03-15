@@ -3,11 +3,22 @@ import { useState, useEffect } from "react";
 import { fetchBkFaturamentoData, consolidateByNota, BkFaturamento } from "@/services/bk/financialService";
 import { useToast } from "@/hooks/use-toast";
 
+// Helper to get date from X days ago in ISO format
+const getDateXDaysAgo = (daysAgo: number) => {
+  const date = new Date();
+  date.setDate(date.getDate() - daysAgo);
+  return date.toISOString().split('T')[0];
+};
+
 export const useFinancial = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [faturamentoData, setFaturamentoData] = useState<BkFaturamento[]>([]);
   const [consolidatedInvoices, setConsolidatedInvoices] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [dateRange, setDateRange] = useState({
+    startDate: getDateXDaysAgo(30), // Default to 30 days ago
+    endDate: new Date().toISOString().split('T')[0] // Today
+  });
   const { toast } = useToast();
 
   const loadData = async () => {
@@ -15,7 +26,7 @@ export const useFinancial = () => {
       setIsLoading(true);
       setError(null);
       
-      const data = await fetchBkFaturamentoData();
+      const data = await fetchBkFaturamentoData(dateRange.startDate, dateRange.endDate);
       setFaturamentoData(data);
       
       // Consolidate invoices by NOTA
@@ -37,10 +48,14 @@ export const useFinancial = () => {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [dateRange.startDate, dateRange.endDate]);
 
   const refreshData = () => {
     loadData();
+  };
+
+  const updateDateRange = (startDate: string, endDate: string) => {
+    setDateRange({ startDate, endDate });
   };
 
   return {
@@ -48,6 +63,8 @@ export const useFinancial = () => {
     faturamentoData,
     consolidatedInvoices,
     error,
-    refreshData
+    refreshData,
+    dateRange,
+    updateDateRange
   };
 };

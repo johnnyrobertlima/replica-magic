@@ -3,8 +3,18 @@ import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/utils/formatters";
 
+interface Invoice {
+  NOTA: string;
+  DATA_EMISSAO: string | null;
+  PES_CODIGO: number | null;
+  STATUS: string | null;
+  VALOR_NOTA: number | null;
+  ITEMS_COUNT: number;
+  CLIENTE_NOME?: string | null;
+}
+
 interface FinancialDashboardProps {
-  invoices: any[];
+  invoices: Invoice[];
 }
 
 export const FinancialDashboard = ({ invoices }: FinancialDashboardProps) => {
@@ -14,7 +24,7 @@ export const FinancialDashboard = ({ invoices }: FinancialDashboardProps) => {
   const averageValue = totalInvoices > 0 ? totalValue / totalInvoices : 0;
   
   // Count invoices by status
-  const statusCounts = invoices.reduce((counts: Record<string, number>, invoice) => {
+  const statusCounts: Record<string, number> = invoices.reduce((counts: Record<string, number>, invoice) => {
     const status = invoice.STATUS || 'Desconhecido';
     counts[status] = (counts[status] || 0) + 1;
     return counts;
@@ -70,6 +80,9 @@ export const FinancialDashboard = ({ invoices }: FinancialDashboardProps) => {
                 <div className="font-medium">{count}</div>
               </div>
             ))}
+            {Object.keys(statusCounts).length === 0 && (
+              <div className="text-sm text-muted-foreground">Nenhum dado disponível</div>
+            )}
           </div>
         </CardContent>
       </Card>

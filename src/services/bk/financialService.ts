@@ -14,8 +14,11 @@ interface ConsolidatedInvoice {
   CLIENTE_NOME?: string | null;
 }
 
-export const fetchBkFaturamentoData = async (): Promise<BkFaturamento[]> => {
-  console.log("Fetching B&K faturamento data...");
+export const fetchBkFaturamentoData = async (
+  startDate?: string,
+  endDate?: string
+): Promise<BkFaturamento[]> => {
+  console.log("Fetching B&K faturamento data...", { startDate, endDate });
   
   // First, query to get the PED_NUMPEDIDO values from BK center
   const { data: pedidosBK, error: pedidosError } = await supabase
@@ -36,14 +39,26 @@ export const fetchBkFaturamentoData = async (): Promise<BkFaturamento[]> => {
   // Extract the PED_NUMPEDIDO values into an array
   const pedidosNums = pedidosBK.map(p => p.PED_NUMPEDIDO);
   
-  // Now use the array of PED_NUMPEDIDO values in the IN clause
-  const { data, error } = await supabase
+  // Build the query with optional date filters
+  let query = supabase
     .from('BLUEBAY_FATURAMENTO')
     .select(`
       *,
       BLUEBAY_PESSOA:PES_CODIGO (APELIDO, RAZAOSOCIAL)
     `)
     .in('PED_NUMPEDIDO', pedidosNums);
+
+  // Add date range filters if provided
+  if (startDate) {
+    query = query.gte('DATA_EMISSAO', startDate);
+  }
+  
+  if (endDate) {
+    query = query.lte('DATA_EMISSAO', endDate);
+  }
+
+  // Execute the query
+  const { data, error } = await query;
 
   if (error) {
     console.error("Error fetching B&K faturamento data:", error);
@@ -73,7 +88,8 @@ export const consolidateByNota = (data: BkFaturamento[]): ConsolidatedInvoice[] 
         PES_CODIGO: item.PES_CODIGO,
         STATUS: item.STATUS,
         VALOR_NOTA: item.VALOR_NOTA,
-        ITEMS_COUNT: 1
+        ITEMS_COUNT: 1,
+        CLIENTE_NOME: item.BLUEBAY_PESSOA?.APELIDO || item.BLUEBAY_PESSOA?.RAZAOSOCIAL || null
       });
     }
   });
