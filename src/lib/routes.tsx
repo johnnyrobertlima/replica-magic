@@ -16,6 +16,7 @@ import AcompanhamentoFaturamento from "@/pages/AcompanhamentoFaturamento";
 import UserGroupManagement from "@/pages/admin/users/UserGroupManagement";
 import { AdminBanners } from "@/pages/admin/banners"; // Updated import
 import BluebayHome from "@/pages/BluebayHome";
+import BkHome from "@/pages/BkHome";
 
 export const routes = [
   {
@@ -29,6 +30,10 @@ export const routes = [
   {
     path: "/client-area/bluebay",
     element: <BluebayHome />,
+  },
+  {
+    path: "/client-area/bk",
+    element: <BkHome />,
   },
   {
     path: "/post-management",

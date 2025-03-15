@@ -1,4 +1,3 @@
-
 import { Routes, Route, Navigate } from "react-router-dom";
 import Index from "@/pages/Index";
 import ClientArea from "@/pages/ClientArea";
@@ -15,11 +14,12 @@ import ClientLogin from "@/pages/ClientLogin";
 import AprovacaoFinanceira from "@/pages/AprovacaoFinanceira";
 import AcompanhamentoFaturamento from "@/pages/AcompanhamentoFaturamento";
 import BluebayHome from "@/pages/BluebayHome";
+import BkHome from "@/pages/BkHome";
 
 // Admin imports
 import { AdminLayout } from "@/pages/admin/layout";
 import { AdminDashboard } from "@/pages/admin/dashboard";
-import { AdminBanners } from "@/pages/admin/banners"; // This now imports from index.tsx
+import { AdminBanners } from "@/pages/admin/banners";
 import { AdminClients } from "@/pages/admin/clients";
 import { AdminLogos } from "@/pages/admin/logos";
 import { AdminMessages } from "@/pages/admin/messages";
@@ -80,6 +80,13 @@ function App() {
       <Route path="/client-area/bluebay/acompanhamento-faturamento" element={
         <PermissionGuard resourcePath="/client-area/bluebay/aprovacao-financeira">
           <AcompanhamentoFaturamento />
+        </PermissionGuard>
+      } />
+      
+      {/* B&K Routes */}
+      <Route path="/client-area/bk" element={
+        <PermissionGuard resourcePath="/client-area/bk">
+          <BkHome />
         </PermissionGuard>
       } />
 
