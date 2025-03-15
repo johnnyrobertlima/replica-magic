@@ -17,18 +17,33 @@ interface ConsolidatedInvoice {
 export const fetchBkFaturamentoData = async (): Promise<BkFaturamento[]> => {
   console.log("Fetching B&K faturamento data...");
   
+  // First, query to get the PED_NUMPEDIDO values from BK center
+  const { data: pedidosBK, error: pedidosError } = await supabase
+    .from('BLUEBAY_PEDIDO')
+    .select('PED_NUMPEDIDO')
+    .eq('CENTROCUSTO', 'BK');
+
+  if (pedidosError) {
+    console.error("Error fetching BK pedidos:", pedidosError);
+    throw pedidosError;
+  }
+
+  if (!pedidosBK || pedidosBK.length === 0) {
+    console.log("No BK pedidos found");
+    return [];
+  }
+
+  // Extract the PED_NUMPEDIDO values into an array
+  const pedidosNums = pedidosBK.map(p => p.PED_NUMPEDIDO);
+  
+  // Now use the array of PED_NUMPEDIDO values in the IN clause
   const { data, error } = await supabase
     .from('BLUEBAY_FATURAMENTO')
     .select(`
       *,
       BLUEBAY_PESSOA:PES_CODIGO (APELIDO, RAZAOSOCIAL)
     `)
-    .in('PED_NUMPEDIDO', (
-      supabase
-        .from('BLUEBAY_PEDIDO')
-        .select('PED_NUMPEDIDO')
-        .eq('CENTROCUSTO', 'BK')
-    ));
+    .in('PED_NUMPEDIDO', pedidosNums);
 
   if (error) {
     console.error("Error fetching B&K faturamento data:", error);
