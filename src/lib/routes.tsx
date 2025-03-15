@@ -14,6 +14,8 @@ import ClientLogin from "@/pages/ClientLogin";
 import AprovacaoFinanceira from "@/pages/AprovacaoFinanceira";
 import AcompanhamentoFaturamento from "@/pages/AcompanhamentoFaturamento";
 import UserGroupManagement from "@/pages/admin/users/UserGroupManagement";
+import { AdminBanners } from "@/pages/admin/banners";
+import BluebayHome from "@/pages/BluebayHome";
 
 export const routes = [
   {
@@ -23,6 +25,10 @@ export const routes = [
   {
     path: "/client-area",
     element: <ClientArea />,
+  },
+  {
+    path: "/client-area/bluebay",
+    element: <BluebayHome />,
   },
   {
     path: "/post-management",
@@ -75,5 +81,9 @@ export const routes = [
   {
     path: "/admin/users",
     element: <UserGroupManagement />,
+  },
+  {
+    path: "/admin/banners",
+    element: <AdminBanners />,
   },
 ] as const;

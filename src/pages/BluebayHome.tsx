@@ -6,6 +6,8 @@ import { Boxes, ClipboardCheck, FileCheck, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import JabNavMenu from "@/components/jab-orders/JabNavMenu";
+import { JabHeroBanner } from "@/components/jab-orders/JabHeroBanner";
+import { Toaster } from "@/components/ui/toaster";
 
 const BluebayHome = () => {
   const navigate = useNavigate();
@@ -32,8 +34,10 @@ const BluebayHome = () => {
   };
 
   return (
-    <main className="container mx-auto px-4 py-8">
-      <div className="space-y-6">
+    <main className="container-fluid p-0 max-w-full">
+      <JabHeroBanner />
+      
+      <div className="container mx-auto px-4 py-8 space-y-6">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="text-center md:text-left space-y-2">
             <h1 className="text-4xl font-bold">Área do Cliente Bluebay</h1>
@@ -94,6 +98,24 @@ const BluebayHome = () => {
                 </Card>
               </Link>
 
+              <Link to="/client-area/bluebay/jab-orders-by-representante">
+                <Card className="h-full transition-all hover:shadow-lg">
+                  <CardHeader>
+                    <div className="flex items-center gap-4">
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        <Boxes className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <CardTitle>Separação por Representante</CardTitle>
+                        <CardDescription>
+                          Visualize e gerencie pedidos agrupados por representante
+                        </CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                </Card>
+              </Link>
+
               <Link to="/client-area/bluebay/aprovacao-financeira">
                 <Card className="h-full transition-all hover:shadow-lg">
                   <CardHeader>
@@ -115,6 +137,7 @@ const BluebayHome = () => {
           </CardHeader>
         </Card>
       </div>
+      <Toaster />
     </main>
   );
 };

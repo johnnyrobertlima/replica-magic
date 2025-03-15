@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,10 +43,7 @@ export const AdminBanners = () => {
           console.error("Error uploading image:", uploadError);
           throw new Error(`Erro ao fazer upload da imagem: ${uploadError.message}`);
         }
-        const { data: { publicUrl } } = supabase.storage
-          .from("oni-media")
-          .getPublicUrl(uploadData.path);
-        imageUrl = publicUrl;
+        imageUrl = uploadData.path;
       }
 
       const duration = Number(formData.get("duration")) * 1000; // Convert seconds to milliseconds
@@ -163,10 +161,7 @@ export const AdminBanners = () => {
           return;
         }
 
-        const { data: { publicUrl } } = supabase.storage
-          .from("oni-media")
-          .getPublicUrl(uploadData.path);
-        updatedData.image_url = publicUrl;
+        updatedData.image_url = uploadData.path;
       }
 
       const { error } = await supabase

@@ -1,3 +1,4 @@
+
 export const validateImage = (file: File) => {
   const MAX_SIZE = 5 * 1024 * 1024; // 5MB
   const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/x-icon', 'image/ico'];

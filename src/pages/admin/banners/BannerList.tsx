@@ -1,6 +1,8 @@
+
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ActionButtons } from "@/components/admin/ActionButtons";
 import { Loader2 } from "lucide-react";
+import { getStorageUrl } from "@/utils/imageUtils";
 
 interface Banner {
   id: string;
@@ -52,7 +54,7 @@ export const BannerList = ({
             <TableCell>{banner.title}</TableCell>
             <TableCell>
               <img
-                src={banner.image_url}
+                src={getStorageUrl(banner.image_url)}
                 alt={banner.title}
                 className="h-16 w-24 object-cover rounded"
               />
