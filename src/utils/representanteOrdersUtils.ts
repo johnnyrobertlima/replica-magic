@@ -31,8 +31,8 @@ export const groupOrdersByRepresentante = async (ordersData: { orders: JabOrder[
     
     if (!groupedOrders[representanteName]) {
       groupedOrders[representanteName] = {
-        PES_CODIGO: representanteCode,
-        representante: representanteCode,
+        PES_CODIGO: order.PES_CODIGO,
+        representante: representanteCode.toString(), // Convert number to string here
         representanteNome: representanteName,
         pedidos: [],
         allItems: [],
