@@ -1,4 +1,3 @@
-
 import * as d3 from "d3";
 import { TreemapDataItem, TreemapZoomState, HierarchyNode } from "../treemapTypes";
 
@@ -21,13 +20,26 @@ export const renderTreemap = (
   const height = svgRef.current.clientHeight;
   const margin = { top: 10, right: 10, bottom: 10, left: 10 };
   
+  // Define the root type that includes children
+  interface TreemapRoot {
+    name: string;
+    children: TreemapDataItem[];
+  }
+  
   // Setup the hierarchy data structure
-  const hierarchy = d3.hierarchy({ name: "root", children: data })
-    .sum(d => (d as any).value || 0)
+  const hierarchy = d3.hierarchy<TreemapRoot>({ name: "root", children: data })
+    .sum(d => {
+      // If it's a child node (TreemapDataItem), use its value
+      if ('value' in d) {
+        return d.value;
+      }
+      // Otherwise it's the root, return 0
+      return 0;
+    })
     .sort((a, b) => (b.value || 0) - (a.value || 0));
   
   // Create treemap layout
-  const treemap = d3.treemap<TreemapDataItem>()
+  const treemap = d3.treemap<TreemapRoot>()
     .size([
       width - margin.left - margin.right,
       height - margin.top - margin.bottom
@@ -37,7 +49,7 @@ export const renderTreemap = (
     .round(true);
   
   // Apply the treemap layout to the hierarchy
-  const root = treemap(hierarchy as d3.HierarchyNode<TreemapDataItem>);
+  const root = treemap(hierarchy);
   
   // Create the SVG group for the treemap
   const svg = d3.select(svgRef.current);
@@ -84,13 +96,14 @@ export const renderTreemap = (
         }
       } else {
         // Zoom to this node
-        handleZoomToNode(d as HierarchyNode);
+        handleZoomToNode(d as unknown as HierarchyNode);
       }
     })
     .on("mouseover", function(event, d) {
       // Update tooltip content
-      tooltip.select(".item-name").text((d as any).data.name);
-      tooltip.select(".item-value").text(formatCurrency((d as any).value));
+      const node = d as d3.HierarchyNode<TreemapDataItem>;
+      tooltip.select(".item-name").text(node.data.name);
+      tooltip.select(".item-value").text(formatCurrency(node.value || 0));
       
       // Position and show tooltip
       tooltip
@@ -120,10 +133,13 @@ export const renderTreemap = (
   
   // Add rectangle for each cell
   cell.append("rect")
-    .attr("id", d => `rect-${d.data.name.replace(/\s+/g, '-')}`)
+    .attr("id", d => {
+      const node = d as d3.HierarchyNode<TreemapDataItem>;
+      return `rect-${node.data.name.replace(/\s+/g, '-')}`;
+    })
     .attr("width", d => d.x1 - d.x0)
     .attr("height", d => d.y1 - d.y0)
-    .attr("fill", d => colorScale((d as any).value))
+    .attr("fill", d => colorScale((d as d3.HierarchyNode<TreemapDataItem>).value || 0))
     .attr("stroke", "#fff")
     .attr("stroke-width", 1)
     .classed("treemap-rect", true);
@@ -135,7 +151,10 @@ export const renderTreemap = (
     .attr("y", 14)
     .attr("font-size", "10px")
     .attr("fill", "#fff")
-    .text(d => truncateText((d as any).data.name, d.x1 - d.x0));
+    .text(d => {
+      const node = d as d3.HierarchyNode<TreemapDataItem>;
+      return truncateText(node.data.name, d.x1 - d.x0);
+    });
   
   // Add value text to larger cells
   cell.append("text")
@@ -144,7 +163,7 @@ export const renderTreemap = (
     .attr("y", 26)
     .attr("font-size", "9px")
     .attr("fill", "rgba(255,255,255,0.8)")
-    .text(d => formatCurrency((d as any).value));
+    .text(d => formatCurrency((d as d3.HierarchyNode<TreemapDataItem>).value || 0));
   
   // Add click handler on background to reset zoom
   svg.on("click", function(event) {
