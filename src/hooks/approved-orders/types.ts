@@ -1,7 +1,8 @@
 
 import type { Database } from "@/integrations/supabase/types";
 
-export type Json = Database['public']['CompositeTypes']['json'];
+// Define the Json type correctly by referencing the Supabase type
+export type Json = string | number | boolean | null | { [key: string]: Json } | Json[];
 
 export interface ApprovedOrder {
   id: string;
