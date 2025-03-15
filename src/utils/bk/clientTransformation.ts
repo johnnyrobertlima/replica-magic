@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for client data transformation
  */
@@ -11,13 +12,14 @@ import { BkClient } from "@/types/bk/client";
  */
 export function transformClientForSave(formData: Partial<BkClient>): any {
   // Extract properties that need special handling
-  const { empresas, fator_correcao, ...baseData } = formData;
+  const { empresas, ...baseData } = formData;
   
   // Create transformed object
   const transformedData = {
     ...baseData,
     CATEGORIA: formData.empresas?.join(','),
-    // We keep volume_saudavel_faturamento as is since it's already in the base table
+    // We make sure fator_correcao is explicitly included in the update
+    fator_correcao: formData.fator_correcao
   };
   
   return transformedData;

@@ -77,12 +77,18 @@ export const useClientForm = (clients: BkClient[], onSuccessfulSave: () => void)
         // Update existing client
         const transformedData = transformClientForSave(formData);
         
-        const { error } = await supabase
+        console.log("Updating client with data:", transformedData);
+        console.log("Original form data:", formData);
+        
+        const { error, data } = await supabase
           .from("BLUEBAY_PESSOA")
           .update(transformedData)
-          .eq("PES_CODIGO", currentClient.PES_CODIGO);
+          .eq("PES_CODIGO", currentClient.PES_CODIGO)
+          .select();
 
         if (error) throw error;
+        
+        console.log("Update response:", data);
 
         toast({
           title: "Cliente atualizado",
@@ -91,6 +97,8 @@ export const useClientForm = (clients: BkClient[], onSuccessfulSave: () => void)
       } else {
         // Create new client
         const clientToInsert = prepareClientForInsert(formData);
+        
+        console.log("Inserting client with data:", clientToInsert);
         
         const { error } = await supabase
           .from("BLUEBAY_PESSOA")
@@ -128,11 +136,13 @@ export const useClientForm = (clients: BkClient[], onSuccessfulSave: () => void)
     const newEmpresas = checked
       ? [...empresas, empresa]
       : empresas.filter(e => e !== empresa);
+    console.log(`Checkbox ${empresa} changed to ${checked}. New empresas:`, newEmpresas);
     setFormData({ ...formData, empresas: newEmpresas });
   };
 
   const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
     const value = e.target.value === "" ? null : parseFloat(e.target.value);
+    console.log(`Number field ${fieldName} changed to:`, value);
     setFormData({ ...formData, [fieldName]: value });
   };
 
