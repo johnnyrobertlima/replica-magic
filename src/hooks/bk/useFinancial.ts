@@ -46,7 +46,7 @@ export const useFinancial = () => {
       setIsLoading(true);
       setError(null);
       
-      // Fetch data using the updated query that already filters by CENTROCUSTO = 'BK'
+      // Fetch data using the revised approach that gets and filters data properly
       const data = await fetchBkFaturamentoData(dateRange.startDate, dateRange.endDate);
       
       console.log(`Loaded ${data.length} faturamento records`);
