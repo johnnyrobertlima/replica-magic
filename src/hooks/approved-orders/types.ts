@@ -1,12 +1,15 @@
 
-import { ClienteFinanceiro } from '@/types/financialClient';
+import type { Database } from "@/integrations/supabase/types";
+
+export type Json = Database['public']['CompositeTypes']['json'];
 
 export interface ApprovedOrder {
-  separacaoId: string;
-  clienteData: ClienteFinanceiro;
-  approvedAt: Date;
-  userId?: string | null;
-  userEmail?: string | null;
+  id: string;
+  separacao_id: string;
+  cliente_data: any;
+  approved_at: string;
+  user_id?: string;
+  user_email?: string;
   action?: string;
 }
 
@@ -19,10 +22,5 @@ export interface OrderTotals {
 }
 
 export interface PendingValuesState {
-  [pedidoNumber: string]: number;
-}
-
-export interface MonthSelection {
-  year: number;
-  month: number;
+  [clienteId: string]: number;
 }

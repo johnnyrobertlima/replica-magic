@@ -24,10 +24,10 @@ export const useOrderTotals = () => {
     const pedidosAprovados: string[] = [];
     
     approvedOrders.forEach((order, index) => {
-      console.log(`calculateTotals: Processing order #${index}:`, order.separacaoId);
+      console.log(`calculateTotals: Processing order #${index}:`, order.separacao_id);
       
       // Find the separação by ID
-      const separacao = order.clienteData.separacoes.find(sep => sep && sep.id === order.separacaoId);
+      const separacao = order.cliente_data.separacoes.find(sep => sep && sep.id === order.separacao_id);
       
       if (separacao) {
         console.log(`calculateTotals: Found separacao:`, separacao);
@@ -70,7 +70,7 @@ export const useOrderTotals = () => {
           console.log(`calculateTotals: No items found in separacao`);
         }
       } else {
-        console.log(`calculateTotals: Could not find separacao with ID ${order.separacaoId} in order`);
+        console.log(`calculateTotals: Could not find separacao with ID ${order.separacao_id} in order`);
       }
     });
     

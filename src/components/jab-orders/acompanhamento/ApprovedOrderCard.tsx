@@ -15,12 +15,12 @@ interface ApprovedOrderCardProps {
 export const ApprovedOrderCard = ({ order, onExport }: ApprovedOrderCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  if (!order || !order.clienteData) return null;
+  if (!order || !order.cliente_data) return null;
   
-  const approvedSeparacao = order.clienteData.separacoes && 
-    order.clienteData.separacoes.length > 0 ? 
-    order.clienteData.separacoes.find(
-      sep => sep && sep.id === order.separacaoId
+  const approvedSeparacao = order.cliente_data.separacoes && 
+    order.cliente_data.separacoes.length > 0 ? 
+    order.cliente_data.separacoes.find(
+      sep => sep && sep.id === order.separacao_id
     ) : null;
   
   if (!approvedSeparacao) return null;
@@ -35,7 +35,7 @@ export const ApprovedOrderCard = ({ order, onExport }: ApprovedOrderCardProps) =
       return total + ((item.quantidade_pedida || 0) * (item.valor_unitario || 0));
     }, 0) : 0;
 
-  // Calcular o valor já faturado (Quantidade Entregue * Valor Unit.)
+  // Calcular o valor já entregue (Quantidade Entregue * Valor Unit.)
   const valorFaturado = approvedSeparacao.separacao_itens_flat ? 
     approvedSeparacao.separacao_itens_flat.reduce((total, item) => {
       return total + ((item.quantidade_entregue || 0) * (item.valor_unitario || 0));
@@ -55,18 +55,18 @@ export const ApprovedOrderCard = ({ order, onExport }: ApprovedOrderCardProps) =
         <div className="flex justify-between items-start">
           <div>
             <CardTitle className="text-lg">
-              {order.clienteData.APELIDO || 'Cliente sem nome'}
+              {order.cliente_data.APELIDO || 'Cliente sem nome'}
             </CardTitle>
             <p className="text-sm text-gray-500 mt-1">
-              Aprovado em: {new Date(order.approvedAt).toLocaleString('pt-BR')}
+              Aprovado em: {new Date(order.approved_at).toLocaleString('pt-BR')}
             </p>
-            {order.userEmail && (
+            {order.user_email && (
               <p className="text-xs text-gray-500">
-                Por: {order.userEmail} ({order.action === 'approved' ? 'Aprovado' : 'Reprovado'})
+                Por: {order.user_email} ({order.action === 'approved' ? 'Aprovado' : 'Reprovado'})
               </p>
             )}
             <p className="text-xs text-gray-600 mt-1 font-medium">
-              Representante: {order.clienteData.representanteNome || 'Não informado'}
+              Representante: {order.cliente_data.representanteNome || 'Não informado'}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -74,7 +74,7 @@ export const ApprovedOrderCard = ({ order, onExport }: ApprovedOrderCardProps) =
               variant="outline"
               size="sm"
               className="h-8 px-2 flex items-center gap-1 text-xs"
-              onClick={() => onExport(order.separacaoId)}
+              onClick={() => onExport(order.separacao_id)}
             >
               <Download className="h-3.5 w-3.5" />
               Exportar

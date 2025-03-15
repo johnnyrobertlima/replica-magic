@@ -2,119 +2,99 @@
 import { useState, useCallback } from 'react';
 import { ApprovedOrder } from './types';
 import { 
-  fetchApprovedOrdersFromSupabase, 
-  processSupabaseOrders,
-  saveToSupabase,
-  createSimplifiedClienteData
-} from './utils/supabaseUtils';
-import {
-  loadFromLocalStorage,
-  saveToLocalStorage
+  saveOrdersToLocalStorage, 
+  loadOrdersFromLocalStorage, 
+  saveOrderToSupabase,
+  loadOrdersFromSupabase
 } from './utils/localStorageUtils';
 
 export const useApprovedOrdersStorage = () => {
   const [approvedOrders, setApprovedOrders] = useState<ApprovedOrder[]>([]);
 
-  // Load approved orders with month filtering
-  const loadApprovedOrders = useCallback(async (selectedYear: number, selectedMonth: number) => {
+  // Load approved orders from local storage and Supabase
+  const loadApprovedOrders = useCallback(async (year: number, month: number): Promise<ApprovedOrder[]> => {
     try {
-      // Try to get from Supabase first
-      const supabaseOrders = await fetchApprovedOrdersFromSupabase(selectedYear, selectedMonth);
+      console.log(`Loading approved orders for ${year}-${month}`);
       
-      // Process Supabase orders
-      const processedOrders = processSupabaseOrders(supabaseOrders);
+      // Try to load from local storage first
+      const localOrders = loadOrdersFromLocalStorage(year, month);
       
-      setApprovedOrders(processedOrders);
-      return processedOrders;
-    } catch (error) {
-      console.error('Error loading from Supabase, falling back to localStorage');
+      // Then try to load from Supabase
+      const supabaseOrders = await loadOrdersFromSupabase(year, month);
       
-      // Fallback to localStorage if Supabase fails
-      try {
-        const localStorageOrders = loadFromLocalStorage(selectedYear, selectedMonth);
-        setApprovedOrders(localStorageOrders);
-        return localStorageOrders;
-      } catch (localStorageError) {
-        console.error('Error loading from localStorage:', localStorageError);
-        setApprovedOrders([]);
-        return [];
+      // Merge the two sources, giving priority to Supabase data
+      const allOrders = [...localOrders];
+      
+      // Add orders from Supabase that aren't already in local storage
+      for (const supabaseOrder of supabaseOrders) {
+        const existingOrderIndex = allOrders.findIndex(
+          order => order.separacao_id === supabaseOrder.separacao_id
+        );
+        
+        if (existingOrderIndex === -1) {
+          // If this order isn't in local storage, add it
+          allOrders.push(supabaseOrder);
+        }
       }
+      
+      // Sort orders by approved_at timestamp (newest first)
+      allOrders.sort((a, b) => {
+        return new Date(b.approved_at).getTime() - new Date(a.approved_at).getTime();
+      });
+      
+      // Update state
+      setApprovedOrders(allOrders);
+      return allOrders;
+    } catch (error) {
+      console.error('Error loading approved orders:', error);
+      return [];
     }
   }, []);
 
-  // Save to Supabase and localStorage whenever approvedOrders changes
-  const addApprovedOrder = useCallback(async (
-    separacaoId: string, 
-    clienteData: any, // Use any to break the circular reference
-    userEmail: string | null = null,
-    userId: string | null = null,
-    action: string = 'approved'
-  ) => {
-    try {
-      // Create new order object
-      const newOrder = {
-        separacaoId,
-        clienteData,
-        approvedAt: new Date(),
-        userId,
-        userEmail,
-        action
-      };
-      
-      // Create simplified client data for storage
-      const simplifiedClienteData = createSimplifiedClienteData(clienteData, separacaoId);
-      
-      // Save to Supabase
+  // Add a new approved order
+  const addApprovedOrder = useCallback(
+    async (
+      separacaoId: string,
+      clienteData: any,
+      userEmail: string | null,
+      userId: string | null,
+      action: "approved" | "rejected"
+    ) => {
       try {
-        await saveToSupabase(
-          separacaoId,
-          simplifiedClienteData,
-          newOrder.approvedAt,
-          userId,
-          userEmail,
-          action
-        );
-      } catch (error) {
-        console.error('Supabase save failed, continuing with localStorage:', error);
-      }
-      
-      // Update local state
-      setApprovedOrders(prevOrders => {
-        // Check if order already exists
-        const exists = prevOrders.some(order => order.separacaoId === separacaoId);
-        if (exists) return prevOrders;
-        
-        // Add new order
-        const newOrders = [...prevOrders, newOrder];
-        
-        // Save to localStorage as backup
-        saveToLocalStorage(newOrders);
-        
-        return newOrders;
-      });
-    } catch (error) {
-      console.error('Error adding approved order:', error);
-      // Fall back to simpler implementation
-      setApprovedOrders(prevOrders => {
-        const exists = prevOrders.some(order => order.separacaoId === separacaoId);
-        if (exists) return prevOrders;
-        
-        const newOrder = {
-          separacaoId,
-          clienteData,
-          approvedAt: new Date(),
-          userId,
-          userEmail,
+        // Create new order object with proper types
+        const newApprovedOrder: ApprovedOrder = {
+          id: crypto.randomUUID(),
+          separacao_id: separacaoId,
+          cliente_data: clienteData,
+          approved_at: new Date().toISOString(),
+          user_email: userEmail || undefined,
+          user_id: userId || undefined,
           action
         };
         
-        const newOrders = [...prevOrders, newOrder];
-        saveToLocalStorage(newOrders);
+        // Get current month and year
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth() + 1; // JavaScript months are 0-indexed
         
-        return newOrders;
-      });
-    }
-  }, []);
+        // Save to local storage
+        setApprovedOrders(prevOrders => {
+          const updatedOrders = [newApprovedOrder, ...prevOrders];
+          saveOrdersToLocalStorage(updatedOrders, year, month);
+          return updatedOrders;
+        });
+        
+        // Save to Supabase in the background
+        await saveOrderToSupabase(newApprovedOrder);
+        
+        return newApprovedOrder;
+      } catch (error) {
+        console.error('Error adding approved order:', error);
+        return null;
+      }
+    },
+    []
+  );
 
   return {
     approvedOrders,
