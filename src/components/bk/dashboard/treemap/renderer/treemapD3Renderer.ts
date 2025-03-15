@@ -1,3 +1,4 @@
+
 import * as d3 from "d3";
 import { TreemapDataItem, TreemapZoomState, HierarchyNode } from "../treemapTypes";
 import { TreemapRoot, TreemapRenderParams } from "./types";
@@ -61,22 +62,23 @@ export const renderTreemap = ({
   const tooltip = d3.select("#d3-tooltip");
   
   // Create cells for leaf nodes only
-  let cell = g
-    .selectAll("g")
+  // Important: Cast the selection type properly to fix type errors
+  const cells = g
+    .selectAll<SVGGElement, d3.HierarchyRectangularNode<TreemapRoot>>("g")
     .data(root.leaves())
     .join("g")
     .attr("transform", d => `translate(${d.x0},${d.y0})`)
     .attr("class", "treemap-cell")
     .style("cursor", "pointer");
   
-  // Setup zoom handlers
-  cell = setupZoomHandlers(cell, zoomState, handleZoomToNode, handleZoomReset);
+  // Use the properly typed cells for the handlers
+  setupZoomHandlers(cells, zoomState, handleZoomToNode, handleZoomReset);
   
-  // Setup tooltip handlers
-  cell = setupTooltipHandlers(cell, tooltip, svgRef);
+  // Setup tooltip handlers with the properly typed cells
+  setupTooltipHandlers(cells, tooltip, svgRef);
   
   // Add rectangle for each cell
-  cell.append("rect")
+  cells.append("rect")
     .attr("id", d => {
       const dataItem = d.data as unknown as { name: string };
       return `rect-${dataItem.name.replace(/\s+/g, '-')}`;
@@ -89,7 +91,7 @@ export const renderTreemap = ({
     .classed("treemap-rect", true);
   
   // Add text to each cell that has enough space
-  cell.append("text")
+  cells.append("text")
     .filter(d => (d.x1 - d.x0) > 40 && (d.y1 - d.y0) > 20)
     .attr("x", 4)
     .attr("y", 14)
@@ -101,7 +103,7 @@ export const renderTreemap = ({
     });
   
   // Add value text to larger cells
-  cell.append("text")
+  cells.append("text")
     .filter(d => (d.x1 - d.x0) > 80 && (d.y1 - d.y0) > 40)
     .attr("x", 4)
     .attr("y", 26)

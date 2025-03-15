@@ -31,7 +31,7 @@ export const applyZoomState = (
  * Add click handlers for zoom functionality
  */
 export const setupZoomHandlers = (
-  cell: d3.Selection<d3.BaseType, d3.HierarchyRectangularNode<TreemapRoot>, d3.BaseType, unknown>,
+  cell: d3.Selection<SVGGElement, d3.HierarchyRectangularNode<TreemapRoot>, SVGGElement, unknown>,
   zoomState: TreemapZoomState,
   handleZoomToNode: (node: HierarchyNode) => void,
   handleZoomReset: () => void
@@ -56,8 +56,6 @@ export const setupZoomHandlers = (
       handleZoomToNode(hierarchyNode);
     }
   });
-  
-  return cell;
 };
 
 /**

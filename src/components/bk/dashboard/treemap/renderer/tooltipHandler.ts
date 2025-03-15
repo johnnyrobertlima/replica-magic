@@ -7,14 +7,13 @@ import { formatCurrency } from "./utils";
  * Set up tooltip interactions for treemap cells
  */
 export const setupTooltipHandlers = (
-  cell: d3.Selection<d3.BaseType, d3.HierarchyRectangularNode<TreemapRoot>, d3.BaseType, unknown>,
+  cell: d3.Selection<SVGGElement, d3.HierarchyRectangularNode<TreemapRoot>, SVGGElement, unknown>,
   tooltip: d3.Selection<d3.BaseType, unknown, HTMLElement, any>,
   svgRef: React.RefObject<SVGSVGElement>
 ) => {
   cell.on("mouseover", function(event, d) {
     // Get the data item from the node
-    const dataItem = d.data.children ? { name: d.data.name, value: 0 } : d.data.children ? 
-      { name: d.data.name, value: 0 } : d.data as unknown as { name: string; value: number };
+    const dataItem = d.data.children ? { name: d.data.name, value: 0 } : d.data as unknown as { name: string; value: number };
     const value = d.value || 0;
     
     // Update tooltip content
@@ -52,6 +51,4 @@ export const setupTooltipHandlers = (
     // Remove highlight
     d3.select(this).select("rect").classed("highlighted", false);
   });
-  
-  return cell;
 };
