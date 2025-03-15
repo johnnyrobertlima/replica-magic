@@ -30,9 +30,9 @@ export const ItemTreemap = ({ data }: ItemTreemapProps) => {
     
     // Preparar os dados para D3 treemap
     const hierarchy = d3.hierarchy({ children: data })
-      .sum(d => {
-        // Explicitly check if the node has a value property
-        return "value" in d ? d.value : 0;
+      .sum((d: any) => {
+        // Ensure the callback always returns a number, not unknown
+        return "value" in d ? d.value as number : 0;
       })
       .sort((a, b) => (b.value || 0) - (a.value || 0));
     
@@ -168,3 +168,4 @@ export const ItemTreemap = ({ data }: ItemTreemapProps) => {
     </div>
   );
 };
+
