@@ -10,6 +10,7 @@ interface ItemTreemapProps {
 }
 
 export const ItemTreemap = ({ data }: ItemTreemapProps) => {
+  // We're maintaining the same API, so the component doesn't need to change
   const { 
     svgRef, 
     handleValueRangeChange, 
