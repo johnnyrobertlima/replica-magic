@@ -77,7 +77,7 @@ const BkClients = () => {
       const clientsWithNewFields = data?.map(client => ({
         ...client,
         empresas: client.CATEGORIA?.split(',') || [],
-        fator_correcao: 0
+        fator_correcao: client.fator_correcao || 0
       })) || [];
       
       setClients(clientsWithNewFields);
@@ -169,9 +169,14 @@ const BkClients = () => {
         });
       } else {
         // Create new client
+        // For new clients, PES_CODIGO is required and must be a number
+        if (!dataToSave.PES_CODIGO) {
+          throw new Error("Código do cliente é obrigatório");
+        }
+        
         const { error } = await supabase
           .from("BLUEBAY_PESSOA")
-          .insert([dataToSave]);
+          .insert(dataToSave);
 
         if (error) throw error;
 
@@ -184,11 +189,11 @@ const BkClients = () => {
       // Refresh the client list
       fetchClients();
       setIsFormOpen(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving client:", error);
       toast({
         title: "Erro ao salvar",
-        description: "Ocorreu um erro ao salvar as informações do cliente.",
+        description: error.message || "Ocorreu um erro ao salvar as informações do cliente.",
         variant: "destructive",
       });
     } finally {
@@ -335,6 +340,8 @@ const BkClients = () => {
                     onChange={handleInputChange}
                     readOnly={!!currentClient}
                     disabled={!!currentClient}
+                    required
+                    type="number"
                   />
                 </div>
                 <div className="space-y-2">
