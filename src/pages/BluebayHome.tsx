@@ -1,7 +1,8 @@
+
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
-import { Boxes, ClipboardCheck, FileCheck, LogOut } from "lucide-react";
+import { BarChart2, Boxes, ClipboardCheck, FileCheck, LogOut, Receipt } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { JabHeroBanner } from "@/components/jab-orders/JabHeroBanner";
@@ -124,6 +125,24 @@ const BluebayHome = () => {
                         <CardTitle>Aprovação Financeira</CardTitle>
                         <CardDescription>
                           Aprove ou reprove pedidos pendentes
+                        </CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                </Card>
+              </Link>
+
+              <Link to="/client-area/bluebay/acompanhamento-faturamento">
+                <Card className="h-full transition-all hover:shadow-lg">
+                  <CardHeader>
+                    <div className="flex items-center gap-4">
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        <BarChart2 className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <CardTitle>Acompanhamento de Faturamento</CardTitle>
+                        <CardDescription>
+                          Acompanhe os dados de faturamento e vendas
                         </CardDescription>
                       </div>
                     </div>
