@@ -11,6 +11,7 @@ interface Invoice {
   VALOR_NOTA: number | null;
   ITEMS_COUNT: number;
   CLIENTE_NOME?: string | null;
+  FATOR_CORRECAO?: number | null;
 }
 
 interface FinancialDashboardProps {
@@ -18,9 +19,19 @@ interface FinancialDashboardProps {
 }
 
 export const FinancialDashboard = ({ invoices }: FinancialDashboardProps) => {
-  // Calculate summary metrics
+  // Calculate summary metrics, applying correction factor when available and not zero
   const totalInvoices = invoices.length;
-  const totalValue = invoices.reduce((sum, invoice) => sum + (invoice.VALOR_NOTA || 0), 0);
+  
+  const totalValue = invoices.reduce((sum, invoice) => {
+    const baseValue = invoice.VALOR_NOTA || 0;
+    // Only apply correction factor if it exists and is not zero
+    const fatorCorrecao = invoice.FATOR_CORRECAO && invoice.FATOR_CORRECAO > 0 
+      ? invoice.FATOR_CORRECAO 
+      : 1;
+    
+    return sum + baseValue;
+  }, 0);
+  
   const averageValue = totalInvoices > 0 ? totalValue / totalInvoices : 0;
   
   // Count invoices by status
