@@ -114,7 +114,7 @@ export const ApprovedOrderCard = ({ order, onExport }: ApprovedOrderCardProps) =
           </div>
           
           <div className="bg-gray-50 p-3 rounded-md">
-            <p className="text-xs text-gray-500">Faturado</p>
+            <p className="text-xs text-gray-500">Valor Entregue</p>
             <p className="font-medium">{formatCurrency(valorFaturado)}</p>
           </div>
         </div>

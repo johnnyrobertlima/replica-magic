@@ -30,7 +30,7 @@ export const StatCardsGrid = ({
       />
       
       <StatCard 
-        title="Valor Faturado" 
+        title="Valor Entregue" 
         value={isLoading ? "..." : formatCurrency(valorFaturado)} 
         color="blue" 
       />
