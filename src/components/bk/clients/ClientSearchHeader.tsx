@@ -22,8 +22,8 @@ export const ClientSearchHeader = ({
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Buscar cliente..."
-            className="pl-8 w-[250px]"
+            placeholder="Buscar por nome, apelido, CNPJ ou código..."
+            className="pl-8 w-[300px]"
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
           />
