@@ -19,6 +19,9 @@ export const ApprovedOrdersCockpit = ({
   valorFaltaFaturar,
   valorFaturado
 }: ApprovedOrdersCockpitProps) => {
+  // Calculate the percentage of invoice progress
+  const percentFaturado = valorTotal > 0 ? Math.round((valorFaturado / valorTotal) * 100) : 0;
+  
   return (
     <div className="space-y-6">
       <StatCardsGrid 

@@ -15,6 +15,7 @@ export const useOrderTotals = () => {
     let quantidadeItens = 0;
     let quantidadePedidos = 0;
     let valorFaltaFaturar = 0;
+    let valorFaturado = 0;
     
     // Get unique pedido numbers to count properly
     const uniquePedidos = new Set<string>();
@@ -30,27 +31,41 @@ export const useOrderTotals = () => {
       
       if (separacao) {
         console.log(`calculateTotals: Found separacao:`, separacao);
-        valorTotal += separacao.valor_total || 0;
-        quantidadeItens += separacao.quantidade_itens || 0;
         
-        console.log(`calculateTotals: Updated running totals - valorTotal: ${valorTotal}, quantidadeItens: ${quantidadeItens}`);
+        // Process the separacao_itens_flat (if available) or fall back to separacao_itens
+        const itens = separacao.separacao_itens_flat || separacao.separacao_itens || [];
         
-        // Calculate "Falta Faturar" directly from separacao_itens
-        if (separacao.separacao_itens && separacao.separacao_itens.length > 0) {
-          console.log(`calculateTotals: Processing ${separacao.separacao_itens.length} items in separacao`);
+        if (itens && itens.length > 0) {
+          console.log(`calculateTotals: Processing ${itens.length} items in separacao`);
           
-          separacao.separacao_itens.forEach(item => {
-            console.log(`calculateTotals: Adding pedido ${item.pedido} to tracking`);
-            uniquePedidos.add(item.pedido);
-            pedidosAprovados.push(item.pedido);
+          itens.forEach(item => {
+            // Track unique pedidos
+            if (item.pedido) {
+              console.log(`calculateTotals: Adding pedido ${item.pedido} to tracking`);
+              uniquePedidos.add(item.pedido);
+              pedidosAprovados.push(item.pedido);
+            }
             
-            // Calculate "Falta Faturar" for each item
+            // Calculate quantities
             const quantidade = item.quantidade_pedida || 0;
             const valorUnitario = item.valor_unitario || 0;
-            const faltaFaturarItem = quantidade * valorUnitario;
+            const quantidadeEntregue = item.quantidade_entregue || 0;
+            const saldo = item.quantidade_saldo || (quantidade - quantidadeEntregue);
             
-            valorFaltaFaturar += faltaFaturarItem;
-            console.log(`calculateTotals: Item falta faturar: ${faltaFaturarItem}, Running total: ${valorFaltaFaturar}`);
+            // Calculate values using same logic as in ApprovedOrderCard
+            const itemValorTotal = quantidade * valorUnitario;
+            const itemValorFaltaFaturar = saldo * valorUnitario;
+            const itemValorFaturado = quantidadeEntregue * valorUnitario;
+            
+            // Add to totals
+            valorTotal += itemValorTotal;
+            valorFaltaFaturar += itemValorFaltaFaturar;
+            valorFaturado += itemValorFaturado;
+            
+            // Count this as one item
+            quantidadeItens += 1;
+            
+            console.log(`calculateTotals: Item values - Total: ${itemValorTotal}, Falta Faturar: ${itemValorFaltaFaturar}, Faturado: ${itemValorFaturado}`);
           });
         } else {
           console.log(`calculateTotals: No items found in separacao`);
@@ -62,13 +77,6 @@ export const useOrderTotals = () => {
     
     quantidadePedidos = uniquePedidos.size;
     console.log(`calculateTotals: Unique pedidos count: ${quantidadePedidos}, All pedidos: ${Array.from(uniquePedidos).join(', ')}`);
-    console.log(`calculateTotals: All pedidos approved (with duplicates): ${pedidosAprovados.join(', ')}`);
-    
-    // We're now calculating "Falta Faturar" directly from the separacao_itens,
-    // so we don't need to use pendingValues anymore as a fallback
-
-    // Ensure valorFaturado is never negative
-    const valorFaturado = Math.max(0, valorTotal - valorFaltaFaturar);
     
     console.log('calculateTotals: Final calculated totals:', { 
       valorTotal, 
