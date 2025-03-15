@@ -46,7 +46,7 @@ export const PedidosIncluidos = ({ approvedSeparacao }: PedidosIncluidosProps) =
               .filter(item => item && item.pedido)
               .map((item, index) => {
                 const quantidade = item.quantidade_pedida || 0;
-                const quantidadeEntregue = item.quantidade_entregue || 0; /* Este é o valor do campo QTDE_ENTREGUE da tabela BLUEBAY_PEDIDO */
+                const quantidadeEntregue = item.quantidade_entregue || 0;
                 const valorUnitario = item.valor_unitario || 0;
                 const saldo = item.quantidade_saldo || (quantidade - quantidadeEntregue);
                 
