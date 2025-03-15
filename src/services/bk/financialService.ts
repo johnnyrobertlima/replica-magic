@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
 
@@ -76,6 +77,7 @@ export const fetchBkFaturamentoData = async (
             const clienteInfo = clienteMap.get(item.PES_CODIGO);
             if (clienteInfo) {
               (item as any).CLIENTE_INFO = clienteInfo;
+              (item as any).FATOR_CORRECAO = clienteInfo.FATOR_CORRECAO; // Adiciona o fator de correção diretamente no item
             }
           }
         });
@@ -128,7 +130,18 @@ export const consolidateByNota = (data: BkFaturamento[]): ConsolidatedInvoice[] 
   data.forEach(item => {
     if (!item.NOTA) return;
     
-    const itemValue = (item.QUANTIDADE || 0) * (item.VALOR_UNITARIO || 0);
+    // Obtém o fator de correção do cliente (se disponível)
+    const clienteInfo = (item as any).CLIENTE_INFO;
+    const fatorCorrecao = clienteInfo?.FATOR_CORRECAO || null;
+    
+    // Aplica o fator de correção ao valor unitário se existir e for maior que 0
+    const valorUnitario = item.VALOR_UNITARIO || 0;
+    const valorUnitarioAjustado = (fatorCorrecao && fatorCorrecao > 0) 
+      ? valorUnitario * fatorCorrecao 
+      : valorUnitario;
+    
+    // Calcula o valor do item com o fator de correção aplicado
+    const itemValue = (item.QUANTIDADE || 0) * valorUnitarioAjustado;
     
     const existingInvoice = invoiceMap.get(item.NOTA);
     
@@ -136,10 +149,8 @@ export const consolidateByNota = (data: BkFaturamento[]): ConsolidatedInvoice[] 
       existingInvoice.ITEMS_COUNT += 1;
       existingInvoice.VALOR_NOTA = (existingInvoice.VALOR_NOTA || 0) + itemValue;
     } else {
-      const clienteInfo = (item as any).CLIENTE_INFO;
       const clienteNome = clienteInfo ? 
         (clienteInfo.APELIDO || clienteInfo.RAZAOSOCIAL || null) : null;
-      const fatorCorrecao = clienteInfo ? clienteInfo.FATOR_CORRECAO : null;
       
       invoiceMap.set(item.NOTA, {
         NOTA: item.NOTA,

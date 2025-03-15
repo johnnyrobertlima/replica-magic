@@ -11,6 +11,7 @@ interface Invoice {
   VALOR_NOTA: number | null;
   ITEMS_COUNT: number;
   CLIENTE_NOME?: string | null;
+  FATOR_CORRECAO?: number | null;
 }
 
 interface FinancialDashboardProps {
@@ -51,7 +52,7 @@ export const FinancialDashboard = ({ invoices }: FinancialDashboardProps) => {
         <CardContent>
           <div className="text-2xl font-bold">{formatCurrency(totalValue)}</div>
           <p className="text-xs text-muted-foreground">
-            Soma do valor de todas as notas
+            Soma do valor de todas as notas (com fator de correção aplicado)
           </p>
         </CardContent>
       </Card>
