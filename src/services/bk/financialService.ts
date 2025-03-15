@@ -19,22 +19,46 @@ export const fetchBkFaturamentoData = async (
 ): Promise<BkFaturamento[]> => {
   console.log("Fetching B&K faturamento data...", { startDate, endDate });
   
-  // Use the get_bk_faturamento function to get invoices with correct join on PED_NUMPEDIDO and PED_ANOBASE
-  const { data, error } = await supabase.rpc('get_bk_faturamento', {
-    start_date: startDate,
-    end_date: endDate
-  });
+  // Step 1: Query BLUEBAY_FATURAMENTO with date filtering
+  let query = supabase
+    .from('BLUEBAY_FATURAMENTO')
+    .select(`
+      *,
+      pedido:BLUEBAY_PEDIDO!inner(
+        CENTROCUSTO,
+        PED_NUMPEDIDO,
+        PED_ANOBASE
+      )
+    `)
+    .eq('pedido.CENTROCUSTO', 'BK');
+  
+  // Apply date filters if provided
+  if (startDate) {
+    query = query.gte('DATA_EMISSAO', startDate);
+  }
+  
+  if (endDate) {
+    query = query.lte('DATA_EMISSAO', endDate);
+  }
+  
+  const { data, error } = await query;
 
   if (error) {
     console.error("Error fetching B&K faturamento data:", error);
     throw error;
   }
 
-  console.log(`Fetched ${data?.length || 0} faturamento records`);
+  console.log(`Fetched ${data?.length || 0} faturamento records filtered by BK CENTROCUSTO`);
+  
+  // Transform the data to remove the nested pedido property and keep only the faturamento fields
+  const transformedData = data.map(item => {
+    const { pedido, ...faturamento } = item;
+    return faturamento as BkFaturamento;
+  });
   
   // Let's separately get the cliente names
-  if (data && data.length > 0) {
-    const clienteIds = data
+  if (transformedData && transformedData.length > 0) {
+    const clienteIds = transformedData
       .map(item => item.PES_CODIGO)
       .filter((id): id is number => id !== null && !isNaN(Number(id)));
     
@@ -55,7 +79,7 @@ export const fetchBkFaturamentoData = async (
         });
         
         // Attach cliente info to each faturamento record
-        data.forEach(item => {
+        transformedData.forEach(item => {
           if (item.PES_CODIGO !== null) {
             const clienteInfo = clienteMap.get(item.PES_CODIGO);
             if (clienteInfo) {
@@ -68,7 +92,7 @@ export const fetchBkFaturamentoData = async (
     }
   }
   
-  return data || [];
+  return transformedData;
 };
 
 export const fetchInvoiceItems = async (nota: string): Promise<any[]> => {
