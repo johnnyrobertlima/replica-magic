@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Download, ChevronDown, ChevronUp } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { PedidosIncluidos } from "./PedidosIncluidos";
+import { Progress } from "@/components/ui/progress";
 
 interface ApprovedOrderCardProps {
   order: any;
@@ -47,6 +48,9 @@ export const ApprovedOrderCard = ({ order, onExport }: ApprovedOrderCardProps) =
     approvedSeparacao.separacao_itens_flat.reduce((total, item) => {
       return total + ((item.quantidade_entregue || 0) * (item.valor_unitario || 0));
     }, 0) : 0;
+
+  // Calcular o percentual faturado
+  const percentualFaturado = valorTotal > 0 ? Math.round((valorFaturado / valorTotal) * 100) : 0;
 
   return (
     <Card 
@@ -118,6 +122,17 @@ export const ApprovedOrderCard = ({ order, onExport }: ApprovedOrderCardProps) =
             <p className="text-xs text-gray-500">Faturado</p>
             <p className="font-medium">{formatCurrency(valorFaturado)}</p>
           </div>
+        </div>
+        
+        <div className="bg-gray-50 p-3 rounded-md mb-4">
+          <div className="flex justify-between items-center mb-1">
+            <p className="text-xs text-gray-500">Progresso de Faturamento</p>
+            <p className="text-xs font-medium">{percentualFaturado}%</p>
+          </div>
+          <Progress 
+            value={percentualFaturado} 
+            className="h-2 bg-gray-200" 
+          />
         </div>
         
         {isExpanded && (
