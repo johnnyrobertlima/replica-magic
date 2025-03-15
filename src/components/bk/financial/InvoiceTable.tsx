@@ -67,7 +67,8 @@ export const InvoiceTable = ({ invoices, isLoading }: InvoiceTableProps) => {
   const filteredInvoices = invoices.filter((invoice) => {
     return (
       invoice.NOTA?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoice.CLIENTE_NOME?.toLowerCase().includes(searchTerm.toLowerCase())
+      invoice.CLIENTE_NOME?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      String(invoice.PES_CODIGO).includes(searchTerm)
     );
   });
 
@@ -144,7 +145,14 @@ export const InvoiceTable = ({ invoices, isLoading }: InvoiceTableProps) => {
                         ? new Date(invoice.DATA_EMISSAO).toLocaleDateString('pt-BR') 
                         : '-'}
                     </TableCell>
-                    <TableCell>{invoice.CLIENTE_NOME || '-'}</TableCell>
+                    <TableCell>
+                      {invoice.CLIENTE_NOME || '-'} 
+                      {invoice.PES_CODIGO && (
+                        <span className="ml-1 text-sm text-muted-foreground">
+                          (Cód: {invoice.PES_CODIGO})
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <StatusBadge status={invoice.STATUS} />
                     </TableCell>

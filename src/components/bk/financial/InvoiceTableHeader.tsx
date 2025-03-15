@@ -45,7 +45,7 @@ export const InvoiceTableHeader = ({
         </TableHead>
         <TableHead className="cursor-pointer" onClick={() => handleSort("CLIENTE_NOME")}>
           <div className="flex items-center">
-            Cliente <SortIcon field="CLIENTE_NOME" sortField={sortField} sortDirection={sortDirection} />
+            Cliente (PES_CODIGO) <SortIcon field="CLIENTE_NOME" sortField={sortField} sortDirection={sortDirection} />
           </div>
         </TableHead>
         <TableHead className="cursor-pointer" onClick={() => handleSort("STATUS")}>
