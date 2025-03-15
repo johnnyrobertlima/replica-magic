@@ -1,6 +1,5 @@
 
 import { BkMenu } from "@/components/bk/BkMenu";
-import { BkBanner } from "@/components/bk/BkBanner";
 import { ClientList } from "@/components/bk/clients/ClientList";
 import { ClientForm } from "@/components/bk/clients/ClientForm";
 import { ClientSearchHeader } from "@/components/bk/clients/ClientSearchHeader";
@@ -28,7 +27,6 @@ const BkClients = () => {
 
   return (
     <main className="container-fluid p-0 max-w-full">
-      <BkBanner />
       <BkMenu />
 
       <div className="container mx-auto px-4 py-8">

@@ -1,7 +1,6 @@
 
 import React, { useEffect, useState } from "react";
 import { BkMenu } from "@/components/bk/BkMenu";
-import { BkBanner } from "@/components/bk/BkBanner";
 import { FinancialDashboard } from "@/components/bk/financial/FinancialDashboard";
 import { useFinancial } from "@/hooks/bk/useFinancial";
 import { Button } from "@/components/ui/button";
@@ -102,7 +101,6 @@ export const BkDashboard = () => {
 
   return (
     <div className="container-fluid p-0 max-w-full">
-      <BkBanner />
       <BkMenu />
       
       <div className="container mx-auto px-4 py-8">
