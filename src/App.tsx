@@ -1,3 +1,4 @@
+
 import { Routes, Route, Navigate } from "react-router-dom";
 import Index from "@/pages/Index";
 import ClientArea from "@/pages/ClientArea";
@@ -18,6 +19,7 @@ import BkHome from "@/pages/BkHome";
 import BkClients from "@/pages/bk/BkClients"; 
 import BkFinancial from "@/pages/bk/BkFinancial";
 import BkReports from "@/pages/bk/BkReports";
+import BkDashboard from "@/pages/bk/BkDashboard";
 
 // Admin imports
 import { AdminLayout } from "@/pages/admin/layout";
@@ -105,6 +107,11 @@ function App() {
       <Route path="/client-area/bk/reports" element={
         <PermissionGuard resourcePath="/client-area/bk">
           <BkReports />
+        </PermissionGuard>
+      } />
+      <Route path="/client-area/bk/dashboard" element={
+        <PermissionGuard resourcePath="/client-area/bk">
+          <BkDashboard />
         </PermissionGuard>
       } />
       <Route path="/client-area/bk/requests" element={
