@@ -26,3 +26,14 @@ export interface TreemapCellProps {
   animate?: boolean;
   animationDelay?: number;
 }
+
+export interface TreemapZoomState {
+  currentNode: any;
+  previousNodes: any[];
+}
+
+export interface TreemapFilterState {
+  valueRange: [number, number];
+  originalData: TreemapDataItem[];
+  filteredData: TreemapDataItem[];
+}

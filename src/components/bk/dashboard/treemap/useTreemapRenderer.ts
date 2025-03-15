@@ -1,20 +1,89 @@
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import * as d3 from "d3";
 import { formatCurrency } from "@/lib/utils";
-import { TreemapDataItem } from "./treemapTypes";
+import { TreemapDataItem, TreemapZoomState, TreemapFilterState } from "./treemapTypes";
 import { getTreemapColorScale } from "./treemapColors";
 
 export const useTreemapRenderer = (data: TreemapDataItem[]) => {
   const svgRef = useRef<SVGSVGElement>(null);
+  const [zoomState, setZoomState] = useState<TreemapZoomState>({
+    currentNode: null,
+    previousNodes: []
+  });
   
+  const [filterState, setFilterState] = useState<TreemapFilterState>({
+    valueRange: [0, 0],
+    originalData: [],
+    filteredData: []
+  });
+  
+  // Initialize filter state when data changes
   useEffect(() => {
-    if (!data.length || !svgRef.current) {
+    if (data.length) {
+      const minValue = Math.min(...data.map(item => item.value));
+      const maxValue = Math.max(...data.map(item => item.value));
+      
+      setFilterState({
+        valueRange: [minValue, maxValue],
+        originalData: data,
+        filteredData: data
+      });
+    }
+  }, [data]);
+  
+  // Handle filtering data by value range
+  const handleValueRangeChange = useCallback((range: [number, number]) => {
+    const filtered = filterState.originalData.filter(
+      item => item.value >= range[0] && item.value <= range[1]
+    );
+    
+    setFilterState(prev => ({
+      ...prev,
+      valueRange: range,
+      filteredData: filtered
+    }));
+  }, [filterState.originalData]);
+  
+  // Reset zoom to initial state
+  const handleZoomReset = useCallback(() => {
+    setZoomState({
+      currentNode: null,
+      previousNodes: []
+    });
+  }, []);
+  
+  // Zoom in to currently highlighted section
+  const handleZoomIn = useCallback(() => {
+    // Implementation will be completed in the rendering function
+    console.log('Zoom in requested');
+  }, []);
+  
+  // Zoom out to previous level
+  const handleZoomOut = useCallback(() => {
+    if (zoomState.previousNodes.length > 0) {
+      const previousNodes = [...zoomState.previousNodes];
+      const lastNode = previousNodes.pop();
+      
+      setZoomState({
+        currentNode: lastNode,
+        previousNodes
+      });
+    } else {
+      handleZoomReset();
+    }
+  }, [zoomState, handleZoomReset]);
+  
+  // Main rendering function for the treemap
+  useEffect(() => {
+    const dataToRender = filterState.filteredData;
+    
+    if (!dataToRender.length || !svgRef.current) {
       console.log("No data or SVG ref for treemap");
       return;
     }
     
-    console.log("Rendering treemap with data:", data);
+    console.log("Rendering treemap with data:", dataToRender);
     
     // Clear the SVG before drawing
     d3.select(svgRef.current).selectAll("*").remove();
@@ -26,12 +95,19 @@ export const useTreemapRenderer = (data: TreemapDataItem[]) => {
       .attr("width", width)
       .attr("height", height);
     
-    // Create hierarchy from data
-    const hierarchy = d3.hierarchy({ children: data })
-      .sum((d: any) => {
-        // Ensure we return a number for the value
-        return d.value ? Number(d.value) : 0;
-      });
+    // Create root hierarchy for the current view
+    let rootHierarchy;
+    
+    if (zoomState.currentNode) {
+      // If we're zoomed in, use the current node as root
+      rootHierarchy = zoomState.currentNode;
+    } else {
+      // Create hierarchy from full data
+      rootHierarchy = d3.hierarchy({ children: dataToRender })
+        .sum((d: any) => {
+          return d.value ? Number(d.value) : 0;
+        });
+    }
     
     // Create treemap layout
     const treemapLayout = d3.treemap()
@@ -41,18 +117,54 @@ export const useTreemapRenderer = (data: TreemapDataItem[]) => {
       .round(true);
     
     // Apply the treemap layout to the hierarchy
-    treemapLayout(hierarchy);
+    treemapLayout(rootHierarchy);
     
     // Create color scale based on index
-    const colorScale = getTreemapColorScale(d3, data);
+    const colorScale = getTreemapColorScale(d3, dataToRender);
+    
+    // Add breadcrumb navigation if zoomed in
+    if (zoomState.previousNodes.length > 0) {
+      const breadcrumb = svg.append("g")
+        .attr("class", "breadcrumb")
+        .attr("transform", "translate(10, 20)");
+      
+      breadcrumb.append("text")
+        .attr("class", "breadcrumb-text")
+        .attr("fill", "#666")
+        .style("font-size", "12px")
+        .style("cursor", "pointer")
+        .text("Todos")
+        .on("click", () => handleZoomReset());
+      
+      // Add breadcrumb trail
+      zoomState.previousNodes.forEach((node, i) => {
+        breadcrumb.append("text")
+          .attr("class", "breadcrumb-text")
+          .attr("fill", "#666")
+          .style("font-size", "12px")
+          .style("cursor", "pointer")
+          .attr("transform", `translate(${60 + i * 100}, 0)`)
+          .text(() => {
+            const name = node.data?.name || "Categoria";
+            return ` > ${name.length > 15 ? name.substring(0, 15) + '...' : name}`;
+          })
+          .on("click", () => {
+            // Zoom to this specific level
+            setZoomState({
+              currentNode: node,
+              previousNodes: zoomState.previousNodes.slice(0, i)
+            });
+          });
+      });
+    }
     
     // Create cells for each leaf node
-    const cell = svg.selectAll("g")
-      .data(hierarchy.leaves())
+    const cell = svg.selectAll(".treemap-cell")
+      .data(rootHierarchy.leaves())
       .enter()
       .append("g")
-      .attr("transform", d => `translate(${(d as any).x0},${(d as any).y0})`)
       .attr("class", "treemap-cell")
+      .attr("transform", d => `translate(${(d as any).x0},${(d as any).y0})`)
       .attr("data-item", d => {
         const item = d.data as any;
         return item.name;
@@ -76,7 +188,7 @@ export const useTreemapRenderer = (data: TreemapDataItem[]) => {
       .duration(500)
       .delay((d, i) => i * 20) // Stagger the animations
       .attr("height", d => Math.max(0, (d as any).y1 - (d as any).y0))
-      .on("end", function() {
+      .on("end", function(this: SVGRectElement, d: any) {
         // Add event listeners after animation is complete
         d3.select(this)
           .on("mouseover", function(event, d) {
@@ -127,6 +239,22 @@ export const useTreemapRenderer = (data: TreemapDataItem[]) => {
               .on("end", function() {
                 d3.select(this).style("display", "none");
               });
+          })
+          .on("click", function(event, d) {
+            // Handle zoom in on click
+            if (d.children) {
+              // If this node has children, zoom into it
+              setZoomState(prev => ({
+                currentNode: d,
+                previousNodes: prev.currentNode ? [...prev.previousNodes, prev.currentNode] : []
+              }));
+            } else if (d.parent && d.parent.children.length > 1) {
+              // If this is a leaf node but has siblings, zoom to parent
+              setZoomState(prev => ({
+                currentNode: d.parent,
+                previousNodes: prev.currentNode ? [...prev.previousNodes, prev.currentNode] : []
+              }));
+            }
           });
       });
     
@@ -189,7 +317,17 @@ export const useTreemapRenderer = (data: TreemapDataItem[]) => {
       .duration(400)
       .delay((d, i) => 500 + i * 20) // Delay after labels animation
       .style("opacity", 1);
-  }, [data]);
+  }, [filterState.filteredData, zoomState, handleZoomReset]);
 
-  return { svgRef };
+  return { 
+    svgRef,
+    handleValueRangeChange,
+    handleZoomReset,
+    handleZoomIn,
+    handleZoomOut,
+    minValue: filterState.valueRange[0],
+    maxValue: filterState.valueRange[1],
+    isFiltered: filterState.filteredData.length !== filterState.originalData.length,
+    isZoomed: zoomState.currentNode !== null || zoomState.previousNodes.length > 0
+  };
 };

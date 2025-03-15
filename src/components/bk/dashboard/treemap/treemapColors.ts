@@ -2,6 +2,8 @@
 /**
  * Provides color palette for treemap visualization
  */
+import * as d3 from "d3";
+import { TreemapDataItem } from "./treemapTypes";
 
 // Muted/pastel color palette for treemap blocks
 export const colorRange = [
@@ -21,8 +23,8 @@ export const colorRange = [
 /**
  * Gets a D3 color scale for the treemap
  */
-export const getTreemapColorScale = (d3: any, data: any[]) => {
-  return d3.scaleOrdinal()
+export const getTreemapColorScale = (d3: typeof import("d3"), data: TreemapDataItem[]) => {
+  return d3.scaleOrdinal<string>()
     .domain(data.map((_, i) => i.toString()))
     .range(colorRange);
 };
