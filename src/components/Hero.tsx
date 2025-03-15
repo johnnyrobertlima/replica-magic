@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,12 +10,13 @@ export const Hero = () => {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
 
   const { data: banners, isLoading } = useQuery({
-    queryKey: ["active-banners"],
+    queryKey: ["active-banners", "index"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("banners")
         .select("*")
         .eq("is_active", true)
+        .or('page_location.eq.index,page_location.eq.both')
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;

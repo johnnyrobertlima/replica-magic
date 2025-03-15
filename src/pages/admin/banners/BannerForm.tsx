@@ -5,18 +5,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import { ImageUpload } from "@/components/admin/ImageUpload";
 import { getStorageUrl } from "@/utils/imageUtils";
-
-interface Banner {
-  id: string;
-  title: string;
-  description: string;
-  button_text: string;
-  button_link: string;
-  image_url: string;
-  youtube_url: string | null;
-  is_active: boolean;
-  duration: number;
-}
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Banner } from "@/types/banner";
 
 interface BannerFormProps {
   onSubmit: (formData: FormData) => Promise<void>;
@@ -83,6 +73,22 @@ export const BannerForm = ({
             required
             defaultValue={editingBanner?.duration ? editingBanner.duration / 1000 : 5}
           />
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Localização da Página</label>
+          <Select 
+            name="page_location" 
+            defaultValue={editingBanner?.page_location || 'index'}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Selecionar localização" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="index">Página Inicial</SelectItem>
+              <SelectItem value="bluebay">Bluebay</SelectItem>
+              <SelectItem value="both">Ambos</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium">Imagem</label>

@@ -133,6 +133,7 @@ export type Database = {
           id: string | null
           image_url: string | null
           is_active: boolean | null
+          page_location: string | null
           title: string
           updated_at: string | null
           youtube_url: string | null
@@ -146,6 +147,7 @@ export type Database = {
           id?: string | null
           image_url?: string | null
           is_active?: boolean | null
+          page_location?: string | null
           title: string
           updated_at?: string | null
           youtube_url?: string | null
@@ -159,6 +161,7 @@ export type Database = {
           id?: string | null
           image_url?: string | null
           is_active?: boolean | null
+          page_location?: string | null
           title?: string
           updated_at?: string | null
           youtube_url?: string | null

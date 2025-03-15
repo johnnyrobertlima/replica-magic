@@ -9,4 +9,5 @@ export interface Banner {
   youtube_url: string | null;
   is_active: boolean;
   duration: number;
+  page_location: string;
 }

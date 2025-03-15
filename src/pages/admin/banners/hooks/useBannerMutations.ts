@@ -29,6 +29,7 @@ export const useBannerMutations = ({ onSuccess }: UseBannerMutationsProps = {}) 
       }
 
       const duration = Number(formData.get("duration")) * 1000; // Convert seconds to milliseconds
+      const pageLocation = formData.get("page_location") as string || 'index';
 
       const bannerData = {
         title: String(formData.get("title")),
@@ -38,6 +39,7 @@ export const useBannerMutations = ({ onSuccess }: UseBannerMutationsProps = {}) 
         youtube_url: formData.get("youtube_url") ? String(formData.get("youtube_url")) : null,
         image_url: imageUrl,
         duration: duration,
+        page_location: pageLocation,
       };
 
       const { error } = await supabase.from("banners").insert([bannerData]);
@@ -48,6 +50,7 @@ export const useBannerMutations = ({ onSuccess }: UseBannerMutationsProps = {}) 
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["banners"] });
+      queryClient.invalidateQueries({ queryKey: ["active-banners"] });
       onSuccess?.();
       toast({ title: "Banner criado com sucesso!" });
     },
@@ -70,6 +73,7 @@ export const useBannerMutations = ({ onSuccess }: UseBannerMutationsProps = {}) 
         button_link: String(formData.get("button_link")),
         youtube_url: formData.get("youtube_url") ? String(formData.get("youtube_url")) : null,
         duration: Number(formData.get("duration")) * 1000, // Convert seconds to milliseconds
+        page_location: formData.get("page_location") as string || 'index',
       };
 
       const file = formData.get("image") as File;
@@ -98,6 +102,7 @@ export const useBannerMutations = ({ onSuccess }: UseBannerMutationsProps = {}) 
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["banners"] });
+      queryClient.invalidateQueries({ queryKey: ["active-banners"] });
       onSuccess?.();
       toast({ title: "Banner atualizado com sucesso!" });
     },
@@ -124,6 +129,7 @@ export const useBannerMutations = ({ onSuccess }: UseBannerMutationsProps = {}) 
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["banners"] });
+      queryClient.invalidateQueries({ queryKey: ["active-banners"] });
       toast({ title: "Banner atualizado com sucesso!" });
     },
     onError: (error: Error) => {
@@ -149,6 +155,7 @@ export const useBannerMutations = ({ onSuccess }: UseBannerMutationsProps = {}) 
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["banners"] });
+      queryClient.invalidateQueries({ queryKey: ["active-banners"] });
       toast({ title: "Banner excluído com sucesso!" });
     },
     onError: (error: Error) => {

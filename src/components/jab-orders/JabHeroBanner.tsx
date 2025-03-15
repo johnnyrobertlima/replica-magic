@@ -11,12 +11,13 @@ export const JabHeroBanner = () => {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
 
   const { data: banners, isLoading } = useQuery({
-    queryKey: ["active-banners"],
+    queryKey: ["active-banners", "bluebay"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("banners")
         .select("*")
         .eq("is_active", true)
+        .or('page_location.eq.bluebay,page_location.eq.both')
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as Banner[];

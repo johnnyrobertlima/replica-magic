@@ -3,17 +3,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ActionButtons } from "@/components/admin/ActionButtons";
 import { Loader2 } from "lucide-react";
 import { getStorageUrl } from "@/utils/imageUtils";
-
-interface Banner {
-  id: string;
-  title: string;
-  description: string;
-  button_text: string;
-  button_link: string;
-  image_url: string;
-  youtube_url: string | null;
-  is_active: boolean;
-}
+import { Badge } from "@/components/ui/badge";
+import { Banner } from "@/types/banner";
 
 interface BannerListProps {
   banners?: Banner[];
@@ -38,12 +29,39 @@ export const BannerList = ({
     );
   }
 
+  const getLocationLabel = (location: string) => {
+    switch (location) {
+      case 'index':
+        return 'Página Inicial';
+      case 'bluebay':
+        return 'Bluebay';
+      case 'both':
+        return 'Ambos';
+      default:
+        return location;
+    }
+  };
+
+  const getLocationColor = (location: string) => {
+    switch (location) {
+      case 'index':
+        return 'bg-blue-100 text-blue-800';
+      case 'bluebay':
+        return 'bg-green-100 text-green-800';
+      case 'both':
+        return 'bg-purple-100 text-purple-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   return (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead>Título</TableHead>
           <TableHead>Imagem</TableHead>
+          <TableHead>Localização</TableHead>
           <TableHead>Status</TableHead>
           <TableHead className="w-[100px]">Ações</TableHead>
         </TableRow>
@@ -58,6 +76,11 @@ export const BannerList = ({
                 alt={banner.title}
                 className="h-16 w-24 object-cover rounded"
               />
+            </TableCell>
+            <TableCell>
+              <Badge variant="outline" className={getLocationColor(banner.page_location)}>
+                {getLocationLabel(banner.page_location)}
+              </Badge>
             </TableCell>
             <TableCell>
               {banner.is_active ? "Ativo" : "Inativo"}
