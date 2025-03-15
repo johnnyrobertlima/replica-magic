@@ -17,6 +17,7 @@ interface ItemDetailRow {
   PES_CODIGO: number;
   QUANTIDADE: number;
   VALOR_UNITARIO: number;
+  FATOR_CORRECAO?: number | null;
 }
 
 interface ItemDetailsTableProps {
@@ -56,6 +57,8 @@ export const ItemDetailsTable = ({ itemDetails, isLoadingDetails }: ItemDetailsT
           ) : (
             itemDetails.map((detail, index) => {
               const valorTotal = (detail.QUANTIDADE || 0) * (detail.VALOR_UNITARIO || 0);
+              // Determine if correction factor was applied
+              const isCorrectionApplied = detail.FATOR_CORRECAO && detail.FATOR_CORRECAO > 0;
               
               return (
                 <TableRow key={`${detail.NOTA}-${detail.PES_CODIGO}-${index}`}>
@@ -74,8 +77,13 @@ export const ItemDetailsTable = ({ itemDetails, isLoadingDetails }: ItemDetailsT
                     )}
                   </TableCell>
                   <TableCell className="text-right">{detail.QUANTIDADE || 0}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className={`text-right ${isCorrectionApplied ? 'text-blue-500 font-medium' : ''}`}>
                     {detail.VALOR_UNITARIO ? formatCurrency(detail.VALOR_UNITARIO) : '-'}
+                    {isCorrectionApplied && (
+                      <span className="ml-1 text-xs text-blue-500">
+                        (fator: {detail.FATOR_CORRECAO})
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell className="text-right">{formatCurrency(valorTotal)}</TableCell>
                 </TableRow>
