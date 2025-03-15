@@ -105,6 +105,21 @@ export const fetchBkFaturamentoData = async (
   return data || [];
 };
 
+// New function to fetch invoice items by NOTA
+export const fetchInvoiceItems = async (nota: string): Promise<BkFaturamento[]> => {
+  const { data, error } = await supabase
+    .from('BLUEBAY_FATURAMENTO')
+    .select('*, BLUEBAY_ITEM!inner(DESCRICAO)')
+    .eq('NOTA', nota);
+  
+  if (error) {
+    console.error("Error fetching invoice items:", error);
+    throw error;
+  }
+  
+  return data || [];
+};
+
 export const consolidateByNota = (data: BkFaturamento[]): ConsolidatedInvoice[] => {
   const invoiceMap = new Map<string, ConsolidatedInvoice>();
   

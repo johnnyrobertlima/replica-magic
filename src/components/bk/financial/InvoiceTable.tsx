@@ -12,7 +12,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatCurrency } from "@/utils/formatters";
-import { ChevronDown, ChevronUp, Search } from "lucide-react";
+import { ChevronDown, ChevronUp, Search, ChevronRight, ChevronLeft } from "lucide-react";
+import { fetchInvoiceItems } from "@/services/bk/financialService";
+
+interface InvoiceItem {
+  NOTA: string;
+  QUANTIDADE: number | null;
+  VALOR_UNITARIO: number | null;
+  ITEM_CODIGO: string | null;
+  DESCRICAO?: string | null;
+}
 
 interface InvoiceTableProps {
   invoices: any[];
@@ -23,6 +32,9 @@ export const InvoiceTable = ({ invoices, isLoading }: InvoiceTableProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState<string>("DATA_EMISSAO");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [selectedInvoice, setSelectedInvoice] = useState<string | null>(null);
+  const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([]);
+  const [isLoadingItems, setIsLoadingItems] = useState(false);
 
   const handleSort = (field: string) => {
     if (field === sortField) {
@@ -33,10 +45,31 @@ export const InvoiceTable = ({ invoices, isLoading }: InvoiceTableProps) => {
     }
   };
 
+  const handleInvoiceClick = async (nota: string) => {
+    if (selectedInvoice === nota) {
+      // If clicking the same invoice, close it
+      setSelectedInvoice(null);
+      setInvoiceItems([]);
+      return;
+    }
+
+    setSelectedInvoice(nota);
+    setIsLoadingItems(true);
+    
+    try {
+      const items = await fetchInvoiceItems(nota);
+      setInvoiceItems(items);
+    } catch (error) {
+      console.error("Error fetching invoice items:", error);
+    } finally {
+      setIsLoadingItems(false);
+    }
+  };
+
   const filteredInvoices = invoices.filter((invoice) => {
     return (
       invoice.NOTA?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      String(invoice.PES_CODIGO)?.includes(searchTerm)
+      invoice.CLIENTE_NOME?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
 
@@ -80,7 +113,7 @@ export const InvoiceTable = ({ invoices, isLoading }: InvoiceTableProps) => {
         <div className="relative flex-1">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar por nota ou código do cliente..."
+            placeholder="Buscar por nota ou cliente..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-8"
@@ -93,6 +126,7 @@ export const InvoiceTable = ({ invoices, isLoading }: InvoiceTableProps) => {
           <TableCaption>Lista de notas fiscais</TableCaption>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-10"></TableHead>
               <TableHead className="cursor-pointer" onClick={() => handleSort("NOTA")}>
                 <div className="flex items-center">
                   Nota Fiscal <SortIcon field="NOTA" />
@@ -103,9 +137,9 @@ export const InvoiceTable = ({ invoices, isLoading }: InvoiceTableProps) => {
                   Data de Emissão <SortIcon field="DATA_EMISSAO" />
                 </div>
               </TableHead>
-              <TableHead className="cursor-pointer" onClick={() => handleSort("PES_CODIGO")}>
+              <TableHead className="cursor-pointer" onClick={() => handleSort("CLIENTE_NOME")}>
                 <div className="flex items-center">
-                  Cliente <SortIcon field="PES_CODIGO" />
+                  Cliente <SortIcon field="CLIENTE_NOME" />
                 </div>
               </TableHead>
               <TableHead className="cursor-pointer" onClick={() => handleSort("STATUS")}>
@@ -124,35 +158,104 @@ export const InvoiceTable = ({ invoices, isLoading }: InvoiceTableProps) => {
           <TableBody>
             {sortedInvoices.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
+                <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
                   Nenhuma nota fiscal encontrada
                 </TableCell>
               </TableRow>
             ) : (
               sortedInvoices.map((invoice) => (
-                <TableRow key={invoice.NOTA}>
-                  <TableCell className="font-medium">{invoice.NOTA}</TableCell>
-                  <TableCell>
-                    {invoice.DATA_EMISSAO 
-                      ? new Date(invoice.DATA_EMISSAO).toLocaleDateString('pt-BR') 
-                      : '-'}
-                  </TableCell>
-                  <TableCell>{invoice.PES_CODIGO || '-'}</TableCell>
-                  <TableCell>
-                    <div className={`inline-flex px-2 py-1 rounded-full text-xs ${
-                      invoice.STATUS === 'Concluído' ? 'bg-green-100 text-green-800' :
-                      invoice.STATUS === 'Pendente' ? 'bg-yellow-100 text-yellow-800' :
-                      invoice.STATUS === 'Cancelado' ? 'bg-red-100 text-red-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {invoice.STATUS || 'Desconhecido'}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {invoice.VALOR_NOTA ? formatCurrency(invoice.VALOR_NOTA) : '-'}
-                  </TableCell>
-                  <TableCell className="text-right">{invoice.ITEMS_COUNT}</TableCell>
-                </TableRow>
+                <React.Fragment key={invoice.NOTA}>
+                  <TableRow 
+                    className={selectedInvoice === invoice.NOTA ? "bg-muted" : "cursor-pointer"}
+                    onClick={() => handleInvoiceClick(invoice.NOTA)}
+                  >
+                    <TableCell>
+                      {selectedInvoice === invoice.NOTA ? 
+                        <ChevronDown className="h-4 w-4" /> : 
+                        <ChevronRight className="h-4 w-4" />
+                      }
+                    </TableCell>
+                    <TableCell className="font-medium">{invoice.NOTA}</TableCell>
+                    <TableCell>
+                      {invoice.DATA_EMISSAO 
+                        ? new Date(invoice.DATA_EMISSAO).toLocaleDateString('pt-BR') 
+                        : '-'}
+                    </TableCell>
+                    <TableCell>{invoice.CLIENTE_NOME || '-'}</TableCell>
+                    <TableCell>
+                      <div className={`inline-flex px-2 py-1 rounded-full text-xs ${
+                        invoice.STATUS === 'Concluído' ? 'bg-green-100 text-green-800' :
+                        invoice.STATUS === 'Pendente' ? 'bg-yellow-100 text-yellow-800' :
+                        invoice.STATUS === 'Cancelado' ? 'bg-red-100 text-red-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {invoice.STATUS || 'Desconhecido'}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {invoice.VALOR_NOTA ? formatCurrency(invoice.VALOR_NOTA) : '-'}
+                    </TableCell>
+                    <TableCell className="text-right">{invoice.ITEMS_COUNT}</TableCell>
+                  </TableRow>
+                  {selectedInvoice === invoice.NOTA && (
+                    <TableRow>
+                      <TableCell colSpan={7} className="bg-muted/30 p-0">
+                        <div className="px-4 py-2">
+                          <h4 className="font-medium mb-2">Itens da Nota {invoice.NOTA}</h4>
+                          {isLoadingItems ? (
+                            <div className="py-4 flex justify-center">
+                              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-700"></div>
+                            </div>
+                          ) : (
+                            <div className="rounded overflow-hidden border">
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead>Código</TableHead>
+                                    <TableHead>Descrição</TableHead>
+                                    <TableHead className="text-right">Quantidade</TableHead>
+                                    <TableHead className="text-right">Valor Unit.</TableHead>
+                                    <TableHead className="text-right">Valor Total</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {invoiceItems.length === 0 ? (
+                                    <TableRow>
+                                      <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                                        Nenhum item encontrado para esta nota
+                                      </TableCell>
+                                    </TableRow>
+                                  ) : (
+                                    invoiceItems.map((item, index) => {
+                                      const valorTotal = (item.QUANTIDADE || 0) * (item.VALOR_UNITARIO || 0);
+                                      const descricao = item.DESCRICAO || 
+                                        (item as any)?.BLUEBAY_ITEM?.DESCRICAO || 
+                                        'Sem descrição';
+                                      
+                                      return (
+                                        <TableRow key={`${item.NOTA}-${item.ITEM_CODIGO}-${index}`}>
+                                          <TableCell>{item.ITEM_CODIGO || '-'}</TableCell>
+                                          <TableCell>{descricao}</TableCell>
+                                          <TableCell className="text-right">{item.QUANTIDADE || 0}</TableCell>
+                                          <TableCell className="text-right">
+                                            {item.VALOR_UNITARIO ? formatCurrency(item.VALOR_UNITARIO) : '-'}
+                                          </TableCell>
+                                          <TableCell className="text-right">
+                                            {formatCurrency(valorTotal)}
+                                          </TableCell>
+                                        </TableRow>
+                                      );
+                                    })
+                                  )}
+                                </TableBody>
+                              </Table>
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </React.Fragment>
               ))
             )}
           </TableBody>
