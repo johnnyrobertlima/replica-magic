@@ -29,13 +29,13 @@ export const ApprovedOrderCard = ({ order, onExport }: ApprovedOrderCardProps) =
     setIsExpanded(!isExpanded);
   };
 
-  // Calcular o valor total dos itens
+  // Calcular o valor total dos itens (Quantidade Pedida * Valor Unit.)
   const valorTotal = approvedSeparacao.separacao_itens_flat ? 
     approvedSeparacao.separacao_itens_flat.reduce((total, item) => {
       return total + ((item.quantidade_pedida || 0) * (item.valor_unitario || 0));
     }, 0) : 0;
 
-  // Calcular o valor já faturado (Entregue * Valor Unit.)
+  // Calcular o valor já faturado (Quantidade Entregue * Valor Unit.)
   const valorFaturado = approvedSeparacao.separacao_itens_flat ? 
     approvedSeparacao.separacao_itens_flat.reduce((total, item) => {
       return total + ((item.quantidade_entregue || 0) * (item.valor_unitario || 0));

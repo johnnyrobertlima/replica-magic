@@ -28,6 +28,7 @@ const AcompanhamentoFaturamento = () => {
   useEffect(() => {
     const updateTotals = async () => {
       const calculatedTotals = calculateTotals();
+      console.log("AcompanhamentoFaturamento: Updated totals", calculatedTotals);
       setTotals(calculatedTotals);
     };
     
