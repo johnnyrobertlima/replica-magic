@@ -14,7 +14,7 @@ import ClientLogin from "@/pages/ClientLogin";
 import AprovacaoFinanceira from "@/pages/AprovacaoFinanceira";
 import AcompanhamentoFaturamento from "@/pages/AcompanhamentoFaturamento";
 import UserGroupManagement from "@/pages/admin/users/UserGroupManagement";
-import { AdminBanners } from "@/pages/admin/banners";
+import { AdminBanners } from "@/pages/admin/banners"; // Updated import
 import BluebayHome from "@/pages/BluebayHome";
 
 export const routes = [

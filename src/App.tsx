@@ -19,7 +19,7 @@ import BluebayHome from "@/pages/BluebayHome";
 // Admin imports
 import { AdminLayout } from "@/pages/admin/layout";
 import { AdminDashboard } from "@/pages/admin/dashboard";
-import { AdminBanners } from "@/pages/admin/banners";
+import { AdminBanners } from "@/pages/admin/banners"; // This now imports from index.tsx
 import { AdminClients } from "@/pages/admin/clients";
 import { AdminLogos } from "@/pages/admin/logos";
 import { AdminMessages } from "@/pages/admin/messages";
