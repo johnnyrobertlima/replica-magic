@@ -14,6 +14,7 @@ export interface ClienteFinanceiro {
   PES_CODIGO: number;
   APELIDO: string | null;
   volume_saudavel_faturamento: number | null;
+  fator_correcao?: number | null;
   valoresTotais: number;
   valoresEmAberto: number;
   valoresVencidos: number;

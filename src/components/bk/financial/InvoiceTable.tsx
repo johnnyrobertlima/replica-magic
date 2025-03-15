@@ -80,8 +80,11 @@ export const InvoiceTable = ({ invoices, isLoading }: InvoiceTableProps) => {
     }
     
     if (sortField === "VALOR_NOTA") {
-      const valueA = a.VALOR_NOTA || 0;
-      const valueB = b.VALOR_NOTA || 0;
+      // Apply fator correction for sorting by value
+      const fatorA = a.fator_correcao && a.fator_correcao > 0 ? a.fator_correcao : 1;
+      const fatorB = b.fator_correcao && b.fator_correcao > 0 ? b.fator_correcao : 1;
+      const valueA = (a.VALOR_NOTA || 0) * fatorA;
+      const valueB = (b.VALOR_NOTA || 0) * fatorB;
       return sortDirection === "asc" ? valueA - valueB : valueB - valueA;
     }
     
@@ -127,55 +130,68 @@ export const InvoiceTable = ({ invoices, isLoading }: InvoiceTableProps) => {
                 </TableCell>
               </TableRow>
             ) : (
-              sortedInvoices.map((invoice) => (
-                <React.Fragment key={invoice.NOTA}>
-                  <TableRow 
-                    className={selectedInvoice === invoice.NOTA ? "bg-muted" : "cursor-pointer"}
-                    onClick={() => handleInvoiceClick(invoice.NOTA)}
-                  >
-                    <TableCell>
-                      {selectedInvoice === invoice.NOTA ? 
-                        <ChevronDown className="h-4 w-4" /> : 
-                        <ChevronRight className="h-4 w-4" />
-                      }
-                    </TableCell>
-                    <TableCell className="font-medium">{invoice.NOTA}</TableCell>
-                    <TableCell>
-                      {invoice.DATA_EMISSAO 
-                        ? new Date(invoice.DATA_EMISSAO).toLocaleDateString('pt-BR') 
-                        : '-'}
-                    </TableCell>
-                    <TableCell>
-                      {invoice.CLIENTE_NOME || '-'} 
-                      {invoice.PES_CODIGO && (
-                        <span className="ml-1 text-sm text-muted-foreground">
-                          (Cód: {invoice.PES_CODIGO})
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge status={invoice.STATUS} />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {invoice.VALOR_NOTA ? formatCurrency(invoice.VALOR_NOTA) : '-'}
-                    </TableCell>
-                    <TableCell className="text-right">{invoice.ITEMS_COUNT}</TableCell>
-                  </TableRow>
-                  {selectedInvoice === invoice.NOTA && (
-                    <TableRow>
-                      <TableCell colSpan={7} className="bg-muted/30 p-0">
-                        <div className="px-4 py-2">
-                          <h4 className="font-medium mb-2">Itens da Nota {invoice.NOTA}</h4>
-                          <InvoiceItemsTable 
-                            invoiceItems={invoiceItems}
-                            isLoadingItems={isLoadingItems}
-                          />
-                        </div>
+              sortedInvoices.map((invoice) => {
+                // Apply factor correction
+                const fator = invoice.fator_correcao && invoice.fator_correcao > 0 
+                  ? invoice.fator_correcao 
+                  : 1;
+                const valorCorrigido = (invoice.VALOR_NOTA || 0) * fator;
+                
+                return (
+                  <React.Fragment key={invoice.NOTA}>
+                    <TableRow 
+                      className={selectedInvoice === invoice.NOTA ? "bg-muted" : "cursor-pointer"}
+                      onClick={() => handleInvoiceClick(invoice.NOTA)}
+                    >
+                      <TableCell>
+                        {selectedInvoice === invoice.NOTA ? 
+                          <ChevronDown className="h-4 w-4" /> : 
+                          <ChevronRight className="h-4 w-4" />
+                        }
                       </TableCell>
+                      <TableCell className="font-medium">{invoice.NOTA}</TableCell>
+                      <TableCell>
+                        {invoice.DATA_EMISSAO 
+                          ? new Date(invoice.DATA_EMISSAO).toLocaleDateString('pt-BR') 
+                          : '-'}
+                      </TableCell>
+                      <TableCell>
+                        {invoice.CLIENTE_NOME || '-'} 
+                        {invoice.PES_CODIGO && (
+                          <span className="ml-1 text-sm text-muted-foreground">
+                            (Cód: {invoice.PES_CODIGO})
+                          </span>
+                        )}
+                        {invoice.fator_correcao && invoice.fator_correcao > 0 && invoice.fator_correcao !== 1 && (
+                          <span className="ml-2 text-xs text-blue-500 font-medium">
+                            Fator: {invoice.fator_correcao}x
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={invoice.STATUS} />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {invoice.VALOR_NOTA ? formatCurrency(valorCorrigido) : '-'}
+                      </TableCell>
+                      <TableCell className="text-right">{invoice.ITEMS_COUNT}</TableCell>
                     </TableRow>
-                  )}
-                </React.Fragment>
-              ))
+                    {selectedInvoice === invoice.NOTA && (
+                      <TableRow>
+                        <TableCell colSpan={7} className="bg-muted/30 p-0">
+                          <div className="px-4 py-2">
+                            <h4 className="font-medium mb-2">Itens da Nota {invoice.NOTA}</h4>
+                            <InvoiceItemsTable 
+                              invoiceItems={invoiceItems}
+                              isLoadingItems={isLoadingItems}
+                            />
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </React.Fragment>
+                );
+              })
             )}
           </TableBody>
         </Table>

@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { ClienteFinanceiro } from "@/types/financialClient";
 import { useToast } from "@/hooks/use-toast";
@@ -29,7 +28,7 @@ export const useFinancialDataFetching = () => {
       // Fetch financial titles
       const titulos = await fetchFinancialTitles(clientesCodigos);
 
-      // Fetch client info
+      // Fetch client info including fator_correcao
       const clientes = await fetchClientInfo(clientesCodigos);
 
       // Get unique pedido numbers from separações

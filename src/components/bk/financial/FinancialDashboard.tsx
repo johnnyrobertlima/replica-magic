@@ -11,6 +11,7 @@ interface Invoice {
   VALOR_NOTA: number | null;
   ITEMS_COUNT: number;
   CLIENTE_NOME?: string | null;
+  fator_correcao?: number | null;
 }
 
 interface FinancialDashboardProps {
@@ -18,9 +19,17 @@ interface FinancialDashboardProps {
 }
 
 export const FinancialDashboard = ({ invoices }: FinancialDashboardProps) => {
-  // Calculate summary metrics
+  // Calculate summary metrics with factor correction
   const totalInvoices = invoices.length;
-  const totalValue = invoices.reduce((sum, invoice) => sum + (invoice.VALOR_NOTA || 0), 0);
+  
+  const totalValue = invoices.reduce((sum, invoice) => {
+    const baseValue = invoice.VALOR_NOTA || 0;
+    const fator = invoice.fator_correcao && invoice.fator_correcao > 0 
+      ? invoice.fator_correcao 
+      : 1;
+    return sum + (baseValue * fator);
+  }, 0);
+  
   const averageValue = totalInvoices > 0 ? totalValue / totalInvoices : 0;
   
   // Count invoices by status
@@ -51,7 +60,7 @@ export const FinancialDashboard = ({ invoices }: FinancialDashboardProps) => {
         <CardContent>
           <div className="text-2xl font-bold">{formatCurrency(totalValue)}</div>
           <p className="text-xs text-muted-foreground">
-            Soma do valor de todas as notas
+            Soma do valor de todas as notas (com fator de correção)
           </p>
         </CardContent>
       </Card>
