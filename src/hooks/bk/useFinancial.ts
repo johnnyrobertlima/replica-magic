@@ -48,20 +48,10 @@ export const useFinancial = () => {
       
       // Fetch data using the database function with correct join
       const data = await fetchBkFaturamentoData(dateRange.startDate, dateRange.endDate);
-      
-      // Filter out records where CENTROCUSTO is not NULL
-      const filteredData = data.filter(item => {
-        // Check if we can access CENTROCUSTO through any potential relation
-        const hasNoCentroCusto = !(item as any).CENTROCUSTO;
-        return hasNoCentroCusto;
-      });
-      
-      console.log(`Filtered down to ${filteredData.length} records after CENTROCUSTO check`);
-      
-      setFaturamentoData(filteredData);
+      setFaturamentoData(data);
       
       // Consolidate invoices by NOTA
-      const consolidated = consolidateByNota(filteredData);
+      const consolidated = consolidateByNota(data);
       setConsolidatedInvoices(consolidated);
       
     } catch (err) {

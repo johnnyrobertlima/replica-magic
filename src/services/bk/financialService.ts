@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
 
@@ -19,7 +20,7 @@ export const fetchBkFaturamentoData = async (
 ): Promise<BkFaturamento[]> => {
   console.log("Fetching B&K faturamento data...", { startDate, endDate });
   
-  // Use the get_bk_faturamento function to get invoices with correct join on PED_NUMPEDIDO and PED_ANOBASE
+  // Use the get_bk_faturamento function to get invoices with correct join
   const { data, error } = await supabase.rpc('get_bk_faturamento', {
     start_date: startDate,
     end_date: endDate
