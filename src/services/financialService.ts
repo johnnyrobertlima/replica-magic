@@ -15,11 +15,11 @@ export const fetchFinancialTitles = async (clientesCodigos: number[]) => {
   return titulos;
 };
 
-// Fetch client info including fator_correcao
+// Fetch client info
 export const fetchClientInfo = async (clientesCodigos: number[]) => {
   const { data: clientes, error } = await supabase
     .from('BLUEBAY_PESSOA')
-    .select('PES_CODIGO, APELIDO, volume_saudavel_faturamento, fator_correcao')
+    .select('PES_CODIGO, APELIDO, volume_saudavel_faturamento')
     .in('PES_CODIGO', clientesCodigos);
 
   if (error) throw error;
@@ -66,7 +66,6 @@ export const processClientsData = (
           PES_CODIGO: cliente.PES_CODIGO,
           APELIDO: cliente.APELIDO,
           volume_saudavel_faturamento: cliente.volume_saudavel_faturamento,
-          fator_correcao: cliente.fator_correcao,
           valoresTotais: 0,
           valoresEmAberto: 0,
           valoresVencidos: 0,

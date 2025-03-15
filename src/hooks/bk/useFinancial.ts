@@ -51,7 +51,7 @@ export const useFinancial = () => {
       setFaturamentoData(data);
       
       // Consolidate invoices by NOTA
-      const consolidated = await consolidateByNota(data);
+      const consolidated = consolidateByNota(data);
       setConsolidatedInvoices(consolidated);
       
     } catch (err) {
