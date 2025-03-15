@@ -25,19 +25,28 @@ const AcompanhamentoFaturamento = () => {
     valorFaturado: 0
   });
   
+  const [isCalculating, setIsCalculating] = useState(false);
+  
   useEffect(() => {
     const updateTotals = async () => {
-      const calculatedTotals = calculateTotals();
-      console.log("AcompanhamentoFaturamento: Updated totals", calculatedTotals);
-      setTotals(calculatedTotals);
+      if (isLoading) return;
+      
+      setIsCalculating(true);
+      try {
+        const calculatedTotals = await calculateTotals();
+        console.log("AcompanhamentoFaturamento: Updated totals", calculatedTotals);
+        setTotals(calculatedTotals);
+      } catch (error) {
+        console.error("Error calculating totals:", error);
+      } finally {
+        setIsCalculating(false);
+      }
     };
     
-    if (!isLoading) {
-      updateTotals();
-    }
+    updateTotals();
   }, [isLoading, approvedOrders, calculateTotals]);
 
-  if (isLoading) {
+  if (isLoading || isCalculating) {
     return (
       <div className="flex items-center justify-center p-8">
         <Loader2 className="h-8 w-8 animate-spin" />

@@ -1,11 +1,12 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, ChevronDown, ChevronUp } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { PedidosIncluidos } from "./PedidosIncluidos";
 import { Progress } from "@/components/ui/progress";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ApprovedOrderCardProps {
   order: any;
@@ -14,6 +15,8 @@ interface ApprovedOrderCardProps {
 
 export const ApprovedOrderCard = ({ order, onExport }: ApprovedOrderCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [processedItems, setProcessedItems] = useState<any[]>([]);
+  const [isLoadingItems, setIsLoadingItems] = useState(true);
 
   if (!order || !order.cliente_data) return null;
   
@@ -29,23 +32,113 @@ export const ApprovedOrderCard = ({ order, onExport }: ApprovedOrderCardProps) =
     setIsExpanded(!isExpanded);
   };
 
-  // Calcular o valor total dos itens (Quantidade Pedida * Valor Unit.)
-  const valorTotal = approvedSeparacao.separacao_itens_flat ? 
-    approvedSeparacao.separacao_itens_flat.reduce((total, item) => {
+  useEffect(() => {
+    const fetchEntregaData = async () => {
+      if (!approvedSeparacao.separacao_itens_flat || approvedSeparacao.separacao_itens_flat.length === 0) {
+        setProcessedItems([]);
+        setIsLoadingItems(false);
+        return;
+      }
+      
+      try {
+        // Prepare items for filtering from BLUEBAY_PEDIDO
+        const itemsToFetch = approvedSeparacao.separacao_itens_flat
+          .filter(item => item && item.pedido && item.item_codigo)
+          .map(item => ({
+            pedido: item.pedido,
+            item_codigo: item.item_codigo
+          }));
+        
+        if (itemsToFetch.length === 0) {
+          setProcessedItems(approvedSeparacao.separacao_itens_flat);
+          setIsLoadingItems(false);
+          return;
+        }
+        
+        console.log('ApprovedOrderCard: Fetching delivery data for items:', itemsToFetch);
+        
+        // Fetch the data from BLUEBAY_PEDIDO based on order numbers and item codes
+        const { data: pedidoData, error } = await supabase
+          .from('BLUEBAY_PEDIDO')
+          .select('PED_NUMPEDIDO, ITEM_CODIGO, QTDE_ENTREGUE')
+          .in('PED_NUMPEDIDO', itemsToFetch.map(item => item.pedido))
+          .in('ITEM_CODIGO', itemsToFetch.map(item => item.item_codigo));
+        
+        if (error) {
+          console.error('Error fetching QTDE_ENTREGUE from BLUEBAY_PEDIDO:', error);
+          setProcessedItems(approvedSeparacao.separacao_itens_flat);
+          setIsLoadingItems(false);
+          return;
+        }
+        
+        console.log('ApprovedOrderCard: Received pedido data:', pedidoData);
+        
+        // Create a map of PED_NUMPEDIDO+ITEM_CODIGO to QTDE_ENTREGUE for easy lookup
+        const entregaMap = {};
+        pedidoData.forEach(row => {
+          const key = `${row.PED_NUMPEDIDO}:${row.ITEM_CODIGO}`;
+          entregaMap[key] = row.QTDE_ENTREGUE || 0;
+        });
+        
+        // Update the items with the correct QTDE_ENTREGUE values
+        const updatedItems = approvedSeparacao.separacao_itens_flat.map(item => {
+          if (item && item.pedido && item.item_codigo) {
+            const key = `${item.pedido}:${item.item_codigo}`;
+            // Ensure we always have a number for quantidade_entregue, defaulting to 0
+            const quantidadeEntregue = entregaMap[key] !== undefined ? Number(entregaMap[key]) : 0;
+            return {
+              ...item,
+              quantidade_entregue: quantidadeEntregue
+            };
+          }
+          return {
+            ...item,
+            quantidade_entregue: 0 // Ensure default value is 0, not null or undefined
+          };
+        });
+        
+        console.log('ApprovedOrderCard: Updated items with entrega data:', updatedItems);
+        setProcessedItems(updatedItems);
+      } catch (error) {
+        console.error('Error in fetchEntregaData:', error);
+        // Even on error, ensure we set default value for quantidade_entregue
+        const defaultItems = approvedSeparacao.separacao_itens_flat.map(item => ({
+          ...item,
+          quantidade_entregue: item.quantidade_entregue || 0
+        }));
+        setProcessedItems(defaultItems);
+      } finally {
+        setIsLoadingItems(false);
+      }
+    };
+    
+    fetchEntregaData();
+  }, [approvedSeparacao.separacao_itens_flat]);
+
+  // Calculate values using the processed items with updated quantidade_entregue
+  const calculateValues = () => {
+    const items = isLoadingItems ? approvedSeparacao.separacao_itens_flat || [] : processedItems;
+    
+    // Calcular o valor total dos itens (Quantidade Pedida * Valor Unit.)
+    const valorTotal = items.reduce((total, item) => {
       return total + ((item.quantidade_pedida || 0) * (item.valor_unitario || 0));
-    }, 0) : 0;
+    }, 0);
 
-  // Calcular o valor já entregue (Quantidade Entregue * Valor Unit.)
-  const valorFaturado = approvedSeparacao.separacao_itens_flat ? 
-    approvedSeparacao.separacao_itens_flat.reduce((total, item) => {
+    // Calcular o valor já entregue (Quantidade Entregue * Valor Unit.)
+    const valorFaturado = items.reduce((total, item) => {
       return total + ((item.quantidade_entregue || 0) * (item.valor_unitario || 0));
-    }, 0) : 0;
+    }, 0);
 
-  // Calcular o valor que falta faturar (Total - Faturado)
-  const valorFaltaFaturar = valorTotal - valorFaturado;
+    // Calcular o valor que falta faturar (Total - Faturado)
+    const valorFaltaFaturar = valorTotal - valorFaturado;
 
-  // Calcular o percentual faturado
-  const percentualFaturado = valorTotal > 0 ? Math.round((valorFaturado / valorTotal) * 100) : 0;
+    // Calcular o percentual faturado
+    const percentualFaturado = valorTotal > 0 ? Math.round((valorFaturado / valorTotal) * 100) : 0;
+    
+    return { valorTotal, valorFaturado, valorFaltaFaturar, percentualFaturado };
+  };
+  
+  const { valorTotal, valorFaturado, valorFaltaFaturar, percentualFaturado } = calculateValues();
 
   return (
     <Card 
@@ -131,7 +224,10 @@ export const ApprovedOrderCard = ({ order, onExport }: ApprovedOrderCardProps) =
         </div>
         
         {isExpanded && (
-          <PedidosIncluidos approvedSeparacao={approvedSeparacao} />
+          <PedidosIncluidos approvedSeparacao={{ 
+            ...approvedSeparacao,
+            separacao_itens_flat: processedItems.length > 0 ? processedItems : approvedSeparacao.separacao_itens_flat
+          }} />
         )}
       </CardContent>
     </Card>

@@ -42,6 +42,8 @@ export const PedidosIncluidos = ({ approvedSeparacao }: PedidosIncluidosProps) =
           return;
         }
         
+        console.log('PedidosIncluidos: Fetching delivery data for items:', itemsToFetch);
+        
         // Create a map of all the order number + item code combinations
         const pedidoItemPairs = itemsToFetch.map(item => `${item.pedido}:${item.item_codigo}`);
         
@@ -59,30 +61,44 @@ export const PedidosIncluidos = ({ approvedSeparacao }: PedidosIncluidosProps) =
           return;
         }
         
+        console.log('PedidosIncluidos: Received pedido data:', pedidoData);
+        
         // Create a map of PED_NUMPEDIDO+ITEM_CODIGO to QTDE_ENTREGUE for easy lookup
         const entregaMap = {};
         pedidoData.forEach(row => {
           const key = `${row.PED_NUMPEDIDO}:${row.ITEM_CODIGO}`;
-          entregaMap[key] = row.QTDE_ENTREGUE;
+          entregaMap[key] = row.QTDE_ENTREGUE || 0;
         });
+        
+        console.log('PedidosIncluidos: Created entrega map:', entregaMap);
         
         // Update the items with the correct QTDE_ENTREGUE values
         const updatedItems = approvedSeparacao.separacao_itens_flat.map(item => {
           if (item && item.pedido && item.item_codigo) {
             const key = `${item.pedido}:${item.item_codigo}`;
-            const quantidadeEntregue = entregaMap[key] !== undefined ? entregaMap[key] : 0;
+            // Ensure we always have a number for quantidade_entregue, defaulting to 0
+            const quantidadeEntregue = entregaMap[key] !== undefined ? Number(entregaMap[key]) : 0;
             return {
               ...item,
               quantidade_entregue: quantidadeEntregue
             };
           }
-          return item;
+          return {
+            ...item,
+            quantidade_entregue: 0 // Ensure default value is 0, not null or undefined
+          };
         });
         
+        console.log('PedidosIncluidos: Updated items with entrega data:', updatedItems);
         setItemsWithEntrega(updatedItems);
       } catch (error) {
         console.error('Error in fetchEntregaData:', error);
-        setItemsWithEntrega(approvedSeparacao.separacao_itens_flat);
+        // Even on error, ensure we set default value for quantidade_entregue
+        const defaultItems = approvedSeparacao.separacao_itens_flat.map(item => ({
+          ...item,
+          quantidade_entregue: item.quantidade_entregue || 0
+        }));
+        setItemsWithEntrega(defaultItems);
       } finally {
         setIsLoading(false);
       }

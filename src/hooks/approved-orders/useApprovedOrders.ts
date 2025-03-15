@@ -1,10 +1,10 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useApprovedOrdersStorage } from './useApprovedOrdersStorage';
 import { useOrderTotals } from './useOrderTotals';
 import { useMonthSelection } from './useMonthSelection';
 import { useOrdersDataLoader } from './useOrdersDataLoader';
-import { ApprovedOrder } from './types';
+import { ApprovedOrder, OrderTotals } from './types';
 
 export const useApprovedOrders = () => {
   const { 
@@ -32,19 +32,22 @@ export const useApprovedOrders = () => {
     loadData();
   }, [selectedYear, selectedMonth, loadOrdersForMonth]);
 
+  const calculateTotalsWrapper = useCallback(async () => {
+    console.log('useApprovedOrders: Calling calculateTotals with', {
+      approvedOrdersCount: approvedOrders.length,
+      pendingValuesCount: Object.keys(pendingValues).length,
+      pendingValues
+    });
+    
+    return await calculateTotals(approvedOrders, pendingValues);
+  }, [approvedOrders, pendingValues, calculateTotals]);
+
   return {
     approvedOrders,
     isLoading,
     addApprovedOrder,
     loadApprovedOrders,
-    calculateTotals: () => {
-      console.log('useApprovedOrders: Calling calculateTotals with', {
-        approvedOrdersCount: approvedOrders.length,
-        pendingValuesCount: Object.keys(pendingValues).length,
-        pendingValues
-      });
-      return calculateTotals(approvedOrders, pendingValues);
-    },
+    calculateTotals: calculateTotalsWrapper,
     handleMonthSelect,
     selectedYear,
     selectedMonth
