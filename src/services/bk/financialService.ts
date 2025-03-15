@@ -12,6 +12,7 @@ interface ConsolidatedInvoice {
   VALOR_NOTA: number | null;
   ITEMS_COUNT: number;
   CLIENTE_NOME?: string | null;
+  FATOR_CORRECAO?: number | null;
 }
 
 export const fetchBkFaturamentoData = async (
@@ -37,7 +38,7 @@ export const fetchBkFaturamentoData = async (
   const filteredData = data?.filter(item => item.TIPO === 'S') || [];
   console.log(`Filtered to ${filteredData.length} records with TIPO = 'S'`);
   
-  // Let's separately get the cliente names
+  // Let's separately get the cliente names and correction factors
   if (filteredData.length > 0) {
     const clienteIds = filteredData
       .map(item => item.PES_CODIGO)
@@ -46,16 +47,22 @@ export const fetchBkFaturamentoData = async (
     if (clienteIds.length > 0) {
       const { data: clientesData, error: clientesError } = await supabase
         .from('BLUEBAY_PESSOA')
-        .select('PES_CODIGO, APELIDO, RAZAOSOCIAL')
+        .select('PES_CODIGO, APELIDO, RAZAOSOCIAL, fator_correcao')
         .in('PES_CODIGO', clienteIds);
       
       if (!clientesError && clientesData) {
-        // Create a map of cliente IDs to their names
-        const clienteMap = new Map<number, { APELIDO: string | null, RAZAOSOCIAL: string | null }>();
+        // Create a map of cliente IDs to their names and correction factors
+        const clienteMap = new Map<number, { 
+          APELIDO: string | null, 
+          RAZAOSOCIAL: string | null,
+          FATOR_CORRECAO: number | null 
+        }>();
+        
         clientesData.forEach(cliente => {
           clienteMap.set(cliente.PES_CODIGO, {
             APELIDO: cliente.APELIDO,
-            RAZAOSOCIAL: cliente.RAZAOSOCIAL
+            RAZAOSOCIAL: cliente.RAZAOSOCIAL,
+            FATOR_CORRECAO: cliente.fator_correcao
           });
         });
         
@@ -80,7 +87,7 @@ export const fetchInvoiceItems = async (nota: string): Promise<any[]> => {
   console.log("Fetching invoice items for nota:", nota);
   const { data, error } = await supabase
     .from('BLUEBAY_FATURAMENTO')
-    .select('NOTA, ITEM_CODIGO, QUANTIDADE, VALOR_UNITARIO, TIPO')
+    .select('NOTA, ITEM_CODIGO, QUANTIDADE, VALOR_UNITARIO, TIPO, PES_CODIGO')
     .eq('NOTA', nota)
     .eq('TIPO', 'S');
   
@@ -90,6 +97,25 @@ export const fetchInvoiceItems = async (nota: string): Promise<any[]> => {
   }
   
   console.log(`Fetched ${data?.length} items for nota ${nota}`);
+
+  // If we have items, get the correction factor for the client
+  if (data && data.length > 0 && data[0].PES_CODIGO) {
+    const pesCode = data[0].PES_CODIGO;
+    const { data: clienteData, error: clienteError } = await supabase
+      .from('BLUEBAY_PESSOA')
+      .select('fator_correcao')
+      .eq('PES_CODIGO', pesCode)
+      .single();
+
+    if (!clienteError && clienteData) {
+      const fatorCorrecao = clienteData.fator_correcao;
+      // Add correction factor to each item
+      data.forEach(item => {
+        item.FATOR_CORRECAO = fatorCorrecao;
+      });
+    }
+  }
+  
   return data || [];
 };
 
@@ -110,10 +136,11 @@ export const consolidateByNota = (data: BkFaturamento[]): ConsolidatedInvoice[] 
       // Add the calculated item value to the invoice total
       existingInvoice.VALOR_NOTA = (existingInvoice.VALOR_NOTA || 0) + itemValue;
     } else {
-      // Get cliente name if available
+      // Get cliente name and correction factor if available
       const clienteInfo = (item as any).CLIENTE_INFO;
       const clienteNome = clienteInfo ? 
         (clienteInfo.APELIDO || clienteInfo.RAZAOSOCIAL || null) : null;
+      const fatorCorrecao = clienteInfo ? clienteInfo.FATOR_CORRECAO : null;
       
       // Create a new invoice entry with the calculated value
       invoiceMap.set(item.NOTA, {
@@ -123,7 +150,8 @@ export const consolidateByNota = (data: BkFaturamento[]): ConsolidatedInvoice[] 
         STATUS: item.STATUS,
         VALOR_NOTA: itemValue,  // Use the calculated value
         ITEMS_COUNT: 1,
-        CLIENTE_NOME: clienteNome
+        CLIENTE_NOME: clienteNome,
+        FATOR_CORRECAO: fatorCorrecao
       });
     }
   });

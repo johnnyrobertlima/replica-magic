@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react";
 import { fetchBkFaturamentoData, consolidateByNota, BkFaturamento } from "@/services/bk/financialService";
 import { useToast } from "@/hooks/use-toast";
@@ -53,6 +52,8 @@ export const useFinancial = () => {
       // Consolidate invoices by NOTA
       const consolidated = consolidateByNota(data);
       setConsolidatedInvoices(consolidated);
+      
+      console.log("Data loaded with correction factors:", consolidated);
       
     } catch (err) {
       console.error("Error loading financial data:", err);

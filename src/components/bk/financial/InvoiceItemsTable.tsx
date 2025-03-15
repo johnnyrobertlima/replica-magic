@@ -15,6 +15,7 @@ interface InvoiceItem {
   QUANTIDADE: number | null;
   VALOR_UNITARIO: number | null;
   ITEM_CODIGO: string | null;
+  FATOR_CORRECAO?: number | null;
 }
 
 interface InvoiceItemsTableProps {
@@ -51,14 +52,33 @@ export const InvoiceItemsTable = ({ invoiceItems, isLoadingItems }: InvoiceItems
             </TableRow>
           ) : (
             invoiceItems.map((item, index) => {
-              const valorTotal = (item.QUANTIDADE || 0) * (item.VALOR_UNITARIO || 0);
+              // Apply correction factor to unit value if it exists and is not 0
+              const fatorCorrecao = item.FATOR_CORRECAO && item.FATOR_CORRECAO > 0 
+                ? item.FATOR_CORRECAO 
+                : null;
+              
+              const valorUnitario = item.VALOR_UNITARIO || 0;
+              const valorUnitarioAjustado = fatorCorrecao 
+                ? valorUnitario * fatorCorrecao 
+                : valorUnitario;
+              
+              const valorTotal = (item.QUANTIDADE || 0) * valorUnitarioAjustado;
               
               return (
                 <TableRow key={`${item.NOTA}-${item.ITEM_CODIGO}-${index}`}>
                   <TableCell>{item.ITEM_CODIGO || '-'}</TableCell>
                   <TableCell className="text-right">{item.QUANTIDADE || 0}</TableCell>
                   <TableCell className="text-right">
-                    {item.VALOR_UNITARIO ? formatCurrency(item.VALOR_UNITARIO) : '-'}
+                    {valorUnitario ? (
+                      <div>
+                        {formatCurrency(valorUnitarioAjustado)}
+                        {fatorCorrecao && (
+                          <span className="text-xs text-muted-foreground ml-1">
+                            (factor: {fatorCorrecao})
+                          </span>
+                        )}
+                      </div>
+                    ) : '-'}
                   </TableCell>
                   <TableCell className="text-right">
                     {formatCurrency(valorTotal)}
