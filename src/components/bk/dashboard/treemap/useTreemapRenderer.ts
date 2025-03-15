@@ -27,13 +27,13 @@ export const useTreemapRenderer = (data: TreemapDataItem[]) => {
   
   // Render the treemap whenever data, filter, or zoom state changes
   useEffect(() => {
-    renderTreemap(
+    renderTreemap({
       svgRef, 
-      filterState.filteredData, 
+      data: filterState.filteredData, 
       zoomState, 
       handleZoomToNode, 
       handleZoomReset
-    );
+    });
   }, [filterState.filteredData, zoomState, handleZoomReset, handleZoomToNode]);
   
   // Wrap the zoom in functionality to maintain consistent API
