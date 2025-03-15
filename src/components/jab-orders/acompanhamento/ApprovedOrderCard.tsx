@@ -43,7 +43,7 @@ export const ApprovedOrderCard = ({ order, onExport }: ApprovedOrderCardProps) =
       return total + (saldo * (item.valor_unitario || 0));
     }, 0) : 0;
 
-  // Calcular o valor já faturado (Faturado * Valor Unit.)
+  // Calcular o valor já faturado (Entregue * Valor Unit.)
   const valorFaturado = approvedSeparacao.separacao_itens_flat ? 
     approvedSeparacao.separacao_itens_flat.reduce((total, item) => {
       return total + ((item.quantidade_entregue || 0) * (item.valor_unitario || 0));

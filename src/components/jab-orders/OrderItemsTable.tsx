@@ -42,7 +42,7 @@ export const OrderItemsTable = ({
               <TableHead>SKU</TableHead>
               <TableHead>Descrição</TableHead>
               <TableHead className="text-right">QT Pedido</TableHead>
-              <TableHead className="text-right">QT Faturada</TableHead>
+              <TableHead className="text-right">QT Entregue</TableHead>
               <TableHead className="text-right">QT Saldo</TableHead>
               <TableHead className="text-right">QT Físico</TableHead>
               <TableHead className="text-right">VL Uni</TableHead>

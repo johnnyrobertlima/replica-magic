@@ -34,7 +34,7 @@ export const PedidosIncluidos = ({ approvedSeparacao }: PedidosIncluidosProps) =
               <TableHead>SKU</TableHead>
               <TableHead>Descrição</TableHead>
               <TableHead className="text-right">Solicitado</TableHead>
-              <TableHead className="text-right">Faturado</TableHead>
+              <TableHead className="text-right">Entregue</TableHead>
               <TableHead className="text-right">Saldo</TableHead>
               <TableHead className="text-right">Valor Unit.</TableHead>
               <TableHead className="text-right">Total</TableHead>
