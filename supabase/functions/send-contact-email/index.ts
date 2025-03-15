@@ -27,11 +27,30 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Using Resend API key:", RESEND_API_KEY ? "****" + RESEND_API_KEY.slice(-4) : "Not set");
     
     if (!RESEND_API_KEY) {
-      throw new Error("RESEND_API_KEY is not set");
+      return new Response(
+        JSON.stringify({ error: "RESEND_API_KEY is not set" }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
 
-    const contactMessage: ContactMessage = await req.json();
-    console.log("Received contact message:", JSON.stringify(contactMessage));
+    // Parse request body and handle potential errors
+    let contactMessage: ContactMessage;
+    try {
+      contactMessage = await req.json();
+      console.log("Received contact message:", JSON.stringify(contactMessage));
+    } catch (parseError) {
+      console.error("Error parsing request body:", parseError);
+      return new Response(
+        JSON.stringify({ error: "Invalid request body format" }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
     
     const emailHtml = `
       <h2>Nova mensagem de contato</h2>
@@ -41,37 +60,48 @@ const handler = async (req: Request): Promise<Response> => {
       <p><strong>Mensagem:</strong> ${contactMessage.message}</p>
     `;
 
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: "ONI Digital <comercial@oniagencia.com.br>",
-        to: ["comercial@oniagencia.com.br"],
-        subject: "Nova mensagem de contato - Site ONI",
-        html: emailHtml,
-        reply_to: contactMessage.email
-      }),
-    });
-
-    const responseText = await res.text();
-    console.log("Resend API response status:", res.status);
-    console.log("Resend API response:", responseText);
-
-    if (res.ok) {
-      const data = JSON.parse(responseText);
-      return new Response(JSON.stringify(data), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    try {
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${RESEND_API_KEY}`,
+        },
+        body: JSON.stringify({
+          from: "ONI Digital <comercial@oniagencia.com.br>",
+          to: ["comercial@oniagencia.com.br"],
+          subject: "Nova mensagem de contato - Site ONI",
+          html: emailHtml,
+          reply_to: contactMessage.email
+        }),
       });
-    } else {
-      console.error("Resend API error:", responseText);
-      return new Response(JSON.stringify({ error: responseText }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+
+      const responseText = await res.text();
+      console.log("Resend API response status:", res.status);
+      console.log("Resend API response:", responseText);
+
+      if (res.ok) {
+        const data = JSON.parse(responseText);
+        return new Response(JSON.stringify(data), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      } else {
+        console.error("Resend API error:", responseText);
+        return new Response(JSON.stringify({ error: responseText }), {
+          status: 500, // Changed from 400 to 500 to indicate server error
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    } catch (fetchError) {
+      console.error("Fetch error when calling Resend API:", fetchError);
+      return new Response(
+        JSON.stringify({ error: "Error calling email service: " + fetchError.message }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
   } catch (error: any) {
     console.error("Error in send-contact-email function:", error);

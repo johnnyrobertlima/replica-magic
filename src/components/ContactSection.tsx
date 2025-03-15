@@ -1,13 +1,14 @@
 
 import { motion } from "framer-motion";
 import { Phone, Mail, MapPin } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 export const ContactSection = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const formRef = useRef<HTMLFormElement>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -50,8 +51,10 @@ export const ContactSection = () => {
         });
       }
 
-      // Reset form
-      e.currentTarget.reset();
+      // Reset form safely using the ref
+      if (formRef.current) {
+        formRef.current.reset();
+      }
     } catch (error: any) {
       console.error("Error sending message:", error);
       toast({
@@ -75,7 +78,7 @@ export const ContactSection = () => {
             className="space-y-8"
           >
             <h2 className="text-4xl font-bold">PEÇA SEU ORÇAMENTO</h2>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <input
                   type="text"
