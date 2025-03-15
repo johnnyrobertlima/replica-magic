@@ -1,12 +1,11 @@
-
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { Boxes, ClipboardCheck, FileCheck, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import JabNavMenu from "@/components/jab-orders/JabNavMenu";
 import { JabHeroBanner } from "@/components/jab-orders/JabHeroBanner";
+import { BluebayMenu } from "@/components/jab-orders/BluebayMenu";
 import { Toaster } from "@/components/ui/toaster";
 
 const BluebayHome = () => {
@@ -36,6 +35,7 @@ const BluebayHome = () => {
   return (
     <main className="container-fluid p-0 max-w-full">
       <JabHeroBanner />
+      <BluebayMenu />
       
       <div className="container mx-auto px-4 py-8 space-y-6">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
@@ -45,17 +45,14 @@ const BluebayHome = () => {
               Acesse as funcionalidades disponíveis para sua conta
             </p>
           </div>
-          <div className="flex items-center gap-4">
-            <JabNavMenu />
-            <Button
-              variant="outline"
-              onClick={handleLogout}
-              className="flex items-center gap-2"
-            >
-              <LogOut className="h-4 w-4" />
-              Sair
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            onClick={handleLogout}
+            className="flex items-center gap-2"
+          >
+            <LogOut className="h-4 w-4" />
+            Sair
+          </Button>
         </div>
 
         <Card className="w-full">
