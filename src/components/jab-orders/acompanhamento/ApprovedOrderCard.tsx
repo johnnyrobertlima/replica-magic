@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,19 +34,14 @@ export const ApprovedOrderCard = ({ order, onExport }: ApprovedOrderCardProps) =
       return total + ((item.quantidade_pedida || 0) * (item.valor_unitario || 0));
     }, 0) : 0;
 
-  // Calcular o valor que falta faturar (Saldo * Valor Unit.)
-  const valorFaltaFaturar = approvedSeparacao.separacao_itens_flat ? 
-    approvedSeparacao.separacao_itens_flat.reduce((total, item) => {
-      const saldo = item.quantidade_saldo || 
-                   (item.quantidade_pedida || 0) - (item.quantidade_entregue || 0);
-      return total + (saldo * (item.valor_unitario || 0));
-    }, 0) : 0;
-
   // Calcular o valor já faturado (Entregue * Valor Unit.)
   const valorFaturado = approvedSeparacao.separacao_itens_flat ? 
     approvedSeparacao.separacao_itens_flat.reduce((total, item) => {
       return total + ((item.quantidade_entregue || 0) * (item.valor_unitario || 0));
     }, 0) : 0;
+
+  // Calcular o valor que falta faturar (Saldo * Valor Unit.)
+  const valorFaltaFaturar = valorTotal - valorFaturado;
 
   // Calcular o percentual faturado
   const percentualFaturado = valorTotal > 0 ? Math.round((valorFaturado / valorTotal) * 100) : 0;
