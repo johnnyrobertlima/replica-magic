@@ -16,6 +16,7 @@ interface InvoiceItem {
   VALOR_UNITARIO: number | null;
   ITEM_CODIGO: string | null;
   FATOR_CORRECAO?: number | null;
+  TIPO?: string | null;
 }
 
 interface InvoiceItemsTableProps {

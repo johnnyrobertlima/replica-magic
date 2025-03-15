@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from "react";
 import { fetchBkFaturamentoData, consolidateByNota, BkFaturamento } from "@/services/bk/financialService";
 import { useToast } from "@/hooks/use-toast";
@@ -45,12 +46,16 @@ export const useFinancial = () => {
       setIsLoading(true);
       setError(null);
       
+      console.log(`Loading financial data for date range: ${dateRange.startDate} to ${dateRange.endDate}`);
+      
       // Fetch data using the database function with correct join
       const data = await fetchBkFaturamentoData(dateRange.startDate, dateRange.endDate);
+      console.log(`Received ${data.length} raw records from database`);
       setFaturamentoData(data);
       
       // Consolidate invoices by NOTA
       const consolidated = consolidateByNota(data);
+      console.log(`Consolidated into ${consolidated.length} invoice records`);
       setConsolidatedInvoices(consolidated);
       
       console.log("Data loaded with correction factors:", consolidated);
@@ -77,6 +82,7 @@ export const useFinancial = () => {
   };
 
   const updateDateRange = (startDate: string, endDate: string) => {
+    console.log(`Updating date range to: ${startDate} - ${endDate}`);
     setDateRange({ startDate, endDate });
   };
 

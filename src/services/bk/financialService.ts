@@ -31,18 +31,44 @@ export const fetchBkFaturamentoData = async (
 ): Promise<BkFaturamento[]> => {
   console.log("Fetching B&K faturamento data...", { startDate, endDate });
   
-  const { data, error } = await supabase.rpc('get_bk_faturamento', {
+  // Use the RPC function to get filtered data with joins
+  const { data: rpcData, error: rpcError } = await supabase.rpc('get_bk_faturamento', {
     start_date: startDate,
     end_date: endDate
   });
 
-  if (error) {
-    console.error("Error fetching B&K faturamento data:", error);
-    throw error;
+  if (rpcError) {
+    console.error("Error fetching B&K faturamento data via RPC:", rpcError);
+    
+    // Fallback to direct query on the BLUEBAY_FATURAMENTO table if RPC fails
+    const query = supabase
+      .from('BLUEBAY_FATURAMENTO')
+      .select('*');
+    
+    if (startDate) {
+      query.gte('DATA_EMISSAO', startDate);
+    }
+    
+    if (endDate) {
+      query.lte('DATA_EMISSAO', endDate);
+    }
+    
+    const { data: fallbackData, error: fallbackError } = await query;
+    
+    if (fallbackError) {
+      console.error("Error in fallback query:", fallbackError);
+      throw fallbackError;
+    }
+    
+    console.log(`Fetched ${fallbackData?.length || 0} faturamento records via fallback`);
+    return processFaturamentoData(fallbackData || []);
   }
 
-  console.log(`Fetched ${data?.length || 0} faturamento records`);
-  
+  console.log(`Fetched ${rpcData?.length || 0} faturamento records via RPC`);
+  return processFaturamentoData(rpcData || []);
+};
+
+const processFaturamentoData = async (data: BkFaturamento[]): Promise<BkFaturamento[]> => {
   const filteredData = data?.filter(item => item.TIPO === 'S') || [];
   console.log(`Filtered to ${filteredData.length} records with TIPO = 'S'`);
   
@@ -90,6 +116,8 @@ export const fetchBkFaturamentoData = async (
 
 export const fetchInvoiceItems = async (nota: string): Promise<InvoiceItem[]> => {
   console.log("Fetching invoice items for nota:", nota);
+  
+  // Query all items for this invoice
   const { data, error } = await supabase
     .from('BLUEBAY_FATURAMENTO')
     .select('NOTA, ITEM_CODIGO, QUANTIDADE, VALOR_UNITARIO, TIPO, PES_CODIGO')
@@ -105,6 +133,7 @@ export const fetchInvoiceItems = async (nota: string): Promise<InvoiceItem[]> =>
 
   const items: InvoiceItem[] = data || [];
 
+  // Get client correction factor if available
   if (items.length > 0 && items[0].PES_CODIGO) {
     const pesCode = items[0].PES_CODIGO;
     const { data: clienteData, error: clienteError } = await supabase
@@ -125,6 +154,7 @@ export const fetchInvoiceItems = async (nota: string): Promise<InvoiceItem[]> =>
 };
 
 export const consolidateByNota = (data: BkFaturamento[]): ConsolidatedInvoice[] => {
+  console.log(`Consolidating ${data.length} items by NOTA`);
   const invoiceMap = new Map<string, ConsolidatedInvoice>();
   
   data.forEach(item => {
@@ -165,5 +195,6 @@ export const consolidateByNota = (data: BkFaturamento[]): ConsolidatedInvoice[] 
     }
   });
   
+  console.log(`Consolidated into ${invoiceMap.size} invoices`);
   return Array.from(invoiceMap.values());
 };
