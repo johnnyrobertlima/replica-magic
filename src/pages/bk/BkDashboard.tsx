@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { BkMenu } from "@/components/bk/BkMenu";
 import { BkBanner } from "@/components/bk/BkBanner";
 import { FinancialDashboard } from "@/components/bk/financial/FinancialDashboard";
@@ -9,6 +9,7 @@ import { DateRangePicker } from "@/components/bk/financial/DateRangePicker";
 import { StatusFilter } from "@/components/bk/financial/StatusFilter";
 import { RefreshCw } from "lucide-react";
 import { ItemTreemap } from "@/components/bk/dashboard/ItemTreemap";
+import { fetchBkItemsReport } from "@/services/bk/reportsService";
 
 export const BkDashboard = () => {
   const {
@@ -21,45 +22,83 @@ export const BkDashboard = () => {
     statusFilter,
     updateStatusFilter,
     availableStatuses,
+    faturamentoData,
   } = useFinancial();
+
+  const [treemapData, setTreemapData] = useState<{ name: string; value: number }[]>([]);
+  const [isLoadingTreemap, setIsLoadingTreemap] = useState(true);
 
   // Fetch invoice items when loading invoices
   useEffect(() => {
-    if (filteredInvoices.length > 0) {
-      console.log("Invoices loaded, fetching items for treemap...");
-    }
-  }, [filteredInvoices]);
-
-  // Process data for treemap - modified to use CLIENTE_NOME instead of items
-  const treemapData = React.useMemo(() => {
-    // If no invoices, return empty array
-    if (filteredInvoices.length === 0) {
-      return [];
-    }
-
-    // Group invoices by client and sum values
-    const clientTotals = new Map<string, number>();
-
-    filteredInvoices.forEach((invoice) => {
-      if (invoice.CLIENTE_NOME) {
-        const currentTotal = clientTotals.get(invoice.CLIENTE_NOME) || 0;
-        clientTotals.set(
-          invoice.CLIENTE_NOME,
-          currentTotal + (invoice.VALOR_NOTA || 0)
-        );
+    const loadTreemapData = async () => {
+      if (filteredInvoices.length > 0) {
+        console.log("Invoices loaded, fetching items for treemap...");
+        setIsLoadingTreemap(true);
+        
+        try {
+          // Utilizando todos os registros de faturamento em vez de apenas os consolidados
+          // para garantir que temos todos os itens
+          if (faturamentoData.length > 0) {
+            // Agrupar por ITEM_CODIGO em vez de CLIENTE_NOME
+            const itemTotals = new Map<string, number>();
+            const itemDescriptions = new Map<string, string>();
+            
+            faturamentoData.forEach((item) => {
+              if (item.ITEM_CODIGO) {
+                const currentTotal = itemTotals.get(item.ITEM_CODIGO) || 0;
+                const valorUnitario = item.VALOR_UNITARIO || 0;
+                const quantidade = item.QUANTIDADE || 0;
+                const valorItem = valorUnitario * quantidade;
+                
+                itemTotals.set(item.ITEM_CODIGO, currentTotal + valorItem);
+                
+                // Guardar descrição do item se disponível
+                if (!itemDescriptions.has(item.ITEM_CODIGO) && item.DESCRICAO) {
+                  itemDescriptions.set(item.ITEM_CODIGO, item.DESCRICAO);
+                }
+              }
+            });
+            
+            // Se não temos descrições nos itens de faturamento, vamos buscar do reportsService
+            if (itemDescriptions.size === 0 && itemTotals.size > 0) {
+              const itemsReport = await fetchBkItemsReport(dateRange.startDate, dateRange.endDate);
+              itemsReport.forEach(report => {
+                if (report.DESCRICAO) {
+                  itemDescriptions.set(report.ITEM_CODIGO, report.DESCRICAO);
+                }
+              });
+            }
+            
+            // Criar dataset para o treemap
+            const data = Array.from(itemTotals).map(([code, value]) => {
+              const description = itemDescriptions.get(code);
+              const name = description ? `${code} - ${description}` : code;
+              return { name, value };
+            });
+            
+            // Ordenar por valor (maior para menor)
+            data.sort((a, b) => b.value - a.value);
+            
+            // Limitar a 30 itens para melhor visualização
+            const limitedData = data.slice(0, 30);
+            
+            console.log(`Generated ${limitedData.length} items for treemap by ITEM_CODIGO`);
+            setTreemapData(limitedData);
+          } else {
+            console.log("No faturamento data available for treemap");
+            setTreemapData([]);
+          }
+        } catch (error) {
+          console.error("Error processing treemap data:", error);
+          setTreemapData([]);
+        } finally {
+          setIsLoadingTreemap(false);
+        }
       }
-    });
-
-    const result = Array.from(clientTotals).map(([name, value]) => ({
-      name,
-      value,
-    }));
+    };
     
-    // Log treemap data for debugging
-    console.log("Treemap data by client:", result);
-    
-    return result;
-  }, [filteredInvoices]);
+    loadTreemapData();
+  }, [filteredInvoices, faturamentoData, dateRange.startDate, dateRange.endDate]);
 
   return (
     <div className="container-fluid p-0 max-w-full">
@@ -90,7 +129,11 @@ export const BkDashboard = () => {
           </div>
 
           <div className="grid gap-6">
-            {treemapData.length > 0 ? (
+            {isLoadingTreemap ? (
+              <div className="w-full h-[400px] bg-white rounded-lg p-4 border flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+              </div>
+            ) : treemapData.length > 0 ? (
               <ItemTreemap data={treemapData} />
             ) : (
               <div className="w-full h-[400px] bg-white rounded-lg p-4 border flex items-center justify-center">

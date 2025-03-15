@@ -48,7 +48,7 @@ export const ItemTreemap = ({ data }: ItemTreemapProps) => {
       .round(true);
     
     // Apply the treemap layout to the hierarchy
-    treemapLayout(hierarchy as any);
+    treemapLayout(hierarchy);
     
     // Create color scale based on value
     const maxValue = d3.max(data, d => d.value) || 0;
@@ -155,7 +155,7 @@ export const ItemTreemap = ({ data }: ItemTreemapProps) => {
 
   return (
     <div className="w-full h-[400px] bg-white rounded-lg p-4 border">
-      <h3 className="text-lg font-semibold mb-4">Volume por Cliente</h3>
+      <h3 className="text-lg font-semibold mb-4">Volume por Item</h3>
       <div className="relative w-full h-[300px]">
         <svg ref={svgRef} className="w-full h-full"></svg>
         
