@@ -25,6 +25,11 @@ export const useClientSearch = (clients: BkClient[]) => {
       
       // Check if ALL search terms match at least one of the fields
       return searchTerms.every(term => {
+        // Special case for PES_CODIGO to match it exactly
+        if (codigoStr.includes(term)) {
+          return true;
+        }
+        
         // Special case for APELIDO to give it higher priority
         if (apelidoNormalized.includes(term)) {
           return true;
@@ -32,8 +37,7 @@ export const useClientSearch = (clients: BkClient[]) => {
         
         // Check other fields
         return razaoSocialNormalized.includes(term) || 
-               cnpjCpfNormalized.includes(term) || 
-               codigoStr.includes(term);
+               cnpjCpfNormalized.includes(term);
       });
     });
   }, [clients, searchTerm]);
