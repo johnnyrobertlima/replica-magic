@@ -52,15 +52,13 @@ export const BkDashboard = () => {
                 
                 itemTotals.set(item.ITEM_CODIGO, currentTotal + valorItem);
                 
-                // Guardar descrição do item se disponível
-                if (!itemDescriptions.has(item.ITEM_CODIGO) && item.DESCRICAO) {
-                  itemDescriptions.set(item.ITEM_CODIGO, item.DESCRICAO);
-                }
+                // Note: DESCRICAO não está disponível diretamente nos itens de faturamento
+                // vamos buscar do reportsService depois
               }
             });
             
             // Se não temos descrições nos itens de faturamento, vamos buscar do reportsService
-            if (itemDescriptions.size === 0 && itemTotals.size > 0) {
+            if (itemTotals.size > 0) {
               const itemsReport = await fetchBkItemsReport(dateRange.startDate, dateRange.endDate);
               itemsReport.forEach(report => {
                 if (report.DESCRICAO) {
