@@ -8,6 +8,8 @@ interface ImageUploadProps {
   name: string;
   currentImage?: string;
   onChange?: (file: File | null) => void;
+  onUrlChange?: (url: string) => void;
+  bucket?: string;
   accept?: string;
 }
 
@@ -15,6 +17,8 @@ export const ImageUpload = ({
   name, 
   currentImage, 
   onChange,
+  onUrlChange,
+  bucket = "oni-media",
   accept = "image/jpeg,image/png,image/webp"
 }: ImageUploadProps) => {
   const { toast } = useToast();
