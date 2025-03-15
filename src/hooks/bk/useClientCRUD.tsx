@@ -21,12 +21,17 @@ export const useClientCRUD = () => {
   const fetchClients = async () => {
     setIsLoading(true);
     try {
+      console.log("Fetching all clients from BLUEBAY_PESSOA table...");
+      
+      // Improved query to fetch ALL clients without restrictions
       const { data, error } = await supabase
         .from("BLUEBAY_PESSOA")
         .select("*")
         .order("PES_CODIGO", { ascending: true });
 
       if (error) throw error;
+      
+      console.log(`Fetched ${data?.length || 0} clients from database`);
       
       // Transform API data to client objects
       const transformedClients = data?.map(transformClientFromApi) || [];

@@ -23,20 +23,11 @@ export const useClientSearch = (clients: BkClient[]) => {
       const cnpjCpfNormalized = normalizeString(client.CNPJCPF);
       const codigoStr = String(client.PES_CODIGO);
       
-      // Check if ALL search terms match at least one of the fields
-      return searchTerms.every(term => {
-        // Special case for PES_CODIGO to match it exactly
-        if (codigoStr.includes(term)) {
-          return true;
-        }
-        
-        // Special case for APELIDO to give it higher priority
-        if (apelidoNormalized.includes(term)) {
-          return true;
-        }
-        
-        // Check other fields
-        return razaoSocialNormalized.includes(term) || 
+      // Check if ANY search terms match at least one of the fields (more permissive)
+      return searchTerms.some(term => {
+        return codigoStr.includes(term) ||
+               apelidoNormalized.includes(term) ||
+               razaoSocialNormalized.includes(term) || 
                cnpjCpfNormalized.includes(term);
       });
     });
