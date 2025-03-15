@@ -7,13 +7,8 @@ import { PublicRoutes } from "./public-routes";
 export function AppRoutes() {
   return (
     <Routes>
-      {/* Public Routes */}
       <PublicRoutes />
-      
-      {/* Client Area Routes */}
       <ClientAreaRoutes />
-      
-      {/* Admin Routes */}
       <AdminRoutes />
     </Routes>
   );

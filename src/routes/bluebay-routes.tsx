@@ -1,5 +1,5 @@
 
-import { Route } from "react-router-dom";
+import { Route, Fragment } from "react-router-dom";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
 import BluebayHome from "@/pages/BluebayHome";
 import JabOrders from "@/pages/JabOrders";
@@ -10,7 +10,7 @@ import AcompanhamentoFaturamento from "@/pages/AcompanhamentoFaturamento";
 
 export function BluebayRoutes() {
   return (
-    <>
+    <Fragment>
       <Route path="/client-area/bluebay" element={
         <PermissionGuard resourcePath="/client-area/bluebay">
           <BluebayHome />
@@ -41,6 +41,6 @@ export function BluebayRoutes() {
           <AcompanhamentoFaturamento />
         </PermissionGuard>
       } />
-    </>
+    </Fragment>
   );
 }

@@ -1,5 +1,5 @@
 
-import { Route } from "react-router-dom";
+import { Route, Fragment } from "react-router-dom";
 import { Outlet } from "react-router-dom";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
 import { AdminLayout } from "@/pages/admin/layout";
@@ -18,7 +18,7 @@ import { UserGroupManagement } from "@/pages/admin/users/UserGroupManagement";
 
 export function AdminRoutes() {
   return (
-    <>
+    <Fragment>
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin" element={<AdminLayout><Outlet /></AdminLayout>}>
         <Route index element={<AdminDashboard />} />
@@ -73,6 +73,6 @@ export function AdminRoutes() {
           </PermissionGuard>
         } />
       </Route>
-    </>
+    </Fragment>
   );
 }
