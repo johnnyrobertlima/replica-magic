@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react";
 import { fetchBkFaturamentoData, consolidateByNota, BkFaturamento } from "@/services/bk/financialService";
 import { useToast } from "@/hooks/use-toast";
@@ -47,10 +46,21 @@ export const useFinancial = () => {
       setError(null);
       
       const data = await fetchBkFaturamentoData(dateRange.startDate, dateRange.endDate);
-      setFaturamentoData(data);
+      
+      // Filter out records related to a specific CENTROCUSTO
+      // Now, we only want to keep records where CENTROCUSTO is NULL
+      const filteredData = data.filter(item => {
+        // Check if we can access CENTROCUSTO through any potential relation
+        const hasNoCentroCusto = !(item as any).CENTROCUSTO;
+        return hasNoCentroCusto;
+      });
+      
+      console.log(`Filtered down to ${filteredData.length} records after CENTROCUSTO check`);
+      
+      setFaturamentoData(filteredData);
       
       // Consolidate invoices by NOTA
-      const consolidated = consolidateByNota(data);
+      const consolidated = consolidateByNota(filteredData);
       setConsolidatedInvoices(consolidated);
       
     } catch (err) {

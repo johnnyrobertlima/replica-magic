@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { 
   Table, 
@@ -111,7 +112,7 @@ export const InvoiceTable = ({ invoices, isLoading }: InvoiceTableProps) => {
       
       <div className="rounded-md border">
         <Table>
-          <TableCaption>Lista de notas fiscais</TableCaption>
+          <TableCaption>Lista de notas fiscais - Total: {sortedInvoices.length}</TableCaption>
           <InvoiceTableHeader 
             sortField={sortField}
             sortDirection={sortDirection}
