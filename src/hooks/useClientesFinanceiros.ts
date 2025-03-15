@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useSeparacoes } from "@/hooks/useSeparacoes";
 import { ClienteFinanceiro } from "@/types/financialClient";
@@ -6,6 +5,12 @@ import { getSeparacoesPendentes, getClientesCodigos } from "@/utils/financialUti
 import { useFinancialDataFetching } from "./financial/useFinancialDataFetching";
 import { useHiddenCards } from "./financial/useHiddenCards";
 import { useVolumeSaudavel } from "./financial/useVolumeSaudavel";
+import { 
+  fetchFinancialTitles, 
+  fetchClientInfo, 
+  fetchPedidosForRepresentantes, 
+  processClientsData 
+} from "@/services/financialService";
 
 export type { ClienteFinanceiro } from "@/types/financialClient";
 

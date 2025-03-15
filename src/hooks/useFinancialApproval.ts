@@ -1,8 +1,14 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useClientesFinanceiros } from "@/hooks/useClientesFinanceiros";
 import { useApprovedOrders } from "@/hooks/useApprovedOrders";
 import { supabase } from "@/integrations/supabase/client";
+import { 
+  fetchFinancialTitles, 
+  fetchClientInfo, 
+  fetchPedidosForRepresentantes, 
+  processClientsData,
+  fetchValoresVencidos
+} from "@/services/financialService";
 
 export const useFinancialApproval = () => {
   const { 
