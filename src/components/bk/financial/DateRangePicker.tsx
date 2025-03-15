@@ -82,7 +82,7 @@ export const DateRangePicker = ({ startDate, endDate, onUpdate }: DateRangePicke
             <Button 
               id="date" 
               variant={"outline"} 
-              className="w-[300px] justify-start text-left font-normal"
+              className="w-[300px] justify-start text-left font-normal bg-white"
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
               {startDate && endDate ? (
@@ -94,7 +94,7 @@ export const DateRangePicker = ({ startDate, endDate, onUpdate }: DateRangePicke
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="end">
+          <PopoverContent className="w-auto p-0 bg-white" align="end">
             <div className="grid gap-4 p-4">
               <div className="grid gap-2">
                 <div className="flex items-center justify-between">
@@ -107,7 +107,7 @@ export const DateRangePicker = ({ startDate, endDate, onUpdate }: DateRangePicke
                       variant="outline"
                       size="sm"
                       onClick={preset.handler}
-                      className="text-xs"
+                      className="text-xs bg-white"
                     >
                       {preset.name}
                     </Button>
@@ -125,7 +125,7 @@ export const DateRangePicker = ({ startDate, endDate, onUpdate }: DateRangePicke
                     onSelect={handleStartDateChange}
                     initialFocus
                     disabled={(date) => date > new Date() || date > endDateObj}
-                    className="p-3 pointer-events-auto"
+                    className="p-3 pointer-events-auto bg-white"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -138,7 +138,7 @@ export const DateRangePicker = ({ startDate, endDate, onUpdate }: DateRangePicke
                     onSelect={handleEndDateChange}
                     initialFocus
                     disabled={(date) => date > new Date() || date < startDateObj}
-                    className="p-3 pointer-events-auto"
+                    className="p-3 pointer-events-auto bg-white"
                   />
                 </div>
               </div>
@@ -149,3 +149,4 @@ export const DateRangePicker = ({ startDate, endDate, onUpdate }: DateRangePicke
     </div>
   );
 };
+
