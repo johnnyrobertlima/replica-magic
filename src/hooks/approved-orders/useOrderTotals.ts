@@ -27,7 +27,7 @@ export const useOrderTotals = () => {
       console.log(`calculateTotals: Processing order #${index}:`, order.separacaoId);
       
       // Find the separação by ID
-      const separacao = order.clienteData.separacoes.find(sep => sep.id === order.separacaoId);
+      const separacao = order.clienteData.separacoes.find(sep => sep && sep.id === order.separacaoId);
       
       if (separacao) {
         console.log(`calculateTotals: Found separacao:`, separacao);
@@ -52,7 +52,7 @@ export const useOrderTotals = () => {
             const quantidadeEntregue = item.quantidade_entregue || 0;
             const saldo = item.quantidade_saldo || (quantidade - quantidadeEntregue);
             
-            // Calculate values using same logic as in ApprovedOrderCard
+            // Calculate values using same logic as in PedidosIncluidos.tsx
             const itemValorTotal = quantidade * valorUnitario;
             const itemValorFaltaFaturar = saldo * valorUnitario;
             const itemValorFaturado = quantidadeEntregue * valorUnitario;
