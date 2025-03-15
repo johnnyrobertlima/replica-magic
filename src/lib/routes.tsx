@@ -4,6 +4,7 @@ import ClientArea from "@/pages/ClientArea";
 import PostManagement from "@/pages/PostManagement";
 import JabOrders from "@/pages/JabOrders";
 import JabOrdersByClient from "@/pages/JabOrdersByClient";
+import JabOrdersByRepresentante from "@/pages/JabOrdersByRepresentante";
 import ContentManagement from "@/pages/ContentManagement";
 import MailingRegistration from "@/pages/MailingRegistration";
 import TokenManagement from "@/pages/TokenManagement";
@@ -34,6 +35,10 @@ export const routes = [
   {
     path: "/client-area/bluebay/jab-orders-by-client",
     element: <JabOrdersByClient />,
+  },
+  {
+    path: "/client-area/bluebay/jab-orders-by-representante",
+    element: <JabOrdersByRepresentante />,
   },
   {
     path: "/client-area/bluebay/aprovacao-financeira",
