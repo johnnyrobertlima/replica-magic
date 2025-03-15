@@ -33,26 +33,24 @@ export const ItemTreemap = ({ data }: ItemTreemapProps) => {
         <h3 className="text-lg font-semibold">Volume por Item</h3>
         
         {data.length > 0 && (
-          <CollapsibleTrigger asChild>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setIsOpen(!isOpen)}
-              className="flex gap-1 items-center"
-            >
-              {isOpen ? 
-                <>
-                  <ChevronUp className="h-4 w-4" />
-                  <span>Ocultar controles</span>
-                </>
-                : 
-                <>
-                  <ChevronDown className="h-4 w-4" />
-                  <span>Exibir controles</span>
-                </>
-              }
-            </Button>
-          </CollapsibleTrigger>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setIsOpen(!isOpen)}
+            className="flex gap-1 items-center"
+          >
+            {isOpen ? 
+              <>
+                <ChevronUp className="h-4 w-4" />
+                <span>Ocultar controles</span>
+              </>
+              : 
+              <>
+                <ChevronDown className="h-4 w-4" />
+                <span>Exibir controles</span>
+              </>
+            }
+          </Button>
         )}
       </div>
       
