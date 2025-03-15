@@ -17,6 +17,7 @@ import UserGroupManagement from "@/pages/admin/users/UserGroupManagement";
 import { AdminBanners } from "@/pages/admin/banners"; // Updated import
 import BluebayHome from "@/pages/BluebayHome";
 import BkHome from "@/pages/BkHome";
+import BkClients from "@/pages/bk/BkClients";
 
 export const routes = [
   {
@@ -34,6 +35,10 @@ export const routes = [
   {
     path: "/client-area/bk",
     element: <BkHome />,
+  },
+  {
+    path: "/client-area/bk/clients",
+    element: <BkClients />,
   },
   {
     path: "/post-management",
