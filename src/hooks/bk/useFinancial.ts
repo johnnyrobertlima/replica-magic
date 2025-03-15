@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { fetchBkFaturamentoData, consolidateByNota, BkFaturamento } from "@/services/bk/financialService";
 import { useToast } from "@/hooks/use-toast";
 
@@ -14,12 +14,32 @@ export const useFinancial = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [faturamentoData, setFaturamentoData] = useState<BkFaturamento[]>([]);
   const [consolidatedInvoices, setConsolidatedInvoices] = useState<any[]>([]);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [error, setError] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState({
     startDate: getDateXDaysAgo(30), // Default to 30 days ago
     endDate: new Date().toISOString().split('T')[0] // Today
   });
   const { toast } = useToast();
+
+  // Extract unique statuses from consolidated invoices
+  const availableStatuses = useMemo(() => {
+    const statuses = new Set<string>();
+    consolidatedInvoices.forEach(invoice => {
+      if (invoice.STATUS !== null) {
+        statuses.add(invoice.STATUS);
+      }
+    });
+    return Array.from(statuses);
+  }, [consolidatedInvoices]);
+
+  // Filter invoices by status
+  const filteredInvoices = useMemo(() => {
+    if (statusFilter === "all") {
+      return consolidatedInvoices;
+    }
+    return consolidatedInvoices.filter(invoice => invoice.STATUS === statusFilter);
+  }, [consolidatedInvoices, statusFilter]);
 
   const loadData = async () => {
     try {
@@ -58,13 +78,21 @@ export const useFinancial = () => {
     setDateRange({ startDate, endDate });
   };
 
+  const updateStatusFilter = (status: string) => {
+    setStatusFilter(status);
+  };
+
   return {
     isLoading,
     faturamentoData,
     consolidatedInvoices,
+    filteredInvoices,
     error,
     refreshData,
     dateRange,
-    updateDateRange
+    updateDateRange,
+    statusFilter,
+    updateStatusFilter,
+    availableStatuses
   };
 };

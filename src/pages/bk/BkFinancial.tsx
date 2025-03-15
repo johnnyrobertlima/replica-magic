@@ -6,15 +6,20 @@ import { FinancialDashboard } from "@/components/bk/financial/FinancialDashboard
 import { useFinancial } from "@/hooks/bk/useFinancial";
 import { Button } from "@/components/ui/button";
 import { DateRangePicker } from "@/components/bk/financial/DateRangePicker";
+import { StatusFilter } from "@/components/bk/financial/StatusFilter";
 import { RefreshCw } from "lucide-react";
 
 export const BkFinancial = () => {
   const { 
     isLoading, 
     consolidatedInvoices, 
+    filteredInvoices,
     refreshData, 
     dateRange, 
-    updateDateRange 
+    updateDateRange,
+    statusFilter,
+    updateStatusFilter,
+    availableStatuses
   } = useFinancial();
 
   return (
@@ -30,7 +35,12 @@ export const BkFinancial = () => {
       <BkMenu />
 
       <div className="mt-6 space-y-6">
-        <div className="flex justify-end mb-4">
+        <div className="flex flex-wrap justify-between gap-4 mb-4 items-center">
+          <StatusFilter 
+            selectedStatus={statusFilter} 
+            onStatusChange={updateStatusFilter}
+            statuses={availableStatuses}
+          />
           <DateRangePicker 
             startDate={dateRange.startDate} 
             endDate={dateRange.endDate} 
@@ -38,11 +48,11 @@ export const BkFinancial = () => {
           />
         </div>
         
-        <FinancialDashboard invoices={consolidatedInvoices} />
+        <FinancialDashboard invoices={filteredInvoices} />
         
         <div className="p-4 rounded-lg border bg-card text-card-foreground shadow-sm">
           <h2 className="text-xl font-semibold mb-4">Notas Fiscais</h2>
-          <InvoiceTable invoices={consolidatedInvoices} isLoading={isLoading} />
+          <InvoiceTable invoices={filteredInvoices} isLoading={isLoading} />
         </div>
       </div>
     </div>

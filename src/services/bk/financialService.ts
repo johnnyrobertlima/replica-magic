@@ -111,24 +111,29 @@ export const consolidateByNota = (data: BkFaturamento[]): ConsolidatedInvoice[] 
   data.forEach(item => {
     if (!item.NOTA) return;
     
+    // Calculate the item value as QUANTIDADE * VALOR_UNITARIO
+    const itemValue = (item.QUANTIDADE || 0) * (item.VALOR_UNITARIO || 0);
+    
     const existingInvoice = invoiceMap.get(item.NOTA);
     
     if (existingInvoice) {
       // Update the existing invoice
       existingInvoice.ITEMS_COUNT += 1;
+      // Add the calculated item value to the invoice total
+      existingInvoice.VALOR_NOTA = (existingInvoice.VALOR_NOTA || 0) + itemValue;
     } else {
       // Get cliente name if available
       const clienteInfo = (item as any).CLIENTE_INFO;
       const clienteNome = clienteInfo ? 
         (clienteInfo.APELIDO || clienteInfo.RAZAOSOCIAL || null) : null;
       
-      // Create a new invoice entry
+      // Create a new invoice entry with the calculated value
       invoiceMap.set(item.NOTA, {
         NOTA: item.NOTA,
         DATA_EMISSAO: item.DATA_EMISSAO ? new Date(item.DATA_EMISSAO).toISOString() : null,
         PES_CODIGO: item.PES_CODIGO,
         STATUS: item.STATUS,
-        VALOR_NOTA: item.VALOR_NOTA,
+        VALOR_NOTA: itemValue,  // Use the calculated value
         ITEMS_COUNT: 1,
         CLIENTE_NOME: clienteNome
       });
