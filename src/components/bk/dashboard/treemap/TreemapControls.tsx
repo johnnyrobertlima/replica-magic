@@ -4,7 +4,7 @@ import { ValueRangeSlider } from "./controls/ValueRangeSlider";
 import { ZoomControls } from "./controls/ZoomControls";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { X, Maximize, ZoomIn, ZoomOut } from "lucide-react";
+import { X } from "lucide-react";
 
 interface TreemapControlsProps {
   minValue: number;

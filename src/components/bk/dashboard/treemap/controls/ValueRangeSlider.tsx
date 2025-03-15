@@ -24,7 +24,7 @@ export const ValueRangeSlider = ({
   useEffect(() => {
     setLocalValue(valueRange);
     
-    // Force a rerender of the slider component when valueRange changes
+    // Force a rerender of the slider component when valueRange changes from parent
     if (sliderRef.current) {
       const event = new Event('change', { bubbles: true });
       sliderRef.current.dispatchEvent(event);
