@@ -1,6 +1,13 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { 
+  fetchBkFaturamentoData,
+  BkFaturamento
+} from "@/services/bk/financialService";
 
+/**
+ * Interface for item reports
+ */
 export interface ItemReport {
   ITEM_CODIGO: string;
   DESCRICAO?: string;
@@ -9,6 +16,9 @@ export interface ItemReport {
   OCORRENCIAS: number;
 }
 
+/**
+ * Interface for item details
+ */
 export interface ItemDetail {
   NOTA: string;
   DATA_EMISSAO: string;
@@ -16,10 +26,11 @@ export interface ItemDetail {
   PES_CODIGO: number;
   QUANTIDADE: number;
   VALOR_UNITARIO: number;
+  FATOR_CORRECAO?: number | null;
 }
 
 /**
- * Fetches faturamento data grouped by item code
+ * Fetches and processes items report data
  */
 export const fetchBkItemsReport = async (
   startDate?: string,
@@ -27,138 +38,97 @@ export const fetchBkItemsReport = async (
 ): Promise<ItemReport[]> => {
   console.log("Fetching B&K items report data...", { startDate, endDate });
   
-  // Query the faturamento data
-  let query = supabase
-    .from('BLUEBAY_FATURAMENTO')
-    .select('*')
-    .eq('TIPO', 'S');
+  // Reuse the same data fetching logic from financial service
+  const faturamentoData = await fetchBkFaturamentoData(startDate, endDate);
   
-  if (startDate) {
-    query = query.gte('DATA_EMISSAO', startDate);
-  }
-  
-  if (endDate) {
-    query = query.lte('DATA_EMISSAO', endDate);
-  }
-  
-  const { data, error } = await query;
-  
-  if (error) {
-    console.error("Error fetching B&K faturamento data:", error);
-    throw error;
-  }
-  
-  console.log(`Fetched ${data?.length || 0} faturamento records`);
-  
-  // Group data by ITEM_CODIGO
-  const itemsMap = new Map<string, ItemReport>();
-  
-  for (const item of data || []) {
-    if (!item.ITEM_CODIGO) continue;
-    
-    const quantidade = item.QUANTIDADE || 0;
-    const valorUnitario = item.VALOR_UNITARIO || 0;
-    const valorTotal = quantidade * valorUnitario;
-    
-    if (itemsMap.has(item.ITEM_CODIGO)) {
-      const existingItem = itemsMap.get(item.ITEM_CODIGO)!;
-      existingItem.TOTAL_QUANTIDADE += quantidade;
-      existingItem.TOTAL_VALOR += valorTotal;
-      existingItem.OCORRENCIAS += 1;
-    } else {
-      itemsMap.set(item.ITEM_CODIGO, {
-        ITEM_CODIGO: item.ITEM_CODIGO,
-        DESCRICAO: null, // Will be populated later
-        TOTAL_QUANTIDADE: quantidade,
-        TOTAL_VALOR: valorTotal,
-        OCORRENCIAS: 1
-      });
-    }
-  }
-  
-  // Get descriptions for items
-  const itemCodes = Array.from(itemsMap.keys());
-  if (itemCodes.length > 0) {
-    const { data: itemsData, error: itemsError } = await supabase
-      .from('BLUEBAY_ITEM')
-      .select('ITEM_CODIGO, DESCRICAO')
-      .in('ITEM_CODIGO', itemCodes);
-    
-    if (!itemsError && itemsData) {
-      for (const item of itemsData) {
-        if (itemsMap.has(item.ITEM_CODIGO)) {
-          itemsMap.get(item.ITEM_CODIGO)!.DESCRICAO = item.DESCRICAO;
-        }
-      }
-    }
-  }
-  
-  return Array.from(itemsMap.values());
+  return processItemsReport(faturamentoData);
 };
 
 /**
- * Fetches details for a specific item code
+ * Fetches details for a specific item
  */
 export const fetchItemDetails = async (
   itemCode: string,
   startDate?: string,
   endDate?: string
 ): Promise<ItemDetail[]> => {
-  console.log("Fetching details for item:", itemCode);
+  console.log(`Fetching details for item ${itemCode}...`);
   
-  let query = supabase
-    .from('BLUEBAY_FATURAMENTO')
-    .select('*')
-    .eq('TIPO', 'S')
-    .eq('ITEM_CODIGO', itemCode);
+  // Reuse the same data fetching logic from financial service
+  const faturamentoData = await fetchBkFaturamentoData(startDate, endDate);
   
-  if (startDate) {
-    query = query.gte('DATA_EMISSAO', startDate);
-  }
+  // Filter for the specific item and transform to detail records
+  const itemDetails = faturamentoData
+    .filter(item => item.ITEM_CODIGO === itemCode && item.NOTA)
+    .map(item => {
+      // Get client correction factor if available (same as in financial service)
+      const clienteInfo = (item as any).CLIENTE_INFO;
+      const fatorCorrecao = clienteInfo?.FATOR_CORRECAO || null;
+      
+      // Apply correction factor in the same way as financial service
+      const valorUnitario = item.VALOR_UNITARIO || 0;
+      const valorUnitarioAjustado = (fatorCorrecao && fatorCorrecao > 0) 
+        ? valorUnitario * fatorCorrecao 
+        : valorUnitario;
+      
+      return {
+        NOTA: item.NOTA || '',
+        DATA_EMISSAO: item.DATA_EMISSAO ? new Date(item.DATA_EMISSAO).toISOString() : '',
+        CLIENTE_NOME: clienteInfo ? (clienteInfo.APELIDO || clienteInfo.RAZAOSOCIAL || '') : '',
+        PES_CODIGO: item.PES_CODIGO || 0,
+        QUANTIDADE: item.QUANTIDADE || 0,
+        VALOR_UNITARIO: valorUnitarioAjustado,
+        FATOR_CORRECAO: fatorCorrecao
+      };
+    });
   
-  if (endDate) {
-    query = query.lte('DATA_EMISSAO', endDate);
-  }
+  // Sort by date (newest first)
+  return itemDetails.sort((a, b) => {
+    return new Date(b.DATA_EMISSAO).getTime() - new Date(a.DATA_EMISSAO).getTime();
+  });
+};
+
+/**
+ * Processes raw faturamento data into item report
+ */
+const processItemsReport = (data: BkFaturamento[]): ItemReport[] => {
+  const itemsMap = new Map<string, ItemReport>();
   
-  const { data, error } = await query;
-  
-  if (error) {
-    console.error("Error fetching item details:", error);
-    throw error;
-  }
-  
-  console.log(`Fetched ${data?.length || 0} detail records for item ${itemCode}`);
-  
-  // Get client names
-  const clientIds = data
-    ?.map(item => item.PES_CODIGO)
-    .filter(id => id !== null && !isNaN(Number(id))) || [];
-  
-  const clientsMap = new Map<number, string>();
-  
-  if (clientIds.length > 0) {
-    const { data: clientsData, error: clientsError } = await supabase
-      .from('BLUEBAY_PESSOA')
-      .select('PES_CODIGO, APELIDO, RAZAOSOCIAL')
-      .in('PES_CODIGO', clientIds);
+  data.forEach(item => {
+    if (!item.ITEM_CODIGO) return;
     
-    if (!clientsError && clientsData) {
-      for (const client of clientsData) {
-        clientsMap.set(
-          client.PES_CODIGO, 
-          client.APELIDO || client.RAZAOSOCIAL || `Cliente ${client.PES_CODIGO}`
-        );
-      }
+    // Get client correction factor if available (same as in financial service)
+    const clienteInfo = (item as any).CLIENTE_INFO;
+    const fatorCorrecao = clienteInfo?.FATOR_CORRECAO || null;
+    
+    // Apply correction factor in the same way as financial service
+    const valorUnitario = item.VALOR_UNITARIO || 0;
+    const valorUnitarioAjustado = (fatorCorrecao && fatorCorrecao > 0) 
+      ? valorUnitario * fatorCorrecao 
+      : valorUnitario;
+    
+    // Calculate item value with correction factor applied
+    const itemValue = (item.QUANTIDADE || 0) * valorUnitarioAjustado;
+    
+    const existingItem = itemsMap.get(item.ITEM_CODIGO);
+    
+    if (existingItem) {
+      existingItem.TOTAL_QUANTIDADE += (item.QUANTIDADE || 0);
+      existingItem.TOTAL_VALOR += itemValue;
+      existingItem.OCORRENCIAS += 1;
+    } else {
+      // Fetch item description from database if available
+      itemsMap.set(item.ITEM_CODIGO, {
+        ITEM_CODIGO: item.ITEM_CODIGO,
+        DESCRICAO: item.DESCRICAO || '',
+        TOTAL_QUANTIDADE: item.QUANTIDADE || 0,
+        TOTAL_VALOR: itemValue,
+        OCORRENCIAS: 1
+      });
     }
-  }
+  });
   
-  // Format the details
-  return (data || []).map(item => ({
-    NOTA: item.NOTA || '',
-    DATA_EMISSAO: item.DATA_EMISSAO || '',
-    CLIENTE_NOME: clientsMap.get(item.PES_CODIGO) || '',
-    PES_CODIGO: item.PES_CODIGO || 0,
-    QUANTIDADE: item.QUANTIDADE || 0,
-    VALOR_UNITARIO: item.VALOR_UNITARIO || 0
-  }));
+  // Convert map to array and sort by item code
+  return Array.from(itemsMap.values())
+    .sort((a, b) => a.ITEM_CODIGO.localeCompare(b.ITEM_CODIGO));
 };
