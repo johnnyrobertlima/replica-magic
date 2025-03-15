@@ -1,3 +1,4 @@
+
 import * as d3 from "d3";
 import { TreemapDataItem, TreemapZoomState, HierarchyNode } from "../treemapTypes";
 
@@ -111,21 +112,27 @@ export const renderTreemap = (
       tooltip.select(".item-name").text(dataItem.name);
       tooltip.select(".item-value").text(formatCurrency(value));
       
-      // Position and show tooltip
-      tooltip
-        .style("display", "block")
-        .style("left", `${event.pageX + 10}px`)
-        .style("top", `${event.pageY + 10}px`)
-        .style("opacity", 1);
+      // Posicionar tooltip no canto superior direito
+      const svgRect = svgRef.current?.getBoundingClientRect();
+      if (svgRect) {
+        // Posicionamento fixo no canto superior direito com margem
+        const tooltipWidth = 200; // Largura aproximada do tooltip
+        const rightPosition = svgRect.right - tooltipWidth - 10; // 10px de margem da borda direita
+        const topPosition = svgRect.top + 10; // 10px de margem do topo
+        
+        tooltip
+          .style("display", "block")
+          .style("left", `${rightPosition}px`)
+          .style("top", `${topPosition}px`)
+          .style("opacity", 1);
+      }
       
       // Highlight this cell
       d3.select(this).select("rect").classed("highlighted", true);
     })
     .on("mousemove", function(event) {
-      // Move tooltip with mouse
-      tooltip
-        .style("left", `${event.pageX + 10}px`)
-        .style("top", `${event.pageY + 10}px`);
+      // Não muda a posição com o movimento do mouse
+      // O tooltip permanece fixo no canto superior direito
     })
     .on("mouseout", function() {
       // Hide tooltip
