@@ -19,41 +19,11 @@ export const fetchBkFaturamentoData = async (
 ): Promise<BkFaturamento[]> => {
   console.log("Fetching B&K faturamento data...", { startDate, endDate });
   
-  // First, query to get the PED_NUMPEDIDO values from BK center
-  const { data: pedidosBK, error: pedidosError } = await supabase
-    .from('BLUEBAY_PEDIDO')
-    .select('PED_NUMPEDIDO')
-    .eq('CENTROCUSTO', 'BK');
-
-  if (pedidosError) {
-    console.error("Error fetching BK pedidos:", pedidosError);
-    throw pedidosError;
-  }
-
-  if (!pedidosBK || pedidosBK.length === 0) {
-    console.log("No BK pedidos found");
-    return [];
-  }
-
-  // Extract the PED_NUMPEDIDO values into an array
-  const pedidosNums = pedidosBK.map(p => p.PED_NUMPEDIDO);
-  
-  // Build the query with optional date filters
-  let query = supabase
-    .from('BLUEBAY_FATURAMENTO')
-    .select('*');
-
-  // Add date range filters if provided
-  if (startDate) {
-    query = query.gte('DATA_EMISSAO', startDate);
-  }
-  
-  if (endDate) {
-    query = query.lte('DATA_EMISSAO', endDate);
-  }
-
-  // Add filter for PED_NUMPEDIDO
-  query = query.in('PED_NUMPEDIDO', pedidosNums);
+  // Build the query following the SQL provided
+  let query = supabase.rpc('get_bk_faturamento', {
+    start_date: startDate,
+    end_date: endDate
+  });
 
   // Execute the query
   const { data, error } = await query;
