@@ -23,39 +23,43 @@ export const BkDashboard = () => {
     availableStatuses,
   } = useFinancial();
 
-  // Process data for treemap
+  // Fetch invoice items when loading invoices
+  useEffect(() => {
+    if (filteredInvoices.length > 0) {
+      console.log("Invoices loaded, fetching items for treemap...");
+    }
+  }, [filteredInvoices]);
+
+  // Process data for treemap - modified to use CLIENTE_NOME instead of items
   const treemapData = React.useMemo(() => {
-    const itemTotals = new Map<string, number>();
+    // If no invoices, return empty array
+    if (filteredInvoices.length === 0) {
+      return [];
+    }
+
+    // Group invoices by client and sum values
+    const clientTotals = new Map<string, number>();
 
     filteredInvoices.forEach((invoice) => {
-      invoice.items?.forEach((item) => {
-        const currentTotal = itemTotals.get(item.ITEM_CODIGO) || 0;
-        itemTotals.set(
-          item.ITEM_CODIGO,
-          currentTotal + item.QUANTIDADE * item.VALOR_UNITARIO
+      if (invoice.CLIENTE_NOME) {
+        const currentTotal = clientTotals.get(invoice.CLIENTE_NOME) || 0;
+        clientTotals.set(
+          invoice.CLIENTE_NOME,
+          currentTotal + (invoice.VALOR_NOTA || 0)
         );
-      });
+      }
     });
 
-    const result = Array.from(itemTotals).map(([name, value]) => ({
+    const result = Array.from(clientTotals).map(([name, value]) => ({
       name,
       value,
     }));
     
     // Log treemap data for debugging
-    console.log("Treemap data:", result);
+    console.log("Treemap data by client:", result);
     
     return result;
   }, [filteredInvoices]);
-
-  useEffect(() => {
-    // Log when treemap data changes
-    console.log(`Generated ${treemapData.length} items for treemap`);
-    if (treemapData.length === 0) {
-      console.log("No data available for treemap - check if items property exists in filteredInvoices");
-      console.log("Sample invoice:", filteredInvoices[0]);
-    }
-  }, [treemapData, filteredInvoices]);
 
   return (
     <div className="container-fluid p-0 max-w-full">
