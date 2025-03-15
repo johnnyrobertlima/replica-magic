@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { BkMenu } from "@/components/bk/BkMenu";
 import { BkBanner } from "@/components/bk/BkBanner";
 import { FinancialDashboard } from "@/components/bk/financial/FinancialDashboard";
@@ -37,11 +37,25 @@ export const BkDashboard = () => {
       });
     });
 
-    return Array.from(itemTotals).map(([name, value]) => ({
+    const result = Array.from(itemTotals).map(([name, value]) => ({
       name,
       value,
     }));
+    
+    // Log treemap data for debugging
+    console.log("Treemap data:", result);
+    
+    return result;
   }, [filteredInvoices]);
+
+  useEffect(() => {
+    // Log when treemap data changes
+    console.log(`Generated ${treemapData.length} items for treemap`);
+    if (treemapData.length === 0) {
+      console.log("No data available for treemap - check if items property exists in filteredInvoices");
+      console.log("Sample invoice:", filteredInvoices[0]);
+    }
+  }, [treemapData, filteredInvoices]);
 
   return (
     <div className="container-fluid p-0 max-w-full">
@@ -72,7 +86,13 @@ export const BkDashboard = () => {
           </div>
 
           <div className="grid gap-6">
-            <ItemTreemap data={treemapData} />
+            {treemapData.length > 0 ? (
+              <ItemTreemap data={treemapData} />
+            ) : (
+              <div className="w-full h-[400px] bg-white rounded-lg p-4 border flex items-center justify-center">
+                <p className="text-muted-foreground">Não há dados disponíveis para visualização</p>
+              </div>
+            )}
             <FinancialDashboard invoices={filteredInvoices} />
           </div>
         </div>
