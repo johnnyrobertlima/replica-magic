@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { 
   Table, 
@@ -20,7 +19,6 @@ interface InvoiceItem {
   QUANTIDADE: number | null;
   VALOR_UNITARIO: number | null;
   ITEM_CODIGO: string | null;
-  DESCRICAO?: string | null;
 }
 
 interface InvoiceTableProps {
@@ -47,7 +45,6 @@ export const InvoiceTable = ({ invoices, isLoading }: InvoiceTableProps) => {
 
   const handleInvoiceClick = async (nota: string) => {
     if (selectedInvoice === nota) {
-      // If clicking the same invoice, close it
       setSelectedInvoice(null);
       setInvoiceItems([]);
       return;
@@ -211,8 +208,7 @@ export const InvoiceTable = ({ invoices, isLoading }: InvoiceTableProps) => {
                               <Table>
                                 <TableHeader>
                                   <TableRow>
-                                    <TableHead>Código</TableHead>
-                                    <TableHead>Descrição</TableHead>
+                                    <TableHead>Código do Item</TableHead>
                                     <TableHead className="text-right">Quantidade</TableHead>
                                     <TableHead className="text-right">Valor Unit.</TableHead>
                                     <TableHead className="text-right">Valor Total</TableHead>
@@ -221,21 +217,17 @@ export const InvoiceTable = ({ invoices, isLoading }: InvoiceTableProps) => {
                                 <TableBody>
                                   {invoiceItems.length === 0 ? (
                                     <TableRow>
-                                      <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                                      <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
                                         Nenhum item encontrado para esta nota
                                       </TableCell>
                                     </TableRow>
                                   ) : (
                                     invoiceItems.map((item, index) => {
                                       const valorTotal = (item.QUANTIDADE || 0) * (item.VALOR_UNITARIO || 0);
-                                      const descricao = item.DESCRICAO || 
-                                        (item as any)?.BLUEBAY_ITEM?.DESCRICAO || 
-                                        'Sem descrição';
                                       
                                       return (
                                         <TableRow key={`${item.NOTA}-${item.ITEM_CODIGO}-${index}`}>
                                           <TableCell>{item.ITEM_CODIGO || '-'}</TableCell>
-                                          <TableCell>{descricao}</TableCell>
                                           <TableCell className="text-right">{item.QUANTIDADE || 0}</TableCell>
                                           <TableCell className="text-right">
                                             {item.VALOR_UNITARIO ? formatCurrency(item.VALOR_UNITARIO) : '-'}

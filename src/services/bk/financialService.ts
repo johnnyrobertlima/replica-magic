@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
 
@@ -105,11 +104,11 @@ export const fetchBkFaturamentoData = async (
   return data || [];
 };
 
-// New function to fetch invoice items by NOTA
 export const fetchInvoiceItems = async (nota: string): Promise<BkFaturamento[]> => {
+  console.log("Fetching invoice items for nota:", nota);
   const { data, error } = await supabase
     .from('BLUEBAY_FATURAMENTO')
-    .select('*, BLUEBAY_ITEM!inner(DESCRICAO)')
+    .select('NOTA, ITEM_CODIGO, QUANTIDADE, VALOR_UNITARIO')
     .eq('NOTA', nota);
   
   if (error) {
@@ -117,6 +116,7 @@ export const fetchInvoiceItems = async (nota: string): Promise<BkFaturamento[]> 
     throw error;
   }
   
+  console.log(`Fetched ${data?.length} items for nota ${nota}`);
   return data || [];
 };
 
