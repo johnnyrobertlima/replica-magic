@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { Toaster } from "@/components/ui/toaster";
@@ -27,9 +26,15 @@ const AcompanhamentoFaturamento = () => {
   
   useEffect(() => {
     const updateTotals = async () => {
-      const calculatedTotals = calculateTotals();
-      console.log("AcompanhamentoFaturamento: Updated totals", calculatedTotals);
-      setTotals(calculatedTotals);
+      try {
+        // calculateTotals now returns a Promise in the updated version
+        const calculatedTotals = await calculateTotals();
+        console.log("AcompanhamentoFaturamento: Updated totals", calculatedTotals);
+        setTotals(calculatedTotals);
+      } catch (error) {
+        console.error("Error calculating totals:", error);
+        // Keep existing totals on error
+      }
     };
     
     if (!isLoading) {

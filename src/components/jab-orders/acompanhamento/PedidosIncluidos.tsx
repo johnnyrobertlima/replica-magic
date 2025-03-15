@@ -14,13 +14,26 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface PedidosIncluidosProps {
   approvedSeparacao: any;
+  itemsWithEntrega?: any[];
+  isLoading?: boolean;
 }
 
-export const PedidosIncluidos = ({ approvedSeparacao }: PedidosIncluidosProps) => {
+export const PedidosIncluidos = ({ 
+  approvedSeparacao, 
+  itemsWithEntrega: propItemsWithEntrega,
+  isLoading: propIsLoading 
+}: PedidosIncluidosProps) => {
   const [itemsWithEntrega, setItemsWithEntrega] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
+    // If itemsWithEntrega is provided as a prop, use it
+    if (propItemsWithEntrega) {
+      setItemsWithEntrega(propItemsWithEntrega);
+      setIsLoading(propIsLoading || false);
+      return;
+    }
+
     const fetchEntregaData = async () => {
       if (!approvedSeparacao.separacao_itens_flat || approvedSeparacao.separacao_itens_flat.length === 0) {
         setIsLoading(false);
@@ -89,7 +102,7 @@ export const PedidosIncluidos = ({ approvedSeparacao }: PedidosIncluidosProps) =
     };
     
     fetchEntregaData();
-  }, [approvedSeparacao.separacao_itens_flat]);
+  }, [approvedSeparacao.separacao_itens_flat, propItemsWithEntrega, propIsLoading]);
   
   if (!approvedSeparacao.separacao_itens_flat || approvedSeparacao.separacao_itens_flat.length === 0) {
     return null;
@@ -98,6 +111,17 @@ export const PedidosIncluidos = ({ approvedSeparacao }: PedidosIncluidosProps) =
   if (isLoading) {
     return <div className="mt-4 pt-4 border-t border-gray-200">Carregando dados de entrega...</div>;
   }
+
+  // Log total values for debugging
+  const totalPedido = itemsWithEntrega.reduce((total, item) => {
+    return total + ((item.quantidade_pedida || 0) * (item.valor_unitario || 0));
+  }, 0);
+  
+  const totalFaturado = itemsWithEntrega.reduce((total, item) => {
+    return total + ((item.quantidade_entregue || 0) * (item.valor_unitario || 0));
+  }, 0);
+  
+  console.log(`PedidosIncluidos - Total Pedido: ${totalPedido}, Total Faturado: ${totalFaturado}`);
 
   return (
     <div className="mt-4 pt-4 border-t border-gray-200">
