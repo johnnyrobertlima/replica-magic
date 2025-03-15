@@ -1,4 +1,3 @@
-
 import { Routes, Route, Navigate } from "react-router-dom";
 import Index from "@/pages/Index";
 import ClientArea from "@/pages/ClientArea";
@@ -17,7 +16,8 @@ import AcompanhamentoFaturamento from "@/pages/AcompanhamentoFaturamento";
 import BluebayHome from "@/pages/BluebayHome";
 import BkHome from "@/pages/BkHome";
 import BkClients from "@/pages/bk/BkClients"; 
-import BkFinancial from "@/pages/bk/BkFinancial"; 
+import BkFinancial from "@/pages/bk/BkFinancial";
+import BkReports from "@/pages/bk/BkReports";
 
 // Admin imports
 import { AdminLayout } from "@/pages/admin/layout";
@@ -104,10 +104,7 @@ function App() {
       } />
       <Route path="/client-area/bk/reports" element={
         <PermissionGuard resourcePath="/client-area/bk">
-          <div className="container mx-auto p-8">
-            <h1 className="text-3xl font-bold mb-4">Relatórios</h1>
-            <p className="text-muted-foreground">Esta funcionalidade estará disponível em breve.</p>
-          </div>
+          <BkReports />
         </PermissionGuard>
       } />
       <Route path="/client-area/bk/requests" element={
