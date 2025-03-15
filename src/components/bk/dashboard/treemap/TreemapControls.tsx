@@ -1,10 +1,10 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { ValueRangeSlider } from "./controls/ValueRangeSlider";
 import { ZoomControls } from "./controls/ZoomControls";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { X, Maximize, ZoomIn, ZoomOut } from "lucide-react";
 
 interface TreemapControlsProps {
   minValue: number;
@@ -32,19 +32,19 @@ export const TreemapControls = ({
     setValueRange([minValue, maxValue]);
   }, [minValue, maxValue]);
   
-  const handleRangeChange = (newRange: [number, number]) => {
+  const handleRangeChange = useCallback((newRange: [number, number]) => {
     setValueRange(newRange);
     onValueRangeChange(newRange);
-  };
+  }, [onValueRangeChange]);
 
-  const handleClearFilter = () => {
+  const handleClearFilter = useCallback(() => {
     // Create a new array to ensure React detects the change
     const resetRange: [number, number] = [minValue, maxValue];
     setValueRange(resetRange);
     
     // Make sure we explicitly call the callback to update the parent component
     onValueRangeChange(resetRange);
-  };
+  }, [minValue, maxValue, onValueRangeChange]);
 
   return (
     <div className="bg-white rounded-lg p-5 border shadow-sm transition-all duration-200 animate-fade-in">
@@ -68,7 +68,7 @@ export const TreemapControls = ({
               variant="ghost" 
               size="sm" 
               onClick={handleClearFilter} 
-              className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+              className="h-7 px-2 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50 flex items-center"
             >
               <X className="h-3.5 w-3.5 mr-1" />
               Limpar filtro
