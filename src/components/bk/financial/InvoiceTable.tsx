@@ -6,13 +6,13 @@ import {
   TableCell, 
   TableRow 
 } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
 import { formatCurrency } from "@/utils/formatters";
-import { ChevronDown, ChevronRight, Search } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { fetchInvoiceItems } from "@/services/bk/financialService";
 import { InvoiceTableHeader } from "./InvoiceTableHeader";
 import { InvoiceItemsTable } from "./InvoiceItemsTable";
 import { StatusBadge } from "./StatusBadge";
+import { SearchBar } from "./SearchBar";
 
 interface InvoiceItem {
   NOTA: string;
@@ -102,15 +102,11 @@ export const InvoiceTable = ({ invoices, isLoading }: InvoiceTableProps) => {
   return (
     <div className="space-y-4">
       <div className="flex items-center space-x-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por nota ou cliente..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-8"
-          />
-        </div>
+        <SearchBar 
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          placeholder="Buscar por nota ou cliente..."
+        />
       </div>
       
       <div className="rounded-md border">
