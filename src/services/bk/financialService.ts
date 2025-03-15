@@ -33,9 +33,13 @@ export const fetchBkFaturamentoData = async (
 
   console.log(`Fetched ${data?.length || 0} faturamento records`);
   
+  // Filter to only include items with TIPO = 'S'
+  const filteredData = data?.filter(item => item.TIPO === 'S') || [];
+  console.log(`Filtered to ${filteredData.length} records with TIPO = 'S'`);
+  
   // Let's separately get the cliente names
-  if (data && data.length > 0) {
-    const clienteIds = data
+  if (filteredData.length > 0) {
+    const clienteIds = filteredData
       .map(item => item.PES_CODIGO)
       .filter((id): id is number => id !== null && !isNaN(Number(id)));
     
@@ -56,7 +60,7 @@ export const fetchBkFaturamentoData = async (
         });
         
         // Attach cliente info to each faturamento record
-        data.forEach(item => {
+        filteredData.forEach(item => {
           if (item.PES_CODIGO !== null) {
             const clienteInfo = clienteMap.get(item.PES_CODIGO);
             if (clienteInfo) {
@@ -69,15 +73,16 @@ export const fetchBkFaturamentoData = async (
     }
   }
   
-  return data || [];
+  return filteredData;
 };
 
 export const fetchInvoiceItems = async (nota: string): Promise<any[]> => {
   console.log("Fetching invoice items for nota:", nota);
   const { data, error } = await supabase
     .from('BLUEBAY_FATURAMENTO')
-    .select('NOTA, ITEM_CODIGO, QUANTIDADE, VALOR_UNITARIO')
-    .eq('NOTA', nota);
+    .select('NOTA, ITEM_CODIGO, QUANTIDADE, VALOR_UNITARIO, TIPO')
+    .eq('NOTA', nota)
+    .eq('TIPO', 'S');
   
   if (error) {
     console.error("Error fetching invoice items:", error);
