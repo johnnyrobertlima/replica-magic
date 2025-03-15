@@ -19,21 +19,18 @@ export const fetchBkFaturamentoData = async (
 ): Promise<BkFaturamento[]> => {
   console.log("Fetching B&K faturamento data...", { startDate, endDate });
   
-  // Build the query following the SQL provided
-  let query = supabase.rpc('get_bk_faturamento', {
+  // Use the new database function to get faturamento data
+  const { data, error } = await supabase.rpc('get_bk_faturamento', {
     start_date: startDate,
     end_date: endDate
   });
-
-  // Execute the query
-  const { data, error } = await query;
 
   if (error) {
     console.error("Error fetching B&K faturamento data:", error);
     throw error;
   }
 
-  console.log(`Fetched ${data?.length} faturamento records`);
+  console.log(`Fetched ${data?.length || 0} faturamento records`);
   
   // Let's separately get the cliente names
   if (data && data.length > 0) {
