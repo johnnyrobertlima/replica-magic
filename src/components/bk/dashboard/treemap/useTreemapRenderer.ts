@@ -2,7 +2,7 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import * as d3 from "d3";
 import { formatCurrency } from "@/lib/utils";
-import { TreemapDataItem, TreemapZoomState, TreemapFilterState } from "./treemapTypes";
+import { TreemapDataItem, TreemapZoomState, TreemapFilterState, HierarchyNode } from "./treemapTypes";
 import { getTreemapColorScale } from "./treemapColors";
 
 export const useTreemapRenderer = (data: TreemapDataItem[]) => {
@@ -63,7 +63,7 @@ export const useTreemapRenderer = (data: TreemapDataItem[]) => {
   const handleZoomOut = useCallback(() => {
     if (zoomState.previousNodes.length > 0) {
       const previousNodes = [...zoomState.previousNodes];
-      const lastNode = previousNodes.pop();
+      const lastNode = previousNodes.pop() || null;
       
       setZoomState({
         currentNode: lastNode,
@@ -96,11 +96,11 @@ export const useTreemapRenderer = (data: TreemapDataItem[]) => {
       .attr("height", height);
     
     // Create root hierarchy for the current view
-    let rootHierarchy;
+    let rootHierarchy: d3.HierarchyNode<any>;
     
     if (zoomState.currentNode) {
       // If we're zoomed in, use the current node as root
-      rootHierarchy = zoomState.currentNode;
+      rootHierarchy = zoomState.currentNode as d3.HierarchyNode<any>;
     } else {
       // Create hierarchy from full data
       rootHierarchy = d3.hierarchy({ children: dataToRender })
@@ -110,7 +110,7 @@ export const useTreemapRenderer = (data: TreemapDataItem[]) => {
     }
     
     // Create treemap layout
-    const treemapLayout = d3.treemap()
+    const treemapLayout = d3.treemap<any>()
       .size([width, height])
       .paddingInner(3)
       .paddingOuter(8)
@@ -166,11 +166,11 @@ export const useTreemapRenderer = (data: TreemapDataItem[]) => {
       .attr("class", "treemap-cell")
       .attr("transform", d => `translate(${(d as any).x0},${(d as any).y0})`)
       .attr("data-item", d => {
-        const item = d.data as any;
+        const item = d.data as TreemapDataItem;
         return item.name;
       })
       .attr("data-value", d => {
-        const item = d.data as any;
+        const item = d.data as TreemapDataItem;
         return formatCurrency(item.value);
       });
     
@@ -202,7 +202,7 @@ export const useTreemapRenderer = (data: TreemapDataItem[]) => {
               .attr("transform", "scale(1.02)");
               
             // Show custom tooltip with fade-in
-            const item = (d as any).data;
+            const item = (d as HierarchyNode).data;
             const tooltip = d3.select("#d3-tooltip");
             tooltip
               .style("display", "block")
@@ -213,8 +213,8 @@ export const useTreemapRenderer = (data: TreemapDataItem[]) => {
               .duration(200)
               .style("opacity", 1);
               
-            tooltip.select(".item-name").text(item.name);
-            tooltip.select(".item-value").text(formatCurrency(item.value));
+            tooltip.select(".item-name").text(item.name || "");
+            tooltip.select(".item-value").text(formatCurrency(item.value || 0));
           })
           .on("mousemove", function(event) {
             // Move tooltip with cursor
@@ -242,16 +242,17 @@ export const useTreemapRenderer = (data: TreemapDataItem[]) => {
           })
           .on("click", function(event, d) {
             // Handle zoom in on click
-            if (d.children) {
+            const node = d as HierarchyNode;
+            if (node.children) {
               // If this node has children, zoom into it
               setZoomState(prev => ({
-                currentNode: d,
+                currentNode: node,
                 previousNodes: prev.currentNode ? [...prev.previousNodes, prev.currentNode] : []
               }));
-            } else if (d.parent && d.parent.children.length > 1) {
+            } else if (node.parent && node.parent.children && node.parent.children.length > 1) {
               // If this is a leaf node but has siblings, zoom to parent
               setZoomState(prev => ({
-                currentNode: d.parent,
+                currentNode: node.parent,
                 previousNodes: prev.currentNode ? [...prev.previousNodes, prev.currentNode] : []
               }));
             }
@@ -274,7 +275,7 @@ export const useTreemapRenderer = (data: TreemapDataItem[]) => {
       .text(d => {
         const rect = d as any;
         const width = rect.x1 - rect.x0;
-        const item = d.data as any;
+        const item = d.data as TreemapDataItem;
         return width > 60 ? item.name : null;
       })
       .each(function(d) {
@@ -310,7 +311,7 @@ export const useTreemapRenderer = (data: TreemapDataItem[]) => {
       .attr("pointer-events", "none")
       .style("opacity", 0) // Start with opacity 0 for animation
       .text(d => {
-        const item = d.data as any;
+        const item = d.data as TreemapDataItem;
         return formatCurrency(item.value);
       })
       .transition() // Add fade-in transition

@@ -28,12 +28,36 @@ export interface TreemapCellProps {
 }
 
 export interface TreemapZoomState {
-  currentNode: any;
-  previousNodes: any[];
+  currentNode: HierarchyNode | null;
+  previousNodes: HierarchyNode[];
 }
 
 export interface TreemapFilterState {
   valueRange: [number, number];
   originalData: TreemapDataItem[];
   filteredData: TreemapDataItem[];
+}
+
+/**
+ * TypeScript interface for D3 hierarchy node structure
+ * This helps solve type errors when working with d3.hierarchy objects
+ */
+export interface HierarchyNode {
+  data: {
+    name?: string;
+    value?: number;
+    children?: any[];
+    [key: string]: any;
+  };
+  depth: number;
+  height: number;
+  parent: HierarchyNode | null;
+  children?: HierarchyNode[];
+  x0?: number;
+  y0?: number;
+  x1?: number;
+  y1?: number;
+  value?: number;
+  id?: string;
+  [key: string]: any;
 }
