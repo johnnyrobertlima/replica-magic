@@ -89,7 +89,7 @@ const handler = async (req: Request): Promise<Response> => {
       } else {
         console.error("Resend API error:", responseText);
         return new Response(JSON.stringify({ error: responseText }), {
-          status: 500, // Changed from 400 to 500 to indicate server error
+          status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
