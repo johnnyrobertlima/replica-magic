@@ -24,3 +24,8 @@ export interface OrderTotals {
 export interface PendingValuesState {
   [clienteId: string]: number;
 }
+
+export interface MonthSelection {
+  year: number;
+  month: number;
+}

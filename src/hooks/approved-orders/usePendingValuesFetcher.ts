@@ -12,7 +12,7 @@ export const usePendingValuesFetcher = () => {
     const approvedItemCodes: string[] = [];
     
     filteredOrders.forEach(order => {
-      const separacao = order.clienteData.separacoes.find(sep => sep.id === order.separacaoId);
+      const separacao = order.cliente_data.separacoes.find(sep => sep.id === order.separacao_id);
       if (separacao?.separacao_itens_flat) {
         separacao.separacao_itens_flat.forEach(item => {
           if (!uniquePedidoNumbers.includes(item.pedido)) {
