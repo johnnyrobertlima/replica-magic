@@ -12,7 +12,6 @@ interface ConsolidatedInvoice {
   VALOR_NOTA: number | null;
   ITEMS_COUNT: number;
   CLIENTE_NOME?: string | null;
-  FATOR_CORRECAO?: number | null;
 }
 
 export const fetchBkFaturamentoData = async (
@@ -47,22 +46,16 @@ export const fetchBkFaturamentoData = async (
     if (clienteIds.length > 0) {
       const { data: clientesData, error: clientesError } = await supabase
         .from('BLUEBAY_PESSOA')
-        .select('PES_CODIGO, APELIDO, RAZAOSOCIAL, fator_correcao')
+        .select('PES_CODIGO, APELIDO, RAZAOSOCIAL')
         .in('PES_CODIGO', clienteIds);
       
       if (!clientesError && clientesData) {
-        // Create a map of cliente IDs to their information
-        const clienteMap = new Map<number, { 
-          APELIDO: string | null, 
-          RAZAOSOCIAL: string | null,
-          FATOR_CORRECAO: number | null 
-        }>();
-        
+        // Create a map of cliente IDs to their names
+        const clienteMap = new Map<number, { APELIDO: string | null, RAZAOSOCIAL: string | null }>();
         clientesData.forEach(cliente => {
           clienteMap.set(cliente.PES_CODIGO, {
             APELIDO: cliente.APELIDO,
-            RAZAOSOCIAL: cliente.RAZAOSOCIAL,
-            FATOR_CORRECAO: cliente.fator_correcao
+            RAZAOSOCIAL: cliente.RAZAOSOCIAL
           });
         });
         
@@ -80,7 +73,7 @@ export const fetchBkFaturamentoData = async (
     }
   }
   
-  return filteredData as BkFaturamento[];
+  return filteredData;
 };
 
 export const fetchInvoiceItems = async (nota: string): Promise<any[]> => {
@@ -117,11 +110,10 @@ export const consolidateByNota = (data: BkFaturamento[]): ConsolidatedInvoice[] 
       // Add the calculated item value to the invoice total
       existingInvoice.VALOR_NOTA = (existingInvoice.VALOR_NOTA || 0) + itemValue;
     } else {
-      // Get cliente name and fator_correcao if available
+      // Get cliente name if available
       const clienteInfo = (item as any).CLIENTE_INFO;
       const clienteNome = clienteInfo ? 
         (clienteInfo.APELIDO || clienteInfo.RAZAOSOCIAL || null) : null;
-      const fatorCorrecao = clienteInfo ? clienteInfo.FATOR_CORRECAO : null;
       
       // Create a new invoice entry with the calculated value
       invoiceMap.set(item.NOTA, {
@@ -131,12 +123,10 @@ export const consolidateByNota = (data: BkFaturamento[]): ConsolidatedInvoice[] 
         STATUS: item.STATUS,
         VALOR_NOTA: itemValue,  // Use the calculated value
         ITEMS_COUNT: 1,
-        CLIENTE_NOME: clienteNome,
-        FATOR_CORRECAO: fatorCorrecao
+        CLIENTE_NOME: clienteNome
       });
     }
   });
   
   return Array.from(invoiceMap.values());
 };
-

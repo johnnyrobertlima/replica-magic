@@ -8,13 +8,12 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { formatCurrency } from "@/utils/formatters";
-import { ChevronDown, ChevronRight, Info } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { fetchInvoiceItems } from "@/services/bk/financialService";
 import { InvoiceTableHeader } from "./InvoiceTableHeader";
 import { InvoiceItemsTable } from "./InvoiceItemsTable";
 import { StatusBadge } from "./StatusBadge";
 import { SearchBar } from "./SearchBar";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface InvoiceItem {
   NOTA: string;
@@ -158,24 +157,7 @@ export const InvoiceTable = ({ invoices, isLoading }: InvoiceTableProps) => {
                       <StatusBadge status={invoice.STATUS} />
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        {invoice.VALOR_NOTA 
-                          ? formatCurrency(invoice.VALOR_NOTA) 
-                          : '-'}
-                        
-                        {invoice.FATOR_CORRECAO && invoice.FATOR_CORRECAO > 0 && invoice.FATOR_CORRECAO !== 1 && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger>
-                                <Info className="h-4 w-4 text-blue-500" />
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Fator de correção: {invoice.FATOR_CORRECAO}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
-                      </div>
+                      {invoice.VALOR_NOTA ? formatCurrency(invoice.VALOR_NOTA) : '-'}
                     </TableCell>
                     <TableCell className="text-right">{invoice.ITEMS_COUNT}</TableCell>
                   </TableRow>
