@@ -37,6 +37,18 @@ export const BusinessMetricsSection = () => {
           min="0"
           value={formData.fator_correcao || ""}
           onChange={(e) => onNumberChange(e, 'fator_correcao')}
+          onBlur={(e) => {
+            // Ensure integer values on blur
+            if (e.target.value) {
+              const roundedValue = Math.round(Number(e.target.value));
+              const event = {
+                target: {
+                  value: roundedValue.toString()
+                }
+              } as React.ChangeEvent<HTMLInputElement>;
+              onNumberChange(event, 'fator_correcao');
+            }
+          }}
         />
       </div>
     </div>

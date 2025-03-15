@@ -18,8 +18,11 @@ export function transformClientForSave(formData: Partial<BkClient>): any {
   const transformedData = {
     ...baseData,
     CATEGORIA: formData.empresas?.join(','),
-    // We make sure fator_correcao is explicitly included in the update
-    fator_correcao: formData.fator_correcao
+    // Make sure fator_correcao is explicitly included in the update
+    // Convert to integer if it exists
+    fator_correcao: formData.fator_correcao !== undefined && formData.fator_correcao !== null
+      ? Math.round(Number(formData.fator_correcao))
+      : null
   };
   
   return transformedData;
@@ -34,7 +37,7 @@ export function transformClientFromApi(apiData: any): BkClient {
   return {
     ...apiData,
     empresas: apiData.CATEGORIA?.split(',') || [],
-    fator_correcao: apiData.fator_correcao || 0
+    fator_correcao: apiData.fator_correcao !== null ? Number(apiData.fator_correcao) : 0
   };
 }
 

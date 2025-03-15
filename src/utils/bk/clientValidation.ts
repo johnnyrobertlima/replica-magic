@@ -32,8 +32,13 @@ export function validateClientForm(client: Partial<BkClient>): ValidationError[]
     errors.push({ field: 'volume_saudavel_faturamento', message: 'Volume saudável deve ser um número válido' });
   }
 
-  if (client.fator_correcao && (isNaN(Number(client.fator_correcao)) || !Number.isInteger(Number(client.fator_correcao)) || Number(client.fator_correcao) < 0)) {
-    errors.push({ field: 'fator_correcao', message: 'Fator de correção deve ser um número inteiro positivo' });
+  if (client.fator_correcao !== undefined && client.fator_correcao !== null) {
+    const fatorNumber = Number(client.fator_correcao);
+    if (isNaN(fatorNumber)) {
+      errors.push({ field: 'fator_correcao', message: 'Fator de correção deve ser um número válido' });
+    } else if (fatorNumber < 0) {
+      errors.push({ field: 'fator_correcao', message: 'Fator de correção deve ser um número positivo' });
+    }
   }
 
   return errors;

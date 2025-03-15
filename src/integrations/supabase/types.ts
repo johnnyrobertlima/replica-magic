@@ -444,6 +444,7 @@ export type Database = {
           DATACADASTRO: string | null
           EMAIL: string | null
           ENDERECO: string | null
+          fator_correcao: number | null
           INSCRICAO_ESTADUAL: string | null
           NOME_CATEGORIA: string | null
           NUMERO: string | null
@@ -464,6 +465,7 @@ export type Database = {
           DATACADASTRO?: string | null
           EMAIL?: string | null
           ENDERECO?: string | null
+          fator_correcao?: number | null
           INSCRICAO_ESTADUAL?: string | null
           NOME_CATEGORIA?: string | null
           NUMERO?: string | null
@@ -484,6 +486,7 @@ export type Database = {
           DATACADASTRO?: string | null
           EMAIL?: string | null
           ENDERECO?: string | null
+          fator_correcao?: number | null
           INSCRICAO_ESTADUAL?: string | null
           NOME_CATEGORIA?: string | null
           NUMERO?: string | null
