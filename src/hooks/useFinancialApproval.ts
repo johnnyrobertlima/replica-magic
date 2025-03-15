@@ -45,15 +45,11 @@ export const useFinancialApproval = () => {
     if (loadedApproved) return;
     
     try {
-      const approvedOrdersList = await loadApprovedOrders(selectedYear, selectedMonth);
-      console.log(`Loaded ${approvedOrdersList.length} approved orders for ${selectedYear}-${selectedMonth}`);
+      const approvedOrders = await loadApprovedOrders(selectedYear, selectedMonth);
+      console.log(`Loaded ${approvedOrders.length} approved orders for ${selectedYear}-${selectedMonth}`);
       
       // Create a set of approved separation IDs for efficient lookups
-      const approvedIds = new Set<string>();
-      approvedOrdersList.forEach(order => {
-        approvedIds.add(order.separacao_id || order.separacaoId || '');
-      });
-      
+      const approvedIds = new Set(approvedOrders.map(order => order.separacaoId));
       setApprovedSeparacaoIds(approvedIds);
       setLoadedApproved(true);
     } catch (error) {

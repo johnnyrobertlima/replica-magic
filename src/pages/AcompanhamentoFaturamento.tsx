@@ -25,10 +25,10 @@ const AcompanhamentoFaturamento = () => {
   });
   
   useEffect(() => {
-    const updateTotals = () => {
+    const updateTotals = async () => {
       try {
-        // calculateTotals now returns the calculated values directly
-        const calculatedTotals = calculateTotals();
+        // calculateTotals now returns a Promise in the updated version
+        const calculatedTotals = await calculateTotals();
         console.log("AcompanhamentoFaturamento: Updated totals", calculatedTotals);
         setTotals(calculatedTotals);
       } catch (error) {
