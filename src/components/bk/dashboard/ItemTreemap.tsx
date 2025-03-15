@@ -36,19 +36,20 @@ export const ItemTreemap = ({ data }: ItemTreemapProps) => {
           onZoomReset={handleZoomReset}
           onZoomIn={handleZoomIn}
           onZoomOut={handleZoomOut}
+          isZoomed={isZoomed}
         />
       )}
       
       {/* Status indicators */}
       {(isFiltered || isZoomed) && (
-        <div className="text-xs text-muted-foreground mb-2 flex items-center gap-2">
+        <div className="text-xs text-muted-foreground mb-2 flex items-center gap-2 mt-3">
           {isFiltered && <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">Filtrado</span>}
           {isZoomed && <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded-full">Ampliado</span>}
         </div>
       )}
       
       {/* Treemap visualization */}
-      <div className="relative w-full h-[400px]">
+      <div className="relative w-full h-[400px] mt-4">
         <svg ref={svgRef} className="w-full h-full"></svg>
         
         {/* Custom tooltip */}

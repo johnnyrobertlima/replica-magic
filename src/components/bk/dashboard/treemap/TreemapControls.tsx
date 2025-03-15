@@ -1,10 +1,8 @@
 
-import React, { useState } from "react";
-import { Slider } from "@/components/ui/slider";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ZoomIn, ZoomOut, RefreshCw } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import React, { useState, useEffect } from "react";
+import { ValueRangeSlider } from "./controls/ValueRangeSlider";
+import { ZoomControls } from "./controls/ZoomControls";
+import { Separator } from "@/components/ui/separator";
 
 interface TreemapControlsProps {
   minValue: number;
@@ -13,6 +11,7 @@ interface TreemapControlsProps {
   onZoomReset: () => void;
   onZoomIn: () => void;
   onZoomOut: () => void;
+  isZoomed: boolean;
 }
 
 export const TreemapControls = ({
@@ -21,64 +20,46 @@ export const TreemapControls = ({
   onValueRangeChange,
   onZoomReset,
   onZoomIn,
-  onZoomOut
+  onZoomOut,
+  isZoomed
 }: TreemapControlsProps) => {
   const [valueRange, setValueRange] = useState<[number, number]>([minValue, maxValue]);
   
-  const handleRangeChange = (value: number[]) => {
-    const newRange: [number, number] = [value[0], value[1]];
+  // Update value range when min/max change
+  useEffect(() => {
+    setValueRange([minValue, maxValue]);
+  }, [minValue, maxValue]);
+  
+  const handleRangeChange = (newRange: [number, number]) => {
     setValueRange(newRange);
     onValueRangeChange(newRange);
   };
 
   return (
-    <div className="mb-4 bg-white rounded-lg p-4 border animate-fade-in">
-      <div className="flex items-center justify-between mb-4">
-        <h4 className="text-sm font-medium">Filtrar por valor</h4>
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={onZoomIn}
-            className="h-8 w-8 p-0"
-            title="Ampliar seleção"
-          >
-            <ZoomIn className="h-4 w-4" />
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={onZoomOut}
-            className="h-8 w-8 p-0"
-            title="Reduzir visualização"
-          >
-            <ZoomOut className="h-4 w-4" />
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={onZoomReset}
-            className="h-8 w-8 p-0"
-            title="Resetar visualização"
-          >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
+    <div className="bg-white rounded-lg p-5 border shadow-sm transition-all duration-200 animate-fade-in">
+      <div className="flex flex-col space-y-4">
+        <div className="flex items-center justify-between">
+          <h4 className="text-sm font-medium text-gray-700">Controles de Visualização</h4>
+          <ZoomControls 
+            onZoomIn={onZoomIn}
+            onZoomOut={onZoomOut}
+            onZoomReset={onZoomReset}
+            isZoomed={isZoomed}
+          />
         </div>
-      </div>
-      
-      <div className="space-y-4">
-        <Slider
-          min={minValue}
-          max={maxValue}
-          step={(maxValue - minValue) / 100}
-          value={valueRange}
-          onValueChange={handleRangeChange}
-          className="my-6"
-        />
         
-        <div className="flex justify-between text-sm">
-          <div className="font-medium">{formatCurrency(valueRange[0])}</div>
-          <div className="font-medium">{formatCurrency(valueRange[1])}</div>
+        <Separator className="my-1" />
+        
+        <div className="pt-2">
+          <div className="flex justify-between items-center mb-2">
+            <h4 className="text-xs font-medium text-gray-500">Filtrar por valor</h4>
+          </div>
+          <ValueRangeSlider
+            minValue={minValue}
+            maxValue={maxValue}
+            valueRange={valueRange}
+            onValueChange={handleRangeChange}
+          />
         </div>
       </div>
     </div>
