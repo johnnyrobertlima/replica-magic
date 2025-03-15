@@ -35,7 +35,7 @@ export async function fetchPedidosDetalhados(numeroPedidos: string[]) {
         STATUS,
         ITEM_CODIGO,
         QTDE_PEDIDA,
-        QTDE_ENTREGUE, // Este é o campo que está sendo consultado da tabela BLUEBAY_PEDIDO
+        QTDE_ENTREGUE, /* Este é o campo que está sendo consultado da tabela BLUEBAY_PEDIDO */
         DATA_PEDIDO,
         REPRESENTANTE
       `)
