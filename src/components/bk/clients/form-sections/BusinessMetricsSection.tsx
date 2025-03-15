@@ -1,7 +1,6 @@
 
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Percent } from "lucide-react";
 import { useClientForm } from "@/contexts/bk/ClientFormContext";
 
 export const BusinessMetricsSection = () => {
@@ -29,26 +28,16 @@ export const BusinessMetricsSection = () => {
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="fator_correcao" className="flex items-center">
-          <Percent className="mr-1.5 h-4 w-4" />
-          Fator de Correção
-        </Label>
-        <div className="relative">
-          <Input
-            id="fator_correcao"
-            name="fator_correcao"
-            type="number"
-            step="0.01"
-            min="0"
-            max="100"
-            value={formData.fator_correcao || ""}
-            onChange={(e) => onNumberChange(e, 'fator_correcao')}
-            className="pr-8"
-          />
-          <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-            %
-          </span>
-        </div>
+        <Label htmlFor="fator_correcao">Fator de Correção</Label>
+        <Input
+          id="fator_correcao"
+          name="fator_correcao"
+          type="number"
+          step="1"
+          min="0"
+          value={formData.fator_correcao || ""}
+          onChange={(e) => onNumberChange(e, 'fator_correcao')}
+        />
       </div>
     </div>
   );
