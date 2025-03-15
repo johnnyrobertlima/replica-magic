@@ -10,6 +10,8 @@ import { StatusFilter } from "@/components/bk/financial/StatusFilter";
 import { RefreshCw } from "lucide-react";
 import { ItemTreemap } from "@/components/bk/dashboard/ItemTreemap";
 import { fetchBkItemsReport } from "@/services/bk/reportsService";
+import { ClientsAbcCurve } from "@/components/bk/dashboard/abc-curve/ClientsAbcCurve";
+import { ItemsAbcCurve } from "@/components/bk/dashboard/abc-curve/ItemsAbcCurve";
 
 export const BkDashboard = () => {
   const {
@@ -138,6 +140,19 @@ export const BkDashboard = () => {
                 <p className="text-muted-foreground">Não há dados disponíveis para visualização</p>
               </div>
             )}
+
+            {/* ABC Curves Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <ClientsAbcCurve 
+                invoices={filteredInvoices} 
+                isLoading={isLoading} 
+              />
+              <ItemsAbcCurve 
+                data={treemapData} 
+                isLoading={isLoadingTreemap} 
+              />
+            </div>
+            
             <FinancialDashboard invoices={filteredInvoices} />
           </div>
         </div>
