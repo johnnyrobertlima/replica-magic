@@ -70,14 +70,9 @@ export const InvoiceItemsTable = ({ invoiceItems, isLoadingItems }: InvoiceItems
                   <TableCell className="text-right">{item.QUANTIDADE || 0}</TableCell>
                   <TableCell className="text-right">
                     {valorUnitario ? (
-                      <div>
+                      <span className={fatorCorrecao ? "text-blue-500" : ""}>
                         {formatCurrency(valorUnitarioAjustado)}
-                        {fatorCorrecao && (
-                          <span className="text-xs text-muted-foreground ml-1">
-                            (factor: {fatorCorrecao})
-                          </span>
-                        )}
-                      </div>
+                      </span>
                     ) : '-'}
                   </TableCell>
                   <TableCell className="text-right">
