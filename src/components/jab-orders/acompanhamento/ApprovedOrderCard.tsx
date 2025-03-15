@@ -102,7 +102,7 @@ export const ApprovedOrderCard = ({ order, onExport }: ApprovedOrderCardProps) =
       </CardHeader>
       
       <CardContent className="p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div className="bg-gray-50 p-3 rounded-md">
             <p className="text-xs text-gray-500">Valor Total</p>
             <p className="font-medium">{formatCurrency(valorTotal)}</p>
@@ -111,6 +111,11 @@ export const ApprovedOrderCard = ({ order, onExport }: ApprovedOrderCardProps) =
           <div className="bg-gray-50 p-3 rounded-md">
             <p className="text-xs text-gray-500">Falta Faturar</p>
             <p className="font-medium">{formatCurrency(valorFaltaFaturar)}</p>
+          </div>
+          
+          <div className="bg-gray-50 p-3 rounded-md">
+            <p className="text-xs text-gray-500">Faturado</p>
+            <p className="font-medium">{formatCurrency(valorFaturado)}</p>
           </div>
         </div>
         
