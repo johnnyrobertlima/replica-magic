@@ -1,16 +1,18 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { formatCurrency } from "@/lib/utils";
 import { TreemapDataItem } from "./treemap/treemapTypes";
 import { useTreemapRenderer } from "./treemap/useTreemapRenderer";
 import { TreemapControls } from "./treemap/TreemapControls";
+import { Button } from "@/components/ui/button";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface ItemTreemapProps {
   data: TreemapDataItem[];
 }
 
 export const ItemTreemap = ({ data }: ItemTreemapProps) => {
-  // We're maintaining the same API, so the component doesn't need to change
   const { 
     svgRef, 
     handleValueRangeChange, 
@@ -23,22 +25,57 @@ export const ItemTreemap = ({ data }: ItemTreemapProps) => {
     isZoomed
   } = useTreemapRenderer(data);
 
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
     <div className="w-full bg-white rounded-lg p-4 border animate-fade-in">
-      <h3 className="text-lg font-semibold mb-4">Volume por Item</h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold">Volume por Item</h3>
+        
+        {data.length > 0 && (
+          <CollapsibleTrigger asChild>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setIsOpen(!isOpen)}
+              className="flex gap-1 items-center"
+            >
+              {isOpen ? 
+                <>
+                  <ChevronUp className="h-4 w-4" />
+                  <span>Ocultar controles</span>
+                </>
+                : 
+                <>
+                  <ChevronDown className="h-4 w-4" />
+                  <span>Exibir controles</span>
+                </>
+              }
+            </Button>
+          </CollapsibleTrigger>
+        )}
+      </div>
       
-      {/* Controls section */}
-      {data.length > 0 && (
-        <TreemapControls
-          minValue={minValue}
-          maxValue={maxValue}
-          onValueRangeChange={handleValueRangeChange}
-          onZoomReset={handleZoomReset}
-          onZoomIn={handleZoomIn}
-          onZoomOut={handleZoomOut}
-          isZoomed={isZoomed}
-        />
-      )}
+      <Collapsible
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        className="w-full"
+      >
+        {/* Controls section */}
+        {data.length > 0 && (
+          <CollapsibleContent>
+            <TreemapControls
+              minValue={minValue}
+              maxValue={maxValue}
+              onValueRangeChange={handleValueRangeChange}
+              onZoomReset={handleZoomReset}
+              onZoomIn={handleZoomIn}
+              onZoomOut={handleZoomOut}
+              isZoomed={isZoomed}
+            />
+          </CollapsibleContent>
+        )}
+      </Collapsible>
       
       {/* Status indicators */}
       {(isFiltered || isZoomed) && (

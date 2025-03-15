@@ -47,7 +47,7 @@ export const TreemapControls = ({
   }, [minValue, maxValue, onValueRangeChange]);
 
   return (
-    <div className="bg-white rounded-lg p-5 border shadow-sm transition-all duration-200 animate-fade-in">
+    <div className="bg-white rounded-lg p-4 border shadow-sm transition-all duration-200 animate-fade-in mb-4">
       <div className="flex flex-col space-y-4">
         <div className="flex items-center justify-between">
           <h4 className="text-sm font-medium text-gray-700">Controles de Visualização</h4>
