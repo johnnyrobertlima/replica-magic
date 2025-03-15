@@ -2,6 +2,12 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { validateClientForm, isClientCodeUnique } from "@/utils/bk/clientValidation";
+import { 
+  transformClientFromApi, 
+  transformClientForSave, 
+  prepareClientForInsert 
+} from "@/utils/bk/clientTransformation";
 
 export interface BkClient {
   PES_CODIGO: number;
@@ -50,13 +56,10 @@ export const useClients = () => {
 
       if (error) throw error;
       
-      const clientsWithNewFields = data?.map(client => ({
-        ...client,
-        empresas: client.CATEGORIA?.split(',') || [],
-        fator_correcao: client.volume_saudavel_faturamento || 0
-      })) || [];
+      // Transform API data to client objects
+      const transformedClients = data?.map(transformClientFromApi) || [];
       
-      setClients(clientsWithNewFields);
+      setClients(transformedClients);
     } catch (error) {
       console.error("Error fetching clients:", error);
       toast({
@@ -127,22 +130,51 @@ export const useClients = () => {
     }
   };
 
+  const validateForm = (): boolean => {
+    const validationErrors = validateClientForm(formData);
+    
+    if (validationErrors.length > 0) {
+      toast({
+        title: "Erro de validação",
+        description: validationErrors[0].message,
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    // If creating a new client, check if the code is unique
+    if (!currentClient && formData.PES_CODIGO) {
+      const pesCode = Number(formData.PES_CODIGO);
+      if (!isClientCodeUnique(pesCode, clients)) {
+        toast({
+          title: "Erro de validação",
+          description: "Já existe um cliente com este código",
+          variant: "destructive",
+        });
+        return false;
+      }
+    }
+    
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
     setIsSubmitting(true);
 
     try {
-      const dataToSubmit = {
-        ...formData,
-        CATEGORIA: formData.empresas?.join(',')
-      };
-      
-      const { empresas, fator_correcao, ...dataToSave } = dataToSubmit;
-
       if (currentClient) {
+        // Update existing client
+        const transformedData = transformClientForSave(formData);
+        
         const { error } = await supabase
           .from("BLUEBAY_PESSOA")
-          .update(dataToSave)
+          .update(transformedData)
           .eq("PES_CODIGO", currentClient.PES_CODIGO);
 
         if (error) throw error;
@@ -152,19 +184,8 @@ export const useClients = () => {
           description: "As informações do cliente foram atualizadas com sucesso.",
         });
       } else {
-        if (!dataToSave.PES_CODIGO) {
-          throw new Error("Código do cliente é obrigatório");
-        }
-        
-        const pesCodigoAsNumber = Number(dataToSave.PES_CODIGO);
-        if (isNaN(pesCodigoAsNumber)) {
-          throw new Error("Código do cliente deve ser um número válido");
-        }
-        
-        const clientToInsert = {
-          ...dataToSave,
-          PES_CODIGO: pesCodigoAsNumber
-        };
+        // Create new client
+        const clientToInsert = prepareClientForInsert(formData);
         
         const { error } = await supabase
           .from("BLUEBAY_PESSOA")
