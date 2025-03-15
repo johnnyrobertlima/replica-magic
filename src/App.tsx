@@ -17,6 +17,7 @@ import AcompanhamentoFaturamento from "@/pages/AcompanhamentoFaturamento";
 import BluebayHome from "@/pages/BluebayHome";
 import BkHome from "@/pages/BkHome";
 import BkClients from "@/pages/bk/BkClients"; // Import the BkClients component
+import BkFinancial from "@/pages/bk/BkFinancial"; // Import the BkFinancial component
 
 // Admin imports
 import { AdminLayout } from "@/pages/admin/layout";
@@ -94,6 +95,11 @@ function App() {
       <Route path="/client-area/bk/clients" element={
         <PermissionGuard resourcePath="/client-area/bk">
           <BkClients />
+        </PermissionGuard>
+      } />
+      <Route path="/client-area/bk/financial" element={
+        <PermissionGuard resourcePath="/client-area/bk">
+          <BkFinancial />
         </PermissionGuard>
       } />
 
