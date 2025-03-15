@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { 
   Table, 
@@ -13,6 +12,7 @@ import { ChevronDown, ChevronRight, Search } from "lucide-react";
 import { fetchInvoiceItems } from "@/services/bk/financialService";
 import { InvoiceTableHeader } from "./InvoiceTableHeader";
 import { InvoiceItemsTable } from "./InvoiceItemsTable";
+import { StatusBadge } from "./StatusBadge";
 
 interface InvoiceItem {
   NOTA: string;
@@ -149,14 +149,7 @@ export const InvoiceTable = ({ invoices, isLoading }: InvoiceTableProps) => {
                     </TableCell>
                     <TableCell>{invoice.CLIENTE_NOME || '-'}</TableCell>
                     <TableCell>
-                      <div className={`inline-flex px-2 py-1 rounded-full text-xs ${
-                        invoice.STATUS === 'Concluído' ? 'bg-green-100 text-green-800' :
-                        invoice.STATUS === 'Pendente' ? 'bg-yellow-100 text-yellow-800' :
-                        invoice.STATUS === 'Cancelado' ? 'bg-red-100 text-red-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {invoice.STATUS || 'Desconhecido'}
-                      </div>
+                      <StatusBadge status={invoice.STATUS} />
                     </TableCell>
                     <TableCell className="text-right">
                       {invoice.VALOR_NOTA ? formatCurrency(invoice.VALOR_NOTA) : '-'}
