@@ -38,9 +38,22 @@ export const TreemapControls = ({
   };
 
   const handleClearFilter = () => {
+    // Create a new array to ensure React detects the change
     const resetRange: [number, number] = [minValue, maxValue];
     setValueRange(resetRange);
+    
+    // Make sure we explicitly call the callback to update the parent component
     onValueRangeChange(resetRange);
+    
+    // Force the slider value to update visually
+    setTimeout(() => {
+      const sliderElement = document.querySelector('.treemap-value-slider') as HTMLElement;
+      if (sliderElement) {
+        // Dispatch an input event to ensure the slider UI updates
+        const event = new Event('input', { bubbles: true });
+        sliderElement.dispatchEvent(event);
+      }
+    }, 0);
   };
 
   return (

@@ -24,7 +24,7 @@ export const ValueRangeSlider = ({
         step={(maxValue - minValue) / 100}
         value={valueRange}
         onValueChange={(value) => onValueChange(value as [number, number])}
-        className="my-6"
+        className="my-6 treemap-value-slider"
       />
       
       <div className="flex justify-between text-sm">
