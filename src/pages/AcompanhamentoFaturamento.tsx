@@ -6,6 +6,7 @@ import { useApprovedOrders } from "@/hooks/useApprovedOrders";
 import { ApprovedOrdersCockpit } from "@/components/jab-orders/ApprovedOrdersCockpit";
 import { AcompanhamentoHeader } from "@/components/jab-orders/acompanhamento/AcompanhamentoHeader";
 import { ApprovedOrdersList } from "@/components/jab-orders/acompanhamento/ApprovedOrdersList";
+import { BluebayMenu } from "@/components/jab-orders/BluebayMenu";
 
 const AcompanhamentoFaturamento = () => {
   const { 
@@ -55,32 +56,35 @@ const AcompanhamentoFaturamento = () => {
   }
 
   return (
-    <main className="container mx-auto px-4 py-8">
-      <AcompanhamentoHeader 
-        selectedYear={selectedYear}
-        selectedMonth={selectedMonth}
-        onMonthSelect={handleMonthSelect}
-      />
-
-      <div className="space-y-6">
-        <ApprovedOrdersCockpit 
-          valorTotal={totals.valorTotal}
-          quantidadeItens={totals.quantidadeItens}
-          quantidadePedidos={totals.quantidadePedidos}
-          valorFaltaFaturar={totals.valorFaltaFaturar}
-          valorFaturado={totals.valorFaturado}
+    <main className="container-fluid p-0 max-w-full">
+      <BluebayMenu />
+      <div className="container mx-auto px-4 py-8">
+        <AcompanhamentoHeader 
+          selectedYear={selectedYear}
+          selectedMonth={selectedMonth}
+          onMonthSelect={handleMonthSelect}
         />
-        
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Pedidos Aprovados</h2>
-          <p className="text-sm text-muted-foreground">
-            Total de {approvedOrders.length} {approvedOrders.length === 1 ? 'pedido aprovado' : 'pedidos aprovados'}
-          </p>
+
+        <div className="space-y-6">
+          <ApprovedOrdersCockpit 
+            valorTotal={totals.valorTotal}
+            quantidadeItens={totals.quantidadeItens}
+            quantidadePedidos={totals.quantidadePedidos}
+            valorFaltaFaturar={totals.valorFaltaFaturar}
+            valorFaturado={totals.valorFaturado}
+          />
+          
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold">Pedidos Aprovados</h2>
+            <p className="text-sm text-muted-foreground">
+              Total de {approvedOrders.length} {approvedOrders.length === 1 ? 'pedido aprovado' : 'pedidos aprovados'}
+            </p>
+          </div>
+          
+          <ApprovedOrdersList approvedOrders={approvedOrders} />
         </div>
-        
-        <ApprovedOrdersList approvedOrders={approvedOrders} />
+        <Toaster />
       </div>
-      <Toaster />
     </main>
   );
 };

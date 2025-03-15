@@ -22,23 +22,17 @@ export const AcompanhamentoHeader = ({
   );
 
   return (
-    <>
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
-        <JabNavMenu />
-      </div>
-
-      <div className="space-y-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold">Acompanhamento de Faturamento</h1>
-            <p className="text-muted-foreground mt-1">
-              Pedidos aprovados em <span className="font-medium">{formattedMonth}</span>
-            </p>
-          </div>
-          
-          <MonthFilterSelect onMonthSelect={onMonthSelect} />
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold">Acompanhamento de Faturamento</h1>
+          <p className="text-muted-foreground mt-1">
+            Pedidos aprovados em <span className="font-medium">{formattedMonth}</span>
+          </p>
         </div>
+        
+        <MonthFilterSelect onMonthSelect={onMonthSelect} />
       </div>
-    </>
+    </div>
   );
 };

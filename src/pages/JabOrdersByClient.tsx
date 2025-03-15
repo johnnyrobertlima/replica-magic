@@ -4,6 +4,7 @@ import { useClientOrders } from "@/hooks/useClientOrders";
 import { OrdersTabs } from "@/components/jab-orders/OrdersTabs";
 import { Toaster } from "@/components/ui/toaster";
 import JabNavMenu from "@/components/jab-orders/JabNavMenu";
+import { BluebayMenu } from "@/components/jab-orders/BluebayMenu";
 
 const JabOrdersByClient = () => {
   const clientOrders = useClientOrders();
@@ -18,15 +19,18 @@ const JabOrdersByClient = () => {
   }
 
   return (
-    <main className="container mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row md:justify-end md:items-center gap-4 mb-6">
-        <JabNavMenu />
-      </div>
+    <main className="container-fluid p-0 max-w-full">
+      <BluebayMenu />
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex flex-col md:flex-row md:justify-end md:items-center gap-4 mb-6">
+          <JabNavMenu />
+        </div>
 
-      <div className="space-y-6">
-        <OrdersTabs clientOrders={clientOrders} />
+        <div className="space-y-6">
+          <OrdersTabs clientOrders={clientOrders} />
+        </div>
+        <Toaster />
       </div>
-      <Toaster />
     </main>
   );
 };
