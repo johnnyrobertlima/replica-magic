@@ -74,8 +74,8 @@ export const AdminBannersPage = () => {
         banners={banners}
         isLoading={isLoading}
         onEdit={handleEdit}
-        onToggle={(id, is_active) => toggleBanner({ id, is_active })}
-        onDelete={(id) => deleteBanner(id)}
+        onToggle={(id, is_active) => toggleBanner.mutate({ id, is_active })}
+        onDelete={(id) => deleteBanner.mutate(id)}
       />
     </div>
   );
