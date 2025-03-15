@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from "react";
 import { fetchBkFaturamentoData, consolidateByNota, BkFaturamento } from "@/services/bk/financialService";
 import { useToast } from "@/hooks/use-toast";
@@ -45,10 +46,10 @@ export const useFinancial = () => {
       setIsLoading(true);
       setError(null);
       
+      // Fetch data using the database function with correct join
       const data = await fetchBkFaturamentoData(dateRange.startDate, dateRange.endDate);
       
-      // Filter out records related to a specific CENTROCUSTO
-      // Now, we only want to keep records where CENTROCUSTO is NULL
+      // Filter out records where CENTROCUSTO is not NULL
       const filteredData = data.filter(item => {
         // Check if we can access CENTROCUSTO through any potential relation
         const hasNoCentroCusto = !(item as any).CENTROCUSTO;

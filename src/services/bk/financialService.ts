@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
 
@@ -20,19 +19,18 @@ export const fetchBkFaturamentoData = async (
 ): Promise<BkFaturamento[]> => {
   console.log("Fetching B&K faturamento data...", { startDate, endDate });
   
-  // Query directly from BLUEBAY_FATURAMENTO without the CENTROCUSTO filter
-  // This avoids filtering out records where CENTROCUSTO might be NULL
-  const { data, error } = await supabase
-    .from('BLUEBAY_FATURAMENTO')
-    .select('*')
-    .order('DATA_EMISSAO', { ascending: false });
-  
+  // Use the get_bk_faturamento function to get invoices with correct join on PED_NUMPEDIDO and PED_ANOBASE
+  const { data, error } = await supabase.rpc('get_bk_faturamento', {
+    start_date: startDate,
+    end_date: endDate
+  });
+
   if (error) {
     console.error("Error fetching B&K faturamento data:", error);
     throw error;
   }
 
-  console.log(`Fetched ${data?.length || 0} faturamento records without filtering`);
+  console.log(`Fetched ${data?.length || 0} faturamento records`);
   
   // Let's separately get the cliente names
   if (data && data.length > 0) {
