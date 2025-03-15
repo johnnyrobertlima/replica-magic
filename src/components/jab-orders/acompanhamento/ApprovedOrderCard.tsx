@@ -41,7 +41,7 @@ export const ApprovedOrderCard = ({ order, onExport }: ApprovedOrderCardProps) =
       return total + ((item.quantidade_entregue || 0) * (item.valor_unitario || 0));
     }, 0) : 0;
 
-  // Calcular o valor que falta faturar (Saldo * Valor Unit.)
+  // Calcular o valor que falta faturar (Total - Faturado)
   const valorFaltaFaturar = valorTotal - valorFaturado;
 
   // Calcular o percentual faturado

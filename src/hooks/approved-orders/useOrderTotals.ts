@@ -50,7 +50,6 @@ export const useOrderTotals = () => {
             const quantidade = item.quantidade_pedida || 0;
             const valorUnitario = item.valor_unitario || 0;
             const quantidadeEntregue = item.quantidade_entregue || 0;
-            const saldo = quantidade - quantidadeEntregue;
             
             // Calculate values consistently with PedidosIncluidos.tsx and ApprovedOrderCard.tsx
             const itemValorTotal = quantidade * valorUnitario;
