@@ -45,6 +45,7 @@ export const PedidosIncluidos = ({ approvedSeparacao }: PedidosIncluidosProps) =
             {approvedSeparacao.separacao_itens_flat
               .filter(item => item && item.pedido)
               .map((item, index) => {
+                // Use quantidade_pedida directly from the item
                 const quantidade = item.quantidade_pedida || 0;
                 const quantidadeEntregue = item.quantidade_entregue || 0;
                 const valorUnitario = item.valor_unitario || 0;
