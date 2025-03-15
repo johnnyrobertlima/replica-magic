@@ -3,6 +3,8 @@ import React, { useState, useEffect } from "react";
 import { ValueRangeSlider } from "./controls/ValueRangeSlider";
 import { ZoomControls } from "./controls/ZoomControls";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
 
 interface TreemapControlsProps {
   minValue: number;
@@ -35,6 +37,12 @@ export const TreemapControls = ({
     onValueRangeChange(newRange);
   };
 
+  const handleClearFilter = () => {
+    const resetRange: [number, number] = [minValue, maxValue];
+    setValueRange(resetRange);
+    onValueRangeChange(resetRange);
+  };
+
   return (
     <div className="bg-white rounded-lg p-5 border shadow-sm transition-all duration-200 animate-fade-in">
       <div className="flex flex-col space-y-4">
@@ -53,6 +61,15 @@ export const TreemapControls = ({
         <div className="pt-2">
           <div className="flex justify-between items-center mb-2">
             <h4 className="text-xs font-medium text-gray-500">Filtrar por valor</h4>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleClearFilter} 
+              className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-3.5 w-3.5 mr-1" />
+              Limpar filtro
+            </Button>
           </div>
           <ValueRangeSlider
             minValue={minValue}
