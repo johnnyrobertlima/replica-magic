@@ -1,18 +1,18 @@
+
 import React, { useState } from "react";
 import { 
   Table, 
   TableBody, 
   TableCaption, 
   TableCell, 
-  TableHead, 
-  TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatCurrency } from "@/utils/formatters";
-import { ChevronDown, ChevronUp, Search, ChevronRight, ChevronLeft } from "lucide-react";
+import { ChevronDown, ChevronRight, Search } from "lucide-react";
 import { fetchInvoiceItems } from "@/services/bk/financialService";
+import { InvoiceTableHeader } from "./InvoiceTableHeader";
+import { InvoiceItemsTable } from "./InvoiceItemsTable";
 
 interface InvoiceItem {
   NOTA: string;
@@ -91,11 +91,6 @@ export const InvoiceTable = ({ invoices, isLoading }: InvoiceTableProps) => {
       : valueB.localeCompare(valueA);
   });
 
-  const SortIcon = ({ field }: { field: string }) => {
-    if (field !== sortField) return null;
-    return sortDirection === "asc" ? <ChevronUp className="w-4 h-4 ml-1" /> : <ChevronDown className="w-4 h-4 ml-1" />;
-  };
-
   if (isLoading) {
     return (
       <div className="w-full py-24 flex items-center justify-center">
@@ -121,37 +116,11 @@ export const InvoiceTable = ({ invoices, isLoading }: InvoiceTableProps) => {
       <div className="rounded-md border">
         <Table>
           <TableCaption>Lista de notas fiscais</TableCaption>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-10"></TableHead>
-              <TableHead className="cursor-pointer" onClick={() => handleSort("NOTA")}>
-                <div className="flex items-center">
-                  Nota Fiscal <SortIcon field="NOTA" />
-                </div>
-              </TableHead>
-              <TableHead className="cursor-pointer" onClick={() => handleSort("DATA_EMISSAO")}>
-                <div className="flex items-center">
-                  Data de Emissão <SortIcon field="DATA_EMISSAO" />
-                </div>
-              </TableHead>
-              <TableHead className="cursor-pointer" onClick={() => handleSort("CLIENTE_NOME")}>
-                <div className="flex items-center">
-                  Cliente <SortIcon field="CLIENTE_NOME" />
-                </div>
-              </TableHead>
-              <TableHead className="cursor-pointer" onClick={() => handleSort("STATUS")}>
-                <div className="flex items-center">
-                  Status <SortIcon field="STATUS" />
-                </div>
-              </TableHead>
-              <TableHead className="cursor-pointer text-right" onClick={() => handleSort("VALOR_NOTA")}>
-                <div className="flex items-center justify-end">
-                  Valor <SortIcon field="VALOR_NOTA" />
-                </div>
-              </TableHead>
-              <TableHead className="text-right">Itens</TableHead>
-            </TableRow>
-          </TableHeader>
+          <InvoiceTableHeader 
+            sortField={sortField}
+            sortDirection={sortDirection}
+            handleSort={handleSort}
+          />
           <TableBody>
             {sortedInvoices.length === 0 ? (
               <TableRow>
@@ -199,50 +168,10 @@ export const InvoiceTable = ({ invoices, isLoading }: InvoiceTableProps) => {
                       <TableCell colSpan={7} className="bg-muted/30 p-0">
                         <div className="px-4 py-2">
                           <h4 className="font-medium mb-2">Itens da Nota {invoice.NOTA}</h4>
-                          {isLoadingItems ? (
-                            <div className="py-4 flex justify-center">
-                              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-700"></div>
-                            </div>
-                          ) : (
-                            <div className="rounded overflow-hidden border">
-                              <Table>
-                                <TableHeader>
-                                  <TableRow>
-                                    <TableHead>Código do Item</TableHead>
-                                    <TableHead className="text-right">Quantidade</TableHead>
-                                    <TableHead className="text-right">Valor Unit.</TableHead>
-                                    <TableHead className="text-right">Valor Total</TableHead>
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {invoiceItems.length === 0 ? (
-                                    <TableRow>
-                                      <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
-                                        Nenhum item encontrado para esta nota
-                                      </TableCell>
-                                    </TableRow>
-                                  ) : (
-                                    invoiceItems.map((item, index) => {
-                                      const valorTotal = (item.QUANTIDADE || 0) * (item.VALOR_UNITARIO || 0);
-                                      
-                                      return (
-                                        <TableRow key={`${item.NOTA}-${item.ITEM_CODIGO}-${index}`}>
-                                          <TableCell>{item.ITEM_CODIGO || '-'}</TableCell>
-                                          <TableCell className="text-right">{item.QUANTIDADE || 0}</TableCell>
-                                          <TableCell className="text-right">
-                                            {item.VALOR_UNITARIO ? formatCurrency(item.VALOR_UNITARIO) : '-'}
-                                          </TableCell>
-                                          <TableCell className="text-right">
-                                            {formatCurrency(valorTotal)}
-                                          </TableCell>
-                                        </TableRow>
-                                      );
-                                    })
-                                  )}
-                                </TableBody>
-                              </Table>
-                            </div>
-                          )}
+                          <InvoiceItemsTable 
+                            invoiceItems={invoiceItems}
+                            isLoadingItems={isLoadingItems}
+                          />
                         </div>
                       </TableCell>
                     </TableRow>

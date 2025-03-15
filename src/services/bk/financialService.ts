@@ -104,7 +104,7 @@ export const fetchBkFaturamentoData = async (
   return data || [];
 };
 
-export const fetchInvoiceItems = async (nota: string): Promise<BkFaturamento[]> => {
+export const fetchInvoiceItems = async (nota: string): Promise<any[]> => {
   console.log("Fetching invoice items for nota:", nota);
   const { data, error } = await supabase
     .from('BLUEBAY_FATURAMENTO')
