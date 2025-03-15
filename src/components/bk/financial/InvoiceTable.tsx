@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { 
   Table, 
@@ -14,13 +13,7 @@ import { InvoiceTableHeader } from "./InvoiceTableHeader";
 import { InvoiceItemsTable } from "./InvoiceItemsTable";
 import { StatusBadge } from "./StatusBadge";
 import { SearchBar } from "./SearchBar";
-
-interface InvoiceItem {
-  NOTA: string;
-  QUANTIDADE: number | null;
-  VALOR_UNITARIO: number | null;
-  ITEM_CODIGO: string | null;
-}
+import { InvoiceItem } from "@/services/bk/types/financialTypes";
 
 interface InvoiceTableProps {
   invoices: any[];

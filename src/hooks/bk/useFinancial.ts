@@ -1,6 +1,10 @@
 
 import { useState, useEffect, useMemo } from "react";
-import { fetchBkFaturamentoData, consolidateByNota, BkFaturamento } from "@/services/bk/financialService";
+import { 
+  fetchBkFaturamentoData, 
+  consolidateByNota, 
+  BkFaturamento 
+} from "@/services/bk/financialService";
 import { useToast } from "@/hooks/use-toast";
 
 // Helper to get date from X days ago in ISO format

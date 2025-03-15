@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   Table,
@@ -9,15 +8,7 @@ import {
   TableRow
 } from "@/components/ui/table";
 import { formatCurrency } from "@/utils/formatters";
-
-interface InvoiceItem {
-  NOTA: string;
-  QUANTIDADE: number | null;
-  VALOR_UNITARIO: number | null;
-  ITEM_CODIGO: string | null;
-  FATOR_CORRECAO?: number | null;
-  TIPO?: string | null;
-}
+import { InvoiceItem } from "@/services/bk/types/financialTypes";
 
 interface InvoiceItemsTableProps {
   invoiceItems: InvoiceItem[];
