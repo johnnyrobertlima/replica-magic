@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -73,11 +72,20 @@ export const useClients = () => {
   };
 
   const filteredClients = clients.filter(client => {
-    const searchLower = searchTerm.toLowerCase();
+    if (!searchTerm) return true;
+    
+    const searchLower = searchTerm.toLowerCase().trim();
+    
+    // Prioritize APELIDO in search
+    const apelidoMatch = client.APELIDO?.toLowerCase().includes(searchLower) || false;
+    
+    // If APELIDO matches, return immediately
+    if (apelidoMatch) return true;
+    
+    // Otherwise check other fields
     return (
-      (client.RAZAOSOCIAL?.toLowerCase().includes(searchLower) || "") ||
-      (client.APELIDO?.toLowerCase().includes(searchLower) || "") ||
-      (client.CNPJCPF?.toLowerCase().includes(searchLower) || "") ||
+      (client.RAZAOSOCIAL?.toLowerCase().includes(searchLower) || false) ||
+      (client.CNPJCPF?.toLowerCase().includes(searchLower) || false) ||
       String(client.PES_CODIGO).includes(searchTerm)
     );
   });

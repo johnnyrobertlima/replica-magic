@@ -8,7 +8,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Loader2, Edit, Trash2 } from "lucide-react";
+import { Loader2, Edit, Trash2, Building } from "lucide-react";
 import { BkClient } from "@/hooks/bk/useClients";
 
 interface ClientListProps {
@@ -38,7 +38,7 @@ export const ClientList = ({
               <TableRow>
                 <TableHead className="w-20">Código</TableHead>
                 <TableHead className="w-48">Razão Social</TableHead>
-                <TableHead className="w-32">Nome Fantasia</TableHead>
+                <TableHead className="w-32 font-bold">Nome Fantasia</TableHead>
                 <TableHead className="w-32">CNPJ/CPF</TableHead>
                 <TableHead className="w-32">Cidade</TableHead>
                 <TableHead className="w-24">UF</TableHead>
@@ -57,7 +57,12 @@ export const ClientList = ({
                   <TableRow key={client.PES_CODIGO}>
                     <TableCell>{client.PES_CODIGO}</TableCell>
                     <TableCell>{client.RAZAOSOCIAL || "-"}</TableCell>
-                    <TableCell>{client.APELIDO || "-"}</TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center">
+                        <Building className="h-4 w-4 mr-2 text-muted-foreground" />
+                        {client.APELIDO || "-"}
+                      </div>
+                    </TableCell>
                     <TableCell>{client.CNPJCPF || "-"}</TableCell>
                     <TableCell>{client.CIDADE || "-"}</TableCell>
                     <TableCell>{client.UF || "-"}</TableCell>
