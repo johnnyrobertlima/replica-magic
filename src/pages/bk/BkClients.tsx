@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { BkMenu } from "@/components/bk/BkMenu";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,7 +23,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Search, Edit, Plus, Trash2, Loader2, Percent, Building, Package, Book } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
-// Define the client data structure
 interface BkClient {
   PES_CODIGO: number;
   CATEGORIA?: string | null;
@@ -44,7 +42,6 @@ interface BkClient {
   EMAIL?: string | null;
   DATACADASTRO?: string | null;
   volume_saudavel_faturamento?: number | null;
-  // New fields
   empresas?: string[];
   fator_correcao?: number | null;
 }
@@ -73,11 +70,10 @@ const BkClients = () => {
 
       if (error) throw error;
       
-      // Initialize the new fields with default values
       const clientsWithNewFields = data?.map(client => ({
         ...client,
         empresas: client.CATEGORIA?.split(',') || [],
-        fator_correcao: client.fator_correcao || 0
+        fator_correcao: client.volume_saudavel_faturamento || 0
       })) || [];
       
       setClients(clientsWithNewFields);
@@ -145,17 +141,14 @@ const BkClients = () => {
     setIsSubmitting(true);
 
     try {
-      // Convert empresas array to comma-separated string to save in CATEGORIA field
       const dataToSubmit = {
         ...formData,
         CATEGORIA: formData.empresas?.join(',')
       };
       
-      // Remove the new fields that don't exist in the DB table
       const { empresas, fator_correcao, ...dataToSave } = dataToSubmit;
 
       if (currentClient) {
-        // Update existing client
         const { error } = await supabase
           .from("BLUEBAY_PESSOA")
           .update(dataToSave)
@@ -168,15 +161,13 @@ const BkClients = () => {
           description: "As informações do cliente foram atualizadas com sucesso.",
         });
       } else {
-        // Create new client
-        // For new clients, PES_CODIGO is required and must be a number
         if (!dataToSave.PES_CODIGO) {
           throw new Error("Código do cliente é obrigatório");
         }
         
         const { error } = await supabase
           .from("BLUEBAY_PESSOA")
-          .insert(dataToSave);
+          .insert([dataToSave]);
 
         if (error) throw error;
 
@@ -186,7 +177,6 @@ const BkClients = () => {
         });
       }
 
-      // Refresh the client list
       fetchClients();
       setIsFormOpen(false);
     } catch (error: any) {
@@ -219,7 +209,6 @@ const BkClients = () => {
         description: "O cliente foi excluído com sucesso.",
       });
 
-      // Refresh the client list
       fetchClients();
     } catch (error) {
       console.error("Error deleting client:", error);
@@ -400,7 +389,6 @@ const BkClients = () => {
                 </div>
               </div>
 
-              {/* Empresa field (checkboxes) */}
               <div className="space-y-2">
                 <Label>Empresa</Label>
                 <div className="flex flex-wrap gap-6 pt-2">
@@ -475,7 +463,6 @@ const BkClients = () => {
                     onChange={(e) => handleNumberChange(e, 'volume_saudavel_faturamento')}
                   />
                 </div>
-                {/* Fator de Correção field (percentage) */}
                 <div className="space-y-2">
                   <Label htmlFor="fator_correcao" className="flex items-center">
                     <Percent className="mr-1.5 h-4 w-4" />
