@@ -23,18 +23,37 @@ export const useClientCRUD = () => {
     try {
       console.log("Fetching all clients from BLUEBAY_PESSOA table...");
       
-      // Improved query to fetch ALL clients without restrictions
-      const { data, error } = await supabase
-        .from("BLUEBAY_PESSOA")
-        .select("*")
-        .order("PES_CODIGO", { ascending: true });
+      // Fetch all data in chunks to avoid limitations
+      let allClients: any[] = [];
+      let count = 0;
+      let hasMore = true;
+      const chunkSize = 1000;
 
-      if (error) throw error;
+      while (hasMore) {
+        const { data, error, count: totalCount } = await supabase
+          .from("BLUEBAY_PESSOA")
+          .select("*", { count: 'exact' })
+          .range(count, count + chunkSize - 1)
+          .order("PES_CODIGO", { ascending: true });
+
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          allClients = [...allClients, ...data];
+          count += data.length;
+          console.log(`Fetched chunk of ${data.length} clients, total so far: ${allClients.length}`);
+          
+          // If we received fewer records than requested, we've reached the end
+          hasMore = data.length === chunkSize;
+        } else {
+          hasMore = false;
+        }
+      }
       
-      console.log(`Fetched ${data?.length || 0} clients from database`);
+      console.log(`Fetched a total of ${allClients.length} clients from database`);
       
       // Transform API data to client objects
-      const transformedClients = data?.map(transformClientFromApi) || [];
+      const transformedClients = allClients.map(transformClientFromApi) || [];
       
       setClients(transformedClients);
     } catch (error) {
