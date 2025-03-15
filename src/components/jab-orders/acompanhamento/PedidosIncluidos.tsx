@@ -37,24 +37,33 @@ export const PedidosIncluidos = ({ approvedSeparacao }: PedidosIncluidosProps) =
               <TableHead className="text-right">Faturado</TableHead>
               <TableHead className="text-right">Saldo</TableHead>
               <TableHead className="text-right">Valor Unit.</TableHead>
-              <TableHead className="text-right">Valor Total</TableHead>
+              <TableHead className="text-right">Total</TableHead>
+              <TableHead className="text-right">Valor Faturado</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {approvedSeparacao.separacao_itens_flat
               .filter(item => item && item.pedido)
               .map((item, index) => {
-                const valorTotal = (item.quantidade_pedida || 0) * (item.valor_unitario || 0);
+                const quantidade = item.quantidade_pedida || 0;
+                const quantidadeEntregue = item.quantidade_entregue || 0;
+                const valorUnitario = item.valor_unitario || 0;
+                const saldo = item.quantidade_saldo || (quantidade - quantidadeEntregue);
+                
+                const valorTotal = quantidade * valorUnitario;
+                const valorFaturado = quantidadeEntregue * valorUnitario;
+                
                 return (
                   <TableRow key={`item-${item.pedido}-${item.item_codigo}-${index}`}>
                     <TableCell>{item.pedido}</TableCell>
                     <TableCell>{item.item_codigo}</TableCell>
                     <TableCell>{item.descricao || 'Sem descrição'}</TableCell>
-                    <TableCell className="text-right">{item.quantidade_pedida || 0}</TableCell>
-                    <TableCell className="text-right">{item.quantidade_entregue || 0}</TableCell>
-                    <TableCell className="text-right">{item.quantidade_saldo || (item.quantidade_pedida - (item.quantidade_entregue || 0))}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.valor_unitario || 0)}</TableCell>
+                    <TableCell className="text-right">{quantidade}</TableCell>
+                    <TableCell className="text-right">{quantidadeEntregue}</TableCell>
+                    <TableCell className="text-right">{saldo}</TableCell>
+                    <TableCell className="text-right">{formatCurrency(valorUnitario)}</TableCell>
                     <TableCell className="text-right">{formatCurrency(valorTotal)}</TableCell>
+                    <TableCell className="text-right">{formatCurrency(valorFaturado)}</TableCell>
                   </TableRow>
                 );
               })}
