@@ -22,7 +22,7 @@ export const TreemapTooltip = ({ children, data }: TreemapTooltipProps) => {
         </TooltipTrigger>
         <TooltipContent 
           side="top" 
-          className="bg-white/95 backdrop-blur-sm border border-gray-200 p-3 shadow-lg"
+          className="bg-white/95 backdrop-blur-sm border border-gray-200 p-3 shadow-lg animate-fade-in"
         >
           <p className="font-medium">{data.name}</p>
           <p className="text-sm text-muted-foreground mt-1">{data.value}</p>

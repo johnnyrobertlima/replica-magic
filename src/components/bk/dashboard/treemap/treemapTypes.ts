@@ -23,4 +23,6 @@ export interface TreemapCellProps {
   colorScale: any;
   width: number;
   height: number;
+  animate?: boolean;
+  animationDelay?: number;
 }

@@ -62,50 +62,75 @@ export const useTreemapRenderer = (data: TreemapDataItem[]) => {
         return formatCurrency(item.value);
       });
     
-    // Add rectangles
+    // Add rectangles with staggered animation
     cell.append("rect")
       .attr("id", (d, i) => `rect-${i}`)
       .attr("width", d => Math.max(0, (d as any).x1 - (d as any).x0))
-      .attr("height", d => Math.max(0, (d as any).y1 - (d as any).y0))
+      .attr("height", 0) // Start with height 0 for animation
       .attr("fill", (d, i) => colorScale(i.toString()))
       .attr("stroke", "#fff")
       .attr("stroke-width", 1)
-      .attr("class", "cursor-pointer transition-all duration-200")
+      .attr("class", "cursor-pointer")
       .style("fill-opacity", 0.85)
-      .on("mouseover", function(event, d) {
-        // Highlight rectangle and show tooltip on hover
+      .transition() // Add transition for initial load
+      .duration(500)
+      .delay((d, i) => i * 20) // Stagger the animations
+      .attr("height", d => Math.max(0, (d as any).y1 - (d as any).y0))
+      .on("end", function() {
+        // Add event listeners after animation is complete
         d3.select(this)
-          .attr("stroke", "#333")
-          .attr("stroke-width", 2)
-          .style("fill-opacity", 1);
-          
-        // Show custom tooltip
-        const item = (d as any).data;
-        const tooltip = d3.select("#d3-tooltip");
-        tooltip.style("display", "block")
-          .style("left", (event.pageX + 10) + "px")
-          .style("top", (event.pageY - 28) + "px");
-          
-        tooltip.select(".item-name").text(item.name);
-        tooltip.select(".item-value").text(formatCurrency(item.value));
-      })
-      .on("mousemove", function(event) {
-        // Move tooltip with cursor
-        d3.select("#d3-tooltip")
-          .style("left", (event.pageX + 10) + "px")
-          .style("top", (event.pageY - 28) + "px");
-      })
-      .on("mouseout", function() {
-        // Restore rectangle style and hide tooltip
-        d3.select(this)
-          .attr("stroke", "#fff")
-          .attr("stroke-width", 1)
-          .style("fill-opacity", 0.85);
-          
-        d3.select("#d3-tooltip").style("display", "none");
+          .on("mouseover", function(event, d) {
+            // Highlight rectangle and show tooltip on hover
+            d3.select(this)
+              .attr("stroke", "#333")
+              .attr("stroke-width", 2)
+              .style("fill-opacity", 1)
+              .transition()
+              .duration(150)
+              .attr("transform", "scale(1.02)");
+              
+            // Show custom tooltip with fade-in
+            const item = (d as any).data;
+            const tooltip = d3.select("#d3-tooltip");
+            tooltip
+              .style("display", "block")
+              .style("opacity", 0)
+              .style("left", (event.pageX + 10) + "px")
+              .style("top", (event.pageY - 28) + "px")
+              .transition()
+              .duration(200)
+              .style("opacity", 1);
+              
+            tooltip.select(".item-name").text(item.name);
+            tooltip.select(".item-value").text(formatCurrency(item.value));
+          })
+          .on("mousemove", function(event) {
+            // Move tooltip with cursor
+            d3.select("#d3-tooltip")
+              .style("left", (event.pageX + 10) + "px")
+              .style("top", (event.pageY - 28) + "px");
+          })
+          .on("mouseout", function() {
+            // Restore rectangle style and hide tooltip
+            d3.select(this)
+              .attr("stroke", "#fff")
+              .attr("stroke-width", 1)
+              .style("fill-opacity", 0.85)
+              .transition()
+              .duration(150)
+              .attr("transform", "scale(1)");
+              
+            d3.select("#d3-tooltip")
+              .transition()
+              .duration(200)
+              .style("opacity", 0)
+              .on("end", function() {
+                d3.select(this).style("display", "none");
+              });
+          });
       });
     
-    // Add text labels
+    // Add text labels with fade-in animation
     cell.append("text")
       .attr("x", 4)
       .attr("y", 14)
@@ -117,6 +142,7 @@ export const useTreemapRenderer = (data: TreemapDataItem[]) => {
       })
       .attr("fill", "#333") // Darker text for better contrast on pastel backgrounds
       .attr("pointer-events", "none")
+      .style("opacity", 0) // Start with opacity 0 for animation
       .text(d => {
         const rect = d as any;
         const width = rect.x1 - rect.x0;
@@ -137,9 +163,13 @@ export const useTreemapRenderer = (data: TreemapDataItem[]) => {
           node.textContent = text + "...";
           textLength = node.getComputedTextLength();
         }
-      });
+      })
+      .transition() // Add fade-in transition
+      .duration(400)
+      .delay((d, i) => 300 + i * 20) // Delay after rectangles animation
+      .style("opacity", 1);
     
-    // Add value text for large rectangles
+    // Add value text for large rectangles with fade-in animation
     cell.filter(d => {
         const rect = d as any;
         return (rect.x1 - rect.x0) > 90 && (rect.y1 - rect.y0) > 40;
@@ -150,10 +180,15 @@ export const useTreemapRenderer = (data: TreemapDataItem[]) => {
       .attr("font-size", "10px")
       .attr("fill", "#555") // Darker text for better contrast
       .attr("pointer-events", "none")
+      .style("opacity", 0) // Start with opacity 0 for animation
       .text(d => {
         const item = d.data as any;
         return formatCurrency(item.value);
-      });
+      })
+      .transition() // Add fade-in transition
+      .duration(400)
+      .delay((d, i) => 500 + i * 20) // Delay after labels animation
+      .style("opacity", 1);
   }, [data]);
 
   return { svgRef };

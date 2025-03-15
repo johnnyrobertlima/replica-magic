@@ -22,7 +22,7 @@ export const colorRange = [
  * Gets a D3 color scale for the treemap
  */
 export const getTreemapColorScale = (d3: any, data: any[]) => {
-  return d3.scaleOrdinal<string>()
+  return d3.scaleOrdinal()
     .domain(data.map((_, i) => i.toString()))
     .range(colorRange);
 };
