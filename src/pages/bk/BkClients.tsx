@@ -165,9 +165,19 @@ const BkClients = () => {
           throw new Error("Código do cliente é obrigatório");
         }
         
+        const pesCodigoAsNumber = Number(dataToSave.PES_CODIGO);
+        if (isNaN(pesCodigoAsNumber)) {
+          throw new Error("Código do cliente deve ser um número válido");
+        }
+        
+        const clientToInsert = {
+          ...dataToSave,
+          PES_CODIGO: pesCodigoAsNumber
+        };
+        
         const { error } = await supabase
           .from("BLUEBAY_PESSOA")
-          .insert([dataToSave]);
+          .insert([clientToInsert]);
 
         if (error) throw error;
 
