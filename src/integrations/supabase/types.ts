@@ -718,6 +718,7 @@ export type Database = {
           id: string | null
           message: string
           name: string
+          phone: string | null
           read: boolean | null
           updated_at: string | null
         }
@@ -727,6 +728,7 @@ export type Database = {
           id?: string | null
           message: string
           name: string
+          phone?: string | null
           read?: boolean | null
           updated_at?: string | null
         }
@@ -736,6 +738,7 @@ export type Database = {
           id?: string | null
           message?: string
           name?: string
+          phone?: string | null
           read?: boolean | null
           updated_at?: string | null
         }
