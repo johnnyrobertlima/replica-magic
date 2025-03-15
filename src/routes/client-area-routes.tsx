@@ -1,5 +1,6 @@
 
-import { Route, Fragment } from "react-router-dom";
+import { Route } from "react-router-dom";
+import { Fragment } from "react";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
 import ClientArea from "@/pages/ClientArea";
 import PostManagement from "@/pages/PostManagement";

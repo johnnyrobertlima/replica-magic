@@ -1,5 +1,6 @@
 
-import { Route, Fragment } from "react-router-dom";
+import { Route } from "react-router-dom";
+import { Fragment } from "react";
 import { Outlet } from "react-router-dom";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
 import { AdminLayout } from "@/pages/admin/layout";

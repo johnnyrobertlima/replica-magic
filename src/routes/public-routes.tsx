@@ -1,5 +1,6 @@
 
-import { Route, Fragment } from "react-router-dom";
+import { Route } from "react-router-dom";
+import { Fragment } from "react";
 import Index from "@/pages/Index";
 import ClientLogin from "@/pages/ClientLogin";
 
