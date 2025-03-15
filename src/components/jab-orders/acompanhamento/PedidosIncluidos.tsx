@@ -1,4 +1,5 @@
 
+import { useState, useEffect } from "react";
 import { FileText } from "lucide-react";
 import { 
   Table, 
@@ -9,14 +10,93 @@ import {
   TableCell 
 } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PedidosIncluidosProps {
   approvedSeparacao: any;
 }
 
 export const PedidosIncluidos = ({ approvedSeparacao }: PedidosIncluidosProps) => {
+  const [itemsWithEntrega, setItemsWithEntrega] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  useEffect(() => {
+    const fetchEntregaData = async () => {
+      if (!approvedSeparacao.separacao_itens_flat || approvedSeparacao.separacao_itens_flat.length === 0) {
+        setIsLoading(false);
+        return;
+      }
+      
+      try {
+        // Prepare items for filtering from BLUEBAY_PEDIDO
+        const itemsToFetch = approvedSeparacao.separacao_itens_flat
+          .filter(item => item && item.pedido && item.item_codigo)
+          .map(item => ({
+            pedido: item.pedido,
+            item_codigo: item.item_codigo
+          }));
+        
+        if (itemsToFetch.length === 0) {
+          setItemsWithEntrega(approvedSeparacao.separacao_itens_flat);
+          setIsLoading(false);
+          return;
+        }
+        
+        // Create a map of all the order number + item code combinations
+        const pedidoItemPairs = itemsToFetch.map(item => `${item.pedido}:${item.item_codigo}`);
+        
+        // Fetch the data from BLUEBAY_PEDIDO based on order numbers and item codes
+        const { data: pedidoData, error } = await supabase
+          .from('BLUEBAY_PEDIDO')
+          .select('PED_NUMPEDIDO, ITEM_CODIGO, QTDE_ENTREGUE')
+          .in('PED_NUMPEDIDO', itemsToFetch.map(item => item.pedido))
+          .in('ITEM_CODIGO', itemsToFetch.map(item => item.item_codigo));
+        
+        if (error) {
+          console.error('Error fetching QTDE_ENTREGUE from BLUEBAY_PEDIDO:', error);
+          setItemsWithEntrega(approvedSeparacao.separacao_itens_flat);
+          setIsLoading(false);
+          return;
+        }
+        
+        // Create a map of PED_NUMPEDIDO+ITEM_CODIGO to QTDE_ENTREGUE for easy lookup
+        const entregaMap = {};
+        pedidoData.forEach(row => {
+          const key = `${row.PED_NUMPEDIDO}:${row.ITEM_CODIGO}`;
+          entregaMap[key] = row.QTDE_ENTREGUE;
+        });
+        
+        // Update the items with the correct QTDE_ENTREGUE values
+        const updatedItems = approvedSeparacao.separacao_itens_flat.map(item => {
+          if (item && item.pedido && item.item_codigo) {
+            const key = `${item.pedido}:${item.item_codigo}`;
+            const quantidadeEntregue = entregaMap[key] !== undefined ? entregaMap[key] : 0;
+            return {
+              ...item,
+              quantidade_entregue: quantidadeEntregue
+            };
+          }
+          return item;
+        });
+        
+        setItemsWithEntrega(updatedItems);
+      } catch (error) {
+        console.error('Error in fetchEntregaData:', error);
+        setItemsWithEntrega(approvedSeparacao.separacao_itens_flat);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchEntregaData();
+  }, [approvedSeparacao.separacao_itens_flat]);
+  
   if (!approvedSeparacao.separacao_itens_flat || approvedSeparacao.separacao_itens_flat.length === 0) {
     return null;
+  }
+  
+  if (isLoading) {
+    return <div className="mt-4 pt-4 border-t border-gray-200">Carregando dados de entrega...</div>;
   }
 
   return (
@@ -42,7 +122,7 @@ export const PedidosIncluidos = ({ approvedSeparacao }: PedidosIncluidosProps) =
             </TableRow>
           </TableHeader>
           <TableBody>
-            {approvedSeparacao.separacao_itens_flat
+            {itemsWithEntrega
               .filter(item => item && item.pedido)
               .map((item, index) => {
                 // Use quantidade_pedida directly from the item
