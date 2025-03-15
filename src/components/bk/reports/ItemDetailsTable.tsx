@@ -79,11 +79,6 @@ export const ItemDetailsTable = ({ itemDetails, isLoadingDetails }: ItemDetailsT
                   <TableCell className="text-right">{detail.QUANTIDADE || 0}</TableCell>
                   <TableCell className={`text-right ${isCorrectionApplied ? 'text-blue-500 font-medium' : ''}`}>
                     {detail.VALOR_UNITARIO ? formatCurrency(detail.VALOR_UNITARIO) : '-'}
-                    {isCorrectionApplied && (
-                      <span className="ml-1 text-xs text-blue-500">
-                        (fator: {detail.FATOR_CORRECAO})
-                      </span>
-                    )}
                   </TableCell>
                   <TableCell className="text-right">{formatCurrency(valorTotal)}</TableCell>
                 </TableRow>
