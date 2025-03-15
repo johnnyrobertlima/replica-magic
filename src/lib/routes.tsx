@@ -1,4 +1,3 @@
-
 import Index from "@/pages/Index";
 import ClientArea from "@/pages/ClientArea";
 import PostManagement from "@/pages/PostManagement";
@@ -14,10 +13,10 @@ import ClientLogin from "@/pages/ClientLogin";
 import AprovacaoFinanceira from "@/pages/AprovacaoFinanceira";
 import AcompanhamentoFaturamento from "@/pages/AcompanhamentoFaturamento";
 import UserGroupManagement from "@/pages/admin/users/UserGroupManagement";
-import { AdminBanners } from "@/pages/admin/banners"; // Updated import
+import { AdminBanners } from "@/pages/admin/banners";
 import BluebayHome from "@/pages/BluebayHome";
 import BkHome from "@/pages/BkHome";
-import { BkClients } from "@/pages/bk";
+import { BkClients, BkFinancial, BkReports, BkDashboard } from "@/pages/bk";
 
 export const routes = [
   {
@@ -39,6 +38,18 @@ export const routes = [
   {
     path: "/client-area/bk/clients",
     element: <BkClients />,
+  },
+  {
+    path: "/client-area/bk/financial",
+    element: <BkFinancial />,
+  },
+  {
+    path: "/client-area/bk/reports",
+    element: <BkReports />,
+  },
+  {
+    path: "/client-area/bk/dashboard",
+    element: <BkDashboard />,
   },
   {
     path: "/post-management",
