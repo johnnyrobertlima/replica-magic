@@ -20,7 +20,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Search, Edit, Plus, Trash2, Loader2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Search, Edit, Plus, Trash2, Loader2, Percent, Building, Package, Book } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 // Define the client data structure
@@ -43,6 +44,9 @@ interface BkClient {
   EMAIL?: string | null;
   DATACADASTRO?: string | null;
   volume_saudavel_faturamento?: number | null;
+  // New fields
+  empresas?: string[];
+  fator_correcao?: number | null;
 }
 
 const BkClients = () => {
@@ -68,7 +72,15 @@ const BkClients = () => {
         .order("PES_CODIGO", { ascending: true });
 
       if (error) throw error;
-      setClients(data || []);
+      
+      // Initialize the new fields with default values
+      const clientsWithNewFields = data?.map(client => ({
+        ...client,
+        empresas: client.CATEGORIA?.split(',') || [],
+        fator_correcao: 0
+      })) || [];
+      
+      setClients(clientsWithNewFields);
     } catch (error) {
       console.error("Error fetching clients:", error);
       toast({
@@ -93,7 +105,11 @@ const BkClients = () => {
 
   const handleEdit = (client: BkClient) => {
     setCurrentClient(client);
-    setFormData(client);
+    setFormData({
+      ...client,
+      empresas: client.empresas || [],
+      fator_correcao: client.fator_correcao || 0
+    });
     setIsFormOpen(true);
   };
 
@@ -102,35 +118,111 @@ const BkClients = () => {
     setFormData({ ...formData, [name]: value });
   };
 
+  const handleCheckboxChange = (checked: boolean, empresa: string) => {
+    const empresas = formData.empresas || [];
+    const newEmpresas = checked
+      ? [...empresas, empresa]
+      : empresas.filter(e => e !== empresa);
+    setFormData({ ...formData, empresas: newEmpresas });
+  };
+
+  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
+    const value = e.target.value === "" ? null : parseFloat(e.target.value);
+    setFormData({ ...formData, [fieldName]: value });
+  };
+
+  const handleCreate = () => {
+    setCurrentClient(null);
+    setFormData({
+      empresas: [],
+      fator_correcao: 0
+    });
+    setIsFormOpen(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase
-        .from("BLUEBAY_PESSOA")
-        .update(formData)
-        .eq("PES_CODIGO", currentClient?.PES_CODIGO);
+      // Convert empresas array to comma-separated string to save in CATEGORIA field
+      const dataToSubmit = {
+        ...formData,
+        CATEGORIA: formData.empresas?.join(',')
+      };
+      
+      // Remove the new fields that don't exist in the DB table
+      const { empresas, fator_correcao, ...dataToSave } = dataToSubmit;
 
-      if (error) throw error;
+      if (currentClient) {
+        // Update existing client
+        const { error } = await supabase
+          .from("BLUEBAY_PESSOA")
+          .update(dataToSave)
+          .eq("PES_CODIGO", currentClient.PES_CODIGO);
 
-      toast({
-        title: "Cliente atualizado",
-        description: "As informações do cliente foram atualizadas com sucesso.",
-      });
+        if (error) throw error;
+
+        toast({
+          title: "Cliente atualizado",
+          description: "As informações do cliente foram atualizadas com sucesso.",
+        });
+      } else {
+        // Create new client
+        const { error } = await supabase
+          .from("BLUEBAY_PESSOA")
+          .insert([dataToSave]);
+
+        if (error) throw error;
+
+        toast({
+          title: "Cliente criado",
+          description: "Novo cliente foi criado com sucesso.",
+        });
+      }
 
       // Refresh the client list
       fetchClients();
       setIsFormOpen(false);
     } catch (error) {
-      console.error("Error updating client:", error);
+      console.error("Error saving client:", error);
       toast({
-        title: "Erro ao atualizar",
-        description: "Ocorreu um erro ao atualizar as informações do cliente.",
+        title: "Erro ao salvar",
+        description: "Ocorreu um erro ao salvar as informações do cliente.",
         variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (client: BkClient) => {
+    if (!confirm(`Tem certeza que deseja excluir o cliente ${client.RAZAOSOCIAL || client.APELIDO || client.PES_CODIGO}?`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("BLUEBAY_PESSOA")
+        .delete()
+        .eq("PES_CODIGO", client.PES_CODIGO);
+
+      if (error) throw error;
+
+      toast({
+        title: "Cliente excluído",
+        description: "O cliente foi excluído com sucesso.",
+      });
+
+      // Refresh the client list
+      fetchClients();
+    } catch (error) {
+      console.error("Error deleting client:", error);
+      toast({
+        title: "Erro ao excluir",
+        description: "Ocorreu um erro ao excluir o cliente.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -152,7 +244,7 @@ const BkClients = () => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <Button className="ml-2">
+              <Button className="ml-2" onClick={handleCreate}>
                 <Plus className="h-4 w-4 mr-2" />
                 Novo Cliente
               </Button>
@@ -204,7 +296,11 @@ const BkClients = () => {
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
-                              <Button variant="ghost" size="sm">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleDelete(client)}
+                              >
                                 <Trash2 className="h-4 w-4 text-destructive" />
                               </Button>
                             </div>
@@ -223,7 +319,9 @@ const BkClients = () => {
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Editar Cliente</DialogTitle>
+            <DialogTitle>
+              {currentClient ? "Editar Cliente" : "Novo Cliente"}
+            </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit}>
             <div className="grid gap-4 py-4">
@@ -234,8 +332,9 @@ const BkClients = () => {
                     id="PES_CODIGO"
                     name="PES_CODIGO"
                     value={formData.PES_CODIGO || ""}
-                    readOnly
-                    disabled
+                    onChange={handleInputChange}
+                    readOnly={!!currentClient}
+                    disabled={!!currentClient}
                   />
                 </div>
                 <div className="space-y-2">
@@ -243,9 +342,11 @@ const BkClients = () => {
                   <Input
                     id="DATACADASTRO"
                     name="DATACADASTRO"
-                    value={formData.DATACADASTRO?.split("T")[0] || ""}
-                    readOnly
-                    disabled
+                    type="date"
+                    value={formData.DATACADASTRO?.split("T")[0] || new Date().toISOString().split("T")[0]}
+                    onChange={handleInputChange}
+                    readOnly={!!currentClient}
+                    disabled={!!currentClient}
                   />
                 </div>
               </div>
@@ -292,16 +393,62 @@ const BkClients = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="CATEGORIA">Categoria</Label>
-                  <Input
-                    id="CATEGORIA"
-                    name="CATEGORIA"
-                    value={formData.CATEGORIA || ""}
-                    onChange={handleInputChange}
-                  />
+              {/* Empresa field (checkboxes) */}
+              <div className="space-y-2">
+                <Label>Empresa</Label>
+                <div className="flex flex-wrap gap-6 pt-2">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="empresa-bluebay" 
+                      checked={formData.empresas?.includes('Bluebay')}
+                      onCheckedChange={(checked) => 
+                        handleCheckboxChange(checked as boolean, 'Bluebay')
+                      }
+                    />
+                    <Label 
+                      htmlFor="empresa-bluebay" 
+                      className="flex items-center cursor-pointer"
+                    >
+                      <Building className="mr-1.5 h-4 w-4" />
+                      Bluebay
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="empresa-jab" 
+                      checked={formData.empresas?.includes('JAB')}
+                      onCheckedChange={(checked) => 
+                        handleCheckboxChange(checked as boolean, 'JAB')
+                      }
+                    />
+                    <Label 
+                      htmlFor="empresa-jab" 
+                      className="flex items-center cursor-pointer"
+                    >
+                      <Package className="mr-1.5 h-4 w-4" />
+                      JAB
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="empresa-bk" 
+                      checked={formData.empresas?.includes('BK')}
+                      onCheckedChange={(checked) => 
+                        handleCheckboxChange(checked as boolean, 'BK')
+                      }
+                    />
+                    <Label 
+                      htmlFor="empresa-bk" 
+                      className="flex items-center cursor-pointer"
+                    >
+                      <Book className="mr-1.5 h-4 w-4" />
+                      BK
+                    </Label>
+                  </div>
                 </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="NOME_CATEGORIA">Nome da Categoria</Label>
                   <Input
@@ -318,8 +465,31 @@ const BkClients = () => {
                     name="volume_saudavel_faturamento"
                     type="number"
                     value={formData.volume_saudavel_faturamento || ""}
-                    onChange={handleInputChange}
+                    onChange={(e) => handleNumberChange(e, 'volume_saudavel_faturamento')}
                   />
+                </div>
+                {/* Fator de Correção field (percentage) */}
+                <div className="space-y-2">
+                  <Label htmlFor="fator_correcao" className="flex items-center">
+                    <Percent className="mr-1.5 h-4 w-4" />
+                    Fator de Correção
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="fator_correcao"
+                      name="fator_correcao"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      value={formData.fator_correcao || ""}
+                      onChange={(e) => handleNumberChange(e, 'fator_correcao')}
+                      className="pr-8"
+                    />
+                    <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                      %
+                    </span>
+                  </div>
                 </div>
               </div>
 

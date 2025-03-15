@@ -17,7 +17,7 @@ import UserGroupManagement from "@/pages/admin/users/UserGroupManagement";
 import { AdminBanners } from "@/pages/admin/banners"; // Updated import
 import BluebayHome from "@/pages/BluebayHome";
 import BkHome from "@/pages/BkHome";
-import BkClients from "@/pages/bk/BkClients";
+import { BkClients } from "@/pages/bk";
 
 export const routes = [
   {
