@@ -25,19 +25,30 @@ export const ContactSection = () => {
         .from("contact_messages")
         .insert([{ name, email, phone, message }]);
 
-      if (dbError) throw dbError;
+      if (dbError) {
+        console.error("Database error:", dbError);
+        throw new Error("Erro ao salvar mensagem no banco de dados");
+      }
 
       // Then, send email notification
-      const { error: emailError } = await supabase.functions.invoke("send-contact-email", {
+      const { data, error: emailError } = await supabase.functions.invoke("send-contact-email", {
         body: { name, email, phone, message },
       });
 
-      if (emailError) throw emailError;
-
-      toast({
-        title: "Mensagem enviada com sucesso!",
-        description: "Entraremos em contato em breve.",
-      });
+      if (emailError) {
+        console.error("Email sending error:", emailError);
+        // Still show success if only the email failed but DB succeeded
+        toast({
+          title: "Mensagem enviada com sucesso!",
+          description: "Sua mensagem foi salva, mas houve um problema ao enviar o email de notificação.",
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "Mensagem enviada com sucesso!",
+          description: "Entraremos em contato em breve.",
+        });
+      }
 
       // Reset form
       e.currentTarget.reset();
@@ -45,7 +56,7 @@ export const ContactSection = () => {
       console.error("Error sending message:", error);
       toast({
         title: "Erro ao enviar mensagem",
-        description: "Por favor, tente novamente mais tarde.",
+        description: error.message || "Por favor, tente novamente mais tarde.",
         variant: "destructive",
       });
     } finally {

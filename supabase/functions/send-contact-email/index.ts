@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
@@ -16,12 +17,21 @@ interface ContactMessage {
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Log the API key (masked) for debugging
+    console.log("Using Resend API key:", RESEND_API_KEY ? "****" + RESEND_API_KEY.slice(-4) : "Not set");
+    
+    if (!RESEND_API_KEY) {
+      throw new Error("RESEND_API_KEY is not set");
+    }
+
     const contactMessage: ContactMessage = await req.json();
+    console.log("Received contact message:", JSON.stringify(contactMessage));
     
     const emailHtml = `
       <h2>Nova mensagem de contato</h2>
@@ -46,16 +56,19 @@ const handler = async (req: Request): Promise<Response> => {
       }),
     });
 
+    const responseText = await res.text();
+    console.log("Resend API response status:", res.status);
+    console.log("Resend API response:", responseText);
+
     if (res.ok) {
-      const data = await res.json();
+      const data = JSON.parse(responseText);
       return new Response(JSON.stringify(data), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     } else {
-      const error = await res.text();
-      console.error("Resend API error:", error);
-      return new Response(JSON.stringify({ error }), {
+      console.error("Resend API error:", responseText);
+      return new Response(JSON.stringify({ error: responseText }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
