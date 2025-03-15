@@ -1,13 +1,22 @@
 
 import { ClienteFinanceiro } from '@/types/financialClient';
+import { Json } from '@/integrations/supabase/types';
 
 export interface ApprovedOrder {
-  separacaoId: string;
-  clienteData: ClienteFinanceiro;
-  approvedAt: Date;
+  id?: string;
+  separacao_id: string;
+  cliente_data: ClienteFinanceiro;
+  approved_at: Date | string;
+  user_id?: string | null;
+  user_email?: string | null;
+  action?: string;
+  
+  // Properties used in the client-side
+  separacaoId?: string;
+  clienteData?: ClienteFinanceiro;
+  approvedAt?: Date;
   userId?: string | null;
   userEmail?: string | null;
-  action?: string;
 }
 
 export interface OrderTotals {
