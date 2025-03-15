@@ -8,19 +8,40 @@ import { Button } from "@/components/ui/button";
 import { DateRangePicker } from "@/components/bk/financial/DateRangePicker";
 import { StatusFilter } from "@/components/bk/financial/StatusFilter";
 import { RefreshCw } from "lucide-react";
+import { ItemTreemap } from "@/components/bk/dashboard/ItemTreemap";
 
 export const BkDashboard = () => {
-  const { 
-    isLoading, 
-    consolidatedInvoices, 
+  const {
+    isLoading,
+    consolidatedInvoices,
     filteredInvoices,
-    refreshData, 
-    dateRange, 
+    refreshData,
+    dateRange,
     updateDateRange,
     statusFilter,
     updateStatusFilter,
-    availableStatuses
+    availableStatuses,
   } = useFinancial();
+
+  // Process data for treemap
+  const treemapData = React.useMemo(() => {
+    const itemTotals = new Map<string, number>();
+
+    filteredInvoices.forEach((invoice) => {
+      invoice.items?.forEach((item) => {
+        const currentTotal = itemTotals.get(item.ITEM_CODIGO) || 0;
+        itemTotals.set(
+          item.ITEM_CODIGO,
+          currentTotal + item.QUANTIDADE * item.VALOR_UNITARIO
+        );
+      });
+    });
+
+    return Array.from(itemTotals).map(([name, value]) => ({
+      name,
+      value,
+    }));
+  }, [filteredInvoices]);
 
   return (
     <div className="container-fluid p-0 max-w-full">
@@ -35,22 +56,25 @@ export const BkDashboard = () => {
             Atualizar
           </Button>
         </div>
-  
+
         <div className="mt-6 space-y-6">
           <div className="flex flex-wrap justify-between gap-4 mb-4 items-center">
-            <StatusFilter 
-              selectedStatus={statusFilter} 
+            <StatusFilter
+              selectedStatus={statusFilter}
               onStatusChange={updateStatusFilter}
               statuses={availableStatuses}
             />
-            <DateRangePicker 
-              startDate={dateRange.startDate} 
-              endDate={dateRange.endDate} 
-              onUpdate={updateDateRange} 
+            <DateRangePicker
+              startDate={dateRange.startDate}
+              endDate={dateRange.endDate}
+              onUpdate={updateDateRange}
             />
           </div>
-          
-          <FinancialDashboard invoices={filteredInvoices} />
+
+          <div className="grid gap-6">
+            <ItemTreemap data={treemapData} />
+            <FinancialDashboard invoices={filteredInvoices} />
+          </div>
         </div>
       </div>
     </div>
