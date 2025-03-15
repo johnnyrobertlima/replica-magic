@@ -56,22 +56,22 @@ export const ItemTreemap = ({ data }: ItemTreemapProps) => {
     // Apply the treemap layout to the hierarchy
     treemapLayout(hierarchy);
     
-    // Create enhanced color scale with more colors
+    // Create color scale with more muted/pastel colors
     const colorRange = [
-      "#3B82F6", // blue-500
-      "#8B5CF6", // violet-500
-      "#EC4899", // pink-500
-      "#EF4444", // red-500
-      "#F59E0B", // amber-500
-      "#10B981", // emerald-500
-      "#06B6D4", // cyan-500
-      "#6366F1", // indigo-500
-      "#8B5CF6", // violet-500
-      "#D946EF", // fuchsia-500
-      "#F97316"  // orange-500
+      "#D3E4FD", // Soft Blue
+      "#E5DEFF", // Soft Purple
+      "#FFDEE2", // Soft Pink
+      "#FDE1D3", // Soft Peach
+      "#FEC6A1", // Soft Orange
+      "#FEF7CD", // Soft Yellow
+      "#F2FCE2", // Soft Green
+      "#F1F0FB", // Soft Gray
+      "#D4E6F1", // Light Blue
+      "#D5F5E3", // Light Green
+      "#FAE5D3"  // Light Orange
     ];
     
-    // Create color scale based on index instead of value for more variety
+    // Create color scale based on index
     const colorScale = d3.scaleOrdinal<string>()
       .domain(data.map((_, i) => i.toString()))
       .range(colorRange);
@@ -82,6 +82,7 @@ export const ItemTreemap = ({ data }: ItemTreemapProps) => {
       .enter()
       .append("g")
       .attr("transform", d => `translate(${(d as any).x0},${(d as any).y0})`)
+      .attr("class", "treemap-cell")
       .attr("data-item", d => {
         const item = d.data as any;
         return item.name;
@@ -100,19 +101,38 @@ export const ItemTreemap = ({ data }: ItemTreemapProps) => {
       .attr("stroke", "#fff")
       .attr("stroke-width", 1)
       .attr("class", "cursor-pointer transition-all duration-200")
-      .on("mouseover", function() {
-        // Highlight rectangle on hover
+      .style("fill-opacity", 0.85)
+      .on("mouseover", function(event, d) {
+        // Highlight rectangle and show tooltip on hover
         d3.select(this)
-          .attr("stroke", "#000")
+          .attr("stroke", "#333")
           .attr("stroke-width", 2)
-          .attr("filter", "brightness(1.1)");
+          .style("fill-opacity", 1);
+          
+        // Show custom tooltip
+        const item = (d as any).data;
+        const tooltip = d3.select("#d3-tooltip");
+        tooltip.style("display", "block")
+          .style("left", (event.pageX + 10) + "px")
+          .style("top", (event.pageY - 28) + "px");
+          
+        tooltip.select(".item-name").text(item.name);
+        tooltip.select(".item-value").text(formatCurrency(item.value));
+      })
+      .on("mousemove", function(event) {
+        // Move tooltip with cursor
+        d3.select("#d3-tooltip")
+          .style("left", (event.pageX + 10) + "px")
+          .style("top", (event.pageY - 28) + "px");
       })
       .on("mouseout", function() {
-        // Restore rectangle style
+        // Restore rectangle style and hide tooltip
         d3.select(this)
           .attr("stroke", "#fff")
           .attr("stroke-width", 1)
-          .attr("filter", null);
+          .style("fill-opacity", 0.85);
+          
+        d3.select("#d3-tooltip").style("display", "none");
       });
     
     // Add text labels
@@ -125,9 +145,8 @@ export const ItemTreemap = ({ data }: ItemTreemapProps) => {
         const size = Math.sqrt(area) / 10;
         return `${Math.min(Math.max(size, 8), 14)}px`;
       })
-      .attr("fill", "white")
+      .attr("fill", "#333") // Darker text for better contrast on pastel backgrounds
       .attr("pointer-events", "none")
-      .style("text-shadow", "1px 1px 1px rgba(0,0,0,0.5)")
       .text(d => {
         const rect = d as any;
         const width = rect.x1 - rect.x0;
@@ -159,26 +178,9 @@ export const ItemTreemap = ({ data }: ItemTreemapProps) => {
       .attr("x", 4)
       .attr("y", 30)
       .attr("font-size", "10px")
-      .attr("fill", "rgba(255,255,255,0.8)")
+      .attr("fill", "#555") // Darker text for better contrast
       .attr("pointer-events", "none")
-      .style("text-shadow", "1px 1px 1px rgba(0,0,0,0.5)")
       .text(d => {
-        const item = d.data as any;
-        return formatCurrency(item.value);
-      });
-      
-    // Create tooltip triggers by adding transparent overlay 
-    // that works with the Radix UI Tooltip component
-    cell.append("rect")
-      .attr("width", d => Math.max(0, (d as any).x1 - (d as any).x0))
-      .attr("height", d => Math.max(0, (d as any).y1 - (d as any).y0))
-      .attr("fill", "transparent")
-      .attr("class", "tooltip-trigger cursor-pointer")
-      .attr("data-item", d => {
-        const item = d.data as any;
-        return item.name;
-      })
-      .attr("data-value", d => {
         const item = d.data as any;
         return formatCurrency(item.value);
       });
@@ -190,22 +192,11 @@ export const ItemTreemap = ({ data }: ItemTreemapProps) => {
       <TooltipProvider delayDuration={0}>
         <div className="relative w-full h-[300px]">
           <svg ref={svgRef} className="w-full h-full"></svg>
-          {data.map((item, index) => (
-            <Tooltip key={index}>
-              <TooltipTrigger asChild>
-                <div id={`tooltip-trigger-${index}`} className="absolute top-0 left-0 w-0 h-0 opacity-0"></div>
-              </TooltipTrigger>
-              <TooltipContent className="bg-white/95 backdrop-blur shadow-lg border border-gray-200 p-3 rounded-lg">
-                <div className="font-medium">{item.name}</div>
-                <div className="text-sm text-muted-foreground mt-1">{formatCurrency(item.value)}</div>
-              </TooltipContent>
-            </Tooltip>
-          ))}
           
-          {/* Custom D3 tooltip fallback */}
+          {/* Custom tooltip */}
           <div 
             id="d3-tooltip" 
-            className="absolute hidden bg-white/95 backdrop-blur-sm p-3 shadow-lg rounded-lg border border-gray-200 z-10 pointer-events-none max-w-xs"
+            className="absolute hidden bg-white/95 backdrop-blur-sm p-3 shadow-lg rounded-lg border border-gray-200 z-50 pointer-events-none max-w-xs"
             style={{ display: 'none' }}
           >
             <p className="item-name font-medium"></p>
