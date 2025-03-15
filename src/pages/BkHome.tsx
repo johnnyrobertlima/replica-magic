@@ -4,20 +4,22 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { FileText, BarChart2, Users, Wallet, ClipboardCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BkMenu } from "@/components/bk/BkMenu";
+import { BkBanner } from "@/components/bk/BkBanner";
 
 const BkHome = () => {
   return (
     <main className="container-fluid p-0 max-w-full">
+      <BkBanner />
+      <BkMenu />
+      
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-5xl mx-auto">
           <div className="space-y-6 mb-6">
-            <h1 className="text-4xl font-bold tracking-tight">Bem-vindo à área do cliente B&K</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Bem-vindo à área do cliente B&K</h1>
             <p className="text-muted-foreground text-lg">
               Acesse as ferramentas e serviços disponíveis para gerenciamento dos seus dados.
             </p>
           </div>
-
-          <BkMenu />
           
           <div className="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <Card className="bg-white shadow-md hover:shadow-lg transition-shadow">

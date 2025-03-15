@@ -16,8 +16,8 @@ import AprovacaoFinanceira from "@/pages/AprovacaoFinanceira";
 import AcompanhamentoFaturamento from "@/pages/AcompanhamentoFaturamento";
 import BluebayHome from "@/pages/BluebayHome";
 import BkHome from "@/pages/BkHome";
-import BkClients from "@/pages/bk/BkClients"; // Import the BkClients component
-import BkFinancial from "@/pages/bk/BkFinancial"; // Import the BkFinancial component
+import BkClients from "@/pages/bk/BkClients"; 
+import BkFinancial from "@/pages/bk/BkFinancial"; 
 
 // Admin imports
 import { AdminLayout } from "@/pages/admin/layout";
@@ -100,6 +100,22 @@ function App() {
       <Route path="/client-area/bk/financial" element={
         <PermissionGuard resourcePath="/client-area/bk">
           <BkFinancial />
+        </PermissionGuard>
+      } />
+      <Route path="/client-area/bk/reports" element={
+        <PermissionGuard resourcePath="/client-area/bk">
+          <div className="container mx-auto p-8">
+            <h1 className="text-3xl font-bold mb-4">Relatórios</h1>
+            <p className="text-muted-foreground">Esta funcionalidade estará disponível em breve.</p>
+          </div>
+        </PermissionGuard>
+      } />
+      <Route path="/client-area/bk/requests" element={
+        <PermissionGuard resourcePath="/client-area/bk">
+          <div className="container mx-auto p-8">
+            <h1 className="text-3xl font-bold mb-4">Solicitações</h1>
+            <p className="text-muted-foreground">Esta funcionalidade estará disponível em breve.</p>
+          </div>
         </PermissionGuard>
       } />
 
