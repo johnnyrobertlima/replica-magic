@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from "react";
 import { BkClient } from "@/types/bk/client";
 
@@ -5,25 +6,51 @@ export const useClientSearch = (clients: BkClient[]) => {
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredClients = useMemo(() => {
+    if (!searchTerm.trim()) return clients;
+    
+    const searchTerms = searchTerm.toLowerCase().trim().split(/\s+/);
+    
     return clients.filter(client => {
-      if (!searchTerm) return true;
+      // Normalize strings to improve search
+      const normalizeString = (str: string | null | undefined): string => {
+        return (str || "").toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, ""); // Remove acentos
+      };
       
-      const searchLower = searchTerm.toLowerCase().trim();
+      const apelidoNormalized = normalizeString(client.APELIDO);
+      const razaoSocialNormalized = normalizeString(client.RAZAOSOCIAL);
+      const cnpjCpfNormalized = normalizeString(client.CNPJCPF);
+      const codigoStr = String(client.PES_CODIGO);
       
-      // Prioritize APELIDO in search
-      const apelidoMatch = client.APELIDO?.toLowerCase().includes(searchLower) || false;
-      
-      // If APELIDO matches, return immediately
-      if (apelidoMatch) return true;
-      
-      // Otherwise check other fields
-      return (
-        (client.RAZAOSOCIAL?.toLowerCase().includes(searchLower) || false) ||
-        (client.CNPJCPF?.toLowerCase().includes(searchLower) || false) ||
-        String(client.PES_CODIGO).includes(searchTerm)
-      );
+      // Check if ALL search terms match at least one of the fields
+      return searchTerms.every(term => {
+        // Special case for APELIDO to give it higher priority
+        if (apelidoNormalized.includes(term)) {
+          return true;
+        }
+        
+        // Check other fields
+        return razaoSocialNormalized.includes(term) || 
+               cnpjCpfNormalized.includes(term) || 
+               codigoStr.includes(term);
+      });
     });
   }, [clients, searchTerm]);
+
+  // Log search results for debugging
+  useMemo(() => {
+    if (searchTerm.trim()) {
+      console.log(`Busca por "${searchTerm}" encontrou ${filteredClients.length} resultados`);
+      if (filteredClients.length < 10) {
+        console.log("Resultados:", filteredClients.map(c => ({ 
+          codigo: c.PES_CODIGO, 
+          apelido: c.APELIDO, 
+          razaoSocial: c.RAZAOSOCIAL 
+        })));
+      }
+    }
+  }, [searchTerm, filteredClients]);
 
   return {
     searchTerm,
