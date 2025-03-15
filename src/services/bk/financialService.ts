@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
 
@@ -20,61 +19,22 @@ export const fetchBkFaturamentoData = async (
 ): Promise<BkFaturamento[]> => {
   console.log("Fetching B&K faturamento data...", { startDate, endDate });
   
-  // Step 1: Query BLUEBAY_FATURAMENTO with date filtering
-  let query = supabase
-    .from('BLUEBAY_FATURAMENTO')
-    .select('*');
-  
-  // Apply date filters if provided
-  if (startDate) {
-    query = query.gte('DATA_EMISSAO', startDate);
-  }
-  
-  if (endDate) {
-    query = query.lte('DATA_EMISSAO', endDate);
-  }
-  
-  const { data: faturamentoData, error: faturamentoError } = await query;
+  // Use the get_bk_faturamento function to get invoices with correct join on PED_NUMPEDIDO and PED_ANOBASE
+  const { data, error } = await supabase.rpc('get_bk_faturamento', {
+    start_date: startDate,
+    end_date: endDate
+  });
 
-  if (faturamentoError) {
-    console.error("Error fetching B&K faturamento data:", faturamentoError);
-    throw faturamentoError;
+  if (error) {
+    console.error("Error fetching B&K faturamento data:", error);
+    throw error;
   }
 
-  console.log(`Fetched ${faturamentoData?.length || 0} faturamento records`);
-  
-  // Step 2: Now get all BK pedidos to filter the faturamento
-  const { data: pedidosData, error: pedidosError } = await supabase
-    .from('BLUEBAY_PEDIDO')
-    .select('PED_NUMPEDIDO, PED_ANOBASE')
-    .eq('CENTROCUSTO', 'BK');
-  
-  if (pedidosError) {
-    console.error("Error fetching BK pedidos:", pedidosError);
-    throw pedidosError;
-  }
-  
-  console.log(`Fetched ${pedidosData?.length || 0} BK pedidos`);
-  
-  // Create a map of pedidos for faster lookup
-  const bkPedidosMap = new Map();
-  pedidosData.forEach(pedido => {
-    const key = `${pedido.PED_NUMPEDIDO}-${pedido.PED_ANOBASE}`;
-    bkPedidosMap.set(key, true);
-  });
-  
-  // Step 3: Filter faturamento data to only include those related to BK pedidos
-  const filteredData = faturamentoData.filter(item => {
-    if (!item.PED_NUMPEDIDO || !item.PED_ANOBASE) return false;
-    const key = `${item.PED_NUMPEDIDO}-${item.PED_ANOBASE}`;
-    return bkPedidosMap.has(key);
-  });
-  
-  console.log(`Filtered to ${filteredData.length} faturamento records related to BK pedidos`);
+  console.log(`Fetched ${data?.length || 0} faturamento records`);
   
   // Let's separately get the cliente names
-  if (filteredData && filteredData.length > 0) {
-    const clienteIds = filteredData
+  if (data && data.length > 0) {
+    const clienteIds = data
       .map(item => item.PES_CODIGO)
       .filter((id): id is number => id !== null && !isNaN(Number(id)));
     
@@ -95,7 +55,7 @@ export const fetchBkFaturamentoData = async (
         });
         
         // Attach cliente info to each faturamento record
-        filteredData.forEach(item => {
+        data.forEach(item => {
           if (item.PES_CODIGO !== null) {
             const clienteInfo = clienteMap.get(item.PES_CODIGO);
             if (clienteInfo) {
@@ -108,7 +68,7 @@ export const fetchBkFaturamentoData = async (
     }
   }
   
-  return filteredData;
+  return data || [];
 };
 
 export const fetchInvoiceItems = async (nota: string): Promise<any[]> => {
