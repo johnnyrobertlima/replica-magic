@@ -34,6 +34,20 @@ export const ApprovedOrderCard = ({ order, onExport }: ApprovedOrderCardProps) =
       return total + ((item.quantidade_pedida || 0) * (item.valor_unitario || 0));
     }, 0) : 0;
 
+  // Calcular o valor que falta faturar (Saldo * Valor Unit.)
+  const valorFaltaFaturar = approvedSeparacao.separacao_itens_flat ? 
+    approvedSeparacao.separacao_itens_flat.reduce((total, item) => {
+      const saldo = item.quantidade_saldo || 
+                   (item.quantidade_pedida || 0) - (item.quantidade_entregue || 0);
+      return total + (saldo * (item.valor_unitario || 0));
+    }, 0) : 0;
+
+  // Calcular o valor já faturado (Faturado * Valor Unit.)
+  const valorFaturado = approvedSeparacao.separacao_itens_flat ? 
+    approvedSeparacao.separacao_itens_flat.reduce((total, item) => {
+      return total + ((item.quantidade_entregue || 0) * (item.valor_unitario || 0));
+    }, 0) : 0;
+
   return (
     <Card 
       className={`border-l-4 border-l-green-500 shadow-md ${isExpanded ? 'col-span-full' : ''}`}
@@ -52,6 +66,9 @@ export const ApprovedOrderCard = ({ order, onExport }: ApprovedOrderCardProps) =
                 Por: {order.userEmail} ({order.action === 'approved' ? 'Aprovado' : 'Reprovado'})
               </p>
             )}
+            <p className="text-xs text-gray-600 mt-1 font-medium">
+              Representante: {order.clienteData.representanteNome || 'Não informado'}
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -88,18 +105,18 @@ export const ApprovedOrderCard = ({ order, onExport }: ApprovedOrderCardProps) =
       <CardContent className="p-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div className="bg-gray-50 p-3 rounded-md">
-            <p className="text-xs text-gray-500">Representante</p>
-            <p className="font-medium">{order.clienteData.representanteNome || 'Não informado'}</p>
-          </div>
-          
-          <div className="bg-gray-50 p-3 rounded-md">
-            <p className="text-xs text-gray-500">Código do Cliente</p>
-            <p className="font-medium">{order.clienteData.PES_CODIGO || 'N/A'}</p>
-          </div>
-          
-          <div className="bg-gray-50 p-3 rounded-md">
             <p className="text-xs text-gray-500">Valor Total</p>
             <p className="font-medium">{formatCurrency(valorTotal)}</p>
+          </div>
+          
+          <div className="bg-gray-50 p-3 rounded-md">
+            <p className="text-xs text-gray-500">Falta Faturar</p>
+            <p className="font-medium">{formatCurrency(valorFaltaFaturar)}</p>
+          </div>
+          
+          <div className="bg-gray-50 p-3 rounded-md">
+            <p className="text-xs text-gray-500">Faturado</p>
+            <p className="font-medium">{formatCurrency(valorFaturado)}</p>
           </div>
         </div>
         
@@ -110,4 +127,3 @@ export const ApprovedOrderCard = ({ order, onExport }: ApprovedOrderCardProps) =
     </Card>
   );
 };
-
