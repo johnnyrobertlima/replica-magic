@@ -127,19 +127,10 @@ export const BkDashboard = () => {
           </div>
 
           <div className="grid gap-6">
-            {isLoadingTreemap ? (
-              <div className="w-full h-[400px] bg-white rounded-lg p-4 border flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
-              </div>
-            ) : treemapData.length > 0 ? (
-              <ItemTreemap data={treemapData} />
-            ) : (
-              <div className="w-full h-[400px] bg-white rounded-lg p-4 border flex items-center justify-center">
-                <p className="text-muted-foreground">Não há dados disponíveis para visualização</p>
-              </div>
-            )}
-
-            {/* ABC Curves Section */}
+            {/* 1. Indicadores financeiros no topo */}
+            <FinancialDashboard invoices={filteredInvoices} />
+            
+            {/* 2. Curvas ABC de Clientes e Itens */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <ClientsAbcCurve 
                 invoices={filteredInvoices} 
@@ -151,7 +142,18 @@ export const BkDashboard = () => {
               />
             </div>
             
-            <FinancialDashboard invoices={filteredInvoices} />
+            {/* 3. Gráfico de Volume por Item */}
+            {isLoadingTreemap ? (
+              <div className="w-full h-[400px] bg-white rounded-lg p-4 border flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+              </div>
+            ) : treemapData.length > 0 ? (
+              <ItemTreemap data={treemapData} />
+            ) : (
+              <div className="w-full h-[400px] bg-white rounded-lg p-4 border flex items-center justify-center">
+                <p className="text-muted-foreground">Não há dados disponíveis para visualização</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
