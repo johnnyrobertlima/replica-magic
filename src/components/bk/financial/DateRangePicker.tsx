@@ -1,4 +1,3 @@
-
 import React from "react";
 import { CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,6 +21,7 @@ export const DateRangePicker = ({ startDate, endDate, onUpdate }: DateRangePicke
   const startDateObj = startDate ? new Date(startDate) : new Date();
   const endDateObj = endDate ? new Date(endDate) : new Date();
   
+  // Only update the start date, keeping the end date the same
   const handleStartDateChange = (date: Date | undefined) => {
     if (date) {
       const newStartDate = date.toISOString().split("T")[0];
@@ -29,6 +29,7 @@ export const DateRangePicker = ({ startDate, endDate, onUpdate }: DateRangePicke
     }
   };
   
+  // Only update the end date, keeping the start date the same
   const handleEndDateChange = (date: Date | undefined) => {
     if (date) {
       const newEndDate = date.toISOString().split("T")[0];
@@ -149,4 +150,3 @@ export const DateRangePicker = ({ startDate, endDate, onUpdate }: DateRangePicke
     </div>
   );
 };
-

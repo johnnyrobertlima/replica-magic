@@ -85,9 +85,11 @@ export const useFinancial = () => {
     loadData();
   };
 
+  // Only update the date range without resetting other filters
   const updateDateRange = (startDate: string, endDate: string) => {
     console.log(`Updating date range to: ${startDate} - ${endDate}`);
     setDateRange({ startDate, endDate });
+    // We don't reset the status filter here anymore
   };
 
   const updateStatusFilter = (status: string) => {
