@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,13 +30,13 @@ const KNOWN_ROUTES = [
   "/admin/users",
   // Área do cliente
   "/client-area",
-  // Rotas JAB
-  "/client-area/jab",
-  "/client-area/jab/jab-orders",
-  "/client-area/jab/jab-orders-by-client",
-  "/client-area/jab/jab-orders-by-representante",
-  "/client-area/jab/aprovacao-financeira",
-  "/client-area/jab/acompanhamento-faturamento",
+  // Rotas Bluebay
+  "/client-area/bluebay",
+  "/client-area/bluebay/jab-orders",
+  "/client-area/bluebay/jab-orders-by-client",
+  "/client-area/bluebay/jab-orders-by-representante",
+  "/client-area/bluebay/aprovacao-financeira",
+  "/client-area/bluebay/acompanhamento-faturamento",
   // Rotas B&K
   "/client-area/bk",
   "/client-area/bk/dashboard",

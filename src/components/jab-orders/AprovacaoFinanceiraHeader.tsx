@@ -15,7 +15,7 @@ export const AprovacaoFinanceiraHeader = () => {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Pedidos Pendentes de Aprovação</h2>
         <Link 
-          to="/client-area/jab/acompanhamento-faturamento" 
+          to="/client-area/bluebay/acompanhamento-faturamento" 
           className="text-primary hover:underline flex items-center gap-1.5 transition-colors hover:text-primary/80"
         >
           Ver Pedidos Aprovados

@@ -92,33 +92,33 @@ export function AppRoutes() {
       } />
 
       {/* Bluebay Routes */}
-      <Route path="/client-area/jab" element={
-        <PermissionGuard resourcePath="/client-area/jab">
+      <Route path="/client-area/bluebay" element={
+        <PermissionGuard resourcePath="/client-area/bluebay">
           <BluebayHome />
         </PermissionGuard>
       } />
-      <Route path="/client-area/jab/jab-orders" element={
-        <PermissionGuard resourcePath="/client-area/jab/jab-orders">
+      <Route path="/client-area/bluebay/jab-orders" element={
+        <PermissionGuard resourcePath="/client-area/bluebay/jab-orders">
           <JabOrders />
         </PermissionGuard>
       } />
-      <Route path="/client-area/jab/jab-orders-by-client" element={
-        <PermissionGuard resourcePath="/client-area/jab/jab-orders-by-client">
+      <Route path="/client-area/bluebay/jab-orders-by-client" element={
+        <PermissionGuard resourcePath="/client-area/bluebay/jab-orders-by-client">
           <JabOrdersByClient />
         </PermissionGuard>
       } />
-      <Route path="/client-area/jab/jab-orders-by-representante" element={
-        <PermissionGuard resourcePath="/client-area/jab/jab-orders-by-client">
+      <Route path="/client-area/bluebay/jab-orders-by-representante" element={
+        <PermissionGuard resourcePath="/client-area/bluebay/jab-orders-by-client">
           <JabOrdersByRepresentante />
         </PermissionGuard>
       } />
-      <Route path="/client-area/jab/aprovacao-financeira" element={
-        <PermissionGuard resourcePath="/client-area/jab/aprovacao-financeira">
+      <Route path="/client-area/bluebay/aprovacao-financeira" element={
+        <PermissionGuard resourcePath="/client-area/bluebay/aprovacao-financeira">
           <AprovacaoFinanceira />
         </PermissionGuard>
       } />
-      <Route path="/client-area/jab/acompanhamento-faturamento" element={
-        <PermissionGuard resourcePath="/client-area/jab/aprovacao-financeira">
+      <Route path="/client-area/bluebay/acompanhamento-faturamento" element={
+        <PermissionGuard resourcePath="/client-area/bluebay/aprovacao-financeira">
           <AcompanhamentoFaturamento />
         </PermissionGuard>
       } />

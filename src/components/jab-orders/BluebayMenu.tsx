@@ -20,12 +20,12 @@ export const BluebayMenu = () => {
   const currentPath = location.pathname;
 
   const menuItems = [
-    { name: "Início", path: "/client-area/jab" },
-    { name: "Acompanhamento de Faturamento", path: "/client-area/jab/acompanhamento-faturamento" },
-    { name: "Aprovação Financeira", path: "/client-area/jab/aprovacao-financeira" },
-    { name: "Pedidos por Cliente", path: "/client-area/jab/jab-orders-by-client" },
-    { name: "Separação de Pedidos", path: "/client-area/jab/jab-orders" },
-    { name: "Separação por Representante", path: "/client-area/jab/jab-orders-by-representante" },
+    { name: "Início", path: "/client-area/bluebay" },
+    { name: "Acompanhamento de Faturamento", path: "/client-area/bluebay/acompanhamento-faturamento" },
+    { name: "Aprovação Financeira", path: "/client-area/bluebay/aprovacao-financeira" },
+    { name: "Pedidos por Cliente", path: "/client-area/bluebay/jab-orders-by-client" },
+    { name: "Separação de Pedidos", path: "/client-area/bluebay/jab-orders" },
+    { name: "Separação por Representante", path: "/client-area/bluebay/jab-orders-by-representante" },
   ];
 
   return (
