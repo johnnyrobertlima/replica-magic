@@ -60,7 +60,7 @@ const BluebayHome = () => {
           <CardHeader>
             <CardTitle className="text-2xl mb-4">Área JAB</CardTitle>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Link to="/client-area/bluebay/jab-orders-by-client">
+              <Link to="/client-area/jab/jab-orders-by-client">
                 <Card className="h-full transition-all hover:shadow-lg">
                   <CardHeader>
                     <div className="flex items-center gap-4">
@@ -78,7 +78,7 @@ const BluebayHome = () => {
                 </Card>
               </Link>
 
-              <Link to="/client-area/bluebay/jab-orders">
+              <Link to="/client-area/jab/jab-orders">
                 <Card className="h-full transition-all hover:shadow-lg">
                   <CardHeader>
                     <div className="flex items-center gap-4">
@@ -96,7 +96,7 @@ const BluebayHome = () => {
                 </Card>
               </Link>
 
-              <Link to="/client-area/bluebay/jab-orders-by-representante">
+              <Link to="/client-area/jab/jab-orders-by-representante">
                 <Card className="h-full transition-all hover:shadow-lg">
                   <CardHeader>
                     <div className="flex items-center gap-4">
@@ -114,7 +114,7 @@ const BluebayHome = () => {
                 </Card>
               </Link>
 
-              <Link to="/client-area/bluebay/aprovacao-financeira">
+              <Link to="/client-area/jab/aprovacao-financeira">
                 <Card className="h-full transition-all hover:shadow-lg">
                   <CardHeader>
                     <div className="flex items-center gap-4">
@@ -132,7 +132,7 @@ const BluebayHome = () => {
                 </Card>
               </Link>
 
-              <Link to="/client-area/bluebay/acompanhamento-faturamento">
+              <Link to="/client-area/jab/acompanhamento-faturamento">
                 <Card className="h-full transition-all hover:shadow-lg">
                   <CardHeader>
                     <div className="flex items-center gap-4">

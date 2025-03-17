@@ -116,12 +116,12 @@ const ClientArea = () => {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-2">
-              <Link to="/client-area/bluebay/jab-orders">
+              <Link to="/client-area/jab/jab-orders">
                 <Button className="w-full">
                   Separação de pedidos JAB
                 </Button>
               </Link>
-              <Link to="/client-area/bluebay/aprovacao-financeira">
+              <Link to="/client-area/jab/aprovacao-financeira">
                 <Button className="w-full variant-outline">
                   Aprovação Financeira
                 </Button>

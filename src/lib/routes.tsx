@@ -1,3 +1,4 @@
+
 import Index from "@/pages/Index";
 import ClientArea from "@/pages/ClientArea";
 import PostManagement from "@/pages/PostManagement";
@@ -28,7 +29,7 @@ export const routes = [
     element: <ClientArea />,
   },
   {
-    path: "/client-area/bluebay",
+    path: "/client-area/jab",
     element: <BluebayHome />,
   },
   {
@@ -56,23 +57,23 @@ export const routes = [
     element: <PostManagement />,
   },
   {
-    path: "/client-area/bluebay/jab-orders",
+    path: "/client-area/jab/jab-orders",
     element: <JabOrders />,
   },
   {
-    path: "/client-area/bluebay/jab-orders-by-client",
+    path: "/client-area/jab/jab-orders-by-client",
     element: <JabOrdersByClient />,
   },
   {
-    path: "/client-area/bluebay/jab-orders-by-representante",
+    path: "/client-area/jab/jab-orders-by-representante",
     element: <JabOrdersByRepresentante />,
   },
   {
-    path: "/client-area/bluebay/aprovacao-financeira",
+    path: "/client-area/jab/aprovacao-financeira",
     element: <AprovacaoFinanceira />,
   },
   {
-    path: "/client-area/bluebay/acompanhamento-faturamento",
+    path: "/client-area/jab/acompanhamento-faturamento",
     element: <AcompanhamentoFaturamento />,
   },
   {

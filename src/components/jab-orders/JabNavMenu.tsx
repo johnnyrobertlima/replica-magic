@@ -11,38 +11,38 @@ const JabNavMenu = () => {
   return (
     <div className="flex flex-wrap gap-2">
       <Button
-        variant={isActive("/client-area/bluebay/jab-orders") ? "default" : "outline"}
+        variant={isActive("/client-area/jab/jab-orders") ? "default" : "outline"}
         asChild
       >
-        <Link to="/client-area/bluebay/jab-orders">Consultar Pedidos</Link>
+        <Link to="/client-area/jab/jab-orders">Consultar Pedidos</Link>
       </Button>
       
       <Button
-        variant={isActive("/client-area/bluebay/jab-orders-by-client") ? "default" : "outline"}
+        variant={isActive("/client-area/jab/jab-orders-by-client") ? "default" : "outline"}
         asChild
       >
-        <Link to="/client-area/bluebay/jab-orders-by-client">Pedidos por Cliente</Link>
+        <Link to="/client-area/jab/jab-orders-by-client">Pedidos por Cliente</Link>
       </Button>
       
       <Button
-        variant={isActive("/client-area/bluebay/jab-orders-by-representante") ? "default" : "outline"}
+        variant={isActive("/client-area/jab/jab-orders-by-representante") ? "default" : "outline"}
         asChild
       >
-        <Link to="/client-area/bluebay/jab-orders-by-representante">Separação por Representante</Link>
+        <Link to="/client-area/jab/jab-orders-by-representante">Separação por Representante</Link>
       </Button>
       
       <Button
-        variant={isActive("/client-area/bluebay/aprovacao-financeira") ? "default" : "outline"}
+        variant={isActive("/client-area/jab/aprovacao-financeira") ? "default" : "outline"}
         asChild
       >
-        <Link to="/client-area/bluebay/aprovacao-financeira">Aprovação Financeira</Link>
+        <Link to="/client-area/jab/aprovacao-financeira">Aprovação Financeira</Link>
       </Button>
       
       <Button
-        variant={isActive("/client-area/bluebay/acompanhamento-faturamento") ? "default" : "outline"}
+        variant={isActive("/client-area/jab/acompanhamento-faturamento") ? "default" : "outline"}
         asChild
       >
-        <Link to="/client-area/bluebay/acompanhamento-faturamento">Acompanhamento Faturamento</Link>
+        <Link to="/client-area/jab/acompanhamento-faturamento">Acompanhamento Faturamento</Link>
       </Button>
     </div>
   );
