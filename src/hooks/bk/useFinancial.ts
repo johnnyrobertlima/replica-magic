@@ -87,7 +87,6 @@ export const useFinancial = () => {
 
   const updateDateRange = (startDate: string, endDate: string) => {
     console.log(`Updating date range to: ${startDate} - ${endDate}`);
-    // Only update the date range without changing any other filters
     setDateRange({ startDate, endDate });
   };
 
@@ -96,13 +95,13 @@ export const useFinancial = () => {
   };
 
   return {
-    isLoading, 
+    isLoading,
     faturamentoData,
     consolidatedInvoices,
     filteredInvoices,
     error,
-    refreshData, 
-    dateRange, 
+    refreshData,
+    dateRange,
     updateDateRange,
     statusFilter,
     updateStatusFilter,

@@ -25,7 +25,6 @@ export const DateRangePicker = ({ startDate, endDate, onUpdate }: DateRangePicke
   const handleStartDateChange = (date: Date | undefined) => {
     if (date) {
       const newStartDate = date.toISOString().split("T")[0];
-      // Pass existing endDate to ensure we only update the startDate
       onUpdate(newStartDate, endDate);
     }
   };
@@ -33,7 +32,6 @@ export const DateRangePicker = ({ startDate, endDate, onUpdate }: DateRangePicke
   const handleEndDateChange = (date: Date | undefined) => {
     if (date) {
       const newEndDate = date.toISOString().split("T")[0];
-      // Pass existing startDate to ensure we only update the endDate
       onUpdate(startDate, newEndDate);
     }
   };
@@ -151,3 +149,4 @@ export const DateRangePicker = ({ startDate, endDate, onUpdate }: DateRangePicke
     </div>
   );
 };
+
