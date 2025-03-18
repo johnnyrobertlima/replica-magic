@@ -1,3 +1,4 @@
+
 import Index from "@/pages/Index";
 import ClientArea from "@/pages/ClientArea";
 import PostManagement from "@/pages/PostManagement";
@@ -10,6 +11,7 @@ import TokenManagement from "@/pages/TokenManagement";
 import WhatsAppClientRegistration from "@/pages/WhatsAppClientRegistration";
 import WhatsAppService from "@/pages/WhatsAppService";
 import ClientLogin from "@/pages/ClientLogin";
+import ResetPassword from "@/pages/ResetPassword";
 import AprovacaoFinanceira from "@/pages/AprovacaoFinanceira";
 import AcompanhamentoFaturamento from "@/pages/AcompanhamentoFaturamento";
 import UserGroupManagement from "@/pages/admin/users/UserGroupManagement";
@@ -98,6 +100,10 @@ export const routes = [
   {
     path: "/login",
     element: <ClientLogin />,
+  },
+  {
+    path: "/reset-password",
+    element: <ResetPassword />,
   },
   {
     path: "/admin/users",
