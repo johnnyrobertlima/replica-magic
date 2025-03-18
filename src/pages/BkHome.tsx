@@ -1,12 +1,55 @@
 
-import { Link } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, BarChart2, Users, Wallet, ClipboardCheck, ReceiptText } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { BkMenu } from "@/components/bk/BkMenu";
 import { BkBanner } from "@/components/bk/BkBanner";
+import { ServiceCard } from "@/components/bk/ServiceCard";
+import { FileText, BarChart2, Users, Wallet, ClipboardCheck, ReceiptText } from "lucide-react";
 
 const BkHome = () => {
+  const services = [
+    {
+      title: "Relatórios",
+      description: "Acesse relatórios e estatísticas sobre seus dados",
+      icon: FileText,
+      iconColor: "bg-purple-100 text-purple-600",
+      path: "/client-area/bk/reports"
+    },
+    {
+      title: "Dashboard",
+      description: "Visualize indicadores de desempenho",
+      icon: BarChart2,
+      iconColor: "bg-blue-100 text-blue-600",
+      path: "/client-area/bk/dashboard"
+    },
+    {
+      title: "Clientes",
+      description: "Gerencie informações de clientes",
+      icon: Users,
+      iconColor: "bg-green-100 text-green-600",
+      path: "/client-area/bk/clients"
+    },
+    {
+      title: "Faturamento",
+      description: "Consulte informações financeiras",
+      icon: Wallet,
+      iconColor: "bg-amber-100 text-amber-600",
+      path: "/client-area/bk/financial"
+    },
+    {
+      title: "Controle de Faturamento",
+      description: "Gerenciamento de faturas e pagamentos",
+      icon: ReceiptText,
+      iconColor: "bg-blue-100 text-blue-600",
+      path: "/client-area/bk/invoice-control"
+    },
+    {
+      title: "Solicitações",
+      description: "Acompanhe solicitações enviadas",
+      icon: ClipboardCheck,
+      iconColor: "bg-red-100 text-red-600",
+      path: "/client-area/bk/requests"
+    },
+  ];
+
   return (
     <main className="container-fluid p-0 max-w-full">
       <BkBanner />
@@ -22,125 +65,16 @@ const BkHome = () => {
           </div>
           
           <div className="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card className="bg-white shadow-md hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-2">
-                <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center mb-2">
-                  <FileText className="h-6 w-6 text-purple-600" />
-                </div>
-                <CardTitle>Relatórios</CardTitle>
-                <CardDescription>
-                  Acesse relatórios e estatísticas sobre seus dados
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground">
-                Visualize dados detalhados e gráficos de desempenho para tomada de decisões.
-              </CardContent>
-              <CardFooter>
-                <Button variant="outline" className="w-full" asChild>
-                  <Link to="/client-area/bk/reports">Acessar</Link>
-                </Button>
-              </CardFooter>
-            </Card>
-
-            <Card className="bg-white shadow-md hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-2">
-                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-2">
-                  <BarChart2 className="h-6 w-6 text-blue-600" />
-                </div>
-                <CardTitle>Dashboard</CardTitle>
-                <CardDescription>
-                  Visualize indicadores de desempenho
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground">
-                Acompanhe métricas importantes e análises em tempo real em um painel personalizado.
-              </CardContent>
-              <CardFooter>
-                <Button variant="outline" className="w-full" asChild>
-                  <Link to="/client-area/bk/dashboard">Acessar</Link>
-                </Button>
-              </CardFooter>
-            </Card>
-
-            <Card className="bg-white shadow-md hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-2">
-                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mb-2">
-                  <Users className="h-6 w-6 text-green-600" />
-                </div>
-                <CardTitle>Clientes</CardTitle>
-                <CardDescription>
-                  Gerencie informações de clientes
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground">
-                Cadastre, atualize e consulte dados de clientes de forma rápida e simples.
-              </CardContent>
-              <CardFooter>
-                <Button variant="outline" className="w-full" asChild>
-                  <Link to="/client-area/bk/clients">Acessar</Link>
-                </Button>
-              </CardFooter>
-            </Card>
-
-            <Card className="bg-white shadow-md hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-2">
-                <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mb-2">
-                  <Wallet className="h-6 w-6 text-amber-600" />
-                </div>
-                <CardTitle>Faturamento</CardTitle>
-                <CardDescription>
-                  Consulte informações financeiras
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground">
-                Acesse relatórios financeiros, faturamento e outras informações importantes.
-              </CardContent>
-              <CardFooter>
-                <Button variant="outline" className="w-full" asChild>
-                  <Link to="/client-area/bk/financial">Acessar</Link>
-                </Button>
-              </CardFooter>
-            </Card>
-
-            <Card className="bg-white shadow-md hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-2">
-                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-2">
-                  <ReceiptText className="h-6 w-6 text-blue-600" />
-                </div>
-                <CardTitle>Controle de Faturamento</CardTitle>
-                <CardDescription>
-                  Gerenciamento de faturas e pagamentos
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground">
-                Acompanhe faturas, pagamentos e histórico financeiro de forma detalhada.
-              </CardContent>
-              <CardFooter>
-                <Button variant="outline" className="w-full" asChild>
-                  <Link to="/client-area/bk/invoice-control">Acessar</Link>
-                </Button>
-              </CardFooter>
-            </Card>
-
-            <Card className="bg-white shadow-md hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-2">
-                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-2">
-                  <ClipboardCheck className="h-6 w-6 text-red-600" />
-                </div>
-                <CardTitle>Solicitações</CardTitle>
-                <CardDescription>
-                  Acompanhe solicitações enviadas
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground">
-                Envie novas solicitações e acompanhe o status das solicitações já enviadas.
-              </CardContent>
-              <CardFooter>
-                <Button variant="outline" className="w-full" asChild>
-                  <Link to="/client-area/bk/requests">Acessar</Link>
-                </Button>
-              </CardFooter>
-            </Card>
+            {services.map((service, index) => (
+              <ServiceCard
+                key={index}
+                title={service.title}
+                description={service.description}
+                icon={service.icon}
+                iconColor={service.iconColor}
+                path={service.path}
+              />
+            ))}
           </div>
         </div>
       </div>
