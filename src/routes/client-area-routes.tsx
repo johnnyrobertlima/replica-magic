@@ -14,7 +14,7 @@ import { BkRoutes } from "./bk-routes";
 
 export function ClientAreaRoutes() {
   return (
-    <Fragment>
+    <>
       <Route path="/client-area" element={
         <PermissionGuard resourcePath="/client-area">
           <ClientArea />
@@ -54,6 +54,6 @@ export function ClientAreaRoutes() {
       
       <BluebayRoutes />
       <BkRoutes />
-    </Fragment>
+    </>
   );
 }

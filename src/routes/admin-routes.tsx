@@ -19,7 +19,7 @@ import { UserGroupManagement } from "@/pages/admin/users/UserGroupManagement";
 
 export function AdminRoutes() {
   return (
-    <Fragment>
+    <>
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin" element={<AdminLayout><Outlet /></AdminLayout>}>
         <Route index element={<AdminDashboard />} />
@@ -74,6 +74,6 @@ export function AdminRoutes() {
           </PermissionGuard>
         } />
       </Route>
-    </Fragment>
+    </>
   );
 }
