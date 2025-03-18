@@ -113,13 +113,20 @@ export const useClientAuth = () => {
     setLoading(true);
     
     try {
+      // Definir a URL de redirecionamento para a verificação do email
+      const origin = window.location.origin;
+      const redirectUrl = `${origin}/login`;
+      
+      console.log("Registrando usuário com redirect para:", redirectUrl);
+      
       const { error } = await supabase.auth.signUp({
         email: email.trim(),
         password: password.trim(),
         options: {
           data: {
             name: name.trim(),
-          }
+          },
+          emailRedirectTo: redirectUrl
         }
       });
       
