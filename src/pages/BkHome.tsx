@@ -1,7 +1,7 @@
 
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, BarChart2, Users, Wallet, ClipboardCheck, Receipt } from "lucide-react";
+import { FileText, BarChart2, Users, Wallet, ClipboardCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BkMenu } from "@/components/bk/BkMenu";
 import { BkBanner } from "@/components/bk/BkBanner";
@@ -98,26 +98,6 @@ const BkHome = () => {
               <CardFooter>
                 <Button variant="outline" className="w-full" asChild>
                   <Link to="/client-area/bk/financial">Acessar</Link>
-                </Button>
-              </CardFooter>
-            </Card>
-
-            <Card className="bg-white shadow-md hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-2">
-                <div className="w-12 h-12 rounded-full bg-teal-100 flex items-center justify-center mb-2">
-                  <Receipt className="h-6 w-6 text-teal-600" />
-                </div>
-                <CardTitle>Faturamento</CardTitle>
-                <CardDescription>
-                  Gerencie notas fiscais e faturamento
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground">
-                Acompanhe o status de notas fiscais, pagamentos e controle o faturamento da empresa.
-              </CardContent>
-              <CardFooter>
-                <Button variant="outline" className="w-full" asChild>
-                  <Link to="/client-area/bk/faturamento">Acessar</Link>
                 </Button>
               </CardFooter>
             </Card>
