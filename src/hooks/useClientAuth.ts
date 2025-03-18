@@ -114,12 +114,13 @@ export const useClientAuth = () => {
     
     try {
       // Definir a URL de redirecionamento para a verificação do email
+      // Usar window.location.origin sem concatenar com href para evitar erros de cross-origin
       const origin = window.location.origin;
       const redirectUrl = `${origin}/login`;
       
       console.log("Registrando usuário com redirect para:", redirectUrl);
       
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password: password.trim(),
         options: {
@@ -132,19 +133,34 @@ export const useClientAuth = () => {
       
       if (error) throw error;
       
+      if (data && data.user) {
+        console.log("Usuário criado com sucesso:", data.user);
+      }
+      
       toast({
         title: "Conta criada com sucesso!",
         description: "Verifique seu email para confirmar o cadastro.",
       });
       
+      // Redirecionar para a página de login após um registro bem-sucedido
+      setTimeout(() => {
+        navigate("/login");
+      }, 1500);
+      
     } catch (error: any) {
+      console.error("Erro ao criar conta:", error);
+      
+      let errorMessage = error.message;
+      if (error.message.includes("User already registered")) {
+        errorMessage = "Este email já está registrado. Tente fazer login.";
+      }
+      
       toast({
         variant: "destructive",
         title: "Erro na criação da conta",
-        description: error.message,
+        description: errorMessage,
       });
       
-      throw error;
     } finally {
       setLoading(false);
     }
