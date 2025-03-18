@@ -1,15 +1,19 @@
 
-import { Routes } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { PublicRoutes } from "./public-routes";
 import { ClientAreaRoutes } from "./client-area-routes";
 import { AdminRoutes } from "./admin-routes";
-import { AuthRoutes } from "./auth-routes";
+import SignupConfirmation from "@/pages/SignupConfirmation";
+import ResetPassword from "@/pages/ResetPassword";
+import ClientLogin from "@/pages/ClientLogin";
 
 export function AppRoutes() {
   return (
     <Routes>
-      {/* Import authentication routes */}
-      <AuthRoutes />
+      {/* Authentication routes */}
+      <Route path="/" element={<SignupConfirmation />} />
+      <Route path="/login" element={<ClientLogin />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       
       {/* Import routes from other modular route files */}
       <PublicRoutes />
