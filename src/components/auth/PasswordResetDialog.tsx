@@ -23,7 +23,7 @@ export const PasswordResetDialog = ({ isOpen, onOpenChange }: PasswordResetDialo
     setIsResetLoading(true);
 
     try {
-      // Construa a URL completa para redirecionamento com o caminho explícito
+      // Usar a URL completa atual para redirecionamento e não localhost
       const origin = window.location.origin;
       const redirectUrl = `${origin}/reset-password`;
       

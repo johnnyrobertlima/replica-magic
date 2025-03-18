@@ -113,8 +113,7 @@ export const useClientAuth = () => {
     setLoading(true);
     
     try {
-      // Definir a URL de redirecionamento para a verificação do email
-      // Usar window.location.origin sem concatenar com href para evitar erros de cross-origin
+      // Obter a URL atual completa para redirecionamento
       const origin = window.location.origin;
       const redirectUrl = `${origin}/login`;
       
@@ -135,6 +134,17 @@ export const useClientAuth = () => {
       
       if (data && data.user) {
         console.log("Usuário criado com sucesso:", data.user);
+        
+        // Verificar se o email de confirmação foi enviado
+        if (data.user.identities && data.user.identities.length === 0) {
+          console.error("Erro: Identidades não definidas no usuário.");
+        }
+        
+        if (data.user.confirmation_sent_at) {
+          console.log("Email de confirmação enviado em:", data.user.confirmation_sent_at);
+        } else {
+          console.warn("Aviso: Nenhuma confirmação de email foi enviada.");
+        }
       }
       
       toast({
