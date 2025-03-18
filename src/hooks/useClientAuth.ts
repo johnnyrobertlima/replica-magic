@@ -113,8 +113,8 @@ export const useClientAuth = () => {
     setLoading(true);
     
     try {
-      // Using a relative URL to avoid domain/environment issues
-      const redirectUrl = "/login";
+      // We need to use the root URL to capture the hash parameters when the user confirms their email
+      const redirectUrl = "/";
       
       console.log("Registrando usuário com redirect para:", redirectUrl);
       
