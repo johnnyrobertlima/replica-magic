@@ -2,12 +2,11 @@
 import { Route } from "react-router-dom";
 import { Fragment } from "react";
 import Index from "@/pages/Index";
-import ClientLogin from "@/pages/ClientLogin";
 
 export function PublicRoutes() {
   return (
     <Fragment>
-      <Route path="/login" element={<ClientLogin />} />
+      {/* Any additional public routes that aren't auth-related would go here */}
     </Fragment>
   );
 }
