@@ -23,8 +23,11 @@ export const PasswordResetDialog = ({ isOpen, onOpenChange }: PasswordResetDialo
     setIsResetLoading(true);
 
     try {
+      // Construa a URL completa para redirecionamento
+      const redirectUrl = `${window.location.origin}/reset-password`;
+      
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: redirectUrl,
       });
 
       if (error) throw error;
