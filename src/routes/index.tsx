@@ -53,6 +53,8 @@ export function AppRoutes() {
       {/* Public Routes */}
       <Route path="/" element={<Index />} />
       <Route path="/login" element={<ClientLogin />} />
+      {/* Adicionamos uma rota com path="/#" para capturar hash redirects */}
+      <Route path="/#" element={<ResetPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
 
       {/* Client Area Routes */}

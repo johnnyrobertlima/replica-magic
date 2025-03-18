@@ -23,9 +23,10 @@ export const PasswordResetDialog = ({ isOpen, onOpenChange }: PasswordResetDialo
     setIsResetLoading(true);
 
     try {
-      // Usar a URL completa atual para redirecionamento e não localhost
-      const origin = window.location.origin;
-      const redirectUrl = `${origin}/reset-password`;
+      // Usar a URL do site em produção para garantir que o redirecionamento funcione
+      // Isso pode ser ajustado com base no ambiente
+      // Para produção, usamos a URL absoluta da página de reset
+      const redirectUrl = "https://www.oniagencia.com.br/reset-password";
       
       console.log("Enviando link de redefinição com redirect para:", redirectUrl);
       

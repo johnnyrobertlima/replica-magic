@@ -113,9 +113,9 @@ export const useClientAuth = () => {
     setLoading(true);
     
     try {
-      // Obter a URL atual completa para redirecionamento
-      const origin = window.location.origin;
-      const redirectUrl = `${origin}/login`;
+      // Definir a URL absoluta para redirecionamento
+      // Em produção, use a URL absoluta
+      const redirectUrl = "https://www.oniagencia.com.br/login";
       
       console.log("Registrando usuário com redirect para:", redirectUrl);
       

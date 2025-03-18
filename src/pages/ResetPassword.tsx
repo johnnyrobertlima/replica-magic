@@ -18,16 +18,31 @@ const ResetPassword = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // On component mount, check if we have an access token in the URL hash
-    const handleHashParams = async () => {
-      // Get the current URL hash
+    // On component mount, check if we have an access token in the URL hash or query params
+    const handleAuthParams = async () => {
+      // Primeiro verifica se temos o token no hash (formato antigo)
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const accessToken = hashParams.get("access_token");
       const refreshToken = hashParams.get("refresh_token");
       const type = hashParams.get("type");
       
-      console.log("Hash params:", { accessToken: !!accessToken, type, hash: window.location.hash });
+      // Se não encontrou no hash, verifica na URL (formato novo)
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlToken = urlParams.get("token");
       
+      console.log("Auth params:", { 
+        hash: { 
+          accessToken: !!accessToken, 
+          type, 
+          hash: window.location.hash 
+        },
+        url: {
+          token: !!urlToken,
+          search: window.location.search
+        }
+      });
+      
+      // Processa o token do hash
       if (accessToken && type === "recovery") {
         try {
           // Set the session with the tokens from the URL
@@ -54,8 +69,37 @@ const ResetPassword = () => {
           });
           navigate("/login");
         }
-      } else if (!accessToken) {
-        // No access token in URL - check if we're already authenticated
+      } 
+      // Processa token da URL (formato novo)
+      else if (urlToken) {
+        try {
+          const { error } = await supabase.auth.verifyOtp({
+            token_hash: urlToken,
+            type: "recovery"
+          });
+          
+          if (error) {
+            console.error("Token verification error:", error);
+            toast({
+              variant: "destructive",
+              title: "Link inválido",
+              description: "O link de redefinição de senha é inválido ou expirou.",
+            });
+            navigate("/login");
+          }
+        } catch (error) {
+          console.error("Error verifying token:", error);
+          toast({
+            variant: "destructive",
+            title: "Erro no processo",
+            description: "Ocorreu um erro ao verificar o token de redefinição.",
+          });
+          navigate("/login");
+        }
+      }
+      // Se não tem token no hash nem na URL, verifica autenticação
+      else {
+        // Check if we're already authenticated
         const { data } = await supabase.auth.getSession();
         if (!data.session) {
           toast({
@@ -68,7 +112,7 @@ const ResetPassword = () => {
       }
     };
 
-    handleHashParams();
+    handleAuthParams();
   }, [navigate, toast]);
 
   const handlePasswordReset = async (e: React.FormEvent) => {
