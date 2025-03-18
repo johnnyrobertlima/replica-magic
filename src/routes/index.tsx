@@ -1,4 +1,3 @@
-
 import { Routes, Route } from "react-router-dom";
 import { Fragment } from "react";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
@@ -6,6 +5,7 @@ import { PermissionGuard } from "@/components/auth/PermissionGuard";
 // Public routes
 import Index from "@/pages/Index";
 import ClientLogin from "@/pages/ClientLogin";
+import ResetPassword from "@/pages/ResetPassword";
 
 // Client area routes
 import ClientArea from "@/pages/ClientArea";
@@ -53,6 +53,7 @@ export function AppRoutes() {
       {/* Public Routes */}
       <Route path="/" element={<Index />} />
       <Route path="/login" element={<ClientLogin />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
       {/* Client Area Routes */}
       <Route path="/client-area" element={

@@ -18,16 +18,57 @@ const ResetPassword = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if we have the access token in the URL (this happens after clicking the reset link)
-    const hash = window.location.hash;
-    if (!hash) {
-      toast({
-        variant: "destructive",
-        title: "Link inválido",
-        description: "O link de redefinição de senha é inválido ou expirou.",
-      });
-      navigate("/login");
-    }
+    // On component mount, check if we have an access token in the URL hash
+    const handleHashParams = async () => {
+      // Get the current URL hash
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = hashParams.get("access_token");
+      const refreshToken = hashParams.get("refresh_token");
+      const type = hashParams.get("type");
+      
+      console.log("Hash params:", { accessToken: !!accessToken, type, hash: window.location.hash });
+      
+      if (accessToken && type === "recovery") {
+        try {
+          // Set the session with the tokens from the URL
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken || "",
+          });
+          
+          if (error) {
+            console.error("Session error:", error);
+            toast({
+              variant: "destructive",
+              title: "Link inválido",
+              description: "O link de redefinição de senha é inválido ou expirou.",
+            });
+            navigate("/login");
+          }
+        } catch (error) {
+          console.error("Error setting session:", error);
+          toast({
+            variant: "destructive",
+            title: "Erro no processo",
+            description: "Ocorreu um erro ao processar o link de redefinição.",
+          });
+          navigate("/login");
+        }
+      } else if (!accessToken) {
+        // No access token in URL - check if we're already authenticated
+        const { data } = await supabase.auth.getSession();
+        if (!data.session) {
+          toast({
+            variant: "destructive",
+            title: "Link inválido",
+            description: "O link de redefinição de senha é inválido ou expirou.",
+          });
+          navigate("/login");
+        }
+      }
+    };
+
+    handleHashParams();
   }, [navigate, toast]);
 
   const handlePasswordReset = async (e: React.FormEvent) => {
