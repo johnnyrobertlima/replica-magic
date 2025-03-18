@@ -87,7 +87,7 @@ const BkHome = () => {
                 <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mb-2">
                   <Wallet className="h-6 w-6 text-amber-600" />
                 </div>
-                <CardTitle>Financeiro</CardTitle>
+                <CardTitle>Faturamento</CardTitle>
                 <CardDescription>
                   Consulte informações financeiras
                 </CardDescription>
