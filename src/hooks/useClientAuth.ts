@@ -113,12 +113,13 @@ export const useClientAuth = () => {
     setLoading(true);
     
     try {
-      // We need to use the root URL to capture the hash parameters when the user confirms their email
-      const redirectUrl = "/";
+      // Definir a URL de redirecionamento para a verificação do email
+      const origin = window.location.origin;
+      const redirectUrl = `${origin}/login`;
       
       console.log("Registrando usuário com redirect para:", redirectUrl);
       
-      const { error, data } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email: email.trim(),
         password: password.trim(),
         options: {
@@ -136,10 +137,7 @@ export const useClientAuth = () => {
         description: "Verifique seu email para confirmar o cadastro.",
       });
       
-      console.log("Resposta do signUp:", data);
-      
     } catch (error: any) {
-      console.error("Erro no registro:", error);
       toast({
         variant: "destructive",
         title: "Erro na criação da conta",

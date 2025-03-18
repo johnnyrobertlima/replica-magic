@@ -23,8 +23,9 @@ export const PasswordResetDialog = ({ isOpen, onOpenChange }: PasswordResetDialo
     setIsResetLoading(true);
 
     try {
-      // Use a relative URL for the redirect
-      const redirectUrl = "/reset-password";
+      // Construa a URL completa para redirecionamento com o caminho explícito
+      const origin = window.location.origin;
+      const redirectUrl = `${origin}/reset-password`;
       
       console.log("Enviando link de redefinição com redirect para:", redirectUrl);
       

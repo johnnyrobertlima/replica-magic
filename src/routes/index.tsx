@@ -6,7 +6,6 @@ import { PermissionGuard } from "@/components/auth/PermissionGuard";
 import Index from "@/pages/Index";
 import ClientLogin from "@/pages/ClientLogin";
 import ResetPassword from "@/pages/ResetPassword";
-import SignupConfirmation from "@/pages/SignupConfirmation";
 
 // Client area routes
 import ClientArea from "@/pages/ClientArea";
@@ -52,7 +51,7 @@ export function AppRoutes() {
   return (
     <Routes>
       {/* Public Routes */}
-      <Route path="/" element={<SignupConfirmation />} />
+      <Route path="/" element={<Index />} />
       <Route path="/login" element={<ClientLogin />} />
       <Route path="/reset-password" element={<ResetPassword />} />
 
