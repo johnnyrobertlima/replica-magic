@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, BarChart2, Users, Wallet, ClipboardCheck } from "lucide-react";
@@ -97,7 +96,7 @@ const BkHome = () => {
               </CardContent>
               <CardFooter>
                 <Button variant="outline" className="w-full" asChild>
-                  <Link to="/client-area/bk/financial">Acessar</Link>
+                  <Link to="/client-area/bk/faturamento">Acessar</Link>
                 </Button>
               </CardFooter>
             </Card>

@@ -5,6 +5,7 @@ import { PermissionGuard } from "@/components/auth/PermissionGuard";
 import BkHome from "@/pages/BkHome";
 import BkClients from "@/pages/bk/BkClients";
 import BkFinancial from "@/pages/bk/BkFinancial";
+import BkFaturamento from "@/pages/bk/BkFaturamento";
 import BkReports from "@/pages/bk/BkReports";
 import BkDashboard from "@/pages/bk/BkDashboard";
 
@@ -24,6 +25,11 @@ export function BkRoutes() {
       <Route path="/client-area/bk/financial" element={
         <PermissionGuard resourcePath="/client-area/bk">
           <BkFinancial />
+        </PermissionGuard>
+      } />
+      <Route path="/client-area/bk/faturamento" element={
+        <PermissionGuard resourcePath="/client-area/bk">
+          <BkFaturamento />
         </PermissionGuard>
       } />
       <Route path="/client-area/bk/reports" element={
