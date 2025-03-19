@@ -12,7 +12,6 @@ import { RefreshCw } from "lucide-react";
 export const BkFinancialAdm = () => {
   const { 
     isLoading, 
-    consolidatedInvoices, 
     filteredInvoices,
     refreshData, 
     dateRange, 
