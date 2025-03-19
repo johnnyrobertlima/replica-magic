@@ -105,38 +105,42 @@ const BkEstoque = () => {
     try {
       setIsLoading(true);
       
-      // First, fetch estoque data
+      // First, fetch estoque data for LOCAL = 3
       const { data: estoqueData, error: estoqueError } = await supabase
         .from('BLUEBAY_ESTOQUE')
         .select('*')
         .eq('LOCAL', 3);
 
       if (estoqueError) throw estoqueError;
-
-      // Then, fetch all items data with group description
+      
+      // Extract all ITEM_CODIGO values to query the item data
+      const itemCodes = estoqueData.map(item => item.ITEM_CODIGO);
+      
+      // Then, fetch item data specifically for the items in our estoque
       const { data: itemsData, error: itemsError } = await supabase
         .from('BLUEBAY_ITEM')
-        .select('ITEM_CODIGO, DESCRICAO, GRU_DESCRICAO');
+        .select('ITEM_CODIGO, DESCRICAO, GRU_DESCRICAO')
+        .in('ITEM_CODIGO', itemCodes);
 
       if (itemsError) throw itemsError;
 
-      // Create a map of ITEM_CODIGO to item data for faster lookups
-      const itemsMap = new Map();
+      // Create a map of item codes to their descriptions and groups
+      const itemMap = new Map();
       itemsData.forEach(item => {
-        itemsMap.set(item.ITEM_CODIGO, {
-          DESCRICAO: item.DESCRICAO,
-          GRU_DESCRICAO: item.GRU_DESCRICAO
+        itemMap.set(item.ITEM_CODIGO, {
+          DESCRICAO: item.DESCRICAO || 'Sem descrição',
+          GRU_DESCRICAO: item.GRU_DESCRICAO || 'Sem grupo'
         });
       });
 
       // Combine the data
       const combinedData: EstoqueItem[] = estoqueData.map(estoque => {
-        const itemInfo = itemsMap.get(estoque.ITEM_CODIGO) || { DESCRICAO: 'Sem descrição', GRU_DESCRICAO: 'Sem grupo' };
+        const itemInfo = itemMap.get(estoque.ITEM_CODIGO) || { DESCRICAO: 'Sem descrição', GRU_DESCRICAO: 'Sem grupo' };
         
         return {
           ITEM_CODIGO: estoque.ITEM_CODIGO,
-          DESCRICAO: itemInfo.DESCRICAO || 'Sem descrição',
-          GRU_DESCRICAO: itemInfo.GRU_DESCRICAO || 'Sem grupo',
+          DESCRICAO: itemInfo.DESCRICAO,
+          GRU_DESCRICAO: itemInfo.GRU_DESCRICAO,
           FISICO: estoque.FISICO,
           DISPONIVEL: estoque.DISPONIVEL,
           RESERVADO: estoque.RESERVADO,
