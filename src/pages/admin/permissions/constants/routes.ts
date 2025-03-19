@@ -13,6 +13,7 @@ export const KNOWN_ROUTES = [
   "/admin/services",
   "/admin/social",
   "/admin/users",
+  "/admin/requests",
   // Área do cliente
   "/client-area",
   // Rotas Bluebay

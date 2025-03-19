@@ -18,7 +18,8 @@ import UserGroupManagement from "@/pages/admin/users/UserGroupManagement";
 import { AdminBanners } from "@/pages/admin/banners";
 import BluebayHome from "@/pages/BluebayHome";
 import BkHome from "@/pages/BkHome";
-import { BkClients, BkFinancial, BkReports, BkDashboard, BkGestaoTitulos, BkFinanceiroManager, BkClientFinancialSummary, BkEstoque } from "@/pages/bk";
+import { BkClients, BkFinancial, BkReports, BkDashboard, BkGestaoTitulos, BkFinanceiroManager, BkClientFinancialSummary, BkEstoque, BkRequests } from "@/pages/bk";
+import AdminRequests from "@/pages/admin/requests";
 
 export const routes = [
   {
@@ -68,6 +69,14 @@ export const routes = [
   {
     path: "/client-area/bk/estoque",
     element: <BkEstoque />,
+  },
+  {
+    path: "/client-area/bk/requests",
+    element: <BkRequests />,
+  },
+  {
+    path: "/admin/requests",
+    element: <AdminRequests />,
   },
   {
     path: "/post-management",
