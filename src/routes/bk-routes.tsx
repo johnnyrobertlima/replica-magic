@@ -8,6 +8,7 @@ import BkFinancial from "@/pages/bk/BkFinancial";
 import BkReports from "@/pages/bk/BkReports";
 import BkDashboard from "@/pages/bk/BkDashboard";
 import BkGestaoTitulos from "@/pages/bk/BkGestaoTitulos";
+import BkFinanceiroManager from "@/pages/bk/BkFinanceiroManager";
 
 export function BkRoutes() {
   return (
@@ -30,6 +31,11 @@ export function BkRoutes() {
       <Route path="/client-area/bk/gestaotitulos" element={
         <PermissionGuard resourcePath="/client-area/bk">
           <BkGestaoTitulos />
+        </PermissionGuard>
+      } />
+      <Route path="/client-area/bk/financeiromanager" element={
+        <PermissionGuard resourcePath="/client-area/bk">
+          <BkFinanceiroManager />
         </PermissionGuard>
       } />
       <Route path="/client-area/bk/reports" element={
