@@ -1,0 +1,49 @@
+
+// Lista de rotas conhecidas da aplicação
+export const KNOWN_ROUTES = [
+  // Rotas administrativas
+  "/admin/permissions",
+  "/admin/groups",
+  "/admin/banners",
+  "/admin/clients",
+  "/admin/dashboard",
+  "/admin/logos",
+  "/admin/messages",
+  "/admin/seo",
+  "/admin/services",
+  "/admin/social",
+  "/admin/users",
+  // Área do cliente
+  "/client-area",
+  // Rotas Bluebay
+  "/client-area/bluebay",
+  "/client-area/bluebay/jab-orders",
+  "/client-area/bluebay/jab-orders-by-client",
+  "/client-area/bluebay/jab-orders-by-representante",
+  "/client-area/bluebay/aprovacao-financeira",
+  "/client-area/bluebay/acompanhamento-faturamento",
+  // Rotas B&K
+  "/client-area/bk",
+  "/client-area/bk/dashboard",
+  "/client-area/bk/reports",
+  "/client-area/bk/clients", 
+  "/client-area/bk/financial",
+  "/client-area/bk/gestaotitulos",
+  "/client-area/bk/financeiromanager",
+  "/client-area/bk/clientefinancial",
+  "/client-area/bk/requests",
+  // Outras rotas
+  "/client-area/content-management",
+  "/client-area/mailing-registration",
+  "/client-area/tokens",
+  "/client-area/whatsapp-registration",
+  "/client-area/whatsapp",
+  "/post-management",
+  "/content-management",
+  "/token-management",
+  "/whatsapp-service",
+  "/mailing-registration",
+  "/jab-orders",
+  "/client-login",
+  "/bluebay-home",
+];

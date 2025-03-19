@@ -1,6 +1,6 @@
 
 import { lazy } from "react";
-import { Navigate, Route, Fragment } from "react-router-dom";
+import { Navigate, Route } from "react-router-dom";
 import SignupConfirmation from "@/pages/SignupConfirmation";
 
 // Importações lazy para melhorar o carregamento da aplicação
@@ -10,7 +10,7 @@ const Index = lazy(() => import("@/pages/Index"));
 
 export function PublicRoutes() {
   return (
-    <Fragment>
+    <>
       {/* Public Routes */}
       <Route path="/" element={<Index />} />
       <Route path="/login" element={<ClientLogin />} />
@@ -19,6 +19,6 @@ export function PublicRoutes() {
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/signup-confirmation" element={<SignupConfirmation />} />
       <Route path="*" element={<Navigate to="/" />} />
-    </Fragment>
+    </>
   );
 }
