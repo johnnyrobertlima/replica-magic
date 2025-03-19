@@ -7,19 +7,47 @@ import { useToast } from "@/components/ui/use-toast";
 export const useTokenVerification = () => {
   const [isTokenValid, setIsTokenValid] = useState(false);
   const [isVerifying, setIsVerifying] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
     const handleAuthParams = async () => {
       try {
-        // Primeiro verifica se temos o token no hash (formato antigo)
+        // Check if we're on the correct page first
+        if (window.location.pathname !== '/reset-password') {
+          // Look for hash params that might indicate a redirect from Supabase auth
+          const hashParams = new URLSearchParams(window.location.hash.substring(1));
+          const type = hashParams.get("type");
+          
+          if (type === "recovery") {
+            // We're on the wrong page but have recovery params, redirect to the correct page
+            navigate("/reset-password" + window.location.hash);
+            return;
+          }
+          
+          if (type === "signup") {
+            // Handle signup confirmation success
+            toast({
+              title: "Email confirmado com sucesso!",
+              description: "Agora você pode fazer login com suas credenciais.",
+            });
+            
+            // Redirect to login page after confirming signup
+            setTimeout(() => {
+              navigate("/login");
+            }, 1000);
+            return;
+          }
+        }
+        
+        // First check if we have the token in the hash (older format)
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const accessToken = hashParams.get("access_token");
         const refreshToken = hashParams.get("refresh_token");
         const type = hashParams.get("type");
         
-        // Se não encontrou no hash, verifica na URL (formato novo)
+        // If not found in hash, check in the URL (newer format)
         const urlParams = new URLSearchParams(window.location.search);
         const urlToken = urlParams.get("token");
         
@@ -32,10 +60,11 @@ export const useTokenVerification = () => {
           url: {
             token: !!urlToken,
             search: window.location.search
-          }
+          },
+          pathname: window.location.pathname
         });
         
-        // Processa o token do hash
+        // Process the token from the hash
         if (accessToken && type === "recovery") {
           try {
             // Set the session with the tokens from the URL
@@ -50,12 +79,13 @@ export const useTokenVerification = () => {
             }
             
             setIsTokenValid(true);
+            setErrorMessage(null);
           } catch (error) {
             console.error("Error setting session:", error);
             throw error;
           }
         } 
-        // Processa token da URL (formato novo)
+        // Process token from the URL (newer format)
         else if (urlToken) {
           try {
             const { error } = await supabase.auth.verifyOtp({
@@ -69,23 +99,26 @@ export const useTokenVerification = () => {
             }
             
             setIsTokenValid(true);
+            setErrorMessage(null);
           } catch (error) {
             console.error("Error verifying token:", error);
             throw error;
           }
         }
-        // Se não tem token no hash nem na URL, verifica autenticação
+        // If no token in hash or URL, check if we're already authenticated
         else {
           // Check if we're already authenticated
           const { data } = await supabase.auth.getSession();
           if (data.session) {
             setIsTokenValid(true);
+            setErrorMessage(null);
           } else {
             throw new Error("Nenhum token válido encontrado");
           }
         }
       } catch (error: any) {
         console.error("Erro ao verificar token:", error);
+        setErrorMessage(error.message);
         toast({
           variant: "destructive",
           title: "Link inválido",
@@ -102,5 +135,5 @@ export const useTokenVerification = () => {
     handleAuthParams();
   }, [navigate, toast]);
 
-  return { isTokenValid, isVerifying };
+  return { isTokenValid, isVerifying, errorMessage };
 };

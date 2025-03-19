@@ -6,7 +6,7 @@ import { useTokenVerification } from "@/hooks/useTokenVerification";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
-  const { isTokenValid, isVerifying } = useTokenVerification();
+  const { isTokenValid, isVerifying, errorMessage } = useTokenVerification();
 
   const handleResetSuccess = () => {
     // Redirect to login page after successful password reset
@@ -16,12 +16,12 @@ const ResetPassword = () => {
   };
 
   if (isVerifying) {
-    return <TokenVerificationLoader />;
+    return <TokenVerificationLoader errorMessage={errorMessage} />;
   }
 
   if (!isTokenValid) {
     // If token is invalid, the useTokenVerification hook will handle the redirection
-    return null;
+    return <TokenVerificationLoader errorMessage={errorMessage} />;
   }
 
   return <PasswordResetForm onSuccess={handleResetSuccess} />;
