@@ -1,3 +1,4 @@
+
 import { Route } from "react-router-dom";
 import { Fragment } from "react";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
@@ -43,7 +44,10 @@ export function BkRoutes() {
       } />
       <Route path="/client-area/bk/invoice-control" element={
         <PermissionGuard resourcePath="/client-area/bk">
-          <BkGestaoTitulos />
+          <div className="container mx-auto p-8">
+            <h1 className="text-3xl font-bold mb-4">Controle de Faturamento</h1>
+            <p className="text-muted-foreground">Esta funcionalidade estará disponível em breve.</p>
+          </div>
         </PermissionGuard>
       } />
       <Route path="/client-area/bk/requests" element={

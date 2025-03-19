@@ -22,7 +22,7 @@ export const BkMenu = () => {
     { name: "Dashboard", path: "/client-area/bk", icon: <BarChart2 className="h-4 w-4 mr-2" /> },
     { name: "Clientes", path: "/client-area/bk/clients", icon: <Users className="h-4 w-4 mr-2" /> },
     { name: "Faturamento", path: "/client-area/bk/financial", icon: <Receipt className="h-4 w-4 mr-2" /> },
-    { name: "Gestão de Títulos", path: "/client-area/bk/invoice-control", icon: <FileSpreadsheet className="h-4 w-4 mr-2" /> },
+    { name: "Gestão de Títulos", path: "/client-area/bk/gestaotitulos", icon: <FileSpreadsheet className="h-4 w-4 mr-2" /> },
     { name: "Relatórios", path: "/client-area/bk/reports", icon: <FileText className="h-4 w-4 mr-2" /> },
     { name: "Solicitações", path: "/client-area/bk/requests", icon: <ClipboardCheck className="h-4 w-4 mr-2" /> },
   ];
