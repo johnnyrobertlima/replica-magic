@@ -1,9 +1,11 @@
+
 import { Route } from "react-router-dom";
 import { Fragment } from "react";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
 import BkHome from "@/pages/BkHome";
 import BkClients from "@/pages/bk/BkClients";
 import BkFinancial from "@/pages/bk/BkFinancial";
+import BkFinancialAdm from "@/pages/bk/BkFinancialAdm";
 import BkReports from "@/pages/bk/BkReports";
 import BkDashboard from "@/pages/bk/BkDashboard";
 import BkGestaoTitulos from "@/pages/bk/BkGestaoTitulos";
@@ -24,6 +26,11 @@ export function BkRoutes() {
       <Route path="/client-area/bk/financial" element={
         <PermissionGuard resourcePath="/client-area/bk">
           <BkFinancial />
+        </PermissionGuard>
+      } />
+      <Route path="/client-area/bk/financialadm" element={
+        <PermissionGuard resourcePath="/client-area/bk">
+          <BkFinancialAdm />
         </PermissionGuard>
       } />
       <Route path="/client-area/bk/gestaotitulos" element={
