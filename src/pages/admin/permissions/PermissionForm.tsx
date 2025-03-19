@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,6 +44,8 @@ const KNOWN_ROUTES = [
   "/client-area/bk/reports",
   "/client-area/bk/clients", 
   "/client-area/bk/financial",
+  "/client-area/bk/gestaotitulos",
+  "/client-area/bk/financeiromanager",
   "/client-area/bk/requests",
   // Outras rotas
   "/client-area/content-management",
