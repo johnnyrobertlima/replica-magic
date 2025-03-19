@@ -152,6 +152,16 @@ export function AppRoutes() {
           <BkDashboard />
         </PermissionGuard>
       } />
+      <Route path="/client-area/bk/gestaotitulos" element={
+        <PermissionGuard resourcePath="/client-area/bk">
+          <BkGestaoTitulos />
+        </PermissionGuard>
+      } />
+      <Route path="/client-area/bk/financeiromanager" element={
+        <PermissionGuard resourcePath="/client-area/bk">
+          <BkFinanceiroManager />
+        </PermissionGuard>
+      } />
       <Route path="/client-area/bk/requests" element={
         <PermissionGuard resourcePath="/client-area/bk">
           <div className="container mx-auto p-8">

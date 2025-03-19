@@ -34,7 +34,7 @@ export function BkRoutes() {
         </PermissionGuard>
       } />
       <Route path="/client-area/bk/financeiromanager" element={
-        <PermissionGuard resourcePath="/client-area/bk">
+        <PermissionGuard resourcePath="/client-area/bk/financeiromanager">
           <BkFinanceiroManager />
         </PermissionGuard>
       } />
