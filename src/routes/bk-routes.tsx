@@ -1,5 +1,5 @@
 
-import { Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
 import BkHome from "@/pages/BkHome";
 import BkClients from "@/pages/bk/BkClients";
@@ -11,48 +11,56 @@ import BkGestaoTitulos from "@/pages/bk/BkGestaoTitulos";
 
 export function BkRoutes() {
   return (
-    <>
-      <Route path="/client-area/bk" element={
+    <Routes>
+      <Route path="/" element={
         <PermissionGuard resourcePath="/client-area/bk">
           <BkHome />
         </PermissionGuard>
       } />
-      <Route path="/client-area/bk/clients" element={
+      
+      <Route path="/clients" element={
         <PermissionGuard resourcePath="/client-area/bk">
           <BkClients />
         </PermissionGuard>
       } />
-      <Route path="/client-area/bk/financial" element={
+      
+      <Route path="/financial" element={
         <PermissionGuard resourcePath="/client-area/bk">
           <BkFinancial />
         </PermissionGuard>
       } />
-      <Route path="/client-area/bk/financialadm" element={
+      
+      <Route path="/financialadm" element={
         <PermissionGuard resourcePath="/client-area/bk">
           <BkFinancialAdm />
         </PermissionGuard>
       } />
-      <Route path="/client-area/bk/gestaotitulos" element={
+      
+      <Route path="/gestaotitulos" element={
         <PermissionGuard resourcePath="/client-area/bk">
           <BkGestaoTitulos />
         </PermissionGuard>
       } />
-      <Route path="/client-area/bk/reports" element={
+      
+      <Route path="/reports" element={
         <PermissionGuard resourcePath="/client-area/bk">
           <BkReports />
         </PermissionGuard>
       } />
-      <Route path="/client-area/bk/dashboard" element={
+      
+      <Route path="/dashboard" element={
         <PermissionGuard resourcePath="/client-area/bk">
           <BkDashboard />
         </PermissionGuard>
       } />
-      <Route path="/client-area/bk/invoice-control" element={
+      
+      <Route path="/invoice-control" element={
         <PermissionGuard resourcePath="/client-area/bk">
           <BkGestaoTitulos />
         </PermissionGuard>
       } />
-      <Route path="/client-area/bk/requests" element={
+      
+      <Route path="/requests" element={
         <PermissionGuard resourcePath="/client-area/bk">
           <div className="container mx-auto p-8">
             <h1 className="text-3xl font-bold mb-4">Solicitações</h1>
@@ -60,6 +68,6 @@ export function BkRoutes() {
           </div>
         </PermissionGuard>
       } />
-    </>
+    </Routes>
   );
 }
