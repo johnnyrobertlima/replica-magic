@@ -89,47 +89,46 @@ export default function RequestForm({ onRequestSubmitted }: RequestFormProps) {
         try {
           const bucketName = 'request_attachments';
           
-          // Check if the bucket exists by listing buckets
-          const { data: buckets, error: bucketsError } = await supabase.storage
-            .listBuckets();
-          
+          // Check if the bucket exists (the bucket should now exist from our migration)
+          const { data: buckets } = await supabase.storage.listBuckets();
           const bucketExists = buckets?.some(bucket => bucket.name === bucketName);
           
-          if (bucketsError || !bucketExists) {
-            console.error("Bucket check error:", !bucketExists ? `Bucket ${bucketName} does not exist` : bucketsError);
+          if (!bucketExists) {
+            console.error(`Bucket ${bucketName} not found. Please contact support.`);
             toast({
-              title: "Aviso do Sistema",
-              description: "Armazenamento de arquivos não configurado. A solicitação será enviada sem anexo.",
+              title: "Erro de Sistema",
+              description: "Armazenamento não configurado. Por favor, contate o suporte.",
+              variant: "destructive",
+            });
+            return;
+          }
+          
+          // Upload the file
+          const fileExt = selectedFile.name.split('.').pop();
+          const userId = session.user.id;
+          const filePath = `${userId}/${protocolNumber}/${Math.random()}.${fileExt}`;
+          
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from(bucketName)
+            .upload(filePath, selectedFile, {
+              cacheControl: '3600',
+              upsert: false
+            });
+          
+          if (uploadError) {
+            console.error("File upload error:", uploadError);
+            toast({
+              title: "Erro ao enviar arquivo",
+              description: "Não foi possível enviar o anexo, mas sua solicitação será processada.",
               variant: "default",
             });
           } else {
-            // Upload the actual file
-            const fileExt = selectedFile.name.split('.').pop();
-            const userId = session.user.id;
-            const filePath = `${userId}/${protocolNumber}/${Math.random()}.${fileExt}`;
-            
-            const { data: uploadData, error: uploadError } = await supabase.storage
+            // Get public URL for the uploaded file
+            const { data: { publicUrl } } = supabase.storage
               .from(bucketName)
-              .upload(filePath, selectedFile, {
-                cacheControl: '3600',
-                upsert: false
-              });
+              .getPublicUrl(filePath);
             
-            if (uploadError) {
-              console.error("File upload error:", uploadError);
-              toast({
-                title: "Erro ao enviar arquivo",
-                description: "Não foi possível enviar o anexo, mas sua solicitação será processada.",
-                variant: "default",
-              });
-            } else {
-              // Get public URL for the uploaded file
-              const { data: { publicUrl } } = supabase.storage
-                .from(bucketName)
-                .getPublicUrl(filePath);
-              
-              attachmentUrl = publicUrl;
-            }
+            attachmentUrl = publicUrl;
           }
         } catch (fileError: any) {
           console.error("File upload error:", fileError);
@@ -141,29 +140,20 @@ export default function RequestForm({ onRequestSubmitted }: RequestFormProps) {
         }
       }
       
-      // Insert request into database
-      const { data, error } = await supabase
-        .from('bk_requests')
-        .insert([{
-          protocol: protocolNumber,
-          title: values.title,
-          department: values.department,
-          description: values.description,
-          status: 'Aberto' as RequestStatus,
-          user_id: session.user.id,
-          user_email: session.user.email,
-          attachment_url: attachmentUrl
-        }])
-        .select();
+      // Use our new security definer function to insert the request
+      // This avoids the infinite recursion policy error
+      const { data, error } = await supabase.rpc('add_user_request', {
+        protocol: protocolNumber,
+        title: values.title,
+        department: values.department,
+        description: values.description,
+        status: 'Aberto' as RequestStatus,
+        user_id: session.user.id,
+        user_email: session.user.email,
+        attachment_url: attachmentUrl
+      });
       
-      if (error) {
-        // Check for infinite recursion error
-        if (error.code === '42P17') {
-          console.error("Infinite recursion error:", error);
-          throw new Error("Erro de política de segurança. Contate o suporte técnico.");
-        }
-        throw error;
-      }
+      if (error) throw error;
       
       // Reset form
       form.reset();

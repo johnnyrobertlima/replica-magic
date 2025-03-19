@@ -22,7 +22,7 @@ export function useRequestsFetching() {
       
       // Get count first
       const { count, error: countError } = await supabase
-        .from('bk_requests')
+        .from('user_requests_view') // Use our view instead of direct table access
         .select('id', { count: 'exact', head: true });
       
       if (countError) {
@@ -34,7 +34,7 @@ export function useRequestsFetching() {
       
       // Then fetch the actual data with pagination
       const { data, error } = await supabase
-        .from('bk_requests')
+        .from('user_requests_view') // Use our view instead of direct table access
         .select('*')
         .order('created_at', { ascending: false })
         .range(from, to);

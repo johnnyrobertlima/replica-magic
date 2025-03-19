@@ -1488,6 +1488,51 @@ export type Database = {
           },
         ]
       }
+      user_requests_view: {
+        Row: {
+          attachment_url: string | null
+          created_at: string | null
+          department: string | null
+          description: string | null
+          id: string | null
+          protocol: string | null
+          response: string | null
+          status: string | null
+          title: string | null
+          updated_at: string | null
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          attachment_url?: string | null
+          created_at?: string | null
+          department?: string | null
+          description?: string | null
+          id?: string | null
+          protocol?: string | null
+          response?: string | null
+          status?: string | null
+          title?: string | null
+          updated_at?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          attachment_url?: string | null
+          created_at?: string | null
+          department?: string | null
+          description?: string | null
+          id?: string | null
+          protocol?: string | null
+          response?: string | null
+          status?: string | null
+          title?: string | null
+          updated_at?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       vw_representantes: {
         Row: {
           codigo_representante: number | null
@@ -1505,6 +1550,32 @@ export type Database = {
       }
     }
     Functions: {
+      add_user_request: {
+        Args: {
+          protocol: string
+          title: string
+          department: string
+          description: string
+          status: string
+          user_id: string
+          user_email: string
+          attachment_url?: string
+        }
+        Returns: {
+          attachment_url: string | null
+          created_at: string
+          department: string
+          description: string
+          id: string
+          protocol: string
+          response: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_email: string
+          user_id: string
+        }[]
+      }
       add_user_to_group: {
         Args: {
           p_user_id: string

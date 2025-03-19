@@ -26,10 +26,9 @@ export function useRequests() {
         return;
       }
       
-      // Use a direct query with the RLS policy instead of the RPC function
-      // This avoids the TypeScript error with the function name
+      // Use our new view to avoid the RLS recursion issue
       const { data, error } = await supabase
-        .from('bk_requests')
+        .from('user_requests_view')
         .select('*')
         .eq('user_id', session.user.id)
         .order('created_at', { ascending: false });
