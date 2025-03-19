@@ -1,6 +1,8 @@
 
 import React from "react";
 import { BkMenu } from "@/components/bk/BkMenu";
+import { InvoiceTable } from "@/components/bk/financial/InvoiceTable";
+import { FinancialDashboard } from "@/components/bk/financial/FinancialDashboard";
 import { useFinancial } from "@/hooks/bk/useFinancial";
 import { Button } from "@/components/ui/button";
 import { DateRangePicker } from "@/components/bk/financial/DateRangePicker";
@@ -10,6 +12,7 @@ import { RefreshCw } from "lucide-react";
 export const BkFinanceiroManager = () => {
   const { 
     isLoading, 
+    consolidatedInvoices, 
     filteredInvoices,
     refreshData, 
     dateRange, 
@@ -46,30 +49,11 @@ export const BkFinanceiroManager = () => {
             />
           </div>
           
-          <div className="p-6 rounded-lg border bg-card text-card-foreground shadow-sm">
-            <h2 className="text-xl font-semibold mb-4">Gerenciamento Financeiro</h2>
-            <p className="text-muted-foreground mb-4">Esta página será utilizada para gerenciar operações financeiras específicas.</p>
-            
-            {isLoading ? (
-              <div className="flex justify-center items-center h-40">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-4 border rounded-lg">
-                  <h3 className="font-medium mb-2">Notas Pendentes</h3>
-                  <p className="text-2xl font-bold">
-                    {filteredInvoices.filter(inv => inv.STATUS === 'PENDENTE').length}
-                  </p>
-                </div>
-                <div className="p-4 border rounded-lg">
-                  <h3 className="font-medium mb-2">Notas Aprovadas</h3>
-                  <p className="text-2xl font-bold">
-                    {filteredInvoices.filter(inv => inv.STATUS === 'APROVADO').length}
-                  </p>
-                </div>
-              </div>
-            )}
+          <FinancialDashboard invoices={filteredInvoices} />
+          
+          <div className="p-4 rounded-lg border bg-card text-card-foreground shadow-sm">
+            <h2 className="text-xl font-semibold mb-4">Notas Fiscais</h2>
+            <InvoiceTable invoices={filteredInvoices} isLoading={isLoading} />
           </div>
         </div>
       </div>
