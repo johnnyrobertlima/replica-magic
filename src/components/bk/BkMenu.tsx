@@ -1,7 +1,7 @@
 
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
-import { Menu, X, Users, Receipt, BarChart2, FileText, ClipboardCheck } from "lucide-react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { Menu, X, Users, Receipt, BarChart2, FileText, ClipboardCheck, LogOut } from "lucide-react";
 import {
   NavigationMenu,
   NavigationMenuList,
@@ -10,9 +10,13 @@ import {
 } from "@/components/ui/navigation-menu";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 export const BkMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   const menuItems = [
     { name: "Dashboard", path: "/client-area/bk", icon: <BarChart2 className="h-4 w-4 mr-2" /> },
@@ -22,11 +26,29 @@ export const BkMenu = () => {
     { name: "Solicitações", path: "/client-area/bk/requests", icon: <ClipboardCheck className="h-4 w-4 mr-2" /> },
   ];
 
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: "Logout realizado com sucesso",
+        description: "Você foi desconectado",
+      });
+      navigate('/login');
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao fazer logout",
+        description: "Não foi possível desconectar. Tente novamente.",
+      });
+    }
+  };
+
   return (
     <div className="sticky top-0 z-50 w-full bg-primary shadow-md">
       <div className="container mx-auto px-4">
         {/* Desktop Menu */}
-        <div className="hidden md:flex justify-center py-3">
+        <div className="hidden md:flex justify-between py-3">
           <NavigationMenu>
             <NavigationMenuList className="gap-1">
               {menuItems.map((item) => (
@@ -48,19 +70,39 @@ export const BkMenu = () => {
               ))}
             </NavigationMenuList>
           </NavigationMenu>
+          
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleLogout}
+            className="text-white hover:bg-primary-700 flex items-center"
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Sair
+          </Button>
         </div>
 
         {/* Mobile Menu Button */}
         <div className="md:hidden flex justify-between items-center py-3">
           <span className="font-semibold text-lg text-white">B&K Menu</span>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsOpen(!isOpen)}
-            className="p-1 text-white hover:bg-primary-700"
-          >
-            {isOpen ? <X size={24} /> : <Menu size={24} />}
-          </Button>
+          <div className="flex items-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              className="mr-2 text-white hover:bg-primary-700"
+            >
+              <LogOut size={20} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsOpen(!isOpen)}
+              className="p-1 text-white hover:bg-primary-700"
+            >
+              {isOpen ? <X size={24} /> : <Menu size={24} />}
+            </Button>
+          </div>
         </div>
 
         {/* Mobile Menu Dropdown */}
