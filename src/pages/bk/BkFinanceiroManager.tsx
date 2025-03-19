@@ -8,10 +8,11 @@ import { useFinancial, DateRange } from "@/hooks/bk/useFinancial";
 import { Button } from "@/components/ui/button";
 import { DateRangePicker } from "@/components/bk/financial/DateRangePicker";
 import { StatusFilter } from "@/components/bk/financial/StatusFilter";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Users } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FinancialSummaryCards } from "@/components/bk/financial/FinancialSummaryCards";
 import { AdditionalFilters } from "@/components/bk/financial/AdditionalFilters";
+import { Link } from "react-router-dom";
 
 export const BkFinanceiroManager = () => {
   const { 
@@ -42,10 +43,18 @@ export const BkFinanceiroManager = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold">Gerenciamento Financeiro</h1>
-          <Button variant="outline" onClick={refreshData} disabled={isLoading}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Atualizar
-          </Button>
+          <div className="flex gap-2">
+            <Link to="/client-area/bk/clientefinancial">
+              <Button variant="outline">
+                <Users className="h-4 w-4 mr-2" />
+                Visão por Cliente
+              </Button>
+            </Link>
+            <Button variant="outline" onClick={refreshData} disabled={isLoading}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Atualizar
+            </Button>
+          </div>
         </div>
   
         <div className="mt-6 space-y-6">

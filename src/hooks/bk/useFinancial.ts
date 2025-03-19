@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { fetchFinancialTitles } from "@/services/bk/titleService";
 import { ConsolidatedInvoice, FinancialTitle } from "@/services/bk/types/financialTypes";
@@ -15,12 +14,21 @@ export interface FinancialSummary {
   totalEmAberto: number;
 }
 
+export interface ClientFinancialSummary {
+  PES_CODIGO: string;
+  CLIENTE_NOME: string;
+  totalValoresVencidos: number;
+  totalPago: number;
+  totalEmAberto: number;
+}
+
 export const useFinancial = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [consolidatedInvoices, setConsolidatedInvoices] = useState<ConsolidatedInvoice[]>([]);
   const [filteredInvoices, setFilteredInvoices] = useState<ConsolidatedInvoice[]>([]);
   const [financialTitles, setFinancialTitles] = useState<FinancialTitle[]>([]);
   const [filteredTitles, setFilteredTitles] = useState<FinancialTitle[]>([]);
+  const [clientFinancialSummaries, setClientFinancialSummaries] = useState<ClientFinancialSummary[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [availableStatuses, setAvailableStatuses] = useState<string[]>([]);
   const [clientFilter, setClientFilter] = useState<string>("");
@@ -67,6 +75,9 @@ export const useFinancial = () => {
       let valoresPagos = 0;
       let valoresEmAberto = 0;
 
+      // Create a map to aggregate data by client
+      const clientMap = new Map<string, ClientFinancialSummary>();
+
       titles.forEach(title => {
         // Skip titles with status "Cancelado"
         if (title.STATUS === "9") return; // "9" is the status code for "Cancelado"
@@ -90,6 +101,39 @@ export const useFinancial = () => {
         if (title.STATUS === "3" && title.VLRTITULO) {
           valoresPagos += title.VLRTITULO;
         }
+
+        // Aggregate data by client
+        if (title.PES_CODIGO) {
+          let clientSummary = clientMap.get(title.PES_CODIGO);
+          if (!clientSummary) {
+            clientSummary = {
+              PES_CODIGO: title.PES_CODIGO,
+              CLIENTE_NOME: title.CLIENTE_NOME || "Cliente não identificado",
+              totalValoresVencidos: 0,
+              totalPago: 0,
+              totalEmAberto: 0
+            };
+            clientMap.set(title.PES_CODIGO, clientSummary);
+          }
+
+          // Calculate client-specific financial values
+          if (title.DTVENCIMENTO && title.VLRSALDO && title.VLRSALDO > 0) {
+            const dataVencimento = new Date(title.DTVENCIMENTO);
+            dataVencimento.setHours(0, 0, 0, 0);
+
+            if (isBefore(dataVencimento, hoje)) {
+              clientSummary.totalValoresVencidos += title.VLRSALDO;
+            }
+
+            if (isEqual(dataVencimento, hoje) || isAfter(dataVencimento, hoje)) {
+              clientSummary.totalEmAberto += title.VLRSALDO;
+            }
+          }
+
+          if (title.STATUS === "3" && title.VLRTITULO) {
+            clientSummary.totalPago += title.VLRTITULO;
+          }
+        }
       });
 
       setFinancialSummary({
@@ -97,6 +141,12 @@ export const useFinancial = () => {
         totalPago: valoresPagos,
         totalEmAberto: valoresEmAberto
       });
+
+      // Convert map to array and sort by client name
+      const clientSummaries = Array.from(clientMap.values())
+        .sort((a, b) => a.CLIENTE_NOME.localeCompare(b.CLIENTE_NOME));
+      
+      setClientFinancialSummaries(clientSummaries);
 
       // Initial filter application
       applyFilters(titles);
@@ -123,6 +173,19 @@ export const useFinancial = () => {
   const updateNotaFilter = useCallback((nota: string) => {
     setNotaFilter(nota);
   }, []);
+
+  // New function to filter client summaries
+  const filterClientSummaries = useCallback(() => {
+    if (!clientFilter) {
+      return clientFinancialSummaries;
+    }
+    
+    const searchTerm = clientFilter.toLowerCase();
+    return clientFinancialSummaries.filter(client => 
+      client.CLIENTE_NOME.toLowerCase().includes(searchTerm) || 
+      client.PES_CODIGO.toString().includes(searchTerm)
+    );
+  }, [clientFinancialSummaries, clientFilter]);
 
   // Apply filters function
   const applyFilters = useCallback((titles: FinancialTitle[]) => {
@@ -179,6 +242,8 @@ export const useFinancial = () => {
     updateClientFilter,
     notaFilter,
     updateNotaFilter,
-    financialSummary
+    financialSummary,
+    clientFinancialSummaries,
+    filterClientSummaries
   };
 };
