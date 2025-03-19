@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Request, RequestStatus } from "../types";
+import { getStorageUrl } from "@/utils/imageUtils";
 
 export function useRequestOperations(
   requests: Request[],
@@ -40,6 +41,11 @@ export function useRequestOperations(
       if (error) throw error;
       
       if (data && data.length > 0) {
+        const updatedRequest = {
+          ...data[0],
+          attachment_url: data[0].attachment_url ? getStorageUrl(data[0].attachment_url) : null
+        };
+        
         // Update the local state
         setRequests(prevRequests => 
           prevRequests.map(req => 
@@ -99,6 +105,11 @@ export function useRequestOperations(
       if (error) throw error;
       
       if (data && data.length > 0) {
+        const updatedRequest = {
+          ...data[0],
+          attachment_url: data[0].attachment_url ? getStorageUrl(data[0].attachment_url) : null
+        };
+        
         // Update the local state
         setRequests(prevRequests => 
           prevRequests.map(req => 

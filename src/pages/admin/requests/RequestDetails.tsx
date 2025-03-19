@@ -1,7 +1,7 @@
 
 import React from "react";
 import { format } from "date-fns";
-import { Loader2, FileText, ExternalLink } from "lucide-react";
+import { Loader2, FileText, ExternalLink, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -87,16 +87,27 @@ export default function RequestDetails({
         {selectedRequest.attachment_url && (
           <div>
             <p className="text-gray-500 text-sm mb-1">Anexo</p>
-            <a 
-              href={selectedRequest.attachment_url} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex items-center text-sm text-blue-600 hover:underline"
-            >
-              <FileText className="h-4 w-4 mr-1" />
-              Ver anexo
-              <ExternalLink className="h-3 w-3 ml-1" />
-            </a>
+            <div className="flex flex-col space-y-2">
+              <a 
+                href={selectedRequest.attachment_url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center text-sm text-blue-600 hover:underline p-2 bg-blue-50 rounded-md"
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Ver anexo no navegador
+                <ExternalLink className="h-3 w-3 ml-1" />
+              </a>
+              
+              <a 
+                href={selectedRequest.attachment_url} 
+                download
+                className="flex items-center text-sm text-green-600 hover:underline p-2 bg-green-50 rounded-md"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Baixar anexo
+              </a>
+            </div>
           </div>
         )}
         
