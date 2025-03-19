@@ -8,9 +8,10 @@ import { DateRangePicker } from "@/components/bk/financial/DateRangePicker";
 import { StatusFilter } from "@/components/bk/financial/StatusFilter";
 import { RefreshCw, Loader2 } from "lucide-react";
 import { ItemTreemap } from "@/components/bk/dashboard/ItemTreemap";
-import { fetchBkItemsReport } from "@/services/bk/reportsService";
+import { fetchBkItemsReport, fetchBkGroupsReport } from "@/services/bk/reportsService";
 import { ClientsAbcCurve } from "@/components/bk/dashboard/abc-curve/ClientsAbcCurve";
 import { ItemsAbcCurve } from "@/components/bk/dashboard/abc-curve/ItemsAbcCurve";
+import { GroupsAbcCurve } from "@/components/bk/dashboard/abc-curve/GroupsAbcCurve";
 import { format } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -30,24 +31,30 @@ export const BkDashboard = () => {
 
   const [treemapData, setTreemapData] = useState<{ name: string; value: number }[]>([]);
   const [isLoadingTreemap, setIsLoadingTreemap] = useState(true);
+  
+  // Add state for groups ABC curve
+  const [groupsData, setGroupsData] = useState<{ name: string; value: number }[]>([]);
+  const [isLoadingGroups, setIsLoadingGroups] = useState(true);
 
-  // Fetch invoice items when loading invoices
+  // Fetch invoice items and groups when loading invoices
   useEffect(() => {
-    const loadTreemapData = async () => {
+    const loadData = async () => {
       if (!isLoading && filteredInvoices.length > 0) {
-        console.log("Invoices loaded, fetching items for treemap...");
+        console.log("Invoices loaded, fetching items and groups data...");
         setIsLoadingTreemap(true);
+        setIsLoadingGroups(true);
         
         try {
           if (dateRange.startDate && dateRange.endDate) {
             const startDateFormatted = format(dateRange.startDate, 'yyyy-MM-dd');
             const endDateFormatted = format(dateRange.endDate, 'yyyy-MM-dd');
             
+            // Fetch items report data
             const itemsReport = await fetchBkItemsReport(startDateFormatted, endDateFormatted);
             
             if (itemsReport && itemsReport.length > 0) {
               // Create dataset for the treemap
-              const data = itemsReport.map(report => {
+              const itemsData = itemsReport.map(report => {
                 const name = report.DESCRICAO 
                   ? `${report.ITEM_CODIGO} - ${report.DESCRICAO}` 
                   : report.ITEM_CODIGO;
@@ -58,10 +65,10 @@ export const BkDashboard = () => {
               });
               
               // Sort by value (highest to lowest)
-              data.sort((a, b) => b.value - a.value);
+              itemsData.sort((a, b) => b.value - a.value);
               
               // Limit to 30 items for better visualization
-              const limitedData = data.slice(0, 30);
+              const limitedData = itemsData.slice(0, 30);
               
               console.log(`Generated ${limitedData.length} items for treemap by ITEM_CODIGO`);
               setTreemapData(limitedData);
@@ -69,33 +76,64 @@ export const BkDashboard = () => {
               console.log("No items returned from report API");
               setTreemapData([]);
             }
+            
+            // Fetch groups report data
+            const groupsReport = await fetchBkGroupsReport(startDateFormatted, endDateFormatted);
+            
+            if (groupsReport && groupsReport.length > 0) {
+              // Create dataset for the groups ABC curve
+              const groupsData = groupsReport.map(report => {
+                const name = report.GRU_DESCRICAO 
+                  ? `${report.GRU_CODIGO} - ${report.GRU_DESCRICAO}` 
+                  : report.GRU_CODIGO;
+                return { 
+                  name, 
+                  value: report.TOTAL_VALOR || 0 
+                };
+              });
+              
+              // Sort by value (highest to lowest)
+              groupsData.sort((a, b) => b.value - a.value);
+              
+              console.log(`Generated ${groupsData.length} items for ABC curve by GRU_DESCRICAO`);
+              setGroupsData(groupsData);
+            } else {
+              console.log("No groups returned from report API");
+              setGroupsData([]);
+            }
           } else {
-            console.log("No date range available for treemap");
+            console.log("No date range available for data");
             setTreemapData([]);
+            setGroupsData([]);
           }
         } catch (error) {
-          console.error("Error processing treemap data:", error);
+          console.error("Error processing data:", error);
           toast({
             title: "Erro ao carregar dados do gráfico",
-            description: "Não foi possível carregar os dados dos itens.",
+            description: "Não foi possível carregar os dados dos itens e grupos.",
             variant: "destructive"
           });
           setTreemapData([]);
+          setGroupsData([]);
         } finally {
           setIsLoadingTreemap(false);
+          setIsLoadingGroups(false);
         }
       } else if (!isLoading && filteredInvoices.length === 0) {
-        console.log("No invoices available for treemap");
+        console.log("No invoices available for data visualization");
         setIsLoadingTreemap(false);
+        setIsLoadingGroups(false);
         setTreemapData([]);
+        setGroupsData([]);
       }
     };
     
-    loadTreemapData();
+    loadData();
   }, [filteredInvoices, dateRange.startDate, dateRange.endDate, isLoading, toast]);
 
   const handleRefresh = () => {
     setIsLoadingTreemap(true);
+    setIsLoadingGroups(true);
     refreshData();
   };
 
@@ -106,8 +144,8 @@ export const BkDashboard = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold">Dashboard</h1>
-          <Button variant="outline" onClick={handleRefresh} disabled={isLoading || isLoadingTreemap}>
-            {(isLoading || isLoadingTreemap) ? (
+          <Button variant="outline" onClick={handleRefresh} disabled={isLoading || isLoadingTreemap || isLoadingGroups}>
+            {(isLoading || isLoadingTreemap || isLoadingGroups) ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : (
               <RefreshCw className="h-4 w-4 mr-2" />
@@ -140,8 +178,8 @@ export const BkDashboard = () => {
               <FinancialDashboard invoices={filteredInvoices} />
             )}
             
-            {/* 2. Curvas ABC de Clientes e Itens */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* 2. Curvas ABC de Clientes, Itens e Grupos */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <ClientsAbcCurve 
                 invoices={filteredInvoices} 
                 isLoading={isLoading} 
@@ -149,6 +187,10 @@ export const BkDashboard = () => {
               <ItemsAbcCurve 
                 data={treemapData} 
                 isLoading={isLoadingTreemap} 
+              />
+              <GroupsAbcCurve 
+                data={groupsData} 
+                isLoading={isLoadingGroups} 
               />
             </div>
             
