@@ -91,7 +91,7 @@ export const TitleTable: React.FC<TitleTableProps> = ({ titles, isLoading }) => 
               <TableCell>{formatCurrency(title.VLRDESCONTO)}</TableCell>
               <TableCell>{formatCurrency(title.VLRSALDO)}</TableCell>
               <TableCell>
-                <StatusBadge status={title.STATUS || ""}>
+                <StatusBadge status={title.STATUS}>
                   {getStatusText(title.STATUS)}
                 </StatusBadge>
               </TableCell>

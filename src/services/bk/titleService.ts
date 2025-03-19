@@ -47,7 +47,7 @@ export const fetchFinancialTitles = async (startDate?: string, endDate?: string,
         const { data: clientData } = await supabase
           .from('BLUEBAY_PESSOA')
           .select('APELIDO, RAZAOSOCIAL')
-          .eq('PES_CODIGO', title.PES_CODIGO)
+          .eq('PES_CODIGO', title.PES_CODIGO.toString())
           .single();
 
         clientName = clientData?.APELIDO || clientData?.RAZAOSOCIAL || "Cliente não encontrado";

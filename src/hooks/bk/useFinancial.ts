@@ -4,7 +4,7 @@ import { fetchFinancialTitles } from "@/services/bk/titleService";
 import { ConsolidatedInvoice, FinancialTitle } from "@/services/bk/types/financialTypes";
 import { format, subDays } from "date-fns";
 
-interface DateRange {
+export interface DateRange {
   startDate: Date | null;
   endDate: Date | null;
 }

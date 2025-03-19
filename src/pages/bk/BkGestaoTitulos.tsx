@@ -1,7 +1,7 @@
 
 import React from "react";
 import { BkMenu } from "@/components/bk/BkMenu";
-import { InvoiceTable } from "@/components/bk/financial/InvoiceTable";
+import { TitleTable } from "@/components/bk/financial/TitleTable";
 import { FinancialDashboard } from "@/components/bk/financial/FinancialDashboard";
 import { useFinancial } from "@/hooks/bk/useFinancial";
 import { Button } from "@/components/ui/button";
@@ -12,8 +12,7 @@ import { RefreshCw } from "lucide-react";
 export const BkGestaoTitulos = () => {
   const { 
     isLoading, 
-    consolidatedInvoices, 
-    filteredInvoices,
+    filteredTitles,
     refreshData, 
     dateRange, 
     updateDateRange,
@@ -49,11 +48,9 @@ export const BkGestaoTitulos = () => {
             />
           </div>
           
-          <FinancialDashboard invoices={filteredInvoices} />
-          
           <div className="p-4 rounded-lg border bg-card text-card-foreground shadow-sm">
             <h2 className="text-xl font-semibold mb-4">Títulos</h2>
-            <InvoiceTable invoices={filteredInvoices} isLoading={isLoading} />
+            <TitleTable titles={filteredTitles} isLoading={isLoading} />
           </div>
         </div>
       </div>

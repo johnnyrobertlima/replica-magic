@@ -11,6 +11,7 @@ import { ItemTreemap } from "@/components/bk/dashboard/ItemTreemap";
 import { fetchBkItemsReport } from "@/services/bk/reportsService";
 import { ClientsAbcCurve } from "@/components/bk/dashboard/abc-curve/ClientsAbcCurve";
 import { ItemsAbcCurve } from "@/components/bk/dashboard/abc-curve/ItemsAbcCurve";
+import { format } from "date-fns";
 
 export const BkDashboard = () => {
   const {
@@ -23,7 +24,6 @@ export const BkDashboard = () => {
     statusFilter,
     updateStatusFilter,
     availableStatuses,
-    faturamentoData,
   } = useFinancial();
 
   const [treemapData, setTreemapData] = useState<{ name: string; value: number }[]>([]);
@@ -37,54 +37,35 @@ export const BkDashboard = () => {
         setIsLoadingTreemap(true);
         
         try {
-          // Utilizando todos os registros de faturamento em vez de apenas os consolidados
-          // para garantir que temos todos os itens
-          if (faturamentoData.length > 0) {
-            // Agrupar por ITEM_CODIGO em vez de CLIENTE_NOME
-            const itemTotals = new Map<string, number>();
-            const itemDescriptions = new Map<string, string>();
+          // Since we don't have access to faturamentoData, we'll use the filteredInvoices
+          // and fetch additional data through the fetchBkItemsReport
+          if (dateRange.startDate && dateRange.endDate) {
+            const startDateFormatted = format(dateRange.startDate, 'yyyy-MM-dd');
+            const endDateFormatted = format(dateRange.endDate, 'yyyy-MM-dd');
             
-            faturamentoData.forEach((item) => {
-              if (item.ITEM_CODIGO) {
-                const currentTotal = itemTotals.get(item.ITEM_CODIGO) || 0;
-                const valorUnitario = item.VALOR_UNITARIO || 0;
-                const quantidade = item.QUANTIDADE || 0;
-                const valorItem = valorUnitario * quantidade;
-                
-                itemTotals.set(item.ITEM_CODIGO, currentTotal + valorItem);
-                
-                // Note: DESCRICAO não está disponível diretamente nos itens de faturamento
-                // vamos buscar do reportsService depois
-              }
+            const itemsReport = await fetchBkItemsReport(startDateFormatted, endDateFormatted);
+            
+            // Create dataset for the treemap
+            const data = itemsReport.map(report => {
+              const name = report.DESCRICAO 
+                ? `${report.ITEM_CODIGO} - ${report.DESCRICAO}` 
+                : report.ITEM_CODIGO;
+              return { 
+                name, 
+                value: report.VALOR_TOTAL || 0 
+              };
             });
             
-            // Se não temos descrições nos itens de faturamento, vamos buscar do reportsService
-            if (itemTotals.size > 0) {
-              const itemsReport = await fetchBkItemsReport(dateRange.startDate, dateRange.endDate);
-              itemsReport.forEach(report => {
-                if (report.DESCRICAO) {
-                  itemDescriptions.set(report.ITEM_CODIGO, report.DESCRICAO);
-                }
-              });
-            }
-            
-            // Criar dataset para o treemap
-            const data = Array.from(itemTotals).map(([code, value]) => {
-              const description = itemDescriptions.get(code);
-              const name = description ? `${code} - ${description}` : code;
-              return { name, value };
-            });
-            
-            // Ordenar por valor (maior para menor)
+            // Sort by value (highest to lowest)
             data.sort((a, b) => b.value - a.value);
             
-            // Limitar a 30 itens para melhor visualização
+            // Limit to 30 items for better visualization
             const limitedData = data.slice(0, 30);
             
             console.log(`Generated ${limitedData.length} items for treemap by ITEM_CODIGO`);
             setTreemapData(limitedData);
           } else {
-            console.log("No faturamento data available for treemap");
+            console.log("No date range available for treemap");
             setTreemapData([]);
           }
         } catch (error) {
@@ -97,7 +78,7 @@ export const BkDashboard = () => {
     };
     
     loadTreemapData();
-  }, [filteredInvoices, faturamentoData, dateRange.startDate, dateRange.endDate]);
+  }, [filteredInvoices, dateRange.startDate, dateRange.endDate]);
 
   return (
     <div className="container-fluid p-0 max-w-full">

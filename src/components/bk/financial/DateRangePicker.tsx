@@ -11,29 +11,23 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface DateRangePickerProps {
-  startDate: string;
-  endDate: string;
-  onUpdate: (startDate: string, endDate: string) => void;
+  startDate: Date | null;
+  endDate: Date | null;
+  onUpdate: (dateRange: { startDate: Date | null; endDate: Date | null }) => void;
 }
 
 export const DateRangePicker = ({ startDate, endDate, onUpdate }: DateRangePickerProps) => {
-  // Convert string dates to Date objects for the calendar
-  const startDateObj = startDate ? new Date(startDate) : new Date();
-  const endDateObj = endDate ? new Date(endDate) : new Date();
-  
   // Only update the start date, keeping the end date the same
   const handleStartDateChange = (date: Date | undefined) => {
     if (date) {
-      const newStartDate = date.toISOString().split("T")[0];
-      onUpdate(newStartDate, endDate);
+      onUpdate({ startDate: date, endDate });
     }
   };
   
   // Only update the end date, keeping the start date the same
   const handleEndDateChange = (date: Date | undefined) => {
     if (date) {
-      const newEndDate = date.toISOString().split("T")[0];
-      onUpdate(startDate, newEndDate);
+      onUpdate({ startDate, endDate: date });
     }
   };
 
@@ -44,7 +38,7 @@ export const DateRangePicker = ({ startDate, endDate, onUpdate }: DateRangePicke
         const end = new Date();
         const start = new Date();
         start.setDate(end.getDate() - 7);
-        onUpdate(start.toISOString().split("T")[0], end.toISOString().split("T")[0]);
+        onUpdate({ startDate: start, endDate: end });
       },
     },
     {
@@ -53,7 +47,7 @@ export const DateRangePicker = ({ startDate, endDate, onUpdate }: DateRangePicke
         const end = new Date();
         const start = new Date();
         start.setDate(end.getDate() - 30);
-        onUpdate(start.toISOString().split("T")[0], end.toISOString().split("T")[0]);
+        onUpdate({ startDate: start, endDate: end });
       },
     },
     {
@@ -61,7 +55,7 @@ export const DateRangePicker = ({ startDate, endDate, onUpdate }: DateRangePicke
       handler: () => {
         const end = new Date();
         const start = new Date(end.getFullYear(), end.getMonth(), 1);
-        onUpdate(start.toISOString().split("T")[0], end.toISOString().split("T")[0]);
+        onUpdate({ startDate: start, endDate: end });
       },
     },
     {
@@ -70,7 +64,7 @@ export const DateRangePicker = ({ startDate, endDate, onUpdate }: DateRangePicke
         const now = new Date();
         const end = new Date(now.getFullYear(), now.getMonth(), 0);
         const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        onUpdate(start.toISOString().split("T")[0], end.toISOString().split("T")[0]);
+        onUpdate({ startDate: start, endDate: end });
       },
     },
   ];
@@ -88,7 +82,7 @@ export const DateRangePicker = ({ startDate, endDate, onUpdate }: DateRangePicke
               <CalendarIcon className="mr-2 h-4 w-4" />
               {startDate && endDate ? (
                 <span>
-                  {format(new Date(startDate), "dd/MM/yyyy", { locale: ptBR })} - {format(new Date(endDate), "dd/MM/yyyy", { locale: ptBR })}
+                  {format(startDate, "dd/MM/yyyy", { locale: ptBR })} - {format(endDate, "dd/MM/yyyy", { locale: ptBR })}
                 </span>
               ) : (
                 <span>Selecione um período</span>
@@ -122,10 +116,10 @@ export const DateRangePicker = ({ startDate, endDate, onUpdate }: DateRangePicke
                   </div>
                   <Calendar
                     mode="single"
-                    selected={startDateObj}
+                    selected={startDate || undefined}
                     onSelect={handleStartDateChange}
                     initialFocus
-                    disabled={(date) => date > new Date() || date > endDateObj}
+                    disabled={(date) => date > new Date() || (endDate ? date > endDate : false)}
                     className="p-3 pointer-events-auto bg-white"
                   />
                 </div>
@@ -135,10 +129,10 @@ export const DateRangePicker = ({ startDate, endDate, onUpdate }: DateRangePicke
                   </div>
                   <Calendar
                     mode="single"
-                    selected={endDateObj}
+                    selected={endDate || undefined}
                     onSelect={handleEndDateChange}
                     initialFocus
-                    disabled={(date) => date > new Date() || date < startDateObj}
+                    disabled={(date) => date > new Date() || (startDate ? date < startDate : false)}
                     className="p-3 pointer-events-auto bg-white"
                   />
                 </div>

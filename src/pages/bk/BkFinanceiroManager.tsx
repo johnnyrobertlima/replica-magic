@@ -4,7 +4,7 @@ import { BkMenu } from "@/components/bk/BkMenu";
 import { TitleTable } from "@/components/bk/financial/TitleTable";
 import { InvoiceTable } from "@/components/bk/financial/InvoiceTable";
 import { FinancialDashboard } from "@/components/bk/financial/FinancialDashboard";
-import { useFinancial } from "@/hooks/bk/useFinancial";
+import { useFinancial, DateRange } from "@/hooks/bk/useFinancial";
 import { Button } from "@/components/ui/button";
 import { DateRangePicker } from "@/components/bk/financial/DateRangePicker";
 import { StatusFilter } from "@/components/bk/financial/StatusFilter";
