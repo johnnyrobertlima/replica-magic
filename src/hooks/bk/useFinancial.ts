@@ -1,112 +1,97 @@
 
-import { useState, useEffect, useMemo } from "react";
-import { 
-  fetchBkFaturamentoData, 
-  consolidateByNota, 
-  BkFaturamento 
-} from "@/services/bk/financialService";
-import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect, useCallback } from "react";
+import { fetchFinancialTitles } from "@/services/bk/titleService";
+import { ConsolidatedInvoice, FinancialTitle } from "@/services/bk/types/financialTypes";
+import { format, subDays } from "date-fns";
 
-// Helper to get date from X days ago in ISO format
-const getDateXDaysAgo = (daysAgo: number) => {
-  const date = new Date();
-  date.setDate(date.getDate() - daysAgo);
-  return date.toISOString().split('T')[0];
-};
+interface DateRange {
+  startDate: Date | null;
+  endDate: Date | null;
+}
 
 export const useFinancial = () => {
   const [isLoading, setIsLoading] = useState(true);
-  const [faturamentoData, setFaturamentoData] = useState<BkFaturamento[]>([]);
-  const [consolidatedInvoices, setConsolidatedInvoices] = useState<any[]>([]);
+  const [consolidatedInvoices, setConsolidatedInvoices] = useState<ConsolidatedInvoice[]>([]);
+  const [filteredInvoices, setFilteredInvoices] = useState<ConsolidatedInvoice[]>([]);
+  const [financialTitles, setFinancialTitles] = useState<FinancialTitle[]>([]);
+  const [filteredTitles, setFilteredTitles] = useState<FinancialTitle[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [error, setError] = useState<string | null>(null);
-  const [dateRange, setDateRange] = useState({
-    startDate: getDateXDaysAgo(30), // Default to 30 days ago
-    endDate: new Date().toISOString().split('T')[0] // Today
+  const [availableStatuses, setAvailableStatuses] = useState<string[]>([]);
+  const [dateRange, setDateRange] = useState<DateRange>({
+    startDate: subDays(new Date(), 30),
+    endDate: new Date(),
   });
-  const { toast } = useToast();
 
-  // Extract unique statuses from consolidated invoices
-  const availableStatuses = useMemo(() => {
-    const statuses = new Set<string>();
-    consolidatedInvoices.forEach(invoice => {
-      if (invoice.STATUS !== null) {
-        statuses.add(invoice.STATUS);
-      }
-    });
-    return Array.from(statuses);
-  }, [consolidatedInvoices]);
-
-  // Filter invoices by status
-  const filteredInvoices = useMemo(() => {
-    if (statusFilter === "all") {
-      return consolidatedInvoices;
-    }
-    return consolidatedInvoices.filter(invoice => invoice.STATUS === statusFilter);
-  }, [consolidatedInvoices, statusFilter]);
-
-  const loadData = async () => {
+  const refreshData = useCallback(async () => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      setError(null);
+      // Format dates for API request
+      const startDateFormatted = dateRange.startDate 
+        ? format(dateRange.startDate, 'yyyy-MM-dd') 
+        : undefined;
       
-      console.log(`Loading financial data for date range: ${dateRange.startDate} to ${dateRange.endDate}`);
-      
-      // Fetch data using the database function with correct join
-      const data = await fetchBkFaturamentoData(dateRange.startDate, dateRange.endDate);
-      console.log(`Received ${data.length} raw records from database`);
-      setFaturamentoData(data);
-      
-      // Consolidate invoices by NOTA
-      const consolidated = consolidateByNota(data);
-      console.log(`Consolidated into ${consolidated.length} invoice records`);
-      setConsolidatedInvoices(consolidated);
-      
-      console.log("Data loaded with correction factors:", consolidated);
-      
-    } catch (err) {
-      console.error("Error loading financial data:", err);
-      setError("Failed to load financial data");
-      toast({
-        title: "Error",
-        description: "Failed to load financial data. Please try again later.",
-        variant: "destructive",
-      });
+      const endDateFormatted = dateRange.endDate
+        ? format(dateRange.endDate, 'yyyy-MM-dd')
+        : undefined;
+
+      const titles = await fetchFinancialTitles(
+        startDateFormatted,
+        endDateFormatted,
+        statusFilter === "all" ? undefined : statusFilter
+      );
+
+      setFinancialTitles(titles);
+      setFilteredTitles(titles);
+
+      // Extract unique statuses for filter
+      const statuses = [...new Set(titles.map(title => title.STATUS || ""))];
+      setAvailableStatuses(['all', ...statuses.filter(status => status !== "")]);
+
+    } catch (error) {
+      console.error("Error fetching financial data:", error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [dateRange, statusFilter]);
 
-  useEffect(() => {
-    loadData();
-  }, [dateRange.startDate, dateRange.endDate]);
+  const updateDateRange = useCallback((newDateRange: DateRange) => {
+    setDateRange(newDateRange);
+  }, []);
 
-  const refreshData = () => {
-    loadData();
-  };
-
-  // Only update the date range without resetting other filters
-  const updateDateRange = (startDate: string, endDate: string) => {
-    console.log(`Updating date range to: ${startDate} - ${endDate}`);
-    setDateRange({ startDate, endDate });
-    // We don't reset the status filter here anymore
-  };
-
-  const updateStatusFilter = (status: string) => {
+  const updateStatusFilter = useCallback((status: string) => {
     setStatusFilter(status);
-  };
+  }, []);
+
+  // Apply filters
+  useEffect(() => {
+    if (financialTitles.length > 0) {
+      let filtered = [...financialTitles];
+      
+      // Apply status filter
+      if (statusFilter !== "all") {
+        filtered = filtered.filter(title => title.STATUS === statusFilter);
+      }
+      
+      setFilteredTitles(filtered);
+    }
+  }, [financialTitles, statusFilter]);
+
+  // Initial data load
+  useEffect(() => {
+    refreshData();
+  }, [refreshData]);
 
   return {
     isLoading,
-    faturamentoData,
     consolidatedInvoices,
     filteredInvoices,
-    error,
+    financialTitles,
+    filteredTitles,
     refreshData,
     dateRange,
     updateDateRange,
     statusFilter,
     updateStatusFilter,
-    availableStatuses
+    availableStatuses,
   };
 };

@@ -23,3 +23,16 @@ export interface InvoiceItem {
   PES_CODIGO: number | null;
   FATOR_CORRECAO?: number | null;
 }
+
+export interface FinancialTitle {
+  NUMNOTA: number | null;
+  DTEMISSAO: string | null;
+  DTVENCIMENTO: string | null;
+  DTPAGTO: string | null;
+  VLRDESCONTO: number | null;
+  VLRTITULO: number | null;
+  VLRSALDO: number | null;
+  STATUS: string | null;
+  CLIENTE_NOME: string | null;
+  PES_CODIGO: string | null;
+}

@@ -1,6 +1,7 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { BkMenu } from "@/components/bk/BkMenu";
+import { TitleTable } from "@/components/bk/financial/TitleTable";
 import { InvoiceTable } from "@/components/bk/financial/InvoiceTable";
 import { FinancialDashboard } from "@/components/bk/financial/FinancialDashboard";
 import { useFinancial } from "@/hooks/bk/useFinancial";
@@ -8,12 +9,15 @@ import { Button } from "@/components/ui/button";
 import { DateRangePicker } from "@/components/bk/financial/DateRangePicker";
 import { StatusFilter } from "@/components/bk/financial/StatusFilter";
 import { RefreshCw } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const BkFinanceiroManager = () => {
   const { 
     isLoading, 
     consolidatedInvoices, 
     filteredInvoices,
+    financialTitles,
+    filteredTitles,
     refreshData, 
     dateRange, 
     updateDateRange,
@@ -21,6 +25,8 @@ export const BkFinanceiroManager = () => {
     updateStatusFilter,
     availableStatuses
   } = useFinancial();
+
+  const [activeTab, setActiveTab] = useState("titles");
 
   return (
     <div className="container-fluid p-0 max-w-full">
@@ -49,12 +55,22 @@ export const BkFinanceiroManager = () => {
             />
           </div>
           
-          <FinancialDashboard invoices={filteredInvoices} />
-          
-          <div className="p-4 rounded-lg border bg-card text-card-foreground shadow-sm">
-            <h2 className="text-xl font-semibold mb-4">Notas Fiscais</h2>
-            <InvoiceTable invoices={filteredInvoices} isLoading={isLoading} />
-          </div>
+          <Tabs defaultValue="titles" value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid grid-cols-2 mb-4">
+              <TabsTrigger value="titles">Títulos Financeiros</TabsTrigger>
+              <TabsTrigger value="invoices">Notas Fiscais</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="titles" className="p-4 rounded-lg border bg-card text-card-foreground shadow-sm">
+              <h2 className="text-xl font-semibold mb-4">Títulos Financeiros</h2>
+              <TitleTable titles={filteredTitles} isLoading={isLoading} />
+            </TabsContent>
+            
+            <TabsContent value="invoices" className="p-4 rounded-lg border bg-card text-card-foreground shadow-sm">
+              <h2 className="text-xl font-semibold mb-4">Notas Fiscais</h2>
+              <InvoiceTable invoices={filteredInvoices} isLoading={isLoading} />
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>
