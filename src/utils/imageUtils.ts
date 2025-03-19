@@ -21,8 +21,16 @@ export const getStorageUrl = (path: string | null) => {
   // Remove qualquer barra inicial se existir
   const cleanPath = path.startsWith('/') ? path.slice(1) : path;
   
+  // Check which bucket the path belongs to
+  let bucketName = 'oni-media'; // Default bucket
+  
+  // If path contains user id and protocol number format, it's likely from request_attachments
+  if (cleanPath.includes('/BK-')) {
+    bucketName = 'request_attachments';
+  }
+  
   // Verifica se o path já contém o nome do bucket
-  const bucketPath = cleanPath.startsWith('oni-media/') ? cleanPath : `oni-media/${cleanPath}`;
+  const bucketPath = cleanPath.startsWith(`${bucketName}/`) ? cleanPath : `${bucketName}/${cleanPath}`;
   
   return `https://mwvrxtvlqkttylfzzxas.supabase.co/storage/v1/object/public/${bucketPath}`;
 };

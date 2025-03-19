@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -88,25 +87,13 @@ export default function RequestForm({ onRequestSubmitted }: RequestFormProps) {
       // Upload file if there is one
       if (selectedFile) {
         try {
-          // Try to create the bucket first if it doesn't exist
-          // This is a workaround to ensure the bucket exists
-          try {
-            const { error: createBucketError } = await supabase.storage.createBucket('request_attachments', {
-              public: true,
-              fileSizeLimit: 5242880, // 5MB
-            });
-            if (createBucketError && !createBucketError.message.includes('already exists')) {
-              console.warn("Error creating bucket:", createBucketError);
-            }
-          } catch (bucketError) {
-            console.log("Bucket already exists or creation failed:", bucketError);
-            // Continue execution even if bucket creation fails (it might already exist)
-          }
-          
-          // Upload the file
+          // Skip bucket creation attempt since we've already created it via SQL
+          // and upload directly to the existing bucket
           const fileExt = selectedFile.name.split('.').pop();
           const userId = session.user.id;
           const filePath = `${userId}/${protocolNumber}/${Math.random()}.${fileExt}`;
+          
+          console.log("Attempting to upload file to path:", filePath);
           
           const { data: uploadData, error: uploadError } = await supabase.storage
             .from('request_attachments')
@@ -123,12 +110,9 @@ export default function RequestForm({ onRequestSubmitted }: RequestFormProps) {
               variant: "default",
             });
           } else {
-            // Get public URL for the uploaded file
-            const { data: { publicUrl } } = supabase.storage
-              .from('request_attachments')
-              .getPublicUrl(filePath);
-            
-            attachmentUrl = publicUrl;
+            console.log("Upload successful:", uploadData);
+            // Store just the relative path - will use getStorageUrl when retrieving
+            attachmentUrl = filePath;
           }
         } catch (fileError: any) {
           console.error("File upload error:", fileError);
