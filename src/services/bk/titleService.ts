@@ -14,8 +14,10 @@ export const fetchFinancialTitles = async (startDate?: string, endDate?: string,
       VLRTITULO,
       VLRSALDO,
       STATUS,
-      PES_CODIGO
-    `);
+      PES_CODIGO,
+      CENTROCUSTO
+    `)
+    .eq('CENTROCUSTO', 'BK');
 
   // Apply date filters if provided
   if (startDate) {
@@ -31,9 +33,6 @@ export const fetchFinancialTitles = async (startDate?: string, endDate?: string,
     query = query.eq('STATUS', status);
   }
 
-  // Adicionar filtro para CENTROCUSTO = BK
-  query = query.eq('CENTROCUSTO', 'BK');
-
   const { data, error } = await query;
 
   if (error) {
@@ -47,13 +46,15 @@ export const fetchFinancialTitles = async (startDate?: string, endDate?: string,
       let clientName = "Cliente não encontrado";
 
       if (title.PES_CODIGO) {
-        const { data: clientData } = await supabase
+        const { data: clientData, error: clientError } = await supabase
           .from('BLUEBAY_PESSOA')
           .select('APELIDO, RAZAOSOCIAL')
           .eq('PES_CODIGO', parseInt(title.PES_CODIGO as string))
           .maybeSingle();
 
-        clientName = clientData?.APELIDO || clientData?.RAZAOSOCIAL || "Cliente não encontrado";
+        if (!clientError && clientData) {
+          clientName = clientData.APELIDO || clientData.RAZAOSOCIAL || "Cliente não encontrado";
+        }
       }
 
       return {

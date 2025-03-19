@@ -5,12 +5,9 @@ import { BkFaturamento, ConsolidatedInvoice } from "./types/financialTypes";
  * Consolidates faturamento data by NOTA (invoice number)
  */
 export const consolidateByNota = (faturamentoData: BkFaturamento[]): ConsolidatedInvoice[] => {
-  // Filter for BK center cost if not already filtered by the API
-  const filteredData = faturamentoData.filter(item => item.CENTROCUSTO === 'BK');
-  
   const notaMap = new Map<string, ConsolidatedInvoice>();
   
-  filteredData.forEach(item => {
+  faturamentoData.forEach(item => {
     const nota = item.NOTA;
     if (!nota) return;
     
@@ -18,12 +15,11 @@ export const consolidateByNota = (faturamentoData: BkFaturamento[]): Consolidate
       notaMap.set(nota, {
         NOTA: nota,
         DATA_EMISSAO: item.DATA_EMISSAO,
-        CLIENTE_NOME: item.CLIENTE_INFO?.APELIDO || item.CLIENTE_INFO?.RAZAOSOCIAL || "Cliente não encontrado",
-        CLIENTE_CODIGO: item.PES_CODIGO,
+        CLIENTE_NOME: (item as any).CLIENTE_INFO?.APELIDO || (item as any).CLIENTE_INFO?.RAZAOSOCIAL || "Cliente não encontrado",
+        PES_CODIGO: item.PES_CODIGO,
         STATUS: item.STATUS,
-        ITENS: [],
-        VALOR_TOTAL: 0,
-        QUANTIDADE_TOTAL: 0
+        ITEMS_COUNT: 0,
+        VALOR_NOTA: 0
       });
     }
     
@@ -32,17 +28,9 @@ export const consolidateByNota = (faturamentoData: BkFaturamento[]): Consolidate
     // Calculate item value
     const itemValue = (item.QUANTIDADE || 0) * (item.VALOR_UNITARIO || 0);
     
-    // Add item to invoice
-    consolidatedInvoice.ITENS.push({
-      ITEM_CODIGO: item.ITEM_CODIGO || "",
-      QUANTIDADE: item.QUANTIDADE || 0,
-      VALOR_UNITARIO: item.VALOR_UNITARIO || 0,
-      VALOR_TOTAL: itemValue
-    });
-    
     // Update totals
-    consolidatedInvoice.VALOR_TOTAL += itemValue;
-    consolidatedInvoice.QUANTIDADE_TOTAL += (item.QUANTIDADE || 0);
+    consolidatedInvoice.VALOR_NOTA = (consolidatedInvoice.VALOR_NOTA || 0) + itemValue;
+    consolidatedInvoice.ITEMS_COUNT = (consolidatedInvoice.ITEMS_COUNT || 0) + 1;
   });
   
   return Array.from(notaMap.values());

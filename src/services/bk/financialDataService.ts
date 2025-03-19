@@ -12,7 +12,6 @@ export const fetchBkFaturamentoData = async (
   console.log("Fetching B&K faturamento data...", { startDate, endDate });
   
   // Use the RPC function to get filtered data with joins
-  // A função RPC já filtra por CENTROCUSTO = BK
   const { data: rpcData, error: rpcError } = await supabase.rpc('get_bk_faturamento', {
     start_date: startDate,
     end_date: endDate
@@ -22,20 +21,16 @@ export const fetchBkFaturamentoData = async (
     console.error("Error fetching B&K faturamento data via RPC:", rpcError);
     
     // Fallback to direct query on the BLUEBAY_FATURAMENTO table if RPC fails
-    const query = supabase
+    // Join with BLUEBAY_PEDIDO to filter by CENTROCUSTO = 'BK'
+    const { data: fallbackData, error: fallbackError } = await supabase
       .from('BLUEBAY_FATURAMENTO')
-      .select('*')
-      .eq('CENTROCUSTO', 'BK'); // Adicionar filtro por CENTROCUSTO = BK
-    
-    if (startDate) {
-      query.gte('DATA_EMISSAO', startDate);
-    }
-    
-    if (endDate) {
-      query.lte('DATA_EMISSAO', endDate);
-    }
-    
-    const { data: fallbackData, error: fallbackError } = await query;
+      .select(`
+        *,
+        BLUEBAY_PEDIDO!inner(CENTROCUSTO)
+      `)
+      .eq('BLUEBAY_PEDIDO.CENTROCUSTO', 'BK')
+      .gte(startDate ? 'DATA_EMISSAO' : 'created_at', startDate || '1900-01-01')
+      .lte(endDate ? 'DATA_EMISSAO' : 'created_at', endDate || '2100-12-31');
     
     if (fallbackError) {
       console.error("Error in fallback query:", fallbackError);
@@ -56,12 +51,16 @@ export const fetchBkFaturamentoData = async (
 export const fetchInvoiceItems = async (nota: string): Promise<InvoiceItem[]> => {
   console.log("Fetching invoice items for nota:", nota);
   
-  // Query all items for this invoice
+  // Query all items for this invoice, joining with BLUEBAY_PEDIDO to filter by CENTROCUSTO
   const { data, error } = await supabase
     .from('BLUEBAY_FATURAMENTO')
-    .select('NOTA, ITEM_CODIGO, QUANTIDADE, VALOR_UNITARIO, TIPO, PES_CODIGO')
+    .select(`
+      *,
+      BLUEBAY_PEDIDO!inner(CENTROCUSTO)
+    `)
     .eq('NOTA', nota)
-    .eq('TIPO', 'S');
+    .eq('TIPO', 'S')
+    .eq('BLUEBAY_PEDIDO.CENTROCUSTO', 'BK');
   
   if (error) {
     console.error("Error fetching invoice items:", error);
@@ -130,7 +129,7 @@ const processFaturamentoData = async (data: BkFaturamento[]): Promise<BkFaturame
             const clienteInfo = clienteMap.get(item.PES_CODIGO);
             if (clienteInfo) {
               (item as any).CLIENTE_INFO = clienteInfo;
-              (item as any).FATOR_CORRECAO = clienteInfo.FATOR_CORRECAO; // Adiciona o fator de correção diretamente no item
+              (item as any).FATOR_CORRECAO = clienteInfo.FATOR_CORRECAO;
             }
           }
         });
