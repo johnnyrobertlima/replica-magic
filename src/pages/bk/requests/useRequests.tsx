@@ -26,13 +26,10 @@ export function useRequests() {
         return;
       }
       
-      // Fetch the user's requests directly using the table query
-      // This works because we have proper RLS policies in place
+      // Use the security definer function to fetch requests
+      // This avoids the infinite recursion in RLS policies
       const { data, error } = await supabase
-        .from('bk_requests')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .order('created_at', { ascending: false });
+        .rpc('get_user_requests', { user_id_param: session.user.id });
       
       if (error) throw error;
       

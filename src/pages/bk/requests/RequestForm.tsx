@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -87,26 +88,36 @@ export default function RequestForm({ onRequestSubmitted }: RequestFormProps) {
       // Upload file if there is one
       if (selectedFile) {
         try {
-          // First check if the bucket exists
-          const { data: bucketList, error: bucketError } = await supabase.storage
-            .listBuckets();
-            
-          const bucketExists = bucketList?.some(bucket => bucket.name === 'request_attachments');
-            
-          if (bucketError || !bucketExists) {
-            console.error("Bucket check error:", bucketError || "Bucket request_attachments does not exist");
+          // First check if the bucket exists by creating a dummy file and catching the error
+          const bucketName = 'request_attachments';
+          const testFilePath = `test-bucket-exists.txt`;
+          const testFile = new Blob(['test'], { type: 'text/plain' });
+          
+          // Try to upload a test file to check if bucket exists
+          const { error: testError } = await supabase.storage
+            .from(bucketName)
+            .upload(testFilePath, testFile, { upsert: true });
+          
+          // If there was an error related to bucket not found
+          if (testError && testError.message.includes('Bucket not found')) {
+            console.error("Storage bucket not configured:", testError);
             toast({
-              title: "Aviso",
-              description: "Sistema de armazenamento não está configurado. Sua solicitação será enviada sem anexo.",
+              title: "Aviso do Sistema",
+              description: "Armazenamento de arquivos não configurado. A solicitação será enviada sem anexo.",
               variant: "default",
             });
           } else {
-            // Upload the file
+            // Delete test file if it was uploaded successfully
+            if (!testError) {
+              await supabase.storage.from(bucketName).remove([testFilePath]);
+            }
+            
+            // Upload the actual file
             const fileExt = selectedFile.name.split('.').pop();
             const filePath = `${session.user.id}/${protocolNumber}/${Math.random()}.${fileExt}`;
             
             const { data: uploadData, error: uploadError } = await supabase.storage
-              .from('request_attachments')
+              .from(bucketName)
               .upload(filePath, selectedFile, {
                 cacheControl: '3600',
                 upsert: false
@@ -122,7 +133,7 @@ export default function RequestForm({ onRequestSubmitted }: RequestFormProps) {
             } else {
               // Get public URL for the uploaded file
               const { data: { publicUrl } } = supabase.storage
-                .from('request_attachments')
+                .from(bucketName)
                 .getPublicUrl(filePath);
               
               attachmentUrl = publicUrl;
@@ -153,7 +164,13 @@ export default function RequestForm({ onRequestSubmitted }: RequestFormProps) {
         }])
         .select();
       
-      if (error) throw error;
+      if (error) {
+        // If there's an infinite recursion error, inform the user to contact support
+        if (error.code === '42P17') {
+          throw new Error("Erro de política de segurança. Contate o suporte técnico.");
+        }
+        throw error;
+      }
       
       // Reset form
       form.reset();

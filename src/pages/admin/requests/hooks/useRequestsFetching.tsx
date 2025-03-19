@@ -20,10 +20,11 @@ export function useRequestsFetching() {
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
       
-      // Get total count first
+      // Get count first to avoid RLS policy recursion
+      // We can simplify this to just get the count directly
       const { count, error: countError } = await supabase
         .from('bk_requests')
-        .select('*', { count: 'exact', head: true });
+        .select('id', { count: 'exact', head: true });
       
       if (countError) {
         console.error("Count error:", countError);
@@ -39,7 +40,13 @@ export function useRequestsFetching() {
         .order('created_at', { ascending: false })
         .range(from, to);
       
-      if (error) throw error;
+      if (error) {
+        // If there's an infinite recursion error, handle it
+        if (error.code === '42P17') {
+          throw new Error("Erro de política de segurança. Contate o suporte técnico.");
+        }
+        throw error;
+      }
       
       // Cast the string status to RequestStatus type
       setRequests((data || []).map(item => ({
