@@ -5,7 +5,8 @@ import { useFinancialFilters } from "./financial/useFinancialFilters";
 import { useFinancialSummaries } from "./financial/useFinancialSummaries";
 import { UseFinancialReturnType } from "./financial/types";
 
-export { DateRange, FinancialSummary, ClientFinancialSummary } from "./financial/types";
+// Use 'export type' instead of 'export' for type re-exports
+export type { DateRange, FinancialSummary, ClientFinancialSummary } from "./financial/types";
 
 export const useFinancial = (): UseFinancialReturnType => {
   const {
