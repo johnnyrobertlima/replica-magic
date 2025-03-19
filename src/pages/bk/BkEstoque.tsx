@@ -64,15 +64,20 @@ const BkEstoque = () => {
   }, [searchTerm, estoqueItems]);
 
   const filterAndGroupItems = (term: string) => {
-    // Filter items by search term
+    // First filter items that have FISICO > 0 or DISPONIVEL > 0
+    const itemsWithStock = estoqueItems.filter(
+      item => (item.FISICO > 0 || item.DISPONIVEL > 0)
+    );
+    
+    // Then filter by search term if provided
     const filtered = term 
-      ? estoqueItems.filter(
+      ? itemsWithStock.filter(
           (item) =>
             item.ITEM_CODIGO.toLowerCase().includes(term.toLowerCase()) ||
             (item.DESCRICAO && item.DESCRICAO.toLowerCase().includes(term.toLowerCase())) ||
             (item.GRU_DESCRICAO && item.GRU_DESCRICAO.toLowerCase().includes(term.toLowerCase()))
         )
-      : [...estoqueItems];
+      : itemsWithStock;
     
     setFilteredItems(filtered);
     
@@ -172,7 +177,7 @@ const BkEstoque = () => {
 
         <Card className="mb-6">
           <CardHeader className="pb-3">
-            <CardTitle className="text-xl">Consulta de Estoque</CardTitle>
+            <CardTitle className="text-xl">Consulta de Estoque (Somente itens com estoque físico ou disponível)</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="relative">
@@ -287,8 +292,8 @@ const BkEstoque = () => {
           <div className="bg-white p-8 rounded-lg shadow text-center">
             <p className="text-gray-500">
               {searchTerm
-                ? "Nenhum item encontrado para esta busca."
-                : "Nenhum item de estoque disponível no momento."}
+                ? "Nenhum item com estoque encontrado para esta busca."
+                : "Nenhum item com estoque disponível no momento."}
             </p>
           </div>
         )}
