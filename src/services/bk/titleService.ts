@@ -14,8 +14,7 @@ export const fetchFinancialTitles = async (startDate?: string, endDate?: string,
       VLRTITULO,
       VLRSALDO,
       STATUS,
-      PES_CODIGO,
-      CENTROCUSTO
+      PES_CODIGO
     `);
 
   // Apply date filters if provided
@@ -41,7 +40,7 @@ export const fetchFinancialTitles = async (startDate?: string, endDate?: string,
 
   // Fetch client names for the titles
   const titles: FinancialTitle[] = await Promise.all(
-    (data || []).map(async (title) => {
+    (data || []).map(async (title: any) => {
       let clientName = "Cliente não encontrado";
 
       if (title.PES_CODIGO) {
@@ -55,8 +54,17 @@ export const fetchFinancialTitles = async (startDate?: string, endDate?: string,
       }
 
       return {
-        ...title,
+        NUMNOTA: title.NUMNOTA,
+        DTEMISSAO: title.DTEMISSAO,
+        DTVENCIMENTO: title.DTVENCIMENTO,
+        DTPAGTO: title.DTPAGTO,
+        VLRDESCONTO: title.VLRDESCONTO,
+        VLRTITULO: title.VLRTITULO,
+        VLRSALDO: title.VLRSALDO,
+        STATUS: title.STATUS,
+        PES_CODIGO: title.PES_CODIGO,
         CLIENTE_NOME: clientName,
+        CENTROCUSTO: 'BK' // Explicitly set CENTROCUSTO since we're querying from mv_titulos_centro_custo_bk
       } as FinancialTitle;
     })
   );
