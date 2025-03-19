@@ -35,4 +35,5 @@ export interface FinancialTitle {
   STATUS: string | null;
   CLIENTE_NOME: string | null;
   PES_CODIGO: string | null;
+  CENTROCUSTO: string | null;
 }

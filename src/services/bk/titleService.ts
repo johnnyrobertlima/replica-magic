@@ -4,7 +4,7 @@ import { FinancialTitle } from "./types/financialTypes";
 
 export const fetchFinancialTitles = async (startDate?: string, endDate?: string, status?: string): Promise<FinancialTitle[]> => {
   let query = supabase
-    .from('BLUEBAY_TITULO')
+    .from('mv_titulos_centro_custo_bk')
     .select(`
       NUMNOTA,
       DTEMISSAO,
@@ -14,7 +14,8 @@ export const fetchFinancialTitles = async (startDate?: string, endDate?: string,
       VLRTITULO,
       VLRSALDO,
       STATUS,
-      PES_CODIGO
+      PES_CODIGO,
+      CENTROCUSTO
     `);
 
   // Apply date filters if provided
@@ -47,8 +48,8 @@ export const fetchFinancialTitles = async (startDate?: string, endDate?: string,
         const { data: clientData } = await supabase
           .from('BLUEBAY_PESSOA')
           .select('APELIDO, RAZAOSOCIAL')
-          .eq('PES_CODIGO', parseInt(title.PES_CODIGO as string))  // Convert string to number here
-          .maybeSingle();  // Using maybeSingle instead of single to handle null cases
+          .eq('PES_CODIGO', parseInt(title.PES_CODIGO as string))
+          .maybeSingle();
 
         clientName = clientData?.APELIDO || clientData?.RAZAOSOCIAL || "Cliente não encontrado";
       }

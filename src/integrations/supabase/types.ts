@@ -1404,6 +1404,28 @@ export type Database = {
       }
     }
     Views: {
+      mv_titulos_centro_custo_bk: {
+        Row: {
+          ANOBASE: number | null
+          DTEMISSAO: string | null
+          DTPAGTO: string | null
+          DTVENCIMENTO: string | null
+          DTVENCTO: string | null
+          FILIAL: number | null
+          MATRIZ: number | null
+          NUMDOCUMENTO: number | null
+          NUMLCTO: number | null
+          NUMNOTA: number | null
+          PES_CODIGO: string | null
+          STATUS: string | null
+          TIPO: string | null
+          VLRABATIMENTO: number | null
+          VLRDESCONTO: number | null
+          VLRSALDO: number | null
+          VLRTITULO: number | null
+        }
+        Relationships: []
+      }
       user_groups_with_profiles: {
         Row: {
           group_id: string | null
