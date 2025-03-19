@@ -30,6 +30,8 @@ import BkClients from "@/pages/bk/BkClients";
 import BkFinancial from "@/pages/bk/BkFinancial";
 import BkReports from "@/pages/bk/BkReports";
 import BkDashboard from "@/pages/bk/BkDashboard";
+import BkGestaoTitulos from "@/pages/bk/BkGestaoTitulos";
+import BkFinanceiroManager from "@/pages/bk/BkFinanceiroManager";
 
 // Admin routes
 import { AdminLayout } from "@/pages/admin/layout";
