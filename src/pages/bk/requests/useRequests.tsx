@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Request, RequestStatus } from "./types";
+import { getStorageUrl } from "@/utils/imageUtils";
 
 export function useRequests() {
   const [requests, setRequests] = useState<Request[]>([]);
@@ -35,11 +36,16 @@ export function useRequests() {
       
       if (error) throw error;
       
-      // Cast the status to the RequestStatus type
-      setRequests((data || []).map(item => ({
+      // Process the data to handle attachment URLs
+      const processedData = (data || []).map(item => ({
         ...item,
-        status: item.status as RequestStatus
-      })));
+        status: item.status as RequestStatus,
+        attachment_url: item.attachment_url ? getStorageUrl(item.attachment_url) : null
+      }));
+      
+      // Cast the status to the RequestStatus type
+      setRequests(processedData);
+      
     } catch (error: any) {
       console.error("Error fetching requests:", error);
       toast({

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,6 +27,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { DEPARTMENTS, RequestStatus } from "./types";
+import { validateImage } from "@/utils/imageUtils";
 
 // Form validation schema
 const requestSchema = z.object({
@@ -59,7 +61,22 @@ export default function RequestForm({ onRequestSubmitted }: RequestFormProps) {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
-    setSelectedFile(file);
+    if (file) {
+      try {
+        validateImage(file);
+        setSelectedFile(file);
+      } catch (error: any) {
+        toast({
+          title: "Erro ao selecionar arquivo",
+          description: error.message || "Verifique o tipo e tamanho do arquivo",
+          variant: "destructive",
+        });
+        e.target.value = '';
+        setSelectedFile(null);
+      }
+    } else {
+      setSelectedFile(null);
+    }
   };
 
   const onSubmit = async (values: RequestFormValues) => {
@@ -87,8 +104,7 @@ export default function RequestForm({ onRequestSubmitted }: RequestFormProps) {
       // Upload file if there is one
       if (selectedFile) {
         try {
-          // Skip bucket creation attempt since we've already created it via SQL
-          // and upload directly to the existing bucket
+          // Upload directly to the existing bucket
           const fileExt = selectedFile.name.split('.').pop();
           const userId = session.user.id;
           const filePath = `${userId}/${protocolNumber}/${Math.random()}.${fileExt}`;

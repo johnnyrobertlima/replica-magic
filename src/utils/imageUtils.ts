@@ -1,10 +1,10 @@
 
 export const validateImage = (file: File) => {
   const MAX_SIZE = 5 * 1024 * 1024; // 5MB
-  const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/x-icon', 'image/ico'];
+  const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/x-icon', 'image/ico', 'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
 
   if (!ALLOWED_TYPES.includes(file.type)) {
-    throw new Error('Tipo de arquivo não permitido. Use JPEG, PNG, WEBP ou ICO.');
+    throw new Error('Tipo de arquivo não permitido. Use JPEG, PNG, WEBP, ICO, PDF, DOCX ou XLSX.');
   }
 
   if (file.size > MAX_SIZE) {
@@ -24,8 +24,8 @@ export const getStorageUrl = (path: string | null) => {
   // Check which bucket the path belongs to
   let bucketName = 'oni-media'; // Default bucket
   
-  // If path contains user id and protocol number format, it's likely from request_attachments
-  if (cleanPath.includes('/BK-')) {
+  // If path contains user id and protocol number format or if it's a direct explicit path to request_attachments
+  if (cleanPath.includes('/BK-') || cleanPath.startsWith('request_attachments/')) {
     bucketName = 'request_attachments';
   }
   
