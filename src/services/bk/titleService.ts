@@ -14,10 +14,8 @@ export const fetchFinancialTitles = async (startDate?: string, endDate?: string,
       VLRTITULO,
       VLRSALDO,
       STATUS,
-      PES_CODIGO,
-      CENTROCUSTO
-    `)
-    .eq('CENTROCUSTO', 'BK');
+      PES_CODIGO
+    `);
 
   // Apply date filters if provided
   if (startDate) {
@@ -33,16 +31,35 @@ export const fetchFinancialTitles = async (startDate?: string, endDate?: string,
     query = query.eq('STATUS', status);
   }
 
-  const { data, error } = await query;
+  const { data: titlesData, error } = await query;
 
   if (error) {
     console.error("Error fetching financial titles:", error);
     throw error;
   }
 
+  // Get all B&K pedidos to filter titles
+  const { data: bkPedidos, error: bkError } = await supabase
+    .from('BLUEBAY_PEDIDO')
+    .select('NUMNOTA')
+    .eq('CENTROCUSTO', 'BK');
+
+  if (bkError) {
+    console.error("Error fetching BK pedidos:", bkError);
+    throw bkError;
+  }
+
+  // Create a Set of NUMNOTA values from BK pedidos for efficient lookup
+  const bkNumNotaSet = new Set(bkPedidos?.map(pedido => pedido.NUMNOTA));
+
+  // Filter titles to only include those associated with BK pedidos
+  const bkTitlesData = (titlesData || []).filter(title => 
+    title.NUMNOTA && bkNumNotaSet.has(title.NUMNOTA)
+  );
+
   // Fetch client names for the titles
   const titles: FinancialTitle[] = await Promise.all(
-    (data || []).map(async (title) => {
+    bkTitlesData.map(async (title) => {
       let clientName = "Cliente não encontrado";
 
       if (title.PES_CODIGO) {
@@ -60,6 +77,7 @@ export const fetchFinancialTitles = async (startDate?: string, endDate?: string,
       return {
         ...title,
         CLIENTE_NOME: clientName,
+        CENTROCUSTO: 'BK', // Explicitly set CENTROCUSTO for all filtered titles
       } as FinancialTitle;
     })
   );
