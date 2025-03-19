@@ -138,17 +138,6 @@ export const useFinancial = () => {
     setFilteredInvoices(filtered);
   }, [statusFilter, clientFilter, notaFilter, consolidatedInvoices]);
 
-  // Add the missing filterClientSummaries function
-  const filterClientSummaries = useCallback(() => {
-    if (clientFilter) {
-      const searchTerm = clientFilter.toLowerCase();
-      return clientFinancialSummaries.filter(client => 
-        client.CLIENTE_NOME.toLowerCase().includes(searchTerm)
-      );
-    }
-    return clientFinancialSummaries;
-  }, [clientFinancialSummaries, clientFilter]);
-
   // Initial data load
   useEffect(() => {
     refreshData();
@@ -171,7 +160,6 @@ export const useFinancial = () => {
     notaFilter,
     updateNotaFilter,
     financialSummary,
-    clientFinancialSummaries,
-    filterClientSummaries  // Add the missing function to the return object
+    clientFinancialSummaries
   };
 };

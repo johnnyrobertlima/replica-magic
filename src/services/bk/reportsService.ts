@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { 
   fetchBkFaturamentoData,
@@ -34,25 +35,39 @@ export interface ItemDetail {
 export const fetchBkItemsReport = async (
   startDate?: string,
   endDate?: string
-): Promise<{
-  ITEM_CODIGO: string;
-  DESCRICAO: string;
-  TOTAL_VALOR: number;
-  TOTAL_QUANTIDADE: number;
-}[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('vw_bk_items_report')
-      .select('*')
-      .gte('DATA_EMISSAO', startDate || '')
-      .lte('DATA_EMISSAO', endDate || '');
-    
-    if (error) throw error;
-    return data || [];
-  } catch (error) {
-    console.error('Error fetching BK items report:', error);
-    return [];
+): Promise<ItemReport[]> => {
+  console.log("Fetching B&K items report data...", { startDate, endDate });
+  
+  // Reuse the same data fetching logic from financial service
+  const faturamentoData = await fetchBkFaturamentoData(startDate, endDate);
+  
+  // Get unique item codes from the faturamento data
+  const itemCodes = [...new Set(faturamentoData
+    .filter(item => item.ITEM_CODIGO)
+    .map(item => item.ITEM_CODIGO as string))];
+  
+  // Fetch item descriptions from BLUEBAY_ITEM table
+  const { data: itemData, error: itemError } = await supabase
+    .from('BLUEBAY_ITEM')
+    .select('ITEM_CODIGO, DESCRICAO')
+    .in('ITEM_CODIGO', itemCodes);
+  
+  if (itemError) {
+    console.error("Error fetching item descriptions:", itemError);
   }
+  
+  // Create a map of item codes to descriptions
+  const itemDescMap = new Map<string, string>();
+  if (itemData) {
+    itemData.forEach(item => {
+      if (item.ITEM_CODIGO && item.DESCRICAO) {
+        itemDescMap.set(item.ITEM_CODIGO, item.DESCRICAO);
+      }
+    });
+  }
+  
+  // Process the faturamento data with the item descriptions from our map
+  return processItemsReport(faturamentoData, itemDescMap);
 };
 
 /**
@@ -97,33 +112,6 @@ export const fetchItemDetails = async (
   return itemDetails.sort((a, b) => {
     return new Date(b.DATA_EMISSAO).getTime() - new Date(a.DATA_EMISSAO).getTime();
   });
-};
-
-/**
- * Fetches and processes groups report data
- */
-export const fetchBkGroupsReport = async (
-  startDate?: string,
-  endDate?: string
-): Promise<{
-  GRU_CODIGO: string;
-  GRU_DESCRICAO: string;
-  TOTAL_VALOR: number;
-  TOTAL_QUANTIDADE: number;
-}[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('vw_bk_groups_report')
-      .select('*')
-      .gte('DATA_EMISSAO', startDate || '')
-      .lte('DATA_EMISSAO', endDate || '');
-    
-    if (error) throw error;
-    return data || [];
-  } catch (error) {
-    console.error('Error fetching BK groups report:', error);
-    return [];
-  }
 };
 
 /**
