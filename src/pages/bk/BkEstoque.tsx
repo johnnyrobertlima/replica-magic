@@ -52,35 +52,40 @@ const BkEstoque = () => {
     try {
       setIsLoading(true);
       
-      // Fetch estoque data with JOIN to get item descriptions
-      const { data, error } = await supabase
+      // First, fetch estoque data
+      const { data: estoqueData, error: estoqueError } = await supabase
         .from('BLUEBAY_ESTOQUE')
-        .select(`
-          ITEM_CODIGO,
-          FISICO,
-          DISPONIVEL,
-          RESERVADO,
-          LOCAL,
-          SUBLOCAL,
-          BLUEBAY_ITEM!inner (DESCRICAO)
-        `)
+        .select('*')
         .eq('LOCAL', 3);
 
-      if (error) throw error;
+      if (estoqueError) throw estoqueError;
 
-      // Transform the data to combine fields from both tables
-      const transformedData = data.map(item => ({
-        ITEM_CODIGO: item.ITEM_CODIGO,
-        DESCRICAO: item.BLUEBAY_ITEM.DESCRICAO,
-        FISICO: item.FISICO,
-        DISPONIVEL: item.DISPONIVEL,
-        RESERVADO: item.RESERVADO,
-        LOCAL: item.LOCAL,
-        SUBLOCAL: item.SUBLOCAL
+      // Then, fetch all items data
+      const { data: itemsData, error: itemsError } = await supabase
+        .from('BLUEBAY_ITEM')
+        .select('ITEM_CODIGO, DESCRICAO');
+
+      if (itemsError) throw itemsError;
+
+      // Create a map of ITEM_CODIGO to DESCRICAO for faster lookups
+      const itemDescriptionMap = new Map();
+      itemsData.forEach(item => {
+        itemDescriptionMap.set(item.ITEM_CODIGO, item.DESCRICAO);
+      });
+
+      // Combine the data
+      const combinedData: EstoqueItem[] = estoqueData.map(estoque => ({
+        ITEM_CODIGO: estoque.ITEM_CODIGO,
+        DESCRICAO: itemDescriptionMap.get(estoque.ITEM_CODIGO) || 'Sem descrição',
+        FISICO: estoque.FISICO,
+        DISPONIVEL: estoque.DISPONIVEL,
+        RESERVADO: estoque.RESERVADO,
+        LOCAL: estoque.LOCAL,
+        SUBLOCAL: estoque.SUBLOCAL
       }));
 
-      setEstoqueItems(transformedData);
-      setFilteredItems(transformedData);
+      setEstoqueItems(combinedData);
+      setFilteredItems(combinedData);
       
     } catch (error: any) {
       console.error("Error fetching estoque data:", error);
