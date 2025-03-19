@@ -26,12 +26,9 @@ export function useRequests() {
         return;
       }
       
-      // Then fetch the requests for this user
+      // Instead of direct query, use RPC to call our security definer function
       const { data, error } = await supabase
-        .from('bk_requests')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .order('created_at', { ascending: false });
+        .rpc('get_user_requests', { user_id_param: session.user.id });
       
       if (error) throw error;
       

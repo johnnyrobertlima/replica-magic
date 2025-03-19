@@ -90,6 +90,15 @@ export default function RequestForm({ onRequestSubmitted }: RequestFormProps) {
         const fileExt = selectedFile.name.split('.').pop();
         const filePath = `${session.user.id}/${protocolNumber}/${Math.random()}.${fileExt}`;
         
+        // Check if the bucket exists by making a simple request
+        const { data: bucketExists, error: bucketCheckError } = await supabase.storage
+          .getBucket('request_attachments');
+          
+        if (bucketCheckError) {
+          console.error("Bucket check error:", bucketCheckError);
+          throw new Error("Sistema de armazenamento não está configurado. Por favor, contate o administrador.");
+        }
+        
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('request_attachments')
           .upload(filePath, selectedFile, {

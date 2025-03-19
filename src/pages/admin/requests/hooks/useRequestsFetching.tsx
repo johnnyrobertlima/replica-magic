@@ -20,13 +20,23 @@ export function useRequestsFetching() {
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
       
-      // Get total count first
+      // Get total count first - use a direct count to avoid recursion issues
       const { count, error: countError } = await supabase
         .from('bk_requests')
         .select('*', { count: 'exact', head: true });
       
-      if (countError) throw countError;
-      setTotalCount(count || 0);
+      if (countError) {
+        console.error("Count error:", countError);
+        // Try alternative approach if security policies cause issues
+        const { data: allData, error: allDataError } = await supabase
+          .from('bk_requests')
+          .select('id');
+          
+        if (allDataError) throw allDataError;
+        setTotalCount(allData?.length || 0);
+      } else {
+        setTotalCount(count || 0);
+      }
       
       // Then fetch the actual data with pagination
       const { data, error } = await supabase
