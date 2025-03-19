@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -87,33 +86,56 @@ export default function RequestForm({ onRequestSubmitted }: RequestFormProps) {
       
       // Upload file if there is one
       if (selectedFile) {
-        const fileExt = selectedFile.name.split('.').pop();
-        const filePath = `${session.user.id}/${protocolNumber}/${Math.random()}.${fileExt}`;
-        
-        // Check if the bucket exists by making a simple request
-        const { data: bucketExists, error: bucketCheckError } = await supabase.storage
-          .getBucket('request_attachments');
-          
-        if (bucketCheckError) {
-          console.error("Bucket check error:", bucketCheckError);
-          throw new Error("Sistema de armazenamento não está configurado. Por favor, contate o administrador.");
-        }
-        
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('request_attachments')
-          .upload(filePath, selectedFile, {
-            cacheControl: '3600',
-            upsert: false
+        try {
+          // First check if the bucket exists
+          const { data: bucketList, error: bucketError } = await supabase.storage
+            .listBuckets();
+            
+          const bucketExists = bucketList?.some(bucket => bucket.name === 'request_attachments');
+            
+          if (bucketError || !bucketExists) {
+            console.error("Bucket check error:", bucketError || "Bucket request_attachments does not exist");
+            toast({
+              title: "Aviso",
+              description: "Sistema de armazenamento não está configurado. Sua solicitação será enviada sem anexo.",
+              variant: "default",
+            });
+          } else {
+            // Upload the file
+            const fileExt = selectedFile.name.split('.').pop();
+            const filePath = `${session.user.id}/${protocolNumber}/${Math.random()}.${fileExt}`;
+            
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from('request_attachments')
+              .upload(filePath, selectedFile, {
+                cacheControl: '3600',
+                upsert: false
+              });
+            
+            if (uploadError) {
+              console.error("File upload error:", uploadError);
+              toast({
+                title: "Erro ao enviar arquivo",
+                description: "Não foi possível enviar o anexo, mas sua solicitação será processada.",
+                variant: "default",
+              });
+            } else {
+              // Get public URL for the uploaded file
+              const { data: { publicUrl } } = supabase.storage
+                .from('request_attachments')
+                .getPublicUrl(filePath);
+              
+              attachmentUrl = publicUrl;
+            }
+          }
+        } catch (fileError: any) {
+          console.error("File upload error:", fileError);
+          toast({
+            title: "Erro ao enviar arquivo",
+            description: "Não foi possível enviar o anexo, mas sua solicitação será processada.",
+            variant: "default",
           });
-        
-        if (uploadError) throw uploadError;
-        
-        // Get public URL for the uploaded file
-        const { data: { publicUrl } } = supabase.storage
-          .from('request_attachments')
-          .getPublicUrl(filePath);
-        
-        attachmentUrl = publicUrl;
+        }
       }
       
       // Insert request into database

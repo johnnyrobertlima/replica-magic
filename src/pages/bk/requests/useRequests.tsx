@@ -26,9 +26,13 @@ export function useRequests() {
         return;
       }
       
-      // Instead of direct query, use RPC to call our security definer function
+      // Fetch the user's requests directly using the table query
+      // This works because we have proper RLS policies in place
       const { data, error } = await supabase
-        .rpc('get_user_requests', { user_id_param: session.user.id });
+        .from('bk_requests')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .order('created_at', { ascending: false });
       
       if (error) throw error;
       
