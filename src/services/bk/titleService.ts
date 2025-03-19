@@ -41,7 +41,7 @@ export const fetchFinancialTitles = async (startDate?: string, endDate?: string,
   // Get all B&K pedidos to filter titles
   const { data: bkPedidos, error: bkError } = await supabase
     .from('BLUEBAY_PEDIDO')
-    .select('NUMNOTA')
+    .select('PED_NUMPEDIDO')
     .eq('CENTROCUSTO', 'BK');
 
   if (bkError) {
@@ -49,12 +49,13 @@ export const fetchFinancialTitles = async (startDate?: string, endDate?: string,
     throw bkError;
   }
 
-  // Create a Set of NUMNOTA values from BK pedidos for efficient lookup
-  const bkNumNotaSet = new Set(bkPedidos?.map(pedido => pedido.NUMNOTA));
+  // Create a Set of PED_NUMPEDIDO values from BK pedidos for efficient lookup
+  const bkPedidoSet = new Set(bkPedidos?.map(pedido => pedido.PED_NUMPEDIDO));
 
   // Filter titles to only include those associated with BK pedidos
+  // In this case, we're assuming NUMNOTA in BLUEBAY_TITULO corresponds to PED_NUMPEDIDO in BLUEBAY_PEDIDO
   const bkTitlesData = (titlesData || []).filter(title => 
-    title.NUMNOTA && bkNumNotaSet.has(title.NUMNOTA)
+    title.NUMNOTA && bkPedidoSet.has(title.NUMNOTA.toString())
   );
 
   // Fetch client names for the titles
