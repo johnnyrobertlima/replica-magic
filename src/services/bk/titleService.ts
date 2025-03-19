@@ -47,8 +47,8 @@ export const fetchFinancialTitles = async (startDate?: string, endDate?: string,
         const { data: clientData } = await supabase
           .from('BLUEBAY_PESSOA')
           .select('APELIDO, RAZAOSOCIAL')
-          .eq('PES_CODIGO', title.PES_CODIGO)  // No need to convert to string, let Supabase handle it
-          .single();
+          .eq('PES_CODIGO', parseInt(title.PES_CODIGO as string))  // Convert string to number here
+          .maybeSingle();  // Using maybeSingle instead of single to handle null cases
 
         clientName = clientData?.APELIDO || clientData?.RAZAOSOCIAL || "Cliente não encontrado";
       }
