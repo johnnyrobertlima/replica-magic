@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { BkMenu } from "@/components/bk/BkMenu";
 import { FinancialDashboard } from "@/components/bk/financial/FinancialDashboard";
@@ -52,7 +51,7 @@ export const BkDashboard = () => {
                 : report.ITEM_CODIGO;
               return { 
                 name, 
-                value: report.VALOR_TOTAL || 0 
+                value: report.TOTAL_VALOR || 0 
               };
             });
             
@@ -101,9 +100,9 @@ export const BkDashboard = () => {
               statuses={availableStatuses}
             />
             <DateRangePicker
-              startDate={dateRange.startDate}
-              endDate={dateRange.endDate}
-              onUpdate={updateDateRange}
+              startDate={dateRange.startDate} 
+              endDate={dateRange.endDate} 
+              onUpdate={updateDateRange} 
             />
           </div>
 

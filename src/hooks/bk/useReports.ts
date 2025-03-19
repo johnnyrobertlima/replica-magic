@@ -7,13 +7,13 @@ import {
   ItemDetail 
 } from "@/services/bk/reportsService";
 import { useToast } from "@/hooks/use-toast";
+import { format, subDays } from "date-fns";
 
-// Helper to get date from X days ago in ISO format
-const getDateXDaysAgo = (daysAgo: number) => {
-  const date = new Date();
-  date.setDate(date.getDate() - daysAgo);
-  return date.toISOString().split('T')[0];
-};
+// Define our DateRange interface to match useFinancial
+export interface DateRange {
+  startDate: Date | null;
+  endDate: Date | null;
+}
 
 export const useReports = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -21,9 +21,9 @@ export const useReports = () => {
   const [selectedItemDetails, setSelectedItemDetails] = useState<ItemDetail[]>([]);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [dateRange, setDateRange] = useState({
-    startDate: getDateXDaysAgo(30), // Default to 30 days ago
-    endDate: new Date().toISOString().split('T')[0] // Today
+  const [dateRange, setDateRange] = useState<DateRange>({
+    startDate: subDays(new Date(), 30), // Default to 30 days ago
+    endDate: new Date() // Today
   });
   const { toast } = useToast();
 
@@ -32,10 +32,18 @@ export const useReports = () => {
       setIsLoading(true);
       setError(null);
       
-      console.log(`Loading reports data for date range: ${dateRange.startDate} to ${dateRange.endDate}`);
-      
-      const data = await fetchBkItemsReport(dateRange.startDate, dateRange.endDate);
-      setItems(data);
+      if (dateRange.startDate && dateRange.endDate) {
+        const startDateFormatted = format(dateRange.startDate, 'yyyy-MM-dd');
+        const endDateFormatted = format(dateRange.endDate, 'yyyy-MM-dd');
+        
+        console.log(`Loading reports data for date range: ${startDateFormatted} to ${endDateFormatted}`);
+        
+        const data = await fetchBkItemsReport(startDateFormatted, endDateFormatted);
+        setItems(data);
+      } else {
+        console.warn("Date range is incomplete");
+        setItems([]);
+      }
       
     } catch (err) {
       console.error("Error loading reports data:", err);
@@ -58,18 +66,26 @@ export const useReports = () => {
     loadData();
   };
 
-  const updateDateRange = (startDate: string, endDate: string) => {
-    console.log(`Updating date range to: ${startDate} - ${endDate}`);
-    setDateRange({ startDate, endDate });
+  const updateDateRange = (newDateRange: DateRange) => {
+    console.log(`Updating date range`, newDateRange);
+    setDateRange(newDateRange);
   };
 
   const loadItemDetails = async (itemCode: string) => {
     try {
       setIsLoadingDetails(true);
       
-      console.log(`Loading details for item ${itemCode}`);
-      const details = await fetchItemDetails(itemCode, dateRange.startDate, dateRange.endDate);
-      setSelectedItemDetails(details);
+      if (dateRange.startDate && dateRange.endDate) {
+        const startDateFormatted = format(dateRange.startDate, 'yyyy-MM-dd');
+        const endDateFormatted = format(dateRange.endDate, 'yyyy-MM-dd');
+        
+        console.log(`Loading details for item ${itemCode}`);
+        const details = await fetchItemDetails(itemCode, startDateFormatted, endDateFormatted);
+        setSelectedItemDetails(details);
+      } else {
+        console.warn("Date range is incomplete for item details");
+        setSelectedItemDetails([]);
+      }
       
     } catch (err) {
       console.error(`Error loading details for item ${itemCode}:`, err);
