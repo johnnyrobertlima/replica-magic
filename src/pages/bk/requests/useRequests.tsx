@@ -26,10 +26,13 @@ export function useRequests() {
         return;
       }
       
-      // Use the security definer function to fetch requests
-      // This avoids the infinite recursion in RLS policies
+      // Use a direct query with the RLS policy instead of the RPC function
+      // This avoids the TypeScript error with the function name
       const { data, error } = await supabase
-        .rpc('get_user_requests', { user_id_param: session.user.id });
+        .from('bk_requests')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .order('created_at', { ascending: false });
       
       if (error) throw error;
       
