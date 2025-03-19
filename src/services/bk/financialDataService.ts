@@ -12,6 +12,7 @@ export const fetchBkFaturamentoData = async (
   console.log("Fetching B&K faturamento data...", { startDate, endDate });
   
   // Use the RPC function to get filtered data with joins
+  // A função RPC já filtra por CENTROCUSTO = BK
   const { data: rpcData, error: rpcError } = await supabase.rpc('get_bk_faturamento', {
     start_date: startDate,
     end_date: endDate
@@ -23,7 +24,8 @@ export const fetchBkFaturamentoData = async (
     // Fallback to direct query on the BLUEBAY_FATURAMENTO table if RPC fails
     const query = supabase
       .from('BLUEBAY_FATURAMENTO')
-      .select('*');
+      .select('*')
+      .eq('CENTROCUSTO', 'BK'); // Adicionar filtro por CENTROCUSTO = BK
     
     if (startDate) {
       query.gte('DATA_EMISSAO', startDate);

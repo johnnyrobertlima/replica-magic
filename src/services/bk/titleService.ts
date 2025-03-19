@@ -31,6 +31,9 @@ export const fetchFinancialTitles = async (startDate?: string, endDate?: string,
     query = query.eq('STATUS', status);
   }
 
+  // Adicionar filtro para CENTROCUSTO = BK
+  query = query.eq('CENTROCUSTO', 'BK');
+
   const { data, error } = await query;
 
   if (error) {
@@ -47,8 +50,8 @@ export const fetchFinancialTitles = async (startDate?: string, endDate?: string,
         const { data: clientData } = await supabase
           .from('BLUEBAY_PESSOA')
           .select('APELIDO, RAZAOSOCIAL')
-          .eq('PES_CODIGO', parseInt(title.PES_CODIGO as string))  // Convert string to number here
-          .maybeSingle();  // Using maybeSingle instead of single to handle null cases
+          .eq('PES_CODIGO', parseInt(title.PES_CODIGO as string))
+          .maybeSingle();
 
         clientName = clientData?.APELIDO || clientData?.RAZAOSOCIAL || "Cliente não encontrado";
       }
