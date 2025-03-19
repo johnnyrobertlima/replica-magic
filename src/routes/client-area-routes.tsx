@@ -1,5 +1,6 @@
 
-import { Routes, Route } from "react-router-dom";
+import { Route } from "react-router-dom";
+import { Fragment } from "react";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
 import ClientArea from "@/pages/ClientArea";
 import PostManagement from "@/pages/PostManagement";
@@ -13,51 +14,46 @@ import { BkRoutes } from "./bk-routes";
 
 export function ClientAreaRoutes() {
   return (
-    <Routes>
-      <Route path="/" element={
+    <Fragment>
+      <Route path="/client-area" element={
         <PermissionGuard resourcePath="/client-area">
           <ClientArea />
         </PermissionGuard>
       } />
-      
       <Route path="/post-management" element={
         <PermissionGuard resourcePath="/post-management">
           <PostManagement />
         </PermissionGuard>
       } />
       
-      <Route path="/content-management" element={
+      <Route path="/client-area/content-management" element={
         <PermissionGuard resourcePath="/client-area/content">
           <ContentManagement />
         </PermissionGuard>
       } />
-      
-      <Route path="/mailing-registration" element={
+      <Route path="/client-area/mailing-registration" element={
         <PermissionGuard resourcePath="/client-area/mailing">
           <MailingRegistration />
         </PermissionGuard>
       } />
-      
-      <Route path="/tokens" element={
+      <Route path="/client-area/tokens" element={
         <PermissionGuard resourcePath="/client-area/tokens">
           <TokenManagement />
         </PermissionGuard>
       } />
-      
-      <Route path="/whatsapp-registration" element={
+      <Route path="/client-area/whatsapp-registration" element={
         <PermissionGuard resourcePath="/client-area/whatsapp">
           <WhatsAppClientRegistration />
         </PermissionGuard>
       } />
-      
-      <Route path="/whatsapp" element={
+      <Route path="/client-area/whatsapp" element={
         <PermissionGuard resourcePath="/client-area/whatsapp">
           <WhatsAppService />
         </PermissionGuard>
       } />
       
-      <Route path="/bluebay/*" element={<BluebayRoutes />} />
-      <Route path="/bk/*" element={<BkRoutes />} />
-    </Routes>
+      <BluebayRoutes />
+      <BkRoutes />
+    </Fragment>
   );
 }
