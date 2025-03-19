@@ -1,15 +1,15 @@
 
-import { Routes } from "react-router-dom";
-import { AdminRoutes } from "./admin-routes";
-import { ClientAreaRoutes } from "./client-area-routes";
-import { PublicRoutes } from "./public-routes";
+import { Routes, Route } from "react-router-dom";
+import { adminRoutes } from "./admin-routes";
+import { clientAreaRoutes } from "./client-area-routes";
+import { publicRoutes } from "./public-routes";
 
 export function AppRoutes() {
   return (
     <Routes>
-      <PublicRoutes />
-      <ClientAreaRoutes />
-      <AdminRoutes />
+      {publicRoutes}
+      {clientAreaRoutes}
+      {adminRoutes}
     </Routes>
   );
 }
