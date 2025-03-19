@@ -46,6 +46,7 @@ const KNOWN_ROUTES = [
   "/client-area/bk/financial",
   "/client-area/bk/gestaotitulos",
   "/client-area/bk/financeiromanager",
+  "/client-area/bk/clientefinancial",
   "/client-area/bk/requests",
   // Outras rotas
   "/client-area/content-management",
