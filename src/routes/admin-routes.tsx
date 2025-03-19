@@ -15,6 +15,7 @@ import { AdminGroups } from "@/pages/admin/groups";
 import { AdminPermissions } from "@/pages/admin/permissions";
 import { AdminLogin } from "@/pages/admin/login";
 import { UserGroupManagement } from "@/pages/admin/users/UserGroupManagement";
+import AdminRequests from "@/pages/admin/requests";
 
 export const adminRoutes = (
   <>
@@ -44,6 +45,11 @@ export const adminRoutes = (
       <Route path="users" element={
         <PermissionGuard resourcePath="/admin" requiredPermission="admin">
           <UserGroupManagement />
+        </PermissionGuard>
+      } />
+      <Route path="requests" element={
+        <PermissionGuard resourcePath="/admin/requests">
+          <AdminRequests />
         </PermissionGuard>
       } />
       <Route path="logos" element={

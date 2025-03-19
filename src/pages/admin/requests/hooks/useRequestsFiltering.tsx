@@ -1,68 +1,65 @@
 
-import { useState, useEffect } from "react";
-import { Request } from "../types";
+import { useState, useMemo, useEffect } from "react";
+import { Request, RequestStatus } from "../types";
 
 export function useRequestsFiltering(requests: Request[]) {
-  const [filteredRequests, setFilteredRequests] = useState<Request[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("");
-  const [departmentFilter, setDepartmentFilter] = useState<string>("");
-  const [activeTab, setActiveTab] = useState("all");
-  
-  // Extract unique departments from requests for filter
-  const departments = Array.from(new Set(requests.map(req => req.department))).sort();
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<RequestStatus | "all">("all");
+  const [departmentFilter, setDepartmentFilter] = useState<string | "all">("all");
+  const [activeTab, setActiveTab] = useState<"all" | "pending" | "completed">("all");
 
-  // Apply filters whenever dependencies change
-  useEffect(() => {
-    applyFilters();
-  }, [requests, searchTerm, statusFilter, departmentFilter, activeTab]);
-  
-  const applyFilters = () => {
-    let result = [...requests];
-    
-    // Filter by tab (request status group)
-    if (activeTab === "open") {
-      result = result.filter(req => 
+  // Extract unique departments from requests
+  const departments = useMemo(() => {
+    const uniqueDepartments = Array.from(new Set(requests.map(req => req.department)));
+    return uniqueDepartments.sort();
+  }, [requests]);
+
+  // Filter requests based on search term, status, and department
+  const filteredRequests = useMemo(() => {
+    let filtered = [...requests];
+
+    // Apply search filter
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter(
+        req =>
+          req.protocol.toLowerCase().includes(searchLower) ||
+          req.title.toLowerCase().includes(searchLower) ||
+          req.description.toLowerCase().includes(searchLower) ||
+          req.user_email.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Apply status filter
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(req => req.status === statusFilter);
+    }
+
+    // Apply department filter
+    if (departmentFilter !== "all") {
+      filtered = filtered.filter(req => req.department === departmentFilter);
+    }
+
+    // Apply tab filter
+    if (activeTab === "pending") {
+      filtered = filtered.filter(req => 
         ["Aberto", "Em Análise", "Em Andamento"].includes(req.status)
       );
-    } else if (activeTab === "closed") {
-      result = result.filter(req => 
-        ["Concluído", "Cancelado"].includes(req.status)
-      );
-    } else if (activeTab === "responded") {
-      result = result.filter(req => 
-        req.status === "Respondido"
+    } else if (activeTab === "completed") {
+      filtered = filtered.filter(req => 
+        ["Respondido", "Concluído", "Cancelado"].includes(req.status)
       );
     }
-    
-    // Apply status filter
-    if (statusFilter) {
-      result = result.filter(req => req.status === statusFilter);
-    }
-    
-    // Apply department filter
-    if (departmentFilter) {
-      result = result.filter(req => req.department === departmentFilter);
-    }
-    
-    // Apply search term
-    if (searchTerm) {
-      const lowerSearchTerm = searchTerm.toLowerCase();
-      result = result.filter(req => 
-        req.title.toLowerCase().includes(lowerSearchTerm) ||
-        req.description.toLowerCase().includes(lowerSearchTerm) ||
-        req.protocol.toLowerCase().includes(lowerSearchTerm) ||
-        req.user_email.toLowerCase().includes(lowerSearchTerm)
-      );
-    }
-    
-    setFilteredRequests(result);
-  };
-  
+
+    return filtered;
+  }, [requests, searchTerm, statusFilter, departmentFilter, activeTab]);
+
+  // Clear all filters
   const clearFilters = () => {
-    setStatusFilter("");
-    setDepartmentFilter("");
     setSearchTerm("");
+    setStatusFilter("all");
+    setDepartmentFilter("all");
+    setActiveTab("all");
   };
 
   return {

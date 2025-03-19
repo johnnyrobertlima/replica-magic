@@ -4,105 +4,124 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Request, RequestStatus } from "../types";
 
-export function useRequestOperations(requests: Request[], setRequests: React.Dispatch<React.SetStateAction<Request[]>>) {
+export function useRequestOperations(
+  requests: Request[],
+  setRequests: React.Dispatch<React.SetStateAction<Request[]>>
+) {
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
-  const [response, setResponse] = useState("");
-  const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [response, setResponse] = useState<string>("");
+  const [updatingStatus, setUpdatingStatus] = useState<boolean>(false);
   const { toast } = useToast();
-  
+
   const handleResponseSubmit = async () => {
-    if (!selectedRequest || !response.trim()) return;
-    
+    if (!selectedRequest || !response.trim()) {
+      toast({
+        title: "Erro",
+        description: "Selecione uma solicitação e escreva uma resposta",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setUpdatingStatus(true);
       
-      // Update the request with response
-      const { error } = await supabase
+      // Update the request with the response and change status to "Respondido"
+      const { data, error } = await supabase
         .from('bk_requests')
         .update({ 
           response: response,
-          status: "Respondido",
+          status: 'Respondido' as RequestStatus,
           updated_at: new Date().toISOString()
         })
-        .eq('id', selectedRequest.id);
+        .eq('id', selectedRequest.id)
+        .select();
       
       if (error) throw error;
       
-      // Update local state
-      setRequests(prevRequests => 
-        prevRequests.map(req => 
-          req.id === selectedRequest.id 
-            ? { ...req, response, status: "Respondido", updated_at: new Date().toISOString() } 
-            : req
-        )
-      );
-      
-      // Update selected request to show the new response and status
-      setSelectedRequest(prev => 
-        prev ? { ...prev, response, status: "Respondido", updated_at: new Date().toISOString() } : null
-      );
-      
-      // Reset response form
-      setResponse("");
-      
-      toast({
-        title: "Resposta enviada com sucesso",
-        description: `Resposta adicionada ao protocolo ${selectedRequest.protocol}`,
-        variant: "default",
-      });
-      
+      if (data && data.length > 0) {
+        // Update the local state
+        setRequests(prevRequests => 
+          prevRequests.map(req => 
+            req.id === selectedRequest.id 
+              ? { ...req, response, status: 'Respondido', updated_at: new Date().toISOString() } 
+              : req
+          )
+        );
+        
+        // Update the selected request
+        setSelectedRequest({ ...selectedRequest, response, status: 'Respondido', updated_at: new Date().toISOString() });
+        
+        toast({
+          title: "Resposta enviada",
+          description: `Resposta para o protocolo ${selectedRequest.protocol} enviada com sucesso`,
+          variant: "default",
+        });
+        
+        // Clear the response field
+        setResponse("");
+      }
     } catch (error: any) {
       console.error("Error submitting response:", error);
       toast({
         title: "Erro ao enviar resposta",
-        description: error.message || "Não foi possível enviar a resposta. Tente novamente.",
+        description: error.message || "Não foi possível enviar a resposta",
         variant: "destructive",
       });
     } finally {
       setUpdatingStatus(false);
     }
   };
-  
-  const updateRequestStatus = async (requestId: string, newStatus: RequestStatus) => {
+
+  const updateRequestStatus = async (newStatus: RequestStatus) => {
+    if (!selectedRequest) {
+      toast({
+        title: "Erro",
+        description: "Selecione uma solicitação para atualizar o status",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setUpdatingStatus(true);
       
       // Update the request status
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('bk_requests')
         .update({ 
           status: newStatus,
           updated_at: new Date().toISOString()
         })
-        .eq('id', requestId);
+        .eq('id', selectedRequest.id)
+        .select();
       
       if (error) throw error;
       
-      // Update local state
-      setRequests(prevRequests => 
-        prevRequests.map(req => 
-          req.id === requestId 
-            ? { ...req, status: newStatus, updated_at: new Date().toISOString() } 
-            : req
-        )
-      );
-      
-      // Update selected request if it's the one being updated
-      if (selectedRequest && selectedRequest.id === requestId) {
-        setSelectedRequest(prev => prev ? { ...prev, status: newStatus, updated_at: new Date().toISOString() } : null);
+      if (data && data.length > 0) {
+        // Update the local state
+        setRequests(prevRequests => 
+          prevRequests.map(req => 
+            req.id === selectedRequest.id 
+              ? { ...req, status: newStatus, updated_at: new Date().toISOString() } 
+              : req
+          )
+        );
+        
+        // Update the selected request
+        setSelectedRequest({ ...selectedRequest, status: newStatus, updated_at: new Date().toISOString() });
+        
+        toast({
+          title: "Status atualizado",
+          description: `Status da solicitação ${selectedRequest.protocol} atualizado para ${newStatus}`,
+          variant: "default",
+        });
       }
-      
-      toast({
-        title: "Status atualizado",
-        description: `O status da solicitação foi alterado para ${newStatus}`,
-        variant: "default",
-      });
-      
     } catch (error: any) {
       console.error("Error updating status:", error);
       toast({
         title: "Erro ao atualizar status",
-        description: error.message || "Não foi possível atualizar o status. Tente novamente.",
+        description: error.message || "Não foi possível atualizar o status",
         variant: "destructive",
       });
     } finally {
