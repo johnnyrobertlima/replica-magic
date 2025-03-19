@@ -18,7 +18,7 @@ import UserGroupManagement from "@/pages/admin/users/UserGroupManagement";
 import { AdminBanners } from "@/pages/admin/banners";
 import BluebayHome from "@/pages/BluebayHome";
 import BkHome from "@/pages/BkHome";
-import { BkClients, BkFinancial, BkReports, BkDashboard, BkGestaoTitulos, BkFinanceiroManager, BkClientFinancialSummary } from "@/pages/bk";
+import { BkClients, BkFinancial, BkReports, BkDashboard, BkGestaoTitulos, BkFinanceiroManager, BkClientFinancialSummary, BkEstoque } from "@/pages/bk";
 
 export const routes = [
   {
@@ -64,6 +64,10 @@ export const routes = [
   {
     path: "/client-area/bk/dashboard",
     element: <BkDashboard />,
+  },
+  {
+    path: "/client-area/bk/estoque",
+    element: <BkEstoque />,
   },
   {
     path: "/post-management",

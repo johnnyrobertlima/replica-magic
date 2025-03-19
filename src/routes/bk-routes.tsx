@@ -9,6 +9,7 @@ import BkDashboard from "@/pages/bk/BkDashboard";
 import BkGestaoTitulos from "@/pages/bk/BkGestaoTitulos";
 import BkFinanceiroManager from "@/pages/bk/BkFinanceiroManager";
 import BkClientFinancialSummary from "@/pages/bk/BkClientFinancialSummary";
+import BkEstoque from "@/pages/bk/BkEstoque";
 
 export const bkRoutes = (
   <>
@@ -50,6 +51,11 @@ export const bkRoutes = (
     <Route path="/client-area/bk/dashboard" element={
       <PermissionGuard resourcePath="/client-area/bk">
         <BkDashboard />
+      </PermissionGuard>
+    } />
+    <Route path="/client-area/bk/estoque" element={
+      <PermissionGuard resourcePath="/client-area/bk/estoque">
+        <BkEstoque />
       </PermissionGuard>
     } />
     <Route path="/client-area/bk/invoice-control" element={

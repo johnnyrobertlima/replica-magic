@@ -6,3 +6,4 @@ export { default as BkDashboard } from './BkDashboard';
 export { default as BkGestaoTitulos } from './BkGestaoTitulos';
 export { default as BkFinanceiroManager } from './BkFinanceiroManager';
 export { default as BkClientFinancialSummary } from './BkClientFinancialSummary';
+export { default as BkEstoque } from './BkEstoque';
