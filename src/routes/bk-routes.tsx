@@ -11,7 +11,7 @@ import BkGestaoTitulos from "@/pages/bk/BkGestaoTitulos";
 
 export function BkRoutes() {
   return (
-    <Fragment>
+    <>
       <Route path="/client-area/bk" element={
         <PermissionGuard resourcePath="/client-area/bk">
           <BkHome />
@@ -55,6 +55,6 @@ export function BkRoutes() {
           </div>
         </PermissionGuard>
       } />
-    </Fragment>
+    </>
   );
 }

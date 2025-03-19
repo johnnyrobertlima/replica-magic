@@ -11,7 +11,7 @@ const Index = lazy(() => import("@/pages/Index"));
 
 export function PublicRoutes() {
   return (
-    <Fragment>
+    <>
       <Route path="/" element={<Index />} index />
       <Route path="/login" element={<ClientLogin />} />
       {/* Adicionamos uma rota com path="/#" para capturar hash redirects */}
@@ -19,6 +19,6 @@ export function PublicRoutes() {
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/signup-confirmation" element={<SignupConfirmation />} />
       <Route path="*" element={<Navigate to="/" />} />
-    </Fragment>
+    </>
   );
 }
