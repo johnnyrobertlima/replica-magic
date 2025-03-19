@@ -12,6 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { OrdersPagination } from "@/components/jab-orders/OrdersPagination";
 import { Request, RequestStatus, REQUEST_STATUS } from "./types";
 
 interface RequestsTableProps {
@@ -19,13 +20,19 @@ interface RequestsTableProps {
   isLoading: boolean;
   selectedRequest: Request | null;
   setSelectedRequest: (request: Request) => void;
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
 }
 
 export default function RequestsTable({
   filteredRequests,
   isLoading,
   selectedRequest,
-  setSelectedRequest
+  setSelectedRequest,
+  currentPage,
+  totalPages,
+  onPageChange
 }: RequestsTableProps) {
   const getBadgeVariant = (status: RequestStatus) => {
     return REQUEST_STATUS[status] as "default" | "secondary" | "destructive" | "outline";
@@ -52,48 +59,59 @@ export default function RequestsTable({
   }
 
   return (
-    <div className="overflow-x-auto">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Protocolo</TableHead>
-            <TableHead>Título</TableHead>
-            <TableHead>Departamento</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Data</TableHead>
-            <TableHead>Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredRequests.map((request) => (
-            <TableRow 
-              key={request.id}
-              className={selectedRequest?.id === request.id ? "bg-blue-50" : undefined}
-            >
-              <TableCell className="font-medium">{request.protocol}</TableCell>
-              <TableCell className="max-w-[200px] truncate">{request.title}</TableCell>
-              <TableCell>{request.department}</TableCell>
-              <TableCell>
-                <Badge variant={getBadgeVariant(request.status)}>
-                  {request.status}
-                </Badge>
-              </TableCell>
-              <TableCell className="whitespace-nowrap">
-                {format(new Date(request.created_at), 'dd/MM/yyyy')}
-              </TableCell>
-              <TableCell>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={() => setSelectedRequest(request)}
-                >
-                  Visualizar
-                </Button>
-              </TableCell>
+    <div className="space-y-4">
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Protocolo</TableHead>
+              <TableHead>Título</TableHead>
+              <TableHead>Departamento</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Data</TableHead>
+              <TableHead>Ações</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {filteredRequests.map((request) => (
+              <TableRow 
+                key={request.id}
+                className={selectedRequest?.id === request.id ? "bg-blue-50" : undefined}
+              >
+                <TableCell className="font-medium">{request.protocol}</TableCell>
+                <TableCell className="max-w-[200px] truncate">{request.title}</TableCell>
+                <TableCell>{request.department}</TableCell>
+                <TableCell>
+                  <Badge variant={getBadgeVariant(request.status)}>
+                    {request.status}
+                  </Badge>
+                </TableCell>
+                <TableCell className="whitespace-nowrap">
+                  {format(new Date(request.created_at), 'dd/MM/yyyy')}
+                </TableCell>
+                <TableCell>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setSelectedRequest(request)}
+                  >
+                    Visualizar
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+      
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <OrdersPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={onPageChange}
+        />
+      )}
     </div>
   );
 }

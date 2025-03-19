@@ -7,16 +7,33 @@ import { Request, RequestStatus } from "../types";
 export function useRequestsFetching() {
   const [requests, setRequests] = useState<Request[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(10);
   const { toast } = useToast();
 
-  const fetchRequests = async () => {
+  const fetchRequests = async (page = currentPage) => {
     try {
       setIsLoading(true);
       
+      // Calculate pagination range
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+      
+      // Get total count first
+      const { count, error: countError } = await supabase
+        .from('bk_requests')
+        .select('*', { count: 'exact', head: true });
+      
+      if (countError) throw countError;
+      setTotalCount(count || 0);
+      
+      // Then fetch the actual data with pagination
       const { data, error } = await supabase
         .from('bk_requests')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(from, to);
       
       if (error) throw error;
       
@@ -25,6 +42,9 @@ export function useRequestsFetching() {
         ...item,
         status: item.status as RequestStatus
       })));
+      
+      // Update current page
+      setCurrentPage(page);
     } catch (error: any) {
       console.error("Error fetching requests:", error);
       toast({
@@ -37,10 +57,21 @@ export function useRequestsFetching() {
     }
   };
 
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      fetchRequests(newPage);
+    }
+  };
+
   return {
     requests,
     setRequests,
     isLoading,
-    fetchRequests
+    fetchRequests,
+    currentPage,
+    totalPages,
+    handlePageChange
   };
 }

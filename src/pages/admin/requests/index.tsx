@@ -35,7 +35,10 @@ const AdminRequests = () => {
     fetchRequests,
     handleResponseSubmit,
     updateRequestStatus,
-    clearFilters
+    clearFilters,
+    currentPage,
+    totalPages,
+    handlePageChange
   } = useRequestsAdmin();
 
   return (
@@ -57,7 +60,7 @@ const AdminRequests = () => {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={fetchRequests}
+                  onClick={() => fetchRequests(1)}
                   disabled={isLoading}
                 >
                   {isLoading ? (
@@ -89,6 +92,9 @@ const AdminRequests = () => {
                 isLoading={isLoading}
                 selectedRequest={selectedRequest}
                 setSelectedRequest={setSelectedRequest}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
               />
             </CardContent>
           </Card>

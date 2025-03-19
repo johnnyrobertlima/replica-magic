@@ -9,7 +9,10 @@ export function useRequestsAdmin() {
     requests, 
     setRequests, 
     isLoading, 
-    fetchRequests 
+    fetchRequests,
+    currentPage,
+    totalPages,
+    handlePageChange
   } = useRequestsFetching();
   
   const {
@@ -46,6 +49,11 @@ export function useRequestsAdmin() {
     requests,
     isLoading,
     fetchRequests,
+    
+    // Pagination
+    currentPage,
+    totalPages,
+    handlePageChange,
     
     // Filtering
     filteredRequests,
