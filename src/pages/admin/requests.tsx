@@ -44,12 +44,15 @@ import { format } from "date-fns";
 // Request status with corresponding badge colors
 const REQUEST_STATUS = {
   "Aberto": "default",
-  "Em Análise": "warning",
+  "Em Análise": "secondary",
   "Em Andamento": "secondary",
-  "Respondido": "info",
-  "Concluído": "success",
+  "Respondido": "outline",
+  "Concluído": "default",
   "Cancelado": "destructive"
-};
+} as const;
+
+// Define type for request status to ensure it's one of the valid options
+type RequestStatus = keyof typeof REQUEST_STATUS;
 
 interface Request {
   id: string;
@@ -57,7 +60,7 @@ interface Request {
   title: string;
   department: string;
   description: string;
-  status: keyof typeof REQUEST_STATUS;
+  status: RequestStatus;
   created_at: string;
   updated_at: string;
   user_id: string;
@@ -100,7 +103,11 @@ const AdminRequests = () => {
       
       if (error) throw error;
       
-      setRequests(data || []);
+      // Cast the string status to RequestStatus type
+      setRequests((data || []).map(item => ({
+        ...item,
+        status: item.status as RequestStatus
+      })));
     } catch (error: any) {
       console.error("Error fetching requests:", error);
       toast({
@@ -203,7 +210,7 @@ const AdminRequests = () => {
     }
   };
   
-  const updateRequestStatus = async (requestId: string, newStatus: keyof typeof REQUEST_STATUS) => {
+  const updateRequestStatus = async (requestId: string, newStatus: RequestStatus) => {
     try {
       setUpdatingStatus(true);
       
@@ -250,8 +257,8 @@ const AdminRequests = () => {
     }
   };
   
-  const getBadgeVariant = (status: keyof typeof REQUEST_STATUS) => {
-    return REQUEST_STATUS[status] as "default" | "secondary" | "destructive" | "success" | "warning" | "outline";
+  const getBadgeVariant = (status: RequestStatus) => {
+    return REQUEST_STATUS[status] as "default" | "secondary" | "destructive" | "outline";
   };
   
   // Extract unique departments from requests for filter

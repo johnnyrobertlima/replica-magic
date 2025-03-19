@@ -70,12 +70,15 @@ const DEPARTMENTS = [
 // Request status with corresponding badge colors
 const REQUEST_STATUS = {
   "Aberto": "default",
-  "Em Análise": "warning",
+  "Em Análise": "secondary",
   "Em Andamento": "secondary",
-  "Respondido": "info",
-  "Concluído": "success",
+  "Respondido": "outline",
+  "Concluído": "default",
   "Cancelado": "destructive"
-};
+} as const;
+
+// Define type for request status
+type RequestStatus = keyof typeof REQUEST_STATUS;
 
 // Form validation schema
 const requestSchema = z.object({
@@ -95,7 +98,7 @@ interface Request {
   title: string;
   department: string;
   description: string;
-  status: keyof typeof REQUEST_STATUS;
+  status: RequestStatus;
   created_at: string;
   updated_at: string;
   attachment_url?: string;
@@ -149,7 +152,11 @@ const BkRequests = () => {
       
       if (error) throw error;
       
-      setRequests(data || []);
+      // Cast the status to the RequestStatus type
+      setRequests((data || []).map(item => ({
+        ...item,
+        status: item.status as RequestStatus
+      })));
     } catch (error: any) {
       console.error("Error fetching requests:", error);
       toast({
@@ -219,7 +226,7 @@ const BkRequests = () => {
           title: values.title,
           department: values.department,
           description: values.description,
-          status: 'Aberto',
+          status: 'Aberto' as RequestStatus,
           user_id: session.user.id,
           user_email: session.user.email,
           attachment_url: attachmentUrl
@@ -253,8 +260,8 @@ const BkRequests = () => {
     }
   };
 
-  const getBadgeVariant = (status: keyof typeof REQUEST_STATUS) => {
-    return REQUEST_STATUS[status] as "default" | "secondary" | "destructive" | "success" | "warning" | "outline";
+  const getBadgeVariant = (status: RequestStatus) => {
+    return REQUEST_STATUS[status] as "default" | "secondary" | "destructive" | "outline";
   };
 
   return (
