@@ -1,6 +1,5 @@
 
 import { Route } from "react-router-dom";
-import { Fragment } from "react";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
 import BkHome from "@/pages/BkHome";
 import BkClients from "@/pages/bk/BkClients";
@@ -12,7 +11,7 @@ import BkGestaoTitulos from "@/pages/bk/BkGestaoTitulos";
 
 export function BkRoutes() {
   return (
-    <Fragment>
+    <>
       <Route path="/client-area/bk" element={
         <PermissionGuard resourcePath="/client-area/bk">
           <BkHome />
@@ -61,6 +60,6 @@ export function BkRoutes() {
           </div>
         </PermissionGuard>
       } />
-    </Fragment>
+    </>
   );
 }

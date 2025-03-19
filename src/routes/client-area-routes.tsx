@@ -1,6 +1,5 @@
 
 import { Route } from "react-router-dom";
-import { Fragment } from "react";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
 import ClientArea from "@/pages/ClientArea";
 import PostManagement from "@/pages/PostManagement";
@@ -14,7 +13,7 @@ import { BkRoutes } from "./bk-routes";
 
 export function ClientAreaRoutes() {
   return (
-    <Fragment>
+    <>
       <Route path="/client-area" element={
         <PermissionGuard resourcePath="/client-area">
           <ClientArea />
@@ -54,6 +53,6 @@ export function ClientAreaRoutes() {
       
       <BluebayRoutes />
       <BkRoutes />
-    </Fragment>
+    </>
   );
 }
