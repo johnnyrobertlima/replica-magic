@@ -17,13 +17,13 @@ export const fetchFinancialTitles = async (startDate?: string, endDate?: string,
       PES_CODIGO
     `);
 
-  // Apply date filters if provided
+  // Apply date filters to DTVENCIMENTO instead of DTEMISSAO
   if (startDate) {
-    query = query.gte('DTEMISSAO', startDate);
+    query = query.gte('DTVENCIMENTO', startDate);
   }
   
   if (endDate) {
-    query = query.lte('DTEMISSAO', endDate);
+    query = query.lte('DTVENCIMENTO', endDate);
   }
 
   // Apply status filter if provided

@@ -74,7 +74,8 @@ export const BkFinanceiroManager = () => {
             <DateRangePicker 
               startDate={dateRange.startDate} 
               endDate={dateRange.endDate} 
-              onUpdate={updateDateRange} 
+              onUpdate={updateDateRange}
+              label="Período de Vencimento"
             />
           </div>
           
