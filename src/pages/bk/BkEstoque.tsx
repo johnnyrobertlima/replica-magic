@@ -10,7 +10,20 @@ import {
   TableHead, 
   TableCell 
 } from "@/components/ui/table";
-import { Loader2, SearchIcon } from "lucide-react";
+import { 
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger
+} from "@/components/ui/accordion";
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, SearchIcon, PackageOpen, Package } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -22,11 +35,20 @@ interface EstoqueItem {
   RESERVADO: number;
   LOCAL: number;
   SUBLOCAL: string;
+  GRU_DESCRICAO: string;
+}
+
+interface GroupedEstoque {
+  groupName: string;
+  items: EstoqueItem[];
+  totalItems: number;
+  totalFisico: number;
 }
 
 const BkEstoque = () => {
   const [estoqueItems, setEstoqueItems] = useState<EstoqueItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<EstoqueItem[]>([]);
+  const [groupedItems, setGroupedItems] = useState<GroupedEstoque[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
@@ -36,17 +58,48 @@ const BkEstoque = () => {
   }, []);
 
   useEffect(() => {
-    if (searchTerm) {
-      const filtered = estoqueItems.filter(
-        (item) =>
-          item.ITEM_CODIGO.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (item.DESCRICAO && item.DESCRICAO.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
-      setFilteredItems(filtered);
-    } else {
-      setFilteredItems(estoqueItems);
+    if (estoqueItems.length > 0) {
+      filterAndGroupItems(searchTerm);
     }
   }, [searchTerm, estoqueItems]);
+
+  const filterAndGroupItems = (term: string) => {
+    // Filter items by search term
+    const filtered = term 
+      ? estoqueItems.filter(
+          (item) =>
+            item.ITEM_CODIGO.toLowerCase().includes(term.toLowerCase()) ||
+            (item.DESCRICAO && item.DESCRICAO.toLowerCase().includes(term.toLowerCase())) ||
+            (item.GRU_DESCRICAO && item.GRU_DESCRICAO.toLowerCase().includes(term.toLowerCase()))
+        )
+      : [...estoqueItems];
+    
+    setFilteredItems(filtered);
+    
+    // Group the filtered items by GRU_DESCRICAO
+    const grouped: Record<string, EstoqueItem[]> = {};
+    
+    filtered.forEach(item => {
+      const groupName = item.GRU_DESCRICAO || 'Sem Grupo';
+      if (!grouped[groupName]) {
+        grouped[groupName] = [];
+      }
+      grouped[groupName].push(item);
+    });
+    
+    // Convert to array and calculate totals
+    const groupedArray: GroupedEstoque[] = Object.entries(grouped).map(([groupName, items]) => ({
+      groupName,
+      items,
+      totalItems: items.length,
+      totalFisico: items.reduce((sum, item) => sum + (item.FISICO || 0), 0)
+    }));
+    
+    // Sort groups alphabetically
+    groupedArray.sort((a, b) => a.groupName.localeCompare(b.groupName));
+    
+    setGroupedItems(groupedArray);
+  };
 
   const fetchEstoqueData = async () => {
     try {
@@ -60,32 +113,39 @@ const BkEstoque = () => {
 
       if (estoqueError) throw estoqueError;
 
-      // Then, fetch all items data
+      // Then, fetch all items data with group description
       const { data: itemsData, error: itemsError } = await supabase
         .from('BLUEBAY_ITEM')
-        .select('ITEM_CODIGO, DESCRICAO');
+        .select('ITEM_CODIGO, DESCRICAO, GRU_DESCRICAO');
 
       if (itemsError) throw itemsError;
 
-      // Create a map of ITEM_CODIGO to DESCRICAO for faster lookups
-      const itemDescriptionMap = new Map();
+      // Create a map of ITEM_CODIGO to item data for faster lookups
+      const itemsMap = new Map();
       itemsData.forEach(item => {
-        itemDescriptionMap.set(item.ITEM_CODIGO, item.DESCRICAO);
+        itemsMap.set(item.ITEM_CODIGO, {
+          DESCRICAO: item.DESCRICAO,
+          GRU_DESCRICAO: item.GRU_DESCRICAO
+        });
       });
 
       // Combine the data
-      const combinedData: EstoqueItem[] = estoqueData.map(estoque => ({
-        ITEM_CODIGO: estoque.ITEM_CODIGO,
-        DESCRICAO: itemDescriptionMap.get(estoque.ITEM_CODIGO) || 'Sem descrição',
-        FISICO: estoque.FISICO,
-        DISPONIVEL: estoque.DISPONIVEL,
-        RESERVADO: estoque.RESERVADO,
-        LOCAL: estoque.LOCAL,
-        SUBLOCAL: estoque.SUBLOCAL
-      }));
+      const combinedData: EstoqueItem[] = estoqueData.map(estoque => {
+        const itemInfo = itemsMap.get(estoque.ITEM_CODIGO) || { DESCRICAO: 'Sem descrição', GRU_DESCRICAO: 'Sem grupo' };
+        
+        return {
+          ITEM_CODIGO: estoque.ITEM_CODIGO,
+          DESCRICAO: itemInfo.DESCRICAO || 'Sem descrição',
+          GRU_DESCRICAO: itemInfo.GRU_DESCRICAO || 'Sem grupo',
+          FISICO: estoque.FISICO,
+          DISPONIVEL: estoque.DISPONIVEL,
+          RESERVADO: estoque.RESERVADO,
+          LOCAL: estoque.LOCAL,
+          SUBLOCAL: estoque.SUBLOCAL
+        };
+      });
 
       setEstoqueItems(combinedData);
-      setFilteredItems(combinedData);
       
     } catch (error: any) {
       console.error("Error fetching estoque data:", error);
@@ -104,51 +164,120 @@ const BkEstoque = () => {
       <BkMenu />
 
       <div className="container mx-auto px-4 py-6">
-        <h1 className="text-3xl font-bold text-primary mb-6">Consulta de Estoque</h1>
+        <h1 className="text-3xl font-bold text-primary mb-6">Gestão de Estoque</h1>
 
-        <div className="mb-6 relative">
-          <div className="relative">
-            <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-            <Input
-              type="text"
-              placeholder="Buscar por código ou descrição do item..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-full md:w-1/2"
-            />
-          </div>
-        </div>
+        <Card className="mb-6">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-xl">Consulta de Estoque</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="relative">
+              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <Input
+                type="text"
+                placeholder="Buscar por código, descrição ou grupo..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 w-full"
+              />
+            </div>
+          </CardContent>
+        </Card>
 
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-        ) : filteredItems.length > 0 ? (
-          <div className="bg-white rounded-lg shadow overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Código</TableHead>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead className="text-right">Físico</TableHead>
-                  <TableHead className="text-right">Disponível</TableHead>
-                  <TableHead className="text-right">Reservado</TableHead>
-                  <TableHead>Sublocalização</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredItems.map((item) => (
-                  <TableRow key={item.ITEM_CODIGO}>
-                    <TableCell className="font-medium">{item.ITEM_CODIGO}</TableCell>
-                    <TableCell>{item.DESCRICAO}</TableCell>
-                    <TableCell className="text-right">{item.FISICO}</TableCell>
-                    <TableCell className="text-right">{item.DISPONIVEL}</TableCell>
-                    <TableCell className="text-right">{item.RESERVADO}</TableCell>
-                    <TableCell>{item.SUBLOCAL}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+        ) : groupedItems.length > 0 ? (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center">
+                    <PackageOpen className="h-8 w-8 text-primary mr-4" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total de Grupos</p>
+                      <p className="text-2xl font-bold">{groupedItems.length}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center">
+                    <Package className="h-8 w-8 text-primary mr-4" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total de Itens</p>
+                      <p className="text-2xl font-bold">{filteredItems.length}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center">
+                    <Package className="h-8 w-8 text-primary mr-4" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Estoque Físico Total</p>
+                      <p className="text-2xl font-bold">
+                        {filteredItems.reduce((sum, item) => sum + (item.FISICO || 0), 0)}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Accordion type="multiple" className="w-full">
+              {groupedItems.map((group, index) => (
+                <AccordionItem key={index} value={`group-${index}`} className="bg-white rounded-lg shadow mb-4 overflow-hidden">
+                  <AccordionTrigger className="px-4 py-3 hover:bg-gray-50">
+                    <div className="flex justify-between items-center w-full pr-4">
+                      <div className="flex items-center gap-4">
+                        <Badge variant="outline" className="px-2 py-1 rounded-full bg-primary/10">
+                          {group.totalItems}
+                        </Badge>
+                        <span className="font-medium">{group.groupName}</span>
+                      </div>
+                      <div className="hidden md:flex items-center gap-6">
+                        <div className="text-right">
+                          <p className="text-xs text-muted-foreground">Estoque Físico</p>
+                          <span className="font-medium">{group.totalFisico}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="bg-white rounded-lg overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Código</TableHead>
+                            <TableHead>Descrição</TableHead>
+                            <TableHead className="text-right">Físico</TableHead>
+                            <TableHead className="text-right">Disponível</TableHead>
+                            <TableHead className="text-right">Reservado</TableHead>
+                            <TableHead>Sublocalização</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {group.items.map((item) => (
+                            <TableRow key={item.ITEM_CODIGO}>
+                              <TableCell className="font-medium">{item.ITEM_CODIGO}</TableCell>
+                              <TableCell>{item.DESCRICAO}</TableCell>
+                              <TableCell className="text-right">{item.FISICO}</TableCell>
+                              <TableCell className="text-right">{item.DISPONIVEL}</TableCell>
+                              <TableCell className="text-right">{item.RESERVADO}</TableCell>
+                              <TableCell>{item.SUBLOCAL}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
           </div>
         ) : (
           <div className="bg-white p-8 rounded-lg shadow text-center">
