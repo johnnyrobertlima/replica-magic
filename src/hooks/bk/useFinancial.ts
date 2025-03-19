@@ -1,5 +1,7 @@
+
 import { useState, useEffect, useCallback } from "react";
-import { fetchFinancialTitles } from "@/services/bk/titleService";
+import { fetchBkFaturamentoData } from "@/services/bk/financialDataService";
+import { consolidateByNota } from "@/services/bk/financialProcessingService";
 import { ConsolidatedInvoice, FinancialTitle } from "@/services/bk/types/financialTypes";
 import { format, subDays, isAfter, isBefore, isEqual, parseISO } from "date-fns";
 
@@ -55,101 +57,26 @@ export const useFinancial = () => {
         ? format(dateRange.endDate, 'yyyy-MM-dd')
         : undefined;
 
-      const titles = await fetchFinancialTitles(
+      // Fetch faturamento data with date filtering
+      const faturamentoData = await fetchBkFaturamentoData(
         startDateFormatted,
-        endDateFormatted,
-        statusFilter === "all" ? undefined : statusFilter
+        endDateFormatted
       );
-
-      setFinancialTitles(titles);
+      
+      // Process and consolidate invoices by nota
+      const consolidated = consolidateByNota(faturamentoData);
+      setConsolidatedInvoices(consolidated);
+      
+      // Apply initial filter for status
+      const filtered = statusFilter === "all" 
+        ? consolidated 
+        : consolidated.filter(invoice => invoice.STATUS === statusFilter);
+      
+      setFilteredInvoices(filtered);
       
       // Extract unique statuses for filter
-      const statuses = [...new Set(titles.map(title => title.STATUS || ""))];
+      const statuses = [...new Set(consolidated.map(invoice => invoice.STATUS || ""))];
       setAvailableStatuses(['all', ...statuses.filter(status => status !== "")]);
-
-      // Calculate financial summary
-      const hoje = new Date();
-      hoje.setHours(0, 0, 0, 0);
-
-      let valoresVencidos = 0;
-      let valoresPagos = 0;
-      let valoresEmAberto = 0;
-
-      // Create a map to aggregate data by client
-      const clientMap = new Map<string, ClientFinancialSummary>();
-
-      titles.forEach(title => {
-        // Skip titles with status "Cancelado"
-        if (title.STATUS === "9") return; // "9" is the status code for "Cancelado"
-
-        // Para valores vencidos: títulos com data de vencimento anterior a hoje e com saldo
-        if (title.DTVENCIMENTO && title.VLRSALDO) {
-          const dataVencimento = new Date(title.DTVENCIMENTO);
-          dataVencimento.setHours(0, 0, 0, 0);
-
-          if (isBefore(dataVencimento, hoje) && title.VLRSALDO > 0) {
-            valoresVencidos += title.VLRSALDO;
-          }
-
-          // Para valores em aberto: títulos com data de vencimento hoje ou posterior
-          if ((isEqual(dataVencimento, hoje) || isAfter(dataVencimento, hoje)) && title.VLRSALDO > 0) {
-            valoresEmAberto += title.VLRSALDO;
-          }
-        }
-
-        // Para valores pagos: títulos com status "3" (Pago)
-        if (title.STATUS === "3" && title.VLRTITULO) {
-          valoresPagos += title.VLRTITULO;
-        }
-
-        // Aggregate data by client
-        if (title.PES_CODIGO) {
-          let clientSummary = clientMap.get(title.PES_CODIGO);
-          if (!clientSummary) {
-            clientSummary = {
-              PES_CODIGO: title.PES_CODIGO,
-              CLIENTE_NOME: title.CLIENTE_NOME || "Cliente não identificado",
-              totalValoresVencidos: 0,
-              totalPago: 0,
-              totalEmAberto: 0
-            };
-            clientMap.set(title.PES_CODIGO, clientSummary);
-          }
-
-          // Calculate client-specific financial values
-          if (title.DTVENCIMENTO && title.VLRSALDO && title.VLRSALDO > 0) {
-            const dataVencimento = new Date(title.DTVENCIMENTO);
-            dataVencimento.setHours(0, 0, 0, 0);
-
-            if (isBefore(dataVencimento, hoje)) {
-              clientSummary.totalValoresVencidos += title.VLRSALDO;
-            }
-
-            if (isEqual(dataVencimento, hoje) || isAfter(dataVencimento, hoje)) {
-              clientSummary.totalEmAberto += title.VLRSALDO;
-            }
-          }
-
-          if (title.STATUS === "3" && title.VLRTITULO) {
-            clientSummary.totalPago += title.VLRTITULO;
-          }
-        }
-      });
-
-      setFinancialSummary({
-        totalValoresVencidos: valoresVencidos,
-        totalPago: valoresPagos,
-        totalEmAberto: valoresEmAberto
-      });
-
-      // Convert map to array and sort by client name
-      const clientSummaries = Array.from(clientMap.values())
-        .sort((a, b) => a.CLIENTE_NOME.localeCompare(b.CLIENTE_NOME));
-      
-      setClientFinancialSummaries(clientSummaries);
-
-      // Initial filter application
-      applyFilters(titles);
 
     } catch (error) {
       console.error("Error fetching financial data:", error);
@@ -164,62 +91,52 @@ export const useFinancial = () => {
 
   const updateStatusFilter = useCallback((status: string) => {
     setStatusFilter(status);
-  }, []);
+    
+    // Apply status filter directly
+    if (status === "all") {
+      setFilteredInvoices(consolidatedInvoices);
+    } else {
+      const filtered = consolidatedInvoices.filter(invoice => invoice.STATUS === status);
+      setFilteredInvoices(filtered);
+    }
+  }, [consolidatedInvoices]);
 
   const updateClientFilter = useCallback((client: string) => {
     setClientFilter(client);
+    applyFilters();
   }, []);
 
   const updateNotaFilter = useCallback((nota: string) => {
     setNotaFilter(nota);
+    applyFilters();
   }, []);
 
-  // New function to filter client summaries
-  const filterClientSummaries = useCallback(() => {
-    if (!clientFilter) {
-      return clientFinancialSummaries;
-    }
-    
-    const searchTerm = clientFilter.toLowerCase();
-    return clientFinancialSummaries.filter(client => 
-      client.CLIENTE_NOME.toLowerCase().includes(searchTerm) || 
-      client.PES_CODIGO.toString().includes(searchTerm)
-    );
-  }, [clientFinancialSummaries, clientFilter]);
-
   // Apply filters function
-  const applyFilters = useCallback((titles: FinancialTitle[]) => {
-    let filtered = [...titles];
+  const applyFilters = useCallback(() => {
+    let filtered = [...consolidatedInvoices];
     
     // Apply status filter
     if (statusFilter !== "all") {
-      filtered = filtered.filter(title => title.STATUS === statusFilter);
+      filtered = filtered.filter(invoice => invoice.STATUS === statusFilter);
     }
     
     // Apply client filter
     if (clientFilter) {
       const searchTerm = clientFilter.toLowerCase();
-      filtered = filtered.filter(title => 
-        title.CLIENTE_NOME?.toLowerCase().includes(searchTerm)
+      filtered = filtered.filter(invoice => 
+        invoice.CLIENTE_NOME?.toLowerCase().includes(searchTerm)
       );
     }
     
     // Apply nota filter
     if (notaFilter) {
-      filtered = filtered.filter(title => 
-        title.NUMNOTA?.toString().includes(notaFilter)
+      filtered = filtered.filter(invoice => 
+        invoice.NOTA.includes(notaFilter)
       );
     }
     
-    setFilteredTitles(filtered);
-  }, [statusFilter, clientFilter, notaFilter]);
-
-  // Effect to apply filters when any filter changes
-  useEffect(() => {
-    if (financialTitles.length > 0) {
-      applyFilters(financialTitles);
-    }
-  }, [financialTitles, statusFilter, clientFilter, notaFilter, applyFilters]);
+    setFilteredInvoices(filtered);
+  }, [statusFilter, clientFilter, notaFilter, consolidatedInvoices]);
 
   // Initial data load
   useEffect(() => {
@@ -243,7 +160,6 @@ export const useFinancial = () => {
     notaFilter,
     updateNotaFilter,
     financialSummary,
-    clientFinancialSummaries,
-    filterClientSummaries
+    clientFinancialSummaries
   };
 };

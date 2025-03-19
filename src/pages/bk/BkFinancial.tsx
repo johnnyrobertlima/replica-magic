@@ -7,7 +7,7 @@ import { useFinancial } from "@/hooks/bk/useFinancial";
 import { Button } from "@/components/ui/button";
 import { DateRangePicker } from "@/components/bk/financial/DateRangePicker";
 import { StatusFilter } from "@/components/bk/financial/StatusFilter";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Loader2 } from "lucide-react";
 
 export const BkFinancial = () => {
   const { 
@@ -30,7 +30,11 @@ export const BkFinancial = () => {
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold">Gestão de Faturamento</h1>
           <Button variant="outline" onClick={refreshData} disabled={isLoading}>
-            <RefreshCw className="h-4 w-4 mr-2" />
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4 mr-2" />
+            )}
             Atualizar
           </Button>
         </div>
