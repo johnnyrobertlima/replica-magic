@@ -20,8 +20,7 @@ export function useRequestsFetching() {
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
       
-      // Get count first to avoid RLS policy recursion
-      // We can simplify this to just get the count directly
+      // Get count first
       const { count, error: countError } = await supabase
         .from('bk_requests')
         .select('id', { count: 'exact', head: true });
