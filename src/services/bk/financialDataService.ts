@@ -21,16 +21,19 @@ export const fetchBkFaturamentoData = async (
     console.error("Error fetching B&K faturamento data via RPC:", rpcError);
     
     // Fallback to direct query on the BLUEBAY_FATURAMENTO table if RPC fails
-    // Join with BLUEBAY_PEDIDO to filter by CENTROCUSTO = 'BK'
-    const { data: fallbackData, error: fallbackError } = await supabase
+    const query = supabase
       .from('BLUEBAY_FATURAMENTO')
-      .select(`
-        *,
-        BLUEBAY_PEDIDO!inner(CENTROCUSTO)
-      `)
-      .eq('BLUEBAY_PEDIDO.CENTROCUSTO', 'BK')
-      .gte(startDate ? 'DATA_EMISSAO' : 'created_at', startDate || '1900-01-01')
-      .lte(endDate ? 'DATA_EMISSAO' : 'created_at', endDate || '2100-12-31');
+      .select('*');
+    
+    if (startDate) {
+      query.gte('DATA_EMISSAO', startDate);
+    }
+    
+    if (endDate) {
+      query.lte('DATA_EMISSAO', endDate);
+    }
+    
+    const { data: fallbackData, error: fallbackError } = await query;
     
     if (fallbackError) {
       console.error("Error in fallback query:", fallbackError);
@@ -51,16 +54,12 @@ export const fetchBkFaturamentoData = async (
 export const fetchInvoiceItems = async (nota: string): Promise<InvoiceItem[]> => {
   console.log("Fetching invoice items for nota:", nota);
   
-  // Query all items for this invoice, joining with BLUEBAY_PEDIDO to filter by CENTROCUSTO
+  // Query all items for this invoice
   const { data, error } = await supabase
     .from('BLUEBAY_FATURAMENTO')
-    .select(`
-      *,
-      BLUEBAY_PEDIDO!inner(CENTROCUSTO)
-    `)
+    .select('NOTA, ITEM_CODIGO, QUANTIDADE, VALOR_UNITARIO, TIPO, PES_CODIGO')
     .eq('NOTA', nota)
-    .eq('TIPO', 'S')
-    .eq('BLUEBAY_PEDIDO.CENTROCUSTO', 'BK');
+    .eq('TIPO', 'S');
   
   if (error) {
     console.error("Error fetching invoice items:", error);
@@ -129,7 +128,7 @@ const processFaturamentoData = async (data: BkFaturamento[]): Promise<BkFaturame
             const clienteInfo = clienteMap.get(item.PES_CODIGO);
             if (clienteInfo) {
               (item as any).CLIENTE_INFO = clienteInfo;
-              (item as any).FATOR_CORRECAO = clienteInfo.FATOR_CORRECAO;
+              (item as any).FATOR_CORRECAO = clienteInfo.FATOR_CORRECAO; // Adiciona o fator de correção diretamente no item
             }
           }
         });

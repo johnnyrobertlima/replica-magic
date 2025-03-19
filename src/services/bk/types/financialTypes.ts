@@ -25,15 +25,14 @@ export interface InvoiceItem {
 }
 
 export interface FinancialTitle {
-  NUMNOTA?: number;
-  DTEMISSAO?: string;
-  DTVENCIMENTO?: string;
-  DTPAGTO?: string;
-  VLRDESCONTO?: number;
-  VLRTITULO?: number;
-  VLRSALDO?: number;
-  STATUS?: string;
-  PES_CODIGO?: string | number;
-  CLIENTE_NOME?: string;
-  CENTROCUSTO?: string;
+  NUMNOTA: number | null;
+  DTEMISSAO: string | null;
+  DTVENCIMENTO: string | null;
+  DTPAGTO: string | null;
+  VLRDESCONTO: number | null;
+  VLRTITULO: number | null;
+  VLRSALDO: number | null;
+  STATUS: string | null;
+  CLIENTE_NOME: string | null;
+  PES_CODIGO: string | null;
 }

@@ -31,54 +31,31 @@ export const fetchFinancialTitles = async (startDate?: string, endDate?: string,
     query = query.eq('STATUS', status);
   }
 
-  const { data: titlesData, error } = await query;
+  const { data, error } = await query;
 
   if (error) {
     console.error("Error fetching financial titles:", error);
     throw error;
   }
 
-  // Get all B&K pedidos to filter titles
-  const { data: bkPedidos, error: bkError } = await supabase
-    .from('BLUEBAY_PEDIDO')
-    .select('PED_NUMPEDIDO')
-    .eq('CENTROCUSTO', 'BK');
-
-  if (bkError) {
-    console.error("Error fetching BK pedidos:", bkError);
-    throw bkError;
-  }
-
-  // Create a Set of PED_NUMPEDIDO values from BK pedidos for efficient lookup
-  const bkPedidoSet = new Set(bkPedidos?.map(pedido => pedido.PED_NUMPEDIDO));
-
-  // Filter titles to only include those associated with BK pedidos
-  // In this case, we're assuming NUMNOTA in BLUEBAY_TITULO corresponds to PED_NUMPEDIDO in BLUEBAY_PEDIDO
-  const bkTitlesData = (titlesData || []).filter(title => 
-    title.NUMNOTA && bkPedidoSet.has(title.NUMNOTA.toString())
-  );
-
   // Fetch client names for the titles
   const titles: FinancialTitle[] = await Promise.all(
-    bkTitlesData.map(async (title) => {
+    (data || []).map(async (title) => {
       let clientName = "Cliente não encontrado";
 
       if (title.PES_CODIGO) {
-        const { data: clientData, error: clientError } = await supabase
+        const { data: clientData } = await supabase
           .from('BLUEBAY_PESSOA')
           .select('APELIDO, RAZAOSOCIAL')
-          .eq('PES_CODIGO', parseInt(title.PES_CODIGO as string))
-          .maybeSingle();
+          .eq('PES_CODIGO', parseInt(title.PES_CODIGO as string))  // Convert string to number here
+          .maybeSingle();  // Using maybeSingle instead of single to handle null cases
 
-        if (!clientError && clientData) {
-          clientName = clientData.APELIDO || clientData.RAZAOSOCIAL || "Cliente não encontrado";
-        }
+        clientName = clientData?.APELIDO || clientData?.RAZAOSOCIAL || "Cliente não encontrado";
       }
 
       return {
         ...title,
         CLIENTE_NOME: clientName,
-        CENTROCUSTO: 'BK', // Explicitly set CENTROCUSTO for all filtered titles
       } as FinancialTitle;
     })
   );
