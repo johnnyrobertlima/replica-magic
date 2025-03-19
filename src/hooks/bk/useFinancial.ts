@@ -68,6 +68,9 @@ export const useFinancial = () => {
       let valoresEmAberto = 0;
 
       titles.forEach(title => {
+        // Skip titles with status "Cancelado"
+        if (title.STATUS === "9") return; // "9" is the status code for "Cancelado"
+
         // Para valores vencidos: títulos com data de vencimento anterior a hoje e com saldo
         if (title.DTVENCIMENTO && title.VLRSALDO) {
           const dataVencimento = new Date(title.DTVENCIMENTO);
