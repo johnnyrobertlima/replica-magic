@@ -113,9 +113,10 @@ export const useClientAuth = () => {
     setLoading(true);
     
     try {
-      // Definir a URL absoluta para redirecionamento
-      // Em produção, use a URL absoluta
-      const redirectUrl = "https://www.oniagencia.com.br/login";
+      // Construir URL dinâmica com base na localização atual
+      const currentDomain = window.location.origin;
+      // Certificar-se de que a URL é absoluta
+      const redirectUrl = `${currentDomain}/login`;
       
       console.log("Registrando usuário com redirect para:", redirectUrl);
       
@@ -132,30 +133,41 @@ export const useClientAuth = () => {
       
       if (error) throw error;
       
+      // Verificar se o usuário foi criado com sucesso e o que aconteceu com o email
       if (data && data.user) {
         console.log("Usuário criado com sucesso:", data.user);
+        console.log("Status do email de confirmação:", data.user.confirmation_sent_at ? "Enviado" : "Não enviado");
+        console.log("ID do usuário:", data.user.id);
+        console.log("Email confirmado:", data.user.email_confirmed_at ? "Sim" : "Não");
         
-        // Verificar se o email de confirmação foi enviado
         if (data.user.identities && data.user.identities.length === 0) {
           console.error("Erro: Identidades não definidas no usuário.");
         }
         
-        if (data.user.confirmation_sent_at) {
-          console.log("Email de confirmação enviado em:", data.user.confirmation_sent_at);
+        // Determinar a mensagem correta com base no comportamento do Supabase
+        let message = "Verifique seu email para confirmar o cadastro.";
+        
+        // Se o Supabase não estiver configurado para exigir confirmação de email
+        if (data.session) {
+          console.log("Sessão criada imediatamente após o registro:", data.session);
+          message = "Sua conta foi criada e você já está autenticado.";
+          
+          // Redirecionar imediatamente se o usuário já está autenticado
+          setTimeout(() => {
+            handleRedirect(data.user!.id);
+          }, 1500);
         } else {
-          console.warn("Aviso: Nenhuma confirmação de email foi enviada.");
+          // Caso padrão - redirecionar para login após 1.5 segundos
+          setTimeout(() => {
+            navigate("/login");
+          }, 1500);
         }
+        
+        toast({
+          title: "Conta criada com sucesso!",
+          description: message,
+        });
       }
-      
-      toast({
-        title: "Conta criada com sucesso!",
-        description: "Verifique seu email para confirmar o cadastro.",
-      });
-      
-      // Redirecionar para a página de login após um registro bem-sucedido
-      setTimeout(() => {
-        navigate("/login");
-      }, 1500);
       
     } catch (error: any) {
       console.error("Erro ao criar conta:", error);

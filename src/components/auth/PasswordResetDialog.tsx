@@ -23,16 +23,17 @@ export const PasswordResetDialog = ({ isOpen, onOpenChange }: PasswordResetDialo
     setIsResetLoading(true);
 
     try {
-      // Usar a URL do site em produção para garantir que o redirecionamento funcione
-      // Isso pode ser ajustado com base no ambiente
-      // Para produção, usamos a URL absoluta da página de reset
-      const redirectUrl = "https://www.oniagencia.com.br/reset-password";
+      // Construir URL dinâmica com base na localização atual
+      const currentDomain = window.location.origin;
+      const redirectUrl = `${currentDomain}/reset-password`;
       
       console.log("Enviando link de redefinição com redirect para:", redirectUrl);
       
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
+      const { error, data } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
         redirectTo: redirectUrl,
       });
+
+      console.log("Resposta da redefinição de senha:", { error, data });
 
       if (error) throw error;
 
