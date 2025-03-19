@@ -71,15 +71,15 @@ export const BkMenu = () => {
             </NavigationMenuList>
           </NavigationMenu>
           
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={handleLogout}
-            className="text-white hover:bg-primary-700 flex items-center"
-          >
-            <LogOut className="h-4 w-4 mr-2" />
-            Sair
-          </Button>
+          <NavigationMenuItem>
+            <button
+              onClick={handleLogout}
+              className="flex items-center px-4 py-2 rounded-md text-white hover:bg-primary-700 transition-colors"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Sair
+            </button>
+          </NavigationMenuItem>
         </div>
 
         {/* Mobile Menu Button */}
@@ -125,6 +125,14 @@ export const BkMenu = () => {
                 {item.name}
               </NavLink>
             ))}
+            
+            <button
+              onClick={handleLogout}
+              className="flex w-full items-center px-4 py-2 text-sm rounded-md transition-colors text-white hover:bg-primary-700"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Sair
+            </button>
           </div>
         )}
       </div>
