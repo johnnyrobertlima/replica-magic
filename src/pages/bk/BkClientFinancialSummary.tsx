@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { BkMenu } from "@/components/bk/BkMenu";
 import { useFinancial } from "@/hooks/bk/useFinancial";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,6 @@ export const BkClientFinancialSummary = () => {
     clientFilter,
     updateClientFilter,
     financialSummary,
-    clientFinancialSummaries,
     filterClientSummaries
   } = useFinancial();
 
