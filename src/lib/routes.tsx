@@ -1,4 +1,3 @@
-
 import Index from "@/pages/Index";
 import ClientArea from "@/pages/ClientArea";
 import PostManagement from "@/pages/PostManagement";
@@ -18,7 +17,7 @@ import UserGroupManagement from "@/pages/admin/users/UserGroupManagement";
 import { AdminBanners } from "@/pages/admin/banners";
 import BluebayHome from "@/pages/BluebayHome";
 import BkHome from "@/pages/BkHome";
-import { BkClients, BkFinancial, BkReports, BkDashboard, BkGestaoTitulos, BkFinanceiroManager, BkClientFinancialSummary, BkEstoque, BkRequests } from "@/pages/bk";
+import { BkClients, BkFinancial, BkReports, BkDashboard, BkGestaoTitulos, BkFinanceiroManager, BkClientFinancialSummary, BkEstoque, BkRequests, BkInvoiceControl } from "@/pages/bk";
 import AdminRequests from "@/pages/admin/requests";
 
 export const routes = [
@@ -73,6 +72,10 @@ export const routes = [
   {
     path: "/client-area/bk/requests",
     element: <BkRequests />,
+  },
+  {
+    path: "/client-area/bk/invoice-control",
+    element: <BkInvoiceControl />,
   },
   {
     path: "/admin/requests",

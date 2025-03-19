@@ -168,6 +168,51 @@ export type Database = {
         }
         Relationships: []
       }
+      bk_requests: {
+        Row: {
+          attachment_url: string | null
+          created_at: string
+          department: string
+          description: string
+          id: string
+          protocol: string
+          response: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_email: string
+          user_id: string
+        }
+        Insert: {
+          attachment_url?: string | null
+          created_at?: string
+          department: string
+          description: string
+          id?: string
+          protocol: string
+          response?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_email: string
+          user_id: string
+        }
+        Update: {
+          attachment_url?: string | null
+          created_at?: string
+          department?: string
+          description?: string
+          id?: string
+          protocol?: string
+          response?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_email?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       BLUEBAY_ESTOQUE: {
         Row: {
           COMPRADO: number | null

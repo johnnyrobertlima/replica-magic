@@ -34,6 +34,7 @@ export const KNOWN_ROUTES = [
   "/client-area/bk/clientefinancial",
   "/client-area/bk/estoque",
   "/client-area/bk/requests",
+  "/client-area/bk/invoice-control",
   // Outras rotas
   "/client-area/content-management",
   "/client-area/mailing-registration",

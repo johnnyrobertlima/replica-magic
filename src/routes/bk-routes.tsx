@@ -11,6 +11,7 @@ import BkFinanceiroManager from "@/pages/bk/BkFinanceiroManager";
 import BkClientFinancialSummary from "@/pages/bk/BkClientFinancialSummary";
 import BkEstoque from "@/pages/bk/BkEstoque";
 import BkRequests from "@/pages/bk/BkRequests";
+import BkInvoiceControl from "@/pages/bk/BkInvoiceControl";
 
 export const bkRoutes = (
   <>
@@ -66,10 +67,7 @@ export const bkRoutes = (
     } />
     <Route path="/client-area/bk/invoice-control" element={
       <PermissionGuard resourcePath="/client-area/bk">
-        <div className="container mx-auto p-8">
-          <h1 className="text-3xl font-bold mb-4">Controle de Faturamento</h1>
-          <p className="text-muted-foreground">Esta funcionalidade estará disponível em breve.</p>
-        </div>
+        <BkInvoiceControl />
       </PermissionGuard>
     } />
   </>
