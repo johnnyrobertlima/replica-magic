@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { BkMenu } from "@/components/bk/BkMenu";
 import { useFinancial } from "@/hooks/bk/useFinancial";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { StatusFilter } from "@/components/bk/financial/StatusFilter";
 import { AdditionalFilters } from "@/components/bk/financial/AdditionalFilters";
 import { ClientFinancialTable } from "@/components/bk/financial/ClientFinancialTable";
 import { FinancialSummaryCards } from "@/components/bk/financial/FinancialSummaryCards";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Loader2 } from "lucide-react";
 
 export const BkClientFinancialSummary = () => {
   const { 
@@ -26,6 +26,7 @@ export const BkClientFinancialSummary = () => {
     filterClientSummaries
   } = useFinancial();
 
+  // Get the filtered client summaries
   const filteredClientSummaries = filterClientSummaries();
 
   return (
@@ -36,7 +37,11 @@ export const BkClientFinancialSummary = () => {
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold">Resumo Financeiro por Cliente</h1>
           <Button variant="outline" onClick={refreshData} disabled={isLoading}>
-            <RefreshCw className="h-4 w-4 mr-2" />
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4 mr-2" />
+            )}
             Atualizar
           </Button>
         </div>
