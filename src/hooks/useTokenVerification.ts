@@ -33,9 +33,9 @@ export const useTokenVerification = () => {
               description: "Agora você pode fazer login com suas credenciais.",
             });
             
-            // Redirect to login page after confirming signup
+            // Redirect to signup confirmation page after confirming signup
             setTimeout(() => {
-              navigate("/login");
+              navigate("/signup-confirmation");
             }, 1000);
             return;
           }
@@ -88,6 +88,16 @@ export const useTokenVerification = () => {
         // Process token from the URL (newer format)
         else if (urlToken) {
           try {
+            // Verificar que tipo de token é (recovery ou signup)
+            const urlParams = new URLSearchParams(window.location.search);
+            const tokenType = urlParams.get("type");
+            
+            if (tokenType === "signup") {
+              // Redirecionar para a página de confirmação de cadastro
+              navigate("/signup-confirmation");
+              return;
+            }
+            
             const { error } = await supabase.auth.verifyOtp({
               token_hash: urlToken,
               type: "recovery"

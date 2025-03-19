@@ -35,7 +35,7 @@ export const useClientAuth = () => {
         description: hasSession 
           ? "Você será redirecionado automaticamente."
           : "Um email de confirmação foi enviado. Por favor, verifique sua caixa de entrada e clique no link para ativar sua conta.",
-        duration: 6000,
+        duration: 8000,
       });
       
       if (user && hasSession) {
@@ -43,11 +43,15 @@ export const useClientAuth = () => {
         setTimeout(() => {
           handleRedirect(user.id);
         }, 1500);
-      } else if (user) {
-        // Caso padrão - redirecionar para login após 1.5 segundos
+      } else {
+        // Mostrar uma mensagem específica para orientação
         setTimeout(() => {
-          navigate("/login");
-        }, 1500);
+          toast({
+            title: "Verifique seu email",
+            description: "Você receberá um email com um link para confirmar sua conta. Após confirmar, você poderá fazer login no sistema.",
+            duration: 10000,
+          });
+        }, 2000);
       }
     } catch (error) {
       // Error is handled in the authentication hook

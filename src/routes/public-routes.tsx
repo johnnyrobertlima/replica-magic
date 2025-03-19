@@ -1,17 +1,33 @@
 
-import { Route } from "react-router-dom";
-import Index from "@/pages/Index";
-import ClientLogin from "@/pages/ClientLogin";
-import ResetPassword from "@/pages/ResetPassword";
+import { lazy } from "react";
+import { Navigate, RouteObject } from "react-router-dom";
+import SignupConfirmation from "@/pages/SignupConfirmation";
 
-export function PublicRoutes() {
-  return (
-    <>
-      <Route path="/" element={<Index />} />
-      <Route path="/login" element={<ClientLogin />} />
-      <Route path="/reset-password" element={<ResetPassword />} />
-      {/* Rota para capturar hash redirects */}
-      <Route path="/#" element={<ResetPassword />} />
-    </>
-  );
-}
+// Importações lazy para melhorar o carregamento da aplicação
+const ClientLogin = lazy(() => import("@/pages/ClientLogin"));
+const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
+const Index = lazy(() => import("@/pages/Index"));
+
+export const publicRoutes: RouteObject[] = [
+  {
+    path: "/",
+    element: <Index />,
+    index: true,
+  },
+  {
+    path: "/login",
+    element: <ClientLogin />,
+  },
+  {
+    path: "/reset-password",
+    element: <ResetPassword />,
+  },
+  {
+    path: "/signup-confirmation",
+    element: <SignupConfirmation />,
+  },
+  {
+    path: "*",
+    element: <Navigate to="/" />,
+  }
+];
