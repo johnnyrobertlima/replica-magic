@@ -2,8 +2,8 @@
 import type { DateRange } from "react-day-picker";
 import type { SearchType } from "./SearchFilters";
 import SearchFilters from "./SearchFilters";
+import { Badge } from "@/components/ui/badge";
 import { 
-  Badge,
   Select,
   SelectContent,
   SelectItem,
