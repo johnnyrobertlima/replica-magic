@@ -1,5 +1,5 @@
 
-import { TotalCards } from "@/components/jab-orders/TotalCards";
+import { FilteredTotalCards } from "./FilteredTotalCards";
 import { OrdersHeader, OrderStatus } from "@/components/jab-orders/OrdersHeader";
 import { ClientOrderCard } from "@/components/jab-orders/ClientOrderCard";
 import { SelectionSummary } from "@/components/jab-orders/SelectionSummary";
@@ -11,6 +11,10 @@ interface PedidosTabContentProps {
     valorTotalSaldoPeriodo: number;
     valorFaturarComEstoquePeriodo: number;
     valoresLiberadosParaFaturamento: number;
+    // New totals
+    valorTotalPedido?: number;
+    clientesCount?: number;
+    faltaFaturar?: number;
   };
   date: any;
   setDate: (date: any) => void;
@@ -61,10 +65,10 @@ export const PedidosTabContent = ({
 }: PedidosTabContentProps) => {
   return (
     <>
-      <TotalCards
-        valorTotalSaldoPeriodo={totals.valorTotalSaldoPeriodo}
-        valorFaturarComEstoquePeriodo={totals.valorFaturarComEstoquePeriodo}
-        valoresLiberadosParaFaturamento={totals.valoresLiberadosParaFaturamento}
+      <FilteredTotalCards
+        valorTotalPedido={totals.valorTotalPedido || 0}
+        clientesCount={totals.clientesCount || 0}
+        faltaFaturar={totals.faltaFaturar || 0}
       />
 
       <OrdersHeader

@@ -8,6 +8,7 @@ import { useBkOrderStatuses } from "./bk/useBkOrderStatuses";
 import { useBkGroupProcessing } from "./bk/useBkGroupProcessing";
 import { useBkGroupFiltering } from "./bk/useBkGroupFiltering";
 import { useBkPeriodTotals } from "./bk/useBkPeriodTotals";
+import { useBkFilteredTotals } from "./bk/useBkFilteredTotals";
 
 export const useClientOrders = () => {
   // Use the state hook
@@ -59,6 +60,9 @@ export const useClientOrders = () => {
 
   // Calculate period totals
   const periodTotals = useBkPeriodTotals(filteredGroups);
+  
+  // Calculate new filtered totals
+  const filteredTotals = useBkFilteredTotals(filteredGroups);
 
   // Use the item selection hook
   const {
@@ -76,7 +80,8 @@ export const useClientOrders = () => {
   // Combine all totals
   const combinedTotals = {
     ...totals,
-    ...periodTotals
+    ...periodTotals,
+    ...filteredTotals
   };
 
   return {
