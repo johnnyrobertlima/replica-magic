@@ -76,7 +76,7 @@ export const BkMenu = () => {
           <NavigationMenuItem>
             <button
               onClick={handleLogout}
-              className="flex items-center px-4 py-2 rounded-md text-white hover:bg-primary-700 transition-colors"
+              className="flex items-center px-4 py-2 rounded-md text-white bg-blue-700 hover:bg-blue-800 transition-colors"
             >
               <LogOut className="h-4 w-4 mr-2" />
               Sair
@@ -92,7 +92,7 @@ export const BkMenu = () => {
               variant="ghost"
               size="sm"
               onClick={handleLogout}
-              className="mr-2 text-white hover:bg-primary-700"
+              className="mr-2 text-white bg-blue-700 hover:bg-blue-800"
             >
               <LogOut size={20} />
             </Button>
@@ -130,7 +130,7 @@ export const BkMenu = () => {
             
             <button
               onClick={handleLogout}
-              className="flex w-full items-center px-4 py-2 text-sm rounded-md transition-colors text-white hover:bg-primary-700"
+              className="flex w-full items-center px-4 py-2 text-sm rounded-md transition-colors text-white bg-blue-700 hover:bg-blue-800"
             >
               <LogOut className="h-4 w-4 mr-2" />
               Sair
