@@ -8,8 +8,7 @@ export async function fetchSeparacoes(centrocusto: 'JAB' | 'BK' = 'JAB'): Promis
     const { data, error } = await supabase
       .from('separacoes')
       .select('*, separacao_itens(*)')
-      .eq('centrocusto', centrocusto)
-      .neq('status', 'completed')
+      .eq('status', 'pendente')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -17,8 +16,8 @@ export async function fetchSeparacoes(centrocusto: 'JAB' | 'BK' = 'JAB'): Promis
       return [];
     }
 
-    // Cast to any first to break the circular reference
-    return data as unknown as Separacao[];
+    // Usar type assertion para quebrar a referência circular
+    return data as any as Separacao[];
   } catch (error) {
     console.error('Exceção ao buscar separações:', error);
     return [];
@@ -38,8 +37,8 @@ export async function fetchSeparacaoById(id: string): Promise<Separacao | null> 
       return null;
     }
 
-    // Cast to any first to break the circular reference
-    return data as unknown as Separacao | null;
+    // Usar type assertion para quebrar a referência circular
+    return data as any as Separacao | null;
   } catch (error) {
     console.error('Exceção ao buscar separação por ID:', error);
     return null;
