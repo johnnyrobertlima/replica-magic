@@ -1447,6 +1447,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_representantes: {
+        Row: {
+          codigo_representante: number
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          codigo_representante: number
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          codigo_representante?: number
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       mv_titulos_centro_custo_bk: {
