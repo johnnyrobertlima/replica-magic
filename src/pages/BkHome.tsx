@@ -1,4 +1,3 @@
-
 import { BkMenu } from "@/components/bk/BkMenu";
 import { BkBanner } from "@/components/bk/BkBanner";
 import { ServiceCard } from "@/components/bk/ServiceCard";
@@ -42,11 +41,11 @@ const BkHome = () => {
       path: "/client-area/bk/pedidos"
     },
     {
-      title: "Títulos Financeiros",
+      title: "Financeiro",
       description: "Consulte seus títulos e resumo financeiro",
       icon: Receipt,
       iconColor: "bg-indigo-100 text-indigo-600",
-      path: "/client-area/bk/clientefinancial"
+      path: "/client-area/bk/financeiromanager"
     },
     {
       title: "Solicitações",
