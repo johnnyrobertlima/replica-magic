@@ -1,3 +1,4 @@
+
 import Index from "@/pages/Index";
 import ClientArea from "@/pages/ClientArea";
 import PostManagement from "@/pages/PostManagement";
@@ -14,6 +15,7 @@ import ResetPassword from "@/pages/ResetPassword";
 import AprovacaoFinanceira from "@/pages/AprovacaoFinanceira";
 import AcompanhamentoFaturamento from "@/pages/AcompanhamentoFaturamento";
 import UserGroupManagement from "@/pages/admin/users/UserGroupManagement";
+import Representantes from "@/pages/Representantes";
 import { AdminBanners } from "@/pages/admin/banners";
 import BluebayHome from "@/pages/BluebayHome";
 import BkHome from "@/pages/BkHome";
@@ -124,6 +126,10 @@ export const routes = [
   {
     path: "/client-area/whatsapp",
     element: <WhatsAppService />,
+  },
+  {
+    path: "/client-area/representantes",
+    element: <Representantes />,
   },
   {
     path: "/login",

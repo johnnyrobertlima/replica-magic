@@ -9,6 +9,7 @@ import MailingRegistration from "@/pages/MailingRegistration";
 import TokenManagement from "@/pages/TokenManagement";
 import WhatsAppClientRegistration from "@/pages/WhatsAppClientRegistration";
 import WhatsAppService from "@/pages/WhatsAppService";
+import Representantes from "@/pages/Representantes";
 import { bluebayRoutes } from "./bluebay-routes";
 import { bkRoutes } from "./bk-routes";
 
@@ -48,6 +49,11 @@ export const clientAreaRoutes = (
     <Route path="/client-area/whatsapp" element={
       <PermissionGuard resourcePath="/client-area/whatsapp">
         <WhatsAppService />
+      </PermissionGuard>
+    } />
+    <Route path="/client-area/representantes" element={
+      <PermissionGuard resourcePath="/client-area/representantes">
+        <Representantes />
       </PermissionGuard>
     } />
     
