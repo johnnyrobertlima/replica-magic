@@ -5,8 +5,9 @@ import { FinancialTitle } from "./types/financialTypes";
 export const fetchFinancialTitles = async (startDate?: string, endDate?: string, status?: string): Promise<FinancialTitle[]> => {
   console.log("Fetching financial titles...", { startDate, endDate, status });
   
+  // Query from the view mv_titulos_centro_custo_bk which already filters for BK center cost
   let query = supabase
-    .from('BLUEBAY_TITULO')
+    .from('mv_titulos_centro_custo_bk')
     .select(`
       NUMNOTA,
       DTEMISSAO,
@@ -19,7 +20,7 @@ export const fetchFinancialTitles = async (startDate?: string, endDate?: string,
       PES_CODIGO
     `);
 
-  // Apply date filters to DTVENCIMENTO instead of DTEMISSAO
+  // Apply date filters to DTVENCIMENTO
   if (startDate) {
     query = query.gte('DTVENCIMENTO', startDate);
   }
@@ -40,7 +41,7 @@ export const fetchFinancialTitles = async (startDate?: string, endDate?: string,
     throw error;
   }
 
-  console.log(`Fetched ${data?.length || 0} financial titles`);
+  console.log(`Fetched ${data?.length || 0} financial titles from BK center cost view`);
 
   // Fetch client names for the titles
   const titles: FinancialTitle[] = await Promise.all(
@@ -68,7 +69,7 @@ export const fetchFinancialTitles = async (startDate?: string, endDate?: string,
         STATUS: title.STATUS,
         PES_CODIGO: title.PES_CODIGO,
         CLIENTE_NOME: clientName,
-        CENTROCUSTO: 'BK' // Explicitly set CENTROCUSTO since we're querying from BLUEBAY_TITULO
+        CENTROCUSTO: 'BK' // Explicitly set CENTROCUSTO since we're querying from the BK view
       } as FinancialTitle;
     })
   );
