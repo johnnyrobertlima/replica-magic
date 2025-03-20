@@ -9,3 +9,4 @@ export { default as BkClientFinancialSummary } from './BkClientFinancialSummary'
 export { default as BkEstoque } from './BkEstoque';
 export { default as BkRequests } from './BkRequests';
 export { default as BkInvoiceControl } from './BkInvoiceControl';
+export { default as BkPedidos } from './BkPedidos';

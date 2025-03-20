@@ -1,49 +1,84 @@
 
-import { useQueryClient } from "@tanstack/react-query";
-import { sendOrdersForSeparation } from "@/services/clientSeparationService";
+import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { sendToSeparation } from "@/services/clientSeparationService";
 import type { ClientOrdersState } from "@/types/clientOrders";
-import { useToast } from "@/hooks/use-toast";
 
 export const useSeparationOperations = (
   state: ClientOrdersState,
-  setState: React.Dispatch<React.SetStateAction<ClientOrdersState>>,
-  groupedOrders: Record<string, any>
+  setState: (state: ClientOrdersState | ((prev: ClientOrdersState) => ClientOrdersState)) => void,
+  groups: Record<string, any>,
+  centrocusto: 'JAB' | 'BK' = 'JAB'
 ) => {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-  const { selectedItems, selectedItemsDetails } = state;
+  const [error, setError] = useState<string | null>(null);
 
-  const handleEnviarParaSeparacao = async () => {
-    setState(prev => ({ ...prev, isSending: true }));
-    
-    try {
-      // Passamos o contexto do cliente selecionado a partir do selectedItemsDetails
-      const result = await sendOrdersForSeparation(selectedItems, groupedOrders, true, selectedItemsDetails);
-      
-      if (result.success) {
-        await queryClient.invalidateQueries({ queryKey: ['separacoes'] });
-        await queryClient.invalidateQueries({ queryKey: ['jabOrders'] });
-        
-        // Clear selections automatically after successful separation
-        setState(prev => ({ 
-          ...prev, 
-          selectedItems: [],
-          selectedItemsDetails: {},
-        }));
-
-        toast({
-          title: "Separação concluída",
-          description: `${result.count || 0} separação(ões) criada(s) com sucesso!`,
-        });
-
-        // Don't need to reset expandedClients here as it was causing issues
-      }
-    } finally {
-      setState(prev => ({ ...prev, isSending: false }));
+  // Mutation to send items to separation
+  const sendToSeparationMutation = useMutation({
+    mutationFn: (params: { selectedItems: string[], selectedItemsDetails: Record<string, any> }) => {
+      return sendToSeparation({
+        items: params.selectedItems.map(item => {
+          const details = params.selectedItemsDetails[item];
+          return {
+            itemCodigo: item,
+            pedido: details.pedido,
+            pesCodigo: details.PES_CODIGO || details.pes_codigo,
+            descricao: details.DESCRICAO,
+            qtdeSaldo: details.QTDE_SALDO,
+            valorUnitario: details.VALOR_UNITARIO,
+            centrocusto
+          };
+        })
+      });
+    },
+    onSuccess: () => {
+      toast.success('Itens enviados para separação com sucesso!');
+      // Reset selected items
+      setState((prev) => ({
+        ...prev,
+        selectedItems: [],
+        selectedItemsDetails: {},
+        isSending: false
+      }));
+    },
+    onError: (err: any) => {
+      const errorMessage = err?.message || 'Falha ao enviar itens para separação';
+      toast.error(errorMessage);
+      setError(errorMessage);
+      setState((prev) => ({ ...prev, isSending: false }));
     }
+  });
+
+  const handleEnviarParaSeparacao = () => {
+    if (state.selectedItems.length === 0) {
+      toast.warning('Selecione pelo menos um item para enviar para separação');
+      return;
+    }
+
+    setState((prev) => ({ ...prev, isSending: true }));
+
+    // Extract details for selected items
+    const selectedItemsDetails: Record<string, any> = {};
+    state.selectedItems.forEach(itemCode => {
+      for (const group of Object.values(groups)) {
+        for (const item of group.allItems) {
+          if (item.ITEM_CODIGO === itemCode) {
+            selectedItemsDetails[itemCode] = item;
+            break;
+          }
+        }
+      }
+    });
+
+    sendToSeparationMutation.mutate({
+      selectedItems: state.selectedItems,
+      selectedItemsDetails
+    });
   };
 
   return {
-    handleEnviarParaSeparacao
+    handleEnviarParaSeparacao,
+    error,
+    isError: !!error
   };
 };

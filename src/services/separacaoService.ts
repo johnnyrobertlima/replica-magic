@@ -1,83 +1,82 @@
+import { supabase } from '@/integrations/supabase/client';
+import type { Separacao } from '@/types/separacao';
 
-import { supabase } from "@/integrations/supabase/client";
-import { Separacao } from "@/types/separacao";
+export async function fetchSeparacoes(centrocusto: 'JAB' | 'BK' = 'JAB'): Promise<Separacao[]> {
+  try {
+    // Fetch separations not in 'completed' status
+    const { data, error } = await supabase
+      .from('separacoes')
+      .select('*')
+      .eq('centrocusto', centrocusto)
+      .neq('status', 'completed')
+      .order('created_at', { ascending: false });
 
-export const fetchSeparacoes = async (): Promise<Separacao[]> => {
-  console.log('Fetching separations from database...');
-  
-  const { data: separacoes, error } = await supabase
-    .from('separacoes')
-    .select(`
-      *,
-      separacao_itens (*)
-    `)
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error('Error fetching separacoes:', error);
-    throw error;
-  }
-
-  console.log(`Fetched ${separacoes?.length || 0} separacoes from database`);
-  
-  // Log separation status to check if there are pending separations
-  if (separacoes && separacoes.length > 0) {
-    const statusCounts = separacoes.reduce((acc, sep) => {
-      const status = sep.status || 'unknown';
-      acc[status] = (acc[status] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-    
-    console.log('Separation status counts:', statusCounts);
-    console.log('First separation example:', { 
-      id: separacoes[0].id,
-      status: separacoes[0].status,
-      cliente_nome: separacoes[0].cliente_nome,
-      valor_total: separacoes[0].valor_total,
-      items_count: separacoes[0].separacao_itens?.length || 0
-    });
-  }
-
-  // If we have separations, fetch representative information
-  if (separacoes && separacoes.length > 0) {
-    const uniquePedidos = Array.from(new Set(
-      separacoes.flatMap(sep => sep.separacao_itens?.map(item => item.pedido) || [])
-    ));
-
-    console.log(`Found ${uniquePedidos.length} unique pedidos in separations`);
-
-    // First fetch orders to get representative codes
-    const { data: pedidosReps } = await supabase
-      .from('BLUEBAY_PEDIDO')
-      .select('PED_NUMPEDIDO, REPRESENTANTE')
-      .eq('CENTROCUSTO', 'JAB')
-      .in('PED_NUMPEDIDO', uniquePedidos);
-
-    if (pedidosReps && pedidosReps.length > 0) {
-      console.log(`Found ${pedidosReps.length} matching pedidos with representatives`);
-      
-      // Then fetch representatives info
-      const { data: representantes } = await supabase
-        .from('BLUEBAY_PESSOA')
-        .select('PES_CODIGO, RAZAOSOCIAL')
-        .in('PES_CODIGO', pedidosReps.map(p => p.REPRESENTANTE).filter(Boolean));
-
-      // Map representatives to separations
-      return separacoes.map(separacao => {
-        const pedido = pedidosReps?.find(p => 
-          separacao.separacao_itens?.some(item => item.pedido === p.PED_NUMPEDIDO)
-        );
-        
-        const representante = representantes?.find(r => r.PES_CODIGO === pedido?.REPRESENTANTE);
-        const representanteNome = representante?.RAZAOSOCIAL || 'Não informado';
-
-        return {
-          ...separacao,
-          representante_nome: representanteNome
-        };
-      });
+    if (error) {
+      console.error('Erro ao buscar separações:', error);
+      return [];
     }
-  }
 
-  return separacoes || [];
-};
+    return data || [];
+  } catch (error) {
+    console.error('Exceção ao buscar separações:', error);
+    return [];
+  }
+}
+
+export async function fetchSeparacaoById(id: string): Promise<Separacao | null> {
+  try {
+    const { data, error } = await supabase
+      .from('separacoes')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      console.error('Erro ao buscar separação por ID:', error);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Exceção ao buscar separação por ID:', error);
+    return null;
+  }
+}
+
+export async function updateSeparacaoStatus(id: string, status: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('separacoes')
+      .update({ status })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Erro ao atualizar status da separação:', error);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Exceção ao atualizar status da separação:', error);
+    return false;
+  }
+}
+
+export async function deleteSeparacao(id: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('separacoes')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Erro ao excluir separação:', error);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Exceção ao excluir separação:', error);
+    return false;
+  }
+}

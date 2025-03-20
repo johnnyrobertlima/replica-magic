@@ -1,88 +1,75 @@
 
-import { toast } from "@/hooks/use-toast";
-import type { ClientOrderGroup } from "@/types/clientOrders";
-import { processSelectedItems, createSeparationsForClients } from "./separation/separationProcessorService";
+import { supabase } from '@/integrations/supabase/client';
 
-/**
- * Main function to send orders for separation
- */
-export const sendOrdersForSeparation = async (
-  selectedItems: string[],
-  groupedOrders: Record<string, ClientOrderGroup>,
-  showToast = true,
-  selectedItemsDetails?: Record<string, { qtde: number; valor: number; clientName?: string; clientCode?: number }>
-) => {
-  if (selectedItems.length === 0) {
-    if (showToast) {
-      toast({
-        title: "Aviso",
-        description: "Selecione pelo menos um item para enviar para separação",
-        variant: "default",
-      });
-    }
-    return { success: false, message: "Nenhum item selecionado" };
-  }
+interface SeparationItem {
+  itemCodigo: string;
+  pedido: string;
+  pesCodigo: string | number;
+  descricao?: string | null;
+  qtdeSaldo: number;
+  valorUnitario: number;
+  centrocusto?: 'JAB' | 'BK';
+}
 
+interface SeparationRequest {
+  items: SeparationItem[];
+}
+
+export async function sendToSeparation({ items }: SeparationRequest) {
   try {
-    // Process and group the selected items by client
-    const { success, message, itemsByClient } = processSelectedItems(selectedItems, groupedOrders, selectedItemsDetails);
+    if (!items || items.length === 0) {
+      throw new Error('Nenhum item fornecido para separação');
+    }
+
+    const user = await supabase.auth.getUser();
     
-    if (!success || !itemsByClient) {
-      if (showToast) {
-        toast({
-          title: "Aviso",
-          description: message || "Erro ao processar itens",
-          variant: "default",
-        });
-      }
-      return { success: false, message };
+    if (!user || !user.data || !user.data.user) {
+      throw new Error('Usuário não autenticado');
     }
 
-    // Create separations for each client
-    const { successCount, errors } = await createSeparationsForClients(itemsByClient);
+    const userId = user.data.user.id;
+    const userEmail = user.data.user.email;
 
-    // Handle the results
-    if (successCount > 0) {
-      console.log(`Sucesso! ${successCount} separações criadas`);
-      if (showToast) {
-        toast({
-          title: "Sucesso",
-          description: `${successCount} separação(ões) criada(s) com sucesso!`,
-          variant: "default",
-        });
+    // Use the first item's centrocusto as the separation's centrocusto
+    const centrocusto = items[0].centrocusto || 'JAB';
+
+    // Group items by cliente (PES_CODIGO)
+    const itemsByCliente: Record<string, SeparationItem[]> = {};
+    items.forEach(item => {
+      const clienteKey = item.pesCodigo.toString();
+      if (!itemsByCliente[clienteKey]) {
+        itemsByCliente[clienteKey] = [];
       }
-      
-      // Show errors for any failed clients
-      errors.forEach(error => {
-        if (showToast) {
-          toast({
-            title: "Erro",
-            description: error.message,
-            variant: "destructive",
-          });
-        }
-      });
-      
-      return { success: true, count: successCount };
-    } else {
-      if (showToast) {
-        toast({
-          title: "Aviso",
-          description: "Nenhuma separação foi criada",
-          variant: "default",
-        });
+      itemsByCliente[clienteKey].push(item);
+    });
+
+    // Create a separation for each cliente
+    const separations = [];
+    for (const [clienteKey, clienteItems] of Object.entries(itemsByCliente)) {
+      const { data, error } = await supabase
+        .from('separacoes')
+        .insert({
+          user_id: userId,
+          user_email: userEmail,
+          cliente_codigo: clienteKey,
+          items: clienteItems,
+          status: 'pending',
+          centrocusto
+        })
+        .select('*')
+        .single();
+
+      if (error) {
+        console.error('Erro ao criar separação:', error);
+        throw new Error(`Falha ao criar separação: ${error.message}`);
       }
-      return { success: false, message: "Nenhuma separação foi criada" };
+
+      separations.push(data);
     }
-  } catch (error) {
-    console.error('Erro ao processar separação:', error);
-    if (showToast) {
-      toast({
-        title: "Erro",
-        description: "Ocorreu um erro ao enviar os itens para separação",
-        variant: "destructive",
-      });
-    }
-    return { success: false, error };
+
+    return { success: true, separations };
+  } catch (error: any) {
+    console.error('Erro no processo de separação:', error);
+    return { success: false, error: error.message || 'Falha desconhecida na separação' };
   }
-};
+}
