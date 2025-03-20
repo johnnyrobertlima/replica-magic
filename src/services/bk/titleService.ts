@@ -3,8 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { FinancialTitle } from "./types/financialTypes";
 
 export const fetchFinancialTitles = async (startDate?: string, endDate?: string, status?: string): Promise<FinancialTitle[]> => {
+  console.log("Fetching financial titles...", { startDate, endDate, status });
+  
   let query = supabase
-    .from('mv_titulos_centro_custo_bk')
+    .from('BLUEBAY_TITULO')
     .select(`
       NUMNOTA,
       DTEMISSAO,
@@ -38,6 +40,8 @@ export const fetchFinancialTitles = async (startDate?: string, endDate?: string,
     throw error;
   }
 
+  console.log(`Fetched ${data?.length || 0} financial titles`);
+
   // Fetch client names for the titles
   const titles: FinancialTitle[] = await Promise.all(
     (data || []).map(async (title: any) => {
@@ -47,7 +51,7 @@ export const fetchFinancialTitles = async (startDate?: string, endDate?: string,
         const { data: clientData } = await supabase
           .from('BLUEBAY_PESSOA')
           .select('APELIDO, RAZAOSOCIAL')
-          .eq('PES_CODIGO', parseInt(title.PES_CODIGO as string))
+          .eq('PES_CODIGO', title.PES_CODIGO)
           .maybeSingle();
 
         clientName = clientData?.APELIDO || clientData?.RAZAOSOCIAL || "Cliente não encontrado";
@@ -64,7 +68,7 @@ export const fetchFinancialTitles = async (startDate?: string, endDate?: string,
         STATUS: title.STATUS,
         PES_CODIGO: title.PES_CODIGO,
         CLIENTE_NOME: clientName,
-        CENTROCUSTO: 'BK' // Explicitly set CENTROCUSTO since we're querying from mv_titulos_centro_custo_bk
+        CENTROCUSTO: 'BK' // Explicitly set CENTROCUSTO since we're querying from BLUEBAY_TITULO
       } as FinancialTitle;
     })
   );

@@ -1,6 +1,7 @@
 
 import { useState, useCallback } from "react";
 import { fetchBkFaturamentoData } from "@/services/bk/financialDataService";
+import { fetchFinancialTitles } from "@/services/bk/titleService";
 import { consolidateByNota } from "@/services/bk/financialProcessingService";
 import { format, subDays } from "date-fns";
 import { ConsolidatedInvoice, FinancialTitle } from "@/services/bk/types/financialTypes";
@@ -38,9 +39,19 @@ export const useFinancialData = () => {
       const consolidated = consolidateByNota(faturamentoData);
       setConsolidatedInvoices(consolidated);
       
+      // Fetch financial titles with date filtering
+      const titles = await fetchFinancialTitles(
+        startDateFormatted,
+        endDateFormatted
+      );
+      setFinancialTitles(titles);
+      
       // Extract unique statuses for filter
-      const statuses = [...new Set(consolidated.map(invoice => invoice.STATUS || ""))];
-      setAvailableStatuses(['all', ...statuses.filter(status => status !== "")]);
+      const invoiceStatuses = [...new Set(consolidated.map(invoice => invoice.STATUS || ""))];
+      const titleStatuses = [...new Set(titles.map(title => title.STATUS || ""))];
+      const uniqueStatuses = [...new Set([...invoiceStatuses, ...titleStatuses])];
+      
+      setAvailableStatuses(['all', ...uniqueStatuses.filter(status => status !== "")]);
     } catch (error) {
       console.error("Error fetching financial data:", error);
     } finally {

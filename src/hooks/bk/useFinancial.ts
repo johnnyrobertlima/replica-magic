@@ -38,6 +38,7 @@ export const useFinancial = (): UseFinancialReturnType => {
 
   // Initial data load
   useEffect(() => {
+    console.log("useFinancial effect - triggering data refresh");
     refreshData();
   }, [refreshData]);
 
