@@ -2,12 +2,11 @@
 import React from "react";
 import { BkMenu } from "@/components/bk/BkMenu";
 import { TitleTable } from "@/components/bk/financial/TitleTable";
-import { FinancialDashboard } from "@/components/bk/financial/FinancialDashboard";
-import { useFinancial } from "@/hooks/bk/useFinancial";
 import { Button } from "@/components/ui/button";
 import { DateRangePicker } from "@/components/bk/financial/DateRangePicker";
 import { StatusFilter } from "@/components/bk/financial/StatusFilter";
 import { RefreshCw } from "lucide-react";
+import { useFinancial } from "@/hooks/bk/useFinancial";
 
 export const BkGestaoTitulos = () => {
   const { 
