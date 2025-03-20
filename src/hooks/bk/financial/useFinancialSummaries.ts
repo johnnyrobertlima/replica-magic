@@ -1,11 +1,12 @@
 
 import { useState, useEffect } from "react";
-import { ConsolidatedInvoice } from "@/services/bk/types/financialTypes";
+import { ConsolidatedInvoice, FinancialTitle } from "@/services/bk/types/financialTypes";
 import { FinancialSummary, ClientFinancialSummary } from "./types";
 import { isAfter, isBefore, isEqual, parseISO } from "date-fns";
 
 export const useFinancialSummaries = (
-  filteredInvoices: ConsolidatedInvoice[]
+  filteredInvoices: ConsolidatedInvoice[],
+  filteredTitles: FinancialTitle[] = []
 ) => {
   const [financialSummary, setFinancialSummary] = useState<FinancialSummary>({
     totalValoresVencidos: 0,
@@ -15,7 +16,7 @@ export const useFinancialSummaries = (
   
   const [clientFinancialSummaries, setClientFinancialSummaries] = useState<ClientFinancialSummary[]>([]);
 
-  // Calculate financial summaries whenever filtered invoices change
+  // Calculate financial summaries from titles whenever filtered titles change
   useEffect(() => {
     // Calculate overall financial summary
     const today = new Date();
@@ -26,26 +27,29 @@ export const useFinancialSummaries = (
     // Client summaries calculation
     const clientSummaries = new Map<string, ClientFinancialSummary>();
 
-    filteredInvoices.forEach(invoice => {
-      const emissaoDate = invoice.DATA_EMISSAO ? parseISO(invoice.DATA_EMISSAO) : null;
-      const valorNota = invoice.VALOR_NOTA || 0;
+    // Process titles
+    filteredTitles.forEach(title => {
+      const vencimentoDate = title.DTVENCIMENTO ? parseISO(title.DTVENCIMENTO) : null;
+      const vlrTitulo = title.VLRTITULO || 0;
+      const vlrSaldo = title.VLRSALDO || 0;
       
-      // Update totals based on status
-      if (invoice.STATUS === 'Pago') {
-        totalPago += valorNota;
+      // Check if title is paid
+      if (title.STATUS === '3') { // Status 3 = Pago
+        totalPago += vlrTitulo;
       } else {
-        totalEmAberto += valorNota;
+        // Add to total open amount if not paid
+        totalEmAberto += vlrSaldo;
         
-        // Check if overdue (simplified logic - actual overdue would depend on terms)
-        if (emissaoDate && (isBefore(emissaoDate, today) || isEqual(emissaoDate, today))) {
-          totalValoresVencidos += valorNota;
+        // Check if overdue (vencimento date is in the past)
+        if (vencimentoDate && isBefore(vencimentoDate, today)) {
+          totalValoresVencidos += vlrSaldo;
         }
       }
       
       // Update client summaries
-      if (invoice.PES_CODIGO && invoice.CLIENTE_NOME) {
-        const pesCode = String(invoice.PES_CODIGO);
-        const clientName = invoice.CLIENTE_NOME;
+      if (title.PES_CODIGO && title.CLIENTE_NOME) {
+        const pesCode = String(title.PES_CODIGO);
+        const clientName = title.CLIENTE_NOME;
         
         if (!clientSummaries.has(pesCode)) {
           clientSummaries.set(pesCode, {
@@ -59,14 +63,14 @@ export const useFinancialSummaries = (
         
         const clientSummary = clientSummaries.get(pesCode)!;
         
-        if (invoice.STATUS === 'Pago') {
-          clientSummary.totalPago += valorNota;
+        if (title.STATUS === '3') { // Status 3 = Pago
+          clientSummary.totalPago += vlrTitulo;
         } else {
-          clientSummary.totalEmAberto += valorNota;
+          clientSummary.totalEmAberto += vlrSaldo;
           
           // Check if overdue for client
-          if (emissaoDate && (isBefore(emissaoDate, today) || isEqual(emissaoDate, today))) {
-            clientSummary.totalValoresVencidos += valorNota;
+          if (vencimentoDate && isBefore(vencimentoDate, today)) {
+            clientSummary.totalValoresVencidos += vlrSaldo;
           }
         }
       }
@@ -79,7 +83,7 @@ export const useFinancialSummaries = (
     });
     
     setClientFinancialSummaries(Array.from(clientSummaries.values()));
-  }, [filteredInvoices]);
+  }, [filteredTitles]);
 
   return {
     financialSummary,

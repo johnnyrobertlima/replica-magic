@@ -12,6 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { StatusBadge } from "./StatusBadge";
+import { formatCurrency } from "@/utils/formatters";
 
 interface TitleTableProps {
   titles: FinancialTitle[];
@@ -19,14 +20,6 @@ interface TitleTableProps {
 }
 
 export const TitleTable: React.FC<TitleTableProps> = ({ titles, isLoading }) => {
-  const formatCurrency = (value: number | null) => {
-    if (value === null) return "R$ 0,00";
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
-  };
-
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "-";
     try {

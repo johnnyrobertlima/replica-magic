@@ -34,7 +34,7 @@ export const useFinancial = (): UseFinancialReturnType => {
   const {
     financialSummary,
     clientFinancialSummaries
-  } = useFinancialSummaries(filteredInvoices);
+  } = useFinancialSummaries(filteredInvoices, filteredTitles);
 
   // Initial data load
   useEffect(() => {
