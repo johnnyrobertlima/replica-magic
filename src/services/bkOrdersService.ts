@@ -81,7 +81,7 @@ export async function fetchAllBkOrders({
 
   console.log('Buscando todos os pedidos BK para o período:', { dataInicial, dataFinal });
 
-  // For BK pedidos page, we fetch all statuses without filtering
+  // For BK pedidos page, we fetch without status filtering
   const pedidosDetalhados = await fetchAllPedidosDireto(dataInicial, dataFinal, 'BK');
 
   if (!pedidosDetalhados.length) {

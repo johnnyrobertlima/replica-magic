@@ -44,7 +44,7 @@ export async function fetchAllPedidosDireto(
         .gte('DATA_PEDIDO', `${dataInicial}`)
         .lte('DATA_PEDIDO', `${dataFinal} 23:59:59.999`);
       
-      // Apply status filter if provided
+      // Apply status filter if provided and we're not on BK pedidos
       if (statusFilter && statusFilter.length > 0) {
         query.in('STATUS', statusFilter);
       }
