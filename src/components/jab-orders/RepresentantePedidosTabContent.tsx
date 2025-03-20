@@ -65,8 +65,6 @@ export const RepresentantePedidosTabContent = ({
         valorTotalSaldoPeriodo={totals.valorTotalSaldoPeriodo}
         valorFaturarComEstoquePeriodo={totals.valorFaturarComEstoquePeriodo}
         valoresLiberadosParaFaturamento={totals.valoresLiberadosParaFaturamento}
-        valorTotalSaldo={totals.valorTotalSaldo}
-        valorFaturarComEstoque={totals.valorFaturarComEstoque}
       />
 
       <OrdersHeader

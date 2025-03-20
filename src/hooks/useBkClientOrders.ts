@@ -1,4 +1,3 @@
-
 import { useMemo, useEffect, useState } from "react";
 import { useAllBkOrders, useBkTotals } from "@/hooks/useBkOrders";
 import { useSeparacoes } from "@/hooks/useSeparacoes";
@@ -123,7 +122,7 @@ export const useClientOrders = () => {
             }))
           );
           
-          const filteredGroup = {
+          filteredByStatus[clientName] = {
             ...group,
             pedidos: filteredPedidos,
             allItems: allFilteredItems,
@@ -136,8 +135,6 @@ export const useClientOrders = () => {
               return sum + (qtdeFaturar * item.VALOR_UNITARIO || 0);
             }, 0)
           };
-          
-          filteredByStatus[clientName] = filteredGroup;
         }
       });
       
