@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import type { Separacao } from '@/types/separacao';
+import type { Separacao, SeparacaoItem } from '@/types/separacao';
 
 export async function fetchSeparacoes(centrocusto: 'JAB' | 'BK' = 'JAB'): Promise<Separacao[]> {
   try {
@@ -17,7 +17,7 @@ export async function fetchSeparacoes(centrocusto: 'JAB' | 'BK' = 'JAB'): Promis
       return [];
     }
 
-    return data || [];
+    return (data || []) as Separacao[];
   } catch (error) {
     console.error('Exceção ao buscar separações:', error);
     return [];
@@ -37,7 +37,7 @@ export async function fetchSeparacaoById(id: string): Promise<Separacao | null> 
       return null;
     }
 
-    return data;
+    return data as Separacao | null;
   } catch (error) {
     console.error('Exceção ao buscar separação por ID:', error);
     return null;
