@@ -23,14 +23,12 @@ export const useBkGroupFiltering = (
         // Filter pedidos in the group by status
         const filteredPedidos = group.pedidos.filter(pedido => {
           // Check if the pedido's status matches any of the selected statuses
-          return selectedStatuses.some(status => 
-            pedido.STATUS === status || 
-            (status === '0' && pedido.STATUS === 'Bloqueado') ||
-            (status === '1' && pedido.STATUS === 'Aberto') ||
-            (status === '2' && pedido.STATUS === 'Parcial') ||
-            (status === '3' && pedido.STATUS === 'Total') ||
-            (status === '4' && pedido.STATUS === 'Cancelado')
-          );
+          return selectedStatuses.includes(pedido.STATUS as OrderStatus) || 
+                 (selectedStatuses.includes('0') && pedido.STATUS === 'Bloqueado') ||
+                 (selectedStatuses.includes('1') && pedido.STATUS === 'Aberto') ||
+                 (selectedStatuses.includes('2') && pedido.STATUS === 'Parcial') ||
+                 (selectedStatuses.includes('3') && pedido.STATUS === 'Total') ||
+                 (selectedStatuses.includes('4') && pedido.STATUS === 'Cancelado');
         });
         
         // Only include group if it has pedidos after filtering
