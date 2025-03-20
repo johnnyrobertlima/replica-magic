@@ -25,7 +25,7 @@ export const BkReports = () => {
       
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold">Relatórios de Itens</h1>
+          <h1 className="text-3xl font-bold">Relatório de Itens</h1>
           <Button variant="outline" onClick={refreshData} disabled={isLoading}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Atualizar

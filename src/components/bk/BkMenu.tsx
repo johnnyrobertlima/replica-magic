@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { Menu, X, Users, Receipt, BarChart2, FileText, ClipboardCheck, LogOut, FileSpreadsheet, DollarSign, Package } from "lucide-react";
+import { Menu, X, Users, Receipt, BarChart2, FileText, ClipboardCheck, LogOut, FileSpreadsheet, Package } from "lucide-react";
 import {
   NavigationMenu,
   NavigationMenuList,
@@ -19,13 +19,12 @@ export const BkMenu = () => {
   const { toast } = useToast();
 
   const menuItems = [
-    { name: "Dashboard", path: "/client-area/bk", icon: <BarChart2 className="h-4 w-4 mr-2" /> },
+    { name: "Home BK", path: "/client-area/bk", icon: <BarChart2 className="h-4 w-4 mr-2" /> },
     { name: "Clientes", path: "/client-area/bk/clients", icon: <Users className="h-4 w-4 mr-2" /> },
     { name: "Faturamento", path: "/client-area/bk/financial", icon: <Receipt className="h-4 w-4 mr-2" /> },
-    { name: "Gestão de Títulos", path: "/client-area/bk/gestaotitulos", icon: <FileSpreadsheet className="h-4 w-4 mr-2" /> },
-    { name: "Gerenciamento Financeiro", path: "/client-area/bk/financeiromanager", icon: <DollarSign className="h-4 w-4 mr-2" /> },
+    { name: "Títulos", path: "/client-area/bk/gestaotitulos", icon: <FileSpreadsheet className="h-4 w-4 mr-2" /> },
     { name: "Estoque", path: "/client-area/bk/estoque", icon: <Package className="h-4 w-4 mr-2" /> },
-    { name: "Relatórios", path: "/client-area/bk/reports", icon: <FileText className="h-4 w-4 mr-2" /> },
+    { name: "Relatório de Itens", path: "/client-area/bk/reports", icon: <FileText className="h-4 w-4 mr-2" /> },
     { name: "Solicitações", path: "/client-area/bk/requests", icon: <ClipboardCheck className="h-4 w-4 mr-2" /> },
   ];
 

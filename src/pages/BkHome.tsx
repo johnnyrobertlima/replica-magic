@@ -7,7 +7,7 @@ import { FileText, BarChart2, Users, Wallet, ClipboardCheck, ShoppingBag, Receip
 const BkHome = () => {
   const services = [
     {
-      title: "Relatórios",
+      title: "Relatório de Itens",
       description: "Acesse relatórios e estatísticas sobre seus dados",
       icon: FileText,
       iconColor: "bg-purple-100 text-purple-600",
