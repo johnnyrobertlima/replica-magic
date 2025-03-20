@@ -67,7 +67,8 @@ export const useFinancialFilters = (
     
     const searchTerm = clientFilter.toLowerCase();
     return clientFinancialSummaries.filter(summary => 
-      summary.CLIENTE_NOME.toLowerCase().includes(searchTerm)
+      summary.CLIENTE_NOME.toLowerCase().includes(searchTerm) ||
+      String(summary.PES_CODIGO).includes(searchTerm)
     );
   }, [clientFilter, clientFinancialSummaries]);
 

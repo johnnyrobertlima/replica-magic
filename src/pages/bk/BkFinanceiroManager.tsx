@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FinancialSummaryCards } from "@/components/bk/financial/FinancialSummaryCards";
 import { AdditionalFilters } from "@/components/bk/financial/AdditionalFilters";
 import { Link } from "react-router-dom";
+import { ClientFinancialTable } from "@/components/bk/financial/ClientFinancialTable";
 
 export const BkFinanceiroManager = () => {
   const { 
@@ -31,10 +32,26 @@ export const BkFinanceiroManager = () => {
     updateClientFilter,
     notaFilter,
     updateNotaFilter,
-    financialSummary
+    financialSummary,
+    clientFinancialSummaries
   } = useFinancial();
 
   const [activeTab, setActiveTab] = useState("titles");
+  const [selectedClient, setSelectedClient] = useState<string | null>(null);
+
+  // Filter titles by selected client if one is selected
+  const clientFilteredTitles = selectedClient 
+    ? filteredTitles.filter(title => String(title.PES_CODIGO) === selectedClient)
+    : filteredTitles;
+
+  const handleClientSelect = (clientCode: string) => {
+    setSelectedClient(clientCode);
+    setActiveTab("titles"); // Switch to titles tab to show client's titles
+  };
+
+  const handleResetClientSelection = () => {
+    setSelectedClient(null);
+  };
 
   return (
     <div className="container-fluid p-0 max-w-full">
@@ -88,20 +105,64 @@ export const BkFinanceiroManager = () => {
             />
           </div>
           
-          <Tabs defaultValue="titles" value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid grid-cols-2 mb-4">
+          {selectedClient && (
+            <div className="flex items-center mb-4">
+              <div className="px-4 py-2 bg-blue-100 border rounded-md flex items-center">
+                <span className="font-medium mr-2">Cliente selecionado</span>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={handleResetClientSelection}
+                  className="h-6 text-blue-600 hover:text-blue-800"
+                >
+                  Limpar seleção
+                </Button>
+              </div>
+            </div>
+          )}
+          
+          <Tabs 
+            defaultValue="titles" 
+            value={activeTab} 
+            onValueChange={setActiveTab} 
+            className="w-full"
+          >
+            <TabsList className="grid grid-cols-3 mb-4">
               <TabsTrigger value="titles">Títulos Financeiros</TabsTrigger>
               <TabsTrigger value="invoices">Notas Fiscais</TabsTrigger>
+              <TabsTrigger value="clients">Clientes</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="titles" className="p-4 rounded-lg border bg-card text-card-foreground shadow-sm">
-              <h2 className="text-xl font-semibold mb-4">Títulos Financeiros</h2>
-              <TitleTable titles={filteredTitles} isLoading={isLoading} />
+            <TabsContent 
+              value="titles" 
+              className="p-4 rounded-lg border bg-card text-card-foreground shadow-sm"
+            >
+              <h2 className="text-xl font-semibold mb-4">
+                {selectedClient 
+                  ? `Títulos Financeiros do Cliente` 
+                  : `Títulos Financeiros`}
+              </h2>
+              <TitleTable titles={clientFilteredTitles} isLoading={isLoading} />
             </TabsContent>
             
-            <TabsContent value="invoices" className="p-4 rounded-lg border bg-card text-card-foreground shadow-sm">
+            <TabsContent 
+              value="invoices" 
+              className="p-4 rounded-lg border bg-card text-card-foreground shadow-sm"
+            >
               <h2 className="text-xl font-semibold mb-4">Notas Fiscais</h2>
               <InvoiceTable invoices={filteredInvoices} isLoading={isLoading} />
+            </TabsContent>
+            
+            <TabsContent 
+              value="clients" 
+              className="p-4 rounded-lg border bg-card text-card-foreground shadow-sm"
+            >
+              <h2 className="text-xl font-semibold mb-4">Clientes - Resumo Financeiro</h2>
+              <ClientFinancialTable 
+                clients={clientFinancialSummaries} 
+                isLoading={isLoading} 
+                onClientSelect={handleClientSelect}
+              />
             </TabsContent>
           </Tabs>
         </div>
