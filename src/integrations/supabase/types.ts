@@ -1652,6 +1652,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_user_in_group: {
+        Args: {
+          user_id: string
+          group_name: string
+        }
+        Returns: boolean
+      }
       check_user_permission: {
         Args: {
           user_id: string

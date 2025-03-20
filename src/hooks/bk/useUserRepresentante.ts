@@ -36,7 +36,7 @@ export const useUserRepresentante = () => {
         
         // Use the RPC function to check if user is in the BK Representantes group
         // This avoids the RLS issue with the user_groups table
-        const { data: userGroups, error: groupsError } = await supabase.rpc(
+        const { data: isInGroup, error: groupsError } = await supabase.rpc(
           'check_user_in_group',
           { 
             user_id: user.id, 
@@ -51,12 +51,11 @@ export const useUserRepresentante = () => {
           return;
         }
         
-        // userGroups will be true/false or null if the function exists and was executed
-        const isRepresentante = !!userGroups;
-        console.log("Is user a representante?", isRepresentante);
-        setIsRepresentanteBK(isRepresentante);
+        // isInGroup will be true/false based on the function result
+        console.log("Is user a representante?", isInGroup);
+        setIsRepresentanteBK(!!isInGroup);
         
-        if (isRepresentante && user) {
+        if (isInGroup && user) {
           console.log("User is a representante, fetching representative code");
           // Get the representante code for this user
           const { data: userRepresentante, error: repError } = await supabase
