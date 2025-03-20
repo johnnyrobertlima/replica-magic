@@ -1,6 +1,6 @@
 
 import { TotalCards } from "./TotalCards";
-import { OrdersHeader } from "./OrdersHeader";
+import { OrdersHeader, OrderStatus } from "./OrdersHeader";
 import { ClientOrderCard } from "./ClientOrderCard";
 import { SelectionSummary } from "./SelectionSummary";
 
@@ -31,6 +31,8 @@ interface PedidosTabContentProps {
   handleEnviarParaSeparacao: () => void;
   exportSelectedItemsToExcel: () => void;
   clearSelections: () => void;
+  selectedStatuses?: OrderStatus[];
+  onStatusChange?: (status: OrderStatus) => void;
 }
 
 export const PedidosTabContent = ({
@@ -53,16 +55,18 @@ export const PedidosTabContent = ({
   handleItemSelect,
   handleEnviarParaSeparacao,
   exportSelectedItemsToExcel,
-  clearSelections
+  clearSelections,
+  selectedStatuses = [],
+  onStatusChange = () => {}
 }: PedidosTabContentProps) => {
   return (
     <>
       <TotalCards
-        valorTotalSaldo={totals.valorTotalSaldo}
-        valorFaturarComEstoque={totals.valorFaturarComEstoque}
         valorTotalSaldoPeriodo={totals.valorTotalSaldoPeriodo}
         valorFaturarComEstoquePeriodo={totals.valorFaturarComEstoquePeriodo}
         valoresLiberadosParaFaturamento={totals.valoresLiberadosParaFaturamento}
+        valorTotalSaldo={totals.valorTotalSaldo}
+        valorFaturarComEstoque={totals.valorFaturarComEstoque}
       />
 
       <OrdersHeader
@@ -76,6 +80,8 @@ export const PedidosTabContent = ({
         onDateChange={setDate}
         searchType={searchType}
         onSearchTypeChange={setSearchType}
+        selectedStatuses={selectedStatuses}
+        onStatusChange={onStatusChange}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

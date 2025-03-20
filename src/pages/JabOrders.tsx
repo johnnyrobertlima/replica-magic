@@ -4,10 +4,11 @@ import { OrderFilters } from "@/components/jab-orders/OrderFilters";
 import { OrderList } from "@/components/jab-orders/OrderList";
 import { OrderSelectionSummary } from "@/components/jab-orders/OrderSelectionSummary";
 import { TotalCards } from "@/components/jab-orders/TotalCards";
-import { OrdersHeader } from "@/components/jab-orders/OrdersHeader";
+import { OrdersHeader, OrderStatus } from "@/components/jab-orders/OrdersHeader";
 import { OrdersPagination } from "@/components/jab-orders/OrdersPagination";
 import { useOrdersState } from "@/hooks/useOrdersState";
 import { BluebayMenu } from "@/components/jab-orders/BluebayMenu";
+import { useState } from "react";
 
 const JabOrders = () => {
   const {
@@ -34,6 +35,17 @@ const JabOrders = () => {
     handleSearch
   } = useOrdersState();
 
+  // Add state for status filtering
+  const [selectedStatuses, setSelectedStatuses] = useState<OrderStatus[]>([]);
+
+  const handleStatusChange = (status: OrderStatus) => {
+    if (status === 'all') {
+      setSelectedStatuses([]);
+    } else {
+      setSelectedStatuses([status]);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -48,11 +60,11 @@ const JabOrders = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="space-y-6">
           <TotalCards
-            valorTotalSaldo={selectedItems.length > 0 ? selectedItemsTotals.totalValor : totals.valorTotalSaldo}
-            valorFaturarComEstoque={selectedItems.length > 0 ? selectedItemsTotals.totalComEstoque : totals.valorFaturarComEstoque}
             valorTotalSaldoPeriodo={totals.valorTotalSaldoPeriodo || 0}
             valorFaturarComEstoquePeriodo={totals.valorFaturarComEstoquePeriodo || 0}
             valoresLiberadosParaFaturamento={totals.valoresLiberadosParaFaturamento || 0}
+            valorTotalSaldo={selectedItems.length > 0 ? selectedItemsTotals.totalValor : totals.valorTotalSaldo}
+            valorFaturarComEstoque={selectedItems.length > 0 ? selectedItemsTotals.totalComEstoque : totals.valorFaturarComEstoque}
           />
 
           <OrdersHeader
@@ -66,6 +78,8 @@ const JabOrders = () => {
             onDateChange={setDate}
             searchType={searchType}
             onSearchTypeChange={setSearchType}
+            selectedStatuses={selectedStatuses}
+            onStatusChange={handleStatusChange}
           />
 
           <OrderFilters

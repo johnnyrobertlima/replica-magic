@@ -97,31 +97,42 @@ export const useClientOrders = () => {
       const filteredByStatus: Record<string, ClientOrderGroup> = {};
       
       Object.entries(groups).forEach(([clientName, group]) => {
-        // Filter items in the group by status
-        const filteredItems = group.items.filter(item => {
-          // Check if the item's status matches any of the selected statuses
+        // Filter pedidos in the group by status
+        const filteredPedidos = group.pedidos.filter(pedido => {
+          // Check if the pedido's status matches any of the selected statuses
           return selectedStatuses.some(status => 
-            item.STATUS === status || 
-            (status === '0' && item.STATUS === 'Bloqueado') ||
-            (status === '1' && item.STATUS === 'Aberto') ||
-            (status === '2' && item.STATUS === 'Parcial') ||
-            (status === '3' && item.STATUS === 'Total') ||
-            (status === '4' && item.STATUS === 'Cancelado')
+            pedido.STATUS === status || 
+            (status === '0' && pedido.STATUS === 'Bloqueado') ||
+            (status === '1' && pedido.STATUS === 'Aberto') ||
+            (status === '2' && pedido.STATUS === 'Parcial') ||
+            (status === '3' && pedido.STATUS === 'Total') ||
+            (status === '4' && pedido.STATUS === 'Cancelado')
           );
         });
         
-        // Only include group if it has items after filtering
-        if (filteredItems.length > 0) {
-          // Create a new group with the filtered items and recalculate totals
+        // Only include group if it has pedidos after filtering
+        if (filteredPedidos.length > 0) {
+          // Create a new group with the filtered pedidos
+          // Get all items from the filtered pedidos
+          const allFilteredItems = filteredPedidos.flatMap(pedido => 
+            (pedido.items || []).map(item => ({
+              ...item,
+              pedido: pedido.PED_NUMPEDIDO,
+              APELIDO: pedido.APELIDO,
+              PES_CODIGO: pedido.PES_CODIGO
+            }))
+          );
+          
           const filteredGroup = {
             ...group,
-            items: filteredItems,
+            pedidos: filteredPedidos,
+            allItems: allFilteredItems,
             // Recalculate totals based on filtered items
-            totalValorSaldo: filteredItems.reduce((sum, item) => sum + (item.QTDE_SALDO * item.VALOR_UNITARIO || 0), 0),
-            totalValorFaturarComEstoque: filteredItems.reduce((sum, item) => {
-              const disponivel = item.DISPONIVEL || 0;
+            totalValorSaldo: allFilteredItems.reduce((sum, item) => sum + (item.QTDE_SALDO * item.VALOR_UNITARIO || 0), 0),
+            totalValorFaturarComEstoque: allFilteredItems.reduce((sum, item) => {
+              const fisico = item.FISICO || 0;
               const qtdeSaldo = item.QTDE_SALDO || 0;
-              const qtdeFaturar = Math.min(disponivel, qtdeSaldo);
+              const qtdeFaturar = Math.min(fisico, qtdeSaldo);
               return sum + (qtdeFaturar * item.VALOR_UNITARIO || 0);
             }, 0)
           };
