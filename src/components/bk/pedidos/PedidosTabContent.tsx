@@ -1,6 +1,6 @@
 
 import { TotalCards } from "@/components/jab-orders/TotalCards";
-import { OrdersHeader } from "@/components/jab-orders/OrdersHeader";
+import { OrdersHeader, OrderStatus } from "@/components/jab-orders/OrdersHeader";
 import { ClientOrderCard } from "@/components/jab-orders/ClientOrderCard";
 import { SelectionSummary } from "@/components/jab-orders/SelectionSummary";
 
@@ -31,6 +31,8 @@ interface PedidosTabContentProps {
   handleEnviarParaSeparacao: () => void;
   exportSelectedItemsToExcel: () => void;
   clearSelections: () => void;
+  selectedStatuses: OrderStatus[];
+  onStatusChange: (status: OrderStatus) => void;
 }
 
 export const PedidosTabContent = ({
@@ -53,13 +55,13 @@ export const PedidosTabContent = ({
   handleItemSelect,
   handleEnviarParaSeparacao,
   exportSelectedItemsToExcel,
-  clearSelections
+  clearSelections,
+  selectedStatuses,
+  onStatusChange
 }: PedidosTabContentProps) => {
   return (
     <>
       <TotalCards
-        valorTotalSaldo={totals.valorTotalSaldo}
-        valorFaturarComEstoque={totals.valorFaturarComEstoque}
         valorTotalSaldoPeriodo={totals.valorTotalSaldoPeriodo}
         valorFaturarComEstoquePeriodo={totals.valorFaturarComEstoquePeriodo}
         valoresLiberadosParaFaturamento={totals.valoresLiberadosParaFaturamento}
@@ -76,6 +78,8 @@ export const PedidosTabContent = ({
         onDateChange={setDate}
         searchType={searchType}
         onSearchTypeChange={setSearchType}
+        selectedStatuses={selectedStatuses}
+        onStatusChange={onStatusChange}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

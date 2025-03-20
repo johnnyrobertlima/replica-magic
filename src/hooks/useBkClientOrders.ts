@@ -8,6 +8,7 @@ import { useClientOrdersState } from "./client-orders/useClientOrdersState";
 import { useItemSelection } from "./client-orders/useItemSelection";
 import { useSeparationOperations } from "./client-orders/useSeparationOperations";
 import { ClientOrderGroup } from "@/types/clientOrders";
+import { OrderStatus } from "@/components/jab-orders/OrdersHeader";
 
 export const useClientOrders = () => {
   // Use the state hook
@@ -32,6 +33,9 @@ export const useClientOrders = () => {
     toggleExpand,
     handleSearch
   } = useClientOrdersState();
+
+  // Add selected statuses state
+  const [selectedStatuses, setSelectedStatuses] = useState<OrderStatus[]>([]);
 
   // Data fetching hooks
   const { data: ordersData = { orders: [], totalCount: 0, itensSeparacao: {} }, isLoading: isLoadingOrders } = useAllBkOrders({
@@ -84,11 +88,53 @@ export const useClientOrders = () => {
     processGroups();
   }, [ordersData]);
 
-  // Filter groups by search criteria
-  const filteredGroups = useMemo(() => 
-    filterGroupsBySearchCriteria(processedGroups, isSearching, searchQuery, searchType), 
-    [processedGroups, isSearching, searchQuery, searchType]
-  );
+  // Filter groups by search criteria and status
+  const filteredGroups = useMemo(() => {
+    let groups = filterGroupsBySearchCriteria(processedGroups, isSearching, searchQuery, searchType);
+
+    // Filter by status if any statuses are selected
+    if (selectedStatuses.length > 0) {
+      const filteredByStatus: Record<string, ClientOrderGroup> = {};
+      
+      Object.entries(groups).forEach(([clientName, group]) => {
+        // Filter items in the group by status
+        const filteredItems = group.items.filter(item => {
+          // Check if the item's status matches any of the selected statuses
+          return selectedStatuses.some(status => 
+            item.STATUS === status || 
+            (status === '0' && item.STATUS === 'Bloqueado') ||
+            (status === '1' && item.STATUS === 'Aberto') ||
+            (status === '2' && item.STATUS === 'Parcial') ||
+            (status === '3' && item.STATUS === 'Total') ||
+            (status === '4' && item.STATUS === 'Cancelado')
+          );
+        });
+        
+        // Only include group if it has items after filtering
+        if (filteredItems.length > 0) {
+          // Create a new group with the filtered items and recalculate totals
+          const filteredGroup = {
+            ...group,
+            items: filteredItems,
+            // Recalculate totals based on filtered items
+            totalValorSaldo: filteredItems.reduce((sum, item) => sum + (item.QTDE_SALDO * item.VALOR_UNITARIO || 0), 0),
+            totalValorFaturarComEstoque: filteredItems.reduce((sum, item) => {
+              const disponivel = item.DISPONIVEL || 0;
+              const qtdeSaldo = item.QTDE_SALDO || 0;
+              const qtdeFaturar = Math.min(disponivel, qtdeSaldo);
+              return sum + (qtdeFaturar * item.VALOR_UNITARIO || 0);
+            }, 0)
+          };
+          
+          filteredByStatus[clientName] = filteredGroup;
+        }
+      });
+      
+      return filteredByStatus;
+    }
+    
+    return groups;
+  }, [processedGroups, isSearching, searchQuery, searchType, selectedStatuses]);
 
   // Calculate period-specific totals based on filtered groups
   const periodTotals = useMemo(() => {
@@ -147,6 +193,8 @@ export const useClientOrders = () => {
     selectedItems,
     expandedClients,
     isSending,
+    selectedStatuses,
+    setSelectedStatuses,
     // Data
     ordersData,
     totals: combinedTotals,

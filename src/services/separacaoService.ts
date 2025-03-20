@@ -19,7 +19,7 @@ export async function fetchSeparacoes(centrocusto: 'JAB' | 'BK' = 'JAB'): Promis
 
     // Break the circular reference by using type assertion
     // Using a more explicit double cast to avoid deep type instantiation
-    return (data as any) as Separacao[];
+    return (data as unknown as Separacao[]);
   } catch (error) {
     console.error('Exceção ao buscar separações:', error);
     return [];
@@ -41,7 +41,7 @@ export async function fetchSeparacaoById(id: string): Promise<Separacao | null> 
 
     // Break the circular reference by using type assertion
     // Using a more explicit double cast to avoid deep type instantiation
-    return (data as any) as Separacao | null;
+    return (data as unknown as Separacao | null);
   } catch (error) {
     console.error('Exceção ao buscar separação por ID:', error);
     return null;

@@ -2,6 +2,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PedidosTabContent } from "./PedidosTabContent";
 import { SeparacoesTabContent } from "./SeparacoesTabContent";
+import { OrderStatus } from "@/components/jab-orders/OrdersHeader";
 
 interface OrdersTabsProps {
   clientOrders: ReturnType<typeof import("@/hooks/useBkClientOrders").useClientOrders>;
@@ -26,6 +27,8 @@ export const OrdersTabs = ({ clientOrders }: OrdersTabsProps) => {
     separacoes,
     filteredGroups,
     totalSelecionado,
+    selectedStatuses,
+    setSelectedStatuses,
     toggleExpand,
     handleSearch,
     handleItemSelect,
@@ -33,6 +36,14 @@ export const OrdersTabs = ({ clientOrders }: OrdersTabsProps) => {
     exportSelectedItemsToExcel,
     clearSelections,
   } = clientOrders;
+
+  const handleStatusChange = (status: OrderStatus) => {
+    if (status === 'all') {
+      setSelectedStatuses([]);
+    } else {
+      setSelectedStatuses([status]);
+    }
+  };
 
   return (
     <Tabs defaultValue="pedidos">
@@ -63,6 +74,8 @@ export const OrdersTabs = ({ clientOrders }: OrdersTabsProps) => {
           handleEnviarParaSeparacao={handleEnviarParaSeparacao}
           exportSelectedItemsToExcel={exportSelectedItemsToExcel}
           clearSelections={clearSelections}
+          selectedStatuses={selectedStatuses}
+          onStatusChange={handleStatusChange}
         />
       </TabsContent>
 
