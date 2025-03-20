@@ -17,7 +17,8 @@ export async function fetchSeparacoes(centrocusto: 'JAB' | 'BK' = 'JAB'): Promis
       return [];
     }
 
-    return (data || []) as Separacao[];
+    // Use type assertion to break the recursive type checking
+    return (data || []) as unknown as Separacao[];
   } catch (error) {
     console.error('Exceção ao buscar separações:', error);
     return [];
@@ -37,7 +38,8 @@ export async function fetchSeparacaoById(id: string): Promise<Separacao | null> 
       return null;
     }
 
-    return data as Separacao | null;
+    // Use type assertion to break the recursive type checking
+    return data as unknown as Separacao | null;
   } catch (error) {
     console.error('Exceção ao buscar separação por ID:', error);
     return null;
