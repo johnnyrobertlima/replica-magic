@@ -1,14 +1,15 @@
 
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertOctagon } from "lucide-react";
 import { useClientOrders } from "@/hooks/useBkClientOrders";
 import { OrdersTabs } from "@/components/bk/pedidos/OrdersTabs";
 import { Toaster } from "@/components/ui/toaster";
 import { BkMenu } from "@/components/bk/BkMenu";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const BkPedidos = () => {
   const clientOrders = useClientOrders();
-  const { isLoading, isRepresentanteBK, representanteNome } = clientOrders;
+  const { isLoading, isRepresentanteBK, representanteNome, error } = clientOrders;
 
   if (isLoading) {
     return (
@@ -22,6 +23,14 @@ const BkPedidos = () => {
     <main className="container-fluid p-0 max-w-full">
       <BkMenu />
       <div className="container mx-auto px-4 py-8">
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertOctagon className="h-4 w-4" />
+            <AlertTitle>Erro</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        
         {isRepresentanteBK && representanteNome && (
           <div className="mb-4">
             <Badge variant="secondary" className="px-3 py-1.5 text-base">

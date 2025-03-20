@@ -1,3 +1,4 @@
+
 import { useAllBkOrders, useBkTotals } from "@/hooks/useBkOrders";
 import { useSeparacoes } from "@/hooks/useSeparacoes";
 import { useClientOrdersState } from "./client-orders/useClientOrdersState";
@@ -38,7 +39,7 @@ export const useClientOrders = () => {
   const { selectedStatuses, setSelectedStatuses, handleStatusChange } = useBkOrderStatuses();
 
   // Check if user is a representante and get their code
-  const { isRepresentanteBK, representanteCodigo, representanteNome, isLoading: isLoadingRepresentante } = useUserRepresentante();
+  const { isRepresentanteBK, representanteCodigo, representanteNome, isLoading: isLoadingRepresentante, error: representanteError } = useUserRepresentante();
 
   // Data fetching hooks
   const { data: ordersData = { orders: [], totalCount: 0, itensSeparacao: {} }, isLoading: isLoadingOrders } = useAllBkOrders({
@@ -109,6 +110,7 @@ export const useClientOrders = () => {
     isRepresentanteBK,
     representanteCodigo,
     representanteNome,
+    error: representanteError,
     // Data
     ordersData,
     totals: combinedTotals,
