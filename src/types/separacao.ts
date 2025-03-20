@@ -20,6 +20,7 @@ export interface Separacao {
   status: string;
   updated_at: string;
   valor_total: number;
-  separacao_itens: SeparacaoItem[];
+  separacao_itens?: SeparacaoItem[];
   representante_nome?: string;
+  centrocusto?: 'JAB' | 'BK';
 }

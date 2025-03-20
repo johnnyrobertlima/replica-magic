@@ -27,8 +27,8 @@ export async function fetchTotals(centrocusto: string = 'JAB'): Promise<JabTotal
     }
 
     // Extract values from results
-    const valorTotalSaldo = valorTotalSaldoResult.data?.valor_total_saldo || 0;
-    const valorFaturarComEstoque = valorFaturarComEstoqueResult.data?.valor_total_faturavel || 0;
+    const valorTotalSaldo = valorTotalSaldoResult.data?.[0]?.valor_total_saldo || 0;
+    const valorFaturarComEstoque = valorFaturarComEstoqueResult.data?.[0]?.valor_total_faturavel || 0;
 
     return {
       valorTotalSaldo,

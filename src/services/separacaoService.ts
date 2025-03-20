@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import type { Separacao } from '@/types/separacao';
 
@@ -6,7 +7,7 @@ export async function fetchSeparacoes(centrocusto: 'JAB' | 'BK' = 'JAB'): Promis
     // Fetch separations not in 'completed' status
     const { data, error } = await supabase
       .from('separacoes')
-      .select('*')
+      .select('*, separacao_itens(*)')
       .eq('centrocusto', centrocusto)
       .neq('status', 'completed')
       .order('created_at', { ascending: false });
@@ -27,9 +28,9 @@ export async function fetchSeparacaoById(id: string): Promise<Separacao | null> 
   try {
     const { data, error } = await supabase
       .from('separacoes')
-      .select('*')
+      .select('*, separacao_itens(*)')
       .eq('id', id)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('Erro ao buscar separação por ID:', error);

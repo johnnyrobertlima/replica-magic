@@ -28,7 +28,7 @@ export async function fetchPedidosUnicos(
     }
 
     // Extract the total count from the first row if available
-    const totalCount = pedidosResult.data.length > 0 
+    const totalCount = pedidosResult.data && pedidosResult.data.length > 0 
       ? pedidosResult.data[0].total_count 
       : 0;
 
@@ -54,15 +54,15 @@ export async function fetchAllPedidosUnicos(
       .in('STATUS', ['1', '2'])
       .gte('DATA_PEDIDO', dataInicial)
       .lte('DATA_PEDIDO', dataFinal)
-      .order('PED_NUMPEDIDO')
-      .distinct('PED_NUMPEDIDO');
+      .order('PED_NUMPEDIDO');
 
     if (error) {
       console.error('Erro ao buscar todos os pedidos únicos:', error);
       return [];
     }
 
-    return data.map(p => p.PED_NUMPEDIDO);
+    const uniquePedidos = Array.from(new Set(data.map(p => p.PED_NUMPEDIDO)));
+    return uniquePedidos;
   } catch (error) {
     console.error('Exceção ao buscar todos os pedidos únicos:', error);
     return [];

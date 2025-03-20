@@ -49,19 +49,41 @@ export async function sendToSeparation({ items }: SeparationRequest) {
       const { data, error } = await supabase
         .from('separacoes')
         .insert({
+          cliente_codigo: parseInt(clienteKey), // Convert to number for the DB
+          cliente_nome: 'Cliente ' + clienteKey, // This should be replaced with actual client name if available
           user_id: userId,
           user_email: userEmail,
-          cliente_codigo: clienteKey,
-          items: clienteItems,
+          quantidade_itens: clienteItems.length,
+          valor_total: clienteItems.reduce((sum, item) => sum + (item.qtdeSaldo * item.valorUnitario), 0),
           status: 'pending',
           centrocusto
         })
-        .select('*')
+        .select()
         .single();
 
       if (error) {
         console.error('Erro ao criar separação:', error);
         throw new Error(`Falha ao criar separação: ${error.message}`);
+      }
+
+      // Add separation items
+      const separationItems = clienteItems.map(item => ({
+        separacao_id: data.id,
+        pedido: item.pedido,
+        item_codigo: item.itemCodigo,
+        descricao: item.descricao,
+        quantidade_pedida: item.qtdeSaldo,
+        valor_unitario: item.valorUnitario,
+        valor_total: item.qtdeSaldo * item.valorUnitario
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('separacao_itens')
+        .insert(separationItems);
+
+      if (itemsError) {
+        console.error('Erro ao inserir itens:', itemsError);
+        throw new Error(`Falha ao inserir itens: ${itemsError.message}`);
       }
 
       separations.push(data);
@@ -73,3 +95,6 @@ export async function sendToSeparation({ items }: SeparationRequest) {
     return { success: false, error: error.message || 'Falha desconhecida na separação' };
   }
 }
+
+// Alias for backward compatibility
+export const sendOrdersForSeparation = sendToSeparation;

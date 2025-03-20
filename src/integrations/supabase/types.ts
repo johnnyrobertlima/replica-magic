@@ -1610,8 +1610,24 @@ export type Database = {
           valor_total_faturavel: number
         }[]
       }
+      calcular_valor_faturar_com_estoque_por_centrocusto: {
+        Args: {
+          centro_custo: string
+        }
+        Returns: {
+          valor_total_faturavel: number
+        }[]
+      }
       calcular_valor_total_jab: {
         Args: Record<PropertyKey, never>
+        Returns: {
+          valor_total_saldo: number
+        }[]
+      }
+      calcular_valor_total_por_centrocusto: {
+        Args: {
+          centro_custo: string
+        }
         Returns: {
           valor_total_saldo: number
         }[]
@@ -1732,6 +1748,19 @@ export type Database = {
           data_final: string
           offset_val: number
           limit_val: number
+        }
+        Returns: {
+          ped_numpedido: string
+          total_count: number
+        }[]
+      }
+      get_pedidos_unicos_by_centrocusto: {
+        Args: {
+          data_inicial: string
+          data_final: string
+          offset_val: number
+          limit_val: number
+          centrocusto: string
         }
         Returns: {
           ped_numpedido: string

@@ -9,8 +9,9 @@ import {
   fetchPedidosUnicos,
   fetchPedidosDetalhados,
   fetchAllPedidosDireto,
-  fetchTotals as fetchJabTotals
-} from "./jab/jabSupabaseClient";
+} from "./jab/pedidos/pedidosQueries";
+
+import { fetchTotals as fetchJabTotals } from "./jab/totals/totalsQueries";
 
 import {
   processJabOrders,
@@ -32,7 +33,13 @@ export async function fetchJabOrders({
 
   console.log('Buscando pedidos para o período:', { dataInicial, dataFinal, page, pageSize });
 
-  const { data: pedidosUnicos, totalCount } = await fetchPedidosUnicos(dataInicial, dataFinal, page, pageSize);
+  const { data: pedidosUnicos, totalCount } = await fetchPedidosUnicos(dataInicial, dataFinal, page, pageSize, 'JAB');
+  
+  if (!pedidosUnicos || pedidosUnicos.length === 0) {
+    console.log('Nenhum pedido único encontrado para o período');
+    return { orders: [], totalCount: 0, itensSeparacao: {} };
+  }
+  
   const numeroPedidos = pedidosUnicos.map(p => p.ped_numpedido);
 
   if (!numeroPedidos.length) {
@@ -40,7 +47,7 @@ export async function fetchJabOrders({
     return { orders: [], totalCount, itensSeparacao: {} };
   }
 
-  const pedidosDetalhados = await fetchPedidosDetalhados(numeroPedidos);
+  const pedidosDetalhados = await fetchPedidosDetalhados(numeroPedidos, 'JAB');
 
   if (!pedidosDetalhados.length) {
     console.log('Nenhum detalhe de pedido encontrado');

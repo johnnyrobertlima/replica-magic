@@ -9,8 +9,9 @@ import {
   fetchPedidosUnicos,
   fetchPedidosDetalhados,
   fetchAllPedidosDireto,
-  fetchTotals as fetchJabTotals
-} from "./jab/jabSupabaseClient";
+} from "./jab/pedidos/pedidosQueries";
+
+import { fetchTotals as fetchJabTotals } from "./jab/totals/totalsQueries";
 
 import {
   processJabOrders,
@@ -35,6 +36,12 @@ export async function fetchBkOrders({
 
   // Modify the function to filter for BK orders (assuming the JAB database structure)
   const { data: pedidosUnicos, totalCount } = await fetchPedidosUnicos(dataInicial, dataFinal, page, pageSize, 'BK');
+  
+  if (!pedidosUnicos || pedidosUnicos.length === 0) {
+    console.log('Nenhum pedido único BK encontrado para o período');
+    return { orders: [], totalCount: 0, itensSeparacao: {} };
+  }
+
   const numeroPedidos = pedidosUnicos.map(p => p.ped_numpedido);
 
   if (!numeroPedidos.length) {
