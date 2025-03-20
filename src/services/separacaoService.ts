@@ -17,8 +17,8 @@ export async function fetchSeparacoes(centrocusto: 'JAB' | 'BK' = 'JAB'): Promis
       return [];
     }
 
-    // Break the circular type reference with a more direct cast
-    return (data || []) as Array<Separacao>;
+    // Use a type assertion that avoids the deep recursion
+    return data as unknown as Separacao[];
   } catch (error) {
     console.error('Exceção ao buscar separações:', error);
     return [];
@@ -38,8 +38,8 @@ export async function fetchSeparacaoById(id: string): Promise<Separacao | null> 
       return null;
     }
 
-    // Break the circular type reference with a more direct cast
-    return data as Separacao | null;
+    // Use a type assertion that avoids the deep recursion
+    return data as unknown as Separacao | null;
   } catch (error) {
     console.error('Exceção ao buscar separação por ID:', error);
     return null;
