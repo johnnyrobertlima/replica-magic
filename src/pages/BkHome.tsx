@@ -2,7 +2,7 @@
 import { BkMenu } from "@/components/bk/BkMenu";
 import { BkBanner } from "@/components/bk/BkBanner";
 import { ServiceCard } from "@/components/bk/ServiceCard";
-import { FileText, BarChart2, Users, Wallet, ClipboardCheck, ReceiptText } from "lucide-react";
+import { FileText, BarChart2, Users, Wallet, ClipboardCheck, ShoppingBag, Receipt } from "lucide-react";
 
 const BkHome = () => {
   const services = [
@@ -35,11 +35,18 @@ const BkHome = () => {
       path: "/client-area/bk/financial"
     },
     {
-      title: "Controle de Faturamento",
-      description: "Gerenciamento de faturas e pagamentos",
-      icon: ReceiptText,
-      iconColor: "bg-blue-100 text-blue-600",
-      path: "/client-area/bk/invoice-control"
+      title: "Pedidos",
+      description: "Acompanhe seus pedidos e separações",
+      icon: ShoppingBag,
+      iconColor: "bg-emerald-100 text-emerald-600",
+      path: "/client-area/bk/pedidos"
+    },
+    {
+      title: "Títulos Financeiros",
+      description: "Consulte seus títulos e resumo financeiro",
+      icon: Receipt,
+      iconColor: "bg-indigo-100 text-indigo-600",
+      path: "/client-area/bk/clientefinancial"
     },
     {
       title: "Solicitações",
