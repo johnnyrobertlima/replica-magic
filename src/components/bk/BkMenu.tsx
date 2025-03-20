@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { Menu, X, Users, Receipt, BarChart2, FileText, ClipboardCheck, LogOut, FileSpreadsheet, Package } from "lucide-react";
@@ -50,38 +49,33 @@ export const BkMenu = () => {
     <div className="sticky top-0 z-50 w-full bg-primary shadow-md">
       <div className="container mx-auto px-4">
         {/* Desktop Menu */}
-        <div className="hidden md:flex justify-between py-3">
-          <NavigationMenu>
-            <NavigationMenuList className="gap-1">
-              {menuItems.map((item) => (
-                <NavigationMenuItem key={item.path}>
-                  <NavLink
-                    to={item.path}
-                    className={({ isActive }) =>
-                      cn(
-                        "flex items-center px-4 py-2 rounded-md text-white hover:bg-primary-700 transition-colors",
-                        isActive ? "bg-primary-800" : ""
-                      )
-                    }
-                    end={item.path === "/client-area/bk"}
-                  >
-                    {item.icon}
-                    {item.name}
-                  </NavLink>
-                </NavigationMenuItem>
-              ))}
-            </NavigationMenuList>
-          </NavigationMenu>
+        <div className="hidden md:flex justify-between items-center py-3">
+          <div className="flex items-center space-x-1">
+            {menuItems.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                className={({ isActive }) =>
+                  cn(
+                    "flex items-center px-3 py-2 rounded-md text-white hover:bg-primary-700 transition-colors whitespace-nowrap",
+                    isActive ? "bg-primary-800" : ""
+                  )
+                }
+                end={item.path === "/client-area/bk"}
+              >
+                {item.icon}
+                {item.name}
+              </NavLink>
+            ))}
+          </div>
           
-          <NavigationMenuItem>
-            <button
-              onClick={handleLogout}
-              className="flex items-center px-4 py-2 rounded-md text-white bg-blue-700 hover:bg-blue-800 transition-colors"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Sair
-            </button>
-          </NavigationMenuItem>
+          <button
+            onClick={handleLogout}
+            className="flex items-center px-4 py-2 rounded-md text-white bg-blue-700 hover:bg-blue-800 transition-colors"
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Sair
+          </button>
         </div>
 
         {/* Mobile Menu Button */}
