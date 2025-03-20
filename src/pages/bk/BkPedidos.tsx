@@ -1,5 +1,5 @@
 
-import { Loader2, AlertOctagon } from "lucide-react";
+import { Loader2, AlertOctagon, User } from "lucide-react";
 import { useClientOrders } from "@/hooks/useBkClientOrders";
 import { OrdersTabs } from "@/components/bk/pedidos/OrdersTabs";
 import { Toaster } from "@/components/ui/toaster";
@@ -32,12 +32,15 @@ const BkPedidos = () => {
         )}
         
         {isRepresentanteBK && representanteNome && (
-          <div className="mb-4">
-            <Badge variant="secondary" className="px-3 py-1.5 text-base">
-              Representante: {representanteNome}
-            </Badge>
-          </div>
+          <Alert variant="default" className="mb-4 bg-blue-50 border-blue-200">
+            <User className="h-4 w-4 text-blue-600" />
+            <AlertTitle className="text-blue-800">Modo Representante</AlertTitle>
+            <AlertDescription className="text-blue-700">
+              Você está visualizando apenas os pedidos do representante: <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">{representanteNome}</Badge>
+            </AlertDescription>
+          </Alert>
         )}
+        
         <div className="space-y-6">
           <OrdersTabs clientOrders={clientOrders} />
         </div>

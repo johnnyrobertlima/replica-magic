@@ -34,44 +34,25 @@ export const useUserRepresentante = () => {
         
         console.log("Checking if user is in 'Representantes BK' group");
         
-        // Instead of querying user_groups directly, use a more direct approach
-        // First get all groups
-        const { data: groups, error: groupsError } = await supabase
-          .from('groups')
-          .select('id, name')
-          .eq('name', 'Representantes BK')
-          .single();
-          
+        // Use the RPC function to check if user is in the BK Representantes group
+        // This avoids the RLS issue with the user_groups table
+        const { data: userGroups, error: groupsError } = await supabase.rpc(
+          'check_user_in_group',
+          { 
+            user_id: user.id, 
+            group_name: 'Representantes BK'
+          }
+        );
+        
         if (groupsError) {
-          console.error("Error fetching Representantes BK group:", groupsError);
-          setError("Erro ao buscar grupo de representantes");
+          console.error("Error checking if user is in Representantes BK group:", groupsError);
+          setError("Erro ao verificar associação ao grupo de representantes. Por favor, contate o suporte.");
           setIsLoading(false);
           return;
         }
         
-        if (!groups) {
-          console.log("Representantes BK group not found");
-          setIsLoading(false);
-          return;
-        }
-        
-        // Now check if user belongs to this group
-        const representanteGroupId = groups.id;
-        const { data: userInGroup, error: userInGroupError } = await supabase
-          .from('user_groups')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('group_id', representanteGroupId)
-          .maybeSingle();
-          
-        if (userInGroupError) {
-          console.error("Error checking if user is in Representantes BK group:", userInGroupError);
-          setError("Erro ao verificar associação do usuário ao grupo de representantes");
-          setIsLoading(false);
-          return;
-        }
-        
-        const isRepresentante = !!userInGroup;
+        // userGroups will be true/false or null if the function exists and was executed
+        const isRepresentante = !!userGroups;
         console.log("Is user a representante?", isRepresentante);
         setIsRepresentanteBK(isRepresentante);
         
@@ -111,6 +92,7 @@ export const useUserRepresentante = () => {
             }
           } else {
             console.log("User is in representantes group but has no representative code assigned");
+            setError("Usuário está no grupo de representantes mas não tem um código de representante associado");
           }
         }
       } catch (error) {
