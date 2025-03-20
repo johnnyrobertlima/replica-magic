@@ -41,6 +41,7 @@ export const KNOWN_ROUTES = [
   "/client-area/tokens",
   "/client-area/whatsapp-registration",
   "/client-area/whatsapp",
+  "/client-area/representantes",
   "/post-management",
   "/content-management",
   "/token-management",
