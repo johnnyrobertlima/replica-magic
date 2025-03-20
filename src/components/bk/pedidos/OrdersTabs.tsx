@@ -28,22 +28,14 @@ export const OrdersTabs = ({ clientOrders }: OrdersTabsProps) => {
     filteredGroups,
     totalSelecionado,
     selectedStatuses,
-    setSelectedStatuses,
     toggleExpand,
     handleSearch,
     handleItemSelect,
     handleEnviarParaSeparacao,
     exportSelectedItemsToExcel,
     clearSelections,
+    handleStatusChange,
   } = clientOrders;
-
-  const handleStatusChange = (status: OrderStatus) => {
-    if (status === 'all') {
-      setSelectedStatuses([]);
-    } else {
-      setSelectedStatuses([status]);
-    }
-  };
 
   return (
     <Tabs defaultValue="pedidos">
