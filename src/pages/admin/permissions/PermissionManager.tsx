@@ -26,7 +26,7 @@ export const PermissionManager = ({ selectedGroupId }: PermissionManagerProps) =
     },
   });
 
-  const { data: permissions, isLoading: isLoadingPermissions } = useQuery({
+  const { data: permissions, isLoading: isLoadingPermissions, refetch: refetchPermissions } = useQuery({
     queryKey: ["permissions", selectedGroupId],
     queryFn: async () => {
       if (!selectedGroupId) return [];
@@ -64,7 +64,7 @@ export const PermissionManager = ({ selectedGroupId }: PermissionManagerProps) =
       <PermissionForm
         selectedGroupId={selectedGroupId}
         existingPaths={existingPaths}
-        onSuccess={() => {}}
+        onSuccess={() => refetchPermissions()}
       />
       <PermissionTable
         permissions={permissions}

@@ -66,6 +66,7 @@ export const PermissionForm = ({ selectedGroupId, existingPaths, onSuccess }: Pe
         resourcePath={formData.resource_path}
         onResourcePathChange={handleResourcePathChange}
         availablePaths={allPaths}
+        selectedGroupId={selectedGroupId}
       />
       
       <PermissionTypeSelector 

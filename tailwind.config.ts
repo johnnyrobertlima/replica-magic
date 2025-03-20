@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -24,6 +25,7 @@ export default {
         background: "#FFFFFF",
         surface: "#F5F6F7",
         "surface-hover": "#E6E8EA",
+        "soft-yellow": "#FEF7CD",
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
