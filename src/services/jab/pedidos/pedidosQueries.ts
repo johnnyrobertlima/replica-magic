@@ -1,4 +1,3 @@
-
 import { supabase } from '@/services/jab/base/supabaseClient';
 
 // Function to fetch unique order numbers with pagination
@@ -98,16 +97,23 @@ export async function fetchPedidosDetalhados(
 export async function fetchAllPedidosDireto(
   dataInicial: string,
   dataFinal: string,
-  centrocusto: string = 'JAB'
+  centrocusto: string = 'JAB',
+  statusFilter?: string[]
 ) {
   try {
-    const { data, error } = await supabase
+    const query = supabase
       .from('BLUEBAY_PEDIDO')
       .select('*')
       .eq('CENTROCUSTO', centrocusto)
-      .in('STATUS', ['1', '2'])
       .gte('DATA_PEDIDO', dataInicial)
       .lte('DATA_PEDIDO', dataFinal);
+    
+    // Add status filter if provided
+    if (statusFilter && statusFilter.length > 0) {
+      query.in('STATUS', statusFilter);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error('Erro ao buscar todos os pedidos direto:', error);

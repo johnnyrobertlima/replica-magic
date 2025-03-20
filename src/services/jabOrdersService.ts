@@ -1,4 +1,3 @@
-
 import type { 
   JabOrdersResponse,
   JabTotalsResponse,
@@ -18,13 +17,14 @@ import {
   processAllJabOrders
 } from "./jab/jabDataProcessor";
 
-export async function fetchJabOrders({ 
+// Function to fetch orders with pagination
+export async function fetchOrders({ 
   dateRange, 
   page = 1, 
   pageSize = 15 
 }: UseJabOrdersOptions): Promise<JabOrdersResponse> {
   if (!dateRange?.from || !dateRange?.to) {
-    console.warn('fetchJabOrders: Data range is missing from or to', dateRange);
+    console.warn('fetchOrders: Data range is missing from or to', dateRange);
     return { orders: [], totalCount: 0, itensSeparacao: {} };
   }
 
@@ -33,13 +33,13 @@ export async function fetchJabOrders({
 
   console.log('Buscando pedidos para o período:', { dataInicial, dataFinal, page, pageSize });
 
-  const { data: pedidosUnicos, totalCount } = await fetchPedidosUnicos(dataInicial, dataFinal, page, pageSize, 'JAB');
+  const { data: pedidosUnicos, totalCount } = await fetchPedidosUnicos(dataInicial, dataFinal, page, pageSize);
   
   if (!pedidosUnicos || pedidosUnicos.length === 0) {
     console.log('Nenhum pedido único encontrado para o período');
     return { orders: [], totalCount: 0, itensSeparacao: {} };
   }
-  
+
   const numeroPedidos = pedidosUnicos.map(p => p.ped_numpedido);
 
   if (!numeroPedidos.length) {
@@ -47,7 +47,7 @@ export async function fetchJabOrders({
     return { orders: [], totalCount, itensSeparacao: {} };
   }
 
-  const pedidosDetalhados = await fetchPedidosDetalhados(numeroPedidos, 'JAB');
+  const pedidosDetalhados = await fetchPedidosDetalhados(numeroPedidos);
 
   if (!pedidosDetalhados.length) {
     console.log('Nenhum detalhe de pedido encontrado');
@@ -64,11 +64,12 @@ export async function fetchJabOrders({
   };
 }
 
-export async function fetchAllJabOrders({ 
+// Function to fetch all orders without pagination
+export async function fetchAllOrders({ 
   dateRange 
 }: Omit<UseJabOrdersOptions, 'page' | 'pageSize'>): Promise<JabOrdersResponse> {
   if (!dateRange?.from || !dateRange?.to) {
-    console.warn('fetchAllJabOrders: Data range is missing from or to', dateRange);
+    console.warn('fetchAllOrders: Data range is missing from or to', dateRange);
     return { orders: [], totalCount: 0, itensSeparacao: {} };
   }
 
@@ -77,8 +78,8 @@ export async function fetchAllJabOrders({
 
   console.log('Buscando todos os pedidos para o período:', { dataInicial, dataFinal });
 
-  // Buscar todos os pedidos diretamente em vez de usar a função intermediária
-  const pedidosDetalhados = await fetchAllPedidosDireto(dataInicial, dataFinal);
+  // For JAB, continue using status filter ['1', '2']
+  const pedidosDetalhados = await fetchAllPedidosDireto(dataInicial, dataFinal, 'JAB', ['1', '2']);
 
   if (!pedidosDetalhados.length) {
     console.log('Nenhum pedido detalhado encontrado para o período via busca direta');
@@ -96,6 +97,7 @@ export async function fetchAllJabOrders({
   };
 }
 
+// Function to fetch totals
 export async function fetchTotals(): Promise<JabTotalsResponse> {
   return await fetchJabTotals();
 }

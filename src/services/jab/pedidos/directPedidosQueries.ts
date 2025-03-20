@@ -4,8 +4,13 @@ import { supabase } from "../base/supabaseClient";
 /**
  * Fetches all direct pedidos by date range
  */
-export async function fetchAllPedidosDireto(dataInicial: string, dataFinal: string) {
-  console.log(`Buscando todos os pedidos diretos para período: ${dataInicial} até ${dataFinal}`);
+export async function fetchAllPedidosDireto(
+  dataInicial: string, 
+  dataFinal: string, 
+  centroCusto: string = 'JAB', 
+  statusFilter?: string[]
+) {
+  console.log(`Buscando todos os pedidos diretos para período: ${dataInicial} até ${dataFinal}, centroCusto: ${centroCusto}`);
   
   try {
     // Divide a consulta em lotes para evitar timeouts
@@ -35,10 +40,14 @@ export async function fetchAllPedidosDireto(dataInicial: string, dataFinal: stri
           DATA_PEDIDO,
           REPRESENTANTE
         `)
-        .eq('CENTROCUSTO', 'JAB')
-        .in('STATUS', ['1', '2'])
+        .eq('CENTROCUSTO', centroCusto)
         .gte('DATA_PEDIDO', `${dataInicial}`)
         .lte('DATA_PEDIDO', `${dataFinal} 23:59:59.999`);
+      
+      // Apply status filter if provided
+      if (statusFilter && statusFilter.length > 0) {
+        query.in('STATUS', statusFilter);
+      }
       
       // Aplicar paginação baseada no ID se não for a primeira consulta
       if (lastId) {
