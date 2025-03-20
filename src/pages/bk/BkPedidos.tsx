@@ -4,10 +4,11 @@ import { useClientOrders } from "@/hooks/useBkClientOrders";
 import { OrdersTabs } from "@/components/bk/pedidos/OrdersTabs";
 import { Toaster } from "@/components/ui/toaster";
 import { BkMenu } from "@/components/bk/BkMenu";
+import { Badge } from "@/components/ui/badge";
 
 const BkPedidos = () => {
   const clientOrders = useClientOrders();
-  const { isLoading } = clientOrders;
+  const { isLoading, isRepresentanteBK, representanteNome } = clientOrders;
 
   if (isLoading) {
     return (
@@ -21,6 +22,13 @@ const BkPedidos = () => {
     <main className="container-fluid p-0 max-w-full">
       <BkMenu />
       <div className="container mx-auto px-4 py-8">
+        {isRepresentanteBK && representanteNome && (
+          <div className="mb-4">
+            <Badge variant="secondary" className="px-3 py-1.5 text-base">
+              Representante: {representanteNome}
+            </Badge>
+          </div>
+        )}
         <div className="space-y-6">
           <OrdersTabs clientOrders={clientOrders} />
         </div>

@@ -9,11 +9,54 @@ export const useBkGroupFiltering = (
   isSearching: boolean,
   searchQuery: string,
   searchType: string,
-  selectedStatuses: OrderStatus[]
+  selectedStatuses: OrderStatus[],
+  representanteCodigo?: number | null
 ) => {
-  // Filter groups by search criteria and status
+  // Filter groups by search criteria, status, and representante (if applicable)
   const filteredGroups = useMemo(() => {
     let groups = filterGroupsBySearchCriteria(processedGroups, isSearching, searchQuery, searchType);
+
+    // Filter by representante if a representante code is provided
+    if (representanteCodigo) {
+      const filteredByRepresentante: Record<string, ClientOrderGroup> = {};
+      
+      Object.entries(groups).forEach(([clientName, group]) => {
+        // Filter pedidos in the group by representante
+        const filteredPedidos = group.pedidos.filter(pedido => 
+          pedido.REPRESENTANTE === representanteCodigo
+        );
+        
+        // Only include group if it has pedidos after filtering
+        if (filteredPedidos.length > 0) {
+          // Create a new group with the filtered pedidos
+          // Get all items from the filtered pedidos
+          const allFilteredItems = filteredPedidos.flatMap(pedido => 
+            (pedido.items || []).map(item => ({
+              ...item,
+              pedido: pedido.PED_NUMPEDIDO,
+              APELIDO: pedido.APELIDO,
+              PES_CODIGO: pedido.PES_CODIGO
+            }))
+          );
+          
+          filteredByRepresentante[clientName] = {
+            ...group,
+            pedidos: filteredPedidos,
+            allItems: allFilteredItems,
+            // Recalculate totals based on filtered items
+            totalValorSaldo: allFilteredItems.reduce((sum, item) => sum + (item.QTDE_SALDO * item.VALOR_UNITARIO || 0), 0),
+            totalValorFaturarComEstoque: allFilteredItems.reduce((sum, item) => {
+              const fisico = item.FISICO || 0;
+              const qtdeSaldo = item.QTDE_SALDO || 0;
+              const qtdeFaturar = Math.min(fisico, qtdeSaldo);
+              return sum + (qtdeFaturar * item.VALOR_UNITARIO || 0);
+            }, 0)
+          };
+        }
+      });
+      
+      groups = filteredByRepresentante;
+    }
 
     // Filter by status if any statuses are selected
     if (selectedStatuses.length > 0) {
@@ -64,7 +107,7 @@ export const useBkGroupFiltering = (
     }
     
     return groups;
-  }, [processedGroups, isSearching, searchQuery, searchType, selectedStatuses]);
+  }, [processedGroups, isSearching, searchQuery, searchType, selectedStatuses, representanteCodigo]);
 
   return filteredGroups;
 };

@@ -1,4 +1,3 @@
-
 import { useAllBkOrders, useBkTotals } from "@/hooks/useBkOrders";
 import { useSeparacoes } from "@/hooks/useSeparacoes";
 import { useClientOrdersState } from "./client-orders/useClientOrdersState";
@@ -9,6 +8,7 @@ import { useBkGroupProcessing } from "./bk/useBkGroupProcessing";
 import { useBkGroupFiltering } from "./bk/useBkGroupFiltering";
 import { useBkPeriodTotals } from "./bk/useBkPeriodTotals";
 import { useBkFilteredTotals } from "./bk/useBkFilteredTotals";
+import { useUserRepresentante } from "./bk/useUserRepresentante";
 
 export const useClientOrders = () => {
   // Use the state hook
@@ -37,6 +37,9 @@ export const useClientOrders = () => {
   // Add selected statuses state
   const { selectedStatuses, setSelectedStatuses, handleStatusChange } = useBkOrderStatuses();
 
+  // Check if user is a representante and get their code
+  const { isRepresentanteBK, representanteCodigo, representanteNome, isLoading: isLoadingRepresentante } = useUserRepresentante();
+
   // Data fetching hooks
   const { data: ordersData = { orders: [], totalCount: 0, itensSeparacao: {} }, isLoading: isLoadingOrders } = useAllBkOrders({
     dateRange: searchDate
@@ -55,7 +58,8 @@ export const useClientOrders = () => {
     isSearching,
     searchQuery,
     searchType,
-    selectedStatuses
+    selectedStatuses,
+    isRepresentanteBK ? representanteCodigo : null
   );
 
   // Calculate period totals
@@ -101,6 +105,10 @@ export const useClientOrders = () => {
     isSending,
     selectedStatuses,
     setSelectedStatuses,
+    // Representante info
+    isRepresentanteBK,
+    representanteCodigo,
+    representanteNome,
     // Data
     ordersData,
     totals: combinedTotals,
@@ -108,7 +116,7 @@ export const useClientOrders = () => {
     filteredGroups,
     totalSelecionado,
     // Loading states
-    isLoading: isLoadingOrders || isLoadingTotals || isLoadingSeparacoes || isProcessingGroups,
+    isLoading: isLoadingOrders || isLoadingTotals || isLoadingSeparacoes || isProcessingGroups || isLoadingRepresentante,
     // Methods
     toggleExpand,
     handleSearch,
