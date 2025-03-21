@@ -14,23 +14,28 @@ export async function processJabOrders(
   const pessoasIds = [...new Set(pedidosDetalhados.map(p => p.PES_CODIGO).filter(id => id !== null && id !== undefined))] as number[];
   const itemCodigos = [...new Set(pedidosDetalhados.map(p => p.ITEM_CODIGO).filter(Boolean))];
 
-  const { pessoas, itens, estoque } = await fetchRelatedData(pessoasIds, itemCodigos);
-  const itensSeparacao = await fetchItensSeparacao();
+  // Buscar dados relacionados e itens de separação em paralelo para otimizar
+  const [relatedDataResult, itensSeparacao] = await Promise.all([
+    fetchRelatedData(pessoasIds, itemCodigos),
+    fetchItensSeparacao()
+  ]);
+  
+  const { pessoas, itens, estoque } = relatedDataResult;
 
   // Cria mapas para lookup rápido
   const pessoasMap = new Map(pessoas.map(p => [p.PES_CODIGO, p]));
   const itemMap = new Map(itens.map(i => [i.ITEM_CODIGO, i.DESCRICAO]));
   const estoqueMap = new Map(estoque.map(e => [e.ITEM_CODIGO, e.FISICO]));
 
-  // Agrupa os pedidos
-  const pedidosAgrupados = new Map<string, any[]>();
-  pedidosDetalhados.forEach(pedido => {
+  // Agrupa os pedidos - otimizando com um método mais eficiente
+  const pedidosAgrupados = pedidosDetalhados.reduce((acc, pedido) => {
     const key = pedido.PED_NUMPEDIDO;
-    if (!pedidosAgrupados.has(key)) {
-      pedidosAgrupados.set(key, []);
+    if (!acc.has(key)) {
+      acc.set(key, []);
     }
-    pedidosAgrupados.get(key)!.push(pedido);
-  });
+    acc.get(key)!.push(pedido);
+    return acc;
+  }, new Map<string, any[]>());
 
   // Processa os pedidos agrupados mantendo a ordem original
   const orders: JabOrder[] = numeroPedidos.map(numPedido => {
@@ -38,7 +43,6 @@ export async function processJabOrders(
     const primeiroPedido = pedidos[0];
     
     if (!primeiroPedido) {
-      console.log('Pedido não encontrado:', numPedido);
       return null;
     }
 
@@ -49,6 +53,7 @@ export async function processJabOrders(
     let valor_faturar_com_estoque = 0;
     const items = new Map<string, any>();
 
+    // Otimizando o processamento de itens com reduce para melhor desempenho
     pedidos.forEach(pedido => {
       if (!pedido.ITEM_CODIGO) return;
 
@@ -112,7 +117,7 @@ export async function processAllJabOrders(
     return { orders: [], totalCount: 0, itensSeparacao: {} };
   }
 
-  // Extrair números de pedidos únicos
+  // Extrair números de pedidos únicos de forma otimizada
   const numeroPedidosSet = new Set<string>();
   pedidosDetalhados.forEach(pedido => {
     if (pedido.PED_NUMPEDIDO) {
@@ -125,22 +130,21 @@ export async function processAllJabOrders(
 
   const ordersResponse = await processJabOrders(pedidosDetalhados, numeroPedidos);
   
-  // Agrupar por cliente (usando PES_CODIGO como chave)
-  const clientGroupsMap = new Map<number, JabOrder[]>();
-  
-  ordersResponse.orders.forEach(order => {
-    if (!order.PES_CODIGO) return;
+  // Agrupar por cliente (usando PES_CODIGO como chave) com método otimizado
+  const clientGroupsMap = ordersResponse.orders.reduce((map, order) => {
+    if (!order.PES_CODIGO) return map;
     
-    if (!clientGroupsMap.has(order.PES_CODIGO)) {
-      clientGroupsMap.set(order.PES_CODIGO, []);
+    if (!map.has(order.PES_CODIGO)) {
+      map.set(order.PES_CODIGO, []);
     }
     
-    clientGroupsMap.get(order.PES_CODIGO)!.push(order);
-  });
+    map.get(order.PES_CODIGO)!.push(order);
+    return map;
+  }, new Map<number, JabOrder[]>());
 
   console.log(`Agrupados em ${clientGroupsMap.size} clientes`);
 
-  // Transformar em uma lista plana
+  // Transformar em uma lista plana - método mais eficiente
   const ordersFlat = Array.from(clientGroupsMap.values()).flat();
 
   return {

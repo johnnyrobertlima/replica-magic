@@ -65,7 +65,7 @@ export async function fetchOrders({
   };
 }
 
-// Function to fetch all orders without pagination
+// Function to fetch all orders without pagination - otimizada para melhor desempenho
 export async function fetchAllOrders({ 
   dateRange 
 }: Omit<UseJabOrdersOptions, 'page' | 'pageSize'>): Promise<JabOrdersResponse> {
@@ -79,8 +79,7 @@ export async function fetchAllOrders({
 
   console.log('Buscando todos os pedidos para o período:', { dataInicial, dataFinal });
 
-  // For JAB orders - use the direct fetch method with the full date range
-  // and ensure we're using the correct status filters
+  // Usar diretamente o método para buscar todos os pedidos com limite aumentado e busca paralela
   const pedidosDetalhados = await fetchAllPedidosDireto(dataInicial, dataFinal, 'JAB', ['1', '2']);
 
   if (!pedidosDetalhados.length) {

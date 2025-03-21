@@ -52,14 +52,6 @@ const JabOrdersByClient = () => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
   return (
     <main className="container-fluid p-0 max-w-full">
       <BluebayMenu />
@@ -69,14 +61,24 @@ const JabOrdersByClient = () => {
           <Button 
             onClick={handleExport} 
             className="bg-green-600 hover:bg-green-700"
+            disabled={isLoading || Object.keys(clientOrders.filteredGroups).length === 0}
           >
             <FileSpreadsheet className="mr-2 h-4 w-4" />
             Exportar para Excel
           </Button>
         </div>
-        <div className="space-y-6">
-          <OrdersTabs clientOrders={clientOrders} />
-        </div>
+        
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <Loader2 className="h-12 w-12 animate-spin text-blue-500 mb-4" />
+            <p className="text-gray-600 text-lg">Carregando pedidos. Isso pode levar alguns instantes...</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <OrdersTabs clientOrders={clientOrders} />
+          </div>
+        )}
+        
         <Toaster />
       </div>
     </main>
