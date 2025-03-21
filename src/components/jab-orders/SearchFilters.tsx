@@ -66,9 +66,9 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
   };
 
   return (
-    <div className="flex flex-col md:flex-row items-center gap-4">
+    <div className="flex flex-col sm:flex-row items-center gap-4 flex-1">
       <Select value={searchType} onValueChange={value => onSearchTypeChange(value as SearchType)}>
-        <SelectTrigger className="w-[180px] bg-white">
+        <SelectTrigger className="w-full sm:w-[180px] bg-white">
           <SelectValue placeholder="Tipo de busca" />
         </SelectTrigger>
         <SelectContent className="bg-white">
@@ -78,14 +78,14 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
         </SelectContent>
       </Select>
 
-      <div className="relative">
+      <div className="relative w-full sm:w-auto flex-1">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder={getPlaceholder()}
           value={searchQuery}
           onChange={(e) => onSearchQueryChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="pl-9 w-full md:w-[250px] bg-white"
+          className="pl-9 w-full bg-white"
         />
       </div>
       
@@ -94,7 +94,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
           <Button
             variant={"outline"}
             className={cn(
-              "justify-start text-left font-normal w-full md:w-[300px] bg-white",
+              "justify-start text-left font-normal w-full sm:w-[300px] bg-white",
               !date && "text-muted-foreground"
             )}
           >
@@ -125,7 +125,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
         </PopoverContent>
       </Popover>
 
-      <Button onClick={handleSearch} className="gap-2 w-full md:w-auto">
+      <Button onClick={handleSearch} className="gap-2 w-full sm:w-auto bg-[#F97316] hover:bg-[#F97316]/90">
         <Search className="h-4 w-4" />
         Pesquisar
       </Button>

@@ -60,7 +60,7 @@ const JabOrdersByClient = () => {
           <h1 className="text-2xl font-bold">Pedidos por Cliente</h1>
           <Button 
             onClick={handleExport} 
-            className="bg-green-600 hover:bg-green-700"
+            className="bg-[#F97316] hover:bg-[#F97316]/90"
             disabled={isLoading || Object.keys(clientOrders.filteredGroups).length === 0}
           >
             <FileSpreadsheet className="mr-2 h-4 w-4" />

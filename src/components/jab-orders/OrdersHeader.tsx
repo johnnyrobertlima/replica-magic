@@ -68,7 +68,7 @@ export const OrdersHeader = ({
     <div className="space-y-4 mb-8">
       <div className="flex justify-between items-center">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold">Pedidos BK</h1>
+          <h1 className="text-3xl font-bold">Pedidos JAB</h1>
           <p className="text-muted-foreground">
             {totalCount > 0 ? (
               `Exibindo página ${currentPage} de ${totalPages} (Total: ${totalCount} pedidos)`
@@ -79,97 +79,95 @@ export const OrdersHeader = ({
         </div>
       </div>
       
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-wrap gap-4 items-center">
-          <div className="flex-1 min-w-[200px]">
-            <label className="block text-sm font-medium mb-1">Status</label>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-full justify-between">
-                  {selectedStatuses.length > 0 
-                    ? `${selectedStatuses.length} status selecionados` 
-                    : "Todos os status"}
-                  <ChevronDown className="h-4 w-4 opacity-50" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56">
-                <DropdownMenuCheckboxItem
-                  checked={selectedStatuses.length === 0}
-                  onCheckedChange={() => onStatusChange('all')}
-                >
-                  Todos os status
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={selectedStatuses.includes('0')}
-                  onCheckedChange={() => onStatusChange('0')}
-                >
-                  0 - Bloqueado
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={selectedStatuses.includes('1')}
-                  onCheckedChange={() => onStatusChange('1')}
-                >
-                  1 - Aberto
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={selectedStatuses.includes('2')}
-                  onCheckedChange={() => onStatusChange('2')}
-                >
-                  2 - Parcial
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={selectedStatuses.includes('3')}
-                  onCheckedChange={() => onStatusChange('3')}
-                >
-                  3 - Total
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={selectedStatuses.includes('4')}
-                  onCheckedChange={() => onStatusChange('4')}
-                >
-                  4 - Cancelado
-                </DropdownMenuCheckboxItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            
-            {selectedStatuses.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-2">
-                {selectedStatuses.map(status => (
-                  <Badge 
-                    key={status} 
-                    variant="secondary"
-                    className="flex items-center gap-1"
-                  >
-                    {getStatusLabel(status)}
-                    <X 
-                      className="h-3 w-3 cursor-pointer" 
-                      onClick={() => onStatusChange(status)}
-                    />
-                  </Badge>
-                ))}
-                {selectedStatuses.length > 1 && (
-                  <Badge 
-                    variant="outline" 
-                    className="cursor-pointer"
-                    onClick={() => onStatusChange('all')}
-                  >
-                    Limpar todos
-                  </Badge>
-                )}
-              </div>
-            )}
-          </div>
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="w-full sm:w-auto min-w-[200px]">
+          <label className="block text-sm font-medium mb-1">Status</label>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="w-full justify-between bg-white">
+                {selectedStatuses.length > 0 
+                  ? `${selectedStatuses.length} status selecionados` 
+                  : "Todos os status"}
+                <ChevronDown className="h-4 w-4 opacity-50" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56 bg-white">
+              <DropdownMenuCheckboxItem
+                checked={selectedStatuses.length === 0}
+                onCheckedChange={() => onStatusChange('all')}
+              >
+                Todos os status
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={selectedStatuses.includes('0')}
+                onCheckedChange={() => onStatusChange('0')}
+              >
+                0 - Bloqueado
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={selectedStatuses.includes('1')}
+                onCheckedChange={() => onStatusChange('1')}
+              >
+                1 - Aberto
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={selectedStatuses.includes('2')}
+                onCheckedChange={() => onStatusChange('2')}
+              >
+                2 - Parcial
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={selectedStatuses.includes('3')}
+                onCheckedChange={() => onStatusChange('3')}
+              >
+                3 - Total
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={selectedStatuses.includes('4')}
+                onCheckedChange={() => onStatusChange('4')}
+              >
+                4 - Cancelado
+              </DropdownMenuCheckboxItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           
-          <SearchFilters
-            searchQuery={searchQuery}
-            onSearchQueryChange={onSearchQueryChange}
-            onSearch={onSearch}
-            date={date}
-            onDateChange={onDateChange}
-            searchType={searchType}
-            onSearchTypeChange={onSearchTypeChange}
-          />
+          {selectedStatuses.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {selectedStatuses.map(status => (
+                <Badge 
+                  key={status} 
+                  variant="secondary"
+                  className="flex items-center gap-1"
+                >
+                  {getStatusLabel(status)}
+                  <X 
+                    className="h-3 w-3 cursor-pointer" 
+                    onClick={() => onStatusChange(status)}
+                  />
+                </Badge>
+              ))}
+              {selectedStatuses.length > 1 && (
+                <Badge 
+                  variant="outline" 
+                  className="cursor-pointer"
+                  onClick={() => onStatusChange('all')}
+                >
+                  Limpar todos
+                </Badge>
+              )}
+            </div>
+          )}
         </div>
+        
+        <SearchFilters
+          searchQuery={searchQuery}
+          onSearchQueryChange={onSearchQueryChange}
+          onSearch={onSearch}
+          date={date}
+          onDateChange={onDateChange}
+          searchType={searchType}
+          onSearchTypeChange={onSearchTypeChange}
+        />
       </div>
     </div>
   );
