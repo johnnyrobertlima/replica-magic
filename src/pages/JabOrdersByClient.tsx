@@ -1,4 +1,5 @@
 
+import React, { useEffect } from "react";
 import { Loader2, FileSpreadsheet } from "lucide-react";
 import { useClientOrders } from "@/hooks/useClientOrders";
 import { OrdersTabs } from "@/components/jab-orders/OrdersTabs";
@@ -10,16 +11,16 @@ import { useToast } from "@/hooks/use-toast";
 
 const JabOrdersByClient = () => {
   const clientOrders = useClientOrders();
-  const { isLoading, searchDate, handleSearch } = clientOrders;
+  const { isLoading } = clientOrders;
   const { toast } = useToast();
   const { exportOrdersToExcel } = useExportClientOrders();
 
   // Force search on initial load if searchDate is available but no data is loaded
-  React.useEffect(() => {
-    if (searchDate && Object.keys(clientOrders.filteredGroups).length === 0 && !isLoading) {
-      handleSearch();
+  useEffect(() => {
+    if (clientOrders.searchDate && Object.keys(clientOrders.filteredGroups).length === 0 && !isLoading) {
+      clientOrders.handleSearch();
     }
-  }, [searchDate, clientOrders.filteredGroups, isLoading, handleSearch]);
+  }, [clientOrders.searchDate, clientOrders.filteredGroups, isLoading, clientOrders.handleSearch]);
 
   const handleExport = () => {
     if (Object.keys(clientOrders.filteredGroups).length === 0) {
