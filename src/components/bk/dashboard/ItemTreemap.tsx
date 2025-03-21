@@ -3,10 +3,16 @@ import React, { useState } from "react";
 import { formatCurrency } from "@/lib/utils";
 import { TreemapDataItem } from "./treemap/treemapTypes";
 import { useTreemapRenderer } from "./treemap/useTreemapRenderer";
-import { TreemapControls } from "./treemap/TreemapControls";
+import { TreemapControls } from "./treemap/treemap/TreemapControls";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger 
+} from "@/components/ui/tooltip";
 
 interface ItemTreemapProps {
   data: TreemapDataItem[];
@@ -85,17 +91,19 @@ export const ItemTreemap = ({ data }: ItemTreemapProps) => {
       
       {/* Treemap visualization */}
       <div className="relative w-full h-[400px] mt-4">
-        <svg ref={svgRef} className="w-full h-full"></svg>
-        
-        {/* Custom tooltip */}
-        <div 
-          id="d3-tooltip" 
-          className="absolute hidden bg-white/95 backdrop-blur-sm p-3 shadow-lg rounded-lg border border-gray-200 z-50 pointer-events-none max-w-xs transition-opacity duration-200 opacity-0"
-          style={{ display: 'none', minWidth: '180px', position: 'absolute' }}
-        >
-          <p className="item-name font-medium text-sm"></p>
-          <p className="item-value text-sm text-blue-700 font-semibold mt-1"></p>
-        </div>
+        <TooltipProvider>
+          <svg ref={svgRef} className="w-full h-full"></svg>
+          
+          {/* Custom tooltip - hidden but used by D3 */}
+          <div 
+            id="d3-tooltip" 
+            className="absolute hidden"
+            style={{ display: 'none' }}
+          >
+            <p className="item-name"></p>
+            <p className="item-value"></p>
+          </div>
+        </TooltipProvider>
       </div>
     </div>
   );

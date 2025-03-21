@@ -88,6 +88,7 @@ export const renderTreemap = ({
     .attr("fill", d => colorScale(d.value || 0))
     .attr("stroke", "#fff")
     .attr("stroke-width", 1)
+    .attr("rx", 2) // Adding slight rounded corners
     .classed("treemap-rect", true);
   
   // Add text to each cell that has enough space
