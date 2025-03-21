@@ -8,14 +8,18 @@ import { useFinancial, DateRange } from "@/hooks/bk/useFinancial";
 import { Button } from "@/components/ui/button";
 import { DateRangePicker } from "@/components/bk/financial/DateRangePicker";
 import { StatusFilter } from "@/components/bk/financial/StatusFilter";
-import { RefreshCw, Users } from "lucide-react";
+import { RefreshCw, Users, FileSpreadsheet } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FinancialSummaryCards } from "@/components/bk/financial/FinancialSummaryCards";
 import { AdditionalFilters } from "@/components/bk/financial/AdditionalFilters";
 import { Link } from "react-router-dom";
 import { ClientFinancialTable } from "@/components/bk/financial/ClientFinancialTable";
+import { exportToExcelWithSections } from "@/utils/excelUtils";
+import { useToast } from "@/hooks/use-toast";
 
 export const BkFinanceiroManager = () => {
+  const { toast } = useToast();
+  
   const { 
     isLoading, 
     consolidatedInvoices, 
@@ -53,6 +57,83 @@ export const BkFinanceiroManager = () => {
     setSelectedClient(null);
   };
 
+  // Function to handle Excel export
+  const handleExportToExcel = () => {
+    try {
+      let data = [];
+      let fileName = 'relatorio-financeiro';
+      
+      switch (activeTab) {
+        case 'titles':
+          // Prepare titles data for export
+          data = clientFilteredTitles.map(title => ({
+            'Nota': title.NUMNOTA || '',
+            'Cliente': title.CLIENTE_NOME || '',
+            'Data Emissão': title.DTEMISSAO || '',
+            'Data Vencimento': title.DTVENCIMENTO || '',
+            'Data Pagamento': title.DTPAGTO || '',
+            'Valor Título': title.VLRTITULO || 0,
+            'Valor Desconto': title.VLRDESCONTO || 0,
+            'Valor Saldo': title.VLRSALDO || 0,
+            'Status': title.STATUS || ''
+          });
+          fileName = `titulos-financeiros-${new Date().toISOString().split('T')[0]}`;
+          break;
+          
+        case 'invoices':
+          // Prepare invoices data for export
+          data = filteredInvoices.map(invoice => ({
+            'Nota Fiscal': invoice.NUMNOTA || '',
+            'Cliente': invoice.CLIENTE_NOME || '',
+            'Data Emissão': invoice.DTEMISSAO || '',
+            'Valor Total': invoice.VLRTOTAL || 0,
+            'Status': invoice.STATUS || ''
+          }));
+          fileName = `notas-fiscais-${new Date().toISOString().split('T')[0]}`;
+          break;
+          
+        case 'clients':
+          // Prepare client summary data for export
+          data = clientFinancialSummaries.map(client => ({
+            'Código': client.PES_CODIGO,
+            'Cliente': client.CLIENTE_NOME,
+            'Valores Vencidos': client.totalValoresVencidos,
+            'Valores Pagos': client.totalPago,
+            'Valores em Aberto': client.totalEmAberto
+          }));
+          fileName = `resumo-clientes-${new Date().toISOString().split('T')[0]}`;
+          break;
+      }
+      
+      // Export the data to Excel
+      if (data.length > 0) {
+        exportToExcelWithSections(
+          [], // No header data
+          data, 
+          fileName
+        );
+        
+        toast({
+          title: "Exportação Concluída",
+          description: `${data.length} registros exportados com sucesso.`,
+        });
+      } else {
+        toast({
+          title: "Nenhum dado para exportar",
+          description: "Aplique filtros diferentes ou atualize os dados.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao exportar dados:", error);
+      toast({
+        title: "Erro na Exportação",
+        description: "Não foi possível exportar os dados. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="container-fluid p-0 max-w-full">
       <BkMenu />
@@ -67,6 +148,18 @@ export const BkFinanceiroManager = () => {
                 Visão por Cliente
               </Button>
             </Link>
+            <Button 
+              variant="outline" 
+              onClick={handleExportToExcel} 
+              disabled={isLoading || (
+                (activeTab === 'titles' && clientFilteredTitles.length === 0) || 
+                (activeTab === 'invoices' && filteredInvoices.length === 0) || 
+                (activeTab === 'clients' && clientFinancialSummaries.length === 0)
+              )}
+            >
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              Exportar Excel
+            </Button>
             <Button variant="outline" onClick={refreshData} disabled={isLoading}>
               <RefreshCw className="h-4 w-4 mr-2" />
               Atualizar
