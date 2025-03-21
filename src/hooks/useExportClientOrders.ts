@@ -12,19 +12,15 @@ export const useExportClientOrders = () => {
     Object.entries(filteredGroups).forEach(([clientName, clientGroup]) => {
       // Iterate through each order in the client group
       clientGroup.pedidos.forEach(order => {
-        // Calculate values using the same logic as displayed in the UI cards
-        const valorFaturado = order.items.reduce((sum, item) => 
-          sum + (item.QTDE_ENTREGUE * item.VALOR_UNITARIO), 0);
-          
-        // Create an entry for each order - using the same values as shown in the UI cards
+        // Use the same values as shown in the UI cards for consistency
         exportData.push({
           "PES_CODIGO": clientGroup.PES_CODIGO,
           "Razão Social": clientName,
           "Numero Pedido": order.PED_NUMPEDIDO,
-          "Valor do Pedido": order.valor_total,
-          "Valor Faturado": valorFaturado,
-          "Valor Total Saldo": order.total_saldo * order.items[0]?.VALOR_UNITARIO || 0,
-          "Representante": order.REPRESENTANTE_NOME || "Não informado"
+          "Valor do Pedido": order.VALOR_TOTAL || order.valor_total, // Match UI display value
+          "Valor Faturado": order.items.reduce((sum, item) => sum + (item.QTDE_ENTREGUE * item.VALOR_UNITARIO), 0), // Calculate as shown in card
+          "Valor Total Saldo": order.items.reduce((sum, item) => sum + (item.QTDE_SALDO * item.VALOR_UNITARIO), 0), // Calculate as shown in card
+          "Representante": order.REPRESENTANTE_NOME || clientGroup.representanteNome || "Não informado" // Use same name as card
         });
       });
     });
