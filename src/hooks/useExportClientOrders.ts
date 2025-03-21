@@ -12,7 +12,7 @@ export const useExportClientOrders = () => {
     Object.entries(filteredGroups).forEach(([clientName, clientGroup]) => {
       // Iterate through each order in the client group
       clientGroup.pedidos.forEach(order => {
-        // Calculate the valor faturado correctly using the same logic as displayed in the UI
+        // Calculate values using the same logic as displayed in the UI cards
         const valorFaturado = order.items.reduce((sum, item) => 
           sum + (item.QTDE_ENTREGUE * item.VALOR_UNITARIO), 0);
           
@@ -23,7 +23,7 @@ export const useExportClientOrders = () => {
           "Numero Pedido": order.PED_NUMPEDIDO,
           "Valor do Pedido": order.valor_total,
           "Valor Faturado": valorFaturado,
-          "Valor Total Saldo": order.total_saldo * order.items[0]?.VALOR_UNITARIO || 0, // Corrigido para usar o valor monetário, não a quantidade
+          "Valor Total Saldo": order.total_saldo * order.items[0]?.VALOR_UNITARIO || 0,
           "Representante": order.REPRESENTANTE_NOME || "Não informado"
         });
       });
