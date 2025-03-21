@@ -17,7 +17,7 @@ export const useExportClientOrders = () => {
           "PES_CODIGO": clientGroup.PES_CODIGO,
           "Razão Social": clientName,
           "Numero Pedido": order.PED_NUMPEDIDO,
-          "Valor do Pedido": order.VALOR_TOTAL || order.valor_total, // Match UI display value
+          "Valor do Pedido": order.valor_total, // Fixed: Using lowercase property name
           "Valor Faturado": order.items.reduce((sum, item) => sum + (item.QTDE_ENTREGUE * item.VALOR_UNITARIO), 0), // Calculate as shown in card
           "Valor Total Saldo": order.items.reduce((sum, item) => sum + (item.QTDE_SALDO * item.VALOR_UNITARIO), 0), // Calculate as shown in card
           "Representante": order.REPRESENTANTE_NOME || clientGroup.representanteNome || "Não informado" // Use same name as card
