@@ -31,11 +31,14 @@ export const ClientOrderItemsTable = ({
   selectedItems,
   onItemSelect
 }: ClientOrderItemsTableProps) => {
-  const filteredItems = items.filter((item) => {
-    if (!showZeroBalance && item.QTDE_SALDO <= 0) return false;
-    if (showOnlyWithStock && (item.FISICO || 0) <= 0) return false;
-    return true;
-  });
+  // Filtra primeiro e depois ordena por ITEM_CODIGO (SKU)
+  const filteredItems = items
+    .filter((item) => {
+      if (!showZeroBalance && item.QTDE_SALDO <= 0) return false;
+      if (showOnlyWithStock && (item.FISICO || 0) <= 0) return false;
+      return true;
+    })
+    .sort((a, b) => a.ITEM_CODIGO.localeCompare(b.ITEM_CODIGO)); // Ordena por SKU alfabeticamente
 
   return (
     <div className="rounded-lg border overflow-x-auto">

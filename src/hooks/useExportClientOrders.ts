@@ -23,7 +23,7 @@ export const useExportClientOrders = () => {
           "Numero Pedido": order.PED_NUMPEDIDO,
           "Valor do Pedido": order.valor_total,
           "Valor Faturado": valorFaturado,
-          "Valor Total Saldo": order.total_saldo,
+          "Valor Total Saldo": order.total_saldo * order.items[0]?.VALOR_UNITARIO || 0, // Corrigido para usar o valor monetário, não a quantidade
           "Representante": order.REPRESENTANTE_NOME || "Não informado"
         });
       });
