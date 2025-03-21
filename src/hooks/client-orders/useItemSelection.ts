@@ -1,3 +1,4 @@
+
 import { useState, useMemo, useCallback } from "react";
 import { ClientOrdersState } from "@/types/clientOrders";
 import { exportToExcel } from "@/utils/excelUtils";
@@ -18,6 +19,7 @@ export const useItemSelection = (
   // Manipulador para seleção/desseleção de itens
   const handleItemSelect = useCallback((item: any) => {
     const itemCode = item.ITEM_CODIGO;
+    console.log("Selecting item:", item);
     
     setState(prevState => {
       // Verificar se o item já está selecionado
@@ -38,16 +40,24 @@ export const useItemSelection = (
         // Adicionar o item com os detalhes
         const qtde = item.QTDE_SALDO;
         const valor = qtde * item.VALOR_UNITARIO;
-        const clientName = item.APELIDO;
+        const clientName = item.APELIDO || '';
         const clientCode = item.PES_CODIGO;
         
         newSelectedItemsDetails[itemCode] = { 
           qtde, 
           valor,
           clientName, // Armazenar o nome do cliente
-          clientCode  // Armazenar o código do cliente
+          clientCode,  // Armazenar o código do cliente
+          pedido: item.pedido,
+          DESCRICAO: item.DESCRICAO,
+          PES_CODIGO: item.PES_CODIGO
         };
       }
+      
+      console.log("Updated selection state:", {
+        selectedItems: newSelectedItems, 
+        selectedItemsDetails: newSelectedItemsDetails
+      });
       
       return {
         ...prevState,

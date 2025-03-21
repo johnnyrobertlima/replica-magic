@@ -17,12 +17,16 @@ interface SeparationRequest {
 export async function sendToSeparation({ items }: SeparationRequest) {
   try {
     if (!items || items.length === 0) {
+      console.error("No items provided for separation");
       throw new Error('Nenhum item fornecido para separação');
     }
 
+    console.log("Starting sendToSeparation with items:", items);
+    
     const user = await supabase.auth.getUser();
     
     if (!user || !user.data || !user.data.user) {
+      console.error("User not authenticated");
       throw new Error('Usuário não autenticado');
     }
 
@@ -32,6 +36,11 @@ export async function sendToSeparation({ items }: SeparationRequest) {
     // Group items by cliente (PES_CODIGO)
     const itemsByCliente: Record<string, SeparationItem[]> = {};
     items.forEach(item => {
+      if (!item.pesCodigo) {
+        console.warn(`Missing PES_CODIGO for item ${item.itemCodigo}`);
+        return;
+      }
+      
       const clienteKey = item.pesCodigo.toString();
       if (!itemsByCliente[clienteKey]) {
         itemsByCliente[clienteKey] = [];
@@ -39,19 +48,33 @@ export async function sendToSeparation({ items }: SeparationRequest) {
       itemsByCliente[clienteKey].push(item);
     });
 
+    console.log("Items grouped by client:", itemsByCliente);
+
     // Create a separation for each cliente
     const separations = [];
     for (const [clienteKey, clienteItems] of Object.entries(itemsByCliente)) {
+      if (clienteItems.length === 0) continue;
+      
+      const clienteNumerico = parseInt(clienteKey);
+      if (isNaN(clienteNumerico)) {
+        console.warn(`Invalid client code: ${clienteKey}`);
+        continue;
+      }
+      
+      console.log(`Creating separation for client ${clienteKey} with ${clienteItems.length} items`);
+      
+      const valorTotal = clienteItems.reduce((sum, item) => sum + (item.qtdeSaldo * item.valorUnitario), 0);
+      
       const { data, error } = await supabase
         .from('separacoes')
         .insert({
-          cliente_codigo: parseInt(clienteKey), // Convert to number for the DB
+          cliente_codigo: clienteNumerico,
           cliente_nome: 'Cliente ' + clienteKey, // This should be replaced with actual client name if available
           user_id: userId,
           user_email: userEmail,
           quantidade_itens: clienteItems.length,
-          valor_total: clienteItems.reduce((sum, item) => sum + (item.qtdeSaldo * item.valorUnitario), 0),
-          status: 'pending'
+          valor_total: valorTotal,
+          status: 'pendente'
         })
         .select()
         .single();
@@ -60,6 +83,8 @@ export async function sendToSeparation({ items }: SeparationRequest) {
         console.error('Erro ao criar separação:', error);
         throw new Error(`Falha ao criar separação: ${error.message}`);
       }
+
+      console.log("Separation created:", data);
 
       // Add separation items
       const separationItems = clienteItems.map(item => ({
@@ -71,6 +96,8 @@ export async function sendToSeparation({ items }: SeparationRequest) {
         valor_unitario: item.valorUnitario,
         valor_total: item.qtdeSaldo * item.valorUnitario
       }));
+
+      console.log("Inserting separation items:", separationItems);
 
       const { error: itemsError } = await supabase
         .from('separacao_itens')
@@ -84,10 +111,11 @@ export async function sendToSeparation({ items }: SeparationRequest) {
       separations.push(data);
     }
 
+    console.log("Separation process completed successfully");
     return { success: true, separations };
   } catch (error: any) {
     console.error('Erro no processo de separação:', error);
-    return { success: false, error: error.message || 'Falha desconhecida na separação' };
+    throw error;
   }
 }
 
