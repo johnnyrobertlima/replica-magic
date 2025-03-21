@@ -11,6 +11,7 @@ import { ItemTreemap } from "@/components/bk/dashboard/ItemTreemap";
 import { fetchBkItemsReport } from "@/services/bk/reportsService";
 import { ClientsAbcCurve } from "@/components/bk/dashboard/abc-curve/ClientsAbcCurve";
 import { ItemsAbcCurve } from "@/components/bk/dashboard/abc-curve/ItemsAbcCurve";
+import { GroupedAbcCurve } from "@/components/bk/dashboard/abc-curve/GroupedAbcCurve"; 
 import { format } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -48,9 +49,10 @@ export const BkDashboard = () => {
             if (itemsReport && itemsReport.length > 0) {
               // Create dataset for the treemap
               const data = itemsReport.map(report => {
+                // Include the group description in parentheses for the GroupedAbcCurve to use
                 const name = report.DESCRICAO 
-                  ? `${report.ITEM_CODIGO} - ${report.DESCRICAO}` 
-                  : report.ITEM_CODIGO;
+                  ? `${report.ITEM_CODIGO} - ${report.DESCRICAO} (${report.GRU_DESCRICAO || 'Sem Grupo'})`
+                  : `${report.ITEM_CODIGO} (${report.GRU_DESCRICAO || 'Sem Grupo'})`;
                 return { 
                   name, 
                   value: report.TOTAL_VALOR || 0 
@@ -152,7 +154,15 @@ export const BkDashboard = () => {
               />
             </div>
             
-            {/* 3. Gráfico de Volume por Item */}
+            {/* 3. Nova Curva ABC por Grupo de Itens (ocupa linha inteira) */}
+            <div className="w-full">
+              <GroupedAbcCurve 
+                data={treemapData}
+                isLoading={isLoadingTreemap}
+              />
+            </div>
+            
+            {/* 4. Gráfico de Volume por Item */}
             {isLoadingTreemap ? (
               <div className="w-full h-[400px] bg-white rounded-lg p-4 border flex items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
