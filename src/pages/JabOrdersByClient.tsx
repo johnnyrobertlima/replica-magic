@@ -24,12 +24,23 @@ const JabOrdersByClient = () => {
       return;
     }
     
-    exportOrdersToExcel(clientOrders.filteredGroups);
-    
-    toast({
-      title: "Exportação concluída",
-      description: "Os dados foram exportados com sucesso.",
-    });
+    try {
+      const exported = exportOrdersToExcel(clientOrders.filteredGroups);
+      
+      if (exported) {
+        toast({
+          title: "Exportação concluída",
+          description: "Os dados foram exportados com sucesso.",
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao exportar dados:", error);
+      toast({
+        title: "Erro na exportação",
+        description: "Ocorreu um erro ao exportar os dados. Tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (isLoading) {
