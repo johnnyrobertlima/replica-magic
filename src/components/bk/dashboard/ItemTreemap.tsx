@@ -91,7 +91,7 @@ export const ItemTreemap = ({ data }: ItemTreemapProps) => {
         <div 
           id="d3-tooltip" 
           className="absolute hidden bg-white/95 backdrop-blur-sm p-3 shadow-lg rounded-lg border border-gray-200 z-50 pointer-events-none max-w-xs transition-opacity duration-200 opacity-0"
-          style={{ display: 'none', minWidth: '180px' }}
+          style={{ display: 'none', minWidth: '180px', position: 'absolute' }}
         >
           <p className="item-name font-medium text-sm"></p>
           <p className="item-value text-sm text-blue-700 font-semibold mt-1"></p>

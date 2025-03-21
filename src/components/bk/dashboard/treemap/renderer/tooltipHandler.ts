@@ -20,27 +20,21 @@ export const setupTooltipHandlers = (
     tooltip.select(".item-name").text(dataItem.name);
     tooltip.select(".item-value").text(formatCurrency(value));
     
-    // Position tooltip in the top-right corner
-    const svgRect = svgRef.current?.getBoundingClientRect();
-    if (svgRect) {
-      // Fixed positioning in the top-right corner with margin
-      const tooltipWidth = 200; // Approximate tooltip width
-      const rightPosition = svgRect.right - tooltipWidth - 10; // 10px margin from right edge
-      const topPosition = svgRect.top + 10; // 10px margin from top
-      
-      tooltip
-        .style("display", "block")
-        .style("left", `${rightPosition}px`)
-        .style("top", `${topPosition}px`)
-        .style("opacity", 1);
-    }
+    // Position tooltip near the mouse pointer with some offset
+    tooltip
+      .style("display", "block")
+      .style("left", `${event.pageX + 15}px`)
+      .style("top", `${event.pageY - 40}px`)
+      .style("opacity", 1);
     
     // Highlight this cell
     d3.select(this).select("rect").classed("highlighted", true);
   })
-  .on("mousemove", function() {
-    // No position change on mouse move
-    // Tooltip remains fixed in the top-right corner
+  .on("mousemove", function(event) {
+    // Update position as mouse moves
+    tooltip
+      .style("left", `${event.pageX + 15}px`)
+      .style("top", `${event.pageY - 40}px`);
   })
   .on("mouseout", function() {
     // Hide tooltip
