@@ -31,8 +31,8 @@ interface PedidosTabContentProps {
   handleEnviarParaSeparacao: () => void;
   exportSelectedItemsToExcel: () => void;
   clearSelections: () => void;
-  selectedStatuses?: OrderStatus[];
-  onStatusChange?: (status: OrderStatus) => void;
+  selectedStatuses: OrderStatus[];
+  onStatusChange: (status: OrderStatus) => void;
 }
 
 export const PedidosTabContent = ({

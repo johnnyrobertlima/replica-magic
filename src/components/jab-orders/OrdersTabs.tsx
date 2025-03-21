@@ -63,6 +63,8 @@ export const OrdersTabs = ({ clientOrders }: OrdersTabsProps) => {
           handleEnviarParaSeparacao={handleEnviarParaSeparacao}
           exportSelectedItemsToExcel={exportSelectedItemsToExcel}
           clearSelections={clearSelections}
+          selectedStatuses={[]}
+          onStatusChange={() => {}}
         />
       </TabsContent>
 

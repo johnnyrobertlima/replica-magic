@@ -10,9 +10,16 @@ import { useToast } from "@/hooks/use-toast";
 
 const JabOrdersByClient = () => {
   const clientOrders = useClientOrders();
-  const { isLoading } = clientOrders;
+  const { isLoading, searchDate, handleSearch } = clientOrders;
   const { toast } = useToast();
   const { exportOrdersToExcel } = useExportClientOrders();
+
+  // Force search on initial load if searchDate is available but no data is loaded
+  React.useEffect(() => {
+    if (searchDate && Object.keys(clientOrders.filteredGroups).length === 0 && !isLoading) {
+      handleSearch();
+    }
+  }, [searchDate, clientOrders.filteredGroups, isLoading, handleSearch]);
 
   const handleExport = () => {
     if (Object.keys(clientOrders.filteredGroups).length === 0) {
