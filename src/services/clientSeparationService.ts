@@ -8,7 +8,6 @@ interface SeparationItem {
   descricao?: string | null;
   qtdeSaldo: number;
   valorUnitario: number;
-  centrocusto?: 'JAB' | 'BK';
 }
 
 interface SeparationRequest {
@@ -29,9 +28,6 @@ export async function sendToSeparation({ items }: SeparationRequest) {
 
     const userId = user.data.user.id;
     const userEmail = user.data.user.email;
-
-    // Use the first item's centrocusto as the separation's centrocusto
-    const centrocusto = items[0].centrocusto || 'JAB';
 
     // Group items by cliente (PES_CODIGO)
     const itemsByCliente: Record<string, SeparationItem[]> = {};
@@ -55,8 +51,7 @@ export async function sendToSeparation({ items }: SeparationRequest) {
           user_email: userEmail,
           quantidade_itens: clienteItems.length,
           valor_total: clienteItems.reduce((sum, item) => sum + (item.qtdeSaldo * item.valorUnitario), 0),
-          status: 'pending',
-          centrocusto
+          status: 'pending'
         })
         .select()
         .single();

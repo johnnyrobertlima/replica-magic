@@ -8,8 +8,7 @@ import type { ClientOrdersState } from "@/types/clientOrders";
 export const useSeparationOperations = (
   state: ClientOrdersState,
   setState: (state: ClientOrdersState | ((prev: ClientOrdersState) => ClientOrdersState)) => void,
-  groups: Record<string, any>,
-  centrocusto: 'JAB' | 'BK' = 'JAB'
+  groups: Record<string, any>
 ) => {
   const [error, setError] = useState<string | null>(null);
 
@@ -25,8 +24,7 @@ export const useSeparationOperations = (
             pesCodigo: details.PES_CODIGO || details.pes_codigo,
             descricao: details.DESCRICAO,
             qtdeSaldo: details.QTDE_SALDO,
-            valorUnitario: details.VALOR_UNITARIO,
-            centrocusto
+            valorUnitario: details.VALOR_UNITARIO
           };
         })
       });
