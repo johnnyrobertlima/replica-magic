@@ -31,7 +31,9 @@ export const setupTooltipHandlers = (
       .style("pointer-events", "none")
       .style("font-family", "inherit")
       .style("font-size", "14px")
-      .style("max-width", "220px");
+      .style("max-width", "220px")
+      .style("transform", "translate(-50%, -100%)")
+      .style("transition", "opacity 0.2s ease");
   };
   
   // Create tooltip element
@@ -53,8 +55,9 @@ export const setupTooltipHandlers = (
     // Show tooltip near mouse
     tooltipElement
       .style("visibility", "visible")
-      .style("left", `${event.pageX + 15}px`)
-      .style("top", `${event.pageY - 40}px`);
+      .style("opacity", "1")
+      .style("left", `${event.pageX}px`)
+      .style("top", `${event.pageY - 10}px`);
     
     // Highlight this cell
     d3.select(this).select("rect").classed("highlighted", true);
@@ -62,12 +65,14 @@ export const setupTooltipHandlers = (
   .on("mousemove", function(event) {
     // Update position as mouse moves
     tooltipElement
-      .style("left", `${event.pageX + 15}px`)
-      .style("top", `${event.pageY - 40}px`);
+      .style("left", `${event.pageX}px`)
+      .style("top", `${event.pageY - 10}px`);
   })
   .on("mouseout", function() {
     // Hide tooltip
-    tooltipElement.style("visibility", "hidden");
+    tooltipElement
+      .style("visibility", "hidden")
+      .style("opacity", "0");
     
     // Remove highlight
     d3.select(this).select("rect").classed("highlighted", false);

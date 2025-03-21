@@ -9,9 +9,13 @@ import { AdditionalFilters } from "@/components/bk/financial/AdditionalFilters";
 import { ClientFinancialTable } from "@/components/bk/financial/ClientFinancialTable";
 import { TitleTable } from "@/components/bk/financial/TitleTable";
 import { FinancialSummaryCards } from "@/components/bk/financial/FinancialSummaryCards";
-import { RefreshCw } from "lucide-react";
+import { FileSpreadsheet, RefreshCw } from "lucide-react";
+import { exportToExcel } from "@/utils/excelUtils";
+import { useToast } from "@/hooks/use-toast";
 
 export const BkClientFinancialSummary = () => {
+  const { toast } = useToast();
+  
   const { 
     isLoading, 
     refreshData, 
@@ -36,6 +40,59 @@ export const BkClientFinancialSummary = () => {
     refreshData();
   }, [refreshData]);
 
+  // Function to handle Excel export
+  const handleExportToExcel = () => {
+    try {
+      // Prepare client summaries data for export
+      const clientSummaryData = filteredClientSummaries.map(client => ({
+        'Código': client.PES_CODIGO,
+        'Cliente': client.CLIENTE_NOME,
+        'Valores Vencidos': client.totalValoresVencidos,
+        'Valores Pagos': client.totalPago,
+        'Valores em Aberto': client.totalEmAberto
+      }));
+
+      // Prepare titles data for export
+      const titlesData = filteredTitles.map(title => ({
+        'Nota': title.NUMNOTA || '',
+        'Cliente': title.CLIENTE_NOME || '',
+        'Data Emissão': title.DTEMISSAO || '',
+        'Data Vencimento': title.DTVENCIMENTO || '',
+        'Data Pagamento': title.DTPAGTO || '',
+        'Valor Título': title.VLRTITULO || 0,
+        'Valor Desconto': title.VLRDESCONTO || 0,
+        'Valor Saldo': title.VLRSALDO || 0,
+        'Status': title.STATUS || ''
+      }));
+
+      // Export the data to Excel - Using exportToExcelWithSections is better here since we have two related datasets
+      if (clientSummaryData.length > 0 || titlesData.length > 0) {
+        exportToExcel(
+          [...clientSummaryData, ...titlesData], 
+          `relatorio-financeiro-${new Date().toISOString().split('T')[0]}`
+        );
+        
+        toast({
+          title: "Exportação Concluída",
+          description: `${clientSummaryData.length} clientes e ${titlesData.length} títulos exportados com sucesso.`,
+        });
+      } else {
+        toast({
+          title: "Nenhum dado para exportar",
+          description: "Aplique filtros diferentes ou atualize os dados.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao exportar dados:", error);
+      toast({
+        title: "Erro na Exportação",
+        description: "Não foi possível exportar os dados. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="container-fluid p-0 max-w-full">
       <BkMenu />
@@ -43,10 +100,20 @@ export const BkClientFinancialSummary = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold">Resumo Financeiro por Cliente</h1>
-          <Button variant="outline" onClick={refreshData} disabled={isLoading}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Atualizar
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={refreshData} disabled={isLoading}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Atualizar
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={handleExportToExcel} 
+              disabled={isLoading || (filteredClientSummaries.length === 0 && filteredTitles.length === 0)}
+            >
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              Exportar Excel
+            </Button>
+          </div>
         </div>
   
         <div className="mt-6 space-y-6">
