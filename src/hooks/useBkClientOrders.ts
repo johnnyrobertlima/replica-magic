@@ -78,9 +78,10 @@ export const useClientOrders = () => {
   } = useItemSelection(state, setState, filteredGroups);
 
   // Use the separation operations hook
+  // Fixing error: Remove the fourth argument 'BK'
   const {
     handleEnviarParaSeparacao
-  } = useSeparationOperations(state, setState, processedGroups, 'BK');
+  } = useSeparationOperations(state, setState, processedGroups);
 
   // Combine all totals
   const combinedTotals = {
