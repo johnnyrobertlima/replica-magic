@@ -1,7 +1,8 @@
+
 import { BkMenu } from "@/components/bk/BkMenu";
 import { BkBanner } from "@/components/bk/BkBanner";
 import { ServiceCard } from "@/components/bk/ServiceCard";
-import { FileText, BarChart2, Users, Wallet, ClipboardCheck, ShoppingBag, Receipt } from "lucide-react";
+import { FileText, BarChart2, Users, Wallet, ClipboardCheck, ShoppingBag, Receipt, Package } from "lucide-react";
 
 const BkHome = () => {
   const services = [
@@ -32,6 +33,13 @@ const BkHome = () => {
       icon: Wallet,
       iconColor: "bg-amber-100 text-amber-600",
       path: "/client-area/bk/financial"
+    },
+    {
+      title: "Estoque",
+      description: "Consulte informações de estoque disponível",
+      icon: Package,
+      iconColor: "bg-teal-100 text-teal-600",
+      path: "/client-area/bk/estoque"
     },
     {
       title: "Pedidos",
