@@ -79,7 +79,8 @@ export async function fetchAllOrders({
 
   console.log('Buscando todos os pedidos para o período:', { dataInicial, dataFinal });
 
-  // For JAB, continue using status filter ['1', '2']
+  // For JAB orders - use the direct fetch method with the full date range
+  // and ensure we're using the correct status filters
   const pedidosDetalhados = await fetchAllPedidosDireto(dataInicial, dataFinal, 'JAB', ['1', '2']);
 
   if (!pedidosDetalhados.length) {
@@ -87,6 +88,8 @@ export async function fetchAllOrders({
     return { orders: [], totalCount: 0, itensSeparacao: {} };
   }
 
+  console.log(`Encontrados ${pedidosDetalhados.length} pedidos detalhados no período solicitado`);
+  
   const result = await processAllJabOrders(pedidosDetalhados);
   console.log(`Processados ${result.orders.length} pedidos no total`);
   

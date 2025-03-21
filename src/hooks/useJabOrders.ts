@@ -26,9 +26,14 @@ export function useAllJabOrders(options: Omit<UseJabOrdersOptions, 'page' | 'pag
   const fromKey = from?.toISOString();
   const toKey = to?.toISOString();
   
+  console.log('useAllJabOrders hook called with date range:', { from, to });
+  
   return useQuery({
     queryKey: ['all-jab-orders', fromKey, toKey],
-    queryFn: () => fetchAllOrders(options),
+    queryFn: () => {
+      console.log('Fetching all JAB orders for date range:', { from, to });
+      return fetchAllOrders(options);
+    },
     enabled: !!from && !!to,
     staleTime: 5 * 60 * 1000, 
     gcTime: 10 * 60 * 1000,

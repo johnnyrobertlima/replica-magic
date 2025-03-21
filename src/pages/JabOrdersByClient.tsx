@@ -18,6 +18,7 @@ const JabOrdersByClient = () => {
   // Force search on initial load if date is available but no data is loaded
   useEffect(() => {
     if (date && Object.keys(filteredGroups).length === 0 && !isLoading) {
+      console.log("Auto-triggering search with date:", date);
       handleSearch();
     }
   }, [date, filteredGroups, isLoading, handleSearch]);

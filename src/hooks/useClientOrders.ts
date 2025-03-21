@@ -15,7 +15,6 @@ export const useClientOrders = () => {
     state,
     setState,
     date,
-    searchDate,
     expandedClients,
     searchQuery,
     searchType,
@@ -33,9 +32,9 @@ export const useClientOrders = () => {
     handleSearch
   } = useClientOrdersState();
 
-  // Data fetching hooks
+  // Data fetching hooks - this should use the date directly, not searchDate
   const { data: ordersData = { orders: [], totalCount: 0, itensSeparacao: {} }, isLoading: isLoadingOrders } = useAllJabOrders({
-    dateRange: searchDate
+    dateRange: date // Use date directly instead of searchDate
   });
 
   const { data: totals = { valorTotalSaldo: 0, valorFaturarComEstoque: 0 }, isLoading: isLoadingTotals } = useTotals();
@@ -73,6 +72,7 @@ export const useClientOrders = () => {
         
         // Store the processed groups in state
         setProcessedGroups(enhancedGroups);
+        console.log(`Grupos processados: ${Object.keys(enhancedGroups).length} clientes`);
       } catch (error) {
         console.error("Erro ao processar grupos de pedidos:", error);
         setProcessedGroups({});

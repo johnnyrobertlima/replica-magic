@@ -1,3 +1,4 @@
+
 import { supabase } from '@/services/jab/base/supabaseClient';
 
 // Function to fetch unique order numbers with pagination
@@ -61,6 +62,7 @@ export async function fetchAllPedidosUnicos(
     }
 
     const uniquePedidos = Array.from(new Set(data.map(p => p.PED_NUMPEDIDO)));
+    console.log(`Encontrados ${uniquePedidos.length} pedidos únicos no total`);
     return uniquePedidos;
   } catch (error) {
     console.error('Exceção ao buscar todos os pedidos únicos:', error);
@@ -74,19 +76,35 @@ export async function fetchPedidosDetalhados(
   centrocusto: string = 'JAB'
 ) {
   try {
-    const { data, error } = await supabase
-      .from('BLUEBAY_PEDIDO')
-      .select('*')
-      .eq('CENTROCUSTO', centrocusto)
-      .in('PED_NUMPEDIDO', numeroPedidos)
-      .in('STATUS', ['1', '2']);
+    console.log(`Buscando detalhes para ${numeroPedidos.length} pedidos`);
+    
+    // Para lidar com muitos pedidos, dividimos em lotes para evitar timeouts
+    const batchSize = 100;
+    let allResults: any[] = [];
+    
+    // Processar em lotes
+    for (let i = 0; i < numeroPedidos.length; i += batchSize) {
+      const batch = numeroPedidos.slice(i, i + batchSize);
+      
+      const { data, error } = await supabase
+        .from('BLUEBAY_PEDIDO')
+        .select('*')
+        .eq('CENTROCUSTO', centrocusto)
+        .in('PED_NUMPEDIDO', batch)
+        .in('STATUS', ['1', '2']);
 
-    if (error) {
-      console.error('Erro ao buscar pedidos detalhados:', error);
-      return [];
+      if (error) {
+        console.error(`Erro ao buscar lote ${i/batchSize + 1} de pedidos detalhados:`, error);
+        continue;
+      }
+      
+      if (data && data.length > 0) {
+        allResults = [...allResults, ...data];
+      }
     }
 
-    return data || [];
+    console.log(`Encontrados ${allResults.length} registros detalhados no total`);
+    return allResults;
   } catch (error) {
     console.error('Exceção ao buscar pedidos detalhados:', error);
     return [];
@@ -101,28 +119,75 @@ export async function fetchAllPedidosDireto(
   statusFilter?: string[]
 ) {
   try {
-    const query = supabase
-      .from('BLUEBAY_PEDIDO')
-      .select('*')
-      .eq('CENTROCUSTO', centrocusto)
-      .gte('DATA_PEDIDO', dataInicial)
-      .lte('DATA_PEDIDO', dataFinal);
+    console.log(`Buscando todos os pedidos direto para o período: ${dataInicial} a ${dataFinal}`);
     
-    // Add status filter if provided
-    if (statusFilter && statusFilter.length > 0) {
-      query.in('STATUS', statusFilter);
+    // Divide a consulta em lotes para evitar timeouts
+    const batchSize = 500;
+    let lastId = '';
+    let allResults: any[] = [];
+    let hasMore = true;
+    let batchCount = 0;
+    
+    while (hasMore) {
+      batchCount++;
+      const query = supabase
+        .from('BLUEBAY_PEDIDO')
+        .select(`
+          MATRIZ,
+          FILIAL,
+          PED_NUMPEDIDO,
+          PED_ANOBASE,
+          QTDE_SALDO,
+          VALOR_UNITARIO,
+          PES_CODIGO,
+          PEDIDO_CLIENTE,
+          STATUS,
+          ITEM_CODIGO,
+          QTDE_PEDIDA,
+          QTDE_ENTREGUE,
+          DATA_PEDIDO,
+          REPRESENTANTE
+        `)
+        .eq('CENTROCUSTO', centrocusto)
+        .gte('DATA_PEDIDO', `${dataInicial}`)
+        .lte('DATA_PEDIDO', `${dataFinal} 23:59:59.999`);
+      
+      // Apply status filter if provided
+      if (statusFilter && statusFilter.length > 0) {
+        query.in('STATUS', statusFilter);
+      }
+      
+      // Aplicar paginação baseada no ID se não for a primeira consulta
+      if (lastId) {
+        query.gt('PED_NUMPEDIDO', lastId);
+      }
+      
+      // Ordenar e limitar
+      const { data, error } = await query
+        .order('PED_NUMPEDIDO', { ascending: true })
+        .limit(batchSize);
+      
+      if (error) {
+        console.error('Erro ao buscar pedidos diretos:', error);
+        throw error;
+      }
+      
+      if (data && data.length > 0) {
+        allResults = [...allResults, ...data];
+        lastId = data[data.length - 1].PED_NUMPEDIDO;
+        
+        // Verificar se ainda há mais dados
+        hasMore = data.length === batchSize;
+      } else {
+        hasMore = false;
+      }
     }
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error('Erro ao buscar todos os pedidos direto:', error);
-      return [];
-    }
-
-    return data || [];
+    
+    console.log(`Encontrados ${allResults.length} registros de pedidos diretamente em ${batchCount} lotes`);
+    return allResults;
   } catch (error) {
-    console.error('Exceção ao buscar todos os pedidos direto:', error);
+    console.error('Erro ao buscar todos os pedidos diretos:', error);
+    // Em caso de erro, retornamos um array vazio para não quebrar a aplicação
     return [];
   }
 }
