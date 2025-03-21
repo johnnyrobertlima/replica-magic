@@ -23,7 +23,7 @@ export const useFinancialExport = ({
   const handleExportToExcel = () => {
     try {
       let exportData: any[] = [];
-      let fileName = `relatorio-financeiro-${new Date().toISOString().split('T')[0]}`;
+      let fileName = `relatorio-faturamento-${new Date().toISOString().split('T')[0]}`;
 
       // Different export logic based on the active tab
       if (activeTab === 'titles' || activeTab === 'all') {
