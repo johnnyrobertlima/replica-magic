@@ -123,3 +123,65 @@ export const exportToExcelWithSections = (
     return 0;
   }
 };
+
+/**
+ * Export data with grouped sections to Excel
+ * @param groupedData Object with group names as keys and arrays of items as values
+ * @param fileName Filename for the exported file
+ * @returns The number of exported rows
+ */
+export const exportGroupedDataToExcel = (
+  groupedData: Record<string, any[]>,
+  fileName: string
+) => {
+  try {
+    // Create workbook
+    const workbook = XLSX.utils.book_new();
+    
+    // Create worksheet
+    const worksheet = XLSX.utils.aoa_to_sheet([[]]);
+    
+    let rowIndex = 0;
+    
+    // For each group
+    Object.entries(groupedData).forEach(([groupName, items], groupIndex) => {
+      // Add a gap between groups
+      if (groupIndex > 0) {
+        rowIndex += 1;
+      }
+      
+      // Add group header
+      const groupHeader = [groupName];
+      XLSX.utils.sheet_add_aoa(worksheet, [groupHeader], { origin: { r: rowIndex, c: 0 } });
+      rowIndex += 1;
+      
+      // If there are items in this group
+      if (items && items.length > 0) {
+        // Add headers based on the first item's keys
+        const headerRow = Object.keys(items[0]);
+        XLSX.utils.sheet_add_aoa(worksheet, [headerRow], { origin: { r: rowIndex, c: 0 } });
+        rowIndex += 1;
+        
+        // Add items data
+        items.forEach(item => {
+          const itemRow = Object.values(item);
+          XLSX.utils.sheet_add_aoa(worksheet, [itemRow], { origin: { r: rowIndex, c: 0 } });
+          rowIndex += 1;
+        });
+      }
+      
+      rowIndex += 1; // Add an extra row after each group
+    });
+    
+    // Add the worksheet to the workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Grupos');
+    
+    // Generate Excel file
+    XLSX.writeFile(workbook, `${fileName}.xlsx`);
+    
+    return rowIndex; // Return the number of rows created
+  } catch (error) {
+    console.error('Error exporting grouped data to Excel:', error);
+    return 0;
+  }
+};

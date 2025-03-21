@@ -11,6 +11,7 @@ import {
 export interface ItemReport {
   ITEM_CODIGO: string;
   DESCRICAO?: string;
+  GRU_DESCRICAO?: string; // Added group description
   TOTAL_QUANTIDADE: number;
   TOTAL_VALOR: number;
   OCORRENCIAS: number;
@@ -46,28 +47,31 @@ export const fetchBkItemsReport = async (
     .filter(item => item.ITEM_CODIGO)
     .map(item => item.ITEM_CODIGO as string))];
   
-  // Fetch item descriptions from BLUEBAY_ITEM table
+  // Fetch item descriptions and group information from BLUEBAY_ITEM table
   const { data: itemData, error: itemError } = await supabase
     .from('BLUEBAY_ITEM')
-    .select('ITEM_CODIGO, DESCRICAO')
+    .select('ITEM_CODIGO, DESCRICAO, GRU_DESCRICAO')
     .in('ITEM_CODIGO', itemCodes);
   
   if (itemError) {
     console.error("Error fetching item descriptions:", itemError);
   }
   
-  // Create a map of item codes to descriptions
-  const itemDescMap = new Map<string, string>();
+  // Create a map of item codes to descriptions and groups
+  const itemInfoMap = new Map<string, { descricao: string, grupoDescricao: string }>();
   if (itemData) {
     itemData.forEach(item => {
-      if (item.ITEM_CODIGO && item.DESCRICAO) {
-        itemDescMap.set(item.ITEM_CODIGO, item.DESCRICAO);
+      if (item.ITEM_CODIGO) {
+        itemInfoMap.set(item.ITEM_CODIGO, {
+          descricao: item.DESCRICAO || '',
+          grupoDescricao: item.GRU_DESCRICAO || 'Sem Grupo'
+        });
       }
     });
   }
   
   // Process the faturamento data with the item descriptions from our map
-  return processItemsReport(faturamentoData, itemDescMap);
+  return processItemsReport(faturamentoData, itemInfoMap);
 };
 
 /**
@@ -119,7 +123,7 @@ export const fetchItemDetails = async (
  */
 const processItemsReport = (
   data: BkFaturamento[], 
-  itemDescMap: Map<string, string>
+  itemInfoMap: Map<string, { descricao: string, grupoDescricao: string }>
 ): ItemReport[] => {
   const itemsMap = new Map<string, ItemReport>();
   
@@ -146,12 +150,13 @@ const processItemsReport = (
       existingItem.TOTAL_VALOR += itemValue;
       existingItem.OCORRENCIAS += 1;
     } else {
-      // Get item description from the map we created earlier
-      const description = itemDescMap.get(item.ITEM_CODIGO) || '';
+      // Get item info from the map we created earlier
+      const itemInfo = itemInfoMap.get(item.ITEM_CODIGO) || { descricao: '', grupoDescricao: 'Sem Grupo' };
       
       itemsMap.set(item.ITEM_CODIGO, {
         ITEM_CODIGO: item.ITEM_CODIGO,
-        DESCRICAO: description,
+        DESCRICAO: itemInfo.descricao,
+        GRU_DESCRICAO: itemInfo.grupoDescricao,
         TOTAL_QUANTIDADE: item.QUANTIDADE || 0,
         TOTAL_VALOR: itemValue,
         OCORRENCIAS: 1

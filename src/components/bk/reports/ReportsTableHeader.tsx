@@ -22,12 +22,14 @@ interface ReportsTableHeaderProps {
   sortField: string;
   sortDirection: "asc" | "desc";
   handleSort: (field: string) => void;
+  showGroup?: boolean;
 }
 
 export const ReportsTableHeader = ({
   sortField,
   sortDirection,
   handleSort,
+  showGroup = false,
 }: ReportsTableHeaderProps) => {
   return (
     <TableHeader>
