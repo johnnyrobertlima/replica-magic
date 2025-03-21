@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { BkMenu } from "@/components/bk/BkMenu";
 import { TitleTable } from "@/components/bk/financial/TitleTable";
@@ -43,21 +42,19 @@ export const BkFinanceiroManager = () => {
   const [activeTab, setActiveTab] = useState("titles");
   const [selectedClient, setSelectedClient] = useState<string | null>(null);
 
-  // Filter titles by selected client if one is selected
   const clientFilteredTitles = selectedClient 
     ? filteredTitles.filter(title => String(title.PES_CODIGO) === selectedClient)
     : filteredTitles;
 
   const handleClientSelect = (clientCode: string) => {
     setSelectedClient(clientCode);
-    setActiveTab("titles"); // Switch to titles tab to show client's titles
+    setActiveTab("titles");
   };
 
   const handleResetClientSelection = () => {
     setSelectedClient(null);
   };
 
-  // Function to handle Excel export
   const handleExportToExcel = () => {
     try {
       let data = [];
@@ -65,7 +62,6 @@ export const BkFinanceiroManager = () => {
       
       switch (activeTab) {
         case 'titles':
-          // Prepare titles data for export
           data = clientFilteredTitles.map(title => ({
             'Nota': title.NUMNOTA || '',
             'Cliente': title.CLIENTE_NOME || '',
@@ -81,19 +77,17 @@ export const BkFinanceiroManager = () => {
           break;
           
         case 'invoices':
-          // Prepare invoices data for export
           data = filteredInvoices.map(invoice => ({
-            'Nota Fiscal': invoice.NUMNOTA || '',
+            'Nota Fiscal': invoice.NOTA || '',
             'Cliente': invoice.CLIENTE_NOME || '',
-            'Data Emissão': invoice.DTEMISSAO || '',
-            'Valor Total': invoice.VLRTOTAL || 0,
+            'Data Emissão': invoice.DATA_EMISSAO || '',
+            'Valor Total': invoice.VALOR_NOTA || 0,
             'Status': invoice.STATUS || ''
           }));
           fileName = `notas-fiscais-${new Date().toISOString().split('T')[0]}`;
           break;
           
         case 'clients':
-          // Prepare client summary data for export
           data = clientFinancialSummaries.map(client => ({
             'Código': client.PES_CODIGO,
             'Cliente': client.CLIENTE_NOME,
@@ -105,10 +99,9 @@ export const BkFinanceiroManager = () => {
           break;
       }
       
-      // Export the data to Excel
       if (data.length > 0) {
         exportToExcelWithSections(
-          [], // No header data
+          [], 
           data, 
           fileName
         );
@@ -168,7 +161,6 @@ export const BkFinanceiroManager = () => {
         </div>
   
         <div className="mt-6 space-y-6">
-          {/* Indicadores Financeiros */}
           <FinancialSummaryCards 
             totalValoresVencidos={financialSummary.totalValoresVencidos}
             totalPago={financialSummary.totalPago}
