@@ -76,7 +76,7 @@ export const BkFinanceiroManager = () => {
             'Valor Desconto': title.VLRDESCONTO || 0,
             'Valor Saldo': title.VLRSALDO || 0,
             'Status': title.STATUS || ''
-          });
+          }));
           fileName = `titulos-financeiros-${new Date().toISOString().split('T')[0]}`;
           break;
           
