@@ -1,7 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { BkMenu } from "@/components/bk/BkMenu";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { 
   Table, 
   TableHeader, 
@@ -23,27 +23,11 @@ import {
   CardTitle 
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, SearchIcon, PackageOpen, Package } from "lucide-react";
+import { Loader2, SearchIcon, PackageOpen, Package, FileSpreadsheet } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-
-interface EstoqueItem {
-  ITEM_CODIGO: string;
-  DESCRICAO: string;
-  FISICO: number;
-  DISPONIVEL: number;
-  RESERVADO: number;
-  LOCAL: number;
-  SUBLOCAL: string;
-  GRU_DESCRICAO: string;
-}
-
-interface GroupedEstoque {
-  groupName: string;
-  items: EstoqueItem[];
-  totalItems: number;
-  totalFisico: number;
-}
+import { useEstoqueExport } from "@/hooks/bk/useEstoqueExport";
+import { EstoqueItem, GroupedEstoque } from "@/types/bk/estoque";
 
 const BkEstoque = () => {
   const [estoqueItems, setEstoqueItems] = useState<EstoqueItem[]>([]);
@@ -52,6 +36,7 @@ const BkEstoque = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
+  const { handleExportEstoque } = useEstoqueExport();
 
   useEffect(() => {
     fetchEstoqueData();
@@ -64,12 +49,10 @@ const BkEstoque = () => {
   }, [searchTerm, estoqueItems]);
 
   const filterAndGroupItems = (term: string) => {
-    // First filter items that have FISICO > 0 or DISPONIVEL > 0
     const itemsWithStock = estoqueItems.filter(
       item => (Number(item.FISICO) > 0 || Number(item.DISPONIVEL) > 0)
     );
     
-    // Then filter by search term if provided
     const filtered = term 
       ? itemsWithStock.filter(
           (item) =>
@@ -81,7 +64,6 @@ const BkEstoque = () => {
     
     setFilteredItems(filtered);
     
-    // Group the filtered items by GRU_DESCRICAO
     const grouped: Record<string, EstoqueItem[]> = {};
     
     filtered.forEach(item => {
@@ -92,7 +74,6 @@ const BkEstoque = () => {
       grouped[groupName].push(item);
     });
     
-    // Convert to array and calculate totals
     const groupedArray: GroupedEstoque[] = Object.entries(grouped).map(([groupName, items]) => ({
       groupName,
       items,
@@ -100,7 +81,6 @@ const BkEstoque = () => {
       totalFisico: items.reduce((sum, item) => sum + (Number(item.FISICO) || 0), 0)
     }));
     
-    // Sort groups alphabetically
     groupedArray.sort((a, b) => a.groupName.localeCompare(b.groupName));
     
     setGroupedItems(groupedArray);
@@ -110,7 +90,6 @@ const BkEstoque = () => {
     try {
       setIsLoading(true);
       
-      // First, fetch estoque data for LOCAL = 3
       const { data: estoqueData, error: estoqueError } = await supabase
         .from('BLUEBAY_ESTOQUE')
         .select('*')
@@ -128,17 +107,14 @@ const BkEstoque = () => {
         return;
       }
       
-      // Extract all ITEM_CODIGO values to query the item data
       const itemCodes = estoqueData.map(item => item.ITEM_CODIGO);
       
-      // Split codes into batches to avoid URL length limitations
       const batchSize = 200;
       const batches = [];
       for (let i = 0; i < itemCodes.length; i += batchSize) {
         batches.push(itemCodes.slice(i, i + batchSize));
       }
       
-      // Fetch item data for each batch and combine results
       let allItemsData = [];
       for (const batch of batches) {
         const { data: itemsData, error: itemsError } = await supabase
@@ -153,7 +129,6 @@ const BkEstoque = () => {
         }
       }
 
-      // Create a map of item codes to their descriptions and groups
       const itemMap = new Map();
       allItemsData.forEach(item => {
         itemMap.set(item.ITEM_CODIGO, {
@@ -162,7 +137,6 @@ const BkEstoque = () => {
         });
       });
 
-      // Combine the data
       const combinedData: EstoqueItem[] = estoqueData.map(estoque => {
         const itemInfo = itemMap.get(estoque.ITEM_CODIGO) || { DESCRICAO: 'Sem descrição', GRU_DESCRICAO: 'Sem grupo' };
         
@@ -193,12 +167,27 @@ const BkEstoque = () => {
     }
   };
 
+  const handleExportClick = () => {
+    handleExportEstoque(groupedItems, filteredItems);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <BkMenu />
 
       <div className="container mx-auto px-4 py-6">
-        <h1 className="text-3xl font-bold text-primary mb-6">Gestão de Estoque</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-primary">Gestão de Estoque</h1>
+          <Button 
+            variant="outline" 
+            onClick={handleExportClick}
+            disabled={isLoading || filteredItems.length === 0}
+            className="flex items-center gap-2"
+          >
+            <FileSpreadsheet className="h-4 w-4" />
+            Exportar Excel
+          </Button>
+        </div>
 
         <Card className="mb-6">
           <CardHeader className="pb-3">
