@@ -1,88 +1,55 @@
 
-import { supabase } from "../base/supabaseClient";
+import { supabase } from '../base/supabaseClient';
 
 /**
- * Fetches detailed pedidos by numbers
+ * Fetches detailed information for a list of order numbers
  */
-export async function fetchPedidosDetalhados(numeroPedidos: string[]) {
-  if (!numeroPedidos.length) return [];
-  
-  // Divide em lotes de 100 para não exceder limites de consulta
-  const batchSize = 100;
-  const batches = [];
-  
-  for (let i = 0; i < numeroPedidos.length; i += batchSize) {
-    batches.push(numeroPedidos.slice(i, i + batchSize));
-  }
-  
-  console.log(`Buscando detalhes em ${batches.length} lotes`);
-  
-  // Busca cada lote de pedidos
-  const allResults = [];
-  for (const batch of batches) {
-    // Get the pedido data first
-    const { data: pedidosData, error: pedidosError } = await supabase
-      .from('BLUEBAY_PEDIDO')
-      .select(`
-        MATRIZ,
-        FILIAL,
-        PED_NUMPEDIDO,
-        PED_ANOBASE,
-        QTDE_SALDO,
-        VALOR_UNITARIO,
-        PES_CODIGO,
-        PEDIDO_CLIENTE,
-        STATUS,
-        ITEM_CODIGO,
-        QTDE_PEDIDA,
-        QTDE_ENTREGUE,
-        DATA_PEDIDO,
-        REPRESENTANTE
-      `)
-      .eq('CENTROCUSTO', 'JAB')
-      .in('STATUS', ['1', '2'])
-      .in('PED_NUMPEDIDO', batch);
-
-    if (pedidosError) {
-      console.error('Erro ao buscar detalhes dos pedidos:', pedidosError);
-      throw pedidosError;
+export async function fetchPedidosDetalhados(
+  numeroPedidos: string[],
+  centrocusto: string = 'JAB'
+) {
+  try {
+    console.log(`Buscando detalhes para ${numeroPedidos.length} pedidos`);
+    
+    // Para lidar com muitos pedidos, dividimos em lotes para evitar timeouts
+    const batchSize = 200;
+    let allResults: any[] = [];
+    
+    // Processar em lotes - executando em paralelo para melhor desempenho
+    const batches = [];
+    for (let i = 0; i < numeroPedidos.length; i += batchSize) {
+      const batch = numeroPedidos.slice(i, i + batchSize);
+      batches.push(batch);
     }
     
-    if (pedidosData) {
-      // Now for each item, get the description from BLUEBAY_ITEM
-      const itemCodes = pedidosData
-        .map(pedido => pedido.ITEM_CODIGO)
-        .filter(Boolean);
-      
-      // Create a map of item codes to descriptions
-      const itemDescriptions: Record<string, string> = {};
-      
-      if (itemCodes.length > 0) {
-        const { data: itemsData, error: itemsError } = await supabase
-          .from('BLUEBAY_ITEM')
-          .select('ITEM_CODIGO, DESCRICAO')
-          .in('ITEM_CODIGO', itemCodes);
-          
-        if (itemsError) {
-          console.error('Erro ao buscar descrições dos itens:', itemsError);
-        } else if (itemsData) {
-          itemsData.forEach(item => {
-            if (item.ITEM_CODIGO) {
-              itemDescriptions[item.ITEM_CODIGO] = item.DESCRICAO || '';
-            }
-          });
-        }
+    const batchPromises = batches.map(async (batch) => {
+      const { data, error } = await supabase
+        .from('BLUEBAY_PEDIDO')
+        .select('*')
+        .eq('CENTROCUSTO', centrocusto)
+        .in('PED_NUMPEDIDO', batch)
+        .in('STATUS', ['1', '2']);
+
+      if (error) {
+        console.error(`Erro ao buscar lote de pedidos detalhados:`, error);
+        return [];
       }
       
-      // Merge the data
-      const mergedData = pedidosData.map(pedido => ({
-        ...pedido,
-        DESCRICAO: pedido.ITEM_CODIGO ? itemDescriptions[pedido.ITEM_CODIGO] || null : null
-      }));
-      
-      allResults.push(...mergedData);
-    }
-  }
+      return data || [];
+    });
+    
+    // Executar todas as consultas em paralelo
+    const batchResults = await Promise.all(batchPromises);
+    
+    // Combinar todos os resultados
+    batchResults.forEach(result => {
+      allResults = [...allResults, ...result];
+    });
 
-  return allResults;
+    console.log(`Encontrados ${allResults.length} registros detalhados no total`);
+    return allResults;
+  } catch (error) {
+    console.error('Exceção ao buscar pedidos detalhados:', error);
+    return [];
+  }
 }
