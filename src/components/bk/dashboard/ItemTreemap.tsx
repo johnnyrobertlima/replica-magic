@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { formatCurrency } from "@/lib/utils";
 import { TreemapDataItem } from "./treemap/treemapTypes";
 import { useTreemapRenderer } from "./treemap/useTreemapRenderer";
-import { TreemapControls } from "./treemap/treemap/TreemapControls";
+import { TreemapControls } from "./treemap/TreemapControls";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
