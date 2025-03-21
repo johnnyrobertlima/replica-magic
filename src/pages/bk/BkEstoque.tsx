@@ -66,7 +66,7 @@ const BkEstoque = () => {
   const filterAndGroupItems = (term: string) => {
     // First filter items that have FISICO > 0 or DISPONIVEL > 0
     const itemsWithStock = estoqueItems.filter(
-      item => (item.FISICO > 0 || item.DISPONIVEL > 0)
+      item => (Number(item.FISICO) > 0 || Number(item.DISPONIVEL) > 0)
     );
     
     // Then filter by search term if provided
@@ -97,7 +97,7 @@ const BkEstoque = () => {
       groupName,
       items,
       totalItems: items.length,
-      totalFisico: items.reduce((sum, item) => sum + (item.FISICO || 0), 0)
+      totalFisico: items.reduce((sum, item) => sum + (Number(item.FISICO) || 0), 0)
     }));
     
     // Sort groups alphabetically
@@ -118,20 +118,44 @@ const BkEstoque = () => {
 
       if (estoqueError) throw estoqueError;
       
+      if (!estoqueData || estoqueData.length === 0) {
+        setIsLoading(false);
+        toast({
+          title: "Nenhum dado de estoque encontrado",
+          description: "Não foram encontrados itens de estoque no local 3.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       // Extract all ITEM_CODIGO values to query the item data
       const itemCodes = estoqueData.map(item => item.ITEM_CODIGO);
       
-      // Then, fetch item data specifically for the items in our estoque
-      const { data: itemsData, error: itemsError } = await supabase
-        .from('BLUEBAY_ITEM')
-        .select('ITEM_CODIGO, DESCRICAO, GRU_DESCRICAO')
-        .in('ITEM_CODIGO', itemCodes);
+      // Split codes into batches to avoid URL length limitations
+      const batchSize = 200;
+      const batches = [];
+      for (let i = 0; i < itemCodes.length; i += batchSize) {
+        batches.push(itemCodes.slice(i, i + batchSize));
+      }
+      
+      // Fetch item data for each batch and combine results
+      let allItemsData = [];
+      for (const batch of batches) {
+        const { data: itemsData, error: itemsError } = await supabase
+          .from('BLUEBAY_ITEM')
+          .select('ITEM_CODIGO, DESCRICAO, GRU_DESCRICAO')
+          .in('ITEM_CODIGO', batch);
 
-      if (itemsError) throw itemsError;
+        if (itemsError) throw itemsError;
+        
+        if (itemsData) {
+          allItemsData = [...allItemsData, ...itemsData];
+        }
+      }
 
       // Create a map of item codes to their descriptions and groups
       const itemMap = new Map();
-      itemsData.forEach(item => {
+      allItemsData.forEach(item => {
         itemMap.set(item.ITEM_CODIGO, {
           DESCRICAO: item.DESCRICAO || 'Sem descrição',
           GRU_DESCRICAO: item.GRU_DESCRICAO || 'Sem grupo'
@@ -154,6 +178,7 @@ const BkEstoque = () => {
         };
       });
 
+      console.log(`Loaded ${combinedData.length} estoque items`);
       setEstoqueItems(combinedData);
       
     } catch (error: any) {
@@ -229,7 +254,7 @@ const BkEstoque = () => {
                     <div>
                       <p className="text-sm text-muted-foreground">Estoque Físico Total</p>
                       <p className="text-2xl font-bold">
-                        {filteredItems.reduce((sum, item) => sum + (item.FISICO || 0), 0)}
+                        {filteredItems.reduce((sum, item) => sum + (Number(item.FISICO) || 0), 0)}
                       </p>
                     </div>
                   </div>
