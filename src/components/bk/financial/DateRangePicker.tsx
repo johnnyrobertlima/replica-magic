@@ -1,3 +1,4 @@
+
 import React from "react";
 import { CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -97,7 +98,7 @@ export const DateRangePicker = ({
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 bg-white" align="end">
+            <PopoverContent className="w-auto p-0 bg-white" align="start" side="bottom">
               <div className="grid gap-4 p-4">
                 <div className="grid gap-2">
                   <div className="flex items-center justify-between">
