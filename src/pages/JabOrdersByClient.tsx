@@ -1,13 +1,36 @@
 
-import { Loader2 } from "lucide-react";
+import { Loader2, FileSpreadsheet } from "lucide-react";
 import { useClientOrders } from "@/hooks/useClientOrders";
 import { OrdersTabs } from "@/components/jab-orders/OrdersTabs";
 import { Toaster } from "@/components/ui/toaster";
 import { BluebayMenu } from "@/components/jab-orders/BluebayMenu";
+import { Button } from "@/components/ui/button";
+import { useExportClientOrders } from "@/hooks/useExportClientOrders";
+import { useToast } from "@/hooks/use-toast";
 
 const JabOrdersByClient = () => {
   const clientOrders = useClientOrders();
   const { isLoading } = clientOrders;
+  const { toast } = useToast();
+  const { exportOrdersToExcel } = useExportClientOrders();
+
+  const handleExport = () => {
+    if (Object.keys(clientOrders.filteredGroups).length === 0) {
+      toast({
+        title: "Nenhum dado para exportar",
+        description: "Não há pedidos para exportar no momento.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    exportOrdersToExcel(clientOrders.filteredGroups);
+    
+    toast({
+      title: "Exportação concluída",
+      description: "Os dados foram exportados com sucesso.",
+    });
+  };
 
   if (isLoading) {
     return (
@@ -21,6 +44,16 @@ const JabOrdersByClient = () => {
     <main className="container-fluid p-0 max-w-full">
       <BluebayMenu />
       <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Pedidos por Cliente</h1>
+          <Button 
+            onClick={handleExport} 
+            className="bg-green-600 hover:bg-green-700"
+          >
+            <FileSpreadsheet className="mr-2 h-4 w-4" />
+            Exportar para Excel
+          </Button>
+        </div>
         <div className="space-y-6">
           <OrdersTabs clientOrders={clientOrders} />
         </div>
