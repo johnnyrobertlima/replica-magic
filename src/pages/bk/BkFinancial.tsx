@@ -7,7 +7,8 @@ import { useFinancial } from "@/hooks/bk/useFinancial";
 import { Button } from "@/components/ui/button";
 import { DateRangePicker } from "@/components/bk/financial/DateRangePicker";
 import { StatusFilter } from "@/components/bk/financial/StatusFilter";
-import { RefreshCw, Loader2 } from "lucide-react";
+import { RefreshCw, Loader2, FileSpreadsheet } from "lucide-react";
+import { useFinancialExport } from "@/hooks/bk/financial/useFinancialExport";
 
 export const BkFinancial = () => {
   const { 
@@ -22,6 +23,13 @@ export const BkFinancial = () => {
     availableStatuses
   } = useFinancial();
 
+  const { handleExportToExcel } = useFinancialExport({
+    activeTab: 'invoices', // Export only invoices
+    clientFilteredTitles: [], // No titles in this view
+    filteredInvoices: filteredInvoices,
+    clientFinancialSummaries: [] // No client summaries in this view
+  });
+
   return (
     <div className="container-fluid p-0 max-w-full">
       <BkMenu />
@@ -29,14 +37,24 @@ export const BkFinancial = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold">Gestão de Faturamento</h1>
-          <Button variant="outline" onClick={refreshData} disabled={isLoading}>
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4 mr-2" />
-            )}
-            Atualizar
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={handleExportToExcel}
+              disabled={isLoading || filteredInvoices.length === 0}
+            >
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              Exportar Excel
+            </Button>
+            <Button variant="outline" onClick={refreshData} disabled={isLoading}>
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4 mr-2" />
+              )}
+              Atualizar
+            </Button>
+          </div>
         </div>
   
         <div className="mt-6 space-y-6">
