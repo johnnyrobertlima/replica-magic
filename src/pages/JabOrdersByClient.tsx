@@ -3,7 +3,8 @@ import React, { useEffect } from "react";
 import { Loader2, FileSpreadsheet } from "lucide-react";
 import { useClientOrders } from "@/hooks/useClientOrders";
 import { OrdersTabs } from "@/components/jab-orders/OrdersTabs";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster as ShadcnToaster } from "@/components/ui/toaster";
+import { Toaster as SonnerToaster } from "sonner";
 import { BluebayMenu } from "@/components/jab-orders/BluebayMenu";
 import { Button } from "@/components/ui/button";
 import { useExportClientOrders } from "@/hooks/useExportClientOrders";
@@ -79,7 +80,8 @@ const JabOrdersByClient = () => {
           </div>
         )}
         
-        <Toaster />
+        <ShadcnToaster />
+        <SonnerToaster position="top-right" richColors />
       </div>
     </main>
   );

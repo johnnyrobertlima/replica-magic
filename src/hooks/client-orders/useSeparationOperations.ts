@@ -38,8 +38,10 @@ export const useSeparationOperations = (
         items: itemsToSend
       });
     },
-    onSuccess: () => {
-      toast.success('Itens enviados para separação com sucesso!');
+    onSuccess: (data, variables) => {
+      const itemCount = variables.selectedItems.length;
+      toast.success(`${itemCount} ${itemCount === 1 ? 'item foi enviado' : 'itens foram enviados'} para separação com sucesso!`);
+      
       // Reset selected items
       setState((prev) => ({
         ...prev,
