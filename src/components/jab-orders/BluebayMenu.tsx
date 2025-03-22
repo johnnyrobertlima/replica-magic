@@ -24,7 +24,6 @@ export const BluebayMenu = () => {
     { name: "Acompanhamento de Faturamento", path: "/client-area/bluebay/acompanhamento-faturamento" },
     { name: "Aprovação Financeira", path: "/client-area/bluebay/aprovacao-financeira" },
     { name: "Pedidos por Cliente", path: "/client-area/bluebay/jab-orders-by-client" },
-    { name: "Separação de Pedidos", path: "/client-area/bluebay/jab-orders" },
     { name: "Separação por Representante", path: "/client-area/bluebay/jab-orders-by-representante" },
   ];
 
