@@ -26,6 +26,9 @@ export const useOrderTotals = () => {
     
     // First pass - collect all pedidos and items
     for (const order of approvedOrders) {
+      // Only count approved orders, not rejected ones
+      if (order.action !== 'approved') continue;
+      
       console.log(`calculateTotals: Processing order #${approvedOrders.indexOf(order)}:`, order.separacao_id);
       
       // Find the separação by ID
@@ -95,6 +98,9 @@ export const useOrderTotals = () => {
     
     // Second pass - calculate totals using the fetched data
     for (const order of approvedOrders) {
+      // Only count approved orders, not rejected ones
+      if (order.action !== 'approved') continue;
+      
       // Find the separação by ID
       const separacao = order.cliente_data.separacoes.find(sep => sep && sep.id === order.separacao_id);
       

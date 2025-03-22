@@ -34,6 +34,22 @@ export const useApprovedOrdersStorage = () => {
         if (existingOrderIndex === -1) {
           // If this order isn't in local storage, add it
           allOrders.push(supabaseOrder);
+        } else {
+          // If it exists but the Supabase version has more data, use that one
+          const localOrder = allOrders[existingOrderIndex];
+          
+          // Check if the Supabase version has separacao_itens_flat
+          const supabaseHasItems = supabaseOrder.cliente_data?.separacoes?.some(
+            sep => sep.id === supabaseOrder.separacao_id && sep.separacao_itens_flat?.length > 0
+          );
+          
+          const localHasItems = localOrder.cliente_data?.separacoes?.some(
+            sep => sep.id === localOrder.separacao_id && sep.separacao_itens_flat?.length > 0
+          );
+          
+          if (supabaseHasItems && !localHasItems) {
+            allOrders[existingOrderIndex] = supabaseOrder;
+          }
         }
       }
       
@@ -61,6 +77,8 @@ export const useApprovedOrdersStorage = () => {
       action: "approved" | "rejected"
     ) => {
       try {
+        console.log(`Adding ${action} order for separation ${separacaoId} with data:`, clienteData);
+        
         // Create new order object with proper types
         const newApprovedOrder: ApprovedOrder = {
           id: crypto.randomUUID(),
@@ -87,6 +105,7 @@ export const useApprovedOrdersStorage = () => {
         // Save to Supabase in the background
         await saveOrderToSupabase(newApprovedOrder);
         
+        console.log("Successfully saved approved order:", newApprovedOrder.id);
         return newApprovedOrder;
       } catch (error) {
         console.error('Error adding approved order:', error);

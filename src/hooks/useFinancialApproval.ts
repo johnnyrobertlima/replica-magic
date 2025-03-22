@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useClientesFinanceiros } from "@/hooks/useClientesFinanceiros";
 import { useApprovedOrders } from "@/hooks/useApprovedOrders";
@@ -112,36 +113,125 @@ export const useFinancialApproval = () => {
     console.log("Hidden card IDs:", [...hiddenCardIds]);
   }, [filteredClientesFinanceiros, clientesWithPendingSeparacoes, approvedSeparacaoIds, hiddenCardIds]);
 
-  const handleApprove = (separacaoId: string, cliente: any) => {
-    addApprovedOrder(
-      separacaoId, 
-      cliente, 
-      currentUser?.email || null,
-      currentUser?.id || null,
-      'approved'
-    );
-    
-    setApprovedSeparacaoIds(prev => {
-      const newSet = new Set(prev);
-      newSet.add(separacaoId);
-      return newSet;
-    });
+  const handleApprove = async (separacaoId: string, cliente: any) => {
+    try {
+      // Fetch complete separation details including items
+      const { data: separacaoData, error: separacaoError } = await supabase
+        .from('separacoes')
+        .select(`
+          *,
+          separacao_itens(*)
+        `)
+        .eq('id', separacaoId)
+        .single();
+      
+      if (separacaoError) {
+        console.error("Error fetching separation details:", separacaoError);
+        throw separacaoError;
+      }
+      
+      // Update the client data with the complete separacao data including items
+      const clienteWithSeparacaoData = {
+        ...cliente,
+        separacoes: cliente.separacoes.map((sep: any) => 
+          sep.id === separacaoId 
+            ? { ...sep, separacao_itens_flat: separacaoData.separacao_itens }
+            : sep
+        )
+      };
+      
+      console.log("Adding approved order with complete data:", {
+        separacaoId,
+        clienteWithSeparacaoData,
+        separacaoData
+      });
+      
+      await addApprovedOrder(
+        separacaoId, 
+        clienteWithSeparacaoData, 
+        currentUser?.email || null,
+        currentUser?.id || null,
+        'approved'
+      );
+      
+      // Update separation status in database
+      const { error: updateError } = await supabase
+        .from('separacoes')
+        .update({ status: 'aprovado' })
+        .eq('id', separacaoId);
+        
+      if (updateError) {
+        console.error("Error updating separation status:", updateError);
+      }
+      
+      setApprovedSeparacaoIds(prev => {
+        const newSet = new Set(prev);
+        newSet.add(separacaoId);
+        return newSet;
+      });
+    } catch (error) {
+      console.error("Error in approval process:", error);
+    }
   };
   
-  const handleReject = (separacaoId: string, cliente: any) => {
-    addApprovedOrder(
-      separacaoId, 
-      cliente, 
-      currentUser?.email || null,
-      currentUser?.id || null,
-      'rejected'
-    );
-    
-    setApprovedSeparacaoIds(prev => {
-      const newSet = new Set(prev);
-      newSet.add(separacaoId);
-      return newSet;
-    });
+  const handleReject = async (separacaoId: string, cliente: any) => {
+    try {
+      // Fetch complete separation details including items
+      const { data: separacaoData, error: separacaoError } = await supabase
+        .from('separacoes')
+        .select(`
+          *,
+          separacao_itens(*)
+        `)
+        .eq('id', separacaoId)
+        .single();
+      
+      if (separacaoError) {
+        console.error("Error fetching separation details:", separacaoError);
+        throw separacaoError;
+      }
+      
+      // Update the client data with the complete separacao data including items
+      const clienteWithSeparacaoData = {
+        ...cliente,
+        separacoes: cliente.separacoes.map((sep: any) => 
+          sep.id === separacaoId 
+            ? { ...sep, separacao_itens_flat: separacaoData.separacao_itens }
+            : sep
+        )
+      };
+      
+      console.log("Adding rejected order with complete data:", {
+        separacaoId,
+        clienteWithSeparacaoData
+      });
+      
+      await addApprovedOrder(
+        separacaoId, 
+        clienteWithSeparacaoData, 
+        currentUser?.email || null,
+        currentUser?.id || null,
+        'rejected'
+      );
+      
+      // Update separation status in database
+      const { error: updateError } = await supabase
+        .from('separacoes')
+        .update({ status: 'reprovado' })
+        .eq('id', separacaoId);
+        
+      if (updateError) {
+        console.error("Error updating separation status:", updateError);
+      }
+      
+      setApprovedSeparacaoIds(prev => {
+        const newSet = new Set(prev);
+        newSet.add(separacaoId);
+        return newSet;
+      });
+    } catch (error) {
+      console.error("Error in rejection process:", error);
+    }
   };
 
   const handleHideCard = (id: string) => {

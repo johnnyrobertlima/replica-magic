@@ -5,6 +5,8 @@ import { ApprovedOrder } from "../types";
 // Save an approved order to Supabase
 export const saveOrderToSupabase = async (order: ApprovedOrder): Promise<void> => {
   try {
+    console.log("Saving order to Supabase:", order);
+    
     const { error } = await supabase
       .from('approved_orders')
       .insert({
@@ -16,6 +18,7 @@ export const saveOrderToSupabase = async (order: ApprovedOrder): Promise<void> =
       });
     
     if (error) {
+      console.error(`Supabase error when saving order: ${error.message}`, error);
       throw new Error(`Supabase error: ${error.message}`);
     }
     
@@ -46,6 +49,7 @@ export const loadOrdersFromSupabase = async (
       .order('approved_at', { ascending: false });
     
     if (error) {
+      console.error(`Supabase error when loading orders: ${error.message}`, error);
       throw new Error(`Supabase error: ${error.message}`);
     }
     
@@ -54,19 +58,91 @@ export const loadOrdersFromSupabase = async (
       return [];
     }
     
-    // Map database records to ApprovedOrder objects
-    const orders: ApprovedOrder[] = data.map(record => ({
-      id: record.id,
-      separacao_id: record.separacao_id,
-      cliente_data: record.cliente_data,
-      approved_at: record.approved_at,
-      user_id: record.user_id,
-      user_email: record.user_email,
-      action: record.action
-    }));
+    // For each order, check if the separacao has related items
+    const enrichedOrders: ApprovedOrder[] = [];
     
-    console.log(`Loaded ${orders.length} orders from Supabase`);
-    return orders;
+    for (const record of data) {
+      // If the record already has cliente_data with separacao_itens_flat, use it directly
+      const hasDetailedItems = record.cliente_data?.separacoes?.some(
+        sep => sep.id === record.separacao_id && sep.separacao_itens_flat?.length > 0
+      );
+      
+      if (hasDetailedItems) {
+        // Just map the record as is
+        enrichedOrders.push({
+          id: record.id,
+          separacao_id: record.separacao_id,
+          cliente_data: record.cliente_data,
+          approved_at: record.approved_at,
+          user_id: record.user_id,
+          user_email: record.user_email,
+          action: record.action
+        });
+      } else {
+        // Try to fetch the separacao items separately
+        try {
+          const { data: separacaoData, error: separacaoError } = await supabase
+            .from('separacoes')
+            .select(`
+              *,
+              separacao_itens(*)
+            `)
+            .eq('id', record.separacao_id)
+            .single();
+            
+          if (separacaoError) {
+            console.warn(`Could not fetch separation items for ${record.separacao_id}: ${separacaoError.message}`);
+            // Still add the record but without the detailed items
+            enrichedOrders.push({
+              id: record.id,
+              separacao_id: record.separacao_id,
+              cliente_data: record.cliente_data,
+              approved_at: record.approved_at,
+              user_id: record.user_id,
+              user_email: record.user_email,
+              action: record.action
+            });
+          } else {
+            // Enrich the cliente_data with the fetched items
+            const clienteData = { ...record.cliente_data };
+            
+            // If the cliente_data has separacoes array
+            if (clienteData.separacoes) {
+              clienteData.separacoes = clienteData.separacoes.map(sep => 
+                sep.id === record.separacao_id
+                  ? { ...sep, separacao_itens_flat: separacaoData.separacao_itens }
+                  : sep
+              );
+            }
+            
+            enrichedOrders.push({
+              id: record.id,
+              separacao_id: record.separacao_id,
+              cliente_data: clienteData,
+              approved_at: record.approved_at,
+              user_id: record.user_id,
+              user_email: record.user_email,
+              action: record.action
+            });
+          }
+        } catch (err) {
+          console.error(`Error enriching order ${record.id}:`, err);
+          // Still add the record but without enrichment
+          enrichedOrders.push({
+            id: record.id,
+            separacao_id: record.separacao_id,
+            cliente_data: record.cliente_data,
+            approved_at: record.approved_at,
+            user_id: record.user_id,
+            user_email: record.user_email,
+            action: record.action
+          });
+        }
+      }
+    }
+    
+    console.log(`Loaded and enriched ${enrichedOrders.length} orders from Supabase`);
+    return enrichedOrders;
   } catch (error) {
     console.error('Error loading orders from Supabase:', error);
     return [];
