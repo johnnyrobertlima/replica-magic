@@ -34,6 +34,9 @@ export interface ClientOrdersState extends SearchState {
     valor: number; 
     clientName?: string; 
     clientCode?: number;
+    pedido?: string;
+    DESCRICAO?: string | null;
+    PES_CODIGO?: number;
   }>;
   isSending: boolean;
 }

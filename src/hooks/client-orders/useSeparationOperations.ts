@@ -25,7 +25,7 @@ export const useSeparationOperations = (
         return {
           itemCodigo: item,
           pedido: details.pedido || "",
-          pesCodigo: details.clientCode || details.PES_CODIGO || details.pes_codigo || 0,
+          pesCodigo: details.clientCode || details.PES_CODIGO || 0,
           descricao: details.DESCRICAO || "",
           qtdeSaldo: details.qtde || 0,
           valorUnitario: details.valor / details.qtde || 0
