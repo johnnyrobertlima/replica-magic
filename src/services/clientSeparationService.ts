@@ -23,16 +23,6 @@ export async function sendToSeparation({ items }: SeparationRequest) {
 
     console.log("Starting sendToSeparation with items:", items);
     
-    const user = await supabase.auth.getUser();
-    
-    if (!user || !user.data || !user.data.user) {
-      console.error("User not authenticated");
-      throw new Error('Usuário não autenticado');
-    }
-
-    const userId = user.data.user.id;
-    const userEmail = user.data.user.email;
-
     // Group items by cliente (PES_CODIGO)
     const itemsByCliente: Record<string, SeparationItem[]> = {};
     items.forEach(item => {
@@ -65,13 +55,12 @@ export async function sendToSeparation({ items }: SeparationRequest) {
       
       const valorTotal = clienteItems.reduce((sum, item) => sum + (item.qtdeSaldo * item.valorUnitario), 0);
       
+      // Remove user_email from the insert as it doesn't exist in the schema
       const { data, error } = await supabase
         .from('separacoes')
         .insert({
           cliente_codigo: clienteNumerico,
           cliente_nome: 'Cliente ' + clienteKey, // This should be replaced with actual client name if available
-          user_id: userId,
-          user_email: userEmail,
           quantidade_itens: clienteItems.length,
           valor_total: valorTotal,
           status: 'pendente'
