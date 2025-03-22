@@ -63,16 +63,25 @@ export const loadOrdersFromSupabase = async (
     
     for (const record of data) {
       // If the record already has cliente_data with separacao_itens_flat, use it directly
-      const hasDetailedItems = record.cliente_data?.separacoes?.some(
-        sep => sep.id === record.separacao_id && sep.separacao_itens_flat?.length > 0
-      );
+      // Check if clienteData is an object and has separacoes property
+      const clienteDataObj = typeof record.cliente_data === 'string' 
+        ? JSON.parse(record.cliente_data) 
+        : record.cliente_data;
+      
+      const hasDetailedItems = clienteDataObj && 
+        Array.isArray(clienteDataObj.separacoes) &&
+        clienteDataObj.separacoes.some(
+          (sep: any) => sep.id === record.separacao_id && 
+          Array.isArray(sep.separacao_itens_flat) && 
+          sep.separacao_itens_flat.length > 0
+        );
       
       if (hasDetailedItems) {
         // Just map the record as is
         enrichedOrders.push({
           id: record.id,
           separacao_id: record.separacao_id,
-          cliente_data: record.cliente_data,
+          cliente_data: clienteDataObj,
           approved_at: record.approved_at,
           user_id: record.user_id,
           user_email: record.user_email,
@@ -96,7 +105,7 @@ export const loadOrdersFromSupabase = async (
             enrichedOrders.push({
               id: record.id,
               separacao_id: record.separacao_id,
-              cliente_data: record.cliente_data,
+              cliente_data: clienteDataObj,
               approved_at: record.approved_at,
               user_id: record.user_id,
               user_email: record.user_email,
@@ -104,11 +113,11 @@ export const loadOrdersFromSupabase = async (
             });
           } else {
             // Enrich the cliente_data with the fetched items
-            const clienteData = { ...record.cliente_data };
+            const clienteData = clienteDataObj ? {...clienteDataObj} : {};
             
             // If the cliente_data has separacoes array
-            if (clienteData.separacoes) {
-              clienteData.separacoes = clienteData.separacoes.map(sep => 
+            if (clienteData.separacoes && Array.isArray(clienteData.separacoes)) {
+              clienteData.separacoes = clienteData.separacoes.map((sep: any) => 
                 sep.id === record.separacao_id
                   ? { ...sep, separacao_itens_flat: separacaoData.separacao_itens }
                   : sep
@@ -131,7 +140,7 @@ export const loadOrdersFromSupabase = async (
           enrichedOrders.push({
             id: record.id,
             separacao_id: record.separacao_id,
-            cliente_data: record.cliente_data,
+            cliente_data: clienteDataObj || record.cliente_data,
             approved_at: record.approved_at,
             user_id: record.user_id,
             user_email: record.user_email,
