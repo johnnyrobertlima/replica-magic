@@ -1,12 +1,17 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { FileSpreadsheet, Loader2 } from "lucide-react";
 import { BluebayAdmBanner } from "@/components/bluebay_adm/BluebayAdmBanner";
 import { BluebayAdmMenu } from "@/components/bluebay_adm/BluebayAdmMenu";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Accordion } from "@/components/ui/accordion";
+import { 
+  Accordion, 
+  AccordionItem,
+  AccordionTrigger, 
+  AccordionContent 
+} from "@/components/ui/accordion";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { exportGroupedDataToExcel } from "@/utils/excelUtils";
@@ -20,11 +25,7 @@ const BluebayAdmEstoque = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
 
-  // Fetch estoque data on component mount
-  useState(() => {
-    fetchEstoqueData();
-  });
-
+  // Define fetchEstoqueData function before using it
   const fetchEstoqueData = async () => {
     try {
       setIsLoading(true);
@@ -106,6 +107,11 @@ const BluebayAdmEstoque = () => {
       setIsLoading(false);
     }
   };
+
+  // Use useEffect to fetch data on component mount
+  useEffect(() => {
+    fetchEstoqueData();
+  }, []);
 
   const filterAndGroupItems = (term: string, items: EstoqueItem[] = estoqueItems) => {
     const itemsWithStock = items.filter(
@@ -290,8 +296,8 @@ const BluebayAdmEstoque = () => {
 // EstoqueGroupItem Component
 const EstoqueGroupItem = ({ group, index }: { group: GroupedEstoque; index: number }) => {
   return (
-    <Accordion.Item value={`group-${index}`} className="bg-white rounded-lg shadow mb-4 overflow-hidden">
-      <Accordion.Trigger className="px-4 py-3 hover:bg-gray-50">
+    <AccordionItem value={`group-${index}`} className="bg-white rounded-lg shadow mb-4 overflow-hidden">
+      <AccordionTrigger className="px-4 py-3 hover:bg-gray-50">
         <div className="flex justify-between items-center w-full pr-4">
           <div className="flex items-center gap-4">
             <Badge variant="outline" className="px-2 py-1 rounded-full bg-primary/10">
@@ -306,8 +312,8 @@ const EstoqueGroupItem = ({ group, index }: { group: GroupedEstoque; index: numb
             </div>
           </div>
         </div>
-      </Accordion.Trigger>
-      <Accordion.Content>
+      </AccordionTrigger>
+      <AccordionContent>
         <div className="bg-white rounded-lg overflow-x-auto">
           <Table>
             <TableHeader>
@@ -334,8 +340,8 @@ const EstoqueGroupItem = ({ group, index }: { group: GroupedEstoque; index: numb
             </TableBody>
           </Table>
         </div>
-      </Accordion.Content>
-    </Accordion.Item>
+      </AccordionContent>
+    </AccordionItem>
   );
 };
 
