@@ -63,7 +63,9 @@ export const useEstoqueData = () => {
     try {
       setIsLoading(true);
       
-      // Buscar todos os itens do estoque sem limitação de quantidade
+      console.log("Iniciando busca de dados de estoque no LOCAL 1");
+      
+      // Obter TODOS os registros de estoque sem nenhuma limitação
       const { data: estoqueData, error: estoqueError } = await supabase
         .from('BLUEBAY_ESTOQUE')
         .select('*')
@@ -81,30 +83,40 @@ export const useEstoqueData = () => {
         return;
       }
       
+      console.log(`Total de registros de estoque encontrados: ${estoqueData.length}`);
+      
+      // Extrair todos os códigos de itens
       const itemCodes = estoqueData.map(item => item.ITEM_CODIGO);
       console.log(`Total de códigos de itens no estoque: ${itemCodes.length}`);
       
-      // Processar todos os itens sem limitação, com tamanho de lote ainda maior
-      const batchSize = 5000; // Aumentar para processar mais itens por lote
+      // Aumentar ainda mais o tamanho dos lotes para garantir processamento de todos os itens
+      const batchSize = 10000; // Tamanho de lote muito maior
       const batches = [];
+      
+      // Dividir os códigos em lotes
       for (let i = 0; i < itemCodes.length; i += batchSize) {
         batches.push(itemCodes.slice(i, i + batchSize));
       }
       
-      console.log(`Processando ${batches.length} lotes com até ${batchSize} itens cada`);
+      console.log(`Dividido em ${batches.length} lotes com até ${batchSize} itens cada`);
       
+      // Processar todos os lotes sequencialmente
       let allItemsData = [];
+      
       for (let i = 0; i < batches.length; i++) {
         const batch = batches[i];
         console.log(`Processando lote ${i+1} de ${batches.length} (${batch.length} itens)`);
         
-        // Consulta sem limitação nenhuma
+        // Consulta com todos os códigos do lote sem limites
         const { data: itemsData, error: itemsError } = await supabase
           .from('BLUEBAY_ITEM')
           .select('ITEM_CODIGO, DESCRICAO, GRU_DESCRICAO')
           .in('ITEM_CODIGO', batch);
 
-        if (itemsError) throw itemsError;
+        if (itemsError) {
+          console.error(`Erro no lote ${i+1}:`, itemsError);
+          throw itemsError;
+        }
         
         if (itemsData) {
           allItemsData = [...allItemsData, ...itemsData];
@@ -112,6 +124,9 @@ export const useEstoqueData = () => {
         }
       }
 
+      console.log(`Total de itens obtidos do BLUEBAY_ITEM: ${allItemsData.length}`);
+
+      // Criar mapa para acesso rápido às informações dos itens
       const itemMap = new Map();
       allItemsData.forEach(item => {
         itemMap.set(item.ITEM_CODIGO, {
@@ -120,7 +135,7 @@ export const useEstoqueData = () => {
         });
       });
 
-      // Combinar todos os dados sem nenhuma limitação
+      // Combinar os dados sem nenhuma limitação
       const combinedData: EstoqueItem[] = estoqueData.map(estoque => {
         const itemInfo = itemMap.get(estoque.ITEM_CODIGO) || { DESCRICAO: 'Sem descrição', GRU_DESCRICAO: 'Sem grupo' };
         
