@@ -12,6 +12,7 @@ import WhatsAppService from "@/pages/WhatsAppService";
 import Representantes from "@/pages/Representantes";
 import { bluebayRoutes } from "./bluebay-routes";
 import { bkRoutes } from "./bk-routes";
+import { bluebayAdmRoutes } from "./bluebay-adm-routes"; // Adicionar esta importação
 
 export const clientAreaRoutes = (
   <>
@@ -59,5 +60,6 @@ export const clientAreaRoutes = (
     
     {bluebayRoutes}
     {bkRoutes}
+    {bluebayAdmRoutes} {/* Adicionar esta linha */}
   </>
 );

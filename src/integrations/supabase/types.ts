@@ -217,6 +217,7 @@ export type Database = {
         Row: {
           COMPRADO: number | null
           DISPONIVEL: number | null
+          ENTROU: number | null
           FILIAL: number
           FISICO: number | null
           ITEM_CODIGO: string
@@ -229,6 +230,7 @@ export type Database = {
         Insert: {
           COMPRADO?: number | null
           DISPONIVEL?: number | null
+          ENTROU?: number | null
           FILIAL: number
           FISICO?: number | null
           ITEM_CODIGO: string
@@ -241,6 +243,7 @@ export type Database = {
         Update: {
           COMPRADO?: number | null
           DISPONIVEL?: number | null
+          ENTROU?: number | null
           FILIAL?: number
           FISICO?: number | null
           ITEM_CODIGO?: string
@@ -564,7 +567,7 @@ export type Database = {
           DTVENCTO: string | null
           FILIAL: number
           MATRIZ: number
-          NUMDOCUMENTO: number | null
+          NUMDOCUMENTO: string | null
           NUMLCTO: number
           NUMNOTA: number | null
           PES_CODIGO: string | null
@@ -583,7 +586,7 @@ export type Database = {
           DTVENCTO?: string | null
           FILIAL: number
           MATRIZ: number
-          NUMDOCUMENTO?: number | null
+          NUMDOCUMENTO?: string | null
           NUMLCTO: number
           NUMNOTA?: number | null
           PES_CODIGO?: string | null
@@ -602,7 +605,7 @@ export type Database = {
           DTVENCTO?: string | null
           FILIAL?: number
           MATRIZ?: number
-          NUMDOCUMENTO?: number | null
+          NUMDOCUMENTO?: string | null
           NUMLCTO?: number
           NUMNOTA?: number | null
           PES_CODIGO?: string | null
@@ -1470,6 +1473,17 @@ export type Database = {
       }
     }
     Views: {
+      mv_faturamento_resumido: {
+        Row: {
+          CENTROCUSTO: string | null
+          NOTA: string | null
+          PED_ANOBASE: number | null
+          PED_NUMPEDIDO: string | null
+          PES_CODIGO: number | null
+          REPRESENTANTE: number | null
+        }
+        Relationships: []
+      }
       mv_titulos_centro_custo_bk: {
         Row: {
           ANOBASE: number | null
@@ -1479,7 +1493,7 @@ export type Database = {
           DTVENCTO: string | null
           FILIAL: number | null
           MATRIZ: number | null
-          NUMDOCUMENTO: number | null
+          NUMDOCUMENTO: string | null
           NUMLCTO: number | null
           NUMNOTA: number | null
           PES_CODIGO: string | null
@@ -1558,6 +1572,17 @@ export type Database = {
         Row: {
           codigo_representante: number | null
           nome_representante: string | null
+        }
+        Relationships: []
+      }
+      VW_RESUMO_GERAL: {
+        Row: {
+          CENTROCUSTO: string | null
+          NOTA: string | null
+          PED_ANOBASE: number | null
+          PED_NUMPEDIDO: string | null
+          PES_CODIGO: number | null
+          REPRESENTANTE: number | null
         }
         Relationships: []
       }
@@ -1779,6 +1804,10 @@ export type Database = {
           user_id_param: string
         }
         Returns: string
+      }
+      refresh_mv_titulos_centro_custo_bk: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       remove_user_from_group: {
         Args: {
