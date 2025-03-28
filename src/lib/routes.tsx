@@ -1,4 +1,3 @@
-
 import Index from "@/pages/Index";
 import ClientArea from "@/pages/ClientArea";
 import PostManagement from "@/pages/PostManagement";
@@ -21,6 +20,7 @@ import BluebayHome from "@/pages/BluebayHome";
 import BluebayAdmHome from "@/pages/BluebayAdmHome";
 import BkHome from "@/pages/BkHome";
 import { BkClients, BkFinancial, BkReports, BkDashboard, BkGestaoTitulos, BkFinanceiroManager, BkClientFinancialSummary, BkEstoque, BkRequests, BkInvoiceControl, BkPedidos } from "@/pages/bk";
+import { BluebayAdmReports, BluebayAdmDashboard, BluebayAdmClients, BluebayAdmFinancial, BluebayAdmEstoque, BluebayAdmPedidos, BluebayAdmFinanceiroManager, BluebayAdmRequests } from "@/pages/bluebay_adm";
 import AdminRequests from "@/pages/admin/requests";
 
 export const routes = [
@@ -39,6 +39,38 @@ export const routes = [
   {
     path: "/client-area/bluebay_adm",
     element: <BluebayAdmHome />,
+  },
+  {
+    path: "/client-area/bluebay_adm/reports",
+    element: <BluebayAdmReports />,
+  },
+  {
+    path: "/client-area/bluebay_adm/dashboard",
+    element: <BluebayAdmDashboard />,
+  },
+  {
+    path: "/client-area/bluebay_adm/clients",
+    element: <BluebayAdmClients />,
+  },
+  {
+    path: "/client-area/bluebay_adm/financial",
+    element: <BluebayAdmFinancial />,
+  },
+  {
+    path: "/client-area/bluebay_adm/estoque",
+    element: <BluebayAdmEstoque />,
+  },
+  {
+    path: "/client-area/bluebay_adm/pedidos",
+    element: <BluebayAdmPedidos />,
+  },
+  {
+    path: "/client-area/bluebay_adm/financeiromanager",
+    element: <BluebayAdmFinanceiroManager />,
+  },
+  {
+    path: "/client-area/bluebay_adm/requests",
+    element: <BluebayAdmRequests />,
   },
   {
     path: "/client-area/bk",
