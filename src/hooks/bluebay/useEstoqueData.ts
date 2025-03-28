@@ -23,19 +23,21 @@ export const useEstoqueData = () => {
   }, [searchTerm, estoqueItems]);
 
   const filterAndGroupItems = (term: string) => {
-    // Não filtrar itens por estoque para mostrar todos os itens
-    const allItems = estoqueItems;
+    // Filtrar itens com estoque físico maior que zero
+    const itemsWithStock = estoqueItems.filter(
+      item => Number(item.FISICO) > 0
+    );
     
-    console.log(`Total de itens no estado estoqueItems: ${allItems.length}`);
+    console.log(`Total de itens com estoque físico > 0: ${itemsWithStock.length}`);
     
     const filtered = term 
-      ? allItems.filter(
+      ? itemsWithStock.filter(
           (item) =>
             item.ITEM_CODIGO.toLowerCase().includes(term.toLowerCase()) ||
             (item.DESCRICAO && item.DESCRICAO.toLowerCase().includes(term.toLowerCase())) ||
             (item.GRU_DESCRICAO && item.GRU_DESCRICAO.toLowerCase().includes(term.toLowerCase()))
         )
-      : allItems;
+      : itemsWithStock;
     
     console.log(`Total de itens após filtro: ${filtered.length}`);
     setFilteredItems(filtered);

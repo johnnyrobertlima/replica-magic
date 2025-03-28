@@ -25,8 +25,8 @@ export const EstoqueItemList = ({ isLoading, groupedItems, searchTerm, totalItem
       <div className="bg-white p-8 rounded-lg shadow text-center">
         <p className="text-gray-500">
           {searchTerm
-            ? "Nenhum item encontrado para esta busca."
-            : "Nenhum item disponível no momento."}
+            ? "Nenhum item com estoque positivo encontrado para esta busca."
+            : "Nenhum item com estoque positivo disponível no momento."}
         </p>
       </div>
     );

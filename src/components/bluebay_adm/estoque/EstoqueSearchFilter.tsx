@@ -13,7 +13,7 @@ export const EstoqueSearchFilter = ({ searchTerm, onSearchChange }: EstoqueSearc
   return (
     <Card className="mb-6">
       <CardHeader className="pb-3">
-        <CardTitle className="text-xl">Consulta de Estoque (Todos os itens do estoque local 1)</CardTitle>
+        <CardTitle className="text-xl">Consulta de Estoque (Itens com estoque físico > 0)</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="relative">
