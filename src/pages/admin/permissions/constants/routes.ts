@@ -23,6 +23,16 @@ export const KNOWN_ROUTES = [
   "/client-area/bluebay/jab-orders-by-representante",
   "/client-area/bluebay/aprovacao-financeira",
   "/client-area/bluebay/acompanhamento-faturamento",
+  // Rotas BluebayAdm
+  "/client-area/bluebay_adm",
+  "/client-area/bluebay_adm/reports",
+  "/client-area/bluebay_adm/dashboard",
+  "/client-area/bluebay_adm/clients",
+  "/client-area/bluebay_adm/financial",
+  "/client-area/bluebay_adm/estoque",
+  "/client-area/bluebay_adm/pedidos",
+  "/client-area/bluebay_adm/financeiromanager",
+  "/client-area/bluebay_adm/requests",
   // Rotas B&K
   "/client-area/bk",
   "/client-area/bk/dashboard",
