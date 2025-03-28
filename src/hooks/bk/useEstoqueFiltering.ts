@@ -2,6 +2,13 @@
 import { useState, useEffect } from "react";
 import { EstoqueItem, GroupedEstoque } from "@/types/bk/estoque";
 
+// List of groups to exclude from the results
+const EXCLUDED_GROUPS = [
+  "MATERIAIS CLIENNTES",
+  "MATERIAL P/ USO E CONSUMO",
+  "MATERIAL PARA USO/CONSUMO"
+];
+
 export const useEstoqueFiltering = (estoqueItems: EstoqueItem[]) => {
   const [filteredItems, setFilteredItems] = useState<EstoqueItem[]>([]);
   const [groupedItems, setGroupedItems] = useState<GroupedEstoque[]>([]);
@@ -15,7 +22,9 @@ export const useEstoqueFiltering = (estoqueItems: EstoqueItem[]) => {
 
   const filterAndGroupItems = (term: string) => {
     const itemsWithStock = estoqueItems.filter(
-      item => (Number(item.FISICO) > 0 || Number(item.DISPONIVEL) > 0)
+      item => 
+        (Number(item.FISICO) > 0 || Number(item.DISPONIVEL) > 0) &&
+        !EXCLUDED_GROUPS.includes(item.GRU_DESCRICAO || '')
     );
     
     const filtered = term 

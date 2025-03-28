@@ -2,6 +2,13 @@
 import { useState, useEffect } from "react";
 import { EstoqueItem, GroupedEstoque } from "@/types/bk/estoque";
 
+// List of groups to exclude from the results
+const EXCLUDED_GROUPS = [
+  "MATERIAIS CLIENNTES",
+  "MATERIAL P/ USO E CONSUMO",
+  "MATERIAL PARA USO/CONSUMO"
+];
+
 export const useEstoqueFiltering = (estoqueItems: EstoqueItem[]) => {
   const [filteredItems, setFilteredItems] = useState<EstoqueItem[]>([]);
   const [groupedItems, setGroupedItems] = useState<GroupedEstoque[]>([]);
@@ -14,12 +21,14 @@ export const useEstoqueFiltering = (estoqueItems: EstoqueItem[]) => {
   }, [searchTerm, estoqueItems]);
 
   const filterAndGroupItems = (term: string) => {
-    // Filtrar itens com estoque físico maior que zero
+    // First filter items with stock and exclude unwanted groups
     const itemsWithStock = estoqueItems.filter(
-      item => Number(item.FISICO) > 0
+      item => 
+        Number(item.FISICO) > 0 && 
+        !EXCLUDED_GROUPS.includes(item.GRU_DESCRICAO || '')
     );
     
-    console.log(`Total de itens com estoque físico > 0: ${itemsWithStock.length}`);
+    console.log(`Total de itens com estoque físico > 0 (excluindo grupos específicos): ${itemsWithStock.length}`);
     
     const filtered = term 
       ? itemsWithStock.filter(
