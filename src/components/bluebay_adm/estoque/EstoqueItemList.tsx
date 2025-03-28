@@ -32,10 +32,15 @@ export const EstoqueItemList = ({ isLoading, groupedItems, searchTerm, totalItem
     );
   }
 
+  // Calcular o total real de itens em todos os grupos
+  const actualTotalItems = groupedItems.reduce((sum, group) => sum + group.items.length, 0);
+  
+  console.log(`🔢 Exibindo total informado: ${totalItems} itens, total real: ${actualTotalItems} itens`);
+
   return (
     <div>
       <div className="mb-4 text-sm text-gray-500">
-        Exibindo {totalItems} {totalItems === 1 ? 'item' : 'itens'} {searchTerm ? 'para a busca atual' : 'no total'}
+        Exibindo {actualTotalItems} {actualTotalItems === 1 ? 'item' : 'itens'} {searchTerm ? 'para a busca atual' : 'no total'}
       </div>
       <Accordion type="multiple" className="w-full">
         {groupedItems.map((group, index) => (

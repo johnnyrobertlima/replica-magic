@@ -26,6 +26,8 @@ export const useEstoqueData = () => {
     // Não filtrar itens por estoque para mostrar todos os itens
     const allItems = estoqueItems;
     
+    console.log(`Total de itens no estado estoqueItems: ${allItems.length}`);
+    
     const filtered = term 
       ? allItems.filter(
           (item) =>
@@ -35,6 +37,7 @@ export const useEstoqueData = () => {
         )
       : allItems;
     
+    console.log(`Total de itens após filtro: ${filtered.length}`);
     setFilteredItems(filtered);
     
     const grouped: Record<string, EstoqueItem[]> = {};
@@ -56,6 +59,9 @@ export const useEstoqueData = () => {
     
     groupedArray.sort((a, b) => a.groupName.localeCompare(b.groupName));
     
+    console.log(`Total de grupos após agrupamento: ${groupedArray.length}`);
+    console.log(`Total de itens em todos os grupos: ${groupedArray.reduce((sum, group) => sum + group.totalItems, 0)}`);
+    
     setGroupedItems(groupedArray);
   };
 
@@ -63,15 +69,20 @@ export const useEstoqueData = () => {
     try {
       setIsLoading(true);
       
-      console.log("Iniciando busca de dados de estoque no LOCAL 1");
+      console.log("🔍 Iniciando busca de dados de estoque no LOCAL 1");
       
-      // Obter TODOS os registros de estoque sem nenhuma limitação
+      // Consulta para obter TODOS os registros de estoque sem nenhuma limitação
+      // Importante: Supabase tem um limite de 1000 registros por padrão, vamos desabilitá-lo
       const { data: estoqueData, error: estoqueError } = await supabase
         .from('BLUEBAY_ESTOQUE')
         .select('*')
-        .eq('LOCAL', 1);
+        .eq('LOCAL', 1)
+        .limit(100000); // Definindo um limite muito alto para garantir que todos os registros sejam retornados
 
-      if (estoqueError) throw estoqueError;
+      if (estoqueError) {
+        console.error("❌ Erro ao buscar dados do estoque:", estoqueError);
+        throw estoqueError;
+      }
       
       if (!estoqueData || estoqueData.length === 0) {
         setIsLoading(false);
@@ -83,11 +94,11 @@ export const useEstoqueData = () => {
         return;
       }
       
-      console.log(`Total de registros de estoque encontrados: ${estoqueData.length}`);
+      console.log(`✅ Total de registros de estoque encontrados: ${estoqueData.length}`);
       
       // Extrair todos os códigos de itens
       const itemCodes = estoqueData.map(item => item.ITEM_CODIGO);
-      console.log(`Total de códigos de itens no estoque: ${itemCodes.length}`);
+      console.log(`📋 Total de códigos de itens no estoque: ${itemCodes.length}`);
       
       // Aumentar ainda mais o tamanho dos lotes para garantir processamento de todos os itens
       const batchSize = 10000; // Tamanho de lote muito maior
@@ -98,33 +109,34 @@ export const useEstoqueData = () => {
         batches.push(itemCodes.slice(i, i + batchSize));
       }
       
-      console.log(`Dividido em ${batches.length} lotes com até ${batchSize} itens cada`);
+      console.log(`📦 Dividido em ${batches.length} lotes com até ${batchSize} itens cada`);
       
       // Processar todos os lotes sequencialmente
       let allItemsData = [];
       
       for (let i = 0; i < batches.length; i++) {
         const batch = batches[i];
-        console.log(`Processando lote ${i+1} de ${batches.length} (${batch.length} itens)`);
+        console.log(`⏳ Processando lote ${i+1} de ${batches.length} (${batch.length} itens)`);
         
         // Consulta com todos os códigos do lote sem limites
         const { data: itemsData, error: itemsError } = await supabase
           .from('BLUEBAY_ITEM')
           .select('ITEM_CODIGO, DESCRICAO, GRU_DESCRICAO')
-          .in('ITEM_CODIGO', batch);
+          .in('ITEM_CODIGO', batch)
+          .limit(100000); // Definindo um limite muito alto para garantir que todos os registros sejam retornados
 
         if (itemsError) {
-          console.error(`Erro no lote ${i+1}:`, itemsError);
+          console.error(`❌ Erro no lote ${i+1}:`, itemsError);
           throw itemsError;
         }
         
         if (itemsData) {
           allItemsData = [...allItemsData, ...itemsData];
-          console.log(`Lote ${i+1} processado, total de itens até agora: ${allItemsData.length}`);
+          console.log(`✅ Lote ${i+1} processado, total de itens até agora: ${allItemsData.length}`);
         }
       }
 
-      console.log(`Total de itens obtidos do BLUEBAY_ITEM: ${allItemsData.length}`);
+      console.log(`📊 Total de itens obtidos do BLUEBAY_ITEM: ${allItemsData.length}`);
 
       // Criar mapa para acesso rápido às informações dos itens
       const itemMap = new Map();
@@ -151,11 +163,11 @@ export const useEstoqueData = () => {
         };
       });
 
-      console.log(`Carregados ${combinedData.length} itens de estoque do local 1`);
+      console.log(`🎯 Carregados ${combinedData.length} itens de estoque do local 1`);
       setEstoqueItems(combinedData);
       
     } catch (error: any) {
-      console.error("Erro ao carregar dados de estoque:", error);
+      console.error("❌ Erro ao carregar dados de estoque:", error);
       toast({
         title: "Erro ao carregar dados de estoque",
         description: error.message || "Não foi possível carregar os dados do estoque.",
