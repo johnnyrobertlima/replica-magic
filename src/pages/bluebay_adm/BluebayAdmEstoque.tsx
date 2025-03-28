@@ -69,6 +69,7 @@ const BluebayAdmEstoque = () => {
           isLoading={isLoading}
           groupedItems={groupedItems}
           searchTerm={searchTerm}
+          totalItems={totalItems}
         />
       </div>
     </main>

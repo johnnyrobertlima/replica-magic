@@ -8,9 +8,10 @@ interface EstoqueItemListProps {
   isLoading: boolean;
   groupedItems: GroupedEstoque[];
   searchTerm: string;
+  totalItems: number;
 }
 
-export const EstoqueItemList = ({ isLoading, groupedItems, searchTerm }: EstoqueItemListProps) => {
+export const EstoqueItemList = ({ isLoading, groupedItems, searchTerm, totalItems }: EstoqueItemListProps) => {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -24,18 +25,23 @@ export const EstoqueItemList = ({ isLoading, groupedItems, searchTerm }: Estoque
       <div className="bg-white p-8 rounded-lg shadow text-center">
         <p className="text-gray-500">
           {searchTerm
-            ? "Nenhum item com estoque encontrado para esta busca."
-            : "Nenhum item com estoque disponível no momento."}
+            ? "Nenhum item encontrado para esta busca."
+            : "Nenhum item disponível no momento."}
         </p>
       </div>
     );
   }
 
   return (
-    <Accordion type="multiple" className="w-full">
-      {groupedItems.map((group, index) => (
-        <EstoqueGroupItem key={index} group={group} index={index} />
-      ))}
-    </Accordion>
+    <div>
+      <div className="mb-4 text-sm text-gray-500">
+        Exibindo {totalItems} {totalItems === 1 ? 'item' : 'itens'} {searchTerm ? 'para a busca atual' : 'no total'}
+      </div>
+      <Accordion type="multiple" className="w-full">
+        {groupedItems.map((group, index) => (
+          <EstoqueGroupItem key={index} group={group} index={index} />
+        ))}
+      </Accordion>
+    </div>
   );
 };

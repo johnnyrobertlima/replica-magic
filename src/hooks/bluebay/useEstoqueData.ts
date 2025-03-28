@@ -23,18 +23,18 @@ export const useEstoqueData = () => {
   }, [searchTerm, estoqueItems]);
 
   const filterAndGroupItems = (term: string) => {
-    const itemsWithStock = estoqueItems.filter(
-      item => (Number(item.FISICO) > 0 || Number(item.DISPONIVEL) > 0)
-    );
+    // Removed filter for only items with stock to show all items
+    // This might be why you're seeing fewer items than expected
+    const allItems = estoqueItems;
     
     const filtered = term 
-      ? itemsWithStock.filter(
+      ? allItems.filter(
           (item) =>
             item.ITEM_CODIGO.toLowerCase().includes(term.toLowerCase()) ||
             (item.DESCRICAO && item.DESCRICAO.toLowerCase().includes(term.toLowerCase())) ||
             (item.GRU_DESCRICAO && item.GRU_DESCRICAO.toLowerCase().includes(term.toLowerCase()))
         )
-      : itemsWithStock;
+      : allItems;
     
     setFilteredItems(filtered);
     
@@ -64,10 +64,12 @@ export const useEstoqueData = () => {
     try {
       setIsLoading(true);
       
+      // Fetch up to 5000 items instead of the default limit
       const { data: estoqueData, error: estoqueError } = await supabase
         .from('BLUEBAY_ESTOQUE')
         .select('*')
-        .eq('LOCAL', 1);
+        .eq('LOCAL', 1)
+        .limit(5000);
 
       if (estoqueError) throw estoqueError;
       
@@ -83,7 +85,8 @@ export const useEstoqueData = () => {
       
       const itemCodes = estoqueData.map(item => item.ITEM_CODIGO);
       
-      const batchSize = 200;
+      // Adjust batch size if needed 
+      const batchSize = 500;
       const batches = [];
       for (let i = 0; i < itemCodes.length; i += batchSize) {
         batches.push(itemCodes.slice(i, i + batchSize));
