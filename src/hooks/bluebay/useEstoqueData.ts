@@ -23,8 +23,7 @@ export const useEstoqueData = () => {
   }, [searchTerm, estoqueItems]);
 
   const filterAndGroupItems = (term: string) => {
-    // Removed filter for only items with stock to show all items
-    // This might be why you're seeing fewer items than expected
+    // Não filtrar itens por estoque para mostrar todos os itens
     const allItems = estoqueItems;
     
     const filtered = term 
@@ -64,12 +63,11 @@ export const useEstoqueData = () => {
     try {
       setIsLoading(true);
       
-      // Fetch up to 5000 items instead of the default limit
+      // Remover a limitação de 5000 itens e puxar todos
       const { data: estoqueData, error: estoqueError } = await supabase
         .from('BLUEBAY_ESTOQUE')
         .select('*')
-        .eq('LOCAL', 1)
-        .limit(5000);
+        .eq('LOCAL', 1);
 
       if (estoqueError) throw estoqueError;
       
@@ -85,8 +83,8 @@ export const useEstoqueData = () => {
       
       const itemCodes = estoqueData.map(item => item.ITEM_CODIGO);
       
-      // Adjust batch size if needed 
-      const batchSize = 500;
+      // Aumentar o tamanho do lote para processar mais itens por vez
+      const batchSize = 1000;
       const batches = [];
       for (let i = 0; i < itemCodes.length; i += batchSize) {
         batches.push(itemCodes.slice(i, i + batchSize));
@@ -129,11 +127,11 @@ export const useEstoqueData = () => {
         };
       });
 
-      console.log(`Loaded ${combinedData.length} estoque items from local 1`);
+      console.log(`Carregados ${combinedData.length} itens de estoque do local 1`);
       setEstoqueItems(combinedData);
       
     } catch (error: any) {
-      console.error("Error fetching estoque data:", error);
+      console.error("Erro ao carregar dados de estoque:", error);
       toast({
         title: "Erro ao carregar dados de estoque",
         description: error.message || "Não foi possível carregar os dados do estoque.",
