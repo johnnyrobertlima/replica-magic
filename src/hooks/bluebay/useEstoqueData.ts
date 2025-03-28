@@ -63,7 +63,7 @@ export const useEstoqueData = () => {
     try {
       setIsLoading(true);
       
-      // Remover a limitação de 5000 itens e puxar todos
+      // Buscar todos os itens do estoque sem limitação
       const { data: estoqueData, error: estoqueError } = await supabase
         .from('BLUEBAY_ESTOQUE')
         .select('*')
@@ -82,16 +82,22 @@ export const useEstoqueData = () => {
       }
       
       const itemCodes = estoqueData.map(item => item.ITEM_CODIGO);
+      console.log(`Total de códigos de itens no estoque: ${itemCodes.length}`);
       
-      // Aumentar o tamanho do lote para processar mais itens por vez
-      const batchSize = 1000;
+      // Usar um tamanho de lote muito maior para processamento
+      const batchSize = 2000;
       const batches = [];
       for (let i = 0; i < itemCodes.length; i += batchSize) {
         batches.push(itemCodes.slice(i, i + batchSize));
       }
       
+      console.log(`Processando ${batches.length} lotes com até ${batchSize} itens cada`);
+      
       let allItemsData = [];
-      for (const batch of batches) {
+      for (let i = 0; i < batches.length; i++) {
+        const batch = batches[i];
+        console.log(`Processando lote ${i+1} de ${batches.length} (${batch.length} itens)`);
+        
         const { data: itemsData, error: itemsError } = await supabase
           .from('BLUEBAY_ITEM')
           .select('ITEM_CODIGO, DESCRICAO, GRU_DESCRICAO')
@@ -101,6 +107,7 @@ export const useEstoqueData = () => {
         
         if (itemsData) {
           allItemsData = [...allItemsData, ...itemsData];
+          console.log(`Lote ${i+1} processado, total de itens até agora: ${allItemsData.length}`);
         }
       }
 
