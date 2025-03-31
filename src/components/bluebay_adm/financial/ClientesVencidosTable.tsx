@@ -57,13 +57,13 @@ export const ClientesVencidosTable: React.FC<ClientesVencidosTableProps> = ({ ti
           </TableRow>
         </TableHeader>
         <TableBody>
-          {vencidosTitles.map((title) => {
+          {vencidosTitles.map((title, index) => {
             const vencimentoDate = new Date(title.DTVENCIMENTO);
             const today = new Date();
             const diasVencido = differenceInDays(today, vencimentoDate);
             
             return (
-              <TableRow key={`${title.NUMLCTO}-${title.ANOBASE}`}>
+              <TableRow key={`${title.NUMNOTA}-${index}`}>
                 <TableCell className="font-medium">{title.NUMNOTA}</TableCell>
                 <TableCell className="max-w-[200px] truncate" title={title.CLIENTE_NOME}>
                   {title.CLIENTE_NOME}
