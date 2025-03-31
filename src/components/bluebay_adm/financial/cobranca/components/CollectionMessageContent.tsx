@@ -4,7 +4,7 @@ import { formatCurrency } from "@/utils/formatters";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
-import { Copy, Mail, ExternalLink } from "lucide-react";
+import { Copy, Send, ExternalLink } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { FinancialTitle } from "@/hooks/bluebay/types/financialTypes";
 import { toast } from "@/components/ui/use-toast";
@@ -33,8 +33,9 @@ export const CollectionMessageContent: React.FC<CollectionMessageContentProps> =
       
       // Informar ao usuário que o link foi acionado
       toast({
-        title: "Abrindo cliente de e-mail",
+        title: "Tentando abrir cliente de e-mail",
         description: "Se o cliente de e-mail não abrir automaticamente, use o botão 'Copiar Texto'",
+        duration: 5000,
       });
     } catch (error) {
       console.error("Erro ao tentar abrir o cliente de e-mail:", error);
@@ -42,13 +43,14 @@ export const CollectionMessageContent: React.FC<CollectionMessageContentProps> =
         variant: "destructive",
         title: "Erro ao abrir o cliente de e-mail",
         description: "Por favor, tente copiar o texto e colar manualmente",
+        duration: 5000,
       });
     }
   };
   
   return (
     <div className="bg-slate-50 p-4 rounded-md my-4 text-sm relative">
-      {/* Botões de ação (Copiar e Abrir no Cliente de E-mail) mais visíveis */}
+      {/* Botões de ação (Copiar e Abrir Cliente de Email) */}
       <div className="flex justify-end gap-2 mb-4">
         <Button 
           size="sm" 
@@ -65,7 +67,7 @@ export const CollectionMessageContent: React.FC<CollectionMessageContentProps> =
           disabled={isSending}
           className="bg-blue-600 hover:bg-blue-700 flex items-center font-medium"
         >
-          <Mail className="h-3.5 w-3.5 mr-1" /> Abrir Cliente de E-mail <ExternalLink className="h-3 w-3 ml-1" />
+          <Send className="h-3.5 w-3.5 mr-1" /> Abrir no Cliente de Email <ExternalLink className="h-3 w-3 ml-1" />
         </Button>
       </div>
       

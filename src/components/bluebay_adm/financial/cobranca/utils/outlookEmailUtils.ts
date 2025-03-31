@@ -44,25 +44,29 @@ export const sendOutlookEmail = async (params: OutlookEmailParams): Promise<void
     console.log(`Abrindo e-mail de cobrança para cliente: ${clientName}`);
     console.log(`URL mailto: ${mailtoUrl.substring(0, 100)}...`);
     
-    // Método 1: Usar window.location.href (mais compatível com Outlook Web)
-    window.location.href = mailtoUrl;
+    // Usar o método de abertura que funciona em mais navegadores
+    // Tentamos diferentes métodos em sequência
     
-    // Método 2 (fallback): Se o método 1 não funcionar bem em alguns navegadores
-    // Este segundo método fica comentado como alternativa futura se necessário
-    /*
+    // Método 1: Usar link programático com _blank
+    const mailLink = document.createElement('a');
+    mailLink.href = mailtoUrl;
+    mailLink.target = '_blank'; // Tentar abrir em nova aba (pode ser bloqueado)
+    mailLink.rel = 'noopener noreferrer';
+    mailLink.style.display = 'none';
+    document.body.appendChild(mailLink);
+    mailLink.click();
+    document.body.removeChild(mailLink);
+    
+    // Aguardar um curto período para ver se o cliente foi aberto
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Método 2: Tentar window.open como alternativa
+    window.open(mailtoUrl, '_self');
+    
+    // Método 3 (último recurso): window.location.href (funciona melhor em alguns casos)
     setTimeout(() => {
-      const link = document.createElement('a');
-      link.href = mailtoUrl;
-      link.setAttribute('target', '_self');
-      link.setAttribute('rel', 'noopener noreferrer');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      window.location.href = mailtoUrl;
     }, 100);
-    */
-    
-    // Aguardar um curto período
-    await new Promise(resolve => setTimeout(resolve, 500));
     
     return Promise.resolve();
   } catch (error) {

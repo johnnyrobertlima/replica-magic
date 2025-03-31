@@ -33,26 +33,26 @@ export const CollectionMessageDialog: React.FC<CollectionMessageDialogProps> = (
     handleSendOutlookEmail 
   } = useCollectionMessage(selectedClient, clientTitles, onCollectionConfirm);
 
+  if (!selectedClient) return null;
+
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
       <AlertDialogContent className="max-w-3xl">
         <AlertDialogHeader>
-          <AlertDialogTitle>Mensagem de Cobrança - {selectedClient?.CLIENTE_NOME}</AlertDialogTitle>
-          <AlertDialogDescription className="sr-only">
-            Este diálogo contém um modelo de mensagem de cobrança para o cliente {selectedClient?.CLIENTE_NOME}.
-            Você pode copiar o texto ou abrir diretamente no Outlook.
+          <AlertDialogTitle>Mensagem de Cobrança - {selectedClient.CLIENTE_NOME}</AlertDialogTitle>
+          <AlertDialogDescription>
+            Utilize as opções abaixo para enviar uma mensagem de cobrança para o cliente {selectedClient.CLIENTE_NOME}.
+            Você pode copiar o texto ou abrir diretamente em seu cliente de e-mail.
           </AlertDialogDescription>
         </AlertDialogHeader>
         
-        {selectedClient && (
-          <CollectionMessageContent 
-            clientName={selectedClient.CLIENTE_NOME}
-            clientTitles={clientTitles}
-            onCopy={handleCopyText}
-            onSendEmail={handleSendOutlookEmail}
-            isSending={isSending}
-          />
-        )}
+        <CollectionMessageContent 
+          clientName={selectedClient.CLIENTE_NOME}
+          clientTitles={clientTitles}
+          onCopy={handleCopyText}
+          onSendEmail={handleSendOutlookEmail}
+          isSending={isSending}
+        />
         
         <CollectionDialogActions 
           onClose={onClose}
