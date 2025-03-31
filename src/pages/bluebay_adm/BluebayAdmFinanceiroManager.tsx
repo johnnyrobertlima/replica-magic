@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { BluebayAdmBanner } from "@/components/bluebay_adm/BluebayAdmBanner";
 import { BluebayAdmMenu } from "@/components/bluebay_adm/BluebayAdmMenu";
@@ -6,6 +7,8 @@ import { FinancialLoader } from "@/components/bluebay_adm/financial/FinancialLoa
 import { FinancialContent } from "@/components/bluebay_adm/financial/FinancialContent";
 import { useFinanciero } from "@/hooks/bluebay/useFinanciero";
 import { useFinancialExport } from "@/hooks/bluebay/useFinancialExport";
+import { Button } from "@/components/ui/button";
+import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 
 const BluebayAdmFinanceiroManager = () => {
   const { 
@@ -23,7 +26,8 @@ const BluebayAdmFinanceiroManager = () => {
     notaFilter,
     updateNotaFilter,
     financialSummary,
-    clientFinancialSummaries
+    clientFinancialSummaries,
+    pagination
   } = useFinanciero();
 
   const [activeTab, setActiveTab] = useState("titles");
@@ -141,6 +145,34 @@ const BluebayAdmFinanceiroManager = () => {
             filteredTitles={filteredTitles}
             clientFinancialSummaries={clientFinancialSummaries}
           />
+          
+          {/* Pagination controls */}
+          {pagination && (
+            <div className="flex items-center justify-between mt-6 bg-white p-4 rounded-md shadow">
+              <div className="text-sm text-muted-foreground">
+                Mostrando {clientFilteredTitles.length} registros de um total de {pagination.totalCount} 
+                (Página {pagination.currentPage})
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={pagination.goToPreviousPage}
+                  disabled={!pagination.hasPreviousPage}
+                >
+                  <ArrowLeftIcon className="h-4 w-4 mr-1" /> Anterior
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={pagination.goToNextPage}
+                  disabled={!pagination.hasNextPage}
+                >
+                  Próxima <ArrowRightIcon className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+          )}
         </FinancialLoader>
       </div>
     </main>

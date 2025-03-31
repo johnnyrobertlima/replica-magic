@@ -18,23 +18,59 @@ export const useFinancialData = () => {
     startDate: subDays(new Date(), 30),
     endDate: new Date(),
   });
+  const [totalCount, setTotalCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 1000; // Fetch a large batch to avoid frequent pagination
 
   const refreshData = useCallback(async () => {
     setIsLoading(true);
     try {
       console.info("useFinanciero effect - triggering data refresh");
       
-      // First, fetch all BLUEBAY titles directly
-      const { data: allTitulos, error: allTitulosError } = await supabase
+      // Format dates for database filtering
+      const startDateFormatted = dateRange.startDate 
+        ? format(dateRange.startDate, 'yyyy-MM-dd') 
+        : null;
+      
+      const endDateFormatted = dateRange.endDate
+        ? format(dateRange.endDate, 'yyyy-MM-dd')
+        : null;
+
+      console.log(`Date range for filtering: ${startDateFormatted} to ${endDateFormatted}`);
+      
+      // Prepare the base query for BLUEBAY_TITULO
+      let tituloQuery = supabase
         .from('BLUEBAY_TITULO')
-        .select('*');
+        .select('*', { count: 'exact' });
+      
+      // Apply date filters if both dates are provided
+      if (startDateFormatted && endDateFormatted) {
+        // Handle timestamp format with special care for PostgreSQL compatibility
+        // Use date range that includes titles with:
+        // 1. DTVENCIMENTO within the range
+        // 2. DTVENCIMENTO is null (to avoid missing important data)
+        tituloQuery = tituloQuery.or(`DTVENCIMENTO.gte.${startDateFormatted},DTVENCIMENTO.lte.${endDateFormatted},DTVENCIMENTO.is.null`);
+      }
+      
+      // Add pagination
+      tituloQuery = tituloQuery
+        .range((currentPage - 1) * pageSize, currentPage * pageSize - 1);
+      
+      // Execute query
+      const { data: allTitulos, error: allTitulosError, count } = await tituloQuery;
       
       if (allTitulosError) {
         console.error("Error fetching all titles:", allTitulosError);
         throw allTitulosError;
       }
       
-      console.info(`Fetched ${allTitulos?.length || 0} total titles for BLUEBAY`);
+      // Update total count for pagination if available
+      if (count !== null) {
+        setTotalCount(count);
+      }
+      
+      console.info(`Fetched ${allTitulos?.length || 0} total titles for BLUEBAY (page ${currentPage}, from ${(currentPage - 1) * pageSize + 1} to ${Math.min(currentPage * pageSize, totalCount || 0)})`);
+      console.info(`Total count: ${count}`);
       
       // Process titles
       const processedTitulos = allTitulos || [];
@@ -67,9 +103,16 @@ export const useFinancialData = () => {
       setAvailableStatuses(['all', ...uniqueStatuses]);
       
       // Fetch billing data for BLUEBAY cost center
-      const { data: faturamento, error: faturamentoError } = await supabase
+      let faturamentoQuery = supabase
         .from('BLUEBAY_FATURAMENTO')
         .select('*');
+      
+      // Apply date filters to faturamento if needed
+      if (startDateFormatted && endDateFormatted) {
+        faturamentoQuery = faturamentoQuery.or(`DATA_EMISSAO.gte.${startDateFormatted},DATA_EMISSAO.lte.${endDateFormatted},DATA_EMISSAO.is.null`);
+      }
+      
+      const { data: faturamento, error: faturamentoError } = await faturamentoQuery;
       
       if (faturamentoError) {
         console.error("Error fetching invoices:", faturamentoError);
@@ -116,11 +159,25 @@ export const useFinancialData = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [dateRange]);
+  }, [dateRange, currentPage, pageSize, totalCount]);
 
   const updateDateRange = useCallback((newDateRange: DateRange) => {
     setDateRange(newDateRange);
+    // Reset pagination when date range changes
+    setCurrentPage(1);
   }, []);
+
+  const goToNextPage = useCallback(() => {
+    if (currentPage * pageSize < totalCount) {
+      setCurrentPage(prev => prev + 1);
+    }
+  }, [currentPage, pageSize, totalCount]);
+
+  const goToPreviousPage = useCallback(() => {
+    if (currentPage > 1) {
+      setCurrentPage(prev => prev - 1);
+    }
+  }, [currentPage]);
 
   return {
     isLoading,
@@ -130,5 +187,14 @@ export const useFinancialData = () => {
     dateRange,
     updateDateRange,
     refreshData,
+    pagination: {
+      currentPage,
+      totalCount,
+      pageSize,
+      goToNextPage,
+      goToPreviousPage,
+      hasNextPage: currentPage * pageSize < totalCount,
+      hasPreviousPage: currentPage > 1
+    }
   };
 };

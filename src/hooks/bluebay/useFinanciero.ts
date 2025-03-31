@@ -12,7 +12,8 @@ export const useFinanciero = () => {
     availableStatuses,
     dateRange,
     updateDateRange,
-    refreshData
+    refreshData,
+    pagination
   } = useFinancialData();
 
   const {
@@ -62,6 +63,7 @@ export const useFinanciero = () => {
     notaFilter,
     updateNotaFilter,
     financialSummary,
-    clientFinancialSummaries
+    clientFinancialSummaries,
+    pagination
   };
 };
