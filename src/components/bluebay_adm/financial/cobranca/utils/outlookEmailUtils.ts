@@ -30,30 +30,24 @@ export const sendOutlookEmail = async (params: OutlookEmailParams): Promise<void
     // Construir a URL do Outlook Web com formato correto
     const outlookUrl = "https://outlook.office.com/mail/deeplink/compose";
     
-    // Preparar os parâmetros sem codificar ainda (mantém a formatação original)
+    // Preservar a formatação do corpo com quebras de linha
+    // Não aplicamos nenhuma codificação aqui, apenas convertemos <br> HTML para \n se existirem
     const plainTextBody = body.replace(/<br\s*\/?>/gi, "\n");
     
-    // Construir a URL com parâmetros corretamente codificados
-    // Importante: Apenas codificar na hora de montar a URL final
-    const urlParams = new URLSearchParams();
-    if (to) urlParams.append("to", encodeURIComponent(to));
-    urlParams.append("subject", encodeURIComponent(subject));
-    urlParams.append("body", encodeURIComponent(plainTextBody));
-    if (cc) urlParams.append("cc", encodeURIComponent(cc));
-    if (bcc) urlParams.append("bcc", encodeURIComponent(bcc));
+    // Construir a URL com parâmetros corretamente encodados
+    // Importante: Apenas aplicamos encodeURIComponent ao construir a URL final
+    const url = `${outlookUrl}?to=${to ? encodeURIComponent(to) : ''}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(plainTextBody)}`;
     
-    // Remover o encoding duplo que o URLSearchParams adiciona
-    const paramsString = urlParams.toString().replace(/\+/g, '%20');
-    
-    // Construir a URL final
-    const finalUrl = `${outlookUrl}?${paramsString}`;
+    // Adicionar cc e bcc se fornecidos
+    const finalUrl = cc ? `${url}&cc=${encodeURIComponent(cc)}` : url;
+    const urlWithBcc = bcc ? `${finalUrl}&bcc=${encodeURIComponent(bcc)}` : finalUrl;
     
     // Log para debug
     console.log(`Abrindo e-mail de cobrança para cliente: ${clientName}`);
-    console.log(`URL Outlook: ${finalUrl.substring(0, 100)}...`);
+    console.log(`URL Outlook: ${urlWithBcc.substring(0, 100)}...`);
     
-    // Abrir o Outlook Web em uma nova aba com método que preserva formatação
-    window.open(finalUrl, "_blank");
+    // Abrir o Outlook Web em uma nova aba
+    window.open(urlWithBcc, "_blank");
     
     return Promise.resolve();
   } catch (error) {
@@ -75,14 +69,13 @@ export const sendMailtoEmail = async (params: OutlookEmailParams): Promise<void>
     // Formatamos o corpo do e-mail para mailto (RFC 6068)
     const plainTextBody = body.replace(/<br\s*\/?>/gi, "\n");
     
-    // Construir os parâmetros completos com encoding adequado
-    let mailtoParams = `subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(plainTextBody)}`;
-    if (to) mailtoParams += `&to=${encodeURIComponent(to)}`;
-    if (cc) mailtoParams += `&cc=${encodeURIComponent(cc)}`;
-    if (bcc) mailtoParams += `&bcc=${encodeURIComponent(bcc)}`;
+    // Construir a URL mailto com encodings corretos
+    let mailtoUrl = "mailto:?";
     
-    // Construir a URL mailto
-    const mailtoUrl = `mailto:?${mailtoParams}`;
+    if (to) mailtoUrl += `to=${encodeURIComponent(to)}&`;
+    mailtoUrl += `subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(plainTextBody)}`;
+    if (cc) mailtoUrl += `&cc=${encodeURIComponent(cc)}`;
+    if (bcc) mailtoUrl += `&bcc=${encodeURIComponent(bcc)}`;
     
     // Usar o método de abertura direto
     window.location.href = mailtoUrl;
@@ -104,13 +97,9 @@ export const sendMailtoEmail = async (params: OutlookEmailParams): Promise<void>
  */
 export const createDirectEmailButton = (to: string, subject: string, body: string) => {
   return () => {
-    // Encode parameters properly for URL
-    const encodedTo = encodeURIComponent(to);
-    const encodedSubject = encodeURIComponent(subject);
-    const encodedBody = encodeURIComponent(body);
-    
-    // Build URL with proper encoding
-    const url = `https://outlook.office.com/mail/deeplink/compose?to=${encodedTo}&subject=${encodedSubject}&body=${encodedBody}`;
+    // Preserve texto original e apenas encode para a URL no final
+    const outlookUrl = "https://outlook.office.com/mail/deeplink/compose";
+    const url = `${outlookUrl}?to=${encodeURIComponent(to)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     window.open(url, "_blank");
   };
 };

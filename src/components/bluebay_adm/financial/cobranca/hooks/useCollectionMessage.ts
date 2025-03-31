@@ -18,6 +18,7 @@ export const useCollectionMessage = (
   const createMessageContent = () => {
     if (!selectedClient) return "";
     
+    // Construir o texto dos títulos com quebras de linha apropriadas
     let titlesText = "";
     clientTitles.forEach(title => {
       const formattedDate = title.DTVENCIMENTO ? format(new Date(title.DTVENCIMENTO), 'dd/MM/yyyy', { locale: ptBR }) : 'N/A';
@@ -77,7 +78,11 @@ Equipe Financeira – Bluebay Importadora
     setIsSending(true);
     
     try {
+      // Criar o corpo do e-mail como texto simples sem nenhuma codificação especial
       const emailBody = createMessageContent();
+      
+      // Definir o assunto como uma string separada
+      const emailSubject = `Títulos em atraso - Bluebay - ${selectedClient.CLIENTE_NOME}`;
       
       toast({
         title: "Abrindo Outlook Web",
@@ -87,9 +92,7 @@ Equipe Financeira – Bluebay Importadora
       
       console.log("Tentando enviar e-mail para:", selectedClient.CLIENTE_NOME);
       
-      // Usar o sujeito como uma string separada para manter a formatação correta
-      const emailSubject = `Títulos em atraso - Bluebay - ${selectedClient.CLIENTE_NOME}`;
-      
+      // Passar o corpo e assunto para a função de envio que fará a codificação correta
       await sendOutlookEmail({
         to: "financeiro@bluebay.com.br", // Email de exemplo - pode ser personalizado
         subject: emailSubject,
