@@ -6,6 +6,7 @@ import { FinancialHeader } from "@/components/bluebay_adm/financial/FinancialHea
 import { FinancialFilters } from "@/components/bluebay_adm/financial/FinancialFilters";
 import { FinancialSummaryCards } from "@/components/bluebay_adm/financial/FinancialSummaryCards";
 import { TitleTable } from "@/components/bluebay_adm/financial/TitleTable";
+import { InvoiceTable } from "@/components/bluebay_adm/financial/InvoiceTable";
 import { ClientFinancialTable } from "@/components/bluebay_adm/financial/ClientFinancialTable";
 import { ClientesVencidosTable } from "@/components/bluebay_adm/financial/ClientesVencidosTable";
 import { FinancialTabs } from "@/components/bluebay_adm/financial/FinancialTabs";
@@ -94,6 +95,11 @@ const BluebayAdmFinanceiroManager = () => {
     setActiveTab("titles");
   };
 
+  const handleViewTitles = (pesCode: number) => {
+    setSelectedClient(String(pesCode));
+    setActiveTab("titles");
+  };
+
   const handleResetClientSelection = () => {
     setSelectedClient(null);
   };
@@ -119,6 +125,7 @@ const BluebayAdmFinanceiroManager = () => {
           activeTab={activeTab}
           hasData={{
             titles: clientFilteredTitles.length > 0,
+            invoices: filteredInvoices.length > 0,
             clients: clientFinancialSummaries !== null && clientFinancialSummaries !== undefined && clientFinancialSummaries.length > 0,
             clientesVencidos: filteredTitles.length > 0
           }}
@@ -168,6 +175,20 @@ const BluebayAdmFinanceiroManager = () => {
                           : `Títulos Financeiros`}
                       </h2>
                       <TitleTable titles={clientFilteredTitles} isLoading={isLoading} />
+                    </>
+                  )
+                },
+                {
+                  id: "invoices",
+                  label: "Notas Fiscais",
+                  content: (
+                    <>
+                      <h2 className="text-xl font-semibold mb-4">Notas Fiscais</h2>
+                      <InvoiceTable 
+                        invoices={filteredInvoices} 
+                        isLoading={isLoading} 
+                        onViewTitles={handleViewTitles}
+                      />
                     </>
                   )
                 },

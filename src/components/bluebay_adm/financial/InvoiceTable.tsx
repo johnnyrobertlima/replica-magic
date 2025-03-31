@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
-import { ConsolidatedInvoice } from "@/hooks/bluebay/useFinancialData";
+import { ConsolidatedInvoice } from "@/hooks/bluebay/types/financialTypes";
 
 interface InvoiceTableProps {
   invoices: ConsolidatedInvoice[];
@@ -30,8 +30,6 @@ export const InvoiceTable: React.FC<InvoiceTableProps> = ({
     );
   }
 
-  console.log("Rendering InvoiceTable with invoices:", invoices);
-
   if (invoices.length === 0) {
     return (
       <div className="bg-muted/40 py-8 text-center rounded-md">
@@ -52,7 +50,7 @@ export const InvoiceTable: React.FC<InvoiceTableProps> = ({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Nota</TableHead>
+            <TableHead>Nota Fiscal</TableHead>
             <TableHead>Cliente</TableHead>
             <TableHead>Data Emissão</TableHead>
             <TableHead>Valor Total</TableHead>
@@ -64,7 +62,7 @@ export const InvoiceTable: React.FC<InvoiceTableProps> = ({
             <TableRow key={invoice.NOTA}>
               <TableCell className="font-medium">{invoice.NOTA}</TableCell>
               <TableCell className="max-w-[200px] truncate" title={invoice.CLIENTE_NOME}>
-                {invoice.CLIENTE_NOME || `Cliente ${invoice.PES_CODIGO || "Desconhecido"}`}
+                {invoice.CLIENTE_NOME}
               </TableCell>
               <TableCell>
                 {invoice.DATA_EMISSAO ? format(new Date(invoice.DATA_EMISSAO), 'dd/MM/yyyy', { locale: ptBR }) : '-'}
