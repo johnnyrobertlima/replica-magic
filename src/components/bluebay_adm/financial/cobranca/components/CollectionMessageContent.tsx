@@ -36,7 +36,7 @@ export const CollectionMessageContent: React.FC<CollectionMessageContentProps> =
       // Informar ao usuário que o link foi acionado
       toast({
         title: "Abrindo Outlook Web",
-        description: "Estamos tentando abrir o Outlook Web em uma nova aba",
+        description: "Estamos abrindo o Outlook Web em uma nova aba",
         duration: 5000,
       });
     } catch (error) {
@@ -69,7 +69,7 @@ export const CollectionMessageContent: React.FC<CollectionMessageContentProps> =
           disabled={isSending}
           className="bg-blue-600 hover:bg-blue-700 flex items-center font-medium"
         >
-          <Mail className="h-3.5 w-3.5 mr-1" /> Enviar por Outlook <ExternalLink className="h-3 w-3 ml-1" />
+          <Mail className="h-3.5 w-3.5 mr-1" /> Abrir no Outlook Web <ExternalLink className="h-3 w-3 ml-1" />
         </Button>
       </div>
       

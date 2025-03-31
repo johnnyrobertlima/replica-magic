@@ -15,7 +15,7 @@ interface OutlookEmailParams {
 
 /**
  * Abre o Outlook Web com um e-mail pré-preenchido
- * Implementação mais confiável que o protocolo mailto
+ * Usando uma abordagem direta que funciona melhor com Outlook Web
  * 
  * @param params Parâmetros do e-mail
  * @returns Promise que resolve quando o e-mail é aberto
@@ -27,13 +27,13 @@ export const sendOutlookEmail = async (params: OutlookEmailParams): Promise<void
   console.log(`Iniciando tentativa de envio de e-mail para ${clientName}`);
   
   try {
-    // Formatar o corpo do e-mail para texto plano
+    // Formatar o corpo do e-mail para texto plano e substituir quebras de linha HTML por \n
     const plainTextBody = body.replace(/<br\s*\/?>/gi, "\n");
     
-    // Construir a URL do Outlook Web
-    let outlookUrl = "https://outlook.office.com/mail/deeplink/compose";
+    // Construir a URL do Outlook Web com formato correto
+    const outlookUrl = "https://outlook.office.com/mail/deeplink/compose";
     
-    // Adicionar parâmetros
+    // Codificar parâmetros corretamente para evitar problemas de formatação
     const urlParams = new URLSearchParams();
     if (to) urlParams.append("to", to);
     urlParams.append("subject", subject);
@@ -41,25 +41,15 @@ export const sendOutlookEmail = async (params: OutlookEmailParams): Promise<void
     if (cc) urlParams.append("cc", cc);
     if (bcc) urlParams.append("bcc", bcc);
     
-    // Adicionar os parâmetros à URL
-    outlookUrl += `?${urlParams.toString()}`;
+    // Construir a URL final
+    const finalUrl = `${outlookUrl}?${urlParams.toString()}`;
     
     // Log para debug
-    console.log(`Abrindo Outlook Web para cliente: ${clientName}`);
-    console.log(`URL Outlook: ${outlookUrl.substring(0, 100)}...`);
+    console.log(`Abrindo e-mail de cobrança para cliente: ${clientName}`);
+    console.log(`URL Outlook: ${finalUrl.substring(0, 100)}...`);
     
-    // Abrir o Outlook Web em uma nova aba
-    window.open(outlookUrl, "_blank");
-    
-    // Se não conseguiu abrir, tentar método alternativo
-    setTimeout(() => {
-      if (!document.hasFocus()) {
-        console.log("Abriu com sucesso em nova aba");
-      } else {
-        console.log("Tentando método alternativo");
-        window.location.href = outlookUrl;
-      }
-    }, 500);
+    // Abrir o Outlook Web em uma nova aba com método que preserva formatação
+    window.open(finalUrl, "_blank");
     
     return Promise.resolve();
   } catch (error) {

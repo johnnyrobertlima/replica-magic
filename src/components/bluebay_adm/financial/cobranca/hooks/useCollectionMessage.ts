@@ -82,8 +82,7 @@ Equipe Financeira – Bluebay Importadora
     setIsSending(true);
     
     try {
-      // Prepare message with linebreaks suitable for email
-      const emailBody = createMessageContent().replace(/\n/g, '\n');
+      const emailBody = createMessageContent();
       
       toast({
         title: "Abrindo Outlook Web",
@@ -93,9 +92,12 @@ Equipe Financeira – Bluebay Importadora
       
       console.log("Tentando enviar e-mail para:", selectedClient.CLIENTE_NOME);
       
+      // Usar o sujeito como uma string separada para manter a formatação correta
+      const emailSubject = `Títulos em atraso - Bluebay - ${selectedClient.CLIENTE_NOME}`;
+      
       await sendOutlookEmail({
         to: "financeiro@bluebay.com.br", // Email de exemplo - pode ser personalizado
-        subject: `Títulos em atraso - Bluebay - ${selectedClient.CLIENTE_NOME}`,
+        subject: emailSubject,
         body: emailBody,
         clientName: selectedClient.CLIENTE_NOME
       });
@@ -130,8 +132,7 @@ Equipe Financeira – Bluebay Importadora
     setIsSending(true);
     
     try {
-      // Prepare message with linebreaks suitable for email
-      const emailBody = createMessageContent().replace(/\n/g, '\n');
+      const emailBody = createMessageContent();
       
       toast({
         title: "Abrindo cliente de e-mail padrão",
