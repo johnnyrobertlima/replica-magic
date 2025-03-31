@@ -1,15 +1,15 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { BluebayAdmBanner } from "@/components/bluebay_adm/BluebayAdmBanner";
 import { BluebayAdmMenu } from "@/components/bluebay_adm/BluebayAdmMenu";
 import { FinancialHeader } from "@/components/bluebay_adm/financial/FinancialHeader";
 import { FinancialLoader } from "@/components/bluebay_adm/financial/FinancialLoader";
 import { FinancialContent } from "@/components/bluebay_adm/financial/FinancialContent";
+import { PaginationControls } from "@/components/bluebay_adm/financial/PaginationControls";
+import { FinancialSummaryCalculator } from "@/components/bluebay_adm/financial/FinancialSummaryCalculator";
 import { useFinanciero } from "@/hooks/bluebay/useFinanciero";
 import { useFinancialExport } from "@/hooks/bluebay/useFinancialExport";
 import { useCollectionStatus } from "@/hooks/bluebay/useCollectionStatus";
-import { Button } from "@/components/ui/button";
-import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 
 const BluebayAdmFinanceiroManager = () => {
   const { 
@@ -49,52 +49,7 @@ const BluebayAdmFinanceiroManager = () => {
     totalEmAberto: 0
   });
 
-  useEffect(() => {
-    console.log("filteredInvoices:", filteredInvoices);
-    console.log("filteredTitles:", filteredTitles);
-  }, [filteredInvoices, filteredTitles]);
-
-  // Calculate summary based on filtered titles, excluding canceled titles (status '4')
-  useEffect(() => {
-    const today = new Date();
-    let totalPago = 0;
-    let totalEmAberto = 0;
-    let totalValoresVencidos = 0;
-
-    // Get the titles that should be considered (all filtered or just client filtered)
-    const titlesToCalculate = selectedClient 
-      ? filteredTitles.filter(title => String(title.PES_CODIGO) === selectedClient)
-      : filteredTitles;
-    
-    // Process titles for summary calculation, excluding canceled titles (status '4')
-    titlesToCalculate
-      .filter(title => title.STATUS !== '4') // Exclude canceled titles
-      .forEach(title => {
-        const vencimentoDate = title.DTVENCIMENTO ? new Date(title.DTVENCIMENTO) : null;
-        const vlrTitulo = title.VLRTITULO || 0;
-        const vlrSaldo = title.VLRSALDO || 0;
-        
-        // Check if title is paid
-        if (title.STATUS === '3') { // Status 3 = Pago
-          totalPago += vlrTitulo;
-        } else {
-          // Add to total open amount if not paid
-          totalEmAberto += vlrSaldo;
-          
-          // Check if overdue (vencimento date is in the past)
-          if (vencimentoDate && vencimentoDate < today) {
-            totalValoresVencidos += vlrSaldo;
-          }
-        }
-      });
-
-    setFilteredSummary({
-      totalValoresVencidos,
-      totalPago,
-      totalEmAberto
-    });
-  }, [filteredTitles, selectedClient]);
-
+  // Títulos filtrados por cliente selecionado
   const clientFilteredTitles = selectedClient 
     ? filteredTitles.filter(title => String(title.PES_CODIGO) === selectedClient)
     : filteredTitles;
@@ -137,6 +92,12 @@ const BluebayAdmFinanceiroManager = () => {
           }}
         />
 
+        <FinancialSummaryCalculator 
+          filteredTitles={filteredTitles}
+          selectedClient={selectedClient}
+          onSummaryCalculated={setFilteredSummary}
+        />
+
         <FinancialLoader isLoading={isLoading}>
           <FinancialContent
             isLoading={isLoading}
@@ -167,33 +128,10 @@ const BluebayAdmFinanceiroManager = () => {
             onResetAllCollectionStatus={resetAllCollectionStatus}
           />
           
-          {/* Pagination controls */}
-          {pagination && (
-            <div className="flex items-center justify-between mt-6 bg-white p-4 rounded-md shadow">
-              <div className="text-sm text-muted-foreground">
-                Mostrando {clientFilteredTitles.length} registros de um total de {pagination.totalCount} 
-                (Página {pagination.currentPage})
-              </div>
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={pagination.goToPreviousPage}
-                  disabled={!pagination.hasPreviousPage}
-                >
-                  <ArrowLeftIcon className="h-4 w-4 mr-1" /> Anterior
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={pagination.goToNextPage}
-                  disabled={!pagination.hasNextPage}
-                >
-                  Próxima <ArrowRightIcon className="h-4 w-4 ml-1" />
-                </Button>
-              </div>
-            </div>
-          )}
+          <PaginationControls
+            pagination={pagination}
+            itemCount={clientFilteredTitles.length}
+          />
         </FinancialLoader>
       </div>
     </main>
