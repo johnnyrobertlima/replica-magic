@@ -64,8 +64,15 @@ export const useFinancialFilters = (
       );
     }
     
+    // Apply nota filter (this was missing)
+    if (notaFilter) {
+      filtered = filtered.filter(title => 
+        String(title.NUMNOTA).includes(notaFilter)
+      );
+    }
+    
     return filtered;
-  }, [statusFilter, clientFilter, financialTitles]);
+  }, [statusFilter, clientFilter, notaFilter, financialTitles]);
 
   const updateStatusFilter = useCallback((status: string) => {
     setStatusFilter(status);
