@@ -128,7 +128,7 @@ export const DateRangePicker = ({
                       selected={startDate || undefined}
                       onSelect={handleStartDateChange}
                       initialFocus
-                      disabled={(date) => date > new Date() || (endDate ? date > endDate : false)}
+                      disabled={(date) => (endDate ? date > endDate : false)}
                       className="p-3 pointer-events-auto bg-white"
                     />
                   </div>
@@ -141,7 +141,7 @@ export const DateRangePicker = ({
                       selected={endDate || undefined}
                       onSelect={handleEndDateChange}
                       initialFocus
-                      disabled={(date) => date > new Date() || (startDate ? date < startDate : false)}
+                      disabled={(date) => (startDate ? date < startDate : false)}
                       className="p-3 pointer-events-auto bg-white"
                     />
                   </div>
@@ -154,3 +154,4 @@ export const DateRangePicker = ({
     </div>
   );
 };
+
