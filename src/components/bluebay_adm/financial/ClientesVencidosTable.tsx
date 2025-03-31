@@ -54,7 +54,7 @@ export const ClientesVencidosTable: React.FC<ClientesVencidosTableProps> = ({
         <TableHeader>
           <TableRow>
             <TableHead className="font-semibold">Nº Título</TableHead>
-            <TableHead>Nº Nota</TableHead>
+            <TableHead>Nº Documento</TableHead>
             <TableHead>Cliente</TableHead>
             <TableHead>Data Emissão</TableHead>
             <TableHead>Data Vencimento</TableHead>
@@ -72,9 +72,9 @@ export const ClientesVencidosTable: React.FC<ClientesVencidosTableProps> = ({
             const diasVencido = differenceInDays(today, vencimentoDate);
             
             return (
-              <TableRow key={`${title.NUMDOCUMENTO || title.NUMNOTA}-${index}`}>
-                <TableCell className="font-medium">{title.NUMDOCUMENTO || '-'}</TableCell>
-                <TableCell>{title.NUMNOTA}</TableCell>
+              <TableRow key={`${title.NUMNOTA}-${index}`}>
+                <TableCell className="font-medium">{title.NUMNOTA}</TableCell>
+                <TableCell>{title.NUMDOCUMENTO || '-'}</TableCell>
                 <TableCell className="max-w-[200px] truncate" title={title.CLIENTE_NOME}>
                   {title.CLIENTE_NOME}
                 </TableCell>
