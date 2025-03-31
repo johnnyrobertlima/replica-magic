@@ -24,145 +24,93 @@ export const useFinancialData = () => {
     try {
       console.info("useFinanciero effect - triggering data refresh");
       
-      // First, fetch data from mv_faturamento_resumido for BLUEBAY center cost
-      const { data: faturamento, error: faturamentoError } = await supabase
-        .from('mv_faturamento_resumido')
-        .select('*')
-        .eq('CENTROCUSTO', 'BLUEBAY');
-        
-      if (faturamentoError) {
-        console.error("Error fetching invoices:", faturamentoError);
-        throw faturamentoError;
-      }
-
-      // Log the sample data to check structure
-      console.info("Sample data from mv_faturamento_resumido:", faturamento?.[0]);
-      
-      if (!faturamento || faturamento.length === 0) {
-        setConsolidatedInvoices([]);
-        setFinancialTitles([]);
-        setAvailableStatuses(['all']);
-        setIsLoading(false);
-        return;
-      }
-
-      // Extract NOTAs to fetch related titles
-      const notas = faturamento.map(item => String(item.NOTA));
-      
-      // Fetch titles linked to these invoices by NOTA
-      const { data: titulos, error: titulosError } = await supabase
+      // Primeiro, buscar todos os títulos do BLUEBAY diretamente
+      const { data: allTitulos, error: allTitulosError } = await supabase
         .from('BLUEBAY_TITULO')
-        .select('*')
-        .in('NUMNOTA', notas);
+        .select('*');
       
-      if (titulosError) {
-        console.error("Error fetching titles:", titulosError);
-        throw titulosError;
+      if (allTitulosError) {
+        console.error("Error fetching all titles:", allTitulosError);
+        throw allTitulosError;
       }
       
-      console.info(`Fetched ${faturamento?.length || 0} invoices and ${titulos?.length || 0} titles`);
+      console.info(`Fetched ${allTitulos?.length || 0} total titles for BLUEBAY`);
       
-      // If no titles were found directly related to invoices, fetch all titles for BLUEBAY
-      if (!titulos || titulos.length === 0) {
-        console.info("No titles found linked to invoices, fetching all titles for BLUEBAY");
-        const { data: allTitulos, error: allTitulosError } = await supabase
-          .from('BLUEBAY_TITULO')
-          .select('*');
-          
-        if (allTitulosError) {
-          console.error("Error fetching all titles:", allTitulosError);
-        } else {
-          console.info(`Fetched ${allTitulos?.length || 0} total titles`);
-          // Use these titles instead
-          const processedTitulos = allTitulos || [];
-          
-          // Get all unique client codes for these titles
-          const clienteCodigos = [...new Set(
-            processedTitulos.map(titulo => 
-              typeof titulo.PES_CODIGO === 'string' ? 
-                titulo.PES_CODIGO : String(titulo.PES_CODIGO)
-            )
-          )].filter(Boolean);
-          
-          // Fetch client data
-          const clientesMap = await fetchClientData(clienteCodigos);
-          
-          // Process titles with client names
-          const processedTitles = processedTitulos.map(titulo => 
-            processFinancialTitle(titulo, clientesMap)
-          );
-          
-          setFinancialTitles(processedTitles);
-          
-          // Collect unique statuses for filter
-          const uniqueStatuses = [...new Set([
-            ...processedTitles.map(title => title.STATUS || "").filter(Boolean)
-          ])];
-          
-          setAvailableStatuses(['all', ...uniqueStatuses]);
-          
-          // Since we have titles but no invoices matched, create placeholder invoices
-          const invoices: ConsolidatedInvoice[] = [];
-          setConsolidatedInvoices(invoices);
-          
-          setIsLoading(false);
-          return;
-        }
-      }
+      // Processar títulos
+      const processedTitulos = allTitulos || [];
       
-      // Get all unique client codes to fetch client information in one batch
-      const clienteCodigos = [...new Set([
-        ...faturamento.map(item => typeof item.PES_CODIGO === 'string' ? 
-          item.PES_CODIGO : String(item.PES_CODIGO)),
-        ...(titulos || []).map(titulo => typeof titulo.PES_CODIGO === 'string' ? 
-          titulo.PES_CODIGO : String(titulo.PES_CODIGO))
-      ])].filter(Boolean);
+      // Coletar todos os códigos de cliente únicos para esses títulos
+      const clienteCodigos = [...new Set(
+        processedTitulos.map(titulo => 
+          typeof titulo.PES_CODIGO === 'string' ? 
+            titulo.PES_CODIGO : String(titulo.PES_CODIGO)
+        )
+      )].filter(Boolean) as (string | number)[];
       
-      // Fetch all client data in one query
+      console.info(`Found ${clienteCodigos.length} unique client codes in titles`);
+      
+      // Buscar dados dos clientes
       const clientesMap = await fetchClientData(clienteCodigos);
       
-      // Process invoices
-      const consolidatedData: ConsolidatedInvoice[] = [];
-      for (const item of faturamento) {
-        const invoice = createConsolidatedInvoice(item, clientesMap);
-        
-        // Find matching titles for this invoice to get due date
-        const matchingTitles = titulos?.filter(titulo => 
-          String(titulo.NUMNOTA) === String(item.NOTA)) || [];
-        
-        // Set due date from the title if available
-        if (matchingTitles.length > 0) {
-          invoice.DATA_VENCIMENTO = matchingTitles[0].DTVENCIMENTO || 
-            matchingTitles[0].DTVENCTO || null;
-        }
-        
-        consolidatedData.push(invoice);
-      }
-      
-      // Update invoice values based on related titles
-      for (const titulo of titulos || []) {
-        // Find the related invoice
-        const invoice = consolidatedData.find(inv => String(inv.NOTA) === String(titulo.NUMNOTA));
-        if (invoice) {
-          updateInvoiceWithTitles(invoice, titulo);
-        }
-      }
-      
-      setConsolidatedInvoices(consolidatedData);
-      
-      // Process titles with client names
-      const processedTitles = (titulos || []).map(titulo => 
+      // Processar títulos com nomes de clientes
+      const processedTitles = processedTitulos.map(titulo => 
         processFinancialTitle(titulo, clientesMap)
       );
       
       setFinancialTitles(processedTitles);
       
-      // Collect unique statuses for filter
+      // Coletar status únicos para filtro
       const uniqueStatuses = [...new Set([
         ...processedTitles.map(title => title.STATUS || "").filter(Boolean)
       ])];
       
       setAvailableStatuses(['all', ...uniqueStatuses]);
+      
+      // Buscar dados de faturamento para BLUEBAY centro de custo
+      const { data: faturamento, error: faturamentoError } = await supabase
+        .from('mv_faturamento_resumido')
+        .select('*')
+        .eq('CENTROCUSTO', 'BLUEBAY');
+      
+      if (faturamentoError) {
+        console.error("Error fetching invoices:", faturamentoError);
+      } else {
+        console.info(`Fetched ${faturamento?.length || 0} invoices for BLUEBAY`);
+        
+        // Processar faturas
+        const consolidatedData: ConsolidatedInvoice[] = [];
+        
+        if (faturamento && faturamento.length > 0) {
+          for (const item of faturamento) {
+            const invoice = createConsolidatedInvoice(item, clientesMap);
+            
+            // Encontrar títulos correspondentes para esta fatura
+            const matchingTitles = processedTitulos.filter(titulo => 
+              String(titulo.NUMNOTA) === String(item.NOTA)) || [];
+            
+            // Definir data de vencimento do título se disponível
+            if (matchingTitles.length > 0) {
+              invoice.DATA_VENCIMENTO = matchingTitles[0].DTVENCIMENTO || 
+                matchingTitles[0].DTVENCTO || null;
+            }
+            
+            consolidatedData.push(invoice);
+          }
+          
+          // Atualizar valores de fatura com base em títulos relacionados
+          for (const titulo of processedTitulos) {
+            // Encontrar a fatura relacionada
+            const invoice = consolidatedData.find(inv => 
+              String(inv.NOTA) === String(titulo.NUMNOTA));
+            
+            if (invoice) {
+              updateInvoiceWithTitles(invoice, titulo);
+            }
+          }
+        }
+        
+        setConsolidatedInvoices(consolidatedData);
+      }
       
     } catch (error) {
       console.error("Error fetching financial data:", error);
