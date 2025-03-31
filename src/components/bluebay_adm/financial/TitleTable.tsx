@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -8,6 +8,22 @@ import { StatusBadge } from "./StatusBadge";
 import { formatCurrency } from "@/utils/formatters";
 import { FinancialTitle } from "@/hooks/bluebay/types/financialTypes";
 import { formatNumDocumento } from "@/hooks/bluebay/utils/titleUtils";
+import { ChevronDown, ChevronUp } from "lucide-react";
+
+interface SortIconProps {
+  field: string;
+  sortField: string;
+  sortDirection: "asc" | "desc";
+}
+
+const SortIcon = ({ field, sortField, sortDirection }: SortIconProps) => {
+  if (field !== sortField) return null;
+  return sortDirection === "asc" ? (
+    <ChevronUp className="w-4 h-4 ml-1" />
+  ) : (
+    <ChevronDown className="w-4 h-4 ml-1" />
+  );
+};
 
 interface TitleTableProps {
   titles: FinancialTitle[];
@@ -15,6 +31,45 @@ interface TitleTableProps {
 }
 
 export const TitleTable: React.FC<TitleTableProps> = ({ titles, isLoading }) => {
+  const [sortField, setSortField] = useState<string>("DTVENCIMENTO");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+  const handleSort = (field: string) => {
+    if (field === sortField) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  const sortedTitles = React.useMemo(() => {
+    if (!titles.length) return [];
+    
+    return [...titles].sort((a, b) => {
+      // Handle date fields
+      if (["DTEMISSAO", "DTVENCIMENTO", "DTPAGTO"].includes(sortField)) {
+        const dateA = a[sortField as keyof FinancialTitle] ? new Date(a[sortField as keyof FinancialTitle] as string).getTime() : 0;
+        const dateB = b[sortField as keyof FinancialTitle] ? new Date(b[sortField as keyof FinancialTitle] as string).getTime() : 0;
+        return sortDirection === "asc" ? dateA - dateB : dateB - dateA;
+      }
+      
+      // Handle numeric fields
+      if (["VLRTITULO", "VLRSALDO", "VLRDESCONTO"].includes(sortField)) {
+        const numA = a[sortField as keyof FinancialTitle] as number || 0;
+        const numB = b[sortField as keyof FinancialTitle] as number || 0;
+        return sortDirection === "asc" ? numA - numB : numB - numA;
+      }
+      
+      // Handle strings and other fields
+      const valA = String(a[sortField as keyof FinancialTitle] || "");
+      const valB = String(b[sortField as keyof FinancialTitle] || "");
+      return sortDirection === "asc" 
+        ? valA.localeCompare(valB) 
+        : valB.localeCompare(valA);
+    });
+  }, [titles, sortField, sortDirection]);
+
   if (isLoading) {
     return (
       <div className="space-y-2">
@@ -39,19 +94,55 @@ export const TitleTable: React.FC<TitleTableProps> = ({ titles, isLoading }) => 
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Nota Fiscal</TableHead>
-            <TableHead>Nº do Documento</TableHead>
-            <TableHead>Cliente</TableHead>
-            <TableHead>Data Emissão</TableHead>
-            <TableHead>Vencimento</TableHead>
-            <TableHead>Pagamento</TableHead>
-            <TableHead>Valor</TableHead>
-            <TableHead>Saldo</TableHead>
-            <TableHead>Status</TableHead>
+            <TableHead className="cursor-pointer" onClick={() => handleSort("NUMNOTA")}>
+              <div className="flex items-center">
+                Nota Fiscal <SortIcon field="NUMNOTA" sortField={sortField} sortDirection={sortDirection} />
+              </div>
+            </TableHead>
+            <TableHead className="cursor-pointer" onClick={() => handleSort("NUMDOCUMENTO")}>
+              <div className="flex items-center">
+                Nº do Documento <SortIcon field="NUMDOCUMENTO" sortField={sortField} sortDirection={sortDirection} />
+              </div>
+            </TableHead>
+            <TableHead className="cursor-pointer" onClick={() => handleSort("CLIENTE_NOME")}>
+              <div className="flex items-center">
+                Cliente <SortIcon field="CLIENTE_NOME" sortField={sortField} sortDirection={sortDirection} />
+              </div>
+            </TableHead>
+            <TableHead className="cursor-pointer" onClick={() => handleSort("DTEMISSAO")}>
+              <div className="flex items-center">
+                Data Emissão <SortIcon field="DTEMISSAO" sortField={sortField} sortDirection={sortDirection} />
+              </div>
+            </TableHead>
+            <TableHead className="cursor-pointer" onClick={() => handleSort("DTVENCIMENTO")}>
+              <div className="flex items-center">
+                Vencimento <SortIcon field="DTVENCIMENTO" sortField={sortField} sortDirection={sortDirection} />
+              </div>
+            </TableHead>
+            <TableHead className="cursor-pointer" onClick={() => handleSort("DTPAGTO")}>
+              <div className="flex items-center">
+                Pagamento <SortIcon field="DTPAGTO" sortField={sortField} sortDirection={sortDirection} />
+              </div>
+            </TableHead>
+            <TableHead className="cursor-pointer" onClick={() => handleSort("VLRTITULO")}>
+              <div className="flex items-center">
+                Valor <SortIcon field="VLRTITULO" sortField={sortField} sortDirection={sortDirection} />
+              </div>
+            </TableHead>
+            <TableHead className="cursor-pointer" onClick={() => handleSort("VLRSALDO")}>
+              <div className="flex items-center">
+                Saldo <SortIcon field="VLRSALDO" sortField={sortField} sortDirection={sortDirection} />
+              </div>
+            </TableHead>
+            <TableHead className="cursor-pointer" onClick={() => handleSort("STATUS")}>
+              <div className="flex items-center">
+                Status <SortIcon field="STATUS" sortField={sortField} sortDirection={sortDirection} />
+              </div>
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {titles.map((title, index) => (
+          {sortedTitles.map((title, index) => (
             <TableRow key={`${title.NUMNOTA}-${index}`}>
               <TableCell className="font-medium">{title.NUMNOTA}</TableCell>
               <TableCell className="font-mono">{formatNumDocumento(title.NUMDOCUMENTO)}</TableCell>
