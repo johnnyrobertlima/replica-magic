@@ -8,6 +8,7 @@ import { FinancialSummaryCards } from "@/components/bluebay_adm/financial/Financ
 import { TitleTable } from "@/components/bluebay_adm/financial/TitleTable";
 import { InvoiceTable } from "@/components/bluebay_adm/financial/InvoiceTable";
 import { ClientFinancialTable } from "@/components/bluebay_adm/financial/ClientFinancialTable";
+import { ClientesVencidosTable } from "@/components/bluebay_adm/financial/ClientesVencidosTable";
 import { FinancialTabs } from "@/components/bluebay_adm/financial/FinancialTabs";
 import { ClientFilterBadge } from "@/components/bluebay_adm/financial/ClientFilterBadge";
 import { LoadingState } from "@/components/bluebay_adm/financial/LoadingState";
@@ -71,7 +72,8 @@ const BluebayAdmFinanceiroManager = () => {
           hasData={{
             titles: clientFilteredTitles.length > 0,
             invoices: filteredInvoices.length > 0,
-            clients: clientFinancialSummaries.length > 0
+            clients: clientFinancialSummaries.length > 0,
+            clientesVencidos: filteredTitles.length > 0
           }}
         />
 
@@ -141,6 +143,19 @@ const BluebayAdmFinanceiroManager = () => {
                         clients={clientFinancialSummaries} 
                         isLoading={isLoading} 
                         onClientSelect={handleClientSelect}
+                      />
+                    </>
+                  )
+                },
+                {
+                  id: "clientesVencidos",
+                  label: "Clientes com Títulos Vencidos",
+                  content: (
+                    <>
+                      <h2 className="text-xl font-semibold mb-4">Clientes com Títulos Vencidos</h2>
+                      <ClientesVencidosTable 
+                        titles={filteredTitles} 
+                        isLoading={isLoading} 
                       />
                     </>
                   )
