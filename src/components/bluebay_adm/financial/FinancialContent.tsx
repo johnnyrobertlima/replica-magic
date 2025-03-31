@@ -80,14 +80,7 @@ export const FinancialContent: React.FC<FinancialContentProps> = ({
       content: (
         <TitleTable
           titles={clientFilteredTitles}
-          statusFilter={statusFilter}
-          updateStatusFilter={updateStatusFilter}
-          availableStatuses={availableStatuses}
-          clientFilter={clientFilter}
-          updateClientFilter={updateClientFilter}
-          notaFilter={notaFilter}
-          updateNotaFilter={updateNotaFilter}
-          isClientSelected={selectedClient !== null}
+          isLoading={isLoading}
         />
       )
     },
@@ -96,7 +89,7 @@ export const FinancialContent: React.FC<FinancialContentProps> = ({
       label: "Clientes",
       content: (
         <ClientFinancialTable
-          clientSummaries={clientFinancialSummaries}
+          clients={clientFinancialSummaries || []}
           isLoading={isLoading}
           onClientSelect={handleClientSelect}
         />
