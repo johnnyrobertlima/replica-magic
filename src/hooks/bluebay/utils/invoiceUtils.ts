@@ -12,6 +12,8 @@ export const determineInvoiceValue = (item: any): number => {
     invoiceValue = parseFloat(String(item.TOTAL));
   } else if ('VALOR' in item && item.VALOR) {
     invoiceValue = parseFloat(String(item.VALOR));
+  } else if ('VALOR_NOTA' in item && item.VALOR_NOTA) {
+    invoiceValue = parseFloat(String(item.VALOR_NOTA));
   }
   
   return invoiceValue;
@@ -33,7 +35,7 @@ export const createConsolidatedInvoice = (
   const dataEmissao = item.DATA_EMISSAO || "";
   
   return {
-    NOTA: String(item.NOTA),
+    NOTA: String(item.NOTA || ""),
     DATA_EMISSAO: dataEmissao,
     DATA_VENCIMENTO: null, // Will be populated from titles
     STATUS: item.STATUS || "1", // Default to "Em Aberto"
@@ -41,7 +43,7 @@ export const createConsolidatedInvoice = (
     VALOR_PAGO: 0, // We'll calculate this from titles
     VALOR_SALDO: invoiceValue,
     PES_CODIGO: pesCodeNumeric,
-    CLIENTE_NOME: clientName
+    CLIENTE_NOME: clientName || `Cliente ${pesCodeNumeric}`
   };
 };
 
@@ -54,6 +56,15 @@ export const updateInvoiceWithTitles = (
   const paidAmount = (titulo.VLRTITULO || 0) - (titulo.VLRSALDO || 0);
   invoice.VALOR_PAGO += paidAmount;
   invoice.VALOR_SALDO = invoice.VALOR_NOTA - invoice.VALOR_PAGO;
+  
+  // Update status based on payment
+  if (invoice.VALOR_PAGO >= invoice.VALOR_NOTA) {
+    invoice.STATUS = "3"; // Pago
+  } else if (invoice.VALOR_PAGO > 0) {
+    invoice.STATUS = "2"; // Parcialmente Pago
+  } else {
+    invoice.STATUS = "1"; // Em Aberto
+  }
   
   return invoice;
 };

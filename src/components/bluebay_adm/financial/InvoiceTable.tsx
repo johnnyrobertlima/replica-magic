@@ -24,6 +24,8 @@ export const InvoiceTable: React.FC<InvoiceTableProps> = ({ invoices, isLoading 
     );
   }
 
+  console.log("Rendering InvoiceTable with invoices:", invoices);
+
   if (invoices.length === 0) {
     return (
       <div className="bg-muted/40 py-8 text-center rounded-md">

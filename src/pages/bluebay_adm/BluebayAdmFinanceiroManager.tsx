@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { BluebayAdmBanner } from "@/components/bluebay_adm/BluebayAdmBanner";
 import { BluebayAdmMenu } from "@/components/bluebay_adm/BluebayAdmMenu";
 import { FinancialHeader } from "@/components/bluebay_adm/financial/FinancialHeader";
@@ -36,6 +36,12 @@ const BluebayAdmFinanceiroManager = () => {
 
   const [activeTab, setActiveTab] = useState("titles");
   const [selectedClient, setSelectedClient] = useState<string | null>(null);
+
+  // Log the data we have for debugging
+  useEffect(() => {
+    console.log("filteredInvoices:", filteredInvoices);
+    console.log("filteredTitles:", filteredTitles);
+  }, [filteredInvoices, filteredTitles]);
 
   const clientFilteredTitles = selectedClient 
     ? filteredTitles.filter(title => String(title.PES_CODIGO) === selectedClient)

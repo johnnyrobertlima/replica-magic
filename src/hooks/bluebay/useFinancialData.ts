@@ -24,7 +24,7 @@ export const useFinancialData = () => {
     try {
       console.info("useFinanciero effect - triggering data refresh");
       
-      // Primeiro, buscar todos os títulos do BLUEBAY diretamente
+      // First, fetch all BLUEBAY titles directly
       const { data: allTitulos, error: allTitulosError } = await supabase
         .from('BLUEBAY_TITULO')
         .select('*');
@@ -36,10 +36,10 @@ export const useFinancialData = () => {
       
       console.info(`Fetched ${allTitulos?.length || 0} total titles for BLUEBAY`);
       
-      // Processar títulos
+      // Process titles
       const processedTitulos = allTitulos || [];
       
-      // Coletar todos os códigos de cliente únicos para esses títulos
+      // Collect all unique client codes for these titles
       const clienteCodigos = [...new Set(
         processedTitulos.map(titulo => 
           typeof titulo.PES_CODIGO === 'string' ? 
@@ -49,46 +49,45 @@ export const useFinancialData = () => {
       
       console.info(`Found ${clienteCodigos.length} unique client codes in titles`);
       
-      // Buscar dados dos clientes
+      // Fetch client data
       const clientesMap = await fetchClientData(clienteCodigos);
       
-      // Processar títulos com nomes de clientes
+      // Process titles with client names
       const processedTitles = processedTitulos.map(titulo => 
         processFinancialTitle(titulo, clientesMap)
       );
       
       setFinancialTitles(processedTitles);
       
-      // Coletar status únicos para filtro
+      // Collect unique statuses for filter
       const uniqueStatuses = [...new Set([
         ...processedTitles.map(title => title.STATUS || "").filter(Boolean)
       ])];
       
       setAvailableStatuses(['all', ...uniqueStatuses]);
       
-      // Buscar dados de faturamento para BLUEBAY centro de custo
+      // Fetch billing data for BLUEBAY cost center
       const { data: faturamento, error: faturamentoError } = await supabase
-        .from('mv_faturamento_resumido')
-        .select('*')
-        .eq('CENTROCUSTO', 'BLUEBAY');
+        .from('BLUEBAY_FATURAMENTO')
+        .select('*');
       
       if (faturamentoError) {
         console.error("Error fetching invoices:", faturamentoError);
       } else {
         console.info(`Fetched ${faturamento?.length || 0} invoices for BLUEBAY`);
         
-        // Processar faturas
+        // Process invoices
         const consolidatedData: ConsolidatedInvoice[] = [];
         
         if (faturamento && faturamento.length > 0) {
           for (const item of faturamento) {
             const invoice = createConsolidatedInvoice(item, clientesMap);
             
-            // Encontrar títulos correspondentes para esta fatura
+            // Find corresponding titles for this invoice
             const matchingTitles = processedTitulos.filter(titulo => 
               String(titulo.NUMNOTA) === String(item.NOTA)) || [];
             
-            // Definir data de vencimento do título se disponível
+            // Set due date of the title if available
             if (matchingTitles.length > 0) {
               invoice.DATA_VENCIMENTO = matchingTitles[0].DTVENCIMENTO || 
                 matchingTitles[0].DTVENCTO || null;
@@ -97,9 +96,9 @@ export const useFinancialData = () => {
             consolidatedData.push(invoice);
           }
           
-          // Atualizar valores de fatura com base em títulos relacionados
+          // Update invoice values based on related titles
           for (const titulo of processedTitulos) {
-            // Encontrar a fatura relacionada
+            // Find the related invoice
             const invoice = consolidatedData.find(inv => 
               String(inv.NOTA) === String(titulo.NUMNOTA));
             

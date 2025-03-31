@@ -37,6 +37,13 @@ export const useFinanciero = () => {
     refreshData();
   }, [refreshData]);
 
+  // Log data for debugging
+  useEffect(() => {
+    console.log("consolidatedInvoices:", consolidatedInvoices.length);
+    console.log("financialTitles:", financialTitles.length);
+    console.log("filteredInvoices:", filteredInvoices.length);
+  }, [consolidatedInvoices, financialTitles, filteredInvoices]);
+
   return {
     isLoading,
     consolidatedInvoices,
