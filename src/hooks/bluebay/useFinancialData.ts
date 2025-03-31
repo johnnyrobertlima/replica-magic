@@ -66,11 +66,9 @@ export const useFinancialData = () => {
       }
 
       // Extract NOTAs to fetch related titles
-      // Converting string NOTAs to string for the IN query - TypeScript expects numbers but we'll handle it
-      const notas = faturamento.map(item => item.NOTA);
+      const notas = faturamento.map(item => String(item.NOTA));
       
       // Fetch titles linked to these invoices by NOTA
-      // Explicitly convert the query to work with string values for NUMNOTA
       const { data: titulos, error: titulosError } = await supabase
         .from('BLUEBAY_TITULO')
         .select('*')
@@ -83,34 +81,60 @@ export const useFinancialData = () => {
       
       console.info(`Fetched ${faturamento?.length || 0} invoices and ${titulos?.length || 0} titles`);
       
+      // Get all unique client codes to fetch client information in one batch
+      const clienteCodigos = [...new Set([
+        ...faturamento.map(item => typeof item.PES_CODIGO === 'string' ? 
+          parseInt(item.PES_CODIGO, 10) : item.PES_CODIGO),
+        ...(titulos || []).map(titulo => typeof titulo.PES_CODIGO === 'string' ? 
+          parseInt(titulo.PES_CODIGO, 10) : titulo.PES_CODIGO)
+      ])].filter(Boolean);
+      
+      // Fetch all client data in one query
+      const { data: clientesData, error: clientesError } = await supabase
+        .from('BLUEBAY_PESSOA')
+        .select('PES_CODIGO, APELIDO, RAZAOSOCIAL')
+        .in('PES_CODIGO', clienteCodigos as number[]);
+      
+      if (clientesError) {
+        console.error("Error fetching client data:", clientesError);
+        throw clientesError;
+      }
+      
+      // Create a map for quick client lookup
+      const clientesMap = new Map();
+      clientesData?.forEach(cliente => {
+        clientesMap.set(cliente.PES_CODIGO, {
+          APELIDO: cliente.APELIDO,
+          RAZAOSOCIAL: cliente.RAZAOSOCIAL
+        });
+      });
+      
       // Consolidate invoices data
       const consolidatedData: ConsolidatedInvoice[] = [];
       
       for (const item of faturamento) {
-        // Get client name
-        const { data: clientData } = await supabase
-          .from('BLUEBAY_PESSOA')
-          .select('APELIDO, RAZAOSOCIAL')
-          .eq('PES_CODIGO', item.PES_CODIGO)
-          .maybeSingle();
+        // Get client name from the map
+        const clienteInfo = clientesMap.get(
+          typeof item.PES_CODIGO === 'string' ? 
+          parseInt(item.PES_CODIGO, 10) : 
+          item.PES_CODIGO
+        );
         
-        const clientName = clientData?.APELIDO || clientData?.RAZAOSOCIAL || "Cliente não encontrado";
+        const clientName = clienteInfo?.APELIDO || clienteInfo?.RAZAOSOCIAL || "Cliente não encontrado";
         
         // Create consolidated invoice object
-        // Note: We need to determine what status to use for invoices
         const invoiceStatus = "1"; // Default to "Em Aberto"
         
-        // Since VALOR property doesn't exist, calculate a value from another source or use a default
-        // This approach assumes we might have a property with a different name or we'll default to 0
+        // Determine invoice value from available properties
         let invoiceValue = 0;
         
-        // Try to check if we have a value property with a different case or name
-        if ('VALOR_TOTAL' in item) {
+        if ('VALOR_TOTAL' in item && item.VALOR_TOTAL) {
           invoiceValue = parseFloat(String(item.VALOR_TOTAL));
-        } else if ('TOTAL' in item) {
+        } else if ('TOTAL' in item && item.TOTAL) {
           invoiceValue = parseFloat(String(item.TOTAL));
+        } else if ('VALOR' in item && item.VALOR) {
+          invoiceValue = parseFloat(String(item.VALOR));
         } else {
-          // Default to 0 if we can't find a suitable value
           console.log(`No value found for invoice ${item.NOTA}, using default 0`);
         }
         
@@ -118,7 +142,7 @@ export const useFinancialData = () => {
         const dataEmissao = item.DATA_EMISSAO || "";
         
         consolidatedData.push({
-          NOTA: item.NOTA,
+          NOTA: String(item.NOTA),
           DATA_EMISSAO: dataEmissao,
           STATUS: invoiceStatus,
           VALOR_NOTA: invoiceValue,
@@ -146,39 +170,30 @@ export const useFinancialData = () => {
       setConsolidatedInvoices(consolidatedData);
       
       // Process titles with client names
-      const processedTitles: FinancialTitle[] = await Promise.all(
-        (titulos || []).map(async (titulo) => {
-          let clientName = "Cliente não encontrado";
-
-          if (titulo.PES_CODIGO) {
-            // Convert PES_CODIGO to number if it's a string for the query
-            const pesCodigoAsNumber = typeof titulo.PES_CODIGO === 'string' 
-              ? parseInt(titulo.PES_CODIGO, 10)
-              : titulo.PES_CODIGO;
-              
-            const { data: clientData } = await supabase
-              .from('BLUEBAY_PESSOA')
-              .select('APELIDO, RAZAOSOCIAL')
-              .eq('PES_CODIGO', pesCodigoAsNumber)
-              .maybeSingle();
-
-            clientName = clientData?.APELIDO || clientData?.RAZAOSOCIAL || "Cliente não encontrado";
-          }
-
-          return {
-            NUMNOTA: titulo.NUMNOTA,
-            DTEMISSAO: titulo.DTEMISSAO,
-            DTVENCIMENTO: titulo.DTVENCIMENTO || titulo.DTVENCTO,
-            DTPAGTO: titulo.DTPAGTO,
-            VLRDESCONTO: titulo.VLRDESCONTO || 0,
-            VLRTITULO: titulo.VLRTITULO || 0,
-            VLRSALDO: titulo.VLRSALDO || 0,
-            STATUS: titulo.STATUS,
-            PES_CODIGO: titulo.PES_CODIGO,
-            CLIENTE_NOME: clientName,
-          } as FinancialTitle;
-        })
-      );
+      const processedTitles: FinancialTitle[] = [];
+      
+      for (const titulo of titulos || []) {
+        const pesCodigoAsNumber = typeof titulo.PES_CODIGO === 'string' ? 
+          parseInt(titulo.PES_CODIGO, 10) : 
+          titulo.PES_CODIGO;
+        
+        // Get client info from the map
+        const clienteInfo = clientesMap.get(pesCodigoAsNumber);
+        const clientName = clienteInfo?.APELIDO || clienteInfo?.RAZAOSOCIAL || "Cliente não encontrado";
+        
+        processedTitles.push({
+          NUMNOTA: titulo.NUMNOTA,
+          DTEMISSAO: titulo.DTEMISSAO,
+          DTVENCIMENTO: titulo.DTVENCIMENTO || titulo.DTVENCTO,
+          DTPAGTO: titulo.DTPAGTO,
+          VLRDESCONTO: titulo.VLRDESCONTO || 0,
+          VLRTITULO: titulo.VLRTITULO || 0,
+          VLRSALDO: titulo.VLRSALDO || 0,
+          STATUS: titulo.STATUS,
+          PES_CODIGO: titulo.PES_CODIGO,
+          CLIENTE_NOME: clientName,
+        });
+      }
       
       setFinancialTitles(processedTitles);
       
