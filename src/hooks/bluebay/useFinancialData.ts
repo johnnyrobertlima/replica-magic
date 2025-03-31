@@ -55,7 +55,7 @@ export const useFinancialData = () => {
       }
 
       // Log the sample data to check structure
-      console.info("Sample data from mv_faturamento_resumido:", faturamento);
+      console.info("Sample data from mv_faturamento_resumido:", faturamento?.[0]);
       
       if (!faturamento || faturamento.length === 0) {
         setConsolidatedInvoices([]);
@@ -97,16 +97,25 @@ export const useFinancialData = () => {
         // Create consolidated invoice object
         // Note: We need to determine what status to use for invoices
         const invoiceStatus = "1"; // Default to "Em Aberto"
-        const invoiceValue = parseFloat(item.VALOR || "0");
+        
+        // Check if the VALOR property exists, if not use a default of 0
+        const invoiceValue = typeof item.VALOR !== 'undefined' ? 
+          parseFloat(String(item.VALOR)) : 
+          0;
+        
+        // Get data_emissao if it exists
+        const dataEmissao = item.DATA_EMISSAO || "";
         
         consolidatedData.push({
           NOTA: item.NOTA,
-          DATA_EMISSAO: item.DATA_EMISSAO || "",
+          DATA_EMISSAO: dataEmissao,
           STATUS: invoiceStatus,
           VALOR_NOTA: invoiceValue,
           VALOR_PAGO: 0, // We'll calculate this from titles
           VALOR_SALDO: invoiceValue,
-          PES_CODIGO: item.PES_CODIGO,
+          PES_CODIGO: typeof item.PES_CODIGO === 'string' ? 
+            parseInt(item.PES_CODIGO, 10) : 
+            item.PES_CODIGO,
           CLIENTE_NOME: clientName
         });
       }
