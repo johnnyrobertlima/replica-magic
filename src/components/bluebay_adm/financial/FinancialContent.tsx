@@ -1,19 +1,12 @@
 
 import React from "react";
 import { FinancialTabs } from "./FinancialTabs";
-import { TitleTable } from "./TitleTable";
-import { InvoiceTable } from "./InvoiceTable";
-import { ClientFinancialTable } from "./ClientFinancialTable";
-import { ClientesVencidosTable } from "./ClientesVencidosTable";
-import { CobrancaTable } from "./CobrancaTable";
-import { CollectedTitlesTable } from "./CollectedTitlesTable";
-import { OrigemTable } from "./OrigemTable";
-import { Button } from "@/components/ui/button";
-import { Eye, EyeOff } from "lucide-react";
 import { DateRange } from "@/hooks/bluebay/types/financialTypes";
 import { FinancialSummaryCards } from "./FinancialSummaryCards";
 import { FinancialFilters } from "./FinancialFilters";
 import { ClientSelectionBanner } from "./ClientSelectionBanner";
+import { TabContent } from "./tabs/TabContent";
+import { getTabDefinitions } from "./tabs/TabDefinitions";
 
 interface FinancialContentProps {
   isLoading: boolean;
@@ -76,106 +69,33 @@ export const FinancialContent: React.FC<FinancialContentProps> = ({
   onResetCollectionStatus,
   onResetAllCollectionStatus
 }) => {
-  // Define os conteúdos das tabs
-  const getTabContent = () => {
-    const tabs = [
-      {
-        id: "titles",
-        label: "Títulos",
-        content: (
-          <TitleTable
-            titles={clientFilteredTitles}
-            isLoading={isLoading}
-          />
-        )
-      },
-      {
-        id: "clients",
-        label: "Clientes",
-        content: (
-          <ClientFinancialTable
-            clients={clientFinancialSummaries || []}
-            isLoading={isLoading}
-            onClientSelect={handleClientSelect}
-          />
-        )
-      },
-      {
-        id: "clientesVencidos",
-        label: "Clientes Vencidos",
-        content: (
-          <ClientesVencidosTable
-            titles={filteredTitles}
-            isLoading={isLoading}
-            onClientSelect={handleClientSelect}
-          />
-        )
-      },
-      {
-        id: "cobranca",
-        label: "Cobrança",
-        content: (
-          <div className="space-y-4">
-            <div className="flex justify-end mb-4">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={onToggleCollectedView}
-              >
-                {showCollectedOnly ? (
-                  <>
-                    <EyeOff className="h-4 w-4 mr-1" />
-                    Ver Pendentes
-                  </>
-                ) : (
-                  <>
-                    <Eye className="h-4 w-4 mr-1" />
-                    Ver Cobrados
-                  </>
-                )}
-              </Button>
-            </div>
-            
-            <CobrancaTable
-              titles={filteredTitles}
-              isLoading={isLoading}
-              onClientSelect={handleClientSelect}
-              onCollectionStatusChange={(clientCode, status) => {
-                const client = filteredTitles.find(t => String(t.PES_CODIGO) === clientCode);
-                if (client && onCollectionStatusChange) {
-                  onCollectionStatusChange(clientCode, client.CLIENTE_NOME, status);
-                }
-              }}
-              collectedClients={collectedClients}
-              showCollected={showCollectedOnly}
-            />
-          </div>
-        )
-      },
-      {
-        id: "cobrados",
-        label: "Cobrados",
-        content: (
-          <CollectedTitlesTable
-            records={collectionRecords}
-            onResetRecord={onResetCollectionStatus || (() => {})}
-            onResetAll={onResetAllCollectionStatus || (() => {})}
-          />
-        )
-      },
-      {
-        id: "origem",
-        label: "Origem",
-        content: (
-          <OrigemTable
-            titles={clientFilteredTitles}
-            isLoading={isLoading}
-          />
-        )
-      }
-    ];
+  const renderTabContent = () => {
+    return (
+      <TabContent
+        activeTab={activeTab}
+        clientFilteredTitles={clientFilteredTitles}
+        filteredTitles={filteredTitles}
+        clientFinancialSummaries={clientFinancialSummaries}
+        isLoading={isLoading}
+        handleClientSelect={handleClientSelect}
+        collectedClients={collectedClients}
+        collectionRecords={collectionRecords}
+        showCollectedOnly={showCollectedOnly}
+        onToggleCollectedView={onToggleCollectedView}
+        onCollectionStatusChange={onCollectionStatusChange}
+        onResetCollectionStatus={onResetCollectionStatus}
+        onResetAllCollectionStatus={onResetAllCollectionStatus}
+      />
+    );
+  };
 
-    return tabs;
+  const getTabDefinitionsWithContent = () => {
+    const tabDefs = getTabDefinitions();
+    
+    return tabDefs.map(tab => ({
+      ...tab,
+      content: renderTabContent()
+    }));
   };
 
   return (
@@ -209,7 +129,7 @@ export const FinancialContent: React.FC<FinancialContentProps> = ({
       <FinancialTabs
         activeTab={activeTab}
         onTabChange={(value) => setActiveTab(value)}
-        tabs={getTabContent()}
+        tabs={getTabDefinitionsWithContent()}
       />
     </div>
   );

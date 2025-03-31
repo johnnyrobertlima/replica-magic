@@ -29,11 +29,9 @@ export const FinancialTabs: React.FC<FinancialTabsProps> = ({
         ))}
       </TabsList>
       
-      {tabs.map(tab => (
-        <TabsContent key={tab.id} value={tab.id} className="mt-0">
-          {tab.content}
-        </TabsContent>
-      ))}
+      <TabsContent value={activeTab} className="mt-0">
+        {tabs.find(tab => tab.id === activeTab)?.content}
+      </TabsContent>
     </Tabs>
   );
 };
