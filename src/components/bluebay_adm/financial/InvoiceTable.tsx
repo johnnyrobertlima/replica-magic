@@ -4,16 +4,22 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { StatusBadge } from "./StatusBadge";
+import { Button } from "@/components/ui/button";
+import { Eye } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
 import { ConsolidatedInvoice } from "@/hooks/bluebay/useFinancialData";
 
 interface InvoiceTableProps {
   invoices: ConsolidatedInvoice[];
   isLoading: boolean;
+  onViewTitles?: (pesCode: number) => void;
 }
 
-export const InvoiceTable: React.FC<InvoiceTableProps> = ({ invoices, isLoading }) => {
+export const InvoiceTable: React.FC<InvoiceTableProps> = ({ 
+  invoices, 
+  isLoading,
+  onViewTitles 
+}) => {
   if (isLoading) {
     return (
       <div className="space-y-2">
@@ -35,6 +41,12 @@ export const InvoiceTable: React.FC<InvoiceTableProps> = ({ invoices, isLoading 
     );
   }
 
+  const handleViewTitles = (pesCode: number) => {
+    if (onViewTitles) {
+      onViewTitles(pesCode);
+    }
+  };
+
   return (
     <div className="border rounded-md">
       <Table>
@@ -43,11 +55,8 @@ export const InvoiceTable: React.FC<InvoiceTableProps> = ({ invoices, isLoading 
             <TableHead>Nota</TableHead>
             <TableHead>Cliente</TableHead>
             <TableHead>Data Emissão</TableHead>
-            <TableHead>Data Vencimento</TableHead>
             <TableHead>Valor Total</TableHead>
-            <TableHead>Valor Pago</TableHead>
-            <TableHead>Saldo</TableHead>
-            <TableHead>Status</TableHead>
+            <TableHead className="text-center">Ver Títulos</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -55,18 +64,23 @@ export const InvoiceTable: React.FC<InvoiceTableProps> = ({ invoices, isLoading 
             <TableRow key={invoice.NOTA}>
               <TableCell className="font-medium">{invoice.NOTA}</TableCell>
               <TableCell className="max-w-[200px] truncate" title={invoice.CLIENTE_NOME}>
-                {invoice.CLIENTE_NOME}
+                {invoice.CLIENTE_NOME || `Cliente ${invoice.PES_CODIGO || "Desconhecido"}`}
               </TableCell>
               <TableCell>
                 {invoice.DATA_EMISSAO ? format(new Date(invoice.DATA_EMISSAO), 'dd/MM/yyyy', { locale: ptBR }) : '-'}
               </TableCell>
-              <TableCell>
-                {invoice.DATA_VENCIMENTO ? format(new Date(invoice.DATA_VENCIMENTO), 'dd/MM/yyyy', { locale: ptBR }) : '-'}
-              </TableCell>
               <TableCell>{formatCurrency(invoice.VALOR_NOTA)}</TableCell>
-              <TableCell>{formatCurrency(invoice.VALOR_PAGO)}</TableCell>
-              <TableCell>{formatCurrency(invoice.VALOR_SALDO)}</TableCell>
-              <TableCell><StatusBadge status={invoice.STATUS} /></TableCell>
+              <TableCell className="text-center">
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => handleViewTitles(invoice.PES_CODIGO)}
+                  disabled={!invoice.PES_CODIGO}
+                >
+                  <Eye className="h-4 w-4 mr-1" />
+                  Ver
+                </Button>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>

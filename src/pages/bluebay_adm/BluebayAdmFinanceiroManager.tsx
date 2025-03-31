@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { BluebayAdmBanner } from "@/components/bluebay_adm/BluebayAdmBanner";
 import { BluebayAdmMenu } from "@/components/bluebay_adm/BluebayAdmMenu";
@@ -48,6 +49,13 @@ const BluebayAdmFinanceiroManager = () => {
   const handleClientSelect = (clientCode: string) => {
     setSelectedClient(clientCode);
     setActiveTab("titles");
+  };
+
+  const handleViewTitles = (pesCode: number) => {
+    if (pesCode) {
+      setSelectedClient(String(pesCode));
+      setActiveTab("titles");
+    }
   };
 
   const handleResetClientSelection = () => {
@@ -133,7 +141,11 @@ const BluebayAdmFinanceiroManager = () => {
                   content: (
                     <>
                       <h2 className="text-xl font-semibold mb-4">Notas Fiscais</h2>
-                      <InvoiceTable invoices={filteredInvoices} isLoading={isLoading} />
+                      <InvoiceTable 
+                        invoices={filteredInvoices} 
+                        isLoading={isLoading} 
+                        onViewTitles={handleViewTitles}
+                      />
                     </>
                   )
                 },
