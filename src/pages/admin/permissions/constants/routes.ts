@@ -33,6 +33,7 @@ export const KNOWN_ROUTES = [
   "/client-area/bluebay_adm/pedidos",
   "/client-area/bluebay_adm/financeiromanager",
   "/client-area/bluebay_adm/requests",
+  "/client-area/bluebay_adm/annalisedecompra",
   // Rotas B&K
   "/client-area/bk",
   "/client-area/bk/dashboard",
