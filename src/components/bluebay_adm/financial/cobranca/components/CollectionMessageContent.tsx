@@ -93,17 +93,17 @@ export const CollectionMessageContent: React.FC<CollectionMessageContentProps> =
             
             return (
               <div key={index} className="mb-1">
-                <p>Nº do Título: {title.NUMDOCUMENTO || title.NUMNOTA}</p>
-                <p>Valor: {formatCurrency(title.VLRSALDO)}</p>
-                <p>Vencimento: {formattedDate}</p>
+                <p>Nº do Título: <strong>{title.NUMDOCUMENTO || title.NUMNOTA}</strong></p>
+                <p>Valor: <strong>{formatCurrency(title.VLRSALDO)}</strong></p>
+                <p>Vencimento: <strong>{formattedDate}</strong></p>
                 <p>&nbsp;</p>
               </div>
             );
           })}
           
           <div className="mt-2 mb-4 font-medium">
-            <p>Total de Títulos Vencidos: {totalTitulos}</p>
-            <p>Valor Total dos Títulos: {formatCurrency(valorTotalTitulos)}</p>
+            <p>Total de Títulos Vencidos: <strong>{totalTitulos}</strong></p>
+            <p>Valor Total dos Títulos: <strong>{formatCurrency(valorTotalTitulos)}</strong></p>
           </div>
           
           <p>Acesse seu portal através do link abaixo:</p>

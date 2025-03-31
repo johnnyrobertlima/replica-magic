@@ -35,8 +35,8 @@ export const sendOutlookEmail = async (params: OutlookEmailParams): Promise<void
     const plainTextBody = body.replace(/<br\s*\/?>/gi, "\n");
     
     // Construir a URL com parâmetros corretamente encodados
-    // Importante: Apenas aplicamos encodeURIComponent ao construir a URL final
-    const url = `${outlookUrl}?to=${to ? encodeURIComponent(to) : ''}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(plainTextBody)}`;
+    // Importante: Aplicamos encodeURIComponent apenas na construção da URL final
+    const url = `${outlookUrl}?to=${encodeURIComponent(to)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(plainTextBody)}`;
     
     // Adicionar cc e bcc se fornecidos
     const finalUrl = cc ? `${url}&cc=${encodeURIComponent(cc)}` : url;
