@@ -39,7 +39,7 @@ export const TitleTable: React.FC<TitleTableProps> = ({ titles, isLoading }) => 
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Nº Título</TableHead>
+            <TableHead>Nota Fiscal</TableHead>
             <TableHead>Nº do Documento</TableHead>
             <TableHead>Cliente</TableHead>
             <TableHead>Data Emissão</TableHead>
