@@ -2,49 +2,51 @@
 import { supabase } from "@/integrations/supabase/client";
 import { ClientInfo } from "../types/financialTypes";
 
-// Fetch client data in batch from Supabase
-export const fetchClientData = async (clienteCodigos: (number | string)[]): Promise<Map<number, ClientInfo>> => {
+// Convert PES_CODIGO to number, handling both string and number inputs
+export const pesCodigoToNumber = (pesCode: string | number | null): number => {
+  if (pesCode === null) return 0;
+  if (typeof pesCode === 'number') return pesCode;
+  return parseInt(pesCode, 10) || 0;
+};
+
+// Get client name from client info, using appropriate fallbacks
+export const getClientName = (clientInfo?: ClientInfo | null): string => {
+  if (!clientInfo) return "Cliente não encontrado";
+  return clientInfo.APELIDO || clientInfo.RAZAOSOCIAL || "Cliente não encontrado";
+};
+
+// Fetch client data from BLUEBAY_PESSOA table
+export const fetchClientData = async (clienteCodigos: (string | number)[]): Promise<Map<number, ClientInfo>> => {
+  const clientesMap = new Map<number, ClientInfo>();
+  
+  // Convert all client codes to string for query
+  const clienteCodigosStr = clienteCodigos.map(String);
+  
+  if (clienteCodigosStr.length === 0) return clientesMap;
+  
   try {
-    // Convert any string clienteCodigos to numbers
-    const numerosCodigos = clienteCodigos.map(codigo => 
-      typeof codigo === 'string' ? parseInt(codigo, 10) : codigo
-    );
-    
-    const { data: clientesData, error } = await supabase
+    const { data: clientes, error } = await supabase
       .from('BLUEBAY_PESSOA')
       .select('PES_CODIGO, APELIDO, RAZAOSOCIAL')
-      .in('PES_CODIGO', numerosCodigos);
+      .in('PES_CODIGO', clienteCodigosStr);
     
     if (error) {
       console.error("Error fetching client data:", error);
-      return new Map();
+      return clientesMap;
     }
     
-    // Create a map for quick client lookup
-    const clientesMap = new Map<number, ClientInfo>();
-    clientesData?.forEach(cliente => {
-      clientesMap.set(cliente.PES_CODIGO, {
+    // Add each client to the map with numeric PES_CODIGO as key
+    for (const cliente of clientes || []) {
+      const numericCode = pesCodigoToNumber(cliente.PES_CODIGO);
+      clientesMap.set(numericCode, {
         APELIDO: cliente.APELIDO,
         RAZAOSOCIAL: cliente.RAZAOSOCIAL
       });
-    });
+    }
     
     return clientesMap;
   } catch (error) {
-    console.error("Error in fetchClientData:", error);
-    return new Map();
+    console.error("Exception fetching client data:", error);
+    return clientesMap;
   }
-};
-
-// Get client name from the client info
-export const getClientName = (
-  clienteInfo: ClientInfo | undefined, 
-  fallback = "Cliente não encontrado"
-): string => {
-  return clienteInfo?.APELIDO || clienteInfo?.RAZAOSOCIAL || fallback;
-};
-
-// Convert PES_CODIGO to number safely
-export const pesCodigoToNumber = (pesCode: string | number): number => {
-  return typeof pesCode === 'string' ? parseInt(pesCode, 10) : pesCode;
 };

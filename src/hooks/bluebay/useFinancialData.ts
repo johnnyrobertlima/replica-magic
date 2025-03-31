@@ -62,15 +62,63 @@ export const useFinancialData = () => {
       
       console.info(`Fetched ${faturamento?.length || 0} invoices and ${titulos?.length || 0} titles`);
       
+      // If no titles were found directly related to invoices, fetch all titles for BLUEBAY
+      if (!titulos || titulos.length === 0) {
+        console.info("No titles found linked to invoices, fetching all titles for BLUEBAY");
+        const { data: allTitulos, error: allTitulosError } = await supabase
+          .from('BLUEBAY_TITULO')
+          .select('*');
+          
+        if (allTitulosError) {
+          console.error("Error fetching all titles:", allTitulosError);
+        } else {
+          console.info(`Fetched ${allTitulos?.length || 0} total titles`);
+          // Use these titles instead
+          const processedTitulos = allTitulos || [];
+          
+          // Get all unique client codes for these titles
+          const clienteCodigos = [...new Set(
+            processedTitulos.map(titulo => 
+              typeof titulo.PES_CODIGO === 'string' ? 
+                titulo.PES_CODIGO : String(titulo.PES_CODIGO)
+            )
+          )].filter(Boolean);
+          
+          // Fetch client data
+          const clientesMap = await fetchClientData(clienteCodigos);
+          
+          // Process titles with client names
+          const processedTitles = processedTitulos.map(titulo => 
+            processFinancialTitle(titulo, clientesMap)
+          );
+          
+          setFinancialTitles(processedTitles);
+          
+          // Collect unique statuses for filter
+          const uniqueStatuses = [...new Set([
+            ...processedTitles.map(title => title.STATUS || "").filter(Boolean)
+          ])];
+          
+          setAvailableStatuses(['all', ...uniqueStatuses]);
+          
+          // Since we have titles but no invoices matched, create placeholder invoices
+          const invoices: ConsolidatedInvoice[] = [];
+          setConsolidatedInvoices(invoices);
+          
+          setIsLoading(false);
+          return;
+        }
+      }
+      
       // Get all unique client codes to fetch client information in one batch
       const clienteCodigos = [...new Set([
         ...faturamento.map(item => typeof item.PES_CODIGO === 'string' ? 
-          parseInt(item.PES_CODIGO, 10) : item.PES_CODIGO),
+          item.PES_CODIGO : String(item.PES_CODIGO)),
         ...(titulos || []).map(titulo => typeof titulo.PES_CODIGO === 'string' ? 
-          parseInt(titulo.PES_CODIGO, 10) : titulo.PES_CODIGO)
-      ])].filter(Boolean) as (string | number)[];
+          titulo.PES_CODIGO : String(titulo.PES_CODIGO))
+      ])].filter(Boolean);
       
-      // Fetch all client data in one query - now we can pass mixed types safely
+      // Fetch all client data in one query
       const clientesMap = await fetchClientData(clienteCodigos);
       
       // Process invoices
