@@ -1,17 +1,16 @@
 
 import React from "react";
-import { FinancialSummaryCards } from "@/components/bluebay_adm/financial/FinancialSummaryCards";
-import { FinancialFilters } from "@/components/bluebay_adm/financial/FinancialFilters";
-import { ClientFilterSection } from "@/components/bluebay_adm/financial/ClientFilterSection";
-import { FinancialTabs } from "@/components/bluebay_adm/financial/FinancialTabs";
-import { TitleTable } from "@/components/bluebay_adm/financial/TitleTable";
-import { OrigemTable } from "@/components/bluebay_adm/financial/OrigemTable";
-import { ClientFinancialTable } from "@/components/bluebay_adm/financial/ClientFinancialTable";
-import { ClientesVencidosTable } from "@/components/bluebay_adm/financial/ClientesVencidosTable";
-import { CobrancaTable } from "@/components/bluebay_adm/financial/CobrancaTable";
-import { DateRange } from "@/hooks/bk/financial/types";
-import { ClientFinancialSummary } from "@/hooks/bluebay/useFinancialFilters";
-import { FinancialTitle } from "@/hooks/bluebay/types/financialTypes";
+import { FinancialTabs } from "./FinancialTabs";
+import { TitleTable } from "./TitleTable";
+import { InvoiceTable } from "./InvoiceTable";
+import { ClientFinancialTable } from "./ClientFinancialTable";
+import { ClientesVencidosTable } from "./ClientesVencidosTable";
+import { CobrancaTable } from "./CobrancaTable";
+import { CollectedTitlesTable } from "./CollectedTitlesTable";
+import { OrigemTable } from "./OrigemTable";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { DateRange } from "@/hooks/bluebay/types/financialTypes";
 
 interface FinancialContentProps {
   isLoading: boolean;
@@ -34,9 +33,16 @@ interface FinancialContentProps {
   handleClientSelect: (clientCode: string) => void;
   activeTab: string;
   setActiveTab: (tab: string) => void;
-  clientFilteredTitles: FinancialTitle[];
-  filteredTitles: FinancialTitle[];
-  clientFinancialSummaries: ClientFinancialSummary[] | null;
+  clientFilteredTitles: any[];
+  filteredTitles: any[];
+  clientFinancialSummaries: any[] | null;
+  collectedClients?: string[];
+  collectionRecords?: any[];
+  showCollectedOnly?: boolean;
+  onToggleCollectedView?: () => void;
+  onCollectionStatusChange?: (clientCode: string, clientName: string, status: string) => void;
+  onResetCollectionStatus?: (clientCode: string) => void;
+  onResetAllCollectionStatus?: () => void;
 }
 
 export const FinancialContent: React.FC<FinancialContentProps> = ({
@@ -58,109 +64,138 @@ export const FinancialContent: React.FC<FinancialContentProps> = ({
   setActiveTab,
   clientFilteredTitles,
   filteredTitles,
-  clientFinancialSummaries
+  clientFinancialSummaries,
+  collectedClients = [],
+  collectionRecords = [],
+  showCollectedOnly = false,
+  onToggleCollectedView,
+  onCollectionStatusChange,
+  onResetCollectionStatus,
+  onResetAllCollectionStatus
 }) => {
+  const tabs = [
+    {
+      id: "titles",
+      label: "Títulos",
+      content: (
+        <TitleTable
+          titles={clientFilteredTitles}
+          statusFilter={statusFilter}
+          updateStatusFilter={updateStatusFilter}
+          availableStatuses={availableStatuses}
+          clientFilter={clientFilter}
+          updateClientFilter={updateClientFilter}
+          notaFilter={notaFilter}
+          updateNotaFilter={updateNotaFilter}
+          isClientSelected={selectedClient !== null}
+        />
+      )
+    },
+    {
+      id: "clients",
+      label: "Clientes",
+      content: (
+        <ClientFinancialTable
+          clientSummaries={clientFinancialSummaries}
+          isLoading={isLoading}
+          onClientSelect={handleClientSelect}
+        />
+      )
+    },
+    {
+      id: "clientesVencidos",
+      label: "Clientes Vencidos",
+      content: (
+        <ClientesVencidosTable
+          titles={filteredTitles}
+          isLoading={isLoading}
+          onClientSelect={handleClientSelect}
+        />
+      )
+    },
+    {
+      id: "cobranca",
+      label: "Cobrança",
+      content: (
+        <div className="space-y-4">
+          <div className="flex justify-end mb-4">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={onToggleCollectedView}
+            >
+              {showCollectedOnly ? (
+                <>
+                  <EyeOff className="h-4 w-4 mr-1" />
+                  Ver Pendentes
+                </>
+              ) : (
+                <>
+                  <Eye className="h-4 w-4 mr-1" />
+                  Ver Cobrados
+                </>
+              )}
+            </Button>
+          </div>
+          
+          <CobrancaTable
+            titles={filteredTitles}
+            isLoading={isLoading}
+            onClientSelect={handleClientSelect}
+            onCollectionStatusChange={(clientCode, status) => {
+              const client = filteredTitles.find(t => String(t.PES_CODIGO) === clientCode);
+              if (client && onCollectionStatusChange) {
+                onCollectionStatusChange(clientCode, client.CLIENTE_NOME, status);
+              }
+            }}
+            collectedClients={collectedClients}
+            showCollected={showCollectedOnly}
+          />
+        </div>
+      )
+    },
+    {
+      id: "cobrados",
+      label: "Cobrados",
+      content: (
+        <CollectedTitlesTable
+          records={collectionRecords}
+          onResetRecord={onResetCollectionStatus || (() => {})}
+          onResetAll={onResetAllCollectionStatus || (() => {})}
+        />
+      )
+    },
+    {
+      id: "origem",
+      label: "Origem",
+      content: (
+        <OrigemTable
+          titles={clientFilteredTitles}
+          isLoading={isLoading}
+        />
+      )
+    }
+  ];
+
   return (
-    <div className="mt-6 space-y-6">
-      <FinancialSummaryCards 
-        totalValoresVencidos={filteredSummary.totalValoresVencidos}
-        totalPago={filteredSummary.totalPago}
-        totalEmAberto={filteredSummary.totalEmAberto}
-        label={selectedClient ? "Cliente Selecionado" : "Filtro Atual"}
-      />
-      
-      <FinancialFilters
-        statusFilter={statusFilter}
-        onStatusChange={updateStatusFilter}
-        statuses={availableStatuses}
-        clientFilter={clientFilter}
-        onClientFilterChange={updateClientFilter}
-        notaFilter={notaFilter}
-        onNotaFilterChange={updateNotaFilter}
-        dateRange={dateRange}
-        onDateRangeUpdate={updateDateRange}
-      />
-      
-      <ClientFilterSection
-        selectedClient={selectedClient}
-        onResetClientSelection={handleResetClientSelection}
-      />
-      
+    <div className="space-y-4">
+      {selectedClient && (
+        <div className="mb-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleResetClientSelection}
+            className="flex items-center"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" /> Voltar para todos os clientes
+          </Button>
+        </div>
+      )}
+
       <FinancialTabs
         activeTab={activeTab}
-        onTabChange={setActiveTab}
-        tabs={[
-          {
-            id: "titles",
-            label: "Títulos Financeiros",
-            content: (
-              <>
-                <h2 className="text-xl font-semibold mb-4">
-                  {selectedClient 
-                    ? `Títulos Financeiros do Cliente` 
-                    : `Títulos Financeiros`}
-                </h2>
-                <TitleTable titles={clientFilteredTitles} isLoading={isLoading} />
-              </>
-            )
-          },
-          {
-            id: "origem",
-            label: "Origem",
-            content: (
-              <>
-                <h2 className="text-xl font-semibold mb-4">Origem dos Títulos</h2>
-                <OrigemTable 
-                  titles={clientFilteredTitles} 
-                  isLoading={isLoading} 
-                  onViewTitles={handleClientSelect}
-                />
-              </>
-            )
-          },
-          {
-            id: "clients",
-            label: "Clientes",
-            content: (
-              <>
-                <h2 className="text-xl font-semibold mb-4">Clientes - Resumo Financeiro</h2>
-                <ClientFinancialTable 
-                  clients={clientFinancialSummaries || []} 
-                  isLoading={isLoading} 
-                  onClientSelect={handleClientSelect}
-                />
-              </>
-            )
-          },
-          {
-            id: "clientesVencidos",
-            label: "Clientes com Títulos Vencidos",
-            content: (
-              <>
-                <h2 className="text-xl font-semibold mb-4">Clientes com Títulos Vencidos</h2>
-                <ClientesVencidosTable 
-                  titles={filteredTitles} 
-                  isLoading={isLoading} 
-                  onClientSelect={handleClientSelect}
-                />
-              </>
-            )
-          },
-          {
-            id: "cobranca",
-            label: "Cobrança",
-            content: (
-              <>
-                <h2 className="text-xl font-semibold mb-4">Cobrança - Valores Consolidados</h2>
-                <CobrancaTable
-                  titles={filteredTitles}
-                  isLoading={isLoading}
-                  onClientSelect={handleClientSelect}
-                />
-              </>
-            )
-          }
-        ]}
+        onTabChange={(value) => setActiveTab(value)}
+        tabs={tabs}
       />
     </div>
   );

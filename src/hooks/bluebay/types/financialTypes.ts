@@ -45,3 +45,11 @@ export interface ClientDebtSummary {
   QUANTIDADE_TITULOS: number;
   VALOR_TOTAL: number;
 }
+
+export interface CollectionRecord {
+  clientCode: string;
+  clientName: string;
+  collectedBy: string;
+  collectionDate: Date;
+  status: string;
+}

@@ -7,6 +7,7 @@ import { FinancialLoader } from "@/components/bluebay_adm/financial/FinancialLoa
 import { FinancialContent } from "@/components/bluebay_adm/financial/FinancialContent";
 import { useFinanciero } from "@/hooks/bluebay/useFinanciero";
 import { useFinancialExport } from "@/hooks/bluebay/useFinancialExport";
+import { useCollectionStatus } from "@/hooks/bluebay/useCollectionStatus";
 import { Button } from "@/components/ui/button";
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 
@@ -29,6 +30,16 @@ const BluebayAdmFinanceiroManager = () => {
     clientFinancialSummaries,
     pagination
   } = useFinanciero();
+
+  const {
+    collectedClients,
+    collectionRecords,
+    showCollectedOnly,
+    handleCollectionStatusChange,
+    toggleShowCollected,
+    resetClientCollectionStatus,
+    resetAllCollectionStatus
+  } = useCollectionStatus({ userName: "Financeiro" });
 
   const [activeTab, setActiveTab] = useState("titles");
   const [selectedClient, setSelectedClient] = useState<string | null>(null);
@@ -120,7 +131,9 @@ const BluebayAdmFinanceiroManager = () => {
             titles: clientFilteredTitles.length > 0,
             clients: clientFinancialSummaries !== null && clientFinancialSummaries !== undefined && clientFinancialSummaries.length > 0,
             clientesVencidos: filteredTitles.length > 0,
-            cobranca: filteredTitles.length > 0
+            cobranca: filteredTitles.length > 0,
+            origem: clientFilteredTitles.length > 0,
+            cobrados: collectionRecords.length > 0
           }}
         />
 
@@ -145,6 +158,13 @@ const BluebayAdmFinanceiroManager = () => {
             clientFilteredTitles={clientFilteredTitles}
             filteredTitles={filteredTitles}
             clientFinancialSummaries={clientFinancialSummaries}
+            collectedClients={collectedClients}
+            collectionRecords={collectionRecords}
+            showCollectedOnly={showCollectedOnly}
+            onToggleCollectedView={toggleShowCollected}
+            onCollectionStatusChange={handleCollectionStatusChange}
+            onResetCollectionStatus={resetClientCollectionStatus}
+            onResetAllCollectionStatus={resetAllCollectionStatus}
           />
           
           {/* Pagination controls */}

@@ -21,7 +21,7 @@ export const FinancialTabs: React.FC<FinancialTabsProps> = ({
 }) => {
   return (
     <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
-      <TabsList className="grid grid-cols-5 w-full max-w-4xl mb-4">
+      <TabsList className="grid grid-cols-6 w-full max-w-5xl mb-4">
         {tabs.map(tab => (
           <TabsTrigger key={tab.id} value={tab.id}>
             {tab.label}

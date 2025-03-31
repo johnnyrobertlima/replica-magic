@@ -15,6 +15,7 @@ interface FinancialHeaderProps {
     clientesVencidos: boolean;
     cobranca: boolean;
     origem?: boolean;
+    cobrados?: boolean;
   };
 }
 
@@ -38,6 +39,8 @@ export const FinancialHeader: React.FC<FinancialHeaderProps> = ({
         return hasData.cobranca;
       case "origem":
         return hasData.origem || hasData.titles;
+      case "cobrados":
+        return hasData.cobrados;
       default:
         return false;
     }
