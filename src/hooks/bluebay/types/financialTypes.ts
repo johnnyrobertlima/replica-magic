@@ -11,6 +11,7 @@ export interface FinancialTitle {
   STATUS: string;
   PES_CODIGO: string | number;
   CLIENTE_NOME: string;
+  NUMDOCUMENTO?: string | null;
 }
 
 export interface ConsolidatedInvoice {
