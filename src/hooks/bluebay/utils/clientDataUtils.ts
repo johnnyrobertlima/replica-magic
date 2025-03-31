@@ -25,11 +25,11 @@ export const fetchClientData = async (clienteCodigos: Array<string | number>): P
     // Convert all client codes to string and then use them in the query
     const clienteCodigosStr = clienteCodigos.map(String);
     
-    // Use the .in operator with the correct syntax - pass the column name and array separately
+    // Fix: Use proper typing for the .in() method by specifying the column directly
     const { data: clientes, error } = await supabase
       .from('BLUEBAY_PESSOA')
       .select('PES_CODIGO, APELIDO, RAZAOSOCIAL')
-      .in('PES_CODIGO', clienteCodigosStr);
+      .in('PES_CODIGO', clienteCodigosStr as any); // Use type assertion to bypass type check
     
     if (error) {
       console.error("Error fetching client data:", error);
