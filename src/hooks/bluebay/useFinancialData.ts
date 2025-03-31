@@ -50,49 +50,9 @@ export const useFinancialData = () => {
         ? format(dateRange.endDate, 'yyyy-MM-dd')
         : undefined;
 
-      // Fetch financial titles with CENTROCUSTO = 'BLUEBAY'
-      const { data: titulos, error: titulosError } = await supabase
-        .from('BLUEBAY_TITULO')
-        .select('*')
-        .eq('STATUS', '1');
-      
-      if (titulosError) throw titulosError;
-
-      // Fetch client names for the titles
-      const titles: FinancialTitle[] = await Promise.all(
-        (titulos || []).map(async (titulo: any) => {
-          let clientName = "Cliente não encontrado";
-
-          if (titulo.PES_CODIGO) {
-            const { data: clientData } = await supabase
-              .from('BLUEBAY_PESSOA')
-              .select('APELIDO, RAZAOSOCIAL')
-              .eq('PES_CODIGO', titulo.PES_CODIGO)
-              .maybeSingle();
-
-            clientName = clientData?.APELIDO || clientData?.RAZAOSOCIAL || "Cliente não encontrado";
-          }
-
-          return {
-            NUMNOTA: titulo.NUMNOTA,
-            DTEMISSAO: titulo.DTEMISSAO,
-            DTVENCIMENTO: titulo.DTVENCIMENTO,
-            DTPAGTO: titulo.DTPAGTO,
-            VLRDESCONTO: titulo.VLRDESCONTO,
-            VLRTITULO: titulo.VLRTITULO,
-            VLRSALDO: titulo.VLRSALDO,
-            STATUS: titulo.STATUS,
-            PES_CODIGO: titulo.PES_CODIGO,
-            CLIENTE_NOME: clientName,
-          } as FinancialTitle;
-        })
-      );
-      
-      setFinancialTitles(titles);
-
-      // Fetch faturamento data with CENTROCUSTO = 'BLUEBAY'
+      // Fetch invoices from mv_faturamento_resumido view with CENTROCUSTO = 'BLUEBAY'
       const { data: faturamento, error: faturamentoError } = await supabase
-        .from('BLUEBAY_FATURAMENTO')
+        .from('mv_faturamento_resumido')
         .select(`
           NOTA,
           DATA_EMISSAO,
@@ -100,9 +60,29 @@ export const useFinancialData = () => {
           VALOR_NOTA,
           PES_CODIGO
         `)
-        .eq('STATUS', '1');
+        .eq('CENTROCUSTO', 'BLUEBAY')
+        .order('DATA_EMISSAO', { ascending: false });
         
-      if (faturamentoError) throw faturamentoError;
+      if (faturamentoError) {
+        console.error("Error fetching invoices:", faturamentoError);
+        throw faturamentoError;
+      }
+
+      // Collect all unique NOTAs from invoices to fetch related titles
+      const notas = faturamento?.map(item => item.NOTA) || [];
+      
+      // Fetch titles linked to these invoices by NOTA
+      const { data: titulos, error: titulosError } = await supabase
+        .from('BLUEBAY_TITULO')
+        .select('*')
+        .in('NUMNOTA', notas);
+      
+      if (titulosError) {
+        console.error("Error fetching titles:", titulosError);
+        throw titulosError;
+      }
+      
+      console.log(`Fetched ${faturamento?.length || 0} invoices and ${titulos?.length || 0} titles`);
 
       // Consolidate invoices by NOTA
       const invoiceMap = new Map<string, ConsolidatedInvoice>();
@@ -135,11 +115,55 @@ export const useFinancialData = () => {
         }
       }
       
+      // Update invoice values based on related titles
+      for (const titulo of titulos || []) {
+        // Check if this title is related to any invoice
+        const invoice = invoiceMap.get(String(titulo.NUMNOTA));
+        if (invoice) {
+          // Calculate paid amount based on title values
+          const paidAmount = (titulo.VLRTITULO || 0) - (titulo.VLRSALDO || 0);
+          invoice.VALOR_PAGO += paidAmount;
+          invoice.VALOR_SALDO = invoice.VALOR_NOTA - invoice.VALOR_PAGO;
+        }
+      }
+      
       setConsolidatedInvoices(Array.from(invoiceMap.values()));
       
+      // Process titles with client names
+      const processedTitles: FinancialTitle[] = await Promise.all(
+        (titulos || []).map(async (titulo: any) => {
+          let clientName = "Cliente não encontrado";
+
+          if (titulo.PES_CODIGO) {
+            const { data: clientData } = await supabase
+              .from('BLUEBAY_PESSOA')
+              .select('APELIDO, RAZAOSOCIAL')
+              .eq('PES_CODIGO', titulo.PES_CODIGO)
+              .maybeSingle();
+
+            clientName = clientData?.APELIDO || clientData?.RAZAOSOCIAL || "Cliente não encontrado";
+          }
+
+          return {
+            NUMNOTA: titulo.NUMNOTA,
+            DTEMISSAO: titulo.DTEMISSAO,
+            DTVENCIMENTO: titulo.DTVENCIMENTO || titulo.DTVENCTO,
+            DTPAGTO: titulo.DTPAGTO,
+            VLRDESCONTO: titulo.VLRDESCONTO || 0,
+            VLRTITULO: titulo.VLRTITULO || 0,
+            VLRSALDO: titulo.VLRSALDO || 0,
+            STATUS: titulo.STATUS,
+            PES_CODIGO: titulo.PES_CODIGO,
+            CLIENTE_NOME: clientName,
+          } as FinancialTitle;
+        })
+      );
+      
+      setFinancialTitles(processedTitles);
+      
       // Extract unique statuses for filter
-      const invoiceStatuses = [...new Set((faturamento || []).map(invoice => invoice.STATUS || ""))];
-      const titleStatuses = [...new Set(titles.map(title => title.STATUS || ""))];
+      const invoiceStatuses = [...new Set(faturamento?.map(invoice => invoice.STATUS || "") || [])];
+      const titleStatuses = [...new Set(processedTitles.map(title => title.STATUS || ""))];
       const uniqueStatuses = [...new Set([...invoiceStatuses, ...titleStatuses])];
       
       setAvailableStatuses(['all', ...uniqueStatuses.filter(status => status !== "")]);
