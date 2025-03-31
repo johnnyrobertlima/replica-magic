@@ -46,7 +46,8 @@ export const FinancialFilters: React.FC<FinancialFiltersProps> = ({
                   {status === 'all' ? 'Todos' : 
                    status === '1' ? 'Em Aberto' :
                    status === '2' ? 'Parcialmente Pago' :
-                   status === '3' ? 'Pago' : status}
+                   status === '3' ? 'Pago' : 
+                   status === '4' ? 'Cancelado' : status}
                 </SelectItem>
               ))}
             </SelectContent>
