@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -53,7 +53,7 @@ export const ClientesVencidosTable: React.FC<ClientesVencidosTableProps> = ({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Número</TableHead>
+            <TableHead>Nº Título</TableHead>
             <TableHead>Cliente</TableHead>
             <TableHead>Data Emissão</TableHead>
             <TableHead>Data Vencimento</TableHead>
