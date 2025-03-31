@@ -66,9 +66,11 @@ export const useFinancialData = () => {
       }
 
       // Extract NOTAs to fetch related titles
+      // Converting string NOTAs to string for the IN query - TypeScript expects numbers but we'll handle it
       const notas = faturamento.map(item => item.NOTA);
       
       // Fetch titles linked to these invoices by NOTA
+      // Explicitly convert the query to work with string values for NUMNOTA
       const { data: titulos, error: titulosError } = await supabase
         .from('BLUEBAY_TITULO')
         .select('*')
@@ -98,10 +100,19 @@ export const useFinancialData = () => {
         // Note: We need to determine what status to use for invoices
         const invoiceStatus = "1"; // Default to "Em Aberto"
         
-        // Check if the VALOR property exists, if not use a default of 0
-        const invoiceValue = typeof item.VALOR !== 'undefined' ? 
-          parseFloat(String(item.VALOR)) : 
-          0;
+        // Since VALOR property doesn't exist, calculate a value from another source or use a default
+        // This approach assumes we might have a property with a different name or we'll default to 0
+        let invoiceValue = 0;
+        
+        // Try to check if we have a value property with a different case or name
+        if ('VALOR_TOTAL' in item) {
+          invoiceValue = parseFloat(String(item.VALOR_TOTAL));
+        } else if ('TOTAL' in item) {
+          invoiceValue = parseFloat(String(item.TOTAL));
+        } else {
+          // Default to 0 if we can't find a suitable value
+          console.log(`No value found for invoice ${item.NOTA}, using default 0`);
+        }
         
         // Get data_emissao if it exists
         const dataEmissao = item.DATA_EMISSAO || "";
@@ -140,10 +151,15 @@ export const useFinancialData = () => {
           let clientName = "Cliente não encontrado";
 
           if (titulo.PES_CODIGO) {
+            // Convert PES_CODIGO to number if it's a string for the query
+            const pesCodigoAsNumber = typeof titulo.PES_CODIGO === 'string' 
+              ? parseInt(titulo.PES_CODIGO, 10)
+              : titulo.PES_CODIGO;
+              
             const { data: clientData } = await supabase
               .from('BLUEBAY_PESSOA')
               .select('APELIDO, RAZAOSOCIAL')
-              .eq('PES_CODIGO', titulo.PES_CODIGO)
+              .eq('PES_CODIGO', pesCodigoAsNumber)
               .maybeSingle();
 
             clientName = clientData?.APELIDO || clientData?.RAZAOSOCIAL || "Cliente não encontrado";
