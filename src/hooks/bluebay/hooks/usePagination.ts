@@ -9,6 +9,7 @@ export interface PaginationState {
   goToPreviousPage: () => void;
   hasNextPage: boolean;
   hasPreviousPage: boolean;
+  updateTotalCount: (count: number) => void;
 }
 
 export const usePagination = (initialPageSize: number = 1000): PaginationState => {

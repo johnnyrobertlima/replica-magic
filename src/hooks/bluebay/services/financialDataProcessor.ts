@@ -10,7 +10,7 @@ import { processFinancialTitle } from "../utils/titleUtils";
 export const processTitles = async (titulos: any[]) => {
   try {
     if (!titulos || titulos.length === 0) {
-      return [];
+      return { processedTitles: [], clientesMap: {}, uniqueStatuses: [] };
     }
     
     // Collect all unique client codes for these titles
@@ -72,8 +72,7 @@ export const processInvoices = (
         
         // Set due date of the title if available
         if (matchingTitles.length > 0) {
-          invoice.DATA_VENCIMENTO = matchingTitles[0].DTVENCIMENTO || 
-            matchingTitles[0].DTVENCTO || null;
+          invoice.DATA_VENCIMENTO = matchingTitles[0].DTVENCIMENTO || null;
         }
         
         consolidatedData.push(invoice);
