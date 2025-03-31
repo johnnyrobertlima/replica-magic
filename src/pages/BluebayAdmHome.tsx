@@ -2,7 +2,7 @@
 import { BluebayAdmMenu } from "@/components/bluebay_adm/BluebayAdmMenu";
 import { BluebayAdmBanner } from "@/components/bluebay_adm/BluebayAdmBanner";
 import { ServiceCard } from "@/components/bluebay_adm/ServiceCard";
-import { FileText, BarChart2, Users, Wallet, ClipboardCheck, ShoppingBag, Receipt, Package } from "lucide-react";
+import { FileText, BarChart2, Users, Wallet, ClipboardCheck, ShoppingBag, Receipt, Package, ShoppingCart } from "lucide-react";
 
 const BluebayAdmHome = () => {
   const services = [
@@ -40,6 +40,13 @@ const BluebayAdmHome = () => {
       icon: Package,
       iconColor: "bg-teal-100 text-teal-600",
       path: "/client-area/bluebay_adm/estoque"
+    },
+    {
+      title: "Análise de Compra",
+      description: "Analise informações para compras",
+      icon: ShoppingCart,
+      iconColor: "bg-rose-100 text-rose-600",
+      path: "/client-area/bluebay_adm/annalisedecompra"
     },
     {
       title: "Pedidos",
