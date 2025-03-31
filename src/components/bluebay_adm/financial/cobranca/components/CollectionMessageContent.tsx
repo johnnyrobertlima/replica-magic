@@ -33,14 +33,14 @@ export const CollectionMessageContent: React.FC<CollectionMessageContentProps> =
       
       // Informar ao usuário que o link foi acionado
       toast({
-        title: "Abrindo Outlook",
-        description: "Se o Outlook não abrir automaticamente, verifique se seu navegador está bloqueando popups",
+        title: "Abrindo cliente de e-mail",
+        description: "Se o cliente de e-mail não abrir automaticamente, use o botão 'Copiar Texto'",
       });
     } catch (error) {
-      console.error("Erro ao tentar abrir o Outlook:", error);
+      console.error("Erro ao tentar abrir o cliente de e-mail:", error);
       toast({
         variant: "destructive",
-        title: "Erro ao abrir o Outlook",
+        title: "Erro ao abrir o cliente de e-mail",
         description: "Por favor, tente copiar o texto e colar manualmente",
       });
     }
@@ -48,7 +48,7 @@ export const CollectionMessageContent: React.FC<CollectionMessageContentProps> =
   
   return (
     <div className="bg-slate-50 p-4 rounded-md my-4 text-sm relative">
-      {/* Botões de ação (Copiar e Abrir no Outlook) mais visíveis */}
+      {/* Botões de ação (Copiar e Abrir no Cliente de E-mail) mais visíveis */}
       <div className="flex justify-end gap-2 mb-4">
         <Button 
           size="sm" 
@@ -65,7 +65,7 @@ export const CollectionMessageContent: React.FC<CollectionMessageContentProps> =
           disabled={isSending}
           className="bg-blue-600 hover:bg-blue-700 flex items-center font-medium"
         >
-          <Mail className="h-3.5 w-3.5 mr-1" /> Abrir no Outlook <ExternalLink className="h-3 w-3 ml-1" />
+          <Mail className="h-3.5 w-3.5 mr-1" /> Abrir Cliente de E-mail <ExternalLink className="h-3 w-3 ml-1" />
         </Button>
       </div>
       

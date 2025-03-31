@@ -85,6 +85,11 @@ Equipe Financeira – Bluebay Importadora
       // Prepare message with linebreaks suitable for email
       const emailBody = createMessageContent().replace(/\n/g, '\n');
       
+      toast({
+        title: "Abrindo cliente de e-mail",
+        description: "Se o cliente de e-mail não abrir, você pode usar a opção 'Copiar Texto'",
+      });
+      
       // Log para debug
       console.log("Tentando enviar e-mail para:", selectedClient.CLIENTE_NOME);
       
@@ -94,12 +99,15 @@ Equipe Financeira – Bluebay Importadora
         clientName: selectedClient.CLIENTE_NOME
       });
       
-      // Não mostramos toast aqui, pois ele será mostrado no componente
-      
       // Registramos a cobrança como feita após algum tempo
       // para dar tempo do usuário interagir com o cliente de email
       setTimeout(() => {
         onCollectionConfirm();
+        
+        toast({
+          title: "Cobrança registrada",
+          description: `A cobrança para ${selectedClient.CLIENTE_NOME} foi registrada com sucesso.`,
+        });
       }, 1000);
       
     } catch (error) {
@@ -107,7 +115,7 @@ Equipe Financeira – Bluebay Importadora
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Não foi possível abrir o Outlook. Por favor, verifique se seu navegador permite a ação.",
+        description: "Não foi possível abrir o cliente de e-mail. Por favor, use a opção 'Copiar Texto'.",
       });
     } finally {
       setIsSending(false);

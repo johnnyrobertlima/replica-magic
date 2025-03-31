@@ -1,7 +1,7 @@
 
 /**
- * Utilitário para integração com o Microsoft Outlook
- * Permite abrir o Outlook com um novo e-mail pré-preenchido
+ * Utilitário para integração com clientes de e-mail (Outlook Web, Gmail, etc.)
+ * Permite abrir o cliente de e-mail com um novo e-mail pré-preenchido
  */
 
 interface OutlookEmailParams {
@@ -14,11 +14,11 @@ interface OutlookEmailParams {
 }
 
 /**
- * Envia um e-mail utilizando o protocolo mailto para abrir o Outlook
- * Funciona com versões desktop e web do Outlook
+ * Abre um cliente de e-mail utilizando o protocolo mailto
+ * Funciona com vários clientes de e-mail, incluindo Outlook Web e Gmail
  * 
  * @param params Parâmetros do e-mail
- * @returns Promise que resolve quando o e-mail é aberto no Outlook
+ * @returns Promise que resolve quando o e-mail é aberto
  */
 export const sendOutlookEmail = async (params: OutlookEmailParams): Promise<void> => {
   const { subject, body, to = "", cc = "", bcc = "", clientName = "" } = params;
@@ -27,7 +27,6 @@ export const sendOutlookEmail = async (params: OutlookEmailParams): Promise<void
   console.log(`Iniciando tentativa de envio de e-mail para ${clientName}`);
   
   try {
-    // Para o Outlook Web, vamos tentar abrir em uma nova aba
     // Formatamos o corpo do e-mail para mailto (RFC 6068)
     const encodedSubject = encodeURIComponent(subject);
     const encodedBody = encodeURIComponent(body.replace(/<br\s*\/?>/gi, "\n"));
@@ -41,21 +40,28 @@ export const sendOutlookEmail = async (params: OutlookEmailParams): Promise<void
     // Construir a URL mailto
     const mailtoUrl = `mailto:?${mailtoParams}`;
     
-    // Registrar a URL para debug (truncada para evitar log muito grande)
+    // Log para debug (truncado)
     console.log(`Abrindo e-mail de cobrança para cliente: ${clientName}`);
     console.log(`URL mailto: ${mailtoUrl.substring(0, 100)}...`);
     
-    // Tentar abrir no cliente de e-mail padrão (Outlook Web ou Desktop)
-    // Usando window.open para garantir que abra em uma nova aba/janela
-    const mailWindow = window.open(mailtoUrl, '_blank');
+    // Método 1: Usar window.location.href (mais compatível com Outlook Web)
+    window.location.href = mailtoUrl;
     
-    // Se não conseguir abrir, tente o método tradicional
-    if (!mailWindow) {
-      console.log("Método window.open falhou, tentando location.href");
-      window.location.href = mailtoUrl;
-    }
+    // Método 2 (fallback): Se o método 1 não funcionar bem em alguns navegadores
+    // Este segundo método fica comentado como alternativa futura se necessário
+    /*
+    setTimeout(() => {
+      const link = document.createElement('a');
+      link.href = mailtoUrl;
+      link.setAttribute('target', '_self');
+      link.setAttribute('rel', 'noopener noreferrer');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }, 100);
+    */
     
-    // Aguardar um curto período para garantir que o cliente de e-mail seja aberto
+    // Aguardar um curto período
     await new Promise(resolve => setTimeout(resolve, 500));
     
     return Promise.resolve();
@@ -66,10 +72,10 @@ export const sendOutlookEmail = async (params: OutlookEmailParams): Promise<void
 };
 
 /**
- * Verifica se o Outlook está disponível no sistema
+ * Verifica se o cliente de e-mail está disponível
  * Nota: Esta função é limitada devido a restrições de segurança do navegador
  * 
- * @returns Promise com boolean indicando se o Outlook está disponível
+ * @returns Promise com boolean indicando se o cliente de e-mail está disponível
  */
 export const isOutlookAvailable = async (): Promise<boolean> => {
   // Devido às restrições de segurança do navegador, não é possível
