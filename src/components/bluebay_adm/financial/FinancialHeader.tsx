@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, FileSpreadsheet, Wallet } from "lucide-react";
+import { RefreshCw, FileDown } from "lucide-react";
 
 interface FinancialHeaderProps {
   title: string;
@@ -13,6 +13,8 @@ interface FinancialHeaderProps {
     titles: boolean;
     clients: boolean;
     clientesVencidos: boolean;
+    cobranca: boolean;
+    origem?: boolean;
   };
 }
 
@@ -24,30 +26,44 @@ export const FinancialHeader: React.FC<FinancialHeaderProps> = ({
   activeTab,
   hasData
 }) => {
-  const isExportDisabled = isLoading || (
-    (activeTab === 'titles' && !hasData.titles) || 
-    (activeTab === 'clients' && !hasData.clients) ||
-    (activeTab === 'clientesVencidos' && !hasData.clientesVencidos)
-  );
+  const canExport = () => {
+    switch (activeTab) {
+      case "titles":
+        return hasData.titles;
+      case "clients":
+        return hasData.clients;
+      case "clientesVencidos":
+        return hasData.clientesVencidos;
+      case "cobranca":
+        return hasData.cobranca;
+      case "origem":
+        return hasData.origem || hasData.titles;
+      default:
+        return false;
+    }
+  };
 
   return (
-    <div className="flex items-center justify-between mb-6">
-      <div className="flex items-center gap-2">
-        <Wallet className="h-6 w-6 text-primary" />
-        <h1 className="text-3xl font-bold">{title}</h1>
-      </div>
-      <div className="flex gap-2">
-        <Button 
-          variant="outline" 
-          onClick={onExport} 
-          disabled={isExportDisabled}
+    <div className="flex justify-between items-center mb-6">
+      <h1 className="text-2xl font-bold">{title}</h1>
+      <div className="flex space-x-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onRefresh}
+          disabled={isLoading}
         >
-          <FileSpreadsheet className="h-4 w-4 mr-2" />
-          Exportar Excel
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Atualizar Dados
         </Button>
-        <Button variant="outline" onClick={onRefresh} disabled={isLoading}>
-          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-          Atualizar
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onExport}
+          disabled={isLoading || !canExport()}
+        >
+          <FileDown className="h-4 w-4 mr-2" />
+          Exportar para Excel
         </Button>
       </div>
     </div>
