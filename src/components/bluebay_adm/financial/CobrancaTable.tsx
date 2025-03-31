@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, MessageSquare, Copy, Clock, CheckCircle, Eye } from "lucide-react";
+import { ChevronDown, ChevronUp, MessageSquare, Copy, CheckCircle } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
 import { FinancialTitle, ClientDebtSummary } from "@/hooks/bluebay/types/financialTypes";
 import { differenceInDays, format } from "date-fns";
@@ -174,6 +174,13 @@ Valor: ${formatCurrency(title.VLRSALDO)}
 Vencimento: ${formattedDate}\n`;
     });
     
+    // Calcular os totais para incluir na mensagem
+    const totalTitulos = clientTitles.length;
+    const valorTotalTitulos = clientTitles.reduce((total, title) => total + title.VLRSALDO, 0);
+
+    const totalInfo = `\nTotal de Títulos Vencidos: ${totalTitulos}
+Valor Total dos Títulos: ${formatCurrency(valorTotalTitulos)}\n`;
+    
     const messageText = `Assunto: Títulos em atraso - Bluebay
 
 Olá,
@@ -184,6 +191,7 @@ Pedimos a gentileza de acessar nosso portal para realizar o download dos boletos
 
 Segue abaixo o(s) título(s) vencido(s):
 ${titlesText}
+${totalInfo}
 Acesse seu portal através do link abaixo:
 🔗 Acessar Portal Bluebay
 
@@ -361,7 +369,7 @@ Equipe Financeira – Bluebay Importadora
                     : 'N/A';
                   
                   return (
-                    <div key={index} className="mb-3">
+                    <div key={index} className="mb-1">
                       <p>Nº do Título: {title.NUMDOCUMENTO || title.NUMNOTA}</p>
                       <p>Valor: {formatCurrency(title.VLRSALDO)}</p>
                       <p>Vencimento: {formattedDate}</p>
@@ -370,6 +378,21 @@ Equipe Financeira – Bluebay Importadora
                   );
                 })
               }
+              
+              {selectedClient && (() => {
+                const clientTitles = filteredTitles.filter(
+                  title => String(title.PES_CODIGO) === String(selectedClient.PES_CODIGO)
+                );
+                const totalTitulos = clientTitles.length;
+                const valorTotalTitulos = clientTitles.reduce((total, title) => total + title.VLRSALDO, 0);
+                
+                return (
+                  <div className="mt-2 mb-4 font-medium">
+                    <p>Total de Títulos Vencidos: {totalTitulos}</p>
+                    <p>Valor Total dos Títulos: {formatCurrency(valorTotalTitulos)}</p>
+                  </div>
+                );
+              })()}
               
               <p>Acesse seu portal através do link abaixo:</p>
               <p>🔗 Acessar Portal Bluebay</p>
