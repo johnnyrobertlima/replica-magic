@@ -41,22 +41,9 @@ export const useFinancialData = () => {
   const refreshData = useCallback(async () => {
     setIsLoading(true);
     try {
-      // First, let's check the structure of mv_faturamento_resumido
-      const { data: columns, error: columnsError } = await supabase
-        .from('mv_faturamento_resumido')
-        .select()
-        .eq('CENTROCUSTO', 'BLUEBAY')
-        .limit(1);
+      console.info("useFinanciero effect - triggering data refresh");
       
-      if (columnsError) {
-        console.error("Error checking columns:", columnsError);
-        throw columnsError;
-      }
-
-      // Log the columns so we can see what we're working with
-      console.log("Sample data from mv_faturamento_resumido:", columns);
-      
-      // Now proceed with the actual query using the correct column names
+      // First, fetch data from mv_faturamento_resumido for BLUEBAY center cost
       const { data: faturamento, error: faturamentoError } = await supabase
         .from('mv_faturamento_resumido')
         .select('*')
@@ -67,13 +54,19 @@ export const useFinancialData = () => {
         throw faturamentoError;
       }
 
-      // If we got data, log it to see what we're working with
-      if (faturamento && faturamento.length > 0) {
-        console.log("First invoice sample:", faturamento[0]);
+      // Log the sample data to check structure
+      console.info("Sample data from mv_faturamento_resumido:", faturamento);
+      
+      if (!faturamento || faturamento.length === 0) {
+        setConsolidatedInvoices([]);
+        setFinancialTitles([]);
+        setAvailableStatuses(['all']);
+        setIsLoading(false);
+        return;
       }
 
-      // Collect all unique NOTAs from invoices to fetch related titles
-      const notas = faturamento?.map(item => item.NOTA || item.nota) || [];
+      // Extract NOTAs to fetch related titles
+      const notas = faturamento.map(item => item.NOTA);
       
       // Fetch titles linked to these invoices by NOTA
       const { data: titulos, error: titulosError } = await supabase
@@ -86,56 +79,42 @@ export const useFinancialData = () => {
         throw titulosError;
       }
       
-      console.log(`Fetched ${faturamento?.length || 0} invoices and ${titulos?.length || 0} titles`);
+      console.info(`Fetched ${faturamento?.length || 0} invoices and ${titulos?.length || 0} titles`);
       
-      // Log a sample title to see its structure
-      if (titulos && titulos.length > 0) {
-        console.log("First title sample:", titulos[0]);
-      }
-
-      // Consolidate invoices by NOTA
-      const invoiceMap = new Map<string, ConsolidatedInvoice>();
+      // Consolidate invoices data
+      const consolidatedData: ConsolidatedInvoice[] = [];
       
-      for (const item of faturamento || []) {
-        // Determine the correct property names
-        const nota = item.NOTA || item.nota;
-        const dataEmissao = item.DATA_EMISSAO || item.data_emissao;
-        const status = item.STATUS || item.status;
-        const valorNota = item.VALOR_NOTA || item.valor_nota || 0;
-        const pesCode = item.PES_CODIGO || item.pes_codigo;
-        
-        // Fetch client name
+      for (const item of faturamento) {
+        // Get client name
         const { data: clientData } = await supabase
           .from('BLUEBAY_PESSOA')
           .select('APELIDO, RAZAOSOCIAL')
-          .eq('PES_CODIGO', pesCode)
+          .eq('PES_CODIGO', item.PES_CODIGO)
           .maybeSingle();
         
         const clientName = clientData?.APELIDO || clientData?.RAZAOSOCIAL || "Cliente não encontrado";
         
-        if (!invoiceMap.has(nota)) {
-          invoiceMap.set(nota, {
-            NOTA: nota,
-            DATA_EMISSAO: dataEmissao,
-            STATUS: status,
-            VALOR_NOTA: valorNota,
-            VALOR_PAGO: 0,
-            VALOR_SALDO: valorNota,
-            PES_CODIGO: pesCode,
-            CLIENTE_NOME: clientName
-          });
-        } else {
-          const existingInvoice = invoiceMap.get(nota)!;
-          existingInvoice.VALOR_NOTA += valorNota;
-          existingInvoice.VALOR_SALDO += valorNota;
-        }
+        // Create consolidated invoice object
+        // Note: We need to determine what status to use for invoices
+        const invoiceStatus = "1"; // Default to "Em Aberto"
+        const invoiceValue = parseFloat(item.VALOR || "0");
+        
+        consolidatedData.push({
+          NOTA: item.NOTA,
+          DATA_EMISSAO: item.DATA_EMISSAO || "",
+          STATUS: invoiceStatus,
+          VALOR_NOTA: invoiceValue,
+          VALOR_PAGO: 0, // We'll calculate this from titles
+          VALOR_SALDO: invoiceValue,
+          PES_CODIGO: item.PES_CODIGO,
+          CLIENTE_NOME: clientName
+        });
       }
       
       // Update invoice values based on related titles
       for (const titulo of titulos || []) {
-        // Check if this title is related to any invoice
-        const invoiceNota = String(titulo.NUMNOTA);
-        const invoice = invoiceMap.get(invoiceNota);
+        // Find the related invoice
+        const invoice = consolidatedData.find(inv => String(inv.NOTA) === String(titulo.NUMNOTA));
         if (invoice) {
           // Calculate paid amount based on title values
           const paidAmount = (titulo.VLRTITULO || 0) - (titulo.VLRSALDO || 0);
@@ -144,11 +123,11 @@ export const useFinancialData = () => {
         }
       }
       
-      setConsolidatedInvoices(Array.from(invoiceMap.values()));
+      setConsolidatedInvoices(consolidatedData);
       
       // Process titles with client names
       const processedTitles: FinancialTitle[] = await Promise.all(
-        (titulos || []).map(async (titulo: any) => {
+        (titulos || []).map(async (titulo) => {
           let clientName = "Cliente não encontrado";
 
           if (titulo.PES_CODIGO) {
@@ -178,16 +157,13 @@ export const useFinancialData = () => {
       
       setFinancialTitles(processedTitles);
       
-      // Extract unique statuses for filter
-      const invoiceStatuses = [...new Set(faturamento?.map(invoice => {
-        const status = invoice.STATUS || invoice.status;
-        return status || "";
-      }) || [])];
+      // Collect unique statuses for filter
+      const uniqueStatuses = [...new Set([
+        ...processedTitles.map(title => title.STATUS || "").filter(Boolean)
+      ])];
       
-      const titleStatuses = [...new Set(processedTitles.map(title => title.STATUS || ""))];
-      const uniqueStatuses = [...new Set([...invoiceStatuses, ...titleStatuses])];
+      setAvailableStatuses(['all', ...uniqueStatuses]);
       
-      setAvailableStatuses(['all', ...uniqueStatuses.filter(status => status !== "")]);
     } catch (error) {
       console.error("Error fetching financial data:", error);
     } finally {

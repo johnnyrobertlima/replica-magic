@@ -1476,6 +1476,8 @@ export type Database = {
       mv_faturamento_resumido: {
         Row: {
           CENTROCUSTO: string | null
+          DATA_EMISSAO: string | null
+          DATA_PEDIDO: string | null
           NOTA: string | null
           PED_ANOBASE: number | null
           PED_NUMPEDIDO: string | null
