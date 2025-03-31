@@ -13,6 +13,7 @@ interface FinancialHeaderProps {
     titles: boolean;
     invoices: boolean;
     clients: boolean;
+    clientesVencidos: boolean; // Added this property
   };
 }
 
@@ -27,7 +28,8 @@ export const FinancialHeader: React.FC<FinancialHeaderProps> = ({
   const isExportDisabled = isLoading || (
     (activeTab === 'titles' && !hasData.titles) || 
     (activeTab === 'invoices' && !hasData.invoices) || 
-    (activeTab === 'clients' && !hasData.clients)
+    (activeTab === 'clients' && !hasData.clients) ||
+    (activeTab === 'clientesVencidos' && !hasData.clientesVencidos) // Added this condition
   );
 
   return (
