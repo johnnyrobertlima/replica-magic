@@ -3,12 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { ClientInfo } from "../types/financialTypes";
 
 // Fetch client data in batch from Supabase
-export const fetchClientData = async (clienteCodigos: number[]): Promise<Map<number, ClientInfo>> => {
+export const fetchClientData = async (clienteCodigos: (number | string)[]): Promise<Map<number, ClientInfo>> => {
   try {
+    // Convert any string clienteCodigos to numbers
+    const numerosCodigos = clienteCodigos.map(codigo => 
+      typeof codigo === 'string' ? parseInt(codigo, 10) : codigo
+    );
+    
     const { data: clientesData, error } = await supabase
       .from('BLUEBAY_PESSOA')
       .select('PES_CODIGO, APELIDO, RAZAOSOCIAL')
-      .in('PES_CODIGO', clienteCodigos);
+      .in('PES_CODIGO', numerosCodigos);
     
     if (error) {
       console.error("Error fetching client data:", error);
