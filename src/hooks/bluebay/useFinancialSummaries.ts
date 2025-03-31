@@ -21,24 +21,26 @@ export const useFinancialSummaries = (
     let totalPago = 0;
     let totalEmAberto = 0;
     
-    // Calculate from titles
-    filteredTitles.forEach(title => {
-      if (title.VLRSALDO > 0) {
-        totalEmAberto += title.VLRSALDO;
-        
-        // Check if overdue
-        if (title.DTVENCIMENTO) {
-          const vencimento = new Date(title.DTVENCIMENTO);
-          if (vencimento < today) {
-            totalValoresVencidos += title.VLRSALDO;
+    // Calculate from titles, excluding canceled titles (status '4')
+    filteredTitles
+      .filter(title => title.STATUS !== '4') // Exclude canceled titles
+      .forEach(title => {
+        if (title.VLRSALDO > 0) {
+          totalEmAberto += title.VLRSALDO;
+          
+          // Check if overdue
+          if (title.DTVENCIMENTO) {
+            const vencimento = new Date(title.DTVENCIMENTO);
+            if (vencimento < today) {
+              totalValoresVencidos += title.VLRSALDO;
+            }
           }
         }
-      }
-      
-      if (title.DTPAGTO) {
-        totalPago += (title.VLRTITULO - (title.VLRSALDO || 0));
-      }
-    });
+        
+        if (title.DTPAGTO) {
+          totalPago += (title.VLRTITULO - (title.VLRSALDO || 0));
+        }
+      });
     
     // Calculate from invoices
     filteredInvoices.forEach(invoice => {
@@ -53,43 +55,45 @@ export const useFinancialSummaries = (
     };
   }, [filteredInvoices, filteredTitles]);
 
-  // Group by client for client summaries
+  // Group by client for client summaries, excluding canceled titles
   const clientFinancialSummaries = useMemo(() => {
     const today = new Date();
     const clientMap = new Map<string | number, ClientFinancialSummary>();
     
-    // Process titles
-    filteredTitles.forEach(title => {
-      const clientKey = title.PES_CODIGO;
-      
-      if (!clientMap.has(clientKey)) {
-        clientMap.set(clientKey, {
-          PES_CODIGO: clientKey,
-          CLIENTE_NOME: title.CLIENTE_NOME,
-          totalValoresVencidos: 0,
-          totalPago: 0,
-          totalEmAberto: 0
-        });
-      }
-      
-      const clientSummary = clientMap.get(clientKey)!;
-      
-      if (title.VLRSALDO > 0) {
-        clientSummary.totalEmAberto += title.VLRSALDO;
+    // Process titles, excluding canceled titles (status '4')
+    filteredTitles
+      .filter(title => title.STATUS !== '4') // Exclude canceled titles
+      .forEach(title => {
+        const clientKey = title.PES_CODIGO;
         
-        // Check if overdue
-        if (title.DTVENCIMENTO) {
-          const vencimento = new Date(title.DTVENCIMENTO);
-          if (vencimento < today) {
-            clientSummary.totalValoresVencidos += title.VLRSALDO;
+        if (!clientMap.has(clientKey)) {
+          clientMap.set(clientKey, {
+            PES_CODIGO: clientKey,
+            CLIENTE_NOME: title.CLIENTE_NOME,
+            totalValoresVencidos: 0,
+            totalPago: 0,
+            totalEmAberto: 0
+          });
+        }
+        
+        const clientSummary = clientMap.get(clientKey)!;
+        
+        if (title.VLRSALDO > 0) {
+          clientSummary.totalEmAberto += title.VLRSALDO;
+          
+          // Check if overdue
+          if (title.DTVENCIMENTO) {
+            const vencimento = new Date(title.DTVENCIMENTO);
+            if (vencimento < today) {
+              clientSummary.totalValoresVencidos += title.VLRSALDO;
+            }
           }
         }
-      }
-      
-      if (title.DTPAGTO) {
-        clientSummary.totalPago += (title.VLRTITULO - (title.VLRSALDO || 0));
-      }
-    });
+        
+        if (title.DTPAGTO) {
+          clientSummary.totalPago += (title.VLRTITULO - (title.VLRSALDO || 0));
+        }
+      });
     
     // Process invoices
     filteredInvoices.forEach(invoice => {

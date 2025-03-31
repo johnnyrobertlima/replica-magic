@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { BluebayAdmBanner } from "@/components/bluebay_adm/BluebayAdmBanner";
 import { BluebayAdmMenu } from "@/components/bluebay_adm/BluebayAdmMenu";
@@ -40,7 +39,7 @@ const BluebayAdmFinanceiroManager = () => {
     console.log("filteredTitles:", filteredTitles);
   }, [filteredInvoices, filteredTitles]);
 
-  // Calculate summary based on filtered titles
+  // Calculate summary based on filtered titles, excluding canceled titles (status '4')
   useEffect(() => {
     const today = new Date();
     let totalPago = 0;
@@ -52,25 +51,27 @@ const BluebayAdmFinanceiroManager = () => {
       ? filteredTitles.filter(title => String(title.PES_CODIGO) === selectedClient)
       : filteredTitles;
     
-    // Process titles for summary calculation
-    titlesToCalculate.forEach(title => {
-      const vencimentoDate = title.DTVENCIMENTO ? new Date(title.DTVENCIMENTO) : null;
-      const vlrTitulo = title.VLRTITULO || 0;
-      const vlrSaldo = title.VLRSALDO || 0;
-      
-      // Check if title is paid
-      if (title.STATUS === '3') { // Status 3 = Pago
-        totalPago += vlrTitulo;
-      } else {
-        // Add to total open amount if not paid
-        totalEmAberto += vlrSaldo;
+    // Process titles for summary calculation, excluding canceled titles (status '4')
+    titlesToCalculate
+      .filter(title => title.STATUS !== '4') // Exclude canceled titles
+      .forEach(title => {
+        const vencimentoDate = title.DTVENCIMENTO ? new Date(title.DTVENCIMENTO) : null;
+        const vlrTitulo = title.VLRTITULO || 0;
+        const vlrSaldo = title.VLRSALDO || 0;
         
-        // Check if overdue (vencimento date is in the past)
-        if (vencimentoDate && vencimentoDate < today) {
-          totalValoresVencidos += vlrSaldo;
+        // Check if title is paid
+        if (title.STATUS === '3') { // Status 3 = Pago
+          totalPago += vlrTitulo;
+        } else {
+          // Add to total open amount if not paid
+          totalEmAberto += vlrSaldo;
+          
+          // Check if overdue (vencimento date is in the past)
+          if (vencimentoDate && vencimentoDate < today) {
+            totalValoresVencidos += vlrSaldo;
+          }
         }
-      }
-    });
+      });
 
     setFilteredSummary({
       totalValoresVencidos,
