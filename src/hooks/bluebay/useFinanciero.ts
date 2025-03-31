@@ -42,7 +42,8 @@ export const useFinanciero = () => {
     console.log("consolidatedInvoices:", consolidatedInvoices.length);
     console.log("financialTitles:", financialTitles.length);
     console.log("filteredInvoices:", filteredInvoices.length);
-  }, [consolidatedInvoices, financialTitles, filteredInvoices]);
+    console.log("filteredTitles:", filteredTitles.length);
+  }, [consolidatedInvoices, financialTitles, filteredInvoices, filteredTitles]);
 
   return {
     isLoading,

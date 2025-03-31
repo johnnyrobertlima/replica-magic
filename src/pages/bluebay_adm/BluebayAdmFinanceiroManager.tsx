@@ -29,17 +29,60 @@ const BluebayAdmFinanceiroManager = () => {
     updateClientFilter,
     notaFilter,
     updateNotaFilter,
-    financialSummary,
-    clientFinancialSummaries
+    financialSummary
   } = useFinanciero();
 
   const [activeTab, setActiveTab] = useState("titles");
   const [selectedClient, setSelectedClient] = useState<string | null>(null);
+  const [filteredSummary, setFilteredSummary] = useState({
+    totalValoresVencidos: 0,
+    totalPago: 0,
+    totalEmAberto: 0
+  });
 
   useEffect(() => {
     console.log("filteredInvoices:", filteredInvoices);
     console.log("filteredTitles:", filteredTitles);
   }, [filteredInvoices, filteredTitles]);
+
+  // Calculate summary based on filtered titles
+  useEffect(() => {
+    const today = new Date();
+    let totalPago = 0;
+    let totalEmAberto = 0;
+    let totalValoresVencidos = 0;
+
+    // Get the titles that should be considered (all filtered or just client filtered)
+    const titlesToCalculate = selectedClient 
+      ? filteredTitles.filter(title => String(title.PES_CODIGO) === selectedClient)
+      : filteredTitles;
+    
+    // Process titles for summary calculation
+    titlesToCalculate.forEach(title => {
+      const vencimentoDate = title.DTVENCIMENTO ? new Date(title.DTVENCIMENTO) : null;
+      const vlrTitulo = title.VLRTITULO || 0;
+      const vlrSaldo = title.VLRSALDO || 0;
+      
+      // Check if title is paid
+      if (title.STATUS === '3') { // Status 3 = Pago
+        totalPago += vlrTitulo;
+      } else {
+        // Add to total open amount if not paid
+        totalEmAberto += vlrSaldo;
+        
+        // Check if overdue (vencimento date is in the past)
+        if (vencimentoDate && vencimentoDate < today) {
+          totalValoresVencidos += vlrSaldo;
+        }
+      }
+    });
+
+    setFilteredSummary({
+      totalValoresVencidos,
+      totalPago,
+      totalEmAberto
+    });
+  }, [filteredTitles, selectedClient]);
 
   const clientFilteredTitles = selectedClient 
     ? filteredTitles.filter(title => String(title.PES_CODIGO) === selectedClient)
@@ -58,7 +101,7 @@ const BluebayAdmFinanceiroManager = () => {
     activeTab,
     filteredTitles: clientFilteredTitles,
     filteredInvoices,
-    clientFinancialSummaries
+    clientFinancialSummaries: []
   });
 
   return (
@@ -75,7 +118,7 @@ const BluebayAdmFinanceiroManager = () => {
           activeTab={activeTab}
           hasData={{
             titles: clientFilteredTitles.length > 0,
-            clients: clientFinancialSummaries.length > 0,
+            clients: [] !== null && [] !== undefined && [].length > 0,
             clientesVencidos: filteredTitles.length > 0
           }}
         />
@@ -85,9 +128,10 @@ const BluebayAdmFinanceiroManager = () => {
         {!isLoading && (
           <div className="mt-6 space-y-6">
             <FinancialSummaryCards 
-              totalValoresVencidos={financialSummary.totalValoresVencidos}
-              totalPago={financialSummary.totalPago}
-              totalEmAberto={financialSummary.totalEmAberto}
+              totalValoresVencidos={filteredSummary.totalValoresVencidos}
+              totalPago={filteredSummary.totalPago}
+              totalEmAberto={filteredSummary.totalEmAberto}
+              label={selectedClient ? "Cliente Selecionado" : "Filtro Atual"}
             />
             
             <FinancialFilters
@@ -133,7 +177,7 @@ const BluebayAdmFinanceiroManager = () => {
                     <>
                       <h2 className="text-xl font-semibold mb-4">Clientes - Resumo Financeiro</h2>
                       <ClientFinancialTable 
-                        clients={clientFinancialSummaries} 
+                        clients={[]} 
                         isLoading={isLoading} 
                         onClientSelect={handleClientSelect}
                       />
