@@ -4,9 +4,10 @@ import { formatCurrency } from "@/utils/formatters";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
-import { Copy, Mail } from "lucide-react";
+import { Copy, Mail, ExternalLink } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { FinancialTitle } from "@/hooks/bluebay/types/financialTypes";
+import { toast } from "@/components/ui/use-toast";
 
 interface CollectionMessageContentProps {
   clientName: string;
@@ -26,6 +27,25 @@ export const CollectionMessageContent: React.FC<CollectionMessageContentProps> =
   const totalTitulos = clientTitles.length;
   const valorTotalTitulos = clientTitles.reduce((total, title) => total + title.VLRSALDO, 0);
   
+  const handleSendEmailClick = () => {
+    try {
+      onSendEmail();
+      
+      // Informar ao usuário que o link foi acionado
+      toast({
+        title: "Abrindo Outlook",
+        description: "Se o Outlook não abrir automaticamente, verifique se seu navegador está bloqueando popups",
+      });
+    } catch (error) {
+      console.error("Erro ao tentar abrir o Outlook:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao abrir o Outlook",
+        description: "Por favor, tente copiar o texto e colar manualmente",
+      });
+    }
+  };
+  
   return (
     <div className="bg-slate-50 p-4 rounded-md my-4 text-sm relative">
       {/* Botões de ação (Copiar e Abrir no Outlook) mais visíveis */}
@@ -41,11 +61,11 @@ export const CollectionMessageContent: React.FC<CollectionMessageContentProps> =
         <Button 
           size="sm"
           variant="default"
-          onClick={onSendEmail}
+          onClick={handleSendEmailClick}
           disabled={isSending}
-          className="bg-blue-600 hover:bg-blue-700 flex items-center"
+          className="bg-blue-600 hover:bg-blue-700 flex items-center font-medium"
         >
-          <Mail className="h-3.5 w-3.5 mr-1" /> Abrir no Outlook
+          <Mail className="h-3.5 w-3.5 mr-1" /> Abrir no Outlook <ExternalLink className="h-3 w-3 ml-1" />
         </Button>
       </div>
       

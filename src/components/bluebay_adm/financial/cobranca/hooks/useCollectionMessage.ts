@@ -82,25 +82,32 @@ Equipe Financeira – Bluebay Importadora
     setIsSending(true);
     
     try {
+      // Prepare message with linebreaks suitable for email
+      const emailBody = createMessageContent().replace(/\n/g, '\n');
+      
+      // Log para debug
+      console.log("Tentando enviar e-mail para:", selectedClient.CLIENTE_NOME);
+      
       await sendOutlookEmail({
         subject: `Títulos em atraso - Bluebay - ${selectedClient.CLIENTE_NOME}`,
-        body: createMessageContent().replace(/\n/g, '<br>'),
+        body: emailBody,
         clientName: selectedClient.CLIENTE_NOME
       });
       
-      toast({
-        title: "E-mail aberto no Outlook",
-        description: "O e-mail foi preparado no Outlook e está pronto para envio",
-      });
+      // Não mostramos toast aqui, pois ele será mostrado no componente
       
-      // Registramos a cobrança como feita
-      onCollectionConfirm();
+      // Registramos a cobrança como feita após algum tempo
+      // para dar tempo do usuário interagir com o cliente de email
+      setTimeout(() => {
+        onCollectionConfirm();
+      }, 1000);
+      
     } catch (error) {
       console.error('Erro ao enviar e-mail:', error);
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Não foi possível abrir o Outlook. Por favor, verifique se ele está instalado e configurado.",
+        description: "Não foi possível abrir o Outlook. Por favor, verifique se seu navegador permite a ação.",
       });
     } finally {
       setIsSending(false);

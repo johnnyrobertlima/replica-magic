@@ -1,6 +1,12 @@
 
 import React from "react";
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { 
+  AlertDialog, 
+  AlertDialogContent, 
+  AlertDialogHeader, 
+  AlertDialogTitle,
+  AlertDialogDescription 
+} from "@/components/ui/alert-dialog";
 import { ClientDebtSummary, FinancialTitle } from "@/hooks/bluebay/types/financialTypes";
 import { useCollectionMessage } from "./hooks/useCollectionMessage";
 import { CollectionMessageContent } from "./components/CollectionMessageContent";
@@ -32,6 +38,10 @@ export const CollectionMessageDialog: React.FC<CollectionMessageDialogProps> = (
       <AlertDialogContent className="max-w-3xl">
         <AlertDialogHeader>
           <AlertDialogTitle>Mensagem de Cobrança - {selectedClient?.CLIENTE_NOME}</AlertDialogTitle>
+          <AlertDialogDescription className="sr-only">
+            Este diálogo contém um modelo de mensagem de cobrança para o cliente {selectedClient?.CLIENTE_NOME}.
+            Você pode copiar o texto ou abrir diretamente no Outlook.
+          </AlertDialogDescription>
         </AlertDialogHeader>
         
         {selectedClient && (
