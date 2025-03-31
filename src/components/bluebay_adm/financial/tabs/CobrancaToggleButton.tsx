@@ -6,17 +6,20 @@ import { Eye, EyeOff } from "lucide-react";
 interface CobrancaToggleButtonProps {
   showCollectedOnly: boolean;
   onToggle: () => void;
+  className?: string;
 }
 
 export const CobrancaToggleButton: React.FC<CobrancaToggleButtonProps> = ({
   showCollectedOnly,
-  onToggle
+  onToggle,
+  className = ""
 }) => {
   return (
     <Button 
       variant="outline" 
       size="sm" 
       onClick={onToggle}
+      className={className}
     >
       {showCollectedOnly ? (
         <>

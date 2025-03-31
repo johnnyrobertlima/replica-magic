@@ -10,8 +10,11 @@ import { FinancialSummaryCalculator } from "@/components/bluebay_adm/financial/F
 import { useFinanciero } from "@/hooks/bluebay/useFinanciero";
 import { useFinancialExport } from "@/hooks/bluebay/useFinancialExport";
 import { useCollectionStatus } from "@/hooks/bluebay/useCollectionStatus";
+import { useFinancialTabSelection } from "@/hooks/bluebay/useFinancialTabSelection";
+import { useClientFilteredTitles } from "@/hooks/bluebay/useClientFilteredTitles";
 
 const BluebayAdmFinanceiroManager = () => {
+  // Use our custom hooks to separate concerns
   const { 
     isLoading, 
     filteredInvoices,
@@ -41,34 +44,40 @@ const BluebayAdmFinanceiroManager = () => {
     resetAllCollectionStatus
   } = useCollectionStatus({ userName: "Financeiro" });
 
-  const [activeTab, setActiveTab] = useState("titles");
-  const [selectedClient, setSelectedClient] = useState<string | null>(null);
+  const {
+    activeTab,
+    setActiveTab,
+    selectedClient,
+    handleClientSelect,
+    handleResetClientSelection
+  } = useFinancialTabSelection();
+
   const [filteredSummary, setFilteredSummary] = useState({
     totalValoresVencidos: 0,
     totalPago: 0,
     totalEmAberto: 0
   });
 
-  // Títulos filtrados por cliente selecionado
-  const clientFilteredTitles = selectedClient 
-    ? filteredTitles.filter(title => String(title.PES_CODIGO) === selectedClient)
-    : filteredTitles;
+  // Use the client filtered titles hook
+  const clientFilteredTitles = useClientFilteredTitles(filteredTitles, selectedClient);
 
-  const handleClientSelect = (clientCode: string) => {
-    setSelectedClient(clientCode);
-    setActiveTab("titles");
-  };
-
-  const handleResetClientSelection = () => {
-    setSelectedClient(null);
-  };
-
+  // Handle exporting data to Excel
   const { handleExportToExcel } = useFinancialExport({
     activeTab,
     filteredTitles: clientFilteredTitles,
     filteredInvoices,
     clientFinancialSummaries: clientFinancialSummaries || []
   });
+
+  // Create a derived data object for determining data availability
+  const hasData = {
+    titles: clientFilteredTitles.length > 0,
+    clients: clientFinancialSummaries !== null && clientFinancialSummaries !== undefined && clientFinancialSummaries.length > 0,
+    clientesVencidos: filteredTitles.length > 0,
+    cobranca: filteredTitles.length > 0,
+    origem: clientFilteredTitles.length > 0,
+    cobrados: collectionRecords.length > 0
+  };
 
   return (
     <main className="container-fluid p-0 max-w-full">
@@ -82,14 +91,7 @@ const BluebayAdmFinanceiroManager = () => {
           onExport={handleExportToExcel}
           isLoading={isLoading}
           activeTab={activeTab}
-          hasData={{
-            titles: clientFilteredTitles.length > 0,
-            clients: clientFinancialSummaries !== null && clientFinancialSummaries !== undefined && clientFinancialSummaries.length > 0,
-            clientesVencidos: filteredTitles.length > 0,
-            cobranca: filteredTitles.length > 0,
-            origem: clientFilteredTitles.length > 0,
-            cobrados: collectionRecords.length > 0
-          }}
+          hasData={hasData}
         />
 
         <FinancialSummaryCalculator 
