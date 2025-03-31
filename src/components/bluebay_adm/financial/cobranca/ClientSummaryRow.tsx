@@ -2,7 +2,7 @@
 import React from "react";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, MessageSquare, CheckCircle } from "lucide-react";
+import { ChevronDown, ChevronUp, MessageSquare, CheckCircle, Mail } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
 import { ClientDebtSummary } from "@/hooks/bluebay/types/financialTypes";
 
@@ -50,8 +50,8 @@ export const ClientSummaryRow: React.FC<ClientSummaryRowProps> = ({
             </>
           ) : (
             <>
-              <MessageSquare className="h-4 w-4 mr-1" />
-              Realizar Cobrança
+              <Mail className="h-4 w-4 mr-1" />
+              Enviar Cobrança
             </>
           )}
         </Button>

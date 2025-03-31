@@ -1,13 +1,14 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Copy } from "lucide-react";
+import { Copy, Mail } from "lucide-react";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogFooter } from "@/components/ui/alert-dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { FinancialTitle, ClientDebtSummary } from "@/hooks/bluebay/types/financialTypes";
 import { formatCurrency } from "@/utils/formatters";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { sendOutlookEmail } from "./utils/outlookEmailUtils";
 
 interface CollectionMessageDialogProps {
   isOpen: boolean;
@@ -25,9 +26,10 @@ export const CollectionMessageDialog: React.FC<CollectionMessageDialogProps> = (
   onCollectionConfirm
 }) => {
   const { toast } = useToast();
+  const [isSending, setIsSending] = useState(false);
 
-  const handleCopyText = () => {
-    if (!selectedClient) return;
+  const createMessageContent = () => {
+    if (!selectedClient) return "";
     
     let titlesText = "";
     clientTitles.forEach(title => {
@@ -66,6 +68,12 @@ Equipe Financeira – Bluebay Importadora
 📧 financeiro@bluebay.com.br
 📞 (11) 1234-5678`;
 
+    return messageText;
+  };
+
+  const handleCopyText = () => {
+    const messageText = createMessageContent();
+    
     navigator.clipboard.writeText(messageText).then(() => {
       toast({
         title: "Copiado!",
@@ -81,6 +89,37 @@ Equipe Financeira – Bluebay Importadora
     });
   };
 
+  const handleSendOutlookEmail = async () => {
+    if (!selectedClient) return;
+    
+    setIsSending(true);
+    
+    try {
+      await sendOutlookEmail({
+        subject: `Títulos em atraso - Bluebay - ${selectedClient.CLIENTE_NOME}`,
+        body: createMessageContent().replace(/\n/g, '<br>'),
+        clientName: selectedClient.CLIENTE_NOME
+      });
+      
+      toast({
+        title: "E-mail aberto no Outlook",
+        description: "O e-mail foi preparado no Outlook e está pronto para envio",
+      });
+      
+      // Registramos a cobrança como feita
+      onCollectionConfirm();
+    } catch (error) {
+      console.error('Erro ao enviar e-mail:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível abrir o Outlook. Por favor, verifique se ele está instalado e configurado.",
+      });
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
       <AlertDialogContent className="max-w-3xl">
@@ -89,14 +128,23 @@ Equipe Financeira – Bluebay Importadora
         </AlertDialogHeader>
         
         <div className="bg-slate-50 p-4 rounded-md my-4 text-sm relative">
-          <Button 
-            size="sm" 
-            variant="outline" 
-            className="absolute right-2 top-2" 
-            onClick={handleCopyText}
-          >
-            <Copy className="h-3.5 w-3.5 mr-1" /> Copiar
-          </Button>
+          <div className="absolute right-2 top-2 flex gap-2">
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={handleCopyText}
+            >
+              <Copy className="h-3.5 w-3.5 mr-1" /> Copiar
+            </Button>
+            <Button 
+              size="sm"
+              variant="outline"
+              onClick={handleSendOutlookEmail}
+              disabled={isSending}
+            >
+              <Mail className="h-3.5 w-3.5 mr-1" /> Abrir no Outlook
+            </Button>
+          </div>
           
           <div className="mt-6 whitespace-pre-line">
             <p><strong>Assunto:</strong> Títulos em atraso - Bluebay</p>
