@@ -4,7 +4,7 @@ import { formatCurrency } from "@/utils/formatters";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
-import { Copy, Send, ExternalLink } from "lucide-react";
+import { Copy, Mail, ExternalLink } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { FinancialTitle } from "@/hooks/bluebay/types/financialTypes";
 import { toast } from "@/components/ui/use-toast";
@@ -14,6 +14,7 @@ interface CollectionMessageContentProps {
   clientTitles: FinancialTitle[];
   onCopy: () => void;
   onSendEmail: () => void;
+  onSendMailto: () => void;
   isSending: boolean;
 }
 
@@ -22,26 +23,27 @@ export const CollectionMessageContent: React.FC<CollectionMessageContentProps> =
   clientTitles,
   onCopy,
   onSendEmail,
+  onSendMailto,
   isSending
 }) => {
   const totalTitulos = clientTitles.length;
   const valorTotalTitulos = clientTitles.reduce((total, title) => total + title.VLRSALDO, 0);
   
-  const handleSendEmailClick = () => {
+  const handleOpenOutlookWeb = () => {
     try {
       onSendEmail();
       
       // Informar ao usuário que o link foi acionado
       toast({
-        title: "Tentando abrir cliente de e-mail",
-        description: "Se o cliente de e-mail não abrir automaticamente, use o botão 'Copiar Texto'",
+        title: "Abrindo Outlook Web",
+        description: "Estamos tentando abrir o Outlook Web em uma nova aba",
         duration: 5000,
       });
     } catch (error) {
-      console.error("Erro ao tentar abrir o cliente de e-mail:", error);
+      console.error("Erro ao tentar abrir o Outlook Web:", error);
       toast({
         variant: "destructive",
-        title: "Erro ao abrir o cliente de e-mail",
+        title: "Erro ao abrir o Outlook Web",
         description: "Por favor, tente copiar o texto e colar manualmente",
         duration: 5000,
       });
@@ -63,11 +65,11 @@ export const CollectionMessageContent: React.FC<CollectionMessageContentProps> =
         <Button 
           size="sm"
           variant="default"
-          onClick={handleSendEmailClick}
+          onClick={handleOpenOutlookWeb}
           disabled={isSending}
           className="bg-blue-600 hover:bg-blue-700 flex items-center font-medium"
         >
-          <Send className="h-3.5 w-3.5 mr-1" /> Abrir no Cliente de Email <ExternalLink className="h-3 w-3 ml-1" />
+          <Mail className="h-3.5 w-3.5 mr-1" /> Enviar por Outlook <ExternalLink className="h-3 w-3 ml-1" />
         </Button>
       </div>
       

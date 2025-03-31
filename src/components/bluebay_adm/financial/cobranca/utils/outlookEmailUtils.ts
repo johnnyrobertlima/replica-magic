@@ -14,8 +14,8 @@ interface OutlookEmailParams {
 }
 
 /**
- * Abre um cliente de e-mail utilizando o protocolo mailto
- * Funciona com vários clientes de e-mail, incluindo Outlook Web e Gmail
+ * Abre o Outlook Web com um e-mail pré-preenchido
+ * Implementação mais confiável que o protocolo mailto
  * 
  * @param params Parâmetros do e-mail
  * @returns Promise que resolve quando o e-mail é aberto
@@ -25,6 +25,57 @@ export const sendOutlookEmail = async (params: OutlookEmailParams): Promise<void
   
   // Log da tentativa de envio para debug
   console.log(`Iniciando tentativa de envio de e-mail para ${clientName}`);
+  
+  try {
+    // Formatar o corpo do e-mail para texto plano
+    const plainTextBody = body.replace(/<br\s*\/?>/gi, "\n");
+    
+    // Construir a URL do Outlook Web
+    let outlookUrl = "https://outlook.office.com/mail/deeplink/compose";
+    
+    // Adicionar parâmetros
+    const urlParams = new URLSearchParams();
+    if (to) urlParams.append("to", to);
+    urlParams.append("subject", subject);
+    urlParams.append("body", plainTextBody);
+    if (cc) urlParams.append("cc", cc);
+    if (bcc) urlParams.append("bcc", bcc);
+    
+    // Adicionar os parâmetros à URL
+    outlookUrl += `?${urlParams.toString()}`;
+    
+    // Log para debug
+    console.log(`Abrindo Outlook Web para cliente: ${clientName}`);
+    console.log(`URL Outlook: ${outlookUrl.substring(0, 100)}...`);
+    
+    // Abrir o Outlook Web em uma nova aba
+    window.open(outlookUrl, "_blank");
+    
+    // Se não conseguiu abrir, tentar método alternativo
+    setTimeout(() => {
+      if (!document.hasFocus()) {
+        console.log("Abriu com sucesso em nova aba");
+      } else {
+        console.log("Tentando método alternativo");
+        window.location.href = outlookUrl;
+      }
+    }, 500);
+    
+    return Promise.resolve();
+  } catch (error) {
+    console.error("Erro ao abrir o Outlook Web:", error);
+    return Promise.reject(new Error("Não foi possível abrir o Outlook Web"));
+  }
+};
+
+/**
+ * Versão alternativa que usa o protocolo mailto como fallback
+ * 
+ * @param params Parâmetros do e-mail
+ * @returns Promise que resolve quando o e-mail é aberto
+ */
+export const sendMailtoEmail = async (params: OutlookEmailParams): Promise<void> => {
+  const { subject, body, to = "", cc = "", bcc = "" } = params;
   
   try {
     // Formatamos o corpo do e-mail para mailto (RFC 6068)
@@ -40,33 +91,8 @@ export const sendOutlookEmail = async (params: OutlookEmailParams): Promise<void
     // Construir a URL mailto
     const mailtoUrl = `mailto:?${mailtoParams}`;
     
-    // Log para debug (truncado)
-    console.log(`Abrindo e-mail de cobrança para cliente: ${clientName}`);
-    console.log(`URL mailto: ${mailtoUrl.substring(0, 100)}...`);
-    
-    // Usar o método de abertura que funciona em mais navegadores
-    // Tentamos diferentes métodos em sequência
-    
-    // Método 1: Usar link programático com _blank
-    const mailLink = document.createElement('a');
-    mailLink.href = mailtoUrl;
-    mailLink.target = '_blank'; // Tentar abrir em nova aba (pode ser bloqueado)
-    mailLink.rel = 'noopener noreferrer';
-    mailLink.style.display = 'none';
-    document.body.appendChild(mailLink);
-    mailLink.click();
-    document.body.removeChild(mailLink);
-    
-    // Aguardar um curto período para ver se o cliente foi aberto
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // Método 2: Tentar window.open como alternativa
-    window.open(mailtoUrl, '_self');
-    
-    // Método 3 (último recurso): window.location.href (funciona melhor em alguns casos)
-    setTimeout(() => {
-      window.location.href = mailtoUrl;
-    }, 100);
+    // Usar o método de abertura direto
+    window.location.href = mailtoUrl;
     
     return Promise.resolve();
   } catch (error) {
@@ -76,15 +102,16 @@ export const sendOutlookEmail = async (params: OutlookEmailParams): Promise<void
 };
 
 /**
- * Verifica se o cliente de e-mail está disponível
- * Nota: Esta função é limitada devido a restrições de segurança do navegador
+ * Cria um botão direto de envio por e-mail que pode ser utilizado em qualquer local
  * 
- * @returns Promise com boolean indicando se o cliente de e-mail está disponível
+ * @param email Email de destino
+ * @param subject Assunto do e-mail
+ * @param body Corpo do e-mail
+ * @returns Função que abre o e-mail ao ser executada
  */
-export const isOutlookAvailable = async (): Promise<boolean> => {
-  // Devido às restrições de segurança do navegador, não é possível
-  // detectar com precisão se o Outlook está instalado.
-  // A melhor abordagem é tentar abrir o mailto e observar o comportamento.
-  
-  return true; // Simplificado para sempre permitir a tentativa
+export const createDirectEmailButton = (to: string, subject: string, body: string) => {
+  return () => {
+    const url = `https://outlook.office.com/mail/deeplink/compose?to=${encodeURIComponent(to)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.open(url, "_blank");
+  };
 };

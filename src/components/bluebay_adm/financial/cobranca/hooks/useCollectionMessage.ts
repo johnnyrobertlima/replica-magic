@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { sendOutlookEmail } from "../utils/outlookEmailUtils";
+import { sendOutlookEmail, sendMailtoEmail } from "../utils/outlookEmailUtils";
 import { ClientDebtSummary, FinancialTitle } from "@/hooks/bluebay/types/financialTypes";
 import { formatCurrency } from "@/utils/formatters";
 import { format } from "date-fns";
@@ -76,7 +76,7 @@ Equipe Financeira – Bluebay Importadora
     });
   };
 
-  const handleSendOutlookEmail = async () => {
+  const handleOpenOutlookWeb = async () => {
     if (!selectedClient) return;
     
     setIsSending(true);
@@ -85,25 +85,70 @@ Equipe Financeira – Bluebay Importadora
       // Prepare message with linebreaks suitable for email
       const emailBody = createMessageContent().replace(/\n/g, '\n');
       
-      // Primeiro, informamos ao usuário que estamos tentando abrir o cliente
       toast({
-        title: "Abrindo cliente de e-mail",
-        description: "Se o cliente de e-mail não abrir automaticamente, use a opção 'Copiar Texto'",
+        title: "Abrindo Outlook Web",
+        description: "Estamos abrindo o Outlook Web em uma nova aba",
         duration: 5000,
       });
       
-      // Log para debug
       console.log("Tentando enviar e-mail para:", selectedClient.CLIENTE_NOME);
       
       await sendOutlookEmail({
+        to: "financeiro@bluebay.com.br", // Email de exemplo - pode ser personalizado
         subject: `Títulos em atraso - Bluebay - ${selectedClient.CLIENTE_NOME}`,
         body: emailBody,
         clientName: selectedClient.CLIENTE_NOME
       });
       
-      // Adicionamos um delay maior para dar tempo de o cliente responder
+      // Adicionamos um delay para dar tempo de o cliente responder
       setTimeout(() => {
         // Registramos a cobrança como realizada
+        onCollectionConfirm();
+        
+        toast({
+          title: "Cobrança registrada",
+          description: `A cobrança para ${selectedClient.CLIENTE_NOME} foi registrada.`,
+        });
+      }, 1500);
+      
+    } catch (error) {
+      console.error('Erro ao abrir Outlook Web:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao abrir Outlook Web",
+        description: "Por favor, use a opção 'Copiar Texto' e cole em seu cliente de e-mail manualmente.",
+        duration: 7000,
+      });
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleSendMailto = async () => {
+    if (!selectedClient) return;
+    
+    setIsSending(true);
+    
+    try {
+      // Prepare message with linebreaks suitable for email
+      const emailBody = createMessageContent().replace(/\n/g, '\n');
+      
+      toast({
+        title: "Abrindo cliente de e-mail padrão",
+        description: "Se o cliente de e-mail não abrir automaticamente, use a opção 'Copiar Texto'",
+        duration: 5000,
+      });
+      
+      console.log("Tentando enviar e-mail via mailto para:", selectedClient.CLIENTE_NOME);
+      
+      await sendMailtoEmail({
+        subject: `Títulos em atraso - Bluebay - ${selectedClient.CLIENTE_NOME}`,
+        body: emailBody,
+        clientName: selectedClient.CLIENTE_NOME
+      });
+      
+      // Registramos a cobrança como realizada após um curto período
+      setTimeout(() => {
         onCollectionConfirm();
         
         toast({
@@ -129,6 +174,7 @@ Equipe Financeira – Bluebay Importadora
     isSending,
     createMessageContent,
     handleCopyText,
-    handleSendOutlookEmail
+    handleOpenOutlookWeb,
+    handleSendMailto
   };
 };
