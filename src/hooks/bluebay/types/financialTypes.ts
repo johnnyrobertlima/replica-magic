@@ -35,3 +35,12 @@ export interface DateRange {
   startDate: Date;
   endDate: Date;
 }
+
+export interface ClientDebtSummary {
+  PES_CODIGO: string | number;
+  CLIENTE_NOME: string;
+  TOTAL_SALDO: number;
+  DIAS_VENCIDO_MEDIO: number;
+  QUANTIDADE_TITULOS: number;
+  VALOR_TOTAL: number;
+}

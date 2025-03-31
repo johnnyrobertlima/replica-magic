@@ -119,7 +119,8 @@ const BluebayAdmFinanceiroManager = () => {
           hasData={{
             titles: clientFilteredTitles.length > 0,
             clients: clientFinancialSummaries !== null && clientFinancialSummaries !== undefined && clientFinancialSummaries.length > 0,
-            clientesVencidos: filteredTitles.length > 0
+            clientesVencidos: filteredTitles.length > 0,
+            cobranca: filteredTitles.length > 0
           }}
         />
 

@@ -8,6 +8,7 @@ import { TitleTable } from "@/components/bluebay_adm/financial/TitleTable";
 import { OrigemTable } from "@/components/bluebay_adm/financial/OrigemTable";
 import { ClientFinancialTable } from "@/components/bluebay_adm/financial/ClientFinancialTable";
 import { ClientesVencidosTable } from "@/components/bluebay_adm/financial/ClientesVencidosTable";
+import { CobrancaTable } from "@/components/bluebay_adm/financial/CobrancaTable";
 import { DateRange } from "@/hooks/bk/financial/types";
 import { ClientFinancialSummary } from "@/hooks/bluebay/useFinancialFilters";
 import { FinancialTitle } from "@/hooks/bluebay/types/financialTypes";
@@ -140,6 +141,20 @@ export const FinancialContent: React.FC<FinancialContentProps> = ({
                 <ClientesVencidosTable 
                   titles={filteredTitles} 
                   isLoading={isLoading} 
+                  onClientSelect={handleClientSelect}
+                />
+              </>
+            )
+          },
+          {
+            id: "cobranca",
+            label: "Cobrança",
+            content: (
+              <>
+                <h2 className="text-xl font-semibold mb-4">Cobrança - Valores Consolidados</h2>
+                <CobrancaTable
+                  titles={filteredTitles}
+                  isLoading={isLoading}
                   onClientSelect={handleClientSelect}
                 />
               </>
