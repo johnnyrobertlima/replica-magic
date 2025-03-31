@@ -19,12 +19,12 @@ export const getClientName = (clientInfo?: ClientInfo | null): string => {
 export const fetchClientData = async (clienteCodigos: Array<string | number>): Promise<Map<number, ClientInfo>> => {
   const clientesMap = new Map<number, ClientInfo>();
   
-  // Convert all client codes to string for query
-  const clienteCodigosStr = clienteCodigos.map(String);
-  
-  if (clienteCodigosStr.length === 0) return clientesMap;
+  if (clienteCodigos.length === 0) return clientesMap;
   
   try {
+    // Convert all client codes to string and then use them in the query
+    const clienteCodigosStr = clienteCodigos.map(String);
+    
     const { data: clientes, error } = await supabase
       .from('BLUEBAY_PESSOA')
       .select('PES_CODIGO, APELIDO, RAZAOSOCIAL')
