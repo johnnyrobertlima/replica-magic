@@ -25,7 +25,7 @@ export const useFinancialData = () => {
   const refreshData = useCallback(async () => {
     setIsLoading(true);
     try {
-      console.info("useFinanciero effect - triggering data refresh");
+      console.info("Iniciando refreshData - buscando dados financeiros");
       
       // Format dates for database filtering
       const startDateFormatted = dateRange.startDate 
@@ -36,23 +36,28 @@ export const useFinancialData = () => {
         ? format(dateRange.endDate, 'yyyy-MM-dd')
         : null;
 
-      console.log(`Date range for filtering: ${startDateFormatted} to ${endDateFormatted}`);
+      console.log(`Filtrando por período: ${startDateFormatted} até ${endDateFormatted}`);
       
-      // Prepare the base query for BLUEBAY_TITULO
+      // 1. Prepare the query for BLUEBAY_TITULO with proper date filtering
       let tituloQuery = supabase
         .from('BLUEBAY_TITULO')
         .select('*', { count: 'exact' });
       
       // Apply date filters if both dates are provided
       if (startDateFormatted && endDateFormatted) {
-        // Handle timestamp format with special care for PostgreSQL compatibility
-        // Use date range that includes titles with:
-        // 1. DTVENCIMENTO within the range
-        // 2. DTVENCIMENTO is null (to avoid missing important data)
-        tituloQuery = tituloQuery.or(`DTVENCIMENTO.gte.${startDateFormatted},DTVENCIMENTO.lte.${endDateFormatted},DTVENCIMENTO.is.null`);
+        // Usando o operador IS NULL para incluir registros com valor nulo
+        const titulosComDataNula = await supabase
+          .from('BLUEBAY_TITULO')
+          .select('*')
+          .is('DTVENCIMENTO', null);
+            
+        // Agora pegamos os registros com data dentro do intervalo
+        tituloQuery = tituloQuery
+          .gte('DTVENCIMENTO', startDateFormatted)
+          .lte('DTVENCIMENTO', endDateFormatted);
       }
       
-      // Add pagination
+      // 2. Add pagination with proper range calculation
       tituloQuery = tituloQuery
         .range((currentPage - 1) * pageSize, currentPage * pageSize - 1);
       
@@ -60,7 +65,7 @@ export const useFinancialData = () => {
       const { data: allTitulos, error: allTitulosError, count } = await tituloQuery;
       
       if (allTitulosError) {
-        console.error("Error fetching all titles:", allTitulosError);
+        console.error("Erro ao buscar títulos:", allTitulosError);
         throw allTitulosError;
       }
       
@@ -69,13 +74,13 @@ export const useFinancialData = () => {
         setTotalCount(count);
       }
       
-      console.info(`Fetched ${allTitulos?.length || 0} total titles for BLUEBAY (page ${currentPage}, from ${(currentPage - 1) * pageSize + 1} to ${Math.min(currentPage * pageSize, totalCount || 0)})`);
-      console.info(`Total count: ${count}`);
+      console.info(`Buscados ${allTitulos?.length || 0} títulos (página ${currentPage}, de ${(currentPage - 1) * pageSize + 1} até ${Math.min(currentPage * pageSize, totalCount || 0)})`);
+      console.info(`Total de registros: ${count}`);
       
       // Process titles
       const processedTitulos = allTitulos || [];
       
-      // Collect all unique client codes for these titles
+      // 3. Collect all unique client codes for these titles
       const clienteCodigos = [...new Set(
         processedTitulos.map(titulo => 
           typeof titulo.PES_CODIGO === 'string' ? 
@@ -83,14 +88,18 @@ export const useFinancialData = () => {
         )
       )].filter(Boolean) as Array<string | number>;
       
-      console.info(`Found ${clienteCodigos.length} unique client codes in titles`);
+      console.info(`Encontrados ${clienteCodigos.length} códigos de clientes únicos`);
       
       // Fetch client data - now returns Record<string | number, ClientInfo> instead of Map
       const clientesMap = await fetchClientData(clienteCodigos);
       
+      if (!clientesMap) {
+        console.warn("Não foi possível buscar dados dos clientes - usando nomes vazios");
+      }
+      
       // Process titles with client names
       const processedTitles = processedTitulos.map(titulo => 
-        processFinancialTitle(titulo, clientesMap)
+        processFinancialTitle(titulo, clientesMap || {})
       );
       
       setFinancialTitles(processedTitles);
@@ -102,51 +111,61 @@ export const useFinancialData = () => {
       
       setAvailableStatuses(['all', ...uniqueStatuses]);
       
-      // Fetch billing data for BLUEBAY cost center
+      // 4. Fetch billing data for BLUEBAY cost center
       let faturamentoQuery = supabase
         .from('BLUEBAY_FATURAMENTO')
         .select('*');
       
       // Apply date filters to faturamento if needed
       if (startDateFormatted && endDateFormatted) {
-        faturamentoQuery = faturamentoQuery.or(`DATA_EMISSAO.gte.${startDateFormatted},DATA_EMISSAO.lte.${endDateFormatted},DATA_EMISSAO.is.null`);
+        faturamentoQuery = faturamentoQuery
+          .gte('DATA_EMISSAO', startDateFormatted)
+          .lte('DATA_EMISSAO', endDateFormatted);
       }
       
       const { data: faturamento, error: faturamentoError } = await faturamentoQuery;
       
       if (faturamentoError) {
-        console.error("Error fetching invoices:", faturamentoError);
+        console.error("Erro ao buscar faturamento:", faturamentoError);
       } else {
-        console.info(`Fetched ${faturamento?.length || 0} invoices for BLUEBAY`);
+        console.info(`Buscados ${faturamento?.length || 0} registros de faturamento`);
         
         // Process invoices
         const consolidatedData: ConsolidatedInvoice[] = [];
         
         if (faturamento && faturamento.length > 0) {
           for (const item of faturamento) {
-            const invoice = createConsolidatedInvoice(item, clientesMap);
-            
-            // Find corresponding titles for this invoice
-            const matchingTitles = processedTitulos.filter(titulo => 
-              String(titulo.NUMNOTA) === String(item.NOTA)) || [];
-            
-            // Set due date of the title if available
-            if (matchingTitles.length > 0) {
-              invoice.DATA_VENCIMENTO = matchingTitles[0].DTVENCIMENTO || 
-                matchingTitles[0].DTVENCTO || null;
+            try {
+              const invoice = createConsolidatedInvoice(item, clientesMap || {});
+              
+              // Find corresponding titles for this invoice
+              const matchingTitles = processedTitulos.filter(titulo => 
+                String(titulo.NUMNOTA) === String(item.NOTA)) || [];
+              
+              // Set due date of the title if available
+              if (matchingTitles.length > 0) {
+                invoice.DATA_VENCIMENTO = matchingTitles[0].DTVENCIMENTO || 
+                  matchingTitles[0].DTVENCTO || null;
+              }
+              
+              consolidatedData.push(invoice);
+            } catch (err) {
+              console.error(`Erro ao processar faturamento ${item.NOTA}:`, err);
             }
-            
-            consolidatedData.push(invoice);
           }
           
           // Update invoice values based on related titles
           for (const titulo of processedTitulos) {
-            // Find the related invoice
-            const invoice = consolidatedData.find(inv => 
-              String(inv.NOTA) === String(titulo.NUMNOTA));
-            
-            if (invoice) {
-              updateInvoiceWithTitles(invoice, titulo);
+            try {
+              // Find the related invoice
+              const invoice = consolidatedData.find(inv => 
+                String(inv.NOTA) === String(titulo.NUMNOTA));
+              
+              if (invoice) {
+                updateInvoiceWithTitles(invoice, titulo);
+              }
+            } catch (err) {
+              console.error(`Erro ao atualizar faturamento com título ${titulo.NUMNOTA}:`, err);
             }
           }
         }
@@ -155,7 +174,7 @@ export const useFinancialData = () => {
       }
       
     } catch (error) {
-      console.error("Error fetching financial data:", error);
+      console.error("Erro geral ao buscar dados financeiros:", error);
     } finally {
       setIsLoading(false);
     }

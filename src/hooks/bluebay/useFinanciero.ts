@@ -34,7 +34,7 @@ export const useFinanciero = () => {
 
   // Initial data load
   useEffect(() => {
-    console.log("useFinanciero effect - triggering data refresh");
+    console.log("useFinanciero effect - disparando atualização de dados");
     refreshData();
   }, [refreshData]);
 
