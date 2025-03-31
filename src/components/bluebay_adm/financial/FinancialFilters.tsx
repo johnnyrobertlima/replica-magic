@@ -76,7 +76,7 @@ export const FinancialFilters: React.FC<FinancialFiltersProps> = ({
           />
         </div>
         
-        <div className="w-full sm:w-auto ml-auto">
+        <div className="w-full sm:w-auto">
           <DateRangePicker 
             startDate={dateRange.startDate} 
             endDate={dateRange.endDate} 

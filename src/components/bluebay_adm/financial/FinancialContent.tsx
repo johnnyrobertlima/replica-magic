@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { DateRange } from "@/hooks/bluebay/types/financialTypes";
 import { FinancialSummaryCards } from "./FinancialSummaryCards";
+import { FinancialFilters } from "./FinancialFilters";
 
 interface FinancialContentProps {
   isLoading: boolean;
@@ -173,12 +174,25 @@ export const FinancialContent: React.FC<FinancialContentProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Adicionando os indicadores financeiros de volta */}
+      {/* Financial summary cards */}
       <FinancialSummaryCards 
         totalValoresVencidos={filteredSummary.totalValoresVencidos}
         totalPago={filteredSummary.totalPago}
         totalEmAberto={filteredSummary.totalEmAberto}
         label={selectedClient ? "Cliente Selecionado" : undefined}
+      />
+
+      {/* Filters section */}
+      <FinancialFilters
+        statusFilter={statusFilter}
+        onStatusChange={updateStatusFilter}
+        statuses={availableStatuses}
+        clientFilter={clientFilter}
+        onClientFilterChange={updateClientFilter}
+        notaFilter={notaFilter}
+        onNotaFilterChange={updateNotaFilter}
+        dateRange={dateRange}
+        onDateRangeUpdate={updateDateRange}
       />
 
       {selectedClient && (
