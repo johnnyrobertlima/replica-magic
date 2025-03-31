@@ -68,7 +68,7 @@ export const useFinancialData = () => {
           parseInt(item.PES_CODIGO, 10) : item.PES_CODIGO),
         ...(titulos || []).map(titulo => typeof titulo.PES_CODIGO === 'string' ? 
           parseInt(titulo.PES_CODIGO, 10) : titulo.PES_CODIGO)
-      ])].filter(Boolean);
+      ])].filter(Boolean) as (string | number)[];
       
       // Fetch all client data in one query - now we can pass mixed types safely
       const clientesMap = await fetchClientData(clienteCodigos);
