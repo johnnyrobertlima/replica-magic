@@ -11,6 +11,8 @@ import { ClientesVencidosTable } from "@/components/bluebay_adm/financial/Client
 import { FinancialTabs } from "@/components/bluebay_adm/financial/FinancialTabs";
 import { ClientFilterBadge } from "@/components/bluebay_adm/financial/ClientFilterBadge";
 import { LoadingState } from "@/components/bluebay_adm/financial/LoadingState";
+import { InvoiceTable } from "@/components/bluebay_adm/financial/InvoiceTable";
+import { OrigemTable } from "@/components/bluebay_adm/financial/OrigemTable";
 import { useFinanciero } from "@/hooks/bluebay/useFinanciero";
 import { useFinancialExport } from "@/hooks/bluebay/useFinancialExport";
 
@@ -168,6 +170,20 @@ const BluebayAdmFinanceiroManager = () => {
                           : `Títulos Financeiros`}
                       </h2>
                       <TitleTable titles={clientFilteredTitles} isLoading={isLoading} />
+                    </>
+                  )
+                },
+                {
+                  id: "origem",
+                  label: "Origem",
+                  content: (
+                    <>
+                      <h2 className="text-xl font-semibold mb-4">Origem dos Títulos</h2>
+                      <OrigemTable 
+                        titles={clientFilteredTitles} 
+                        isLoading={isLoading} 
+                        onViewTitles={handleClientSelect}
+                      />
                     </>
                   )
                 },
