@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { BluebayAdmBanner } from "@/components/bluebay_adm/BluebayAdmBanner";
 import { BluebayAdmMenu } from "@/components/bluebay_adm/BluebayAdmMenu";
@@ -37,7 +36,6 @@ const BluebayAdmFinanceiroManager = () => {
   const [activeTab, setActiveTab] = useState("titles");
   const [selectedClient, setSelectedClient] = useState<string | null>(null);
 
-  // Log the data we have for debugging
   useEffect(() => {
     console.log("filteredInvoices:", filteredInvoices);
     console.log("filteredTitles:", filteredTitles);
@@ -162,6 +160,7 @@ const BluebayAdmFinanceiroManager = () => {
                       <ClientesVencidosTable 
                         titles={filteredTitles} 
                         isLoading={isLoading} 
+                        onClientSelect={handleClientSelect}
                       />
                     </>
                   )

@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -7,13 +7,20 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "./StatusBadge";
 import { formatCurrency } from "@/utils/formatters";
 import { FinancialTitle } from "@/hooks/bluebay/types/financialTypes";
+import { Button } from "@/components/ui/button";
+import { Eye } from "lucide-react";
 
 interface ClientesVencidosTableProps {
   titles: FinancialTitle[];
   isLoading: boolean;
+  onClientSelect?: (clientCode: string) => void;
 }
 
-export const ClientesVencidosTable: React.FC<ClientesVencidosTableProps> = ({ titles, isLoading }) => {
+export const ClientesVencidosTable: React.FC<ClientesVencidosTableProps> = ({ 
+  titles, 
+  isLoading,
+  onClientSelect 
+}) => {
   if (isLoading) {
     return (
       <div className="space-y-2">
@@ -54,6 +61,7 @@ export const ClientesVencidosTable: React.FC<ClientesVencidosTableProps> = ({ ti
             <TableHead>Valor Total</TableHead>
             <TableHead>Valor Saldo</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -80,6 +88,19 @@ export const ClientesVencidosTable: React.FC<ClientesVencidosTableProps> = ({ ti
                 <TableCell>{formatCurrency(title.VLRTITULO)}</TableCell>
                 <TableCell>{formatCurrency(title.VLRSALDO)}</TableCell>
                 <TableCell><StatusBadge status={title.STATUS} /></TableCell>
+                <TableCell>
+                  {onClientSelect && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex items-center gap-1"
+                      onClick={() => onClientSelect(String(title.PES_CODIGO))}
+                    >
+                      <Eye className="h-4 w-4" />
+                      Ver títulos
+                    </Button>
+                  )}
+                </TableCell>
               </TableRow>
             );
           })}
