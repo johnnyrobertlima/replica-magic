@@ -29,7 +29,8 @@ const BluebayAdmFinanceiroManager = () => {
     updateClientFilter,
     notaFilter,
     updateNotaFilter,
-    financialSummary
+    financialSummary,
+    clientFinancialSummaries
   } = useFinanciero();
 
   const [activeTab, setActiveTab] = useState("titles");
@@ -101,7 +102,7 @@ const BluebayAdmFinanceiroManager = () => {
     activeTab,
     filteredTitles: clientFilteredTitles,
     filteredInvoices,
-    clientFinancialSummaries: []
+    clientFinancialSummaries: clientFinancialSummaries || []
   });
 
   return (
@@ -118,7 +119,7 @@ const BluebayAdmFinanceiroManager = () => {
           activeTab={activeTab}
           hasData={{
             titles: clientFilteredTitles.length > 0,
-            clients: [] !== null && [] !== undefined && [].length > 0,
+            clients: clientFinancialSummaries !== null && clientFinancialSummaries !== undefined && clientFinancialSummaries.length > 0,
             clientesVencidos: filteredTitles.length > 0
           }}
         />
@@ -177,7 +178,7 @@ const BluebayAdmFinanceiroManager = () => {
                     <>
                       <h2 className="text-xl font-semibold mb-4">Clientes - Resumo Financeiro</h2>
                       <ClientFinancialTable 
-                        clients={[]} 
+                        clients={clientFinancialSummaries || []} 
                         isLoading={isLoading} 
                         onClientSelect={handleClientSelect}
                       />
