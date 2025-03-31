@@ -22,10 +22,11 @@ export const determineInvoiceValue = (item: any): number => {
 // Create a consolidated invoice object
 export const createConsolidatedInvoice = (
   item: any,
-  clientesMap: Map<number, ClientInfo>
+  clientesMap: Record<string | number, ClientInfo>
 ): ConsolidatedInvoice => {
   const pesCodeNumeric = pesCodigoToNumber(item.PES_CODIGO);
-  const clienteInfo = clientesMap.get(pesCodeNumeric);
+  const pesCodeKey = String(pesCodeNumeric);
+  const clienteInfo = clientesMap[pesCodeKey];
   const clientName = getClientName(clienteInfo);
   
   // Determine invoice value

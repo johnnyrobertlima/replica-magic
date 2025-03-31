@@ -49,7 +49,7 @@ export const useFinancialData = () => {
       
       console.info(`Found ${clienteCodigos.length} unique client codes in titles`);
       
-      // Fetch client data
+      // Fetch client data - now returns Record<string | number, ClientInfo> instead of Map
       const clientesMap = await fetchClientData(clienteCodigos);
       
       // Process titles with client names

@@ -16,8 +16,8 @@ export const getClientName = (clientInfo?: ClientInfo | null): string => {
 };
 
 // Fetch client data from BLUEBAY_PESSOA table
-export const fetchClientData = async (clienteCodigos: Array<string | number>): Promise<Map<number, ClientInfo>> => {
-  const clientesMap = new Map<number, ClientInfo>();
+export const fetchClientData = async (clienteCodigos: Array<string | number>): Promise<Record<string | number, ClientInfo>> => {
+  const clientesMap: Record<string | number, ClientInfo> = {};
   
   if (clienteCodigos.length === 0) return clientesMap;
   
@@ -36,13 +36,13 @@ export const fetchClientData = async (clienteCodigos: Array<string | number>): P
       return clientesMap;
     }
     
-    // Add each client to the map with numeric PES_CODIGO as key
+    // Add each client to the record object with string PES_CODIGO as key
     for (const cliente of clientes || []) {
-      const numericCode = pesCodigoToNumber(cliente.PES_CODIGO);
-      clientesMap.set(numericCode, {
+      const key = String(cliente.PES_CODIGO);
+      clientesMap[key] = {
         APELIDO: cliente.APELIDO,
         RAZAOSOCIAL: cliente.RAZAOSOCIAL
-      });
+      };
     }
     
     return clientesMap;
