@@ -62,6 +62,7 @@ export const CobrancaTable: React.FC<CobrancaTableProps> = ({
         CLIENTE_NOME: title.CLIENTE_NOME,
         TOTAL_SALDO: 0,
         DIAS_VENCIDO_MEDIO: 0,
+        DIAS_VENCIDO_MAXIMO: 0,
         QUANTIDADE_TITULOS: 0,
         VALOR_TOTAL: 0
       };
@@ -72,10 +73,16 @@ export const CobrancaTable: React.FC<CobrancaTableProps> = ({
     summary.VALOR_TOTAL += title.VLRTITULO;
     summary.QUANTIDADE_TITULOS++;
     
-    // Calculate days overdue
+    // Calculate days overdue and track maximum
     if (title.DTVENCIMENTO) {
       const vencimentoDate = new Date(title.DTVENCIMENTO);
       const diasVencido = differenceInDays(new Date(), vencimentoDate);
+      
+      // Update maximum overdue days if this title is older
+      if (diasVencido > summary.DIAS_VENCIDO_MAXIMO) {
+        summary.DIAS_VENCIDO_MAXIMO = diasVencido;
+      }
+      
       summary.DIAS_VENCIDO_MEDIO += diasVencido;
     }
   });
@@ -113,8 +120,7 @@ export const CobrancaTable: React.FC<CobrancaTableProps> = ({
             <TableHead>Código Cliente</TableHead>
             <TableHead>Nome Cliente</TableHead>
             <TableHead>Qtd. Títulos</TableHead>
-            <TableHead>Dias Vencidos (média)</TableHead>
-            <TableHead>Valor Total</TableHead>
+            <TableHead>Dias Vencidos (máx)</TableHead>
             <TableHead>Valor Saldo</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
@@ -137,8 +143,7 @@ export const CobrancaTable: React.FC<CobrancaTableProps> = ({
                     {summary.CLIENTE_NOME}
                   </TableCell>
                   <TableCell>{summary.QUANTIDADE_TITULOS}</TableCell>
-                  <TableCell className="text-amber-600 font-medium">{summary.DIAS_VENCIDO_MEDIO} dias</TableCell>
-                  <TableCell>{formatCurrency(summary.VALOR_TOTAL)}</TableCell>
+                  <TableCell className="text-amber-600 font-medium">{summary.DIAS_VENCIDO_MAXIMO} dias</TableCell>
                   <TableCell className="text-red-600 font-medium">{formatCurrency(summary.TOTAL_SALDO)}</TableCell>
                   <TableCell className="text-right">
                     <Button 
@@ -157,7 +162,7 @@ export const CobrancaTable: React.FC<CobrancaTableProps> = ({
                 
                 {isExpanded && (
                   <TableRow className="bg-muted/20">
-                    <TableCell colSpan={8} className="p-0">
+                    <TableCell colSpan={7} className="p-0">
                       <div className="p-4">
                         <h4 className="text-sm font-medium mb-2">Detalhes dos Títulos</h4>
                         <Table>

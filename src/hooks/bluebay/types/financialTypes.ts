@@ -41,6 +41,7 @@ export interface ClientDebtSummary {
   CLIENTE_NOME: string;
   TOTAL_SALDO: number;
   DIAS_VENCIDO_MEDIO: number;
+  DIAS_VENCIDO_MAXIMO: number;
   QUANTIDADE_TITULOS: number;
   VALOR_TOTAL: number;
 }
