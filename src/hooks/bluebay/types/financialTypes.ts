@@ -1,4 +1,3 @@
-
 // Financial data interface definitions
 export interface FinancialTitle {
   NUMNOTA: string | number;

@@ -6,7 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "./StatusBadge";
 import { formatCurrency } from "@/utils/formatters";
-import { FinancialTitle } from "@/hooks/bluebay/useFinancialData";
+import { FinancialTitle } from "@/hooks/bluebay/types/financialTypes";
+import { formatNumDocumento } from "@/hooks/bluebay/utils/titleUtils";
 
 interface TitleTableProps {
   titles: FinancialTitle[];
@@ -53,7 +54,7 @@ export const TitleTable: React.FC<TitleTableProps> = ({ titles, isLoading }) => 
           {titles.map((title, index) => (
             <TableRow key={`${title.NUMNOTA}-${index}`}>
               <TableCell className="font-medium">{title.NUMNOTA}</TableCell>
-              <TableCell>{title.NUMDOCUMENTO || '-'}</TableCell>
+              <TableCell className="font-mono">{formatNumDocumento(title.NUMDOCUMENTO)}</TableCell>
               <TableCell className="max-w-[200px] truncate" title={title.CLIENTE_NOME}>
                 {title.CLIENTE_NOME}
               </TableCell>

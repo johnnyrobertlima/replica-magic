@@ -9,6 +9,7 @@ import { formatCurrency } from "@/utils/formatters";
 import { FinancialTitle } from "@/hooks/bluebay/types/financialTypes";
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
+import { formatNumDocumento } from "@/hooks/bluebay/utils/titleUtils";
 
 interface ClientesVencidosTableProps {
   titles: FinancialTitle[];
@@ -74,7 +75,7 @@ export const ClientesVencidosTable: React.FC<ClientesVencidosTableProps> = ({
             return (
               <TableRow key={`${title.NUMNOTA}-${index}`}>
                 <TableCell className="font-medium">{title.NUMNOTA}</TableCell>
-                <TableCell>{title.NUMDOCUMENTO || '-'}</TableCell>
+                <TableCell className="font-mono">{formatNumDocumento(title.NUMDOCUMENTO)}</TableCell>
                 <TableCell className="max-w-[200px] truncate" title={title.CLIENTE_NOME}>
                   {title.CLIENTE_NOME}
                 </TableCell>
