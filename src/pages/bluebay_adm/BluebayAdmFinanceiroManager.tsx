@@ -3,16 +3,8 @@ import React, { useState, useEffect } from "react";
 import { BluebayAdmBanner } from "@/components/bluebay_adm/BluebayAdmBanner";
 import { BluebayAdmMenu } from "@/components/bluebay_adm/BluebayAdmMenu";
 import { FinancialHeader } from "@/components/bluebay_adm/financial/FinancialHeader";
-import { FinancialFilters } from "@/components/bluebay_adm/financial/FinancialFilters";
-import { FinancialSummaryCards } from "@/components/bluebay_adm/financial/FinancialSummaryCards";
-import { TitleTable } from "@/components/bluebay_adm/financial/TitleTable";
-import { ClientFinancialTable } from "@/components/bluebay_adm/financial/ClientFinancialTable";
-import { ClientesVencidosTable } from "@/components/bluebay_adm/financial/ClientesVencidosTable";
-import { FinancialTabs } from "@/components/bluebay_adm/financial/FinancialTabs";
-import { ClientFilterBadge } from "@/components/bluebay_adm/financial/ClientFilterBadge";
-import { LoadingState } from "@/components/bluebay_adm/financial/LoadingState";
-import { InvoiceTable } from "@/components/bluebay_adm/financial/InvoiceTable";
-import { OrigemTable } from "@/components/bluebay_adm/financial/OrigemTable";
+import { FinancialLoader } from "@/components/bluebay_adm/financial/FinancialLoader";
+import { FinancialContent } from "@/components/bluebay_adm/financial/FinancialContent";
 import { useFinanciero } from "@/hooks/bluebay/useFinanciero";
 import { useFinancialExport } from "@/hooks/bluebay/useFinancialExport";
 
@@ -126,99 +118,29 @@ const BluebayAdmFinanceiroManager = () => {
           }}
         />
 
-        {isLoading && <LoadingState />}
-        
-        {!isLoading && (
-          <div className="mt-6 space-y-6">
-            <FinancialSummaryCards 
-              totalValoresVencidos={filteredSummary.totalValoresVencidos}
-              totalPago={filteredSummary.totalPago}
-              totalEmAberto={filteredSummary.totalEmAberto}
-              label={selectedClient ? "Cliente Selecionado" : "Filtro Atual"}
-            />
-            
-            <FinancialFilters
-              statusFilter={statusFilter}
-              onStatusChange={updateStatusFilter}
-              statuses={availableStatuses}
-              clientFilter={clientFilter}
-              onClientFilterChange={updateClientFilter}
-              notaFilter={notaFilter}
-              onNotaFilterChange={updateNotaFilter}
-              dateRange={dateRange}
-              onDateRangeUpdate={updateDateRange}
-            />
-            
-            {selectedClient && (
-              <ClientFilterBadge 
-                onReset={handleResetClientSelection} 
-              />
-            )}
-            
-            <FinancialTabs
-              activeTab={activeTab}
-              onTabChange={setActiveTab}
-              tabs={[
-                {
-                  id: "titles",
-                  label: "Títulos Financeiros",
-                  content: (
-                    <>
-                      <h2 className="text-xl font-semibold mb-4">
-                        {selectedClient 
-                          ? `Títulos Financeiros do Cliente` 
-                          : `Títulos Financeiros`}
-                      </h2>
-                      <TitleTable titles={clientFilteredTitles} isLoading={isLoading} />
-                    </>
-                  )
-                },
-                {
-                  id: "origem",
-                  label: "Origem",
-                  content: (
-                    <>
-                      <h2 className="text-xl font-semibold mb-4">Origem dos Títulos</h2>
-                      <OrigemTable 
-                        titles={clientFilteredTitles} 
-                        isLoading={isLoading} 
-                        onViewTitles={handleClientSelect}
-                      />
-                    </>
-                  )
-                },
-                {
-                  id: "clients",
-                  label: "Clientes",
-                  content: (
-                    <>
-                      <h2 className="text-xl font-semibold mb-4">Clientes - Resumo Financeiro</h2>
-                      <ClientFinancialTable 
-                        clients={clientFinancialSummaries || []} 
-                        isLoading={isLoading} 
-                        onClientSelect={handleClientSelect}
-                      />
-                    </>
-                  )
-                },
-                {
-                  id: "clientesVencidos",
-                  label: "Clientes com Títulos Vencidos",
-                  content: (
-                    <>
-                      <h2 className="text-xl font-semibold mb-4">Clientes com Títulos Vencidos</h2>
-                      <ClientesVencidosTable 
-                        titles={filteredTitles} 
-                        isLoading={isLoading} 
-                        onClientSelect={handleClientSelect}
-                      />
-                    </>
-                  )
-                }
-              ]}
-            />
-          </div>
-        )}
+        <FinancialLoader isLoading={isLoading}>
+          <FinancialContent
+            isLoading={isLoading}
+            filteredSummary={filteredSummary}
+            selectedClient={selectedClient}
+            statusFilter={statusFilter}
+            updateStatusFilter={updateStatusFilter}
+            availableStatuses={availableStatuses}
+            clientFilter={clientFilter}
+            updateClientFilter={updateClientFilter}
+            notaFilter={notaFilter}
+            updateNotaFilter={updateNotaFilter}
+            dateRange={dateRange}
+            updateDateRange={updateDateRange}
+            handleResetClientSelection={handleResetClientSelection}
+            handleClientSelect={handleClientSelect}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            clientFilteredTitles={clientFilteredTitles}
+            filteredTitles={filteredTitles}
+            clientFinancialSummaries={clientFinancialSummaries}
+          />
+        </FinancialLoader>
       </div>
     </main>
   );
