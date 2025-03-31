@@ -53,7 +53,7 @@ export const ClientesVencidosTable: React.FC<ClientesVencidosTableProps> = ({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Nº Título</TableHead>
+            <TableHead className="font-semibold">Nº Título</TableHead>
             <TableHead>Cliente</TableHead>
             <TableHead>Data Emissão</TableHead>
             <TableHead>Data Vencimento</TableHead>
