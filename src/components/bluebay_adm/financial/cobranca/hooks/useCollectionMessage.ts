@@ -22,28 +22,23 @@ export const useCollectionMessage = (
     clientTitles.forEach(title => {
       const formattedDate = title.DTVENCIMENTO ? format(new Date(title.DTVENCIMENTO), 'dd/MM/yyyy', { locale: ptBR }) : 'N/A';
       
-      titlesText += `\nNº do Título: ${title.NUMDOCUMENTO || title.NUMNOTA}
-Valor: ${formatCurrency(title.VLRSALDO)}
-Vencimento: ${formattedDate}\n`;
+      titlesText += `\nNº do Título: ${title.NUMDOCUMENTO || title.NUMNOTA}\nValor: ${formatCurrency(title.VLRSALDO)}\nVencimento: ${formattedDate}\n`;
     });
     
     // Calcular os totais para incluir na mensagem
     const totalTitulos = clientTitles.length;
     const valorTotalTitulos = clientTitles.reduce((total, title) => total + title.VLRSALDO, 0);
 
-    const totalInfo = `\nTotal de Títulos Vencidos: ${totalTitulos}
-Valor Total dos Títulos: ${formatCurrency(valorTotalTitulos)}\n`;
+    const totalInfo = `\nTotal de Títulos Vencidos: ${totalTitulos}\nValor Total dos Títulos: ${formatCurrency(valorTotalTitulos)}\n`;
     
-    const messageText = `Assunto: Títulos em atraso - Bluebay
-
-Olá,
+    // Usar template string (com crase) para facilitar múltiplas linhas e manter formatação
+    const messageText = `Olá,
 
 Verificamos que a empresa ${selectedClient.CLIENTE_NOME} possui título(s) com vencimento em aberto junto à Bluebay.
 
 Pedimos a gentileza de acessar nosso portal para realizar o download dos boletos e efetuar o pagamento o quanto antes, evitando assim encargos adicionais ou restrições comerciais.
 
-Segue abaixo o(s) título(s) vencido(s):
-${titlesText}
+Segue abaixo o(s) título(s) vencido(s):${titlesText}
 ${totalInfo}
 Acesse seu portal através do link abaixo:
 🔗 Acessar Portal Bluebay

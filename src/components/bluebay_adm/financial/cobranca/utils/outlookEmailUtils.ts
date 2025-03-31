@@ -27,22 +27,26 @@ export const sendOutlookEmail = async (params: OutlookEmailParams): Promise<void
   console.log(`Iniciando tentativa de envio de e-mail para ${clientName}`);
   
   try {
-    // Formatar o corpo do e-mail para texto plano e substituir quebras de linha HTML por \n
-    const plainTextBody = body.replace(/<br\s*\/?>/gi, "\n");
-    
     // Construir a URL do Outlook Web com formato correto
     const outlookUrl = "https://outlook.office.com/mail/deeplink/compose";
     
-    // Codificar parâmetros corretamente para evitar problemas de formatação
+    // Preparar os parâmetros sem codificar ainda (mantém a formatação original)
+    const plainTextBody = body.replace(/<br\s*\/?>/gi, "\n");
+    
+    // Construir a URL com parâmetros corretamente codificados
+    // Importante: Apenas codificar na hora de montar a URL final
     const urlParams = new URLSearchParams();
-    if (to) urlParams.append("to", to);
-    urlParams.append("subject", subject);
-    urlParams.append("body", plainTextBody);
-    if (cc) urlParams.append("cc", cc);
-    if (bcc) urlParams.append("bcc", bcc);
+    if (to) urlParams.append("to", encodeURIComponent(to));
+    urlParams.append("subject", encodeURIComponent(subject));
+    urlParams.append("body", encodeURIComponent(plainTextBody));
+    if (cc) urlParams.append("cc", encodeURIComponent(cc));
+    if (bcc) urlParams.append("bcc", encodeURIComponent(bcc));
+    
+    // Remover o encoding duplo que o URLSearchParams adiciona
+    const paramsString = urlParams.toString().replace(/\+/g, '%20');
     
     // Construir a URL final
-    const finalUrl = `${outlookUrl}?${urlParams.toString()}`;
+    const finalUrl = `${outlookUrl}?${paramsString}`;
     
     // Log para debug
     console.log(`Abrindo e-mail de cobrança para cliente: ${clientName}`);
@@ -69,11 +73,10 @@ export const sendMailtoEmail = async (params: OutlookEmailParams): Promise<void>
   
   try {
     // Formatamos o corpo do e-mail para mailto (RFC 6068)
-    const encodedSubject = encodeURIComponent(subject);
-    const encodedBody = encodeURIComponent(body.replace(/<br\s*\/?>/gi, "\n"));
+    const plainTextBody = body.replace(/<br\s*\/?>/gi, "\n");
     
-    // Construir os parâmetros completos
-    let mailtoParams = `subject=${encodedSubject}&body=${encodedBody}`;
+    // Construir os parâmetros completos com encoding adequado
+    let mailtoParams = `subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(plainTextBody)}`;
     if (to) mailtoParams += `&to=${encodeURIComponent(to)}`;
     if (cc) mailtoParams += `&cc=${encodeURIComponent(cc)}`;
     if (bcc) mailtoParams += `&bcc=${encodeURIComponent(bcc)}`;
@@ -101,7 +104,13 @@ export const sendMailtoEmail = async (params: OutlookEmailParams): Promise<void>
  */
 export const createDirectEmailButton = (to: string, subject: string, body: string) => {
   return () => {
-    const url = `https://outlook.office.com/mail/deeplink/compose?to=${encodeURIComponent(to)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    // Encode parameters properly for URL
+    const encodedTo = encodeURIComponent(to);
+    const encodedSubject = encodeURIComponent(subject);
+    const encodedBody = encodeURIComponent(body);
+    
+    // Build URL with proper encoding
+    const url = `https://outlook.office.com/mail/deeplink/compose?to=${encodedTo}&subject=${encodedSubject}&body=${encodedBody}`;
     window.open(url, "_blank");
   };
 };
