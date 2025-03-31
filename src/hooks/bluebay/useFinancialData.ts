@@ -45,7 +45,7 @@ export const useFinancialData = () => {
           typeof titulo.PES_CODIGO === 'string' ? 
             titulo.PES_CODIGO : String(titulo.PES_CODIGO)
         )
-      )].filter(Boolean) as (string | number)[];
+      )].filter(Boolean) as Array<string | number>;
       
       console.info(`Found ${clienteCodigos.length} unique client codes in titles`);
       

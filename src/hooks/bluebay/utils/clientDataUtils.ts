@@ -16,7 +16,7 @@ export const getClientName = (clientInfo?: ClientInfo | null): string => {
 };
 
 // Fetch client data from BLUEBAY_PESSOA table
-export const fetchClientData = async (clienteCodigos: (string | number)[]): Promise<Map<number, ClientInfo>> => {
+export const fetchClientData = async (clienteCodigos: Array<string | number>): Promise<Map<number, ClientInfo>> => {
   const clientesMap = new Map<number, ClientInfo>();
   
   // Convert all client codes to string for query
