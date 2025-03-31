@@ -43,6 +43,7 @@ export const sendOutlookEmail = async (params: OutlookEmailParams): Promise<void
   
   // Registrar interação para análise
   console.log(`Abrindo e-mail de cobrança para cliente: ${clientName}`);
+  console.log(`URL mailto: ${mailtoUrl.substring(0, 100)}...`);
   
   try {
     // Abrir o cliente de e-mail padrão (Outlook)
