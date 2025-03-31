@@ -3,7 +3,7 @@ import { useState, useCallback } from "react";
 import * as XLSX from "xlsx";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ConsolidatedInvoice, FinancialTitle } from "./useFinancialData";
+import { ConsolidatedInvoice, FinancialTitle } from "./types/financialTypes";
 import { ClientFinancialSummary } from "./useFinancialFilters";
 
 interface UseFinancialExportParams {

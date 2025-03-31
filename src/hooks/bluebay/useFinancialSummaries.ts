@@ -1,6 +1,6 @@
 
 import { useMemo } from "react";
-import { ConsolidatedInvoice, FinancialTitle } from "./useFinancialData";
+import { ConsolidatedInvoice, FinancialTitle } from "./types/financialTypes";
 import { ClientFinancialSummary } from "./useFinancialFilters";
 
 export interface FinancialSummary {

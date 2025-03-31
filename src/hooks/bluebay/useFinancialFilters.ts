@@ -1,6 +1,6 @@
 
 import { useState, useCallback, useMemo } from "react";
-import { ConsolidatedInvoice, FinancialTitle } from "./useFinancialData";
+import { ConsolidatedInvoice, FinancialTitle } from "./types/financialTypes";
 
 export interface ClientFinancialSummary {
   PES_CODIGO: string | number;
