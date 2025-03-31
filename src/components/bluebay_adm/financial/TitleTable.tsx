@@ -39,6 +39,7 @@ export const TitleTable: React.FC<TitleTableProps> = ({ titles, isLoading }) => 
         <TableHeader>
           <TableRow>
             <TableHead>Nº Título</TableHead>
+            <TableHead>Nº Nota</TableHead>
             <TableHead>Cliente</TableHead>
             <TableHead>Data Emissão</TableHead>
             <TableHead>Vencimento</TableHead>
@@ -51,7 +52,8 @@ export const TitleTable: React.FC<TitleTableProps> = ({ titles, isLoading }) => 
         <TableBody>
           {titles.map((title, index) => (
             <TableRow key={`${title.NUMNOTA}-${index}`}>
-              <TableCell className="font-medium">{title.NUMNOTA}</TableCell>
+              <TableCell className="font-medium">{title.NUMDOCUMENTO || '-'}</TableCell>
+              <TableCell>{title.NUMNOTA}</TableCell>
               <TableCell className="max-w-[200px] truncate" title={title.CLIENTE_NOME}>
                 {title.CLIENTE_NOME}
               </TableCell>
