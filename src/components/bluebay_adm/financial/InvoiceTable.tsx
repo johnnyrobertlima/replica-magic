@@ -41,6 +41,7 @@ export const InvoiceTable: React.FC<InvoiceTableProps> = ({ invoices, isLoading 
             <TableHead>Nota</TableHead>
             <TableHead>Cliente</TableHead>
             <TableHead>Data Emissão</TableHead>
+            <TableHead>Data Vencimento</TableHead>
             <TableHead>Valor Total</TableHead>
             <TableHead>Valor Pago</TableHead>
             <TableHead>Saldo</TableHead>
@@ -56,6 +57,9 @@ export const InvoiceTable: React.FC<InvoiceTableProps> = ({ invoices, isLoading 
               </TableCell>
               <TableCell>
                 {invoice.DATA_EMISSAO ? format(new Date(invoice.DATA_EMISSAO), 'dd/MM/yyyy', { locale: ptBR }) : '-'}
+              </TableCell>
+              <TableCell>
+                {invoice.DATA_VENCIMENTO ? format(new Date(invoice.DATA_VENCIMENTO), 'dd/MM/yyyy', { locale: ptBR }) : '-'}
               </TableCell>
               <TableCell>{formatCurrency(invoice.VALOR_NOTA)}</TableCell>
               <TableCell>{formatCurrency(invoice.VALOR_PAGO)}</TableCell>

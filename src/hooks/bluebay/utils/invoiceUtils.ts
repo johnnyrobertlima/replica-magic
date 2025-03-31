@@ -35,6 +35,7 @@ export const createConsolidatedInvoice = (
   return {
     NOTA: String(item.NOTA),
     DATA_EMISSAO: dataEmissao,
+    DATA_VENCIMENTO: null, // Will be populated from titles
     STATUS: item.STATUS || "1", // Default to "Em Aberto"
     VALOR_NOTA: invoiceValue,
     VALOR_PAGO: 0, // We'll calculate this from titles

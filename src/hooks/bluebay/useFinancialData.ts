@@ -76,7 +76,19 @@ export const useFinancialData = () => {
       // Process invoices
       const consolidatedData: ConsolidatedInvoice[] = [];
       for (const item of faturamento) {
-        consolidatedData.push(createConsolidatedInvoice(item, clientesMap));
+        const invoice = createConsolidatedInvoice(item, clientesMap);
+        
+        // Find matching titles for this invoice to get due date
+        const matchingTitles = titulos?.filter(titulo => 
+          String(titulo.NUMNOTA) === String(item.NOTA)) || [];
+        
+        // Set due date from the title if available
+        if (matchingTitles.length > 0) {
+          invoice.DATA_VENCIMENTO = matchingTitles[0].DTVENCIMENTO || 
+            matchingTitles[0].DTVENCTO || null;
+        }
+        
+        consolidatedData.push(invoice);
       }
       
       // Update invoice values based on related titles

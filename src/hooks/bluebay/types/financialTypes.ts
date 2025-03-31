@@ -16,6 +16,7 @@ export interface FinancialTitle {
 export interface ConsolidatedInvoice {
   NOTA: string;
   DATA_EMISSAO: string;
+  DATA_VENCIMENTO: string | null;
   STATUS: string;
   VALOR_NOTA: number;
   VALOR_PAGO: number;
