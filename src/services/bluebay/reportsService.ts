@@ -47,7 +47,7 @@ const fetchBluebayFaturamentoData = async (startDate?: string, endDate?: string)
       const { data: pedidoData, error: pedidoError } = await supabase
         .from("BLUEBAY_PEDIDO")
         .select("CENTROCUSTO")
-        .limit(10);
+        .limit(20);
         
       if (pedidoError) {
         console.error("Erro ao consultar tabela de pedidos:", pedidoError);
