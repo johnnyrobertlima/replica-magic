@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -42,11 +41,20 @@ export const CobrancaTable: React.FC<CobrancaTableProps> = ({
       if (clienteCodigos.length === 0) return;
       
       try {
-        // Buscar informações dos clientes (incluindo email)
+        // Fix: Convert string[] to number[] for the IN condition
+        // Using .map(Number) to convert strings to numbers
+        const clienteCodigosNumeric = clienteCodigos.map(code => {
+          // If code is already a number as string, convert it
+          // If it can't be converted to a valid number, use a fallback like -1
+          const numericValue = Number(code);
+          return isNaN(numericValue) ? -1 : numericValue;
+        });
+        
+        // Now use the numeric array for the IN condition
         const { data: clientes, error } = await supabase
           .from('BLUEBAY_PESSOA')
           .select('PES_CODIGO, EMAIL')
-          .in('PES_CODIGO', clienteCodigos);
+          .in('PES_CODIGO', clienteCodigosNumeric);
         
         if (error) {
           console.error("Erro ao buscar emails dos clientes:", error);
