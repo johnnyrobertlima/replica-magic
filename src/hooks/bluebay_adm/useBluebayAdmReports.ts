@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { 
   fetchBluebayItemsReport, 
@@ -9,7 +8,6 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { format, subDays } from "date-fns";
 
-// Define our DateRange interface to match other hooks
 export interface DateRange {
   startDate: Date | null;
   endDate: Date | null;
@@ -32,7 +30,6 @@ export const useBluebayAdmReports = () => {
       setIsLoading(true);
       setError(null);
       
-      // Verificar se as datas estão definidas
       console.info("Objeto dateRange:", dateRange);
       console.info("dateRange.startDate é Date?", dateRange.startDate instanceof Date);
       console.info("dateRange.endDate é Date?", dateRange.endDate instanceof Date);
