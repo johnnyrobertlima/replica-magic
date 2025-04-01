@@ -49,45 +49,22 @@ export const fetchBluebayFaturamento = async (
       console.log("Aplicando filtro de data:", true);
     }
 
-    // Construir a consulta relacionando BLUEBAY_FATURAMENTO com BLUEBAY_PEDIDO
-    // e filtrando por CENTROCUSTO = 'BLUEBAY'
-    let query = supabase
-      .from('BLUEBAY_FATURAMENTO')
-      .select('*')
-      .eq('BLUEBAY_PEDIDO.CENTROCUSTO', 'BLUEBAY')
-      .match({ 
-        'BLUEBAY_PEDIDO.CENTROCUSTO': 'BLUEBAY' 
-      })
-      .join('BLUEBAY_PEDIDO', function(query) {
-        query
-          .on('BLUEBAY_FATURAMENTO.PED_NUMPEDIDO', 'BLUEBAY_PEDIDO.PED_NUMPEDIDO')
-          .on('BLUEBAY_FATURAMENTO.PED_ANOBASE', 'BLUEBAY_PEDIDO.PED_ANOBASE');
+    // Utilizar o procedimento RPC get_bluebay_faturamento que está no banco de dados
+    // Este procedimento faz a junção entre BLUEBAY_FATURAMENTO e BLUEBAY_PEDIDO
+    // e aplica o filtro CENTROCUSTO = 'BLUEBAY'
+    const { data, error } = await supabase
+      .rpc('get_bluebay_faturamento', { 
+        start_date: filter.startDate, 
+        end_date: filter.endDate 
       });
 
-    // Aplicar filtros de data se fornecidos
-    if (filter.startDate && filter.endDate) {
-      query = query
-        .gte('DATA_EMISSAO', filter.startDate)
-        .lte('DATA_EMISSAO', filter.endDate);
-    }
-
-    const { data, error } = await query;
-
     if (error) {
-      console.error("Erro na consulta JOIN entre tabelas:", error);
+      console.error("Erro ao chamar função RPC:", error);
       throw error;
     }
 
-    // Filtrar apenas os dados da tabela BLUEBAY_FATURAMENTO
-    // do resultado do JOIN
-    const faturamentoData = data.map(item => {
-      // Extrair apenas os dados do faturamento do resultado do JOIN
-      // que vêm na propriedade BLUEBAY_FATURAMENTO
-      return item.BLUEBAY_FATURAMENTO as BluebayFaturamentoItem;
-    });
-
-    console.info(`Buscados ${faturamentoData?.length || 0} registros de faturamento para CENTROCUSTO = BLUEBAY`);
-    return faturamentoData || [];
+    console.info(`Buscados ${data?.length || 0} registros de faturamento para CENTROCUSTO = BLUEBAY`);
+    return data || [];
   } catch (error) {
     console.error("Erro ao buscar dados de faturamento:", error);
     throw error;
