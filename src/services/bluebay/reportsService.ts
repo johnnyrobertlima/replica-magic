@@ -6,6 +6,10 @@ const fetchBluebayFaturamentoData = async (startDate?: string, endDate?: string)
   try {
     console.info("Buscando dados de faturamento com função RPC:", { startDate, endDate });
     
+    // Teste: remover filtros de data para verificar se retorna algum dado
+    const temFiltroData = startDate !== undefined || endDate !== undefined;
+    console.log("Aplicando filtro de data:", temFiltroData);
+    
     // Usando a função RPC para buscar os dados de faturamento
     const { data: rpcData, error: rpcError } = await supabase.rpc('get_bluebay_faturamento', {
       start_date: startDate,
@@ -18,6 +22,42 @@ const fetchBluebayFaturamentoData = async (startDate?: string, endDate?: string)
     }
 
     console.log("Dados retornados da função RPC:", rpcData);
+    
+    // Verificar quantos registros foram retornados
+    const quantidadeRegistros = Array.isArray(rpcData) ? rpcData.length : 0;
+    console.log(`Quantidade de registros retornados: ${quantidadeRegistros}`);
+    
+    // Se não retornou dados, tentar fazer uma consulta direta à tabela para debug
+    if (quantidadeRegistros === 0) {
+      console.log("Tentando consultar diretamente a tabela BLUEBAY_FATURAMENTO...");
+      const { data: directData, error: directError } = await supabase
+        .from("BLUEBAY_FATURAMENTO")
+        .select("*")
+        .limit(5);
+        
+      if (directError) {
+        console.error("Erro ao consultar diretamente a tabela:", directError);
+      } else {
+        console.log("Amostra direta da tabela BLUEBAY_FATURAMENTO:", directData);
+        console.log("Quantidade de registros na amostra direta:", directData?.length || 0);
+      }
+      
+      // Verificar também a tabela BLUEBAY_PEDIDO para confirmar a condição CENTROCUSTO
+      console.log("Consultando amostra da tabela BLUEBAY_PEDIDO...");
+      const { data: pedidoData, error: pedidoError } = await supabase
+        .from("BLUEBAY_PEDIDO")
+        .select("CENTROCUSTO")
+        .limit(10);
+        
+      if (pedidoError) {
+        console.error("Erro ao consultar tabela de pedidos:", pedidoError);
+      } else {
+        console.log("Valores únicos de CENTROCUSTO encontrados:", 
+          [...new Set(pedidoData?.map(p => p.CENTROCUSTO))]
+        );
+      }
+    }
+    
     return rpcData || [];
   } catch (error) {
     console.error("Erro ao buscar dados de faturamento:", error);
@@ -35,6 +75,12 @@ const processFaturamentoData = async (faturamentoData: any[]) => {
     
     // Extrair códigos de itens únicos
     const itemCodes = [...new Set(faturamentoData.map(item => item.ITEM_CODIGO).filter(Boolean))];
+    console.log("Códigos de itens únicos encontrados:", itemCodes.length);
+    
+    if (itemCodes.length === 0) {
+      console.log("Nenhum código de item encontrado para processar");
+      return [];
+    }
     
     // Buscar detalhes dos itens
     const { data: itemsData, error: itemsError } = await supabase
@@ -47,6 +93,8 @@ const processFaturamentoData = async (faturamentoData: any[]) => {
       throw itemsError;
     }
     
+    console.log("Detalhes de itens encontrados:", itemsData?.length || 0);
+    
     // Criar mapa de itens para lookup rápido
     const itemsMap = new Map();
     itemsData?.forEach(item => {
@@ -55,6 +103,11 @@ const processFaturamentoData = async (faturamentoData: any[]) => {
 
     // Extrair códigos de clientes únicos
     const clienteCodes = [...new Set(faturamentoData.map(item => item.PES_CODIGO).filter(Boolean))];
+    console.log("Códigos de clientes únicos encontrados:", clienteCodes.length);
+    
+    if (clienteCodes.length === 0) {
+      console.log("Nenhum código de cliente encontrado para processar");
+    }
     
     // Buscar informações dos clientes
     const { data: clientesData, error: clientesError } = await supabase
@@ -66,6 +119,8 @@ const processFaturamentoData = async (faturamentoData: any[]) => {
       console.error("Erro ao buscar informações dos clientes:", clientesError);
       throw clientesError;
     }
+    
+    console.log("Informações de clientes encontradas:", clientesData?.length || 0);
     
     // Criar mapa de clientes para lookup rápido
     const clientesMap = new Map();
@@ -110,6 +165,8 @@ const processFaturamentoData = async (faturamentoData: any[]) => {
 
     // Ordenar por TOTAL_VALOR decrescente
     processedItems.sort((a, b) => b.TOTAL_VALOR - a.TOTAL_VALOR);
+    
+    console.log("Itens processados com sucesso:", processedItems.length);
 
     return processedItems;
   } catch (error) {
@@ -167,6 +224,13 @@ export const getBluebayItemDetails = async (itemCode: string, startDate?: string
     const filteredData = faturamentoData.filter(item => 
       item.ITEM_CODIGO === itemCode && item.NOTA
     );
+
+    console.log(`Dados filtrados para o item ${itemCode}:`, filteredData.length);
+    
+    if (filteredData.length === 0) {
+      console.log(`Nenhum detalhe encontrado para o item ${itemCode}`);
+      return [];
+    }
 
     // Extrair códigos de clientes únicos
     const clienteCodes = [...new Set(filteredData.map(item => item.PES_CODIGO).filter(Boolean))];
