@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { formatISO } from "date-fns";
 
@@ -7,12 +6,9 @@ const fetchBluebayFaturamentoData = async (startDate?: string, endDate?: string)
     console.info("Buscando dados de faturamento com função RPC:", { startDate, endDate });
     
     // Usando a função RPC para buscar os dados de faturamento
-    // Note que estamos usando .fn.invoke() em vez de .rpc() para evitar o erro de tipagem
-    const { data: rpcData, error: rpcError } = await supabase.fn.invoke('get_bluebay_faturamento', {
-      body: { 
-        start_date: startDate,
-        end_date: endDate
-      }
+    const { data: rpcData, error: rpcError } = await supabase.rpc('get_bluebay_faturamento', {
+      start_date: startDate,
+      end_date: endDate
     });
 
     if (rpcError) {
