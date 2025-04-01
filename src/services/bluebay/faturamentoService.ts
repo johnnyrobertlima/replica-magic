@@ -50,58 +50,99 @@ export const fetchBluebayFaturamento = async (
       console.log("Datas formatadas:", filter.startDate, filter.endDate);
     }
 
-    // Utilizar o procedimento RPC get_bluebay_faturamento que está no banco de dados
-    // Este procedimento faz a junção entre BLUEBAY_FATURAMENTO e BLUEBAY_PEDIDO
-    // e aplica o filtro CENTROCUSTO = 'BLUEBAY'
-    console.log("Chamando função RPC com parâmetros:", { 
-      start_date: filter.startDate, 
-      end_date: filter.endDate 
-    });
-    
+    // Tentativa alternativa: buscar diretamente da tabela com join na query em vez de usar a função RPC
     const { data, error } = await supabase
-      .rpc('get_bluebay_faturamento', { 
-        start_date: filter.startDate, 
-        end_date: filter.endDate 
-      });
+      .from("BLUEBAY_FATURAMENTO")
+      .select("*")
+      .gte("DATA_EMISSAO", filter.startDate || "1900-01-01")
+      .lte("DATA_EMISSAO", filter.endDate || "2100-12-31");
 
     if (error) {
-      console.error("Erro ao chamar função RPC:", error);
+      console.error("Erro ao buscar dados de faturamento:", error);
       throw error;
     }
 
-    console.info(`Buscados ${data?.length || 0} registros de faturamento para CENTROCUSTO = BLUEBAY`);
-    
-    // Verificar se temos dados válidos
-    if (!data || data.length === 0) {
-      console.log("Nenhum dado retornado da função RPC");
+    // Filtrar apenas itens que pertencem a pedidos com CENTROCUSTO = 'BLUEBAY'
+    // Essa é uma solução temporária até corrigirmos a função RPC
+    const pedidosPromise = supabase
+      .from("BLUEBAY_PEDIDO")
+      .select("MATRIZ, FILIAL, PED_NUMPEDIDO, PED_ANOBASE, MPED_NUMORDEM")
+      .eq("CENTROCUSTO", "BLUEBAY");
+
+    const { data: pedidosData, error: pedidosError } = await pedidosPromise;
+
+    if (pedidosError) {
+      console.error("Erro ao buscar pedidos BLUEBAY:", pedidosError);
+      throw pedidosError;
+    }
+
+    // Criar um mapa para facilitar a verificação
+    const pedidosMap = new Map();
+    pedidosData?.forEach(pedido => {
+      const key = `${pedido.MATRIZ}-${pedido.FILIAL}-${pedido.PED_NUMPEDIDO}-${pedido.PED_ANOBASE}-${pedido.MPED_NUMORDEM}`;
+      pedidosMap.set(key, true);
+    });
+
+    // Filtrar os faturamentos que correspondem aos pedidos BLUEBAY
+    const filteredData = data?.filter(fatura => {
+      if (!fatura.PED_NUMPEDIDO || !fatura.PED_ANOBASE || !fatura.MPED_NUMORDEM) {
+        return false;
+      }
       
-      // Vamos verificar diretamente nas tabelas para diagnóstico
-      const { data: diagnosticData, error: diagnosticError } = await supabase
+      const key = `${fatura.MATRIZ}-${fatura.FILIAL}-${fatura.PED_NUMPEDIDO}-${fatura.PED_ANOBASE}-${fatura.MPED_NUMORDEM}`;
+      return pedidosMap.has(key);
+    }) || [];
+
+    console.info(`Buscados ${filteredData.length} registros de faturamento para CENTROCUSTO = BLUEBAY`);
+
+    // Se não temos dados ainda, faça uma verificação direta da tabela para diagnóstico
+    if (filteredData.length === 0) {
+      console.log("Nenhum dado filtrado encontrado");
+      
+      // Verificar se há dados na tabela de faturamento
+      const { count: faturamentoCount, error: countError } = await supabase
         .from('BLUEBAY_FATURAMENTO')
-        .select('count(*)')
-        .limit(1);
+        .select('*', { count: 'exact', head: true });
         
-      if (diagnosticError) {
-        console.error("Erro ao fazer diagnóstico:", diagnosticError);
+      if (countError) {
+        console.error("Erro ao verificar quantidade de faturamento:", countError);
       } else {
-        console.log("Diagnóstico de dados disponíveis:", diagnosticData);
+        console.log(`Total de registros na tabela BLUEBAY_FATURAMENTO: ${faturamentoCount}`);
       }
       
       // Verificar se há pedidos com CENTROCUSTO = 'BLUEBAY'
-      const { data: pedidosData, error: pedidosError } = await supabase
+      const { count: pedidosCount, error: pedidosCountError } = await supabase
         .from('BLUEBAY_PEDIDO')
-        .select('count(*)')
-        .eq('CENTROCUSTO', 'BLUEBAY')
-        .limit(1);
+        .select('*', { count: 'exact', head: true })
+        .eq('CENTROCUSTO', 'BLUEBAY');
         
-      if (pedidosError) {
-        console.error("Erro ao verificar pedidos BLUEBAY:", pedidosError);
+      if (pedidosCountError) {
+        console.error("Erro ao verificar quantidade de pedidos BLUEBAY:", pedidosCountError);
       } else {
-        console.log("Pedidos com CENTROCUSTO = BLUEBAY:", pedidosData);
+        console.log(`Total de pedidos com CENTROCUSTO = BLUEBAY: ${pedidosCount}`);
+      }
+
+      // Verificar dados recentes para fins de teste
+      const { data: recentData, error: recentError } = await supabase
+        .from('BLUEBAY_FATURAMENTO')
+        .select('*')
+        .order('DATA_EMISSAO', { ascending: false })
+        .limit(5);
+        
+      if (recentError) {
+        console.error("Erro ao buscar dados recentes:", recentError);
+      } else if (recentData && recentData.length > 0) {
+        console.log("Amostra de dados recentes de faturamento:", 
+          recentData.map(item => ({
+            data: item.DATA_EMISSAO,
+            pedido: item.PED_NUMPEDIDO,
+            item: item.ITEM_CODIGO
+          }))
+        );
       }
     }
     
-    return data || [];
+    return filteredData;
   } catch (error) {
     console.error("Erro ao buscar dados de faturamento:", error);
     throw error;

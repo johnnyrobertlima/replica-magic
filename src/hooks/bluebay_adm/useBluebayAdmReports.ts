@@ -49,9 +49,11 @@ export const useBluebayAdmReports = () => {
           console.info("Nenhum item encontrado para o período selecionado");
           toast({
             title: "Sem dados",
-            description: "Nenhum item encontrado para o período selecionado.",
+            description: "Nenhum item encontrado para o período selecionado. Verifique os filtros ou tente outro período.",
             variant: "default",
           });
+        } else {
+          console.info(`Carregados ${data.length} itens para exibição`);
         }
         
         setItems(data);
@@ -83,6 +85,7 @@ export const useBluebayAdmReports = () => {
   }, [dateRange.startDate, dateRange.endDate]);
 
   const refreshData = () => {
+    console.log("Atualizando dados do relatório");
     loadData();
   };
 
