@@ -73,10 +73,10 @@ export async function fetchItemDetailsByCentrocusto(
       return {
         NOTA: fat.NOTA || '',
         DATA_EMISSAO: fat.DATA_EMISSAO || '',
-        CLIENTE_NOME: client.APELIDO || client.RAZAOSOCIAL || `Cliente ${fat.PES_CODIGO}`,
+        CLIENTE_NOME: client.APELIDO || client.RAZAOSOCIAL || `Cliente ${pesCodigoStr}`,
         PES_CODIGO: fat.PES_CODIGO || 0,
-        QUANTIDADE: parseFloat(fat.QUANTIDADE) || 0,
-        VALOR_UNITARIO: parseFloat(fat.VALOR_UNITARIO) || 0,
+        QUANTIDADE: parseFloat(String(fat.QUANTIDADE)) || 0,
+        VALOR_UNITARIO: parseFloat(String(fat.VALOR_UNITARIO)) || 0,
         FATOR_CORRECAO: client.fator_correcao || null
       };
     });

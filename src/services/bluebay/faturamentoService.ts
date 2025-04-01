@@ -35,7 +35,7 @@ export async function fetchBluebayFaturamento(startDate: string, endDate: string
     // Se não houver dados ou ocorrer um erro, faça uma consulta direta à tabela
     console.log("Tentando consultar diretamente a tabela BLUEBAY_FATURAMENTO...");
 
-    // Se não houver dados ou ocorrer um erro, faça uma consulta direta à tabela
+    // Consulta direta à tabela para amostra
     const { data: tableData, error: tableError } = await supabase
       .from("BLUEBAY_FATURAMENTO")
       .select("*")
@@ -49,8 +49,11 @@ export async function fetchBluebayFaturamento(startDate: string, endDate: string
       throw tableError;
     }
 
-    console.log("Amostra direta da tabela BLUEBAY_FATURAMENTO:", tableData);
-    console.log("Quantidade de registros na amostra direta:", tableData ? tableData.length : 0);
+    // Log da amostra para debug
+    if (tableData) {
+      console.log("Amostra direta da tabela BLUEBAY_FATURAMENTO:", tableData);
+      console.log("Quantidade de registros na amostra direta:", tableData.length);
+    }
 
     // Consultar a tabela completa com filtros
     const { data: fullData, error: fullError } = await supabase
