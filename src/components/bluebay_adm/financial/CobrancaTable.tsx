@@ -1,16 +1,20 @@
-import React, { useState, useEffect } from "react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
+import React, { useState } from "react";
+import { Table, TableBody, TableHeader } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FinancialTitle, ClientDebtSummary } from "@/hooks/bluebay/types/financialTypes";
+import { ClientDebtSummary } from "@/hooks/bluebay/types/financialTypes";
 import { useToast } from "@/components/ui/use-toast";
 import { ClientDetailedTitles } from "./cobranca/ClientDetailedTitles";
 import { CollectionMessageDialog } from "./cobranca/CollectionMessageDialog";
 import { ClientSummaryRow } from "./cobranca/ClientSummaryRow";
-import { calculateClientSummaries, sortClientSummaries, filterOverdueUnpaidTitles } from "./cobranca/utils/debtSummaryUtils";
-import { supabase } from "@/integrations/supabase/client";
+import { sortClientSummaries, filterOverdueUnpaidTitles } from "./cobranca/utils/debtSummaryUtils";
+import { useClientEmails } from "./cobranca/hooks/useClientEmails";
+import { CobrancaTableHeader } from "./cobranca/components/CobrancaTableHeader";
+import { EmptyTitlesMessage } from "./cobranca/components/EmptyTitlesMessage";
+import { ClientSummariesProcessor } from "./cobranca/components/ClientSummariesProcessor";
 
 interface CobrancaTableProps {
-  titles: FinancialTitle[];
+  titles: any[];
   isLoading: boolean;
   onClientSelect: (clientCode: string) => void;
   onCollectionStatusChange?: (clientCode: string, status: string) => void;
@@ -29,54 +33,8 @@ export const CobrancaTable: React.FC<CobrancaTableProps> = ({
   const [expandedClients, setExpandedClients] = useState<Set<string | number>>(new Set());
   const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<ClientDebtSummary | null>(null);
-  const [clientsEmailsMap, setClientsEmailsMap] = useState<Record<string, string>>({});
   const { toast } = useToast();
-
-  // Fetch cliente emails for all clients in the titles
-  useEffect(() => {
-    const fetchClientEmails = async () => {
-      // Extrair códigos de clientes únicos
-      const clienteCodigos = [...new Set(titles.map(title => String(title.PES_CODIGO)))];
-      
-      if (clienteCodigos.length === 0) return;
-      
-      try {
-        // Fix: Convert string[] to number[] for the IN condition
-        // Using .map(Number) to convert strings to numbers
-        const clienteCodigosNumeric = clienteCodigos.map(code => {
-          // If code is already a number as string, convert it
-          // If it can't be converted to a valid number, use a fallback like -1
-          const numericValue = Number(code);
-          return isNaN(numericValue) ? -1 : numericValue;
-        });
-        
-        // Now use the numeric array for the IN condition
-        const { data: clientes, error } = await supabase
-          .from('BLUEBAY_PESSOA')
-          .select('PES_CODIGO, EMAIL')
-          .in('PES_CODIGO', clienteCodigosNumeric);
-        
-        if (error) {
-          console.error("Erro ao buscar emails dos clientes:", error);
-          return;
-        }
-        
-        // Criar mapa de emails por código de cliente
-        const emailsMap: Record<string, string> = {};
-        clientes?.forEach(cliente => {
-          emailsMap[String(cliente.PES_CODIGO)] = cliente.EMAIL || "";
-        });
-        
-        setClientsEmailsMap(emailsMap);
-      } catch (error) {
-        console.error("Erro ao processar emails dos clientes:", error);
-      }
-    };
-    
-    if (titles.length > 0) {
-      fetchClientEmails();
-    }
-  }, [titles]);
+  const { clientsEmailsMap } = useClientEmails(titles);
 
   if (isLoading) {
     return (
@@ -97,27 +55,8 @@ export const CobrancaTable: React.FC<CobrancaTableProps> = ({
     : overdueUnpaidTitles.filter(title => !collectedClients.includes(String(title.PES_CODIGO)));
 
   if (filteredTitles.length === 0) {
-    return (
-      <div className="bg-muted/40 py-8 text-center rounded-md">
-        <p className="text-muted-foreground">
-          {showCollected 
-            ? "Nenhum título cobrado encontrado" 
-            : "Nenhum título vencido encontrado"}
-        </p>
-        <p className="text-sm text-muted-foreground">
-          {showCollected 
-            ? "Não há títulos que foram cobrados" 
-            : "Todos os títulos estão pagos, dentro do prazo ou já foram cobrados"}
-        </p>
-      </div>
-    );
+    return <EmptyTitlesMessage showCollected={showCollected} />;
   }
-
-  // Group by client and calculate totals
-  const clientSummaries = calculateClientSummaries(filteredTitles);
-  
-  // Convert to array and sort by total balance descending
-  const sortedClientSummaries = sortClientSummaries(clientSummaries);
 
   const toggleClientExpand = (clientCode: string | number) => {
     setExpandedClients(prev => {
@@ -164,44 +103,16 @@ export const CobrancaTable: React.FC<CobrancaTableProps> = ({
       <div className="border rounded-md">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead className="w-10"></TableHead>
-              <TableHead>Código Cliente</TableHead>
-              <TableHead>Nome Cliente</TableHead>
-              <TableHead>Qtd. Títulos</TableHead>
-              <TableHead>Dias Vencidos (máx)</TableHead>
-              <TableHead>Valor Saldo</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
-            </TableRow>
+            <CobrancaTableHeader />
           </TableHeader>
           <TableBody>
-            {sortedClientSummaries.map((summary) => {
-              const isExpanded = expandedClients.has(summary.PES_CODIGO);
-              const clientTitles = filteredTitles.filter(
-                title => String(title.PES_CODIGO) === String(summary.PES_CODIGO)
-              );
-              const isCollected = collectedClients.includes(String(summary.PES_CODIGO));
-              
-              return (
-                <React.Fragment key={summary.PES_CODIGO}>
-                  <ClientSummaryRow
-                    isExpanded={isExpanded}
-                    summary={summary}
-                    isCollected={isCollected}
-                    onToggleExpand={() => toggleClientExpand(summary.PES_CODIGO)}
-                    onOpenCollectionDialog={() => handleOpenCollectionDialog(summary)}
-                  />
-                  
-                  {isExpanded && (
-                    <TableRow className="bg-muted/20">
-                      <TableCell colSpan={7} className="p-0">
-                        <ClientDetailedTitles clientTitles={clientTitles} />
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </React.Fragment>
-              );
-            })}
+            <ClientSummariesProcessor 
+              filteredTitles={filteredTitles}
+              expandedClients={expandedClients}
+              collectedClients={collectedClients}
+              onToggleExpand={toggleClientExpand}
+              onOpenCollectionDialog={handleOpenCollectionDialog}
+            />
           </TableBody>
         </Table>
       </div>
