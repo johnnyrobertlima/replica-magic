@@ -8,9 +8,8 @@ export const fetchBluebayFaturamentoData = async (startDate?: string, endDate?: 
   try {
     console.info("Buscando dados de faturamento com função RPC:", { startDate, endDate });
     
-    // Teste: remover filtros de data para verificar se retorna algum dado
-    const temFiltroData = startDate !== undefined || endDate !== undefined;
-    console.log("Aplicando filtro de data:", temFiltroData);
+    // Verifica se a consulta está com o filtro correto de CENTROCUSTO
+    console.log("Aplicando filtro de CENTROCUSTO: BLUEBAY");
     
     // Usando a função RPC para buscar os dados de faturamento
     const { data: rpcData, error: rpcError } = await supabase.rpc('get_bluebay_faturamento', {
@@ -44,7 +43,7 @@ export const fetchBluebayFaturamentoData = async (startDate?: string, endDate?: 
         console.log("Quantidade de registros na amostra direta:", directData?.length || 0);
       }
       
-      // Verificar também a tabela BLUEBAY_PEDIDO para confirmar a condição CENTROCUSTO
+      // Verificar também a tabela BLUEBAY_PEDIDO para confirmar os valores de CENTROCUSTO
       console.log("Consultando amostra da tabela BLUEBAY_PEDIDO...");
       const { data: pedidoData, error: pedidoError } = await supabase
         .from("BLUEBAY_PEDIDO")
