@@ -6,9 +6,13 @@ const fetchBluebayFaturamentoData = async (startDate?: string, endDate?: string)
   try {
     console.info("Buscando dados de faturamento com função RPC:", { startDate, endDate });
     
-    const { data: rpcData, error: rpcError } = await supabase.rpc('get_bluebay_faturamento', {
-      start_date: startDate,
-      end_date: endDate
+    // Usando a função RPC para buscar os dados de faturamento
+    // Note que estamos usando .fn.invoke() em vez de .rpc() para evitar o erro de tipagem
+    const { data: rpcData, error: rpcError } = await supabase.fn.invoke('get_bluebay_faturamento', {
+      body: { 
+        start_date: startDate,
+        end_date: endDate
+      }
     });
 
     if (rpcError) {
@@ -120,8 +124,14 @@ export const getBluebayReportItems = async (startDate?: string, endDate?: string
       endDate
     });
 
-    // Buscar dados de faturamento usando a nova função RPC
-    const faturamentoData = await fetchBluebayFaturamentoData(formattedStartDate, formattedEndDate);
+    // Buscar dados de faturamento usando a função
+    const faturamentoData: any[] = await fetchBluebayFaturamentoData(formattedStartDate, formattedEndDate);
+    
+    // Verificar se os dados são um array antes de processar
+    if (!Array.isArray(faturamentoData)) {
+      console.error("Dados de faturamento não são um array:", faturamentoData);
+      return [];
+    }
     
     // Processar os dados para obter itens agrupados com totais
     const processedItems = await processFaturamentoData(faturamentoData);
@@ -140,7 +150,13 @@ export const getBluebayItemDetails = async (itemCode: string, startDate?: string
     const formattedEndDate = endDate ? `${endDate}T23:59:59Z` : undefined;
 
     // Buscar dados de faturamento
-    const faturamentoData = await fetchBluebayFaturamentoData(formattedStartDate, formattedEndDate);
+    const faturamentoData: any[] = await fetchBluebayFaturamentoData(formattedStartDate, formattedEndDate);
+    
+    // Verificar se os dados são um array antes de processar
+    if (!Array.isArray(faturamentoData)) {
+      console.error("Dados de faturamento não são um array:", faturamentoData);
+      return [];
+    }
     
     // Filtrar apenas os dados para o código de item específico
     const filteredData = faturamentoData.filter(item => 
@@ -154,7 +170,7 @@ export const getBluebayItemDetails = async (itemCode: string, startDate?: string
     const { data: clientesData, error: clientesError } = await supabase
       .from("BLUEBAY_PESSOA")
       .select("PES_CODIGO, APELIDO")
-      .in("PES_CODIGO", clienteCodes);
+      .in("PES_CODIGO", clienteCodes as number[]);
     
     if (clientesError) {
       console.error("Erro ao buscar informações dos clientes:", clientesError);
