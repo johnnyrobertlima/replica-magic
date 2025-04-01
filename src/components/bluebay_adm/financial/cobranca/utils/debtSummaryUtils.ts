@@ -15,16 +15,13 @@ export const calculateClientSummaries = (
         PES_CODIGO: title.PES_CODIGO,
         CLIENTE_NOME: title.CLIENTE_NOME,
         TOTAL_SALDO: 0,
-        DIAS_VENCIDO_MEDIO: 0,
-        DIAS_VENCIDO_MAXIMO: 0,
-        QUANTIDADE_TITULOS: 0,
-        VALOR_TOTAL: 0
+        DIAS_VENCIDO_MAX: 0,
+        QUANTIDADE_TITULOS: 0
       };
     }
     
     const summary = clientSummaries[clientKey];
     summary.TOTAL_SALDO += title.VLRSALDO;
-    summary.VALOR_TOTAL += title.VLRTITULO;
     summary.QUANTIDADE_TITULOS++;
     
     // Calculate days overdue and track maximum
@@ -33,18 +30,9 @@ export const calculateClientSummaries = (
       const diasVencido = differenceInDays(new Date(), vencimentoDate);
       
       // Update maximum overdue days if this title is older
-      if (diasVencido > summary.DIAS_VENCIDO_MAXIMO) {
-        summary.DIAS_VENCIDO_MAXIMO = diasVencido;
+      if (diasVencido > summary.DIAS_VENCIDO_MAX) {
+        summary.DIAS_VENCIDO_MAX = diasVencido;
       }
-      
-      summary.DIAS_VENCIDO_MEDIO += diasVencido;
-    }
-  });
-  
-  // Calculate average days overdue
-  Object.values(clientSummaries).forEach(summary => {
-    if (summary.QUANTIDADE_TITULOS > 0) {
-      summary.DIAS_VENCIDO_MEDIO = Math.round(summary.DIAS_VENCIDO_MEDIO / summary.QUANTIDADE_TITULOS);
     }
   });
   

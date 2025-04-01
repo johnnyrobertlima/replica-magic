@@ -20,15 +20,21 @@ export const processFinancialTitle = (
   const numdocumento = titulo.NUMDOCUMENTO ? String(titulo.NUMDOCUMENTO).trim() : null;
   
   return {
-    NUMNOTA: titulo.NUMNOTA,
+    MATRIZ: titulo.MATRIZ || 0,
+    FILIAL: titulo.FILIAL || 0,
+    NUMLCTO: titulo.NUMLCTO || 0,
+    ANOBASE: titulo.ANOBASE || 0,
     DTEMISSAO: titulo.DTEMISSAO,
     DTVENCIMENTO: titulo.DTVENCIMENTO || titulo.DTVENCTO,
     DTPAGTO: titulo.DTPAGTO,
+    VLRABATIMENTO: titulo.VLRABATIMENTO || 0,
     VLRDESCONTO: titulo.VLRDESCONTO || 0,
     VLRTITULO: titulo.VLRTITULO || 0,
     VLRSALDO: titulo.VLRSALDO || 0,
+    TIPO: titulo.TIPO || '',
     STATUS: titulo.STATUS,
     PES_CODIGO: titulo.PES_CODIGO,
+    NUMNOTA: titulo.NUMNOTA,
     CLIENTE_NOME: clienteInfo ? 
       (clienteInfo.RAZAOSOCIAL || clienteInfo.APELIDO || "Cliente sem nome") : 
       "Cliente não encontrado",

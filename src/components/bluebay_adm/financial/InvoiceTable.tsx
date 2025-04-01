@@ -12,7 +12,7 @@ import { ConsolidatedInvoice } from "@/hooks/bluebay/useFinancialData";
 interface InvoiceTableProps {
   invoices: ConsolidatedInvoice[];
   isLoading: boolean;
-  onViewTitles?: (pesCode: number) => void;
+  onViewTitles?: (pesCode: string | number) => void;
 }
 
 export const InvoiceTable: React.FC<InvoiceTableProps> = ({ 
@@ -41,7 +41,7 @@ export const InvoiceTable: React.FC<InvoiceTableProps> = ({
     );
   }
 
-  const handleViewTitles = (pesCode: number) => {
+  const handleViewTitles = (pesCode: string | number) => {
     if (onViewTitles) {
       onViewTitles(pesCode);
     }

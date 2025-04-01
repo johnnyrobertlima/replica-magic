@@ -16,7 +16,7 @@ export const ClientSummaryInfo: React.FC<ClientSummaryInfoProps> = ({ summary })
         {summary.CLIENTE_NOME}
       </TableCell>
       <TableCell>{summary.QUANTIDADE_TITULOS}</TableCell>
-      <TableCell className="text-amber-600 font-medium">{summary.DIAS_VENCIDO_MAXIMO} dias</TableCell>
+      <TableCell className="text-amber-600 font-medium">{summary.DIAS_VENCIDO_MAX} dias</TableCell>
       <TableCell className="text-red-600 font-medium">{formatCurrency(summary.TOTAL_SALDO)}</TableCell>
     </>
   );

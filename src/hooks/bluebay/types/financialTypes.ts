@@ -1,14 +1,15 @@
 
-import { DateRange } from "@/hooks/bluebay/types/financialTypes";
-
-// Re-export DateRange to avoid importing issues
-export type { DateRange };
-
 // Client information from the database
 export interface ClientInfo {
   APELIDO?: string;
   RAZAOSOCIAL?: string;
   EMAIL?: string;
+}
+
+// Date range for filtering
+export interface DateRange {
+  startDate: Date;
+  endDate: Date;
 }
 
 // Financial title interface
@@ -45,12 +46,6 @@ export interface ConsolidatedInvoice {
   STATUS: string;
   PES_CODIGO: string | number;
   CLIENTE_NOME: string;
-}
-
-// Date range for filtering
-export interface DateRange {
-  startDate: Date;
-  endDate: Date;
 }
 
 // Client debt summary for the collection feature

@@ -57,7 +57,7 @@ export const CollectedTitlesTable: React.FC<CollectedTitlesTableProps> = ({
                 <TableCell>{record.clientCode}</TableCell>
                 <TableCell>{record.status}</TableCell>
                 <TableCell>
-                  {format(new Date(record.collectionDate), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                  {format(new Date(record.date), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
                 </TableCell>
                 <TableCell>{record.collectedBy}</TableCell>
                 <TableCell className="text-right">

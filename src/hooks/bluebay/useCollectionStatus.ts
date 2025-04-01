@@ -47,10 +47,11 @@ export const useCollectionStatus = ({ userId, userName = "Usuário" }: UseCollec
       
       // Add a collection record
       const newRecord: CollectionRecord = {
+        id: `${clientCode}-${Date.now()}`,
         clientCode,
         clientName,
         collectedBy: userName || 'Usuário',
-        collectionDate: new Date(),
+        date: new Date(),
         status
       };
       
