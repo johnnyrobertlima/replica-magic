@@ -146,7 +146,7 @@ export const fetchBluebayItemsReport = async (
       endDate
     });
     
-    // Fetch faturamento data with date filter
+    // Fetch faturamento data with date filter - only from BLUEBAY
     const faturamentoData = await fetchBluebayFaturamento(startDate, endDate);
     
     if (!Array.isArray(faturamentoData) || faturamentoData.length === 0) {

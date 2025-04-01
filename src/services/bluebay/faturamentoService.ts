@@ -1,6 +1,5 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
 
 // Definir uma interface específica para evitar problemas de tipo excessivamente profundo
 export interface BluebayFaturamentoItem {
@@ -24,11 +23,6 @@ export interface BluebayFaturamentoItem {
   STATUS?: string;
 }
 
-interface FaturamentoFilter {
-  startDate?: string;
-  endDate?: string;
-}
-
 export const fetchBluebayFaturamento = async (
   startDate?: string,
   endDate?: string
@@ -39,24 +33,12 @@ export const fetchBluebayFaturamento = async (
       endDate
     });
 
-    const filter: FaturamentoFilter = {};
-
-    // Validar se as datas foram fornecidas
-    if (startDate && endDate) {
-      // Formatar datas para o banco de dados
-      filter.startDate = startDate;
-      filter.endDate = endDate + "T23:59:59Z"; // Incluir até o fim do dia
-      console.log("Aplicando filtro de data:", true);
-      console.log("Datas formatadas:", filter.startDate, filter.endDate);
-    }
-
-    // Buscar diretamente da tabela BLUEBAY_FATURAMENTO com filtro de data
+    // Usando a função RPC que filtra por CENTROCUSTO = 'BLUEBAY'
     const { data, error } = await supabase
-      .from("BLUEBAY_FATURAMENTO")
-      .select("*")
-      .gte("DATA_EMISSAO", filter.startDate || "1900-01-01")
-      .lte("DATA_EMISSAO", filter.endDate || "2100-12-31")
-      .limit(100); // Limitando para não sobrecarregar o sistema
+      .rpc('get_bluebay_faturamento', { 
+        start_date: startDate,
+        end_date: endDate ? endDate + "T23:59:59Z" : undefined // Incluir até o fim do dia
+      });
 
     if (error) {
       console.error("Erro ao buscar dados de faturamento:", error);
