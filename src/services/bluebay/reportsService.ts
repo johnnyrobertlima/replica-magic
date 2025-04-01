@@ -1,5 +1,5 @@
 
-// This is now just a barrel file that exports from the individual service modules
+// This is now a barrel file that exports from the individual service modules
 import { ItemReport, ItemDetail } from "./types";
 import { fetchBluebayItemsReport } from "./itemReportsService";
 import { fetchItemDetails } from "./itemDetailsService";
