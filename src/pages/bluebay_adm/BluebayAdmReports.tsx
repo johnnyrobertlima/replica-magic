@@ -32,8 +32,16 @@ const BluebayAdmReports = () => {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
             <h1 className="text-3xl font-bold tracking-tight mb-4 md:mb-0">Relatórios de Itens</h1>
             <DatePickerWithRange 
-              dateRange={dateRange} 
-              onDateRangeChange={updateDateRange} 
+              dateRange={{
+                from: dateRange.startDate,
+                to: dateRange.endDate
+              }}
+              onDateRangeChange={(range) => {
+                updateDateRange({
+                  startDate: range.from,
+                  endDate: range.to
+                });
+              }}
             />
           </div>
           
