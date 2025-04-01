@@ -165,23 +165,28 @@ export const fetchBluebayItemsReport = async (
         console.log("Amostra de dados recentes de faturamento:", sampleData);
         
         // Verificar se há dados no período especificado
-        const countResult = await supabase
-          .from('BLUEBAY_FATURAMENTO')
-          .select('*', { count: 'exact', head: true })
-          .gte('DATA_EMISSAO', startDate)
-          .lte('DATA_EMISSAO', endDate + 'T23:59:59');
-        
-        // Fix: Safely check if countResult has the count property
-        if (countResult.error) {
-          console.error("Erro ao verificar dados no período:", countResult.error);
-        } else {
-          const count = countResult.count !== null ? countResult.count : 0;
-          console.log(`Quantidade de registros no período ${startDate} a ${endDate}: ${count}`);
+        try {
+          const countResult = await supabase
+            .from('BLUEBAY_FATURAMENTO')
+            .select('*', { count: 'exact', head: true })
+            .gte('DATA_EMISSAO', startDate)
+            .lte('DATA_EMISSAO', endDate + 'T23:59:59');
+          
+          if (countResult.error) {
+            console.error("Erro ao verificar dados no período:", countResult.error);
+          } else {
+            const count = countResult.count !== null ? countResult.count : 0;
+            console.log(`Quantidade de registros no período ${startDate} a ${endDate}: ${count}`);
+          }
+        } catch (countError) {
+          console.error("Erro na consulta de contagem:", countError);
         }
       }
       
-      // Use test data ONLY in development AND if explicitly enabled
-      if (process.env.NODE_ENV === 'development' && process.env.REACT_APP_USE_TEST_DATA === 'true') {
+      // Use test data ONLY in development mode for demonstration
+      const isDevelopment = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+      
+      if (isDevelopment) {
         console.log("Usando dados de teste temporários para demonstração");
         return generateTestData();
       }
@@ -215,8 +220,10 @@ export const fetchBluebayItemsReport = async (
   } catch (error) {
     console.error("Error fetching item reports:", error);
     
-    // In development, return test data if there's an error AND if explicitly enabled
-    if (process.env.NODE_ENV === 'development' && process.env.REACT_APP_USE_TEST_DATA === 'true') {
+    // In development, return test data if there's an error
+    const isDevelopment = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+    
+    if (isDevelopment) {
       console.log("Using test data due to error");
       return generateTestData();
     }
