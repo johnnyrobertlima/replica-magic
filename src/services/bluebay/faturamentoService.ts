@@ -1,10 +1,34 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
+// Define a specific return type for the function
+interface BluebayFaturamentoItem {
+  MATRIZ: number;
+  FILIAL: number;
+  ID_EF_DOCFISCAL?: number;
+  ID_EF_DOCFISCAL_ITEM?: number;
+  PED_ANOBASE?: number;
+  MPED_NUMORDEM?: number;
+  PES_CODIGO?: number;
+  TRANSACAO?: number;
+  QUANTIDADE?: number;
+  VALOR_UNITARIO?: number;
+  VALOR_DESCONTO?: number;
+  VALOR_NOTA?: number;
+  DATA_EMISSAO?: string | Date;
+  PED_NUMPEDIDO?: string;
+  ITEM_CODIGO?: string;
+  TIPO?: string;
+  NOTA?: string;
+  STATUS?: string;
+  CENTROCUSTO?: string;
+  [key: string]: any; // Allow for any additional properties
+}
+
 /**
  * Busca dados de faturamento do Bluebay para o período especificado
  */
-export async function fetchBluebayFaturamento(startDate: string, endDate: string): Promise<any[]> {
+export async function fetchBluebayFaturamento(startDate: string, endDate: string): Promise<BluebayFaturamentoItem[]> {
   // Converter datas para formato ISO
   const startIso = new Date(startDate).toISOString();
   const endIso = `${new Date(endDate).toISOString().split('T')[0]}T23:59:59Z`;
@@ -29,11 +53,8 @@ export async function fetchBluebayFaturamento(startDate: string, endDate: string
     if (rpcData && Array.isArray(rpcData) && rpcData.length > 0) {
       console.log("Dados retornados da função RPC:", rpcData);
       console.log("Quantidade de registros retornados:", rpcData.length);
-      return rpcData;
+      return rpcData as BluebayFaturamentoItem[];
     }
-
-    // Se não houver dados ou ocorrer um erro, faça uma consulta direta à tabela
-    console.log("Tentando consultar diretamente a tabela BLUEBAY_FATURAMENTO...");
 
     // Consulta direta à tabela para amostra
     const { data: tableData, error: tableError } = await supabase
@@ -68,7 +89,7 @@ export async function fetchBluebayFaturamento(startDate: string, endDate: string
       throw fullError;
     }
 
-    return fullData || [];
+    return fullData as BluebayFaturamentoItem[] || [];
   } catch (error) {
     console.error("Erro ao buscar dados de faturamento:", error);
     throw error;
