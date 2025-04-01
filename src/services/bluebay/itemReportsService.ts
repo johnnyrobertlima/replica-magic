@@ -152,8 +152,34 @@ export const fetchBluebayItemsReport = async (
     if (!Array.isArray(faturamentoData) || faturamentoData.length === 0) {
       console.info("Nenhum dado de faturamento encontrado para o período");
       
-      // Use test data for development if no real data is available
-      if (process.env.NODE_ENV === 'development') {
+      // Buscar alguns dados da tabela de faturamento diretamente para diagnóstico
+      const { data: sampleData, error: sampleError } = await supabase
+        .from('BLUEBAY_FATURAMENTO')
+        .select('DATA_EMISSAO, PED_NUMPEDIDO, ITEM_CODIGO')
+        .order('DATA_EMISSAO', { ascending: false })
+        .limit(5);
+      
+      if (sampleError) {
+        console.error("Erro ao buscar amostra de dados:", sampleError);
+      } else if (sampleData && sampleData.length > 0) {
+        console.log("Amostra de dados recentes de faturamento:", sampleData);
+        
+        // Verificar se há dados no período especificado
+        const { data: periodData, error: periodError } = await supabase
+          .from('BLUEBAY_FATURAMENTO')
+          .select('count(*)', { count: 'exact', head: true })
+          .gte('DATA_EMISSAO', startDate)
+          .lte('DATA_EMISSAO', endDate + 'T23:59:59');
+        
+        if (periodError) {
+          console.error("Erro ao verificar dados no período:", periodError);
+        } else {
+          console.log(`Quantidade de registros no período ${startDate} a ${endDate}: ${periodData.count}`);
+        }
+      }
+      
+      // Use test data ONLY in development AND if explicitly enabled
+      if (process.env.NODE_ENV === 'development' && process.env.REACT_APP_USE_TEST_DATA === 'true') {
         console.log("Usando dados de teste temporários para demonstração");
         return generateTestData();
       }
@@ -187,8 +213,8 @@ export const fetchBluebayItemsReport = async (
   } catch (error) {
     console.error("Error fetching item reports:", error);
     
-    // In development, return test data if there's an error
-    if (process.env.NODE_ENV === 'development') {
+    // In development, return test data if there's an error AND if explicitly enabled
+    if (process.env.NODE_ENV === 'development' && process.env.REACT_APP_USE_TEST_DATA === 'true') {
       console.log("Using test data due to error");
       return generateTestData();
     }

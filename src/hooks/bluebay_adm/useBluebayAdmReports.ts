@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { 
   fetchBluebayItemsReport, 
@@ -46,7 +47,7 @@ export const useBluebayAdmReports = () => {
           console.info("Nenhum item encontrado para o período selecionado");
           toast({
             title: "Sem dados",
-            description: "Nenhum item encontrado para o período selecionado. Verifique os filtros ou tente outro período.",
+            description: "Nenhum item encontrado para o período selecionado. Tente selecionar um período maior ou verificar se há registros no sistema.",
             variant: "default",
           });
         } else {
@@ -69,7 +70,7 @@ export const useBluebayAdmReports = () => {
       setError("Failed to load reports data");
       toast({
         title: "Erro",
-        description: "Não foi possível carregar os dados do relatório. Tente novamente mais tarde.",
+        description: "Não foi possível carregar os dados do relatório. Tente novamente mais tarde ou entre em contato com o suporte.",
         variant: "destructive",
       });
     } finally {

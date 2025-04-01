@@ -66,13 +66,21 @@ const BluebayAdmReports = () => {
                 <p className="mt-2 text-gray-600">Carregando dados...</p>
               </div>
             ) : items.length === 0 ? (
-              <div className="py-8 text-center">
-                <p className="text-lg text-gray-700">
+              <div className="py-12 text-center">
+                <p className="text-xl text-gray-700 mb-2">
                   Nenhum dado encontrado para o período selecionado.
                 </p>
-                <p className="text-sm text-gray-500 mt-2">
-                  Tente ajustar o intervalo de datas ou verificar se existem registros de faturamento.
+                <p className="text-md text-gray-600 max-w-xl mx-auto mb-4">
+                  Tente selecionar um período maior ou verificar se existem registros de faturamento no sistema.
                 </p>
+                <Button 
+                  variant="outline" 
+                  onClick={refreshData}
+                  className="mt-2"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Tentar novamente
+                </Button>
               </div>
             ) : (
               <ReportsTable 

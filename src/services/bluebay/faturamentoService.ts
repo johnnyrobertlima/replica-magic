@@ -48,34 +48,36 @@ export const fetchBluebayFaturamento = async (
     if (!data || data.length === 0) {
       console.info("Nenhum dado de faturamento encontrado para o período");
       
-      // Diagnóstico adicional
-      const { count: faturamentoCount, error: countError } = await supabase
+      // Diagnóstico adicional para verificar se há dados na tabela
+      const { count: totalItems, error: countError } = await supabase
         .from('BLUEBAY_FATURAMENTO')
         .select('*', { count: 'exact', head: true });
         
       if (countError) {
-        console.error("Erro ao verificar quantidade de faturamento:", countError);
+        console.error("Erro ao verificar quantidade total de itens:", countError);
       } else {
-        console.log(`Total de registros na tabela BLUEBAY_FATURAMENTO: ${faturamentoCount}`);
+        console.log(`Total de registros na tabela BLUEBAY_FATURAMENTO: ${totalItems}`);
       }
       
-      // Verificar dados recentes para fins de diagnóstico
-      const { data: recentData, error: recentError } = await supabase
-        .from('BLUEBAY_FATURAMENTO')
-        .select('*')
-        .order('DATA_EMISSAO', { ascending: false })
+      // Verificar o uso da função RPC diretamente
+      const { data: testData, error: testError } = await supabase
+        .rpc('get_bluebay_faturamento', { 
+          start_date: null,
+          end_date: null
+        })
         .limit(5);
-        
-      if (recentError) {
-        console.error("Erro ao buscar dados recentes:", recentError);
-      } else if (recentData && recentData.length > 0) {
-        console.log("Amostra de dados recentes de faturamento:", 
-          recentData.map(item => ({
+      
+      if (testError) {
+        console.error("Erro no teste da função RPC:", testError);
+      } else if (testData && testData.length > 0) {
+        console.log("Função RPC retorna dados quando não há filtros de data:", 
+          testData.map(item => ({
             data: item.DATA_EMISSAO,
-            pedido: item.PED_NUMPEDIDO,
             item: item.ITEM_CODIGO
           }))
         );
+      } else {
+        console.log("Função RPC sem filtros de data também não retorna dados");
       }
       
       return [];
