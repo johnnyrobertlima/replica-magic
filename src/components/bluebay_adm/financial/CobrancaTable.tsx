@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FinancialTitle, ClientDebtSummary } from "@/hooks/bluebay/types/financialTypes";
@@ -8,6 +8,7 @@ import { ClientDetailedTitles } from "./cobranca/ClientDetailedTitles";
 import { CollectionMessageDialog } from "./cobranca/CollectionMessageDialog";
 import { ClientSummaryRow } from "./cobranca/ClientSummaryRow";
 import { calculateClientSummaries, sortClientSummaries, filterOverdueUnpaidTitles } from "./cobranca/utils/debtSummaryUtils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CobrancaTableProps {
   titles: FinancialTitle[];
@@ -29,7 +30,45 @@ export const CobrancaTable: React.FC<CobrancaTableProps> = ({
   const [expandedClients, setExpandedClients] = useState<Set<string | number>>(new Set());
   const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<ClientDebtSummary | null>(null);
+  const [clientsEmailsMap, setClientsEmailsMap] = useState<Record<string, string>>({});
   const { toast } = useToast();
+
+  // Fetch cliente emails for all clients in the titles
+  useEffect(() => {
+    const fetchClientEmails = async () => {
+      // Extrair códigos de clientes únicos
+      const clienteCodigos = [...new Set(titles.map(title => String(title.PES_CODIGO)))];
+      
+      if (clienteCodigos.length === 0) return;
+      
+      try {
+        // Buscar informações dos clientes (incluindo email)
+        const { data: clientes, error } = await supabase
+          .from('BLUEBAY_PESSOA')
+          .select('PES_CODIGO, EMAIL')
+          .in('PES_CODIGO', clienteCodigos);
+        
+        if (error) {
+          console.error("Erro ao buscar emails dos clientes:", error);
+          return;
+        }
+        
+        // Criar mapa de emails por código de cliente
+        const emailsMap: Record<string, string> = {};
+        clientes?.forEach(cliente => {
+          emailsMap[String(cliente.PES_CODIGO)] = cliente.EMAIL || "";
+        });
+        
+        setClientsEmailsMap(emailsMap);
+      } catch (error) {
+        console.error("Erro ao processar emails dos clientes:", error);
+      }
+    };
+    
+    if (titles.length > 0) {
+      fetchClientEmails();
+    }
+  }, [titles]);
 
   if (isLoading) {
     return (
@@ -85,7 +124,13 @@ export const CobrancaTable: React.FC<CobrancaTableProps> = ({
   };
 
   const handleOpenCollectionDialog = (client: ClientDebtSummary) => {
-    setSelectedClient(client);
+    // Adicionar o email do cliente ao objeto selecionado
+    const clientWithEmail = {
+      ...client,
+      CLIENTE_EMAIL: clientsEmailsMap[String(client.PES_CODIGO)] || ""
+    };
+    
+    setSelectedClient(clientWithEmail);
     setIsMessageDialogOpen(true);
   };
 

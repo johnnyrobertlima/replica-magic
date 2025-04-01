@@ -91,10 +91,14 @@ Equipe Financeira – Bluebay Importadora
       });
       
       console.log("Tentando enviar e-mail para:", selectedClient.CLIENTE_NOME);
+      console.log("Email do cliente:", selectedClient.CLIENTE_EMAIL || "Não disponível");
+      
+      // Usar o email do cliente se estiver disponível
+      const recipientEmail = selectedClient.CLIENTE_EMAIL || "";
       
       // Passar o corpo e assunto para a função de envio que fará a codificação correta
       await sendOutlookEmail({
-        to: "financeiro@bluebay.com.br", // Email de exemplo - pode ser personalizado
+        to: recipientEmail, // Usando o email do cliente quando disponível
         subject: emailSubject,
         body: emailBody,
         clientName: selectedClient.CLIENTE_NOME
@@ -140,7 +144,11 @@ Equipe Financeira – Bluebay Importadora
       
       console.log("Tentando enviar e-mail via mailto para:", selectedClient.CLIENTE_NOME);
       
+      // Usar o email do cliente se estiver disponível
+      const recipientEmail = selectedClient.CLIENTE_EMAIL || "";
+      
       await sendMailtoEmail({
+        to: recipientEmail, // Usando o email do cliente quando disponível
         subject: `Títulos em atraso - Bluebay - ${selectedClient.CLIENTE_NOME}`,
         body: emailBody,
         clientName: selectedClient.CLIENTE_NOME

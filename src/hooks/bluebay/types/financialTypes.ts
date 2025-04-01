@@ -1,60 +1,74 @@
-// Financial data interface definitions
+
+import { DateRange } from "@/hooks/bluebay/types/financialTypes";
+
+// Re-export DateRange to avoid importing issues
+export type { DateRange };
+
+// Client information from the database
+export interface ClientInfo {
+  APELIDO?: string;
+  RAZAOSOCIAL?: string;
+  EMAIL?: string;
+}
+
+// Financial title interface
 export interface FinancialTitle {
-  NUMNOTA: string | number;
-  DTEMISSAO: string;
-  DTVENCIMENTO: string;
+  MATRIZ: number;
+  FILIAL: number;
+  NUMLCTO: number;
+  ANOBASE: number;
+  DTEMISSAO: string | null;
+  DTVENCIMENTO: string | null;
   DTPAGTO: string | null;
+  VLRABATIMENTO: number;
   VLRDESCONTO: number;
   VLRTITULO: number;
   VLRSALDO: number;
-  STATUS: string;
+  TIPO: string;
+  NUMNOTA: number | null;
   PES_CODIGO: string | number;
-  CLIENTE_NOME: string;
-  NUMDOCUMENTO?: string | null;
-  MATRIZ?: number;
-  FILIAL?: number;
-  NUMLCTO?: number;
-  ANOBASE?: number;
-  DTVENCTO?: string;
-  TIPO?: string;
+  NUMDOCUMENTO: string | null;
+  STATUS: string;
+  CLIENTE_NOME?: string;
+  // Data range for filtering
+  DTVENCTO?: string | null;
 }
 
+// Interface for consolidated invoice
 export interface ConsolidatedInvoice {
   NOTA: string;
   DATA_EMISSAO: string;
-  DATA_VENCIMENTO: string | null;
-  STATUS: string;
+  DATA_VENCIMENTO: string;
   VALOR_NOTA: number;
   VALOR_PAGO: number;
   VALOR_SALDO: number;
-  PES_CODIGO: number;
+  STATUS: string;
+  PES_CODIGO: string | number;
   CLIENTE_NOME: string;
 }
 
-export interface ClientInfo {
-  APELIDO: string | null;
-  RAZAOSOCIAL: string | null;
-}
-
+// Date range for filtering
 export interface DateRange {
   startDate: Date;
   endDate: Date;
 }
 
+// Client debt summary for the collection feature
 export interface ClientDebtSummary {
   PES_CODIGO: string | number;
   CLIENTE_NOME: string;
+  CLIENTE_EMAIL?: string; // Campo adicionado para armazenar o email do cliente
   TOTAL_SALDO: number;
-  DIAS_VENCIDO_MEDIO: number;
-  DIAS_VENCIDO_MAXIMO: number;
   QUANTIDADE_TITULOS: number;
-  VALOR_TOTAL: number;
+  DIAS_VENCIDO_MAX: number;
 }
 
+// Collection record interface
 export interface CollectionRecord {
+  id: string;
   clientCode: string;
   clientName: string;
-  collectedBy: string;
-  collectionDate: Date;
   status: string;
+  date: Date;
+  collectedBy: string;
 }
