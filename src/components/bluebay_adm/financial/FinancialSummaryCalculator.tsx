@@ -49,8 +49,6 @@ export const FinancialSummaryCalculator: React.FC<FinancialSummaryProps> = ({
         if (title.STATUS === '3') { // Status 3 = Pago
           totalPago += vlrTitulo;
         } else if (vlrSaldo > 0) {
-          // Adicionar ao total em aberto se não estiver pago e tiver saldo
-          
           // Verificar se está vencido (data de vencimento está no passado)
           if (!vencimentoDate || vencimentoDate < todayDateOnly) {
             // Valores VENCIDOS: data de vencimento é anterior a hoje

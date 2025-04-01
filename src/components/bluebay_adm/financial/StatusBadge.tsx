@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Badge } from "@/components/ui/badge";
-import { XCircle } from "lucide-react";
+import { XCircle, AlertCircle, Clock } from "lucide-react";
 
 interface StatusBadgeProps {
   status: string;
@@ -27,12 +27,19 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
       variant = "outline";
       label = "Pago";
       customClass = "bg-green-100 text-green-800 hover:bg-green-100";
+      icon = <Clock className="h-3 w-3 mr-1" />;
       break;
     case "4":
       variant = "outline";
       label = "Cancelado";
       customClass = "bg-red-100 text-red-800 hover:bg-red-100";
       icon = <XCircle className="h-3 w-3 mr-1" />;
+      break;
+    case "VENCIDO":
+      variant = "outline";
+      label = "Vencido";
+      customClass = "bg-red-100 text-red-800 hover:bg-red-100";
+      icon = <AlertCircle className="h-3 w-3 mr-1" />;
       break;
     default:
       variant = "outline";

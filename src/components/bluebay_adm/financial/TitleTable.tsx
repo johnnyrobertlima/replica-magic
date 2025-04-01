@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -33,6 +33,33 @@ interface TitleTableProps {
 export const TitleTable: React.FC<TitleTableProps> = ({ titles, isLoading }) => {
   const [sortField, setSortField] = useState<string>("DTVENCIMENTO");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [processedTitles, setProcessedTitles] = useState<FinancialTitle[]>([]);
+
+  // Process titles to identify overdue ones
+  useEffect(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const processed = titles.map(title => {
+      // Create a deep copy to avoid mutating the original data
+      const newTitle = { ...title };
+      
+      // Check if title has balance and is overdue
+      if (newTitle.VLRSALDO > 0 && newTitle.DTVENCIMENTO) {
+        const vencimentoDate = new Date(newTitle.DTVENCIMENTO);
+        vencimentoDate.setHours(0, 0, 0, 0);
+        
+        // If due date is before today and status is 'Em Aberto' (1), update to 'Vencido'
+        if (vencimentoDate < today && newTitle.STATUS === '1') {
+          newTitle.STATUS = 'VENCIDO';
+        }
+      }
+      
+      return newTitle;
+    });
+    
+    setProcessedTitles(processed);
+  }, [titles]);
 
   const handleSort = (field: string) => {
     if (field === sortField) {
@@ -44,9 +71,9 @@ export const TitleTable: React.FC<TitleTableProps> = ({ titles, isLoading }) => 
   };
 
   const sortedTitles = React.useMemo(() => {
-    if (!titles.length) return [];
+    if (!processedTitles.length) return [];
     
-    return [...titles].sort((a, b) => {
+    return [...processedTitles].sort((a, b) => {
       // Handle date fields
       if (["DTEMISSAO", "DTVENCIMENTO", "DTPAGTO"].includes(sortField)) {
         const dateA = a[sortField as keyof FinancialTitle] ? new Date(a[sortField as keyof FinancialTitle] as string).getTime() : 0;
@@ -68,7 +95,19 @@ export const TitleTable: React.FC<TitleTableProps> = ({ titles, isLoading }) => 
         ? valA.localeCompare(valB) 
         : valB.localeCompare(valA);
     });
-  }, [titles, sortField, sortDirection]);
+  }, [processedTitles, sortField, sortDirection]);
+
+  // Function to determine if a title is overdue
+  const isOverdue = (title: FinancialTitle) => {
+    if (title.VLRSALDO > 0 && title.DTVENCIMENTO) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const vencimentoDate = new Date(title.DTVENCIMENTO);
+      vencimentoDate.setHours(0, 0, 0, 0);
+      return vencimentoDate < today;
+    }
+    return false;
+  };
 
   if (isLoading) {
     return (
@@ -142,27 +181,31 @@ export const TitleTable: React.FC<TitleTableProps> = ({ titles, isLoading }) => 
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sortedTitles.map((title, index) => (
-            <TableRow key={`${title.NUMNOTA}-${index}`}>
-              <TableCell className="font-medium">{title.NUMNOTA}</TableCell>
-              <TableCell className="font-mono">{formatNumDocumento(title.NUMDOCUMENTO)}</TableCell>
-              <TableCell className="max-w-[200px] truncate" title={title.CLIENTE_NOME}>
-                {title.CLIENTE_NOME}
-              </TableCell>
-              <TableCell>
-                {title.DTEMISSAO ? format(new Date(title.DTEMISSAO), 'dd/MM/yyyy', { locale: ptBR }) : '-'}
-              </TableCell>
-              <TableCell>
-                {title.DTVENCIMENTO ? format(new Date(title.DTVENCIMENTO), 'dd/MM/yyyy', { locale: ptBR }) : '-'}
-              </TableCell>
-              <TableCell>
-                {title.DTPAGTO ? format(new Date(title.DTPAGTO), 'dd/MM/yyyy', { locale: ptBR }) : '-'}
-              </TableCell>
-              <TableCell>{formatCurrency(title.VLRTITULO)}</TableCell>
-              <TableCell>{formatCurrency(title.VLRSALDO)}</TableCell>
-              <TableCell><StatusBadge status={title.STATUS} /></TableCell>
-            </TableRow>
-          ))}
+          {sortedTitles.map((title, index) => {
+            const overdueStyle = isOverdue(title) ? "text-red-600 font-medium" : "";
+            
+            return (
+              <TableRow key={`${title.NUMNOTA}-${index}`} className={overdueStyle}>
+                <TableCell className={`font-medium ${overdueStyle}`}>{title.NUMNOTA}</TableCell>
+                <TableCell className={`font-mono ${overdueStyle}`}>{formatNumDocumento(title.NUMDOCUMENTO)}</TableCell>
+                <TableCell className={`max-w-[200px] truncate ${overdueStyle}`} title={title.CLIENTE_NOME}>
+                  {title.CLIENTE_NOME}
+                </TableCell>
+                <TableCell className={overdueStyle}>
+                  {title.DTEMISSAO ? format(new Date(title.DTEMISSAO), 'dd/MM/yyyy', { locale: ptBR }) : '-'}
+                </TableCell>
+                <TableCell className={overdueStyle}>
+                  {title.DTVENCIMENTO ? format(new Date(title.DTVENCIMENTO), 'dd/MM/yyyy', { locale: ptBR }) : '-'}
+                </TableCell>
+                <TableCell className={overdueStyle}>
+                  {title.DTPAGTO ? format(new Date(title.DTPAGTO), 'dd/MM/yyyy', { locale: ptBR }) : '-'}
+                </TableCell>
+                <TableCell className={overdueStyle}>{formatCurrency(title.VLRTITULO)}</TableCell>
+                <TableCell className={overdueStyle}>{formatCurrency(title.VLRSALDO)}</TableCell>
+                <TableCell><StatusBadge status={title.STATUS} /></TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>

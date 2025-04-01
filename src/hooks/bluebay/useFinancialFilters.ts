@@ -18,6 +18,30 @@ export const useFinancialFilters = (
   const [clientFilter, setClientFilter] = useState<string>("");
   const [notaFilter, setNotaFilter] = useState<string>("");
 
+  // Processar títulos para identificar os vencidos antes de aplicar filtros
+  const processedTitles = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    return financialTitles.map(title => {
+      // Create a shallow copy to avoid mutating original data
+      const newTitle = { ...title };
+      
+      // Check if title has balance and is overdue
+      if (newTitle.VLRSALDO > 0 && newTitle.DTVENCIMENTO) {
+        const vencimentoDate = new Date(newTitle.DTVENCIMENTO);
+        vencimentoDate.setHours(0, 0, 0, 0);
+        
+        // If due date is before today and status is "Em Aberto" (1), mark as "VENCIDO"
+        if (vencimentoDate < today && newTitle.STATUS === '1') {
+          newTitle.STATUS = 'VENCIDO';
+        }
+      }
+      
+      return newTitle;
+    });
+  }, [financialTitles]);
+
   // Apply filters for invoices
   const filteredInvoices = useMemo(() => {
     let filtered = [...consolidatedInvoices];
@@ -48,7 +72,7 @@ export const useFinancialFilters = (
 
   // Apply filters for titles
   const filteredTitles = useMemo(() => {
-    let filtered = [...financialTitles];
+    let filtered = [...processedTitles];
     
     // Apply status filter
     if (statusFilter !== "all") {
@@ -64,7 +88,7 @@ export const useFinancialFilters = (
       );
     }
     
-    // Apply nota filter (this was missing)
+    // Apply nota filter
     if (notaFilter) {
       filtered = filtered.filter(title => 
         String(title.NUMNOTA).includes(notaFilter)
@@ -72,7 +96,7 @@ export const useFinancialFilters = (
     }
     
     return filtered;
-  }, [statusFilter, clientFilter, notaFilter, financialTitles]);
+  }, [statusFilter, clientFilter, notaFilter, processedTitles]);
 
   const updateStatusFilter = useCallback((status: string) => {
     setStatusFilter(status);

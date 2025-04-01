@@ -27,7 +27,12 @@ export const useFinancialSummaries = (
     filteredTitles
       .filter(title => title.STATUS !== '4') // Exclude canceled titles
       .forEach(title => {
-        if (title.VLRSALDO > 0) {
+        // Handle titles with VENCIDO status explicitly
+        if (title.STATUS === 'VENCIDO' && title.VLRSALDO > 0) {
+          totalValoresVencidos += title.VLRSALDO;
+        }
+        // For other titles with saldo, check due date
+        else if (title.VLRSALDO > 0 && title.STATUS !== 'VENCIDO') {
           // Verifica se há data de vencimento e prepara para comparação
           let vencimentoDate = null;
           if (title.DTVENCIMENTO) {
@@ -90,7 +95,12 @@ export const useFinancialSummaries = (
         
         const clientSummary = clientMap.get(clientKey)!;
         
-        if (title.VLRSALDO > 0) {
+        // Handle titles with VENCIDO status explicitly
+        if (title.STATUS === 'VENCIDO' && title.VLRSALDO > 0) {
+          clientSummary.totalValoresVencidos += title.VLRSALDO;
+        }
+        // For other titles with saldo, check due date
+        else if (title.VLRSALDO > 0 && title.STATUS !== 'VENCIDO') {
           // Verifica se há data de vencimento e prepara para comparação
           let vencimentoDate = null;
           if (title.DTVENCIMENTO) {
