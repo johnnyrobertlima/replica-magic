@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { ItemDetail } from "./reportsService";
 
 /**
  * Busca detalhes de itens por cliente para um código de item e período específicos
@@ -9,7 +10,7 @@ export async function fetchItemDetailsByCentrocusto(
   startDate: string, 
   endDate: string,
   centrocusto: string = "BLUEBAY"
-) {
+): Promise<ItemDetail[]> {
   try {
     // Converter datas para formato ISO
     const startIso = new Date(startDate).toISOString();
@@ -62,12 +63,12 @@ export async function fetchItemDetailsByCentrocusto(
     // Criar mapa de clientes para fácil acesso
     const clientsMap: Record<string, any> = {};
     clientsData?.forEach(client => {
-      clientsMap[client.PES_CODIGO.toString()] = client;
+      clientsMap[String(client.PES_CODIGO)] = client;
     });
 
     // Montar os detalhes com as informações do cliente
     const itemDetails = faturamentoData.map(fat => {
-      const pesCodigoStr = fat.PES_CODIGO?.toString() || '';
+      const pesCodigoStr = String(fat.PES_CODIGO || '');
       const client = clientsMap[pesCodigoStr] || {};
       return {
         NOTA: fat.NOTA || '',
