@@ -12,29 +12,47 @@ export const getBluebayReportItems = async (startDate?: string, endDate?: string
       endDate
     });
 
-    // Fetch items data from BLUEBAY_PEDIDO that match CENTROCUSTO = 'BLUEBAY'
-    const { data, error } = await supabase
+    // First, fetch all pedidos that match our criteria
+    const { data: pedidosData, error: pedidosError } = await supabase
       .from("BLUEBAY_PEDIDO")
-      .select(`
-        *,
-        BLUEBAY_ITEM:ITEM_CODIGO(DESCRICAO, GRU_DESCRICAO)
-      `)
+      .select("*")
       .eq("CENTROCUSTO", "BLUEBAY")
       .gte(formattedStartDate ? "DATA_PEDIDO" : "MATRIZ", formattedStartDate ?? 0)
       .lte(formattedEndDate ? "DATA_PEDIDO" : "MATRIZ", formattedEndDate ?? 9999999);
 
-    if (error) {
-      console.error("Error fetching BLUEBAY items:", error);
-      throw error;
+    if (pedidosError) {
+      console.error("Error fetching BLUEBAY pedidos:", pedidosError);
+      throw pedidosError;
     }
 
+    // Get unique item codes from the pedidos
+    const itemCodes = [...new Set(pedidosData.map(item => item.ITEM_CODIGO).filter(Boolean))];
+    
+    // Fetch item details in a separate query
+    const { data: itemsData, error: itemsError } = await supabase
+      .from("BLUEBAY_ITEM")
+      .select("ITEM_CODIGO, DESCRICAO, GRU_DESCRICAO")
+      .in("ITEM_CODIGO", itemCodes);
+    
+    if (itemsError) {
+      console.error("Error fetching BLUEBAY items details:", itemsError);
+      throw itemsError;
+    }
+    
+    // Create a lookup map for item details
+    const itemsMap = new Map();
+    itemsData.forEach(item => {
+      itemsMap.set(item.ITEM_CODIGO, item);
+    });
+
     // Process the results to extract item details and calculate totals
-    const processedItems = data.reduce((acc, item) => {
+    const processedItems = pedidosData.reduce((acc, item) => {
       const itemCode = item.ITEM_CODIGO;
       if (!itemCode) return acc;
 
-      const descricao = item.BLUEBAY_ITEM?.DESCRICAO || '';
-      const grupoDescricao = item.BLUEBAY_ITEM?.GRU_DESCRICAO || 'Sem Grupo';
+      const itemDetails = itemsMap.get(itemCode) || {};
+      const descricao = itemDetails.DESCRICAO || '';
+      const grupoDescricao = itemDetails.GRU_DESCRICAO || 'Sem Grupo';
       
       // Find if the item already exists in our accumulated results
       const existingItemIndex = acc.findIndex(i => 
@@ -79,31 +97,52 @@ export const getBluebayItemDetails = async (itemCode: string, startDate?: string
     const formattedEndDate = endDate ? `${endDate}T23:59:59Z` : undefined;
 
     // Fetch the detailed breakdown of orders for this item
-    const { data, error } = await supabase
+    const { data: pedidosData, error: pedidosError } = await supabase
       .from("BLUEBAY_PEDIDO")
-      .select(`
-        *,
-        BLUEBAY_PESSOA:PES_CODIGO(APELIDO)
-      `)
+      .select("*")
       .eq("ITEM_CODIGO", itemCode)
       .eq("CENTROCUSTO", "BLUEBAY")
       .gte(formattedStartDate ? "DATA_PEDIDO" : "MATRIZ", formattedStartDate ?? 0)
       .lte(formattedEndDate ? "DATA_PEDIDO" : "MATRIZ", formattedEndDate ?? 9999999);
 
-    if (error) {
-      console.error("Error fetching item details:", error);
-      throw error;
+    if (pedidosError) {
+      console.error("Error fetching item details:", pedidosError);
+      throw pedidosError;
     }
 
+    // Get unique customer codes
+    const customerCodes = [...new Set(pedidosData.map(item => item.PES_CODIGO).filter(Boolean))];
+    
+    // Fetch customer details in a separate query
+    const { data: customersData, error: customersError } = await supabase
+      .from("BLUEBAY_PESSOA")
+      .select("PES_CODIGO, APELIDO")
+      .in("PES_CODIGO", customerCodes);
+    
+    if (customersError) {
+      console.error("Error fetching customer details:", customersError);
+      throw customersError;
+    }
+    
+    // Create a lookup map for customer details
+    const customersMap = new Map();
+    customersData.forEach(customer => {
+      customersMap.set(customer.PES_CODIGO, customer);
+    });
+
     // Format the data with client name included
-    const detailedItems = data.map(item => ({
-      DATA_PEDIDO: item.DATA_PEDIDO,
-      PED_NUMPEDIDO: item.PED_NUMPEDIDO,
-      CLIENTE_NOME: item.BLUEBAY_PESSOA?.APELIDO || 'Cliente não identificado',
-      QUANTIDADE: item.QTDE_PEDIDA,
-      VALOR_UNITARIO: item.VALOR_UNITARIO,
-      TOTAL: (Number(item.QTDE_PEDIDA || 0) * Number(item.VALOR_UNITARIO || 0))
-    }));
+    const detailedItems = pedidosData.map(item => {
+      const customer = customersMap.get(item.PES_CODIGO) || {};
+      
+      return {
+        DATA_PEDIDO: item.DATA_PEDIDO,
+        PED_NUMPEDIDO: item.PED_NUMPEDIDO,
+        CLIENTE_NOME: customer.APELIDO || 'Cliente não identificado',
+        QUANTIDADE: item.QTDE_PEDIDA,
+        VALOR_UNITARIO: item.VALOR_UNITARIO,
+        TOTAL: (Number(item.QTDE_PEDIDA || 0) * Number(item.VALOR_UNITARIO || 0))
+      };
+    });
 
     return detailedItems;
   } catch (error) {
