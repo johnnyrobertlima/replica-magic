@@ -48,10 +48,13 @@ export const FinancialSummaryCalculator: React.FC<FinancialSummaryProps> = ({
         // Verificar se o título está pago
         if (title.STATUS === '3') { // Status 3 = Pago
           totalPago += vlrTitulo;
+        } else if (title.STATUS === 'VENCIDO') {
+          // Status VENCIDO: saldo disponível em títulos vencidos
+          totalValoresVencidos += vlrSaldo;
         } else if (vlrSaldo > 0) {
-          // Verificar se está vencido (data de vencimento está no passado)
+          // Para outros status com saldo, verificar se está vencido ou em aberto
           if (!vencimentoDate || vencimentoDate < todayDateOnly) {
-            // Valores VENCIDOS: data de vencimento é anterior a hoje
+            // Se vencido mas não marcado como VENCIDO (por segurança), conta como vencido
             totalValoresVencidos += vlrSaldo;
           } else {
             // Valores EM ABERTO: data de vencimento é hoje ou futura
