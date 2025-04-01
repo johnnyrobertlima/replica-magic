@@ -90,12 +90,24 @@ export const useFinancialData = () => {
         // Filtrar duplicatas ao mesclar arrays
         const newTitles = [...prev];
         processedTitles.forEach(title => {
-          const existingIndex = newTitles.findIndex(t => 
-            t.MATRIZ === title.MATRIZ && 
-            t.FILIAL === title.FILIAL && 
-            t.NUMLCTO === title.NUMLCTO && 
-            t.ANOBASE === title.ANOBASE
-          );
+          // Verifique se os campos necessários existem antes de usá-los
+          const existingIndex = newTitles.findIndex(t => {
+            // Se algum dos campos primários estiver ausente, use outros campos para comparação
+            if (title.MATRIZ && t.MATRIZ && 
+                title.FILIAL && t.FILIAL && 
+                title.NUMLCTO && t.NUMLCTO && 
+                title.ANOBASE && t.ANOBASE) {
+              return t.MATRIZ === title.MATRIZ && 
+                     t.FILIAL === title.FILIAL && 
+                     t.NUMLCTO === title.NUMLCTO && 
+                     t.ANOBASE === title.ANOBASE;
+            } else {
+              // Fallback para outra forma de comparação se os campos primários não estiverem disponíveis
+              return String(t.NUMNOTA) === String(title.NUMNOTA) && 
+                     String(t.PES_CODIGO) === String(title.PES_CODIGO) &&
+                     t.DTEMISSAO === title.DTEMISSAO;
+            }
+          });
           
           if (existingIndex === -1) {
             newTitles.push(title);
@@ -113,12 +125,24 @@ export const useFinancialData = () => {
           // Mesclar evitando duplicatas nas outras páginas
           const newTitles = [...prev];
           processedTitles.forEach(title => {
-            const existingIndex = newTitles.findIndex(t => 
-              t.MATRIZ === title.MATRIZ && 
-              t.FILIAL === title.FILIAL && 
-              t.NUMLCTO === title.NUMLCTO && 
-              t.ANOBASE === title.ANOBASE
-            );
+            // Verifique os campos primários antes de usá-los
+            const existingIndex = newTitles.findIndex(t => {
+              // Se algum dos campos primários estiver ausente, use outros campos para comparação
+              if (title.MATRIZ && t.MATRIZ && 
+                  title.FILIAL && t.FILIAL && 
+                  title.NUMLCTO && t.NUMLCTO && 
+                  title.ANOBASE && t.ANOBASE) {
+                return t.MATRIZ === title.MATRIZ && 
+                      t.FILIAL === title.FILIAL && 
+                      t.NUMLCTO === title.NUMLCTO && 
+                      t.ANOBASE === title.ANOBASE;
+              } else {
+                // Fallback para outra forma de comparação
+                return String(t.NUMNOTA) === String(title.NUMNOTA) && 
+                      String(t.PES_CODIGO) === String(title.PES_CODIGO) &&
+                      t.DTEMISSAO === title.DTEMISSAO;
+              }
+            });
             
             if (existingIndex === -1) {
               newTitles.push(title);

@@ -73,7 +73,14 @@ export const fetchTitulosComDataNula = async (): Promise<FinancialTitle[]> => {
     }
     
     console.info(`Buscados ${data?.length || 0} títulos com data de vencimento nula`);
-    return data || [];
+    
+    // We need to provide a default CLIENTE_NOME to match the FinancialTitle type
+    const titlesWithDefaultClientName = data?.map(title => ({
+      ...title,
+      CLIENTE_NOME: "Nome não disponível" // Adding default client name
+    })) || [];
+    
+    return titlesWithDefaultClientName;
   } catch (error) {
     console.error("Erro ao buscar títulos com data nula:", error);
     return [];

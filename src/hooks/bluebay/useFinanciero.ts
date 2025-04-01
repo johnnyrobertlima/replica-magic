@@ -7,6 +7,8 @@ import { useFinancialSummaries } from "./useFinancialSummaries";
 export const useFinanciero = () => {
   const {
     isLoading,
+    isLoadingMore,
+    hasMorePages,
     consolidatedInvoices,
     financialTitles,
     availableStatuses,
@@ -48,6 +50,8 @@ export const useFinanciero = () => {
 
   return {
     isLoading,
+    isLoadingMore,
+    hasMorePages,
     consolidatedInvoices,
     filteredInvoices,
     financialTitles,

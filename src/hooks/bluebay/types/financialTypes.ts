@@ -1,4 +1,3 @@
-
 // Financial data interface definitions
 export interface FinancialTitle {
   NUMNOTA: string | number;
@@ -12,6 +11,12 @@ export interface FinancialTitle {
   PES_CODIGO: string | number;
   CLIENTE_NOME: string;
   NUMDOCUMENTO?: string | null;
+  MATRIZ?: number;
+  FILIAL?: number;
+  NUMLCTO?: number;
+  ANOBASE?: number;
+  DTVENCTO?: string;
+  TIPO?: string;
 }
 
 export interface ConsolidatedInvoice {
