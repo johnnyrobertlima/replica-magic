@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { BluebayAdmBanner } from "@/components/bluebay_adm/BluebayAdmBanner";
 import { BluebayAdmMenu } from "@/components/bluebay_adm/BluebayAdmMenu";
 import { FinancialHeader } from "@/components/bluebay_adm/financial/FinancialHeader";
@@ -12,11 +12,14 @@ import { useFinancialExport } from "@/hooks/bluebay/useFinancialExport";
 import { useCollectionStatus } from "@/hooks/bluebay/useCollectionStatus";
 import { useFinancialTabSelection } from "@/hooks/bluebay/useFinancialTabSelection";
 import { useClientFilteredTitles } from "@/hooks/bluebay/useClientFilteredTitles";
+import { Button } from "@/components/ui/button";
 
 const BluebayAdmFinanceiroManager = () => {
   // Use our custom hooks to separate concerns
   const { 
     isLoading, 
+    isLoadingMore,
+    hasMorePages,
     filteredInvoices,
     filteredTitles,
     refreshData, 
@@ -79,6 +82,15 @@ const BluebayAdmFinanceiroManager = () => {
     cobrados: collectionRecords.length > 0
   };
 
+  // Force refresh de dados quando o componente é montado
+  useEffect(() => {
+    const loadInitialData = async () => {
+      await refreshData();
+    };
+    
+    loadInitialData();
+  }, [refreshData]);
+
   return (
     <main className="container-fluid p-0 max-w-full">
       <BluebayAdmBanner />
@@ -134,6 +146,24 @@ const BluebayAdmFinanceiroManager = () => {
             pagination={pagination}
             itemCount={clientFilteredTitles.length}
           />
+
+          {isLoadingMore && (
+            <div className="flex justify-center my-4">
+              <div className="text-sm text-gray-500">Carregando mais dados...</div>
+            </div>
+          )}
+          
+          {!isLoading && hasMorePages && (
+            <div className="flex justify-center my-4">
+              <Button 
+                variant="outline"
+                onClick={() => refreshData()}
+                disabled={isLoadingMore}
+              >
+                Carregar todos os títulos do período
+              </Button>
+            </div>
+          )}
         </FinancialLoader>
       </div>
     </main>

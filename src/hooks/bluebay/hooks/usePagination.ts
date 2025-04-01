@@ -7,6 +7,7 @@ export interface PaginationState {
   pageSize: number;
   goToNextPage: () => void;
   goToPreviousPage: () => void;
+  goToPage: (page: number) => void;
   hasNextPage: boolean;
   hasPreviousPage: boolean;
   updateTotalCount: (count: number) => void;
@@ -29,6 +30,12 @@ export const usePagination = (initialPageSize: number = 1000): PaginationState =
     }
   }, [currentPage]);
 
+  const goToPage = useCallback((page: number) => {
+    if (page > 0 && (page * pageSize <= totalCount || totalCount === 0)) {
+      setCurrentPage(page);
+    }
+  }, [pageSize, totalCount]);
+
   const updateTotalCount = useCallback((count: number) => {
     setTotalCount(count);
   }, []);
@@ -39,6 +46,7 @@ export const usePagination = (initialPageSize: number = 1000): PaginationState =
     pageSize,
     goToNextPage,
     goToPreviousPage,
+    goToPage,
     hasNextPage: currentPage * pageSize < totalCount,
     hasPreviousPage: currentPage > 1,
     updateTotalCount

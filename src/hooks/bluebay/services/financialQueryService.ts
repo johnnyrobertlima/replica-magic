@@ -1,7 +1,7 @@
 
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
-import { DateRange } from "../types/financialTypes";
+import { DateRange, FinancialTitle } from "../types/financialTypes";
 
 /**
  * Busca títulos financeiros do Supabase com filtros aplicados
@@ -60,7 +60,7 @@ export const fetchTitulos = async (
 /**
  * Busca títulos com valores nulos na data de vencimento
  */
-export const fetchTitulosComDataNula = async () => {
+export const fetchTitulosComDataNula = async (): Promise<FinancialTitle[]> => {
   try {
     const { data, error } = await supabase
       .from('BLUEBAY_TITULO')
@@ -72,6 +72,7 @@ export const fetchTitulosComDataNula = async () => {
       throw error;
     }
     
+    console.info(`Buscados ${data?.length || 0} títulos com data de vencimento nula`);
     return data || [];
   } catch (error) {
     console.error("Erro ao buscar títulos com data nula:", error);
