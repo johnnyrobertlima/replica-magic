@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 /**
  * Busca dados de faturamento do Bluebay para o período especificado
  */
-export async function fetchBluebayFaturamento(startDate: string, endDate: string) {
+export async function fetchBluebayFaturamento(startDate: string, endDate: string): Promise<any[]> {
   // Converter datas para formato ISO
   const startIso = new Date(startDate).toISOString();
   const endIso = `${new Date(endDate).toISOString().split('T')[0]}T23:59:59Z`;

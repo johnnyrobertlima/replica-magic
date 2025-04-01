@@ -63,7 +63,7 @@ export async function fetchItemDetailsByCentrocusto(
     // Criar mapa de clientes para fácil acesso
     const clientsMap: Record<string, any> = {};
     clientsData?.forEach(client => {
-      clientsMap[String(client.PES_CODIGO)] = client;
+      clientsMap[String(client.PES_CODIGO || '')] = client;
     });
 
     // Montar os detalhes com as informações do cliente
