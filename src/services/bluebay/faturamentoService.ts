@@ -14,10 +14,9 @@ export async function fetchBluebayFaturamento(startDate: string, endDate: string
   try {
     // Tentar chamar a função RPC
     const { data: rpcData, error: rpcError } = await supabase
-      .rpc('get_faturamento_by_period', {
-        p_start_date: startIso,
-        p_end_date: endIso,
-        p_centrocusto: 'BLUEBAY'
+      .rpc('get_bluebay_faturamento', {
+        start_date: startIso,
+        end_date: endIso
       });
 
     console.log("Aplicando filtro de data:", !!startDate && !!endDate);
@@ -27,11 +26,9 @@ export async function fetchBluebayFaturamento(startDate: string, endDate: string
       throw rpcError;
     }
 
-    console.log("Dados retornados da função RPC:", rpcData);
-    console.log("Quantidade de registros retornados:", rpcData ? rpcData.length : 0);
-
-    // Se a função retornar dados, use-os
-    if (rpcData && rpcData.length > 0) {
+    if (rpcData && Array.isArray(rpcData) && rpcData.length > 0) {
+      console.log("Dados retornados da função RPC:", rpcData);
+      console.log("Quantidade de registros retornados:", rpcData.length);
       return rpcData;
     }
 

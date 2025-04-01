@@ -1,10 +1,11 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { ItemReport } from "./reportsService";
 
 /**
  * Processa dados de faturamento e agrupa por item
  */
-export async function processItemsData(faturamentoData: any[], centrocusto: string = "BLUEBAY") {
+export async function processItemsData(faturamentoData: any[], centrocusto: string = "BLUEBAY"): Promise<ItemReport[]> {
   try {
     // Verificar se há dados para processar
     if (!faturamentoData || faturamentoData.length === 0) {
@@ -44,13 +45,13 @@ export async function processItemsData(faturamentoData: any[], centrocusto: stri
     }
 
     // Criar mapa de itens para fácil acesso
-    const itemsMap = {};
+    const itemsMap: Record<string, any> = {};
     itemsData?.forEach(item => {
       itemsMap[item.ITEM_CODIGO] = item;
     });
 
     // Agrupar dados de faturamento por item
-    const itemsGrouped = {};
+    const itemsGrouped: Record<string, ItemReport> = {};
     
     faturamentoData.forEach(fat => {
       const itemCode = fat.ITEM_CODIGO;

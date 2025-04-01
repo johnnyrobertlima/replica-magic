@@ -42,6 +42,9 @@ export const useBluebayAdmReports = () => {
         console.log('dateRange.endDate é Date?', dateRange.endDate instanceof Date);
         
         const data = await fetchBluebayItemsReport(startDateFormatted, endDateFormatted);
+        console.log('Dados recebidos no hook:', data);
+        console.log('Os dados são um array?', Array.isArray(data));
+        console.log('Tamanho dos dados:', data.length);
         setItems(data);
       } else {
         console.warn("Date range is incomplete");

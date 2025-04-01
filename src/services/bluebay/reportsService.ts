@@ -30,8 +30,14 @@ export async function fetchBluebayItemsReport(
   console.log(`Buscando relatório de itens Bluebay...`, { startDate, endDate });
 
   try {
-    // Chamar função RPC para obter os dados
+    // Chamar função para obter os dados
     const faturamentoData = await fetchBluebayFaturamento(startDate, endDate);
+    
+    // Verificar se os dados retornados são um array
+    if (!Array.isArray(faturamentoData)) {
+      console.error("Dados de faturamento não são um array:", faturamentoData);
+      return [];
+    }
     
     // Processar os dados de faturamento em itens
     const processedItems = await processItemsData(faturamentoData, "BLUEBAY");

@@ -60,14 +60,15 @@ export async function fetchItemDetailsByCentrocusto(
     }
 
     // Criar mapa de clientes para fácil acesso
-    const clientsMap = {};
+    const clientsMap: Record<string, any> = {};
     clientsData?.forEach(client => {
-      clientsMap[client.PES_CODIGO] = client;
+      clientsMap[client.PES_CODIGO.toString()] = client;
     });
 
     // Montar os detalhes com as informações do cliente
     const itemDetails = faturamentoData.map(fat => {
-      const client = clientsMap[fat.PES_CODIGO] || {};
+      const pesCodigoStr = fat.PES_CODIGO?.toString() || '';
+      const client = clientsMap[pesCodigoStr] || {};
       return {
         NOTA: fat.NOTA || '',
         DATA_EMISSAO: fat.DATA_EMISSAO || '',
