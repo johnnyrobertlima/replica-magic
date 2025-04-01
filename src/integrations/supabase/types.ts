@@ -1720,6 +1720,32 @@ export type Database = {
           VALOR_UNITARIO: number | null
         }[]
       }
+      get_bluebay_faturamento: {
+        Args: {
+          start_date?: string
+          end_date?: string
+        }
+        Returns: {
+          DATA_EMISSAO: string | null
+          FILIAL: number
+          ID_EF_DOCFISCAL: number
+          ID_EF_DOCFISCAL_ITEM: number
+          ITEM_CODIGO: string | null
+          MATRIZ: number
+          MPED_NUMORDEM: number | null
+          NOTA: string | null
+          PED_ANOBASE: number | null
+          PED_NUMPEDIDO: string | null
+          PES_CODIGO: number | null
+          QUANTIDADE: number | null
+          STATUS: string | null
+          TIPO: string | null
+          TRANSACAO: number | null
+          VALOR_DESCONTO: number | null
+          VALOR_NOTA: number | null
+          VALOR_UNITARIO: number | null
+        }[]
+      }
       get_estoque_para_itens: {
         Args: {
           item_codigos: string[]
