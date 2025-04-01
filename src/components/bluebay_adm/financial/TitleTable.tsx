@@ -43,36 +43,6 @@ export const TitleTable: React.FC<TitleTableProps> = ({ titles, isLoading }) => 
     }
   };
 
-  // Função para verificar se um título está vencido
-  const isTitleOverdue = (title: FinancialTitle): boolean => {
-    if (!title.DTVENCIMENTO || !title.VLRSALDO || title.VLRSALDO <= 0) return false;
-    
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const vencimento = new Date(title.DTVENCIMENTO);
-    vencimento.setHours(0, 0, 0, 0);
-    
-    return vencimento < today;
-  };
-
-  // Função para mostrar o status correto do título
-  const getTitleStatus = (title: FinancialTitle): string => {
-    // Se foi pago, mantém o status original
-    if (title.STATUS === '3') return title.STATUS;
-    
-    // Se foi cancelado, mantém o status original
-    if (title.STATUS === '4') return title.STATUS;
-    
-    // Se tem saldo e está vencido, considera como "Vencido" (status 2)
-    if (title.VLRSALDO > 0 && isTitleOverdue(title)) {
-      return '2'; // Status 2 = Vencido
-    }
-    
-    // Nos demais casos, mantém o status original
-    return title.STATUS;
-  };
-
   const sortedTitles = React.useMemo(() => {
     if (!titles.length) return [];
     
@@ -172,32 +142,27 @@ export const TitleTable: React.FC<TitleTableProps> = ({ titles, isLoading }) => 
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sortedTitles.map((title, index) => {
-            const isOverdue = isTitleOverdue(title);
-            const textColorClass = isOverdue ? "text-red-600" : "";
-            
-            return (
-              <TableRow key={`${title.NUMNOTA}-${index}`}>
-                <TableCell className={`font-medium ${textColorClass}`}>{title.NUMNOTA}</TableCell>
-                <TableCell className={`font-mono ${textColorClass}`}>{formatNumDocumento(title.NUMDOCUMENTO)}</TableCell>
-                <TableCell className={`max-w-[200px] truncate ${textColorClass}`} title={title.CLIENTE_NOME}>
-                  {title.CLIENTE_NOME}
-                </TableCell>
-                <TableCell className={textColorClass}>
-                  {title.DTEMISSAO ? format(new Date(title.DTEMISSAO), 'dd/MM/yyyy', { locale: ptBR }) : '-'}
-                </TableCell>
-                <TableCell className={textColorClass}>
-                  {title.DTVENCIMENTO ? format(new Date(title.DTVENCIMENTO), 'dd/MM/yyyy', { locale: ptBR }) : '-'}
-                </TableCell>
-                <TableCell className={textColorClass}>
-                  {title.DTPAGTO ? format(new Date(title.DTPAGTO), 'dd/MM/yyyy', { locale: ptBR }) : '-'}
-                </TableCell>
-                <TableCell className={textColorClass}>{formatCurrency(title.VLRTITULO)}</TableCell>
-                <TableCell className={textColorClass}>{formatCurrency(title.VLRSALDO)}</TableCell>
-                <TableCell><StatusBadge status={getTitleStatus(title)} /></TableCell>
-              </TableRow>
-            );
-          })}
+          {sortedTitles.map((title, index) => (
+            <TableRow key={`${title.NUMNOTA}-${index}`}>
+              <TableCell className="font-medium">{title.NUMNOTA}</TableCell>
+              <TableCell className="font-mono">{formatNumDocumento(title.NUMDOCUMENTO)}</TableCell>
+              <TableCell className="max-w-[200px] truncate" title={title.CLIENTE_NOME}>
+                {title.CLIENTE_NOME}
+              </TableCell>
+              <TableCell>
+                {title.DTEMISSAO ? format(new Date(title.DTEMISSAO), 'dd/MM/yyyy', { locale: ptBR }) : '-'}
+              </TableCell>
+              <TableCell>
+                {title.DTVENCIMENTO ? format(new Date(title.DTVENCIMENTO), 'dd/MM/yyyy', { locale: ptBR }) : '-'}
+              </TableCell>
+              <TableCell>
+                {title.DTPAGTO ? format(new Date(title.DTPAGTO), 'dd/MM/yyyy', { locale: ptBR }) : '-'}
+              </TableCell>
+              <TableCell>{formatCurrency(title.VLRTITULO)}</TableCell>
+              <TableCell>{formatCurrency(title.VLRSALDO)}</TableCell>
+              <TableCell><StatusBadge status={title.STATUS} /></TableCell>
+            </TableRow>
+          ))}
         </TableBody>
       </Table>
     </div>
