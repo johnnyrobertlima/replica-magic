@@ -2,51 +2,71 @@
 import { supabase } from "@/integrations/supabase/client";
 import { formatISO } from "date-fns";
 
-export const getBluebayReportItems = async (startDate?: string, endDate?: string) => {
+const fetchBluebayFaturamentoData = async (startDate?: string, endDate?: string) => {
   try {
-    const formattedStartDate = startDate ? `${startDate}T00:00:00Z` : undefined;
-    const formattedEndDate = endDate ? `${endDate}T23:59:59Z` : undefined;
-
-    console.info("Fetching Bluebay items report data...", {
-      startDate,
-      endDate
+    console.info("Buscando dados de faturamento com função RPC:", { startDate, endDate });
+    
+    const { data: rpcData, error: rpcError } = await supabase.rpc('get_bluebay_faturamento', {
+      start_date: startDate,
+      end_date: endDate
     });
 
-    // First, fetch all pedidos that match our criteria
-    const { data: pedidosData, error: pedidosError } = await supabase
-      .from("BLUEBAY_PEDIDO")
-      .select("*")
-      .eq("CENTROCUSTO", "BLUEBAY")
-      .gte(formattedStartDate ? "DATA_PEDIDO" : "MATRIZ", formattedStartDate ?? 0)
-      .lte(formattedEndDate ? "DATA_PEDIDO" : "MATRIZ", formattedEndDate ?? 9999999);
-
-    if (pedidosError) {
-      console.error("Error fetching BLUEBAY pedidos:", pedidosError);
-      throw pedidosError;
+    if (rpcError) {
+      console.error("Erro ao buscar dados de faturamento:", rpcError);
+      throw rpcError;
     }
 
-    // Get unique item codes from the pedidos
-    const itemCodes = [...new Set(pedidosData.map(item => item.ITEM_CODIGO).filter(Boolean))];
+    return rpcData || [];
+  } catch (error) {
+    console.error("Erro ao buscar dados de faturamento:", error);
+    throw error;
+  }
+};
+
+const processFaturamentoData = async (faturamentoData: any[]) => {
+  try {
+    // Extrair códigos de itens únicos
+    const itemCodes = [...new Set(faturamentoData.map(item => item.ITEM_CODIGO).filter(Boolean))];
     
-    // Fetch item details in a separate query
+    // Buscar detalhes dos itens
     const { data: itemsData, error: itemsError } = await supabase
       .from("BLUEBAY_ITEM")
       .select("ITEM_CODIGO, DESCRICAO, GRU_DESCRICAO")
       .in("ITEM_CODIGO", itemCodes);
     
     if (itemsError) {
-      console.error("Error fetching BLUEBAY items details:", itemsError);
+      console.error("Erro ao buscar detalhes dos itens:", itemsError);
       throw itemsError;
     }
     
-    // Create a lookup map for item details
+    // Criar mapa de itens para lookup rápido
     const itemsMap = new Map();
     itemsData.forEach(item => {
       itemsMap.set(item.ITEM_CODIGO, item);
     });
 
-    // Process the results to extract item details and calculate totals
-    const processedItems = pedidosData.reduce((acc, item) => {
+    // Extrair códigos de clientes únicos
+    const clienteCodes = [...new Set(faturamentoData.map(item => item.PES_CODIGO).filter(Boolean))];
+    
+    // Buscar informações dos clientes
+    const { data: clientesData, error: clientesError } = await supabase
+      .from("BLUEBAY_PESSOA")
+      .select("PES_CODIGO, APELIDO")
+      .in("PES_CODIGO", clienteCodes);
+    
+    if (clientesError) {
+      console.error("Erro ao buscar informações dos clientes:", clientesError);
+      throw clientesError;
+    }
+    
+    // Criar mapa de clientes para lookup rápido
+    const clientesMap = new Map();
+    clientesData.forEach(cliente => {
+      clientesMap.set(cliente.PES_CODIGO, cliente);
+    });
+
+    // Processar os itens para agrupar e calcular totais
+    const processedItems = faturamentoData.reduce((acc, item) => {
       const itemCode = item.ITEM_CODIGO;
       if (!itemCode) return acc;
 
@@ -54,25 +74,25 @@ export const getBluebayReportItems = async (startDate?: string, endDate?: string
       const descricao = itemDetails.DESCRICAO || '';
       const grupoDescricao = itemDetails.GRU_DESCRICAO || 'Sem Grupo';
       
-      // Find if the item already exists in our accumulated results
+      // Encontrar se o item já existe nos resultados acumulados
       const existingItemIndex = acc.findIndex(i => 
         i.ITEM_CODIGO === itemCode && i.GRU_DESCRICAO === grupoDescricao
       );
 
       if (existingItemIndex >= 0) {
-        // Update existing item
-        acc[existingItemIndex].TOTAL_QUANTIDADE += Number(item.QTDE_PEDIDA || 0);
+        // Atualizar item existente
+        acc[existingItemIndex].TOTAL_QUANTIDADE += Number(item.QUANTIDADE || 0);
         acc[existingItemIndex].TOTAL_VALOR += 
-          Number(item.QTDE_PEDIDA || 0) * Number(item.VALOR_UNITARIO || 0);
+          Number(item.QUANTIDADE || 0) * Number(item.VALOR_UNITARIO || 0);
         acc[existingItemIndex].OCORRENCIAS += 1;
       } else {
-        // Add new item
+        // Adicionar novo item
         acc.push({
           ITEM_CODIGO: itemCode,
           DESCRICAO: descricao,
           GRU_DESCRICAO: grupoDescricao,
-          TOTAL_QUANTIDADE: Number(item.QTDE_PEDIDA || 0),
-          TOTAL_VALOR: Number(item.QTDE_PEDIDA || 0) * Number(item.VALOR_UNITARIO || 0),
+          TOTAL_QUANTIDADE: Number(item.QUANTIDADE || 0),
+          TOTAL_VALOR: Number(item.QUANTIDADE || 0) * Number(item.VALOR_UNITARIO || 0),
           OCORRENCIAS: 1
         });
       }
@@ -80,73 +100,90 @@ export const getBluebayReportItems = async (startDate?: string, endDate?: string
       return acc;
     }, []);
 
-    // Sort by TOTAL_VALOR descending
+    // Ordenar por TOTAL_VALOR decrescente
     processedItems.sort((a, b) => b.TOTAL_VALOR - a.TOTAL_VALOR);
 
     return processedItems;
   } catch (error) {
-    console.error("Error fetching reports:", error);
+    console.error("Erro ao processar dados de faturamento:", error);
     throw error;
   }
 };
 
-// This function fetches the item details for a specific item code
+export const getBluebayReportItems = async (startDate?: string, endDate?: string) => {
+  try {
+    const formattedStartDate = startDate ? `${startDate}T00:00:00Z` : undefined;
+    const formattedEndDate = endDate ? `${endDate}T23:59:59Z` : undefined;
+
+    console.info("Buscando relatório de itens Bluebay...", {
+      startDate,
+      endDate
+    });
+
+    // Buscar dados de faturamento usando a nova função RPC
+    const faturamentoData = await fetchBluebayFaturamentoData(formattedStartDate, formattedEndDate);
+    
+    // Processar os dados para obter itens agrupados com totais
+    const processedItems = await processFaturamentoData(faturamentoData);
+
+    return processedItems;
+  } catch (error) {
+    console.error("Erro ao buscar relatórios:", error);
+    throw error;
+  }
+};
+
+// Esta função busca os detalhes de um item específico
 export const getBluebayItemDetails = async (itemCode: string, startDate?: string, endDate?: string) => {
   try {
     const formattedStartDate = startDate ? `${startDate}T00:00:00Z` : undefined;
     const formattedEndDate = endDate ? `${endDate}T23:59:59Z` : undefined;
 
-    // Fetch the detailed breakdown of orders for this item
-    const { data: pedidosData, error: pedidosError } = await supabase
-      .from("BLUEBAY_PEDIDO")
-      .select("*")
-      .eq("ITEM_CODIGO", itemCode)
-      .eq("CENTROCUSTO", "BLUEBAY")
-      .gte(formattedStartDate ? "DATA_PEDIDO" : "MATRIZ", formattedStartDate ?? 0)
-      .lte(formattedEndDate ? "DATA_PEDIDO" : "MATRIZ", formattedEndDate ?? 9999999);
-
-    if (pedidosError) {
-      console.error("Error fetching item details:", pedidosError);
-      throw pedidosError;
-    }
-
-    // Get unique customer codes
-    const customerCodes = [...new Set(pedidosData.map(item => item.PES_CODIGO).filter(Boolean))];
+    // Buscar dados de faturamento
+    const faturamentoData = await fetchBluebayFaturamentoData(formattedStartDate, formattedEndDate);
     
-    // Fetch customer details in a separate query
-    const { data: customersData, error: customersError } = await supabase
+    // Filtrar apenas os dados para o código de item específico
+    const filteredData = faturamentoData.filter(item => 
+      item.ITEM_CODIGO === itemCode && item.NOTA
+    );
+
+    // Extrair códigos de clientes únicos
+    const clienteCodes = [...new Set(filteredData.map(item => item.PES_CODIGO).filter(Boolean))];
+    
+    // Buscar informações dos clientes
+    const { data: clientesData, error: clientesError } = await supabase
       .from("BLUEBAY_PESSOA")
       .select("PES_CODIGO, APELIDO")
-      .in("PES_CODIGO", customerCodes);
+      .in("PES_CODIGO", clienteCodes);
     
-    if (customersError) {
-      console.error("Error fetching customer details:", customersError);
-      throw customersError;
+    if (clientesError) {
+      console.error("Erro ao buscar informações dos clientes:", clientesError);
+      throw clientesError;
     }
     
-    // Create a lookup map for customer details
-    const customersMap = new Map();
-    customersData.forEach(customer => {
-      customersMap.set(customer.PES_CODIGO, customer);
+    // Criar mapa de clientes para lookup rápido
+    const clientesMap = new Map();
+    clientesData.forEach(cliente => {
+      clientesMap.set(cliente.PES_CODIGO, cliente);
     });
 
-    // Format the data with client name included
-    const detailedItems = pedidosData.map(item => {
-      const customer = customersMap.get(item.PES_CODIGO) || {};
+    // Formatar os dados com o nome do cliente incluído
+    const detailedItems = filteredData.map(item => {
+      const cliente = clientesMap.get(item.PES_CODIGO) || {};
       
       return {
-        DATA_PEDIDO: item.DATA_PEDIDO,
+        DATA_PEDIDO: item.DATA_EMISSAO,
         PED_NUMPEDIDO: item.PED_NUMPEDIDO,
-        CLIENTE_NOME: customer.APELIDO || 'Cliente não identificado',
-        QUANTIDADE: item.QTDE_PEDIDA,
+        CLIENTE_NOME: cliente.APELIDO || 'Cliente não identificado',
+        QUANTIDADE: item.QUANTIDADE,
         VALOR_UNITARIO: item.VALOR_UNITARIO,
-        TOTAL: (Number(item.QTDE_PEDIDA || 0) * Number(item.VALOR_UNITARIO || 0))
+        TOTAL: (Number(item.QUANTIDADE || 0) * Number(item.VALOR_UNITARIO || 0))
       };
     });
 
     return detailedItems;
   } catch (error) {
-    console.error("Error fetching item details:", error);
+    console.error("Erro ao buscar detalhes do item:", error);
     throw error;
   }
 };

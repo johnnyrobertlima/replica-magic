@@ -17,7 +17,7 @@ export const useReports = () => {
   const fetchItems = useCallback(async () => {
     setIsLoading(true);
     try {
-      // Format dates for API request
+      // Formatar datas para requisição à API
       const startDateFormatted = dateRange.startDate 
         ? formatISO(dateRange.startDate, { representation: 'date' }) 
         : undefined;
@@ -26,12 +26,12 @@ export const useReports = () => {
         ? formatISO(dateRange.endDate, { representation: 'date' })
         : undefined;
 
-      console.info("Loading reports data for date range:", startDateFormatted, "to", endDateFormatted);
+      console.info("Carregando dados de relatório para o período:", startDateFormatted, "até", endDateFormatted);
       
       const data = await getBluebayReportItems(startDateFormatted, endDateFormatted);
       setItems(data || []);
     } catch (error) {
-      console.error("Error fetching reports:", error);
+      console.error("Erro ao buscar relatórios:", error);
       setItems([]);
     } finally {
       setIsLoading(false);
@@ -41,7 +41,7 @@ export const useReports = () => {
   const loadItemDetails = useCallback(async (itemCode) => {
     setIsLoadingDetails(true);
     try {
-      // Format dates for API request
+      // Formatar datas para requisição à API
       const startDateFormatted = dateRange.startDate 
         ? formatISO(dateRange.startDate, { representation: 'date' }) 
         : undefined;
@@ -61,7 +61,7 @@ export const useReports = () => {
         details
       });
     } catch (error) {
-      console.error("Error loading item details:", error);
+      console.error("Erro ao carregar detalhes do item:", error);
       setSelectedItemDetails(null);
     } finally {
       setIsLoadingDetails(false);
@@ -77,7 +77,7 @@ export const useReports = () => {
     setSelectedItemDetails(null);
   }, [fetchItems]);
 
-  // Initial data load
+  // Carregamento inicial de dados
   useEffect(() => {
     fetchItems();
   }, [fetchItems]);
