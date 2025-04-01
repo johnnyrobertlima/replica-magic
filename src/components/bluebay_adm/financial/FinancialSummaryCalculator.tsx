@@ -19,6 +19,9 @@ export const FinancialSummaryCalculator: React.FC<FinancialSummaryProps> = ({
   // Calcular o resumo financeiro baseado nos títulos filtrados
   useEffect(() => {
     const today = new Date();
+    // Remover a hora, minutos e segundos para comparar apenas as datas
+    const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    
     let totalPago = 0;
     let totalEmAberto = 0;
     let totalValoresVencidos = 0;
@@ -32,20 +35,29 @@ export const FinancialSummaryCalculator: React.FC<FinancialSummaryProps> = ({
     titlesToCalculate
       .filter(title => title.STATUS !== '4') // Excluir títulos cancelados
       .forEach(title => {
-        const vencimentoDate = title.DTVENCIMENTO ? new Date(title.DTVENCIMENTO) : null;
+        // Verifica se há data de vencimento e prepara para comparação
+        let vencimentoDate = null;
+        if (title.DTVENCIMENTO) {
+          const vencimento = new Date(title.DTVENCIMENTO);
+          vencimentoDate = new Date(vencimento.getFullYear(), vencimento.getMonth(), vencimento.getDate());
+        }
+        
         const vlrTitulo = title.VLRTITULO || 0;
         const vlrSaldo = title.VLRSALDO || 0;
         
         // Verificar se o título está pago
         if (title.STATUS === '3') { // Status 3 = Pago
           totalPago += vlrTitulo;
-        } else {
-          // Adicionar ao total em aberto se não estiver pago
-          totalEmAberto += vlrSaldo;
+        } else if (vlrSaldo > 0) {
+          // Adicionar ao total em aberto se não estiver pago e tiver saldo
           
           // Verificar se está vencido (data de vencimento está no passado)
-          if (vencimentoDate && vencimentoDate < today) {
+          if (!vencimentoDate || vencimentoDate < todayDateOnly) {
+            // Valores VENCIDOS: data de vencimento é anterior a hoje
             totalValoresVencidos += vlrSaldo;
+          } else {
+            // Valores EM ABERTO: data de vencimento é hoje ou futura
+            totalEmAberto += vlrSaldo;
           }
         }
       });

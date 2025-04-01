@@ -16,6 +16,8 @@ export const useFinancialSummaries = (
   // Calculate financial summary
   const financialSummary = useMemo(() => {
     const today = new Date();
+    // Remover a hora, minutos e segundos para comparar apenas as datas
+    const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     
     let totalValoresVencidos = 0;
     let totalPago = 0;
@@ -26,14 +28,20 @@ export const useFinancialSummaries = (
       .filter(title => title.STATUS !== '4') // Exclude canceled titles
       .forEach(title => {
         if (title.VLRSALDO > 0) {
-          totalEmAberto += title.VLRSALDO;
-          
-          // Check if overdue
+          // Verifica se há data de vencimento e prepara para comparação
+          let vencimentoDate = null;
           if (title.DTVENCIMENTO) {
             const vencimento = new Date(title.DTVENCIMENTO);
-            if (vencimento < today) {
-              totalValoresVencidos += title.VLRSALDO;
-            }
+            vencimentoDate = new Date(vencimento.getFullYear(), vencimento.getMonth(), vencimento.getDate());
+          }
+
+          // Classificação dos títulos:
+          // - Em aberto: data de vencimento é hoje ou no futuro
+          // - Vencidos: data de vencimento é anterior a hoje
+          if (!vencimentoDate || vencimentoDate < todayDateOnly) {
+            totalValoresVencidos += title.VLRSALDO;
+          } else {
+            totalEmAberto += title.VLRSALDO;
           }
         }
         
@@ -44,6 +52,7 @@ export const useFinancialSummaries = (
     
     // Calculate from invoices
     filteredInvoices.forEach(invoice => {
+      // Para invoices, manteremos o cálculo anterior, pois podem não ter informação detalhada de vencimento
       totalEmAberto += invoice.VALOR_SALDO || 0;
       totalPago += invoice.VALOR_PAGO || 0;
     });
@@ -58,6 +67,9 @@ export const useFinancialSummaries = (
   // Group by client for client summaries, excluding canceled titles
   const clientFinancialSummaries = useMemo(() => {
     const today = new Date();
+    // Remover a hora, minutos e segundos para comparar apenas as datas
+    const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    
     const clientMap = new Map<string | number, ClientFinancialSummary>();
     
     // Process titles, excluding canceled titles (status '4')
@@ -79,14 +91,20 @@ export const useFinancialSummaries = (
         const clientSummary = clientMap.get(clientKey)!;
         
         if (title.VLRSALDO > 0) {
-          clientSummary.totalEmAberto += title.VLRSALDO;
-          
-          // Check if overdue
+          // Verifica se há data de vencimento e prepara para comparação
+          let vencimentoDate = null;
           if (title.DTVENCIMENTO) {
             const vencimento = new Date(title.DTVENCIMENTO);
-            if (vencimento < today) {
-              clientSummary.totalValoresVencidos += title.VLRSALDO;
-            }
+            vencimentoDate = new Date(vencimento.getFullYear(), vencimento.getMonth(), vencimento.getDate());
+          }
+
+          // Classificação dos títulos:
+          // - Em aberto: data de vencimento é hoje ou no futuro
+          // - Vencidos: data de vencimento é anterior a hoje
+          if (!vencimentoDate || vencimentoDate < todayDateOnly) {
+            clientSummary.totalValoresVencidos += title.VLRSALDO;
+          } else {
+            clientSummary.totalEmAberto += title.VLRSALDO;
           }
         }
         
@@ -111,6 +129,7 @@ export const useFinancialSummaries = (
       
       const clientSummary = clientMap.get(clientKey)!;
       
+      // Para invoices, manteremos o cálculo anterior, pois podem não ter informação detalhada de vencimento
       clientSummary.totalEmAberto += invoice.VALOR_SALDO || 0;
       clientSummary.totalPago += invoice.VALOR_PAGO || 0;
     });
