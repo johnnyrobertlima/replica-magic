@@ -165,16 +165,18 @@ export const fetchBluebayItemsReport = async (
         console.log("Amostra de dados recentes de faturamento:", sampleData);
         
         // Verificar se há dados no período especificado
-        const { data: periodData, error: periodError } = await supabase
+        const countResult = await supabase
           .from('BLUEBAY_FATURAMENTO')
-          .select('count(*)', { count: 'exact', head: true })
+          .select('*', { count: 'exact', head: true })
           .gte('DATA_EMISSAO', startDate)
           .lte('DATA_EMISSAO', endDate + 'T23:59:59');
         
-        if (periodError) {
-          console.error("Erro ao verificar dados no período:", periodError);
+        // Fix: Safely check if countResult has the count property
+        if (countResult.error) {
+          console.error("Erro ao verificar dados no período:", countResult.error);
         } else {
-          console.log(`Quantidade de registros no período ${startDate} a ${endDate}: ${periodData.count}`);
+          const count = countResult.count !== null ? countResult.count : 0;
+          console.log(`Quantidade de registros no período ${startDate} a ${endDate}: ${count}`);
         }
       }
       
