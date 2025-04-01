@@ -19,7 +19,7 @@ export const useAdmReports = () => {
       setItems(data);
     } catch (err) {
       console.error("Error loading report items:", err);
-      setError("Falha ao carregar items do relatório");
+      setError("Falha ao carregar itens do relatório");
       toast({
         title: "Erro",
         description: "Falha ao carregar itens do relatório. Tente novamente mais tarde.",
