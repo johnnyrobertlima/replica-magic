@@ -29,6 +29,7 @@ export const useReports = () => {
       console.info("Carregando dados de relatório para o período:", startDateFormatted, "até", endDateFormatted);
       
       const data = await getBluebayReportItems(startDateFormatted, endDateFormatted);
+      console.log("Dados recebidos no hook:", data);
       setItems(data || []);
     } catch (error) {
       console.error("Erro ao buscar relatórios:", error);

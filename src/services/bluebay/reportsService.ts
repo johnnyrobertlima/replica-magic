@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { formatISO } from "date-fns";
 
@@ -16,6 +17,7 @@ const fetchBluebayFaturamentoData = async (startDate?: string, endDate?: string)
       throw rpcError;
     }
 
+    console.log("Dados retornados da função RPC:", rpcData);
     return rpcData || [];
   } catch (error) {
     console.error("Erro ao buscar dados de faturamento:", error);
@@ -25,6 +27,12 @@ const fetchBluebayFaturamentoData = async (startDate?: string, endDate?: string)
 
 const processFaturamentoData = async (faturamentoData: any[]) => {
   try {
+    // Verificar se os dados são um array antes de processar
+    if (!Array.isArray(faturamentoData)) {
+      console.error("Dados de faturamento não são um array:", faturamentoData);
+      return [];
+    }
+    
     // Extrair códigos de itens únicos
     const itemCodes = [...new Set(faturamentoData.map(item => item.ITEM_CODIGO).filter(Boolean))];
     
@@ -41,7 +49,7 @@ const processFaturamentoData = async (faturamentoData: any[]) => {
     
     // Criar mapa de itens para lookup rápido
     const itemsMap = new Map();
-    itemsData.forEach(item => {
+    itemsData?.forEach(item => {
       itemsMap.set(item.ITEM_CODIGO, item);
     });
 
@@ -52,7 +60,7 @@ const processFaturamentoData = async (faturamentoData: any[]) => {
     const { data: clientesData, error: clientesError } = await supabase
       .from("BLUEBAY_PESSOA")
       .select("PES_CODIGO, APELIDO")
-      .in("PES_CODIGO", clienteCodes);
+      .in("PES_CODIGO", clienteCodes as number[]);
     
     if (clientesError) {
       console.error("Erro ao buscar informações dos clientes:", clientesError);
@@ -61,7 +69,7 @@ const processFaturamentoData = async (faturamentoData: any[]) => {
     
     // Criar mapa de clientes para lookup rápido
     const clientesMap = new Map();
-    clientesData.forEach(cliente => {
+    clientesData?.forEach(cliente => {
       clientesMap.set(cliente.PES_CODIGO, cliente);
     });
 
@@ -116,12 +124,12 @@ export const getBluebayReportItems = async (startDate?: string, endDate?: string
     const formattedEndDate = endDate ? `${endDate}T23:59:59Z` : undefined;
 
     console.info("Buscando relatório de itens Bluebay...", {
-      startDate,
-      endDate
+      startDate: formattedStartDate,
+      endDate: formattedEndDate
     });
 
     // Buscar dados de faturamento usando a função
-    const faturamentoData: any[] = await fetchBluebayFaturamentoData(formattedStartDate, formattedEndDate);
+    const faturamentoData = await fetchBluebayFaturamentoData(formattedStartDate, formattedEndDate);
     
     // Verificar se os dados são um array antes de processar
     if (!Array.isArray(faturamentoData)) {
@@ -131,6 +139,7 @@ export const getBluebayReportItems = async (startDate?: string, endDate?: string
     
     // Processar os dados para obter itens agrupados com totais
     const processedItems = await processFaturamentoData(faturamentoData);
+    console.log("Itens processados:", processedItems);
 
     return processedItems;
   } catch (error) {
@@ -146,7 +155,7 @@ export const getBluebayItemDetails = async (itemCode: string, startDate?: string
     const formattedEndDate = endDate ? `${endDate}T23:59:59Z` : undefined;
 
     // Buscar dados de faturamento
-    const faturamentoData: any[] = await fetchBluebayFaturamentoData(formattedStartDate, formattedEndDate);
+    const faturamentoData = await fetchBluebayFaturamentoData(formattedStartDate, formattedEndDate);
     
     // Verificar se os dados são um array antes de processar
     if (!Array.isArray(faturamentoData)) {
@@ -175,7 +184,7 @@ export const getBluebayItemDetails = async (itemCode: string, startDate?: string
     
     // Criar mapa de clientes para lookup rápido
     const clientesMap = new Map();
-    clientesData.forEach(cliente => {
+    clientesData?.forEach(cliente => {
       clientesMap.set(cliente.PES_CODIGO, cliente);
     });
 
@@ -193,6 +202,7 @@ export const getBluebayItemDetails = async (itemCode: string, startDate?: string
       };
     });
 
+    console.log("Detalhes do item:", detailedItems);
     return detailedItems;
   } catch (error) {
     console.error("Erro ao buscar detalhes do item:", error);
