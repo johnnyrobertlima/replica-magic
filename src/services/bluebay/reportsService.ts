@@ -36,8 +36,23 @@ export const fetchBluebayItemsReport = async (
     
     if (!Array.isArray(faturamentoData) || faturamentoData.length === 0) {
       console.info("Nenhum dado de faturamento encontrado para o período");
+      
+      // Verificar se temos itens cadastrados para diagnóstico
+      const { data: itemData, error: itemError } = await supabase
+        .from('BLUEBAY_ITEM')
+        .select('count(*)')
+        .limit(1);
+        
+      if (itemError) {
+        console.error("Erro ao verificar itens:", itemError);
+      } else {
+        console.log("Diagnóstico de itens disponíveis:", itemData);
+      }
+      
       return [];
     }
+    
+    console.log(`Processando ${faturamentoData.length} registros de faturamento`);
     
     // Obter códigos de itens únicos do faturamento
     const itemCodes = [...new Set(faturamentoData
@@ -49,6 +64,8 @@ export const fetchBluebayItemsReport = async (
       return [];
     }
     
+    console.log(`Encontrados ${itemCodes.length} códigos de itens únicos`);
+    
     // Buscar informações dos itens no BLUEBAY_ITEM
     const { data: itemsData, error: itemsError } = await supabase
       .from('BLUEBAY_ITEM')
@@ -59,6 +76,8 @@ export const fetchBluebayItemsReport = async (
       console.error("Erro ao buscar informações dos itens:", itemsError);
       throw itemsError;
     }
+    
+    console.log(`Carregadas informações de ${itemsData?.length || 0} itens`);
     
     // Mapear itens com suas informações
     const itemsMap = new Map();
@@ -96,7 +115,9 @@ export const fetchBluebayItemsReport = async (
       itemReports[itemCode].OCORRENCIAS += 1;
     });
     
-    return Object.values(itemReports);
+    const result = Object.values(itemReports);
+    console.log(`Gerado relatório com ${result.length} itens`);
+    return result;
   } catch (error) {
     console.error("Erro ao buscar relatório de itens:", error);
     throw error;

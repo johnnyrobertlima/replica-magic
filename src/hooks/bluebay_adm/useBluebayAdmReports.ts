@@ -44,10 +44,25 @@ export const useBluebayAdmReports = () => {
         console.info(`Carregando dados de relatório para o período: ${startDateFormatted} até ${endDateFormatted}`);
         
         const data = await fetchBluebayItemsReport(startDateFormatted, endDateFormatted);
+        
+        if (data.length === 0) {
+          console.info("Nenhum item encontrado para o período selecionado");
+          toast({
+            title: "Sem dados",
+            description: "Nenhum item encontrado para o período selecionado.",
+            variant: "default",
+          });
+        }
+        
         setItems(data);
       } else {
         console.warn("Intervalo de datas incompleto");
         setItems([]);
+        toast({
+          title: "Aviso",
+          description: "Por favor, selecione um intervalo de datas válido.",
+          variant: "default",
+        });
       }
       
     } catch (err) {
@@ -90,6 +105,11 @@ export const useBluebayAdmReports = () => {
       } else {
         console.warn("Intervalo de datas incompleto para detalhes do item");
         setSelectedItemDetails([]);
+        toast({
+          title: "Aviso",
+          description: "Por favor, selecione um intervalo de datas válido.",
+          variant: "default",
+        });
       }
       
     } catch (err) {

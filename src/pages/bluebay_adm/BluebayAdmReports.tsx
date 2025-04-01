@@ -5,6 +5,8 @@ import { BluebayAdmMenu } from "@/components/bluebay_adm/BluebayAdmMenu";
 import { ReportsTable } from "@/components/bk/reports/ReportsTable";
 import { useBluebayAdmReports } from "@/hooks/bluebay_adm/useBluebayAdmReports";
 import { DatePickerWithRange } from "@/components/ui/date-range-picker";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
 
 const BluebayAdmReports = () => {
   const { 
@@ -14,7 +16,8 @@ const BluebayAdmReports = () => {
     updateDateRange,
     loadItemDetails,
     selectedItemDetails,
-    isLoadingDetails
+    isLoadingDetails,
+    refreshData
   } = useBluebayAdmReports();
 
   // Handler para quando um item é clicado na tabela
@@ -31,18 +34,29 @@ const BluebayAdmReports = () => {
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
             <h1 className="text-3xl font-bold tracking-tight mb-4 md:mb-0">Relatórios de Itens</h1>
-            <DatePickerWithRange 
-              dateRange={{
-                from: dateRange.startDate,
-                to: dateRange.endDate
-              }}
-              onDateRangeChange={(range) => {
-                updateDateRange({
-                  startDate: range.from,
-                  endDate: range.to
-                });
-              }}
-            />
+            <div className="flex gap-3 items-center">
+              <DatePickerWithRange 
+                dateRange={{
+                  from: dateRange.startDate,
+                  to: dateRange.endDate
+                }}
+                onDateRangeChange={(range) => {
+                  updateDateRange({
+                    startDate: range.from,
+                    endDate: range.to
+                  });
+                }}
+              />
+              <Button 
+                variant="outline" 
+                size="icon"
+                onClick={refreshData}
+                title="Atualizar dados"
+                disabled={isLoading}
+              >
+                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
           </div>
           
           <div className="bg-white p-6 rounded-lg shadow">
@@ -55,6 +69,9 @@ const BluebayAdmReports = () => {
               <div className="py-8 text-center">
                 <p className="text-lg text-gray-700">
                   Nenhum dado encontrado para o período selecionado.
+                </p>
+                <p className="text-sm text-gray-500 mt-2">
+                  Tente ajustar o intervalo de datas ou verificar se existem registros de faturamento.
                 </p>
               </div>
             ) : (

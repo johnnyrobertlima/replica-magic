@@ -47,11 +47,17 @@ export const fetchBluebayFaturamento = async (
       filter.startDate = startDate;
       filter.endDate = endDate + "T23:59:59Z"; // Incluir até o fim do dia
       console.log("Aplicando filtro de data:", true);
+      console.log("Datas formatadas:", filter.startDate, filter.endDate);
     }
 
     // Utilizar o procedimento RPC get_bluebay_faturamento que está no banco de dados
     // Este procedimento faz a junção entre BLUEBAY_FATURAMENTO e BLUEBAY_PEDIDO
     // e aplica o filtro CENTROCUSTO = 'BLUEBAY'
+    console.log("Chamando função RPC com parâmetros:", { 
+      start_date: filter.startDate, 
+      end_date: filter.endDate 
+    });
+    
     const { data, error } = await supabase
       .rpc('get_bluebay_faturamento', { 
         start_date: filter.startDate, 
@@ -64,6 +70,37 @@ export const fetchBluebayFaturamento = async (
     }
 
     console.info(`Buscados ${data?.length || 0} registros de faturamento para CENTROCUSTO = BLUEBAY`);
+    
+    // Verificar se temos dados válidos
+    if (!data || data.length === 0) {
+      console.log("Nenhum dado retornado da função RPC");
+      
+      // Vamos verificar diretamente nas tabelas para diagnóstico
+      const { data: diagnosticData, error: diagnosticError } = await supabase
+        .from('BLUEBAY_FATURAMENTO')
+        .select('count(*)')
+        .limit(1);
+        
+      if (diagnosticError) {
+        console.error("Erro ao fazer diagnóstico:", diagnosticError);
+      } else {
+        console.log("Diagnóstico de dados disponíveis:", diagnosticData);
+      }
+      
+      // Verificar se há pedidos com CENTROCUSTO = 'BLUEBAY'
+      const { data: pedidosData, error: pedidosError } = await supabase
+        .from('BLUEBAY_PEDIDO')
+        .select('count(*)')
+        .eq('CENTROCUSTO', 'BLUEBAY')
+        .limit(1);
+        
+      if (pedidosError) {
+        console.error("Erro ao verificar pedidos BLUEBAY:", pedidosError);
+      } else {
+        console.log("Pedidos com CENTROCUSTO = BLUEBAY:", pedidosData);
+      }
+    }
+    
     return data || [];
   } catch (error) {
     console.error("Erro ao buscar dados de faturamento:", error);
