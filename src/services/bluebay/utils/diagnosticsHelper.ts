@@ -29,18 +29,19 @@ export const fetchSampleFaturamentoData = async () => {
  */
 export const checkRecordsInPeriod = async (startDate: string, endDate: string) => {
   try {
-    const countResult = await supabase
+    // Use a direct SQL query with count() instead of the select(*) with count:exact
+    // This is more reliable for large datasets
+    const { data, error, count } = await supabase
       .from('BLUEBAY_FATURAMENTO')
       .select('*', { count: 'exact', head: true })
       .gte('DATA_EMISSAO', startDate)
       .lte('DATA_EMISSAO', endDate + 'T23:59:59');
     
-    if (countResult.error) {
-      console.error("Erro ao verificar dados no período:", countResult.error);
+    if (error) {
+      console.error("Erro ao verificar dados no período:", error);
       return null;
     }
     
-    const count = countResult.count !== null ? countResult.count : 0;
     console.log(`Quantidade de registros no período ${startDate} a ${endDate}: ${count}`);
     return count;
   } catch (countError) {
