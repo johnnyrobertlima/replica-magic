@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { format, subDays } from "date-fns";
 import { StockItem } from "./types";
+import { generateSampleStockData } from "./sampleDataGenerator";
 
 /**
  * Fetches stock sales analytics data using the RPC function
@@ -25,8 +26,7 @@ export const fetchStockSalesAnalytics = async (
         p_start_date: startDate,
         p_end_date: endDate,
         p_new_product_date: sixtyDaysAgo
-      })
-      .select('*');
+      });
     
     if (error) {
       console.error("Erro na função RPC:", error.message, error.details);
@@ -66,6 +66,12 @@ export const fetchStockSalesAnalytics = async (
     console.error("Erro ao carregar dados de estoque-vendas:", error);
     throw error; // Re-throw to let the UI handle displaying the error
   }
+};
+
+// Export the sample data generator
+export const fetchSampleStockData = (): Promise<StockItem[]> => {
+  console.log("Gerando dados de exemplo para visualização");
+  return Promise.resolve(generateSampleStockData());
 };
 
 // Re-export required types from the types file

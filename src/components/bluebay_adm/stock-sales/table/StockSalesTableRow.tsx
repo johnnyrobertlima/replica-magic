@@ -13,7 +13,10 @@ interface StockSalesTableRowProps {
 
 export const StockSalesTableRow: React.FC<StockSalesTableRowProps> = ({ item }) => {
   const isLowStock = (item.FISICO || 0) < 5;
-  const isTop10 = (item.RANKING || 0) > 0 && (item.RANKING || 0) <= 10;
+  
+  // Convert bigint or number to standard number for comparison
+  const ranking = item.RANKING !== null ? Number(item.RANKING) : 0;
+  const isTop10 = ranking > 0 && ranking <= 10;
   
   return (
     <TableRow 
@@ -29,7 +32,7 @@ export const StockSalesTableRow: React.FC<StockSalesTableRowProps> = ({ item }) 
         <ItemBadges 
           isNew={item.PRODUTO_NOVO} 
           isTop10={isTop10} 
-          ranking={item.RANKING} 
+          ranking={ranking} 
         />
       </TableCell>
       <TableCell>{item.DESCRICAO}</TableCell>
@@ -49,7 +52,7 @@ export const StockSalesTableRow: React.FC<StockSalesTableRowProps> = ({ item }) 
         {item.DIAS_COBERTURA >= 999 ? '∞' : formatTableNumber(item.DIAS_COBERTURA, 0)}
       </TableCell>
       <TableCell>{formatTableDate(item.DATA_ULTIMA_VENDA)}</TableCell>
-      <TableCell>{item.RANKING || '-'}</TableCell>
+      <TableCell>{item.RANKING !== null ? Number(item.RANKING) : '-'}</TableCell>
     </TableRow>
   );
 };

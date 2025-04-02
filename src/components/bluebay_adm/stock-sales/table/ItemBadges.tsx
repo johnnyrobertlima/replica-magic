@@ -6,7 +6,7 @@ import { Star } from "lucide-react";
 interface ItemBadgesProps {
   isNew: boolean;
   isTop10: boolean;
-  ranking?: number | null;
+  ranking: number;
 }
 
 export const ItemBadges: React.FC<ItemBadgesProps> = ({ isNew, isTop10, ranking }) => {
