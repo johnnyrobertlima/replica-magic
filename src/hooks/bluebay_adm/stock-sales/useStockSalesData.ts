@@ -32,49 +32,13 @@ export const useStockSalesData = () => {
           // Use the enhanced fetching with fallbacks
           const data = await fetchStockSalesAnalytics(startDateFormatted, endDateFormatted);
           
-          // Check if data is using sample data
-          setUsingSampleData(data.length > 0 && data[0].hasOwnProperty('isSampleData'));
+          // Process the data to ensure uniqueness and integrity
+          const processedData = processDataForDisplay(data);
           
-          // Create a Map to store unique items by their ITEM_CODIGO
-          const uniqueItemsMap = new Map<string, StockItem>();
-          
-          // Process the data to ensure we only have unique items
-          data.forEach(item => {
-            // Only add the item if it doesn't already exist in our map
-            if (!uniqueItemsMap.has(item.ITEM_CODIGO)) {
-              uniqueItemsMap.set(item.ITEM_CODIGO, item);
-            } else {
-              console.log(`Duplicate item found and skipped: ${item.ITEM_CODIGO}`);
-            }
-          });
-          
-          // Convert the Map values back to an array
-          const uniqueItems = Array.from(uniqueItemsMap.values());
-          setItems(uniqueItems);
-          
-          if (uniqueItems.length === 0) {
-            toast({
-              title: "Nenhum dado encontrado",
-              description: "Não foram encontrados dados para o período selecionado.",
-              variant: "default",
-            });
-          } else {
-            toast({
-              title: "Dados carregados",
-              description: `Carregados ${uniqueItems.length} registros de estoque e vendas.`,
-              variant: "default",
-            });
-          }
-        } catch (error) {
-          console.error("Erro ao carregar dados de estoque-vendas:", error);
-          setError("Falha ao carregar dados de estoque-vendas");
-          setItems([]);
-          
-          toast({
-            title: "Erro",
-            description: "Não foi possível carregar os dados do relatório. Verifique o console para mais detalhes.",
-            variant: "destructive",
-          });
+          // Update the state with the processed data
+          updateStateWithData(processedData);
+        } catch (fetchError) {
+          handleDataFetchError(fetchError);
         }
       } else {
         console.warn("Intervalo de datas incompleto");
@@ -82,25 +46,83 @@ export const useStockSalesData = () => {
       }
       
     } catch (err) {
-      console.error("Erro ao carregar dados de estoque-vendas:", err);
-      setError("Falha ao carregar dados de estoque-vendas");
-      setItems([]);
-      
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar os dados do relatório. Tente novamente mais tarde.",
-        variant: "destructive",
-      });
+      handleDataFetchError(err);
     } finally {
       setIsLoading(false);
     }
   };
 
+  /**
+   * Processes data to ensure uniqueness and data integrity
+   */
+  const processDataForDisplay = (data: StockItem[]): StockItem[] => {
+    // Check if data is using sample data
+    setUsingSampleData(data.length > 0 && data[0].hasOwnProperty('isSampleData'));
+    
+    // Create a Map to store unique items by their ITEM_CODIGO
+    const uniqueItemsMap = new Map<string, StockItem>();
+    
+    // Process the data to ensure we only have unique items
+    data.forEach(item => {
+      // Only add the item if it doesn't already exist in our map
+      if (!uniqueItemsMap.has(item.ITEM_CODIGO)) {
+        uniqueItemsMap.set(item.ITEM_CODIGO, item);
+      } else {
+        console.log(`Duplicate item found and skipped: ${item.ITEM_CODIGO}`);
+      }
+    });
+    
+    // Convert the Map values back to an array
+    return Array.from(uniqueItemsMap.values());
+  };
+
+  /**
+   * Updates state based on processed data
+   */
+  const updateStateWithData = (uniqueItems: StockItem[]) => {
+    setItems(uniqueItems);
+    
+    if (uniqueItems.length === 0) {
+      toast({
+        title: "Nenhum dado encontrado",
+        description: "Não foram encontrados dados para o período selecionado.",
+        variant: "default",
+      });
+    } else {
+      toast({
+        title: "Dados carregados",
+        description: `Carregados ${uniqueItems.length} registros de estoque e vendas.`,
+        variant: "default",
+      });
+    }
+  };
+
+  /**
+   * Handles errors in data fetching
+   */
+  const handleDataFetchError = (error: unknown) => {
+    console.error("Erro ao carregar dados de estoque-vendas:", error);
+    setError("Falha ao carregar dados de estoque-vendas");
+    setItems([]);
+    
+    toast({
+      title: "Erro",
+      description: "Não foi possível carregar os dados do relatório. Verifique o console para mais detalhes.",
+      variant: "destructive",
+    });
+  };
+
+  /**
+   * Updates date range and triggers data reload
+   */
   const updateDateRange = (newDateRange: DateRange) => {
     console.log(`Atualizando intervalo de datas`, newDateRange);
     setDateRange(newDateRange);
   };
 
+  /**
+   * Manually refreshes data
+   */
   const refreshData = () => {
     console.log("Atualizando dados do relatório");
     loadData();

@@ -21,6 +21,7 @@ export const StockSalesTableRow: React.FC<StockSalesTableRowProps> = ({ item, in
   
   return (
     <TableRow 
+      key={`${item.ITEM_CODIGO}-${index}`} // Add index to ensure uniqueness
       className={`
         ${isLowStock ? 'bg-red-50' : ''}
         ${item.PRODUTO_NOVO ? 'bg-blue-50' : ''}
