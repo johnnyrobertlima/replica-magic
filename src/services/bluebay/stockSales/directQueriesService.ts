@@ -21,7 +21,7 @@ export const fetchStockSalesWithDirectQueries = async (
     const newProductDate = sixtyDaysAgo.toISOString().split('T')[0];
     
     try {
-      // Fetch stock data with related item information
+      // Fetch stock data
       const { data: stockData, error: stockError } = await supabase
         .from('BLUEBAY_ESTOQUE')
         .select(`
@@ -30,12 +30,7 @@ export const fetchStockSalesWithDirectQueries = async (
           "DISPONIVEL",
           "RESERVADO",
           "ENTROU",
-          "LIMITE",
-          BLUEBAY_ITEM:"ITEM_CODIGO"(
-            "DESCRICAO",
-            "GRU_DESCRICAO",
-            "DATACADASTRO"
-          )
+          "LIMITE"
         `)
         .eq('LOCAL', 1);
       
@@ -48,6 +43,42 @@ export const fetchStockSalesWithDirectQueries = async (
         console.warn("Nenhum dado de estoque encontrado");
         return generateSampleStockData();
       }
+      
+      // Fetch item data for the stock items
+      const itemCodes = stockData.map(item => item.ITEM_CODIGO);
+      const { data: itemData, error: itemError } = await supabase
+        .from('BLUEBAY_ITEM')
+        .select(`
+          "ITEM_CODIGO",
+          "DESCRICAO",
+          "GRU_DESCRICAO",
+          "DATACADASTRO"
+        `)
+        .in('ITEM_CODIGO', itemCodes);
+      
+      if (itemError) {
+        console.error("Erro ao buscar dados de itens:", itemError);
+        return generateSampleStockData();
+      }
+      
+      // Create a map of item data for easy lookup
+      const itemMap = new Map();
+      itemData?.forEach(item => {
+        itemMap.set(item.ITEM_CODIGO, item);
+      });
+      
+      // Combine stock data with item data
+      const combinedStockData = stockData.map(stockItem => {
+        const item = itemMap.get(stockItem.ITEM_CODIGO);
+        return {
+          ...stockItem,
+          BLUEBAY_ITEM: item || {
+            DESCRICAO: 'Desconhecido',
+            GRU_DESCRICAO: 'Sem Grupo',
+            DATACADASTRO: null
+          }
+        };
+      });
       
       // Fetch sales data for the specified period
       const { data: salesData, error: salesError } = await supabase
@@ -68,7 +99,7 @@ export const fetchStockSalesWithDirectQueries = async (
       }
       
       // Process the data to calculate analytics
-      return processStockAndSalesData(stockData, salesData || [], newProductDate, startDate, endDate);
+      return processStockAndSalesData(combinedStockData, salesData || [], newProductDate, startDate, endDate);
       
     } catch (queryError) {
       console.error("Erro ao buscar dados diretos:", queryError);

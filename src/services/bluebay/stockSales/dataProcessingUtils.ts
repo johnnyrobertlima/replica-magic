@@ -24,6 +24,7 @@ export const processStockAndSalesData = (
     }
     
     // Add sales quantity and value
+    // Cast QUANTIDADE to number to avoid any type issues
     const quantidade = Number(sale["QUANTIDADE"]) || 0;
     const valorUnitario = Number(sale["VALOR_UNITARIO"]) || 0;
     
@@ -64,7 +65,7 @@ export const processStockAndSalesData = (
     
     // Calculate indicators
     const giroEstoque = fisico > 0 ? qtdVendida / fisico : 0;
-    const percentualEstoqueVendido = qtdVendida + fisico > 0 
+    const percentualEstoqueVendido = (qtdVendida + fisico) > 0 
       ? (qtdVendida / (qtdVendida + fisico)) * 100 
       : 0;
     const diasCobertura = mediaVendasDiaria > 0 
