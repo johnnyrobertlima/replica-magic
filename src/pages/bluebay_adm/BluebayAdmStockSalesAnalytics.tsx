@@ -24,7 +24,11 @@ const BluebayAdmStockSalesAnalytics = () => {
     refreshData,
     clearFilters,
     getSummaryStats,
-    usingSampleData
+    usingSampleData,
+    minCadastroYear,
+    setMinCadastroYear,
+    showZeroStock,
+    setShowZeroStock
   } = useStockSalesAnalytics();
 
   return (
@@ -50,6 +54,10 @@ const BluebayAdmStockSalesAnalytics = () => {
               onRefresh={refreshData}
               onClearFilters={clearFilters}
               isLoading={isLoading}
+              minCadastroYear={minCadastroYear}
+              onMinCadastroYearChange={setMinCadastroYear}
+              showZeroStock={showZeroStock}
+              onShowZeroStockChange={setShowZeroStock}
             />
             
             <StockSalesSummary 

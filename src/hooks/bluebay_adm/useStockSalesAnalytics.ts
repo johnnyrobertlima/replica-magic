@@ -15,6 +15,8 @@ export const useStockSalesAnalytics = () => {
   const [filteredItems, setFilteredItems] = useState<StockItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [groupFilter, setGroupFilter] = useState("all");
+  const [minCadastroYear, setMinCadastroYear] = useState("2022");
+  const [showZeroStock, setShowZeroStock] = useState(false);
   const [sortConfig, setSortConfig] = useState<{
     key: keyof StockItem,
     direction: 'asc' | 'desc'
@@ -113,6 +115,22 @@ export const useStockSalesAnalytics = () => {
   useEffect(() => {
     let result = [...items];
     
+    // Filter by cadastro year
+    if (minCadastroYear !== "all") {
+      const minYear = parseInt(minCadastroYear);
+      result = result.filter(item => {
+        if (!item.DATACADASTRO) return false;
+        const cadastroDate = new Date(item.DATACADASTRO);
+        return cadastroDate.getFullYear() >= minYear;
+      });
+    }
+    
+    // Filter by stock
+    if (!showZeroStock) {
+      result = result.filter(item => (item.FISICO || 0) > 0);
+    }
+    
+    // Filter by search term
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       result = result.filter(item => 
@@ -121,10 +139,12 @@ export const useStockSalesAnalytics = () => {
       );
     }
     
+    // Filter by group
     if (groupFilter && groupFilter !== "all") {
       result = result.filter(item => item.GRU_DESCRICAO === groupFilter);
     }
     
+    // Sort the results
     result.sort((a, b) => {
       const aValue = a[sortConfig.key];
       const bValue = b[sortConfig.key];
@@ -144,7 +164,7 @@ export const useStockSalesAnalytics = () => {
     });
     
     setFilteredItems(result);
-  }, [items, searchTerm, groupFilter, sortConfig]);
+  }, [items, searchTerm, groupFilter, sortConfig, minCadastroYear, showZeroStock]);
 
   const refreshData = () => {
     console.log("Atualizando dados do relatório");
@@ -166,6 +186,8 @@ export const useStockSalesAnalytics = () => {
   const clearFilters = () => {
     setSearchTerm("");
     setGroupFilter("all");
+    setMinCadastroYear("2022");
+    setShowZeroStock(false);
   };
 
   const getSummaryStats = () => {
@@ -198,6 +220,10 @@ export const useStockSalesAnalytics = () => {
     handleSort,
     clearFilters,
     getSummaryStats,
-    usingSampleData
+    usingSampleData,
+    minCadastroYear,
+    setMinCadastroYear,
+    showZeroStock,
+    setShowZeroStock
   };
 };
