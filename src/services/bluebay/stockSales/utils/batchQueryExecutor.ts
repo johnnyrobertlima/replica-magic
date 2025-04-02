@@ -40,8 +40,7 @@ export const fetchInBatches = async ({
       }
       
       // Aplica condições adicionais (gt, lt, gte, lte, in, etc)
-      // Usando um método separado para evitar problemas de tipo recursivo
-      query = applyConditions(query, conditions);
+      query = applyQueryConditions(query, conditions);
       
       // Executa a consulta
       const { data, error } = await query;
@@ -76,23 +75,29 @@ export const fetchInBatches = async ({
 };
 
 /**
- * Função separada para aplicar condições à query
- * Evita recursão de tipos usando um tipo mais específico e explícito
+ * Função helper para aplicar condições à query
+ * Usa tipagem explícita para evitar problemas de recursão de tipos
  */
-function applyConditions(query: any, conditions: QueryCondition[]): any {
-  for (const condition of conditions) {
-    const { type, column, value } = condition;
+function applyQueryConditions(query: any, conditions: QueryCondition[]): any {
+  for (let i = 0; i < conditions.length; i++) {
+    const condition = conditions[i];
     
-    if (type === 'gt') {
-      query = query.gt(column, value);
-    } else if (type === 'lt') {
-      query = query.lt(column, value);
-    } else if (type === 'gte') {
-      query = query.gte(column, value);
-    } else if (type === 'lte') {
-      query = query.lte(column, value);
-    } else if (type === 'in') {
-      query = query.in(column, value);
+    switch (condition.type) {
+      case 'gt':
+        query = query.gt(condition.column, condition.value);
+        break;
+      case 'lt':
+        query = query.lt(condition.column, condition.value);
+        break;
+      case 'gte':
+        query = query.gte(condition.column, condition.value);
+        break;
+      case 'lte':
+        query = query.lte(condition.column, condition.value);
+        break;
+      case 'in':
+        query = query.in(condition.column, condition.value);
+        break;
     }
   }
   
