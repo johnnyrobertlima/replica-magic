@@ -40,20 +40,27 @@ export const fetchInBatches = async ({
       }
       
       // Aplica condições adicionais (gt, lt, gte, lte, in, etc)
-      for (const condition of conditions) {
+      // Usando forma direta para evitar problemas de tipo recursivo
+      for (let i = 0; i < conditions.length; i++) {
+        const condition = conditions[i];
         const { type, column, value } = condition;
         
-        // Use if/else instead of switch to avoid type recursion issues
-        if (type === 'gt') {
-          query = query.gt(column, value);
-        } else if (type === 'lt') {
-          query = query.lt(column, value);
-        } else if (type === 'gte') {
-          query = query.gte(column, value);
-        } else if (type === 'lte') {
-          query = query.lte(column, value);
-        } else if (type === 'in') {
-          query = query.in(column, value);
+        switch (type) {
+          case 'gt':
+            query = query.gt(column, value);
+            break;
+          case 'lt':
+            query = query.lt(column, value);
+            break;
+          case 'gte':
+            query = query.gte(column, value);
+            break;
+          case 'lte':
+            query = query.lte(column, value);
+            break;
+          case 'in':
+            query = query.in(column, value);
+            break;
         }
       }
       
