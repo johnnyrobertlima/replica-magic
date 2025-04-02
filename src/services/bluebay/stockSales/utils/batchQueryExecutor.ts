@@ -39,9 +39,10 @@ export const fetchInBatches = async ({
         }
       }
       
-      // Aplica condições adicionais (gt, lt, gte, lte, in, etc) usando a função auxiliar
-      // Evitamos aninhamento excessivo de tipos
-      query = applyAdditionalConditions(query, conditions);
+      // Aplica condições adicionais sem causar problemas de recursão de tipos
+      if (conditions && conditions.length > 0) {
+        query = manuallyApplyConditions(query, conditions);
+      }
       
       // Executa a consulta
       const { data, error } = await query;
@@ -76,38 +77,33 @@ export const fetchInBatches = async ({
 };
 
 /**
- * Função auxiliar para aplicar condições à query
- * Implementada de forma a evitar excesso de recursão de tipos
+ * Função auxiliar que aplica condições à query de forma manual
+ * para evitar problemas de instanciação de tipos excessivamente profunda
  */
-function applyAdditionalConditions(query: any, conditions: QueryCondition[]): any {
-  if (!conditions || conditions.length === 0) {
-    return query;
-  }
-  
-  // Fazemos uma cópia da query para aplicar as condições
-  let resultQuery = query;
-  
-  // Aplicamos cada condição de forma isolada
+function manuallyApplyConditions(query: any, conditions: QueryCondition[]): any {
+  // Usamos uma abordagem mais direta sem encadeamento complexo
   for (let i = 0; i < conditions.length; i++) {
     const condition = conditions[i];
     
-    if (condition.type === 'gt') {
-      resultQuery = resultQuery.gt(condition.column, condition.value);
+    // Usar switch em vez de encadeamento de métodos
+    switch (condition.type) {
+      case 'gt':
+        query = query.gt(condition.column, condition.value);
+        break;
+      case 'lt':
+        query = query.lt(condition.column, condition.value);
+        break;
+      case 'gte':
+        query = query.gte(condition.column, condition.value);
+        break;
+      case 'lte':
+        query = query.lte(condition.column, condition.value);
+        break;
+      case 'in':
+        query = query.in(condition.column, condition.value);
+        break;
     }
-    else if (condition.type === 'lt') {
-      resultQuery = resultQuery.lt(condition.column, condition.value);
-    }
-    else if (condition.type === 'gte') {
-      resultQuery = resultQuery.gte(condition.column, condition.value);
-    }
-    else if (condition.type === 'lte') {
-      resultQuery = resultQuery.lte(condition.column, condition.value);
-    }
-    else if (condition.type === 'in') {
-      resultQuery = resultQuery.in(condition.column, condition.value);
-    }
-    // Se precisar adicionar mais condições, use mais if/else aqui
   }
   
-  return resultQuery;
+  return query;
 }
