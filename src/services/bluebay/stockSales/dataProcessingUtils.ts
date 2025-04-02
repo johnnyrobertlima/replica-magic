@@ -13,7 +13,7 @@ export const processStockAndSalesData = (
 ): StockItem[] => {
   // Group sales data by item code
   const salesByItem = salesData.reduce((acc, sale) => {
-    const itemCode = sale.ITEM_CODIGO;
+    const itemCode = sale["ITEM_CODIGO"];
     if (!acc[itemCode]) {
       acc[itemCode] = {
         QTD_VENDIDA: 0,
@@ -24,20 +24,20 @@ export const processStockAndSalesData = (
     }
     
     // Add sales quantity and value
-    const quantidade = Number(sale.QUANTIDADE) || 0;
-    const valorUnitario = Number(sale.VALOR_UNITARIO) || 0;
+    const quantidade = Number(sale["QUANTIDADE"]) || 0;
+    const valorUnitario = Number(sale["VALOR_UNITARIO"]) || 0;
     
     acc[itemCode].QTD_VENDIDA += quantidade;
     acc[itemCode].VALOR_TOTAL_VENDIDO += quantidade * valorUnitario;
     
     // Track sales date for calculating the last sale date
-    if (sale.DATA_EMISSAO) {
-      const saleDate = new Date(sale.DATA_EMISSAO);
+    if (sale["DATA_EMISSAO"]) {
+      const saleDate = new Date(sale["DATA_EMISSAO"]);
       acc[itemCode].salesDates.push(saleDate);
       
       // Update last sale date if this sale is more recent
       if (!acc[itemCode].DATA_ULTIMA_VENDA || saleDate > new Date(acc[itemCode].DATA_ULTIMA_VENDA)) {
-        acc[itemCode].DATA_ULTIMA_VENDA = sale.DATA_EMISSAO;
+        acc[itemCode].DATA_ULTIMA_VENDA = sale["DATA_EMISSAO"];
       }
     }
     
@@ -51,8 +51,8 @@ export const processStockAndSalesData = (
   
   // Process stock items with sales data
   const processedItems = stockItems.map(item => {
-    const itemCode = item.ITEM_CODIGO;
-    const fisico = Number(item.FISICO) || 0;
+    const itemCode = item["ITEM_CODIGO"];
+    const fisico = Number(item["FISICO"]) || 0;
     const salesInfo = salesByItem[itemCode] || {
       QTD_VENDIDA: 0,
       VALOR_TOTAL_VENDIDO: 0,
@@ -71,19 +71,20 @@ export const processStockAndSalesData = (
       ? fisico / mediaVendasDiaria 
       : fisico > 0 ? 999 : 0; // 999 days if there are no sales but stock exists, 0 if no stock
     
-    const dataCadastro = item.BLUEBAY_ITEM?.DATACADASTRO;
+    const bluebayItem = item.BLUEBAY_ITEM || {};
+    const dataCadastro = bluebayItem["DATACADASTRO"];
     const produtoNovo = dataCadastro && new Date(dataCadastro) > new Date(newProductDate);
     
     return {
       ITEM_CODIGO: itemCode,
-      DESCRICAO: item.BLUEBAY_ITEM?.DESCRICAO || '',
-      GRU_DESCRICAO: item.BLUEBAY_ITEM?.GRU_DESCRICAO || '',
+      DESCRICAO: bluebayItem["DESCRICAO"] || '',
+      GRU_DESCRICAO: bluebayItem["GRU_DESCRICAO"] || '',
       DATACADASTRO: dataCadastro,
       FISICO: fisico,
-      DISPONIVEL: Number(item.DISPONIVEL) || 0,
-      RESERVADO: Number(item.RESERVADO) || 0,
-      ENTROU: Number(item.ENTROU) || 0,
-      LIMITE: Number(item.LIMITE) || 0,
+      DISPONIVEL: Number(item["DISPONIVEL"]) || 0,
+      RESERVADO: Number(item["RESERVADO"]) || 0,
+      ENTROU: Number(item["ENTROU"]) || 0,
+      LIMITE: Number(item["LIMITE"]) || 0,
       QTD_VENDIDA: qtdVendida,
       VALOR_TOTAL_VENDIDO: salesInfo.VALOR_TOTAL_VENDIDO,
       DATA_ULTIMA_VENDA: salesInfo.DATA_ULTIMA_VENDA,

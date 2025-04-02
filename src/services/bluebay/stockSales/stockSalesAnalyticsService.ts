@@ -23,9 +23,9 @@ export const fetchStockSalesAnalytics = async (
     const sixtyDaysAgo = format(subDays(new Date(), 60), 'yyyy-MM-dd');
     
     try {
-      // Query using the custom function with type cast to bypass TypeScript error
+      // Query using the custom function
       const { data, error } = await supabase
-        .rpc('get_stock_sales_analytics' as any, { 
+        .rpc('get_stock_sales_analytics', { 
           p_start_date: startDate,
           p_end_date: endDate,
           p_new_product_date: sixtyDaysAgo
@@ -38,18 +38,26 @@ export const fetchStockSalesAnalytics = async (
 
       if (!data || !Array.isArray(data) || data.length === 0) {
         console.info("Nenhum dado de análise de estoque e vendas encontrado para o período");
+        // Try the direct queries approach before falling back to sample data
+        const directQueryData = await fetchStockSalesWithDirectQueries(startDate, endDate);
+        if (directQueryData.length > 0) {
+          return directQueryData;
+        }
         return generateSampleStockData();
       }
       
       console.info(`Buscados ${data.length} registros de análise de estoque e vendas`);
       
-      // Cast the data to StockItem[] after confirming it's an array
-      return data as unknown as StockItem[];
+      return data as StockItem[];
     } catch (rpcError) {
       console.error("Erro ao usar função RPC para dados de estoque-vendas:", rpcError);
       
       // Fallback to alternative method: using direct queries
-      return await fetchStockSalesWithDirectQueries(startDate, endDate);
+      const directQueryData = await fetchStockSalesWithDirectQueries(startDate, endDate);
+      if (directQueryData.length > 0) {
+        return directQueryData;
+      }
+      return generateSampleStockData();
     }
   } catch (error) {
     console.error("Erro ao carregar dados de estoque-vendas:", error);

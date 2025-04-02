@@ -25,16 +25,16 @@ export const fetchStockSalesWithDirectQueries = async (
       const { data: stockData, error: stockError } = await supabase
         .from('BLUEBAY_ESTOQUE')
         .select(`
-          ITEM_CODIGO,
-          FISICO,
-          DISPONIVEL,
-          RESERVADO,
-          ENTROU,
-          LIMITE,
-          BLUEBAY_ITEM:ITEM_CODIGO(
-            DESCRICAO,
-            GRU_DESCRICAO,
-            DATACADASTRO
+          "ITEM_CODIGO",
+          "FISICO",
+          "DISPONIVEL",
+          "RESERVADO",
+          "ENTROU",
+          "LIMITE",
+          BLUEBAY_ITEM:"ITEM_CODIGO"(
+            "DESCRICAO",
+            "GRU_DESCRICAO",
+            "DATACADASTRO"
           )
         `)
         .eq('LOCAL', 1);
@@ -53,10 +53,10 @@ export const fetchStockSalesWithDirectQueries = async (
       const { data: salesData, error: salesError } = await supabase
         .from('BLUEBAY_FATURAMENTO')
         .select(`
-          ITEM_CODIGO,
-          QUANTIDADE,
-          VALOR_UNITARIO,
-          DATA_EMISSAO
+          "ITEM_CODIGO",
+          "QUANTIDADE",
+          "VALOR_UNITARIO",
+          "DATA_EMISSAO"
         `)
         .eq('TIPO', 'S')
         .gte('DATA_EMISSAO', startDate)

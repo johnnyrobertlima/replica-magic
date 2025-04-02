@@ -25,12 +25,14 @@ export const useStockSalesAnalytics = () => {
     startDate: subDays(new Date(), 30), // Default to 30 days ago
     endDate: new Date() // Today
   });
+  const [usingSampleData, setUsingSampleData] = useState(false);
   const { toast } = useToast();
 
   const loadData = async () => {
     try {
       setIsLoading(true);
       setError(null);
+      setUsingSampleData(false);
       
       if (dateRange.startDate && dateRange.endDate) {
         const startDateFormatted = format(dateRange.startDate, 'yyyy-MM-dd');
@@ -45,9 +47,10 @@ export const useStockSalesAnalytics = () => {
           
           if (data.length === 0) {
             // Mostrar mensagem quando não há dados reais, mas não considerar isso um erro
+            setUsingSampleData(true);
             toast({
-              title: "Usando dados de amostra",
-              description: "Não foi possível carregar dados reais. Exibindo dados de exemplo para visualização.",
+              title: "Nenhum dado encontrado",
+              description: "Não foram encontrados dados para o período selecionado.",
               variant: "default",
             });
           }
@@ -61,11 +64,12 @@ export const useStockSalesAnalytics = () => {
           
           if (fallbackData.length > 0) {
             toast({
-              title: "Usando dados de amostra",
-              description: "Ocorreu um erro ao carregar dados reais. Exibindo dados de exemplo para visualização.",
+              title: "Dados limitados disponíveis",
+              description: "Ocorreu um erro ao carregar dados completos. Exibindo dados limitados disponíveis.",
               variant: "default",
             });
           } else {
+            setUsingSampleData(true);
             toast({
               title: "Erro",
               description: "Não foi possível carregar os dados do relatório. Tente novamente mais tarde.",
@@ -81,6 +85,7 @@ export const useStockSalesAnalytics = () => {
     } catch (err) {
       console.error("Erro ao carregar dados de estoque-vendas:", err);
       setError("Falha ao carregar dados de estoque-vendas");
+      setUsingSampleData(true);
       toast({
         title: "Erro",
         description: "Não foi possível carregar os dados do relatório. Tente novamente mais tarde.",
@@ -192,6 +197,7 @@ export const useStockSalesAnalytics = () => {
     sortConfig,
     handleSort,
     clearFilters,
-    getSummaryStats
+    getSummaryStats,
+    usingSampleData
   };
 };

@@ -23,7 +23,8 @@ const BluebayAdmStockSalesAnalytics = () => {
     handleSort,
     refreshData,
     clearFilters,
-    getSummaryStats
+    getSummaryStats,
+    usingSampleData
   } = useStockSalesAnalytics();
 
   return (
@@ -51,7 +52,10 @@ const BluebayAdmStockSalesAnalytics = () => {
               isLoading={isLoading}
             />
             
-            <StockSalesSummary stats={getSummaryStats()} />
+            <StockSalesSummary 
+              stats={getSummaryStats()} 
+              usingSampleData={usingSampleData}
+            />
             
             <div className="bg-white shadow rounded-lg overflow-hidden border">
               <div className="p-4 sm:p-6">
