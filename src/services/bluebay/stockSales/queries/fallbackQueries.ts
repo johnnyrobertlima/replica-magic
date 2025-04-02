@@ -24,32 +24,41 @@ export const fetchStockSalesWithPagination = async (
     const sixtyDaysAgo = format(subDays(new Date(), 60), 'yyyy-MM-dd');
     
     // First, get all estoque items (paginated)
+    console.log("Etapa 1: Buscando todos os itens de estoque com paginação");
     const allStockItems = await fetchStockItemsPaginated();
     
     if (allStockItems.length === 0) {
-      console.warn("Nenhum item de estoque encontrado");
+      console.warn("Nenhum item de estoque encontrado, retornando dados de exemplo");
       return generateSampleStockData();
     }
     
+    console.log(`Carregados ${allStockItems.length} itens de estoque com paginação`);
+    
     // Extract item codes to fetch item details
+    console.log("Etapa 2: Extraindo códigos de itens para buscar detalhes");
     const itemCodes = [...new Set(allStockItems.map(item => item.ITEM_CODIGO))];
-    console.log(`Buscando detalhes para ${itemCodes.length} códigos de itens`);
+    console.log(`Buscando detalhes para ${itemCodes.length} códigos de itens únicos`);
     
     // Fetch item details in batches
-    const allItemDetails = await fetchItemDetailsBatch(itemCodes);
+    console.log("Etapa 3: Buscando detalhes dos itens em lotes");
+    const allItemDetails = await fetchItemDetailsBatch(itemCodes, 500);
     
-    console.log(`Obtidos detalhes para ${allItemDetails.length} itens`);
+    console.log(`Obtidos detalhes para ${allItemDetails.length} itens de ${itemCodes.length} códigos`);
     
     // Create a map for item details lookup
+    console.log("Etapa 4: Criando mapa de detalhes dos itens para lookup rápido");
     const itemDetailsMap = new Map();
     allItemDetails.forEach(item => {
       itemDetailsMap.set(item.ITEM_CODIGO, item);
     });
     
     // Fetch sales data for the period in batches
+    console.log(`Etapa 5: Buscando dados de vendas para o período ${startDate} a ${endDate}`);
     const allSalesData = await fetchSalesDataPaginated(startDate, endDate);
+    console.log(`Obtidos ${allSalesData.length} registros de vendas com paginação`);
     
     // Process the data using the utility function
+    console.log("Etapa 6: Processando dados para cálculo dos indicadores");
     const combinedData = processStockAndSalesData(
       allStockItems,
       allSalesData,

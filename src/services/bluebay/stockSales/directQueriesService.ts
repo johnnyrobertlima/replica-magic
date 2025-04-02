@@ -18,12 +18,13 @@ export const fallbackToDirectQueries = async (
     
     try {
       // First strategy: Direct queries with batching
+      console.log("Estratégia 1: Consultas diretas com batching");
       return await directQueriesFunction(startDate, endDate);
     } catch (directError) {
       console.error("Falha na estratégia de consultas diretas:", directError);
       
       // Second strategy: Paginated queries
-      console.log("Tentando estratégia alternativa com paginação");
+      console.log("Estratégia 2: Tentando abordagem alternativa com paginação");
       return await fetchStockSalesWithPagination(startDate, endDate);
     }
   } catch (error) {
