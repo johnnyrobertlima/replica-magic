@@ -55,6 +55,9 @@ const executeRpcQuery = async (
       p_start_date: startDate,
       p_end_date: endDate,
       p_new_product_date: newProductDate
+    }, {
+      head: false,
+      count: 'exact'
     });
 };
 
