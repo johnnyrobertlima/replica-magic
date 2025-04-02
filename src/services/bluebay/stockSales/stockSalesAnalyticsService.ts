@@ -48,7 +48,28 @@ export const fetchStockSalesAnalytics = async (
       
       console.info(`Buscados ${data.length} registros de análise de estoque e vendas`);
       
-      return data as StockItem[];
+      // Transform the data from lowercase properties to uppercase to match our StockItem type
+      const transformedData: StockItem[] = data.map(item => ({
+        ITEM_CODIGO: item.item_codigo,
+        DESCRICAO: item.descricao,
+        GRU_DESCRICAO: item.gru_descricao,
+        DATACADASTRO: item.datacadastro,
+        FISICO: item.fisico,
+        DISPONIVEL: item.disponivel,
+        RESERVADO: item.reservado,
+        ENTROU: item.entrou,
+        LIMITE: item.limite,
+        QTD_VENDIDA: item.qtd_vendida,
+        VALOR_TOTAL_VENDIDO: item.valor_total_vendido,
+        DATA_ULTIMA_VENDA: item.data_ultima_venda,
+        GIRO_ESTOQUE: item.giro_estoque,
+        PERCENTUAL_ESTOQUE_VENDIDO: item.percentual_estoque_vendido,
+        DIAS_COBERTURA: item.dias_cobertura,
+        PRODUTO_NOVO: item.produto_novo,
+        RANKING: item.ranking
+      }));
+      
+      return transformedData;
     } catch (rpcError) {
       console.error("Erro ao usar função RPC para dados de estoque-vendas:", rpcError);
       

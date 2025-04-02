@@ -38,7 +38,7 @@ export const StockSalesSummary: React.FC<StockSalesSummaryProps> = ({
   return (
     <div className="space-y-4">
       {usingSampleData && (
-        <Alert variant="warning" className="bg-amber-50 border-amber-200">
+        <Alert variant="default" className="bg-amber-50 border-amber-200">
           <AlertCircle className="h-4 w-4 text-amber-600" />
           <AlertDescription className="text-amber-800">
             Exibindo dados de exemplo. Os dados reais do banco de dados não estão disponíveis para o período selecionado.
