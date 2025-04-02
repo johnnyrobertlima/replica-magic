@@ -39,9 +39,9 @@ export const fetchInBatches = async ({
         }
       }
       
-      // Aplica condições adicionais sem causar problemas de recursão de tipos
+      // Usa a função auxiliar para aplicar condições sem tipos recursivos profundos
       if (conditions && conditions.length > 0) {
-        query = manuallyApplyConditions(query, conditions);
+        query = applyQueryConditions(query, conditions);
       }
       
       // Executa a consulta
@@ -77,33 +77,31 @@ export const fetchInBatches = async ({
 };
 
 /**
- * Função auxiliar que aplica condições à query de forma manual
- * para evitar problemas de instanciação de tipos excessivamente profunda
+ * Função auxiliar que aplica condições à query
+ * Refatorada para evitar recursão de tipos excessiva
  */
-function manuallyApplyConditions(query: any, conditions: QueryCondition[]): any {
-  // Usamos uma abordagem mais direta sem encadeamento complexo
-  for (let i = 0; i < conditions.length; i++) {
-    const condition = conditions[i];
-    
-    // Usar switch em vez de encadeamento de métodos
+function applyQueryConditions(query: any, conditions: QueryCondition[]): any {
+  let modifiedQuery = query;
+  
+  conditions.forEach(condition => {
     switch (condition.type) {
       case 'gt':
-        query = query.gt(condition.column, condition.value);
+        modifiedQuery = modifiedQuery.gt(condition.column, condition.value);
         break;
       case 'lt':
-        query = query.lt(condition.column, condition.value);
+        modifiedQuery = modifiedQuery.lt(condition.column, condition.value);
         break;
       case 'gte':
-        query = query.gte(condition.column, condition.value);
+        modifiedQuery = modifiedQuery.gte(condition.column, condition.value);
         break;
       case 'lte':
-        query = query.lte(condition.column, condition.value);
+        modifiedQuery = modifiedQuery.lte(condition.column, condition.value);
         break;
       case 'in':
-        query = query.in(condition.column, condition.value);
+        modifiedQuery = modifiedQuery.in(condition.column, condition.value);
         break;
     }
-  }
+  });
   
-  return query;
+  return modifiedQuery;
 }
