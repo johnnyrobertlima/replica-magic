@@ -9,7 +9,7 @@ import { formatCurrency } from "@/utils/formatters";
 
 interface StockSalesTableRowProps {
   item: StockItem;
-  index: number; // Add index prop to ensure unique keys
+  index: number; // Use index to ensure unique keys
 }
 
 export const StockSalesTableRow: React.FC<StockSalesTableRowProps> = ({ item, index }) => {

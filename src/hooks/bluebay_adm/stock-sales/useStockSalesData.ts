@@ -35,10 +35,12 @@ export const useStockSalesData = () => {
           // Check if data is using sample data
           setUsingSampleData(data.length > 0 && data[0].hasOwnProperty('isSampleData'));
           
-          // Ensure we don't have duplicate items by using a Map with ITEM_CODIGO as key
+          // Create a Map to store unique items by their ITEM_CODIGO
           const uniqueItemsMap = new Map<string, StockItem>();
           
+          // Process the data to ensure we only have unique items
           data.forEach(item => {
+            // Only add the item if it doesn't already exist in our map
             if (!uniqueItemsMap.has(item.ITEM_CODIGO)) {
               uniqueItemsMap.set(item.ITEM_CODIGO, item);
             } else {
@@ -46,6 +48,7 @@ export const useStockSalesData = () => {
             }
           });
           
+          // Convert the Map values back to an array
           const uniqueItems = Array.from(uniqueItemsMap.values());
           setItems(uniqueItems);
           
