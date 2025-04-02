@@ -41,7 +41,8 @@ export const fetchInBatches = async ({
         }
       }
       
-      // Aplica condições adicionais usando uma função separada, completamente independente
+      // Aplica condições adicionais usando uma função separada
+      // Solução para evitar o erro TS2589 (type instantiation is excessively deep)
       query = applyConditionsToQuery(query, conditions);
       
       // Executa a consulta
