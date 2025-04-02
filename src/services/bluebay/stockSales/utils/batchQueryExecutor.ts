@@ -41,25 +41,9 @@ export const fetchInBatches = async ({
         }
       }
       
-      // Aplica condições adicionais sem causar recursão de tipos
+      // Aplica condições adicionais usando uma função auxiliar para evitar recursão de tipos
       if (conditions && conditions.length > 0) {
-        for (const condition of conditions) {
-          if (condition.type === 'gt') {
-            query = query.gt(condition.column, condition.value);
-          } 
-          else if (condition.type === 'lt') {
-            query = query.lt(condition.column, condition.value);
-          }
-          else if (condition.type === 'gte') {
-            query = query.gte(condition.column, condition.value);
-          }
-          else if (condition.type === 'lte') {
-            query = query.lte(condition.column, condition.value);
-          }
-          else if (condition.type === 'in') {
-            query = query.in(condition.column, condition.value);
-          }
-        }
+        query = applyConditionsToQuery(query, conditions);
       }
       
       // Executa a consulta
@@ -93,3 +77,33 @@ export const fetchInBatches = async ({
     throw error;
   }
 };
+
+/**
+ * Função auxiliar para aplicar condições à consulta
+ * Evita a recursão de tipos criando uma função separada
+ */
+function applyConditionsToQuery(query: any, conditions: QueryCondition[]): any {
+  let result = query;
+  
+  for (const condition of conditions) {
+    switch (condition.type) {
+      case 'gt':
+        result = result.gt(condition.column, condition.value);
+        break;
+      case 'lt':
+        result = result.lt(condition.column, condition.value);
+        break;
+      case 'gte':
+        result = result.gte(condition.column, condition.value);
+        break;
+      case 'lte':
+        result = result.lte(condition.column, condition.value);
+        break;
+      case 'in':
+        result = result.in(condition.column, condition.value);
+        break;
+    }
+  }
+  
+  return result;
+}
