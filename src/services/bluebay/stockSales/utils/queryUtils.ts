@@ -14,10 +14,21 @@ export const fetchInBatches = async ({
   conditions = [],
   batchSize = 1000,
   logPrefix = "Dados" 
+}: {
+  table: string;
+  selectFields: string;
+  filters?: Record<string, any>;
+  conditions?: Array<{
+    type: 'gt' | 'lt' | 'gte' | 'lte' | 'in';
+    column: string;
+    value: any;
+  }>;
+  batchSize?: number;
+  logPrefix?: string;
 }) => {
   try {
     let offset = 0;
-    let allData = [];
+    let allData: any[] = [];
     let hasMore = true;
     let batchCount = 0;
     let totalProcessed = 0;
@@ -63,7 +74,7 @@ export const fetchInBatches = async ({
       }
       
       // Executa a consulta
-      const { data, error, count } = await query;
+      const { data, error } = await query;
       
       if (error) {
         console.error(`Erro ao buscar lote ${batchCount} de ${logPrefix}:`, error);
@@ -130,7 +141,7 @@ export const fetchStockData = async () => {
 /**
  * Fetch item data in batches for given item codes
  */
-export const fetchItemDataInBatches = async (itemCodes) => {
+export const fetchItemDataInBatches = async (itemCodes: string[]) => {
   try {
     if (!itemCodes || itemCodes.length === 0) {
       console.warn("Nenhum código de item fornecido para busca");
@@ -139,7 +150,7 @@ export const fetchItemDataInBatches = async (itemCodes) => {
     
     // Processa em blocos de 1000 códigos de itens por vez (limitação do Supabase)
     const batchSize = 1000;
-    let allItemData = [];
+    let allItemData: any[] = [];
     let batchesCount = Math.ceil(itemCodes.length / batchSize);
     
     console.log(`Iniciando busca de ${itemCodes.length} itens em ${batchesCount} lotes`);
@@ -189,7 +200,7 @@ export const fetchItemDataInBatches = async (itemCodes) => {
 /**
  * Fetch sales data in batches for a specified date range
  */
-export const fetchSalesDataInBatches = async (startDate, endDate) => {
+export const fetchSalesDataInBatches = async (startDate: string, endDate: string) => {
   try {
     console.log(`Buscando dados de vendas para o período ${startDate} até ${endDate}`);
     
@@ -241,13 +252,13 @@ export const fetchStockItemsPaginated = async () => {
 /**
  * Fetch batch of item details by item codes
  */
-export const fetchItemDetailsBatch = async (itemCodes, batchSize = 500) => {
+export const fetchItemDetailsBatch = async (itemCodes: string[], batchSize = 500) => {
   try {
     if (!itemCodes || itemCodes.length === 0) {
       return [];
     }
     
-    let allItemDetails = [];
+    let allItemDetails: any[] = [];
     let batchesProcessed = 0;
     const totalBatches = Math.ceil(itemCodes.length / batchSize);
     
@@ -289,7 +300,7 @@ export const fetchItemDetailsBatch = async (itemCodes, batchSize = 500) => {
 /**
  * Fetch paginated sales data for a date range
  */
-export const fetchSalesDataPaginated = async (startDate, endDate) => {
+export const fetchSalesDataPaginated = async (startDate: string, endDate: string) => {
   try {
     console.log(`Iniciando busca paginada de dados de vendas para o período ${startDate} a ${endDate}`);
     
