@@ -36,8 +36,10 @@ export const fetchStockSalesAnalytics = async (
     const sixtyDaysAgo = format(subDays(new Date(), 60), 'yyyy-MM-dd');
     
     // Query using the custom function
+    // Using a type cast to any to bypass TypeScript's RPC function name checking
+    // since the function was just added and may not be in the TypeScript definitions yet
     const { data, error } = await supabase
-      .rpc('get_stock_sales_analytics', { 
+      .rpc('get_stock_sales_analytics' as any, { 
         p_start_date: startDate,
         p_end_date: endDate,
         p_new_product_date: sixtyDaysAgo
@@ -55,7 +57,8 @@ export const fetchStockSalesAnalytics = async (
     
     console.info(`Buscados ${data.length} registros de análise de estoque e vendas`);
     
-    return data as StockItem[];
+    // Cast the data to StockItem[] after confirming it's an array
+    return data as unknown as StockItem[];
   } catch (error) {
     console.error("Erro ao buscar dados de análise de estoque e vendas:", error);
     throw error;
