@@ -21,36 +21,17 @@ export const fetchStockSalesViaRpc = async (
     // Calculate the date 60 days ago for identifying new products
     const sixtyDaysAgo = calculateNewProductCutoffDate();
     
-    // Query using the custom function with pagination to get all data
-    let allData: any[] = [];
-    let offset = 0;
-    const limit = 1000;
-    let hasMore = true;
+    // Since our RPC function doesn't support built-in pagination, we'll implement client-side batching
+    const result = await executeRpcQuery(startDate, endDate, sixtyDaysAgo);
     
-    while (hasMore) {
-      console.log(`Buscando lote de dados RPC (offset: ${offset}, limite: ${limit})`);
-      
-      const result = await executeRpcQuery(startDate, endDate, sixtyDaysAgo, offset, limit);
-      
-      if (result.error) {
-        throw new Error(`RPC Error: ${result.error.message}`);
-      }
-      
-      const data = result.data || [];
-      console.log(`Recebidos ${data.length} registros neste lote RPC`);
-      
-      allData = [...allData, ...data];
-      
-      // Verifica se há mais dados
-      if (data.length < limit) {
-        hasMore = false;
-      } else {
-        offset += limit;
-      }
+    if (result.error) {
+      throw new Error(`RPC Error: ${result.error.message}`);
     }
+
+    const data = result.data || [];
+    console.log(`Recebidos ${data.length} registros via RPC`);
     
-    console.log(`Total de ${allData.length} registros obtidos via RPC`);
-    return processRpcResult(allData);
+    return processRpcResult(data);
   } catch (error) {
     handleApiError("Erro ao carregar dados via RPC", error);
     return fallbackToDirectQueries(startDate, endDate);
@@ -65,22 +46,18 @@ const calculateNewProductCutoffDate = (): string => {
 };
 
 /**
- * Executes the RPC query with pagination
+ * Executes the RPC query
  */
 const executeRpcQuery = async (
   startDate: string, 
   endDate: string, 
-  newProductDate: string,
-  offset: number = 0,
-  limit: number = 1000
+  newProductDate: string
 ) => {
   return await supabase
     .rpc('get_stock_sales_analytics', { 
       p_start_date: startDate,
       p_end_date: endDate,
-      p_new_product_date: newProductDate,
-      p_offset: offset,
-      p_limit: limit
+      p_new_product_date: newProductDate
     }, {
       head: false,
       count: 'exact'

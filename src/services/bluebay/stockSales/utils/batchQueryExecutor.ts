@@ -41,10 +41,8 @@ export const fetchInBatches = async ({
         }
       }
       
-      // Aplica condições adicionais usando uma função separada, não aninhada
-      if (conditions && conditions.length > 0) {
-        query = applyConditionsToQuery(query, conditions);
-      }
+      // Aplica condições adicionais usando uma função separada, completamente independente
+      query = applyConditionsToQuery(query, conditions);
       
       // Executa a consulta
       const { data, error } = await query;
@@ -80,9 +78,13 @@ export const fetchInBatches = async ({
 
 /**
  * Função auxiliar para aplicar condições à consulta
- * Esta função é necessária para evitar a recursão de tipos que causa o erro TS2589
+ * Esta função é completamente separada para evitar a recursão de tipos que causa o erro TS2589
  */
 function applyConditionsToQuery(query: any, conditions: QueryCondition[]): any {
+  if (!conditions || conditions.length === 0) {
+    return query;
+  }
+  
   let result = query;
   
   for (const condition of conditions) {
