@@ -34,9 +34,22 @@ export const useStockSalesData = () => {
           
           // Check if data is using sample data
           setUsingSampleData(data.length > 0 && data[0].hasOwnProperty('isSampleData'));
-          setItems(data);
           
-          if (data.length === 0) {
+          // Ensure we don't have duplicate items by using a Map with ITEM_CODIGO as key
+          const uniqueItemsMap = new Map<string, StockItem>();
+          
+          data.forEach(item => {
+            if (!uniqueItemsMap.has(item.ITEM_CODIGO)) {
+              uniqueItemsMap.set(item.ITEM_CODIGO, item);
+            } else {
+              console.log(`Duplicate item found and skipped: ${item.ITEM_CODIGO}`);
+            }
+          });
+          
+          const uniqueItems = Array.from(uniqueItemsMap.values());
+          setItems(uniqueItems);
+          
+          if (uniqueItems.length === 0) {
             toast({
               title: "Nenhum dado encontrado",
               description: "Não foram encontrados dados para o período selecionado.",
@@ -45,7 +58,7 @@ export const useStockSalesData = () => {
           } else {
             toast({
               title: "Dados carregados",
-              description: `Carregados ${data.length} registros de estoque e vendas.`,
+              description: `Carregados ${uniqueItems.length} registros de estoque e vendas.`,
               variant: "default",
             });
           }

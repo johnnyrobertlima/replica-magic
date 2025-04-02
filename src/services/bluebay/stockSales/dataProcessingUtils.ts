@@ -51,22 +51,33 @@ export const processStockAndSalesData = (
   const endDateObj = new Date(endDate);
   const daysDiff = Math.max(1, Math.ceil((endDateObj.getTime() - startDateObj.getTime()) / (1000 * 60 * 60 * 24)));
   
+  // Track processed item codes to avoid duplicates
+  const processedItemCodes = new Set<string>();
+  
   // Fetch all item details to get a map of item code to item details
   const itemDetailsMap = stockItems.reduce((map, item) => {
     const itemCode = item["ITEM_CODIGO"];
     if (!map.has(itemCode)) {
       map.set(itemCode, {
-        DESCRICAO: "",
-        GRU_DESCRICAO: "",
-        DATACADASTRO: null
+        DESCRICAO: item["DESCRICAO"] || "",
+        GRU_DESCRICAO: item["GRU_DESCRICAO"] || "",
+        DATACADASTRO: item["DATACADASTRO"] || null
       });
     }
     return map;
   }, new Map());
   
   // Process stock items with sales data
-  const processedItems = stockItems.map(item => {
+  const processedItems = stockItems.reduce((acc, item) => {
     const itemCode = item["ITEM_CODIGO"];
+    
+    // Skip duplicate items
+    if (processedItemCodes.has(itemCode)) {
+      return acc;
+    }
+    
+    processedItemCodes.add(itemCode);
+    
     const fisico = Number(item["FISICO"]) || 0;
     const salesInfo = salesByItem[itemCode] || {
       QTD_VENDIDA: 0,
@@ -88,13 +99,13 @@ export const processStockAndSalesData = (
     
     // Get item details (description, group, cadastro date)
     const itemDetail = itemDetailsMap.get(itemCode) || {};
-    const dataCadastro = itemDetail["DATACADASTRO"];
+    const dataCadastro = itemDetail["DATACADASTRO"] || item["DATACADASTRO"];
     const produtoNovo = dataCadastro && new Date(dataCadastro) > new Date(newProductDate);
     
-    return {
+    acc.push({
       ITEM_CODIGO: itemCode,
-      DESCRICAO: itemDetail["DESCRICAO"] || '',
-      GRU_DESCRICAO: itemDetail["GRU_DESCRICAO"] || '',
+      DESCRICAO: itemDetail["DESCRICAO"] || item["DESCRICAO"] || '',
+      GRU_DESCRICAO: itemDetail["GRU_DESCRICAO"] || item["GRU_DESCRICAO"] || '',
       DATACADASTRO: dataCadastro,
       FISICO: fisico,
       DISPONIVEL: Number(item["DISPONIVEL"]) || 0,
@@ -109,8 +120,10 @@ export const processStockAndSalesData = (
       DIAS_COBERTURA: diasCobertura,
       PRODUTO_NOVO: !!produtoNovo,
       RANKING: null // Will be assigned later
-    };
-  });
+    });
+    
+    return acc;
+  }, [] as StockItem[]);
   
   // Assign rankings
   return assignRankings(processedItems);

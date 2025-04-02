@@ -62,11 +62,24 @@ export const StockSalesAnalyticsTable: React.FC<StockSalesAnalyticsTableProps> =
     return <TableEmptyState />;
   }
 
+  // Create a Set to track item codes and prevent duplicates
+  const processedCodes = new Set<string>();
+  
+  // Filter out duplicate items based on ITEM_CODIGO
+  const uniqueItems = visibleItems.filter(item => {
+    if (processedCodes.has(item.ITEM_CODIGO)) {
+      console.log(`Duplicate item filtered out: ${item.ITEM_CODIGO}`);
+      return false;
+    }
+    processedCodes.add(item.ITEM_CODIGO);
+    return true;
+  });
+
   return (
     <div className="relative">
       {items.length > displayCount && (
         <div className="text-sm text-gray-500 mb-2">
-          Exibindo {visibleItems.length} de {items.length} registros. 
+          Exibindo {uniqueItems.length} de {items.length} registros. 
           {displayCount < items.length && " Role para baixo para carregar mais."}
         </div>
       )}
@@ -92,8 +105,12 @@ export const StockSalesAnalyticsTable: React.FC<StockSalesAnalyticsTableProps> =
               </TableRow>
             </TableHeader>
             <TableBody>
-              {visibleItems.map((item) => (
-                <StockSalesTableRow key={item.ITEM_CODIGO} item={item} />
+              {uniqueItems.map((item, index) => (
+                <StockSalesTableRow 
+                  key={`${item.ITEM_CODIGO}-${index}`} 
+                  item={item} 
+                  index={index} 
+                />
               ))}
             </TableBody>
           </Table>

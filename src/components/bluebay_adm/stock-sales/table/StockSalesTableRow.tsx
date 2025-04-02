@@ -9,9 +9,10 @@ import { formatCurrency } from "@/utils/formatters";
 
 interface StockSalesTableRowProps {
   item: StockItem;
+  index: number; // Add index prop to ensure unique keys
 }
 
-export const StockSalesTableRow: React.FC<StockSalesTableRowProps> = ({ item }) => {
+export const StockSalesTableRow: React.FC<StockSalesTableRowProps> = ({ item, index }) => {
   const isLowStock = (item.FISICO || 0) < 5;
   
   // Convert bigint or number to standard number for comparison
