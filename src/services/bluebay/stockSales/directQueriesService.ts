@@ -2,7 +2,7 @@
 import { StockItem } from "./types";
 import { handleApiError } from "./errorHandlingService";
 import { generateSampleStockData } from "./sampleDataGenerator";
-import { fetchStockSalesWithDirectQueries } from "./queries/directQueries";
+import { fetchStockSalesWithDirectQueries as directQueriesFunction } from "./queries/directQueries";
 import { fetchStockSalesWithPagination } from "./queries/fallbackQueries";
 
 /**
@@ -18,7 +18,7 @@ export const fallbackToDirectQueries = async (
     
     try {
       // First strategy: Direct queries with batching
-      return await fetchStockSalesWithDirectQueries(startDate, endDate);
+      return await directQueriesFunction(startDate, endDate);
     } catch (directError) {
       console.error("Falha na estratégia de consultas diretas:", directError);
       
@@ -33,5 +33,5 @@ export const fallbackToDirectQueries = async (
   }
 };
 
-// Export for backward compatibility
-export const fetchStockSalesWithDirectQueries = fetchStockSalesWithDirectQueries;
+// Export for backward compatibility, referencing the imported function
+export const fetchStockSalesWithDirectQueries = directQueriesFunction;
