@@ -2,7 +2,7 @@
 import { BluebayAdmMenu } from "@/components/bluebay_adm/BluebayAdmMenu";
 import { BluebayAdmBanner } from "@/components/bluebay_adm/BluebayAdmBanner";
 import { ServiceCard } from "@/components/bluebay_adm/ServiceCard";
-import { FileText, BarChart2, Users, Wallet, ClipboardCheck, ShoppingBag, Receipt, Package, ShoppingCart } from "lucide-react";
+import { FileText, BarChart2, Users, Wallet, ClipboardCheck, ShoppingBag, Receipt, Package, ShoppingCart, TrendingUp } from "lucide-react";
 
 const BluebayAdmHome = () => {
   const services = [
@@ -12,6 +12,13 @@ const BluebayAdmHome = () => {
       icon: FileText,
       iconColor: "bg-purple-100 text-purple-600",
       path: "/client-area/bluebay_adm/reports"
+    },
+    {
+      title: "Análise Estoque vs Vendas",
+      description: "Análise completa de desempenho de estoque e vendas",
+      icon: TrendingUp,
+      iconColor: "bg-cyan-100 text-cyan-600",
+      path: "/client-area/bluebay_adm/stock-sales-analytics"
     },
     {
       title: "Dashboard",

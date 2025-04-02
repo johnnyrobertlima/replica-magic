@@ -321,6 +321,7 @@ export type Database = {
       BLUEBAY_ITEM: {
         Row: {
           CODIGOAUX: string | null
+          DATACADASTRO: string | null
           DESCRICAO: string | null
           FILIAL: number
           GRU_CODIGO: string | null
@@ -330,6 +331,7 @@ export type Database = {
         }
         Insert: {
           CODIGOAUX?: string | null
+          DATACADASTRO?: string | null
           DESCRICAO?: string | null
           FILIAL: number
           GRU_CODIGO?: string | null
@@ -339,6 +341,7 @@ export type Database = {
         }
         Update: {
           CODIGOAUX?: string | null
+          DATACADASTRO?: string | null
           DESCRICAO?: string | null
           FILIAL?: number
           GRU_CODIGO?: string | null
