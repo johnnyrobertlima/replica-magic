@@ -54,14 +54,14 @@ export const StockSalesFilters: React.FC<StockSalesFiltersProps> = ({
           <div className="flex-1 grid gap-4">
             <div className="flex flex-col sm:flex-row gap-4">
               <SearchFilter
-                value={searchTerm}
-                onChange={onSearchChange}
+                searchTerm={searchTerm}
+                onSearchChange={onSearchChange}
               />
               
               <GroupFilter
                 value={groupFilter}
                 onChange={onGroupFilterChange}
-                options={availableGroups}
+                options={availableGroups || []}
               />
             </div>
           </div>
