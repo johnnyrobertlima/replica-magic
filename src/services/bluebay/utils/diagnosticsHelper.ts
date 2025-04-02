@@ -29,9 +29,8 @@ export const fetchSampleFaturamentoData = async () => {
  */
 export const checkRecordsInPeriod = async (startDate: string, endDate: string) => {
   try {
-    // Use a direct SQL query with count() instead of the select(*) with count:exact
-    // This is more reliable for large datasets
-    const { data, error, count } = await supabase
+    // Realizar a consulta com contagem precisa
+    const { count, error } = await supabase
       .from('BLUEBAY_FATURAMENTO')
       .select('*', { count: 'exact', head: true })
       .gte('DATA_EMISSAO', startDate)

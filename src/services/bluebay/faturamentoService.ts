@@ -33,12 +33,12 @@ export const fetchBluebayFaturamento = async (
       endDate
     });
 
-    // Usando a função RPC que filtra por CENTROCUSTO = 'BLUEBAY'
+    // Usando uma query direta em vez da função RPC que pode estar com problemas
     const { data, error } = await supabase
-      .rpc('get_bluebay_faturamento', { 
-        start_date: startDate,
-        end_date: endDate ? endDate + "T23:59:59Z" : undefined // Incluir até o fim do dia
-      });
+      .from('BLUEBAY_FATURAMENTO')
+      .select('*')
+      .gte('DATA_EMISSAO', startDate || '')
+      .lte('DATA_EMISSAO', endDate ? endDate + "T23:59:59Z" : '');
 
     if (error) {
       console.error("Erro ao buscar dados de faturamento:", error);

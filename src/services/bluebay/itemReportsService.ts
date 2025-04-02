@@ -32,7 +32,7 @@ export const fetchBluebayItemsReport = async (
       endDate
     });
     
-    // Fetch faturamento data with date filter - only from BLUEBAY
+    // Fetch faturamento data with date filter - usando query direta em vez da RPC
     const faturamentoData = await fetchBluebayFaturamento(startDate, endDate);
     
     if (!Array.isArray(faturamentoData) || faturamentoData.length === 0) {
@@ -61,12 +61,30 @@ export const fetchBluebayItemsReport = async (
         console.log("Amostra de dados recentes de faturamento:", sampleData);
         
         // Check if there are any records in the specified period
-        await checkRecordsInPeriod(startDate, endDate);
+        const periodCount = await checkRecordsInPeriod(startDate, endDate);
+        if (periodCount && periodCount > 0) {
+          // Há dados no período, mas algo está errado com a consulta RPC
+          // Vamos buscar os dados diretamente da tabela
+          console.log(`Buscando ${periodCount} registros diretamente da tabela BLUEBAY_FATURAMENTO`);
+          const { data: directData, error: directError } = await supabase
+            .from('BLUEBAY_FATURAMENTO')
+            .select('*')
+            .gte('DATA_EMISSAO', startDate)
+            .lte('DATA_EMISSAO', endDate + 'T23:59:59Z')
+            .limit(10000); // Limite para não sobrecarregar
+          
+          if (directError) {
+            console.error("Erro ao buscar dados diretos:", directError);
+          } else if (directData && directData.length > 0) {
+            console.log(`Processando ${directData.length} registros obtidos diretamente`);
+            return await processDirectFaturamentoData(directData);
+          }
+        }
       }
       
-      // Use test data only in development mode
+      // Use test data if in development mode or if direct query also failed
       if (isDevelopmentEnvironment()) {
-        console.log("Usando dados de teste temporários para demonstração");
+        console.log("Usando dados de teste para desenvolvimento");
         return generateTestData();
       }
       
@@ -106,5 +124,31 @@ export const fetchBluebayItemsReport = async (
     }
     
     throw error;
+  }
+};
+
+/**
+ * Process direct faturamento data when RPC fails
+ */
+const processDirectFaturamentoData = async (directData: any[]): Promise<ItemReport[]> => {
+  try {
+    // Get unique item codes from direct data
+    const itemCodes = getUniqueItemCodes(directData);
+    
+    if (itemCodes.length === 0) {
+      return [];
+    }
+    
+    // Fetch item information
+    const itemsData = await fetchItemsInformation(itemCodes);
+    
+    // Create map of item information 
+    const itemsMap = createItemInfoMap(itemsData);
+    
+    // Process faturamento data into item reports
+    return processItemReports(directData, itemsMap);
+  } catch (error) {
+    console.error("Error processing direct faturamento data:", error);
+    return [];
   }
 };
