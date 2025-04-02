@@ -3,29 +3,46 @@ import { supabase } from "@/integrations/supabase/client";
 import { generateSampleStockData } from "../sampleDataGenerator";
 import { handleApiError } from "../errorHandlingService";
 
+// Define table names type for type safety with Supabase
+type SupabaseTable = 
+  | "BLUEBAY_ESTOQUE" 
+  | "BLUEBAY_ITEM" 
+  | "BLUEBAY_FATURAMENTO" 
+  | "BLUEBAY_PEDIDO"
+  | "BLUEBAY_PESSOA";
+
+// Define condition operators type
+type ConditionOperator = 'gt' | 'lt' | 'gte' | 'lte' | 'in';
+
+// Define condition type
+interface QueryCondition {
+  type: ConditionOperator;
+  column: string;
+  value: any;
+}
+
+// Define fetch parameters interface
+interface FetchBatchesParams {
+  table: SupabaseTable;
+  selectFields: string;
+  filters?: Record<string, any>;
+  conditions?: QueryCondition[];
+  batchSize?: number;
+  logPrefix?: string;
+}
+
 /**
  * Função utilitária genérica para consultar dados em batches
  * Controla paginação com offset e limit
  */
-export const fetchInBatches = async ({ 
-  table, 
-  selectFields, 
+export const fetchInBatches = async ({
+  table,
+  selectFields,
   filters = {},
   conditions = [],
   batchSize = 1000,
-  logPrefix = "Dados" 
-}: {
-  table: string;
-  selectFields: string;
-  filters?: Record<string, any>;
-  conditions?: Array<{
-    type: 'gt' | 'lt' | 'gte' | 'lte' | 'in';
-    column: string;
-    value: any;
-  }>;
-  batchSize?: number;
-  logPrefix?: string;
-}) => {
+  logPrefix = "Dados"
+}: FetchBatchesParams): Promise<any[]> => {
   try {
     let offset = 0;
     let allData: any[] = [];
@@ -108,10 +125,10 @@ export const fetchInBatches = async ({
 /**
  * Fetch stock data with error handling
  */
-export const fetchStockData = async () => {
+export const fetchStockData = async (): Promise<any[]> => {
   try {
     const stockData = await fetchInBatches({
-      table: 'BLUEBAY_ESTOQUE',
+      table: "BLUEBAY_ESTOQUE",
       selectFields: `
         "ITEM_CODIGO",
         "FISICO",
@@ -141,7 +158,7 @@ export const fetchStockData = async () => {
 /**
  * Fetch item data in batches for given item codes
  */
-export const fetchItemDataInBatches = async (itemCodes: string[]) => {
+export const fetchItemDataInBatches = async (itemCodes: string[]): Promise<any[]> => {
   try {
     if (!itemCodes || itemCodes.length === 0) {
       console.warn("Nenhum código de item fornecido para busca");
@@ -163,7 +180,7 @@ export const fetchItemDataInBatches = async (itemCodes: string[]) => {
       
       try {
         const batchData = await fetchInBatches({
-          table: 'BLUEBAY_ITEM',
+          table: "BLUEBAY_ITEM",
           selectFields: `
             "ITEM_CODIGO",
             "DESCRICAO",
@@ -200,12 +217,12 @@ export const fetchItemDataInBatches = async (itemCodes: string[]) => {
 /**
  * Fetch sales data in batches for a specified date range
  */
-export const fetchSalesDataInBatches = async (startDate: string, endDate: string) => {
+export const fetchSalesDataInBatches = async (startDate: string, endDate: string): Promise<any[]> => {
   try {
     console.log(`Buscando dados de vendas para o período ${startDate} até ${endDate}`);
     
     const salesData = await fetchInBatches({
-      table: 'BLUEBAY_FATURAMENTO',
+      table: "BLUEBAY_FATURAMENTO",
       selectFields: `
         "ITEM_CODIGO",
         "QUANTIDADE",
@@ -232,7 +249,7 @@ export const fetchSalesDataInBatches = async (startDate: string, endDate: string
 /**
  * Fetch stock items in paginated batches
  */
-export const fetchStockItemsPaginated = async () => {
+export const fetchStockItemsPaginated = async (): Promise<any[]> => {
   try {
     const stockItems = await fetchInBatches({
       table: "BLUEBAY_ESTOQUE",
@@ -252,7 +269,7 @@ export const fetchStockItemsPaginated = async () => {
 /**
  * Fetch batch of item details by item codes
  */
-export const fetchItemDetailsBatch = async (itemCodes: string[], batchSize = 500) => {
+export const fetchItemDetailsBatch = async (itemCodes: string[], batchSize = 500): Promise<any[]> => {
   try {
     if (!itemCodes || itemCodes.length === 0) {
       return [];
@@ -300,7 +317,7 @@ export const fetchItemDetailsBatch = async (itemCodes: string[], batchSize = 500
 /**
  * Fetch paginated sales data for a date range
  */
-export const fetchSalesDataPaginated = async (startDate: string, endDate: string) => {
+export const fetchSalesDataPaginated = async (startDate: string, endDate: string): Promise<any[]> => {
   try {
     console.log(`Iniciando busca paginada de dados de vendas para o período ${startDate} a ${endDate}`);
     
