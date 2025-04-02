@@ -39,9 +39,9 @@ export const fetchInBatches = async ({
         }
       }
       
-      // Usa a função auxiliar para aplicar condições sem tipos recursivos profundos
+      // Aplica condições adicionais usando um loop simples para evitar problemas de tipos
       if (conditions && conditions.length > 0) {
-        query = applyQueryConditions(query, conditions);
+        query = applyConditionsSimple(query, conditions);
       }
       
       // Executa a consulta
@@ -77,31 +77,32 @@ export const fetchInBatches = async ({
 };
 
 /**
- * Função auxiliar que aplica condições à query
- * Refatorada para evitar recursão de tipos excessiva
+ * Aplica condições à query de forma simples sem encadeamento complexo
+ * Eliminando o problema de instanciação de tipos excessiva
  */
-function applyQueryConditions(query: any, conditions: QueryCondition[]): any {
-  let modifiedQuery = query;
+function applyConditionsSimple(query: any, conditions: QueryCondition[]): any {
+  // Evitamos usar métodos que retornam o mesmo objeto para evitar recursão em tipos
+  let currentQuery = query;
   
-  conditions.forEach(condition => {
-    switch (condition.type) {
-      case 'gt':
-        modifiedQuery = modifiedQuery.gt(condition.column, condition.value);
-        break;
-      case 'lt':
-        modifiedQuery = modifiedQuery.lt(condition.column, condition.value);
-        break;
-      case 'gte':
-        modifiedQuery = modifiedQuery.gte(condition.column, condition.value);
-        break;
-      case 'lte':
-        modifiedQuery = modifiedQuery.lte(condition.column, condition.value);
-        break;
-      case 'in':
-        modifiedQuery = modifiedQuery.in(condition.column, condition.value);
-        break;
+  for (let i = 0; i < conditions.length; i++) {
+    const condition = conditions[i];
+    
+    if (condition.type === 'gt') {
+      currentQuery = currentQuery.gt(condition.column, condition.value);
+    } 
+    else if (condition.type === 'lt') {
+      currentQuery = currentQuery.lt(condition.column, condition.value);
     }
-  });
+    else if (condition.type === 'gte') {
+      currentQuery = currentQuery.gte(condition.column, condition.value);
+    }
+    else if (condition.type === 'lte') {
+      currentQuery = currentQuery.lte(condition.column, condition.value);
+    }
+    else if (condition.type === 'in') {
+      currentQuery = currentQuery.in(condition.column, condition.value);
+    }
+  }
   
-  return modifiedQuery;
+  return currentQuery;
 }
