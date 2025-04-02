@@ -32,7 +32,8 @@ export const fetchStockSalesWithDirectQueries = async (
           "ENTROU",
           "LIMITE"
         `)
-        .eq('LOCAL', 1);
+        .eq('LOCAL', 1)
+        .limit(100000); // Aumentar substancialmente o limite
       
       if (stockError) {
         console.error("Erro ao buscar dados de estoque:", stockError);
@@ -54,7 +55,8 @@ export const fetchStockSalesWithDirectQueries = async (
           "GRU_DESCRICAO",
           "DATACADASTRO"
         `)
-        .in('ITEM_CODIGO', itemCodes);
+        .in('ITEM_CODIGO', itemCodes)
+        .limit(100000); // Aumentar substancialmente o limite
       
       if (itemError) {
         console.error("Erro ao buscar dados de itens:", itemError);
@@ -91,7 +93,8 @@ export const fetchStockSalesWithDirectQueries = async (
         `)
         .eq('TIPO', 'S')
         .gte('DATA_EMISSAO', startDate)
-        .lte('DATA_EMISSAO', `${endDate}T23:59:59`);
+        .lte('DATA_EMISSAO', `${endDate}T23:59:59`)
+        .limit(100000); // Aumentar substancialmente o limite
       
       if (salesError) {
         console.error("Erro ao buscar dados de vendas:", salesError);

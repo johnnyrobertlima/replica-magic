@@ -23,18 +23,16 @@ export const fetchStockSalesAnalytics = async (
     const sixtyDaysAgo = format(subDays(new Date(), 60), 'yyyy-MM-dd');
     
     try {
-      // Query using the custom function
-      const { data, error } = await supabase
+      // Query using the custom function with count option enabled and no limit
+      const { data, error, count } = await supabase
         .rpc('get_stock_sales_analytics', { 
           p_start_date: startDate,
           p_end_date: endDate,
           p_new_product_date: sixtyDaysAgo
-        });
-
-      if (error) {
-        console.error("Erro ao buscar dados de análise de estoque e vendas:", error);
-        throw error;
-      }
+        })
+        .returns<any[]>() // Use generic type to avoid type issues
+        .limit(100000) // Aumentar substancialmente o limite (100.000 registros)
+        .throwOnError(); // Lançar erro explicitamente para melhor tratamento
 
       if (!data || !Array.isArray(data) || data.length === 0) {
         console.info("Nenhum dado de análise de estoque e vendas encontrado para o período");
