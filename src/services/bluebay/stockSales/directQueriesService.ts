@@ -21,7 +21,8 @@ export const fetchStockSalesWithDirectQueries = async (
     const newProductDate = sixtyDaysAgo.toISOString().split('T')[0];
     
     try {
-      // Fetch stock data
+      // Using a batched approach for potentially large datasets
+      // First, get all stock data with a large limit
       const { data: stockData, error: stockError } = await supabase
         .from('BLUEBAY_ESTOQUE')
         .select(`
@@ -33,7 +34,7 @@ export const fetchStockSalesWithDirectQueries = async (
           "LIMITE"
         `)
         .eq('LOCAL', 1)
-        .limit(100000); // Aumentar substancialmente o limite
+        .limit(200000); // Very large limit to ensure we get all records
       
       if (stockError) {
         console.error("Erro ao buscar dados de estoque:", stockError);
@@ -45,27 +46,48 @@ export const fetchStockSalesWithDirectQueries = async (
         return generateSampleStockData();
       }
       
-      // Fetch item data for the stock items
-      const itemCodes = stockData.map(item => item.ITEM_CODIGO);
-      const { data: itemData, error: itemError } = await supabase
-        .from('BLUEBAY_ITEM')
-        .select(`
-          "ITEM_CODIGO",
-          "DESCRICAO",
-          "GRU_DESCRICAO",
-          "DATACADASTRO"
-        `)
-        .in('ITEM_CODIGO', itemCodes)
-        .limit(100000); // Aumentar substancialmente o limite
+      console.log(`Encontrados ${stockData.length} registros de estoque`);
       
-      if (itemError) {
-        console.error("Erro ao buscar dados de itens:", itemError);
+      // Fetch item data for the stock items in batches if there are many
+      const itemCodes = stockData.map(item => item.ITEM_CODIGO);
+      let allItemData = [];
+      
+      // Process in batches of 1000 to avoid query size limitations
+      const batchSize = 1000;
+      for (let i = 0; i < itemCodes.length; i += batchSize) {
+        const batchCodes = itemCodes.slice(i, i + batchSize);
+        const { data: itemBatch, error: itemBatchError } = await supabase
+          .from('BLUEBAY_ITEM')
+          .select(`
+            "ITEM_CODIGO",
+            "DESCRICAO",
+            "GRU_DESCRICAO",
+            "DATACADASTRO"
+          `)
+          .in('ITEM_CODIGO', batchCodes);
+        
+        if (itemBatchError) {
+          console.error(`Erro ao buscar lote de itens ${i}-${i+batchSize}:`, itemBatchError);
+          continue;
+        }
+        
+        if (itemBatch && itemBatch.length > 0) {
+          allItemData = [...allItemData, ...itemBatch];
+        }
+        
+        console.log(`Processado lote ${i/batchSize + 1} de itens (${batchCodes.length} itens)`);
+      }
+      
+      if (allItemData.length === 0) {
+        console.error("Não foi possível obter dados dos itens");
         return generateSampleStockData();
       }
       
+      console.log(`Obtidos dados para ${allItemData.length} itens de ${itemCodes.length} códigos`);
+      
       // Create a map of item data for easy lookup
       const itemMap = new Map();
-      itemData?.forEach(item => {
+      allItemData.forEach(item => {
         itemMap.set(item.ITEM_CODIGO, item);
       });
       
@@ -82,27 +104,51 @@ export const fetchStockSalesWithDirectQueries = async (
         };
       });
       
-      // Fetch sales data for the specified period
-      const { data: salesData, error: salesError } = await supabase
-        .from('BLUEBAY_FATURAMENTO')
-        .select(`
-          "ITEM_CODIGO",
-          "QUANTIDADE",
-          "VALOR_UNITARIO",
-          "DATA_EMISSAO"
-        `)
-        .eq('TIPO', 'S')
-        .gte('DATA_EMISSAO', startDate)
-        .lte('DATA_EMISSAO', `${endDate}T23:59:59`)
-        .limit(100000); // Aumentar substancialmente o limite
+      // Fetch sales data in batches for the specified period
+      console.log(`Buscando dados de vendas para o período ${startDate} até ${endDate}`);
       
-      if (salesError) {
-        console.error("Erro ao buscar dados de vendas:", salesError);
-        return generateSampleStockData();
+      let allSalesData = [];
+      let hasMoreSales = true;
+      let offset = 0;
+      const salesBatchSize = 5000;
+      
+      while (hasMoreSales) {
+        const { data: salesBatch, error: salesBatchError } = await supabase
+          .from('BLUEBAY_FATURAMENTO')
+          .select(`
+            "ITEM_CODIGO",
+            "QUANTIDADE",
+            "VALOR_UNITARIO",
+            "DATA_EMISSAO"
+          `)
+          .eq('TIPO', 'S')
+          .gte('DATA_EMISSAO', startDate)
+          .lte('DATA_EMISSAO', `${endDate}T23:59:59`)
+          .range(offset, offset + salesBatchSize - 1);
+        
+        if (salesBatchError) {
+          console.error(`Erro ao buscar lote de vendas ${offset}-${offset+salesBatchSize}:`, salesBatchError);
+          break;
+        }
+        
+        if (!salesBatch || salesBatch.length === 0) {
+          hasMoreSales = false;
+        } else {
+          allSalesData = [...allSalesData, ...salesBatch];
+          offset += salesBatchSize;
+          console.log(`Processado lote de vendas, total acumulado: ${allSalesData.length}`);
+          
+          // If we got fewer records than the batch size, we've reached the end
+          if (salesBatch.length < salesBatchSize) {
+            hasMoreSales = false;
+          }
+        }
       }
       
+      console.log(`Total de ${allSalesData.length} registros de vendas encontrados`);
+      
       // Process the data to calculate analytics
-      return processStockAndSalesData(combinedStockData, salesData || [], newProductDate, startDate, endDate);
+      return processStockAndSalesData(combinedStockData, allSalesData, newProductDate, startDate, endDate);
       
     } catch (queryError) {
       console.error("Erro ao buscar dados diretos:", queryError);

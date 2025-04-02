@@ -23,16 +23,21 @@ export const fetchStockSalesAnalytics = async (
     const sixtyDaysAgo = format(subDays(new Date(), 60), 'yyyy-MM-dd');
     
     try {
-      // Query using the custom function with count option enabled and no limit
-      const { data, error, count } = await supabase
+      // Query using the custom function but don't use .returns<any[]>() as it causes type issues
+      // Instead, use .select('*') which avoids the type checking issues
+      const { data, error } = await supabase
         .rpc('get_stock_sales_analytics', { 
           p_start_date: startDate,
           p_end_date: endDate,
           p_new_product_date: sixtyDaysAgo
         })
-        .returns<any[]>() // Use generic type to avoid type issues
-        .limit(100000) // Aumentar substancialmente o limite (100.000 registros)
-        .throwOnError(); // Lançar erro explicitamente para melhor tratamento
+        .select('*')
+        .limit(100000); // Large limit to ensure we get all records
+      
+      if (error) {
+        console.error("Erro na função RPC:", error.message, error.details);
+        throw error;
+      }
 
       if (!data || !Array.isArray(data) || data.length === 0) {
         console.info("Nenhum dado de análise de estoque e vendas encontrado para o período");
@@ -64,7 +69,7 @@ export const fetchStockSalesAnalytics = async (
         PERCENTUAL_ESTOQUE_VENDIDO: item.percentual_estoque_vendido,
         DIAS_COBERTURA: item.dias_cobertura,
         PRODUTO_NOVO: item.produto_novo,
-        RANKING: item.ranking
+        RANKING: item.ranking != null ? Number(item.ranking) : null // Convert BigInt to Number if not null
       }));
       
       return transformedData;
