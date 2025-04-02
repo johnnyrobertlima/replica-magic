@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { generateSampleStockData } from "../sampleDataGenerator";
 import { handleApiError } from "../errorHandlingService";
@@ -70,24 +69,18 @@ export const fetchInBatches = async ({
       // Aplica condições adicionais (gt, lt, gte, lte, in, etc)
       for (const condition of conditions) {
         const { type, column, value } = condition;
-        switch (type) {
-          case 'gt':
-            query = query.gt(column, value);
-            break;
-          case 'lt':
-            query = query.lt(column, value);
-            break;
-          case 'gte':
-            query = query.gte(column, value);
-            break;
-          case 'lte':
-            query = query.lte(column, value);
-            break;
-          case 'in':
-            query = query.in(column, value);
-            break;
-          // Adicione outros operadores conforme necessário
+        if (type === 'gt') {
+          query = query.gt(column, value);
+        } else if (type === 'lt') {
+          query = query.lt(column, value);
+        } else if (type === 'gte') {
+          query = query.gte(column, value);
+        } else if (type === 'lte') {
+          query = query.lte(column, value);
+        } else if (type === 'in') {
+          query = query.in(column, value);
         }
+        // We use if/else instead of switch to avoid type recursion issues
       }
       
       // Executa a consulta
