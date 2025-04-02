@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { format, subDays } from "date-fns";
 import { StockItem, fetchStockSalesAnalytics, fetchStockSalesAnalyticsWithDirectQueries } from "@/services/bluebay/stockSalesAnalyticsService";
@@ -38,16 +39,39 @@ export const useStockSalesAnalytics = () => {
         console.log(`Carregando relatório de estoque-vendas para o período: ${startDateFormatted} até ${endDateFormatted}`);
         
         try {
-          // Try using the RPC function first
+          // Try using the regular function which now has a fallback for test data
           const data = await fetchStockSalesAnalytics(startDateFormatted, endDateFormatted);
           setItems(data);
-        } catch (rpcError) {
-          console.error("Erro ao usar função RPC para dados de estoque-vendas:", rpcError);
           
-          // Fallback to direct queries if RPC fails
-          console.log("Tentando consulta direta como alternativa");
+          if (data.length === 0) {
+            // Mostrar mensagem quando não há dados reais, mas não considerar isso um erro
+            toast({
+              title: "Usando dados de amostra",
+              description: "Não foi possível carregar dados reais. Exibindo dados de exemplo para visualização.",
+              variant: "default",
+            });
+          }
+        } catch (error) {
+          console.error("Erro ao carregar dados de estoque-vendas:", error);
+          setError("Falha ao carregar dados de estoque-vendas");
+          
+          // Ainda assim, tentar usar dados de exemplo
           const fallbackData = await fetchStockSalesAnalyticsWithDirectQueries(startDateFormatted, endDateFormatted);
           setItems(fallbackData);
+          
+          if (fallbackData.length > 0) {
+            toast({
+              title: "Usando dados de amostra",
+              description: "Ocorreu um erro ao carregar dados reais. Exibindo dados de exemplo para visualização.",
+              variant: "default",
+            });
+          } else {
+            toast({
+              title: "Erro",
+              description: "Não foi possível carregar os dados do relatório. Tente novamente mais tarde.",
+              variant: "destructive",
+            });
+          }
         }
       } else {
         console.warn("Intervalo de datas incompleto");
