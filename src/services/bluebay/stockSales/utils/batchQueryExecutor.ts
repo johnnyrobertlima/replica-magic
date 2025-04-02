@@ -42,6 +42,8 @@ export const fetchInBatches = async ({
       // Aplica condições adicionais (gt, lt, gte, lte, in, etc)
       for (const condition of conditions) {
         const { type, column, value } = condition;
+        
+        // Use if/else instead of switch to avoid type recursion issues
         if (type === 'gt') {
           query = query.gt(column, value);
         } else if (type === 'lt') {
@@ -53,7 +55,6 @@ export const fetchInBatches = async ({
         } else if (type === 'in') {
           query = query.in(column, value);
         }
-        // We use if/else instead of switch to avoid type recursion issues
       }
       
       // Executa a consulta
