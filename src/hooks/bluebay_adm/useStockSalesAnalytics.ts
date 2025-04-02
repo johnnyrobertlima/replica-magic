@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { format, subDays } from "date-fns";
 import { StockItem, fetchStockSalesAnalytics, fetchStockSalesAnalyticsWithDirectQueries } from "@/services/bluebay/stockSalesAnalyticsService";
@@ -14,7 +13,7 @@ export const useStockSalesAnalytics = () => {
   const [items, setItems] = useState<StockItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<StockItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [groupFilter, setGroupFilter] = useState("");
+  const [groupFilter, setGroupFilter] = useState("all");
   const [sortConfig, setSortConfig] = useState<{
     key: keyof StockItem,
     direction: 'asc' | 'desc'
@@ -69,12 +68,10 @@ export const useStockSalesAnalytics = () => {
     }
   };
 
-  // Load data when date range changes
   useEffect(() => {
     loadData();
   }, [dateRange.startDate, dateRange.endDate]);
 
-  // Extract available groups from items
   useEffect(() => {
     if (items.length > 0) {
       const groups = [...new Set(items.map(item => item.GRU_DESCRICAO).filter(Boolean))];
@@ -84,11 +81,9 @@ export const useStockSalesAnalytics = () => {
     }
   }, [items]);
 
-  // Filter and sort items when items, searchTerm, groupFilter, or sortConfig changes
   useEffect(() => {
     let result = [...items];
     
-    // Apply search filter
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       result = result.filter(item => 
@@ -97,27 +92,22 @@ export const useStockSalesAnalytics = () => {
       );
     }
     
-    // Apply group filter
-    if (groupFilter) {
+    if (groupFilter && groupFilter !== "all") {
       result = result.filter(item => item.GRU_DESCRICAO === groupFilter);
     }
     
-    // Apply sorting
     result.sort((a, b) => {
       const aValue = a[sortConfig.key];
       const bValue = b[sortConfig.key];
       
-      // Handle null/undefined values
       if (aValue === undefined || aValue === null) return sortConfig.direction === 'asc' ? -1 : 1;
       if (bValue === undefined || bValue === null) return sortConfig.direction === 'asc' ? 1 : -1;
       
-      // Sort based on value type
       if (typeof aValue === 'string' && typeof bValue === 'string') {
         return sortConfig.direction === 'asc'
           ? aValue.localeCompare(bValue)
           : bValue.localeCompare(aValue);
       } else {
-        // For numbers, dates, booleans
         return sortConfig.direction === 'asc'
           ? (aValue < bValue ? -1 : aValue > bValue ? 1 : 0)
           : (bValue < aValue ? -1 : bValue > aValue ? 1 : 0);
@@ -146,7 +136,7 @@ export const useStockSalesAnalytics = () => {
 
   const clearFilters = () => {
     setSearchTerm("");
-    setGroupFilter("");
+    setGroupFilter("all");
   };
 
   const getSummaryStats = () => {

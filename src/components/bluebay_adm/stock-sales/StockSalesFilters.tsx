@@ -109,7 +109,7 @@ export const StockSalesFilters: React.FC<StockSalesFiltersProps> = ({
               <SelectValue placeholder="Filtrar por grupo" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os grupos</SelectItem>
+              <SelectItem value="all">Todos os grupos</SelectItem>
               {availableGroups.map((group) => (
                 <SelectItem key={group} value={group}>
                   {group}
