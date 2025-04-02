@@ -41,8 +41,7 @@ export const fetchInBatches = async ({
         }
       }
       
-      // Aplica condições adicionais usando uma função separada
-      // Esta função é completamente desacoplada para evitar o erro TS2589
+      // Aplica condições adicionais com uma função separada para evitar recursão de tipos
       query = applyConditionsToQuery(query, conditions);
       
       // Executa a consulta
