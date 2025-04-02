@@ -26,11 +26,13 @@ export const fetchInBatches = async ({
       batchCount++;
       console.log(`Buscando lote ${batchCount} de ${logPrefix} (offset: ${offset}, tamanho: ${batchSize})`);
       
-      // Inicia a consulta
+      // Inicia a consulta básica
       let query = supabase
         .from(table)
-        .select(selectFields)
-        .range(offset, offset + batchSize - 1);
+        .select(selectFields);
+      
+      // Aplica a paginação
+      query = query.range(offset, offset + batchSize - 1);
       
       // Aplica filtros por igualdade
       for (const [key, value] of Object.entries(filters)) {
@@ -39,9 +41,30 @@ export const fetchInBatches = async ({
         }
       }
       
-      // Aplica condições adicionais com uma abordagem que evita problemas de tipos
+      // Aplica condições adicionais usando uma abordagem diferente
+      // que evita recursão de tipos
       if (conditions && conditions.length > 0) {
-        query = applyConditionsManually(query, conditions);
+        // Aplicamos cada condição individualmente sem criar uma cadeia de tipos complexa
+        for (const condition of conditions) {
+          // Cada condição é aplicada de forma isolada para evitar recursão de tipos
+          switch (condition.type) {
+            case 'gt':
+              query = query.gt(condition.column, condition.value);
+              break;
+            case 'lt':
+              query = query.lt(condition.column, condition.value);
+              break;
+            case 'gte':
+              query = query.gte(condition.column, condition.value);
+              break;
+            case 'lte':
+              query = query.lte(condition.column, condition.value);
+              break;
+            case 'in':
+              query = query.in(condition.column, condition.value);
+              break;
+          }
+        }
       }
       
       // Executa a consulta
@@ -75,37 +98,3 @@ export const fetchInBatches = async ({
     throw error;
   }
 };
-
-/**
- * Aplica condições de forma manual para evitar recursão infinita de tipos
- * Esta implementação usa uma abordagem de baixo nível para aplicar as condições
- * sem criar uma cadeia de retornos de tipos que possa confundir o TypeScript
- */
-function applyConditionsManually(query: any, conditions: QueryCondition[]): any {
-  // Cria uma cópia da query para manipulação
-  let resultQuery = query;
-  
-  // Aplica cada condição individualmente
-  for (let i = 0; i < conditions.length; i++) {
-    const condition = conditions[i];
-    
-    // Usa condicionais if/else em vez de switch para mais clareza
-    if (condition.type === 'gt') {
-      resultQuery = resultQuery.gt(condition.column, condition.value);
-    } 
-    else if (condition.type === 'lt') {
-      resultQuery = resultQuery.lt(condition.column, condition.value);
-    }
-    else if (condition.type === 'gte') {
-      resultQuery = resultQuery.gte(condition.column, condition.value);
-    }
-    else if (condition.type === 'lte') {
-      resultQuery = resultQuery.lte(condition.column, condition.value);
-    }
-    else if (condition.type === 'in') {
-      resultQuery = resultQuery.in(condition.column, condition.value);
-    }
-  }
-  
-  return resultQuery;
-}
