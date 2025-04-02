@@ -41,28 +41,23 @@ export const fetchInBatches = async ({
         }
       }
       
-      // Aplica condições adicionais usando uma abordagem diferente
-      // que evita recursão de tipos
+      // Aplica condições adicionais sem causar recursão de tipos
       if (conditions && conditions.length > 0) {
-        // Aplicamos cada condição individualmente sem criar uma cadeia de tipos complexa
         for (const condition of conditions) {
-          // Cada condição é aplicada de forma isolada para evitar recursão de tipos
-          switch (condition.type) {
-            case 'gt':
-              query = query.gt(condition.column, condition.value);
-              break;
-            case 'lt':
-              query = query.lt(condition.column, condition.value);
-              break;
-            case 'gte':
-              query = query.gte(condition.column, condition.value);
-              break;
-            case 'lte':
-              query = query.lte(condition.column, condition.value);
-              break;
-            case 'in':
-              query = query.in(condition.column, condition.value);
-              break;
+          if (condition.type === 'gt') {
+            query = query.gt(condition.column, condition.value);
+          } 
+          else if (condition.type === 'lt') {
+            query = query.lt(condition.column, condition.value);
+          }
+          else if (condition.type === 'gte') {
+            query = query.gte(condition.column, condition.value);
+          }
+          else if (condition.type === 'lte') {
+            query = query.lte(condition.column, condition.value);
+          }
+          else if (condition.type === 'in') {
+            query = query.in(condition.column, condition.value);
           }
         }
       }
