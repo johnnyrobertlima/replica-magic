@@ -1830,6 +1830,32 @@ export type Database = {
           total_count: number
         }[]
       }
+      get_stock_sales_analytics: {
+        Args: {
+          p_start_date: string
+          p_end_date: string
+          p_new_product_date: string
+        }
+        Returns: {
+          item_codigo: string
+          descricao: string
+          gru_descricao: string
+          datacadastro: string
+          fisico: number
+          disponivel: number
+          reservado: number
+          entrou: number
+          limite: number
+          qtd_vendida: number
+          valor_total_vendido: number
+          data_ultima_venda: string
+          giro_estoque: number
+          percentual_estoque_vendido: number
+          dias_cobertura: number
+          produto_novo: boolean
+          ranking: number
+        }[]
+      }
       get_user_group_homepage: {
         Args: {
           user_id_param: string

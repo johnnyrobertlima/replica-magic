@@ -35,7 +35,7 @@ export const fetchStockSalesAnalytics = async (
     // Calculate the date 60 days ago for identifying new products
     const sixtyDaysAgo = format(subDays(new Date(), 60), 'yyyy-MM-dd');
     
-    // Query to join BLUEBAY_ESTOQUE with BLUEBAY_ITEM and compute sales from BLUEBAY_FATURAMENTO
+    // Query using the custom function
     const { data, error } = await supabase
       .rpc('get_stock_sales_analytics', { 
         p_start_date: startDate,
@@ -48,53 +48,18 @@ export const fetchStockSalesAnalytics = async (
       throw error;
     }
 
-    if (!data || data.length === 0) {
+    if (!data || !Array.isArray(data) || data.length === 0) {
       console.info("Nenhum dado de análise de estoque e vendas encontrado para o período");
       return [];
     }
     
     console.info(`Buscados ${data.length} registros de análise de estoque e vendas`);
     
-    // Process rankings
-    const processedData = assignRankings(data);
-    
-    return processedData;
+    return data as StockItem[];
   } catch (error) {
     console.error("Erro ao buscar dados de análise de estoque e vendas:", error);
     throw error;
   }
-};
-
-// Function to assign rankings based on quantity sold
-const assignRankings = (items: StockItem[]): StockItem[] => {
-  // Sort items by QTD_VENDIDA in descending order
-  const sortedItems = [...items].sort((a, b) => b.QTD_VENDIDA - a.QTD_VENDIDA);
-  
-  // Assign rankings to items with sales > 0
-  let currentRank = 1;
-  let lastQtdVendida = -1;
-  
-  return sortedItems.map(item => {
-    // Only assign ranking to items with sales
-    if (item.QTD_VENDIDA > 0) {
-      // If current item's sales differ from previous, increment rank
-      if (item.QTD_VENDIDA !== lastQtdVendida) {
-        currentRank = sortedItems.filter(i => i.QTD_VENDIDA > item.QTD_VENDIDA).length + 1;
-        lastQtdVendida = item.QTD_VENDIDA;
-      }
-      
-      return {
-        ...item,
-        RANKING: currentRank
-      };
-    }
-    
-    // Items with no sales get null ranking
-    return {
-      ...item,
-      RANKING: null
-    };
-  }).sort((a, b) => (a.DESCRICAO || '').localeCompare(b.DESCRICAO || ''));
 };
 
 // Function to handle fallback with direct queries in case the RPC fails
@@ -155,7 +120,7 @@ export const fetchStockSalesAnalyticsWithDirectQueries = async (
     }
     
     // Process and join the data
-    const result = processStockAndSalesData(stockItems, salesData, sixtyDaysAgo, startDate, endDate);
+    const result = processStockAndSalesData(stockItems, salesData || [], sixtyDaysAgo, startDate, endDate);
     return result;
   } catch (error) {
     console.error("Erro ao buscar dados diretos:", error);
@@ -255,6 +220,38 @@ const processStockAndSalesData = (
     };
   });
   
-  // Assign rankings and sort by description
+  // Assign rankings
   return assignRankings(processedItems);
+};
+
+// Function to assign rankings based on quantity sold
+const assignRankings = (items: StockItem[]): StockItem[] => {
+  // Sort items by QTD_VENDIDA in descending order
+  const sortedItems = [...items].sort((a, b) => b.QTD_VENDIDA - a.QTD_VENDIDA);
+  
+  // Assign rankings to items with sales > 0
+  let currentRank = 1;
+  let lastQtdVendida = -1;
+  
+  return sortedItems.map(item => {
+    // Only assign ranking to items with sales
+    if (item.QTD_VENDIDA > 0) {
+      // If current item's sales differ from previous, increment rank
+      if (item.QTD_VENDIDA !== lastQtdVendida) {
+        currentRank = sortedItems.filter(i => i.QTD_VENDIDA > item.QTD_VENDIDA).length + 1;
+        lastQtdVendida = item.QTD_VENDIDA;
+      }
+      
+      return {
+        ...item,
+        RANKING: currentRank
+      };
+    }
+    
+    // Items with no sales get null ranking
+    return {
+      ...item,
+      RANKING: null
+    };
+  }).sort((a, b) => (a.DESCRICAO || '').localeCompare(b.DESCRICAO || ''));
 };
