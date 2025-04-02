@@ -29,8 +29,11 @@ export const useStockSalesData = () => {
         console.log(`Carregando relatório de estoque-vendas para o período: ${startDateFormatted} até ${endDateFormatted}`);
         
         try {
-          // Use the RPC function with proper error handling
+          // Use the enhanced fetching with fallbacks
           const data = await fetchStockSalesAnalytics(startDateFormatted, endDateFormatted);
+          
+          // Check if data is using sample data
+          setUsingSampleData(data.length > 0 && data[0].hasOwnProperty('isSampleData'));
           setItems(data);
           
           if (data.length === 0) {

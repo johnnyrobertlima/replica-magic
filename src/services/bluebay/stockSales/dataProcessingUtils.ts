@@ -14,6 +14,8 @@ export const processStockAndSalesData = (
   // Group sales data by item code
   const salesByItem = salesData.reduce((acc, sale) => {
     const itemCode = sale["ITEM_CODIGO"];
+    if (!itemCode) return acc;
+    
     if (!acc[itemCode]) {
       acc[itemCode] = {
         QTD_VENDIDA: 0,
@@ -24,7 +26,6 @@ export const processStockAndSalesData = (
     }
     
     // Add sales quantity and value
-    // Cast QUANTIDADE to number to avoid any type issues
     const quantidade = Number(sale["QUANTIDADE"]) || 0;
     const valorUnitario = Number(sale["VALOR_UNITARIO"]) || 0;
     
@@ -50,6 +51,19 @@ export const processStockAndSalesData = (
   const endDateObj = new Date(endDate);
   const daysDiff = Math.max(1, Math.ceil((endDateObj.getTime() - startDateObj.getTime()) / (1000 * 60 * 60 * 24)));
   
+  // Fetch all item details to get a map of item code to item details
+  const itemDetailsMap = stockItems.reduce((map, item) => {
+    const itemCode = item["ITEM_CODIGO"];
+    if (!map.has(itemCode)) {
+      map.set(itemCode, {
+        DESCRICAO: "",
+        GRU_DESCRICAO: "",
+        DATACADASTRO: null
+      });
+    }
+    return map;
+  }, new Map());
+  
   // Process stock items with sales data
   const processedItems = stockItems.map(item => {
     const itemCode = item["ITEM_CODIGO"];
@@ -72,14 +86,15 @@ export const processStockAndSalesData = (
       ? fisico / mediaVendasDiaria 
       : fisico > 0 ? 999 : 0; // 999 days if there are no sales but stock exists, 0 if no stock
     
-    const bluebayItem = item.BLUEBAY_ITEM || {};
-    const dataCadastro = bluebayItem["DATACADASTRO"];
+    // Get item details (description, group, cadastro date)
+    const itemDetail = itemDetailsMap.get(itemCode) || {};
+    const dataCadastro = itemDetail["DATACADASTRO"];
     const produtoNovo = dataCadastro && new Date(dataCadastro) > new Date(newProductDate);
     
     return {
       ITEM_CODIGO: itemCode,
-      DESCRICAO: bluebayItem["DESCRICAO"] || '',
-      GRU_DESCRICAO: bluebayItem["GRU_DESCRICAO"] || '',
+      DESCRICAO: itemDetail["DESCRICAO"] || '',
+      GRU_DESCRICAO: itemDetail["GRU_DESCRICAO"] || '',
       DATACADASTRO: dataCadastro,
       FISICO: fisico,
       DISPONIVEL: Number(item["DISPONIVEL"]) || 0,
@@ -132,5 +147,5 @@ export const assignRankings = (items: StockItem[]): StockItem[] => {
       ...item,
       RANKING: null
     };
-  }).sort((a, b) => (a.DESCRICAO || '').localeCompare(b.DESCRICAO || ''));
+  });
 };
