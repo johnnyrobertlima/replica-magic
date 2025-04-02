@@ -18,5 +18,5 @@ export interface StockItem {
   PERCENTUAL_ESTOQUE_VENDIDO: number;
   DIAS_COBERTURA: number;
   PRODUTO_NOVO: boolean;
-  RANKING: number | null;
+  RANKING: bigint | number | null; // Updated to accept bigint from PostgreSQL
 }

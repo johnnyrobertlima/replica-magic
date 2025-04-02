@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { format, subDays } from "date-fns";
-import { StockItem, fetchStockSalesAnalytics, fetchStockSalesAnalyticsWithDirectQueries } from "@/services/bluebay/stockSalesAnalyticsService";
+import { StockItem, fetchStockSalesAnalytics } from "@/services/bluebay/stockSalesAnalyticsService";
 import { useToast } from "@/hooks/use-toast";
 import { DateRange } from "./useStockSalesFilters";
 
@@ -29,41 +29,33 @@ export const useStockSalesData = () => {
         console.log(`Carregando relatório de estoque-vendas para o período: ${startDateFormatted} até ${endDateFormatted}`);
         
         try {
-          // Try using the regular function which now has a fallback for test data
+          // Use the RPC function with proper error handling
           const data = await fetchStockSalesAnalytics(startDateFormatted, endDateFormatted);
           setItems(data);
           
           if (data.length === 0) {
-            // Mostrar mensagem quando não há dados reais, mas não considerar isso um erro
-            setUsingSampleData(true);
             toast({
               title: "Nenhum dado encontrado",
               description: "Não foram encontrados dados para o período selecionado.",
+              variant: "default",
+            });
+          } else {
+            toast({
+              title: "Dados carregados",
+              description: `Carregados ${data.length} registros de estoque e vendas.`,
               variant: "default",
             });
           }
         } catch (error) {
           console.error("Erro ao carregar dados de estoque-vendas:", error);
           setError("Falha ao carregar dados de estoque-vendas");
+          setItems([]);
           
-          // Ainda assim, tentar usar dados de exemplo
-          const fallbackData = await fetchStockSalesAnalyticsWithDirectQueries(startDateFormatted, endDateFormatted);
-          setItems(fallbackData);
-          
-          if (fallbackData.length > 0) {
-            toast({
-              title: "Dados limitados disponíveis",
-              description: "Ocorreu um erro ao carregar dados completos. Exibindo dados limitados disponíveis.",
-              variant: "default",
-            });
-          } else {
-            setUsingSampleData(true);
-            toast({
-              title: "Erro",
-              description: "Não foi possível carregar os dados do relatório. Tente novamente mais tarde.",
-              variant: "destructive",
-            });
-          }
+          toast({
+            title: "Erro",
+            description: "Não foi possível carregar os dados do relatório. Verifique o console para mais detalhes.",
+            variant: "destructive",
+          });
         }
       } else {
         console.warn("Intervalo de datas incompleto");
@@ -73,13 +65,13 @@ export const useStockSalesData = () => {
     } catch (err) {
       console.error("Erro ao carregar dados de estoque-vendas:", err);
       setError("Falha ao carregar dados de estoque-vendas");
-      setUsingSampleData(true);
+      setItems([]);
+      
       toast({
         title: "Erro",
         description: "Não foi possível carregar os dados do relatório. Tente novamente mais tarde.",
         variant: "destructive",
       });
-      setItems([]);
     } finally {
       setIsLoading(false);
     }

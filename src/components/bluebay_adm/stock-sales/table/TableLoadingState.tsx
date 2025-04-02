@@ -10,8 +10,13 @@ export const TableLoadingState: React.FC = () => {
         Isso pode levar alguns instantes para grandes volumes de dados.
       </p>
       <p className="text-gray-500 text-sm mt-1">
-        Estamos processando todos os registros disponíveis.
+        Estamos processando todos os registros disponíveis sem limitação.
       </p>
+      <div className="mt-6 max-w-lg mx-auto">
+        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div className="h-full bg-blue-500 animate-pulse rounded-full"></div>
+        </div>
+      </div>
     </div>
   );
 };
