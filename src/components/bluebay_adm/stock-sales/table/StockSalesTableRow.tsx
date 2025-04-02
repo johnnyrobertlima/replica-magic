@@ -19,9 +19,12 @@ export const StockSalesTableRow: React.FC<StockSalesTableRowProps> = ({ item, in
   const ranking = item.RANKING !== null ? Number(item.RANKING) : 0;
   const isTop10 = ranking > 0 && ranking <= 10;
   
+  // Generate a truly unique key using both item code and index
+  const uniqueKey = `${item.ITEM_CODIGO}-${index}`;
+  
   return (
     <TableRow 
-      key={`${item.ITEM_CODIGO}-${index}`} // Add index to ensure uniqueness
+      key={uniqueKey}
       className={`
         ${isLowStock ? 'bg-red-50' : ''}
         ${item.PRODUTO_NOVO ? 'bg-blue-50' : ''}
