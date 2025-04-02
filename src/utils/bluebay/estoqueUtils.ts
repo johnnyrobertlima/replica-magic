@@ -3,94 +3,140 @@ import { supabase } from "@/integrations/supabase/client";
 import { EstoqueItem } from "@/types/bk/estoque";
 
 /**
- * Fetches a page of estoque data from Supabase
+ * Fetches a page of estoque data with pagination
+ * @param page Page number (0-based)
+ * @param pageSize Number of items per page
+ * @returns Object containing the page data and hasMore flag
  */
-export const fetchEstoquePage = async (pageNumber: number, pageSize: number) => {
-  console.log(`📄 Buscando página ${pageNumber + 1} de estoque (itens ${pageNumber * pageSize} a ${(pageNumber + 1) * pageSize - 1})`);
-  
-  const { data: estoquePageData, error: estoqueError } = await supabase
-    .from('BLUEBAY_ESTOQUE')
-    .select('*')
-    .eq('LOCAL', 1)
-    .range(pageNumber * pageSize, (pageNumber + 1) * pageSize - 1);
+export const fetchEstoquePage = async (
+  page: number,
+  pageSize: number
+): Promise<{ estoquePageData: any[]; hasMore: boolean }> => {
+  try {
+    const from = page * pageSize;
+    const to = from + pageSize - 1;
+
+    console.log(`Buscando página ${page} de estoque (itens ${from}-${to})`);
+
+    const { data, error, count } = await supabase
+      .from("BLUEBAY_ESTOQUE")
+      .select("*", { count: "exact" })
+      .eq("LOCAL", 1)
+      .range(from, to);
+
+    if (error) {
+      console.error("Erro ao buscar dados de estoque:", error.message);
+      throw error;
+    }
+
+    // Determine if there are more pages
+    const hasMore = count ? (page + 1) * pageSize < count : false;
     
-  if (estoqueError) {
-    console.error(`❌ Erro ao buscar página ${pageNumber + 1} do estoque:`, estoqueError);
-    throw estoqueError;
+    console.log(`Encontrados ${data?.length || 0} itens nesta página. Total estimado: ${count}`);
+    return { estoquePageData: data || [], hasMore };
+  } catch (error) {
+    console.error(`Erro ao buscar página ${page} de estoque:`, error);
+    throw error;
   }
-  
-  return { estoquePageData, hasMore: estoquePageData && estoquePageData.length === pageSize };
 };
 
 /**
- * Fetches item details in batches to avoid query limits
+ * Fetches item details in batches to avoid query size limitations
+ * @param itemCodes Array of item codes
+ * @returns Array of item details
  */
-export const fetchItemDetailsInBatches = async (itemCodes: string[], batchSize: number = 500) => {
-  // Dividir em lotes menores para consulta
-  const batches = [];
-  
-  for (let i = 0; i < itemCodes.length; i += batchSize) {
-    batches.push(itemCodes.slice(i, i + batchSize));
-  }
-  
-  console.log(`📦 Dividido em ${batches.length} lotes com até ${batchSize} itens cada`);
-  
-  // Processar todos os lotes sequencialmente
-  let allItemsData: any[] = [];
-  
-  for (let i = 0; i < batches.length; i++) {
-    const batch = batches[i];
-    console.log(`⏳ Processando lote ${i+1} de ${batches.length} (${batch.length} itens)`);
+export const fetchItemDetailsInBatches = async (itemCodes: string[]): Promise<any[]> => {
+  try {
+    // Using batches to avoid query size limitations
+    const batchSize = 500; // Adjusted batch size
+    let allItemsData: any[] = [];
     
-    const { data: itemsData, error: itemsError } = await supabase
-      .from('BLUEBAY_ITEM')
-      .select('ITEM_CODIGO, DESCRICAO, GRU_DESCRICAO')
-      .in('ITEM_CODIGO', batch);
-
-    if (itemsError) {
-      console.error(`❌ Erro no lote ${i+1}:`, itemsError);
-      throw itemsError;
+    console.log(`Buscando detalhes para ${itemCodes.length} itens em lotes de ${batchSize}`);
+    
+    for (let i = 0; i < itemCodes.length; i += batchSize) {
+      const batchCodes = itemCodes.slice(i, i + batchSize);
+      
+      console.log(`Processando lote ${Math.floor(i/batchSize) + 1} de ${Math.ceil(itemCodes.length/batchSize)} (${batchCodes.length} itens)`);
+      
+      const { data, error } = await supabase
+        .from("BLUEBAY_ITEM")
+        .select("*")
+        .in("ITEM_CODIGO", batchCodes);
+      
+      if (error) {
+        console.error(`Erro ao buscar lote de itens ${i}-${i+batchSize}:`, error);
+        continue;
+      }
+      
+      if (data && data.length > 0) {
+        allItemsData = [...allItemsData, ...data];
+      }
     }
     
-    if (itemsData) {
-      allItemsData = [...allItemsData, ...itemsData];
-      console.log(`✅ Lote ${i+1} processado, total de itens até agora: ${allItemsData.length}`);
-    }
+    console.log(`Total de ${allItemsData.length} detalhes de itens encontrados`);
+    return allItemsData;
+  } catch (error) {
+    console.error("Erro ao buscar detalhes dos itens:", error);
+    throw error;
   }
-
-  return allItemsData;
 };
 
 /**
- * Combines estoque data with item details
- */
-export const combineEstoqueWithItemDetails = (estoqueData: any[], itemDetailsMap: Map<string, any>): EstoqueItem[] => {
-  return estoqueData.map(estoque => {
-    const itemInfo = itemDetailsMap.get(estoque.ITEM_CODIGO) || { DESCRICAO: 'Sem descrição', GRU_DESCRICAO: 'Sem grupo' };
-    
-    return {
-      ITEM_CODIGO: estoque.ITEM_CODIGO,
-      DESCRICAO: itemInfo.DESCRICAO,
-      GRU_DESCRICAO: itemInfo.GRU_DESCRICAO,
-      FISICO: estoque.FISICO,
-      DISPONIVEL: estoque.DISPONIVEL,
-      RESERVADO: estoque.RESERVADO,
-      LOCAL: estoque.LOCAL,
-      SUBLOCAL: estoque.SUBLOCAL
-    };
-  });
-};
-
-/**
- * Creates a map for quick access to item details
+ * Creates a map of item details for efficient lookup
+ * @param itemsData Array of item details
+ * @returns Map of item details indexed by item code
  */
 export const createItemDetailsMap = (itemsData: any[]): Map<string, any> => {
   const itemMap = new Map();
   itemsData.forEach(item => {
-    itemMap.set(item.ITEM_CODIGO, {
-      DESCRICAO: item.DESCRICAO || 'Sem descrição',
-      GRU_DESCRICAO: item.GRU_DESCRICAO || 'Sem grupo'
-    });
+    itemMap.set(item.ITEM_CODIGO, item);
   });
   return itemMap;
+};
+
+/**
+ * Combines estoque data with item details
+ * @param estoqueData Array of estoque data
+ * @param itemMap Map of item details
+ * @returns Array of combined estoque items
+ */
+export const combineEstoqueWithItemDetails = (
+  estoqueData: any[],
+  itemMap: Map<string, any>
+): EstoqueItem[] => {
+  return estoqueData.map(estoque => {
+    const itemDetails = itemMap.get(estoque.ITEM_CODIGO) || {};
+    return {
+      ITEM_CODIGO: estoque.ITEM_CODIGO,
+      DESCRICAO: itemDetails.DESCRICAO || "Sem descrição",
+      FISICO: Number(estoque.FISICO) || 0,
+      DISPONIVEL: Number(estoque.DISPONIVEL) || 0,
+      RESERVADO: Number(estoque.RESERVADO) || 0,
+      LOCAL: Number(estoque.LOCAL) || 0,
+      SUBLOCAL: estoque.SUBLOCAL || "",
+      GRU_DESCRICAO: itemDetails.GRU_DESCRICAO || "Sem grupo"
+    };
+  });
+};
+
+// Legacy method kept for backward compatibility
+export const fetchEstoqueData = async (local: number = 1) => {
+  console.warn("Deprecated: fetchEstoqueData is limited to 1000 items. Use fetchAllEstoqueData instead.");
+  try {
+    const { data: estoqueData, error } = await supabase
+      .from("BLUEBAY_ESTOQUE")
+      .select("*")
+      .eq("LOCAL", local)
+      .limit(1000);
+
+    if (error) {
+      console.error("Erro ao buscar dados de estoque:", error);
+      throw error;
+    }
+
+    return { estoqueData: estoqueData || [] };
+  } catch (error) {
+    console.error("Erro ao buscar dados de estoque:", error);
+    throw error;
+  }
 };
