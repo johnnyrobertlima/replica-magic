@@ -21,14 +21,36 @@ export const fetchStockSalesViaRpc = async (
     // Calculate the date 60 days ago for identifying new products
     const sixtyDaysAgo = calculateNewProductCutoffDate();
     
-    // Query using the custom function
-    const result = await executeRpcQuery(startDate, endDate, sixtyDaysAgo);
+    // Query using the custom function with pagination to get all data
+    let allData: any[] = [];
+    let offset = 0;
+    const limit = 1000;
+    let hasMore = true;
     
-    if (result.error) {
-      throw new Error(`RPC Error: ${result.error.message}`);
+    while (hasMore) {
+      console.log(`Buscando lote de dados RPC (offset: ${offset}, limite: ${limit})`);
+      
+      const result = await executeRpcQuery(startDate, endDate, sixtyDaysAgo, offset, limit);
+      
+      if (result.error) {
+        throw new Error(`RPC Error: ${result.error.message}`);
+      }
+      
+      const data = result.data || [];
+      console.log(`Recebidos ${data.length} registros neste lote RPC`);
+      
+      allData = [...allData, ...data];
+      
+      // Verifica se há mais dados
+      if (data.length < limit) {
+        hasMore = false;
+      } else {
+        offset += limit;
+      }
     }
-
-    return processRpcResult(result.data);
+    
+    console.log(`Total de ${allData.length} registros obtidos via RPC`);
+    return processRpcResult(allData);
   } catch (error) {
     handleApiError("Erro ao carregar dados via RPC", error);
     return fallbackToDirectQueries(startDate, endDate);
@@ -43,18 +65,22 @@ const calculateNewProductCutoffDate = (): string => {
 };
 
 /**
- * Executes the RPC query
+ * Executes the RPC query with pagination
  */
 const executeRpcQuery = async (
   startDate: string, 
   endDate: string, 
-  newProductDate: string
+  newProductDate: string,
+  offset: number = 0,
+  limit: number = 1000
 ) => {
   return await supabase
     .rpc('get_stock_sales_analytics', { 
       p_start_date: startDate,
       p_end_date: endDate,
-      p_new_product_date: newProductDate
+      p_new_product_date: newProductDate,
+      p_offset: offset,
+      p_limit: limit
     }, {
       head: false,
       count: 'exact'
@@ -75,7 +101,7 @@ const processRpcResult = (data: any): StockItem[] => {
     return [];
   }
   
-  console.info(`Buscados ${data.length} registros de análise de estoque e vendas`);
+  console.info(`Processando ${data.length} registros de análise de estoque e vendas`);
   
   // Transform the data from lowercase properties to uppercase to match our StockItem type
   return transformDataToStockItems(data);

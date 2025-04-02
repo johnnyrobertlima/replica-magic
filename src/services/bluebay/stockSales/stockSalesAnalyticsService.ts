@@ -40,7 +40,8 @@ const attemptDataFetching = async (
   endDate: string
 ): Promise<StockItem[]> => {
   try {
-    // Try to use the RPC method first
+    console.log("Tentando buscar dados via RPC paginado...");
+    // Try to use the RPC method first with pagination
     return await fetchStockSalesViaRpc(startDate, endDate);
   } catch (error) {
     // Log the specific RPC error

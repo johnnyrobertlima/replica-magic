@@ -41,7 +41,7 @@ export const fetchInBatches = async ({
         }
       }
       
-      // Aplica condições adicionais usando uma função auxiliar para evitar recursão de tipos
+      // Aplica condições adicionais usando uma função separada, não aninhada
       if (conditions && conditions.length > 0) {
         query = applyConditionsToQuery(query, conditions);
       }
@@ -80,7 +80,7 @@ export const fetchInBatches = async ({
 
 /**
  * Função auxiliar para aplicar condições à consulta
- * Evita a recursão de tipos criando uma função separada
+ * Esta função é necessária para evitar a recursão de tipos que causa o erro TS2589
  */
 function applyConditionsToQuery(query: any, conditions: QueryCondition[]): any {
   let result = query;
