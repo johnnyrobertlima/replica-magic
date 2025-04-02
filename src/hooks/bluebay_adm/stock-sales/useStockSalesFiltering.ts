@@ -11,26 +11,11 @@ export const useStockSalesFiltering = (
 ) => {
   const [filteredItems, setFilteredItems] = useState<StockItem[]>([]);
 
-  // Apply all filters when dependencies change
+  // Apply filters only when user explicitly sets them
   useEffect(() => {
     let result = [...items];
     
-    // Filter by cadastro year
-    if (minCadastroYear !== "all") {
-      const minYear = parseInt(minCadastroYear);
-      result = result.filter(item => {
-        if (!item.DATACADASTRO) return false;
-        const cadastroDate = new Date(item.DATACADASTRO);
-        return cadastroDate.getFullYear() >= minYear;
-      });
-    }
-    
-    // Filter by stock
-    if (!showZeroStock) {
-      result = result.filter(item => (item.FISICO || 0) > 0);
-    }
-    
-    // Filter by search term
+    // Apply search filter if the user has entered a search term
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       result = result.filter(item => 
@@ -39,9 +24,24 @@ export const useStockSalesFiltering = (
       );
     }
     
-    // Filter by group
+    // Apply group filter only if a specific group is selected
     if (groupFilter && groupFilter !== "all") {
       result = result.filter(item => item.GRU_DESCRICAO === groupFilter);
+    }
+    
+    // Apply cadastro year filter only if a specific year is selected
+    if (minCadastroYear !== "all") {
+      const minYear = parseInt(minCadastroYear);
+      result = result.filter(item => {
+        if (!item.DATACADASTRO) return true; // Show items with no date
+        const cadastroDate = new Date(item.DATACADASTRO);
+        return cadastroDate.getFullYear() >= minYear;
+      });
+    }
+    
+    // Apply stock filter only if user wants to hide zero stock items
+    if (!showZeroStock) {
+      result = result.filter(item => (item.FISICO || 0) > 0);
     }
     
     setFilteredItems(result);

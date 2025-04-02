@@ -10,7 +10,7 @@ export const useStockSalesData = () => {
   const [items, setItems] = useState<StockItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<DateRange>({
-    startDate: subDays(new Date(), 30), // Default to 30 days ago
+    startDate: subDays(new Date(), 90), // Get data for a wider date range
     endDate: new Date() // Today
   });
   const [usingSampleData, setUsingSampleData] = useState(false);

@@ -1,5 +1,6 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { format, subDays } from "date-fns";
 
 export interface DateRange {
   startDate: Date | null;
@@ -7,26 +8,38 @@ export interface DateRange {
 }
 
 export const useStockSalesFilters = () => {
+  // Filter states
   const [searchTerm, setSearchTerm] = useState("");
   const [groupFilter, setGroupFilter] = useState("all");
-  const [minCadastroYear, setMinCadastroYear] = useState("2022");
-  const [showZeroStock, setShowZeroStock] = useState(false);
   const [availableGroups, setAvailableGroups] = useState<string[]>([]);
-  
+  const [minCadastroYear, setMinCadastroYear] = useState("all");
+  const [showZeroStock, setShowZeroStock] = useState(true); // Set to true to show all items by default
+
+  // Initialize available groups from items
   const updateAvailableGroups = (items: any[]) => {
-    if (items.length > 0) {
-      const groups = [...new Set(items.map(item => item.GRU_DESCRICAO).filter(Boolean))];
-      setAvailableGroups(groups.sort());
-    } else {
+    if (!items || items.length === 0) {
       setAvailableGroups([]);
+      return;
     }
+
+    const groups = new Set<string>();
+    
+    items.forEach(item => {
+      if (item.GRU_DESCRICAO) {
+        groups.add(item.GRU_DESCRICAO);
+      }
+    });
+    
+    const sortedGroups = Array.from(groups).sort((a, b) => a.localeCompare(b));
+    setAvailableGroups(sortedGroups);
   };
 
+  // Function to clear all filters
   const clearFilters = () => {
     setSearchTerm("");
     setGroupFilter("all");
-    setMinCadastroYear("2022");
-    setShowZeroStock(false);
+    setMinCadastroYear("all");
+    setShowZeroStock(true); // Reset to show all items
   };
 
   return {

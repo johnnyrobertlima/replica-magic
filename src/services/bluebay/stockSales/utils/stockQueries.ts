@@ -3,7 +3,7 @@ import { handleApiError } from "../errorHandlingService";
 import { fetchInBatches } from "./batchQueryExecutor";
 
 /**
- * Fetch stock data with error handling
+ * Fetch stock data with error handling - without any filtering
  */
 export const fetchStockData = async (): Promise<any[]> => {
   try {
@@ -17,7 +17,7 @@ export const fetchStockData = async (): Promise<any[]> => {
         "ENTROU",
         "LIMITE"
       `,
-      filters: { LOCAL: 1 },
+      // No filters applied so we get ALL stock items
       batchSize: 5000,
       logPrefix: "estoque"
     });
@@ -36,14 +36,14 @@ export const fetchStockData = async (): Promise<any[]> => {
 };
 
 /**
- * Fetch stock items in paginated batches
+ * Fetch stock items in paginated batches - without any filtering
  */
 export const fetchStockItemsPaginated = async (): Promise<any[]> => {
   try {
     const stockItems = await fetchInBatches({
       table: "BLUEBAY_ESTOQUE",
       selectFields: "*",
-      filters: { LOCAL: 1 },
+      // No filters applied so we get ALL stock items
       batchSize: 5000,
       logPrefix: "estoque paginado"
     });
