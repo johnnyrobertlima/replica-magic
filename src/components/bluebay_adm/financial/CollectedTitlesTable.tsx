@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { ArrowLeftCircle, RefreshCcw } from "lucide-react";
 import { CollectionRecord } from "@/hooks/bluebay/types/financialTypes";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface CollectedTitlesTableProps {
@@ -57,7 +57,9 @@ export const CollectedTitlesTable: React.FC<CollectedTitlesTableProps> = ({
                 <TableCell>{record.clientCode}</TableCell>
                 <TableCell>{record.status}</TableCell>
                 <TableCell>
-                  {format(new Date(record.date), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                  {record.date && isValid(new Date(record.date)) 
+                    ? format(new Date(record.date), 'dd/MM/yyyy HH:mm', { locale: ptBR })
+                    : 'Data inválida'}
                 </TableCell>
                 <TableCell>{record.collectedBy}</TableCell>
                 <TableCell className="text-right">
