@@ -12,25 +12,31 @@ interface TableSortableHeaderProps {
     direction: 'asc' | 'desc';
   };
   onSort: (key: keyof StockItem) => void;
+  width?: string;
+  align?: 'left' | 'right' | 'center';
 }
 
 export const TableSortableHeader: React.FC<TableSortableHeaderProps> = ({
   sortKey,
   label,
   currentSortConfig,
-  onSort
+  onSort,
+  width = 'auto',
+  align = 'left'
 }) => {
   const isActive = currentSortConfig.key === sortKey;
+  const alignmentClass = align === 'right' ? 'justify-end' : align === 'center' ? 'justify-center' : 'justify-start';
   
   return (
     <TableHead 
-      className="cursor-pointer hover:bg-muted/50"
+      className={`cursor-pointer hover:bg-muted/50 whitespace-nowrap sticky top-0 z-10 ${width}`}
       onClick={() => onSort(sortKey)}
+      style={{ position: 'sticky', top: 0, zIndex: 20, minWidth: width === 'auto' ? 'auto' : width }}
     >
-      <div className="flex items-center">
+      <div className={`flex items-center ${alignmentClass} w-full`}>
         {label}
         <ArrowUpDown 
-          className={`inline ml-1 h-4 w-4 ${isActive ? 'text-primary' : 'text-gray-400'}`}
+          className={`inline ml-1 h-4 w-4 flex-shrink-0 ${isActive ? 'text-primary' : 'text-gray-400'}`}
         />
       </div>
     </TableHead>
