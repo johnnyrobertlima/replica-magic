@@ -76,11 +76,11 @@ export const GroupedStockTable: React.FC<GroupedStockTableProps> = ({
         </div>
       </div>
       
-      <ScrollArea className="h-[calc(100vh-300px)]">
-        <div className="overflow-x-auto">
-          <Table className="border-collapse min-w-full">
-            <TableHeader className="bg-gray-50 sticky top-0 z-10">
-              <TableRow className="sticky top-0 z-10 bg-gray-50">
+      <div className="relative border rounded-md overflow-hidden">
+        <div className="overflow-hidden">
+          <Table className="border-collapse">
+            <TableHeader className="bg-background sticky top-0 z-20">
+              <TableRow>
                 <TableSortableHeader sortKey="GRU_DESCRICAO" label="Grupo" currentSortConfig={sortConfig} onSort={onSort} />
                 <TableSortableHeader sortKey="FISICO" label="Estoque Físico" currentSortConfig={sortConfig} onSort={onSort} />
                 <TableSortableHeader sortKey="DISPONIVEL" label="Disponível" currentSortConfig={sortConfig} onSort={onSort} />
@@ -94,30 +94,37 @@ export const GroupedStockTable: React.FC<GroupedStockTableProps> = ({
                 <TableSortableHeader sortKey="RANKING" label="Ranking" currentSortConfig={sortConfig} onSort={onSort} />
               </TableRow>
             </TableHeader>
-            <TableBody>
-              {groupedData.map((group) => (
-                <React.Fragment key={group.groupName}>
-                  {/* Group Header Row */}
-                  <StockGroupHeader 
-                    group={group}
-                    onToggle={() => toggleGroup(group.groupName)}
-                  />
-                  
-                  {/* Group Items (when expanded) */}
-                  {group.isExpanded && group.items.map((item, itemIndex) => (
-                    <StockSalesTableRow 
-                      key={`${item.ITEM_CODIGO}-${itemIndex}`} 
-                      item={item} 
-                      index={itemIndex}
-                      isGroupedView
-                    />
-                  ))}
-                </React.Fragment>
-              ))}
-            </TableBody>
           </Table>
         </div>
-      </ScrollArea>
+        
+        <ScrollArea className="h-[calc(100vh-380px)]">
+          <div className="overflow-x-auto">
+            <Table className="border-collapse min-w-full">
+              <TableBody>
+                {groupedData.map((group) => (
+                  <React.Fragment key={group.groupName}>
+                    {/* Group Header Row */}
+                    <StockGroupHeader 
+                      group={group}
+                      onToggle={() => toggleGroup(group.groupName)}
+                    />
+                    
+                    {/* Group Items (when expanded) */}
+                    {group.isExpanded && group.items.map((item, itemIndex) => (
+                      <StockSalesTableRow 
+                        key={`${item.ITEM_CODIGO}-${itemIndex}`} 
+                        item={item} 
+                        index={itemIndex}
+                        isGroupedView
+                      />
+                    ))}
+                  </React.Fragment>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </ScrollArea>
+      </div>
     </div>
   );
 };

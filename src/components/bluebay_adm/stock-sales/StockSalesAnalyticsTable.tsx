@@ -72,11 +72,11 @@ export const StockSalesAnalyticsTable: React.FC<StockSalesAnalyticsTableProps> =
         </TabsContent>
         
         <TabsContent value="list" className="mt-0">
-          <ScrollArea className="h-[calc(100vh-250px)]">
-            <div className="overflow-x-auto">
-              <Table className="border-collapse min-w-full">
-                <TableHeader className="bg-gray-50 sticky top-0 z-10">
-                  <TableRow className="sticky top-0 z-10 bg-gray-50">
+          <div className="border rounded-md overflow-hidden">
+            <div className="overflow-hidden">
+              <Table className="border-collapse">
+                <TableHeader className="bg-background sticky top-0 z-20">
+                  <TableRow>
                     <TableSortableHeader sortKey="ITEM_CODIGO" label="Código" currentSortConfig={sortConfig} onSort={onSort} />
                     <TableSortableHeader sortKey="DESCRICAO" label="Descrição" currentSortConfig={sortConfig} onSort={onSort} />
                     <TableSortableHeader sortKey="GRU_DESCRICAO" label="Grupo" currentSortConfig={sortConfig} onSort={onSort} />
@@ -92,18 +92,25 @@ export const StockSalesAnalyticsTable: React.FC<StockSalesAnalyticsTableProps> =
                     <TableSortableHeader sortKey="RANKING" label="Ranking" currentSortConfig={sortConfig} onSort={onSort} />
                   </TableRow>
                 </TableHeader>
-                <TableBody>
-                  {items.map((item, index) => (
-                    <StockSalesTableRow 
-                      key={`${item.ITEM_CODIGO}-${index}`} 
-                      item={item} 
-                      index={index} 
-                    />
-                  ))}
-                </TableBody>
               </Table>
             </div>
-          </ScrollArea>
+            
+            <ScrollArea className="h-[calc(100vh-300px)]">
+              <div className="overflow-x-auto">
+                <Table className="border-collapse min-w-full">
+                  <TableBody>
+                    {items.map((item, index) => (
+                      <StockSalesTableRow 
+                        key={`${item.ITEM_CODIGO}-${index}`} 
+                        item={item} 
+                        index={index} 
+                      />
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </ScrollArea>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
