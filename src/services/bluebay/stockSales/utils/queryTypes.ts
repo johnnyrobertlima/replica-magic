@@ -1,3 +1,4 @@
+
 import { SupabaseClient } from "@supabase/supabase-js";
 
 // Define table names type for type safety with Supabase
@@ -26,4 +27,11 @@ export interface FetchBatchesParams {
   conditions?: QueryCondition[];
   batchSize?: number;
   logPrefix?: string;
+  count?: boolean;
+}
+
+// Define fetch result interface with count
+export interface FetchBatchesResult<T = any> {
+  data: T[];
+  count?: number;
 }

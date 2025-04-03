@@ -47,12 +47,11 @@ export const fetchInBatches = async ({
       query = applyConditionsToQuery(query, conditions);
       
       // Executa a consulta
-      const { data, error } = await query;
+      const { data, error, count } = await query;
       
       if (error) {
         console.error(`Erro ao buscar lote ${batchCount} de ${logPrefix}:`, error);
-        hasMore = false;
-        continue;
+        throw error;
       }
       
       if (!data || data.length === 0) {
