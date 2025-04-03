@@ -1,6 +1,7 @@
 
 import { useMemo, useState } from "react";
 import { StockItem } from "@/services/bluebay/stockSales/types";
+import { EXCLUDED_GROUPS } from "./constants";
 
 export interface GroupedStockData {
   groupName: string;
@@ -26,7 +27,12 @@ export const useStockGrouping = (items: StockItem[]) => {
     // Initial grouping
     const groups: Record<string, StockItem[]> = {};
     
-    items.forEach(item => {
+    // Filter out excluded groups first
+    const filteredItems = items.filter(item => 
+      !EXCLUDED_GROUPS.includes(item.GRU_DESCRICAO || '')
+    );
+    
+    filteredItems.forEach(item => {
       const groupName = item.GRU_DESCRICAO || 'Sem Grupo';
       if (!groups[groupName]) {
         groups[groupName] = [];

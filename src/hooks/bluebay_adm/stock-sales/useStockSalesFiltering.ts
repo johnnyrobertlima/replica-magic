@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { StockItem } from "@/services/bluebay/stockSales/types";
+import { EXCLUDED_GROUPS } from "./constants";
 
 export const useStockSalesFiltering = (
   items: StockItem[],
@@ -13,7 +14,10 @@ export const useStockSalesFiltering = (
 
   // Apply filters only when user explicitly sets them
   useEffect(() => {
-    let result = [...items];
+    // First, filter out excluded groups
+    let result = items.filter(item => 
+      !EXCLUDED_GROUPS.includes(item.GRU_DESCRICAO || '')
+    );
     
     // Apply search filter if the user has entered a search term
     if (searchTerm) {

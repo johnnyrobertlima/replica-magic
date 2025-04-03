@@ -1,13 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { EstoqueItem, GroupedEstoque } from "@/types/bk/estoque";
-
-// List of groups to exclude from the results
-const EXCLUDED_GROUPS = [
-  "MATERIAIS CLIENNTES",
-  "MATERIAL P/ USO E CONSUMO",
-  "MATERIAL PARA USO/CONSUMO"
-];
+import { EXCLUDED_GROUPS } from "../bluebay_adm/stock-sales/constants";
 
 export const useEstoqueFiltering = (estoqueItems: EstoqueItem[]) => {
   const [filteredItems, setFilteredItems] = useState<EstoqueItem[]>([]);
