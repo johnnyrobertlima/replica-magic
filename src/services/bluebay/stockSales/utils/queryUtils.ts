@@ -4,7 +4,7 @@ import { fetchInBatches } from './batchQueryExecutor';
 import { 
   fetchStockData, 
   fetchStockItemsPaginated 
-} from './stockQueries';
+} from './stock';
 import { 
   fetchItemDataInBatches, 
   fetchItemDetailsBatch 
