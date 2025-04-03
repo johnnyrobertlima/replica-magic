@@ -56,7 +56,7 @@ export const GroupedStockTable: React.FC<GroupedStockTableProps> = ({
           <ScrollArea className="h-[calc(100vh-300px)]">
             <div className="min-w-max">
               <Table className="w-auto min-w-full border-collapse">
-                <TableHeader className="bg-gray-50 sticky top-0 z-20">
+                <TableHeader className="sticky top-0 z-20">
                   <TableRow>
                     <TableSortableHeader 
                       sortKey="GRU_DESCRICAO" 

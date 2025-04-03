@@ -49,7 +49,7 @@ export const StockSalesAnalyticsTable: React.FC<StockSalesAnalyticsTableProps> =
         <ScrollArea className="h-[calc(100vh-250px)]">
           <div className="min-w-max">
             <Table className="w-auto min-w-full border-collapse">
-              <TableHeader className="bg-gray-50 sticky top-0 z-20">
+              <TableHeader className="sticky top-0 z-20">
                 <TableRow>
                   <TableSortableHeader sortKey="ITEM_CODIGO" label="Código" currentSortConfig={sortConfig} onSort={onSort} width="120px" />
                   <TableSortableHeader sortKey="DESCRICAO" label="Descrição" currentSortConfig={sortConfig} onSort={onSort} width="180px" />

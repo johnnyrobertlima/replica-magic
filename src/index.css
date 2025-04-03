@@ -43,6 +43,11 @@
   .popover-content, .dropdown-content, .select-content {
     @apply bg-white;
   }
+  
+  /* Table header styling */
+  .sticky-header {
+    @apply sticky top-0 z-20 bg-gray-50 shadow-sm;
+  }
 }
 
 .fade-up {
