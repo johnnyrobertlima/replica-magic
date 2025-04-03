@@ -3,12 +3,13 @@ import { handleApiError } from "../errorHandlingService";
 import { fetchInBatches } from "./batchQueryExecutor";
 
 /**
- * Fetch stock data with error handling - with specific LOCAL and FISICO filtering
+ * Fetch stock data with error handling - with specific LOCAL, FISICO, and DATACADASTRO filtering
  */
 export const fetchStockData = async (): Promise<any[]> => {
   try {
-    console.log("Iniciando busca de dados de estoque com filtros LOCAL=1 e FISICO>0");
+    console.log("Iniciando busca de dados de estoque com filtros LOCAL=1, FISICO>0 e DATACADASTRO>=2022");
     
+    // First, get stock items with LOCAL=1 and FISICO>0
     const stockData = await fetchInBatches({
       table: "BLUEBAY_ESTOQUE",
       selectFields: `
@@ -29,7 +30,7 @@ export const fetchStockData = async (): Promise<any[]> => {
           value: 0 // Filter for FISICO > 0
         }
       ],
-      batchSize: 5000, // Increased batch size for more efficient loading
+      batchSize: 1000, // Use 1000 items per batch as requested
       logPrefix: "estoque"
     });
     
@@ -38,8 +39,46 @@ export const fetchStockData = async (): Promise<any[]> => {
       return [];
     }
     
+    // Extract item codes to filter by DATACADASTRO
+    const itemCodes = stockData.map(item => item.ITEM_CODIGO);
     console.log(`Encontrados ${stockData.length} registros de estoque com LOCAL=1 e FISICO>0`);
-    return stockData;
+    console.log(`Filtrando ${itemCodes.length} códigos de itens por data de cadastro >= 2022`);
+    
+    // Get item data with DATACADASTRO >= 2022
+    const startDate = new Date('2022-01-01').toISOString();
+    const itemData = await fetchInBatches({
+      table: "BLUEBAY_ITEM",
+      selectFields: `"ITEM_CODIGO", "DATACADASTRO"`,
+      conditions: [
+        { 
+          type: 'in', 
+          column: 'ITEM_CODIGO', 
+          value: itemCodes 
+        },
+        { 
+          type: 'gte', 
+          column: 'DATACADASTRO', 
+          value: startDate 
+        }
+      ],
+      batchSize: 1000, // Use 1000 items per batch as requested
+      logPrefix: "itens com data >= 2022"
+    });
+    
+    if (!itemData || itemData.length === 0) {
+      console.warn("Nenhum item encontrado com data de cadastro >= 2022");
+      return [];
+    }
+    
+    // Create a set of valid item codes (those with DATACADASTRO >= 2022)
+    const validItemCodes = new Set(itemData.map(item => item.ITEM_CODIGO));
+    console.log(`Encontrados ${validItemCodes.size} itens com data de cadastro >= 2022`);
+    
+    // Filter stock data to only include items with DATACADASTRO >= 2022
+    const filteredStockData = stockData.filter(item => validItemCodes.has(item.ITEM_CODIGO));
+    console.log(`Resultado final: ${filteredStockData.length} itens que atendem a todos os critérios de filtro`);
+    
+    return filteredStockData;
   } catch (error) {
     handleApiError("Erro ao buscar dados de estoque", error);
     throw error;
@@ -47,12 +86,13 @@ export const fetchStockData = async (): Promise<any[]> => {
 };
 
 /**
- * Fetch stock items in paginated batches - with specific LOCAL and FISICO filtering
+ * Fetch stock items in paginated batches - with specific LOCAL, FISICO and DATACADASTRO filtering
  */
 export const fetchStockItemsPaginated = async (): Promise<any[]> => {
   try {
-    console.log("Iniciando busca paginada de itens de estoque com filtros LOCAL=1 e FISICO>0");
+    console.log("Iniciando busca paginada de itens de estoque com filtros LOCAL=1, FISICO>0 e DATACADASTRO>=2022");
     
+    // First, get stock items with LOCAL=1 and FISICO>0
     const stockItems = await fetchInBatches({
       table: "BLUEBAY_ESTOQUE",
       selectFields: "*",
@@ -66,12 +106,55 @@ export const fetchStockItemsPaginated = async (): Promise<any[]> => {
           value: 0 // Filter for FISICO > 0
         }
       ],
-      batchSize: 5000, // Increased batch size
+      batchSize: 1000, // Use 1000 items per batch as requested
       logPrefix: "estoque paginado"
     });
     
+    if (!stockItems || stockItems.length === 0) {
+      console.warn("Nenhum item de estoque encontrado com os filtros LOCAL=1 e FISICO>0");
+      return [];
+    }
+    
     console.log(`Busca paginada: ${stockItems.length} itens de estoque obtidos com LOCAL=1 e FISICO>0`);
-    return stockItems;
+    
+    // Extract item codes to filter by DATACADASTRO
+    const itemCodes = stockItems.map(item => item.ITEM_CODIGO);
+    
+    // Get item data with DATACADASTRO >= 2022
+    const startDate = new Date('2022-01-01').toISOString();
+    const itemData = await fetchInBatches({
+      table: "BLUEBAY_ITEM",
+      selectFields: `"ITEM_CODIGO", "DATACADASTRO"`,
+      conditions: [
+        { 
+          type: 'in', 
+          column: 'ITEM_CODIGO', 
+          value: itemCodes 
+        },
+        { 
+          type: 'gte', 
+          column: 'DATACADASTRO', 
+          value: startDate 
+        }
+      ],
+      batchSize: 1000, // Use 1000 items per batch as requested
+      logPrefix: "itens com data >= 2022"
+    });
+    
+    if (!itemData || itemData.length === 0) {
+      console.warn("Nenhum item encontrado com data de cadastro >= 2022");
+      return [];
+    }
+    
+    // Create a set of valid item codes (those with DATACADASTRO >= 2022)
+    const validItemCodes = new Set(itemData.map(item => item.ITEM_CODIGO));
+    console.log(`Encontrados ${validItemCodes.size} itens com data de cadastro >= 2022`);
+    
+    // Filter stock data to only include items with DATACADASTRO >= 2022
+    const filteredStockItems = stockItems.filter(item => validItemCodes.has(item.ITEM_CODIGO));
+    console.log(`Resultado final: ${filteredStockItems.length} itens que atendem a todos os critérios de filtro`);
+    
+    return filteredStockItems;
   } catch (error) {
     handleApiError("Erro ao buscar itens de estoque paginados", error);
     throw error;

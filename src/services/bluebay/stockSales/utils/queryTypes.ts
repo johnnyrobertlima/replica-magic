@@ -1,4 +1,3 @@
-
 import { SupabaseClient } from "@supabase/supabase-js";
 
 // Define table names type for type safety with Supabase
@@ -9,7 +8,7 @@ export type SupabaseTable =
   | "BLUEBAY_PEDIDO"
   | "BLUEBAY_PESSOA";
 
-// Define condition operators type
+// Update ConditionOperator to include 'gte' operator
 export type ConditionOperator = 'gt' | 'lt' | 'gte' | 'lte' | 'in';
 
 // Define condition type

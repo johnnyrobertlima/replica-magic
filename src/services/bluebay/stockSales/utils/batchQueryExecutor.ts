@@ -12,7 +12,7 @@ export const fetchInBatches = async ({
   selectFields,
   filters = {},
   conditions = [],
-  batchSize = 2000, // Aumentado para 2000 itens por lote
+  batchSize = 1000, // Definido para 1000 itens por lote conforme solicitado
   logPrefix = "Dados"
 }: FetchBatchesParams): Promise<any[]> => {
   try {
