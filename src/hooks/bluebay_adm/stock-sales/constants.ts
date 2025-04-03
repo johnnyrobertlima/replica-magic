@@ -1,8 +1,6 @@
 
-// Groups that should be excluded from stock analysis
-export const EXCLUDED_GROUPS = [
-  "MATERIAIS CLIENTES",
-  "MATERIAL P/ USO E CONSUMO",
-  "MATERIAL PARA USO/CONSUMO",
-  "PEITORAL E GUIA P / GATO"
+// List of groups to exclude from the reports
+export const EXCLUDED_GROUPS: string[] = [
+  'NAO COMERCIALIZAVEL',
+  'INATIVO'
 ];
