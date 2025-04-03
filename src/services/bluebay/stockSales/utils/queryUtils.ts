@@ -12,7 +12,7 @@ import {
 import { 
   fetchSalesDataInBatches, 
   fetchSalesDataPaginated 
-} from './salesQueries';
+} from './sales';
 import type { 
   SupabaseTable, 
   ConditionOperator, 
