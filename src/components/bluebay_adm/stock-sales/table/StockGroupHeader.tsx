@@ -20,8 +20,8 @@ export const StockGroupHeader: React.FC<StockGroupHeaderProps> = ({ group, onTog
       <TableCell className="font-semibold w-[250px]">
         <div className="flex items-center">
           {group.isExpanded ? 
-            <ChevronDown className="h-4 w-4 mr-2 flex-shrink-0" /> : 
-            <ChevronRight className="h-4 w-4 mr-2 flex-shrink-0" />
+            <ChevronDown className="h-4 w-4 mr-2 flex-shrink-0 text-primary" /> : 
+            <ChevronRight className="h-4 w-4 mr-2 flex-shrink-0 text-primary" />
           }
           <span className="truncate">{group.groupName} ({group.totalItems} itens)</span>
         </div>

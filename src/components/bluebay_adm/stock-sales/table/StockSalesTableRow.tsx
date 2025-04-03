@@ -27,7 +27,11 @@ export const StockSalesTableRow: React.FC<StockSalesTableRowProps> = ({
     <TableRow className={`${baseClassName} ${hoverClassName} transition-colors`}>
       {!isGroupedView && (
         <>
-          <TableCell className="font-medium w-[120px]">{item.ITEM_CODIGO}</TableCell>
+          <TableCell className="font-medium w-[120px]">
+            <span className="line-clamp-1" title={item.ITEM_CODIGO}>
+              {item.ITEM_CODIGO}
+            </span>
+          </TableCell>
           <TableCell className="w-[250px]">
             <span className="line-clamp-1" title={item.DESCRICAO || '-'}>
               {item.DESCRICAO || '-'}
@@ -44,8 +48,10 @@ export const StockSalesTableRow: React.FC<StockSalesTableRowProps> = ({
       {isGroupedView && (
         <TableCell className={`font-medium ${paddingClassName} w-[250px]`}>
           <div className="flex flex-col">
-            <span>{item.ITEM_CODIGO}</span>
-            <span className="text-sm text-gray-500 truncate" title={item.DESCRICAO || '-'}>
+            <span className="line-clamp-1" title={item.ITEM_CODIGO}>
+              {item.ITEM_CODIGO}
+            </span>
+            <span className="text-sm text-gray-500 line-clamp-1" title={item.DESCRICAO || '-'}>
               {item.DESCRICAO || '-'}
             </span>
           </div>
