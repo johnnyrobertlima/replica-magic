@@ -114,7 +114,7 @@ export const StockSalesTableRow: React.FC<StockSalesTableRowProps> = ({
       
       {visibleColumns.RANKING && (
         <TableCell className="text-right whitespace-nowrap">
-          {item.RANKING || '-'}
+          {item.RANKING !== null ? String(item.RANKING) : '-'}
         </TableCell>
       )}
     </TableRow>
