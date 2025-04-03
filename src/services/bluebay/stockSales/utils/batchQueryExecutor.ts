@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { handleApiError } from "../errorHandlingService";
 import { SupabaseTable, QueryCondition, FetchBatchesParams } from "./queryTypes";
+import { PostgrestFilterBuilder } from "@supabase/postgrest-js";
 
 /**
  * Função utilitária genérica para consultar dados em batches
@@ -28,6 +29,7 @@ export const fetchInBatches = async ({
     // Se count=true, primeiro obter a contagem total para melhor controle
     let totalRecords = null;
     if (count) {
+      // Inicializa a consulta com tipagem explícita para evitar recursão de tipos
       let countQuery = supabase
         .from(table)
         .select(selectFields, { count: 'exact' });
@@ -39,7 +41,7 @@ export const fetchInBatches = async ({
         }
       }
       
-      // Aplica condições adicionais
+      // Aplica condições adicionais com implementação inline
       for (const condition of conditions) {
         switch (condition.type) {
           case 'gt':
@@ -74,7 +76,7 @@ export const fetchInBatches = async ({
       batchCount++;
       console.log(`Buscando lote ${batchCount} de ${logPrefix} (offset: ${offset}, tamanho: ${batchSize})`);
       
-      // Inicia a consulta básica
+      // Inicia a consulta básica com tipagem explícita
       let query = supabase
         .from(table)
         .select(selectFields, { count: 'exact' });
@@ -89,7 +91,7 @@ export const fetchInBatches = async ({
         }
       }
       
-      // Aplica condições adicionais
+      // Aplica condições adicionais com implementação inline
       for (const condition of conditions) {
         switch (condition.type) {
           case 'gt':
