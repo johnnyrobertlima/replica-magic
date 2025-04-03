@@ -52,7 +52,7 @@ export const AdditionalFilters: React.FC<AdditionalFiltersProps> = ({
             checked={showZeroStock}
             onCheckedChange={onShowZeroStockChange}
           />
-          <Label htmlFor="show-zero-stock">Apresentar itens com estoque físico = 0</Label>
+          <Label htmlFor="show-zero-stock">Apresentar itens com estoque disponível = 0</Label>
         </div>
       </div>
     </div>

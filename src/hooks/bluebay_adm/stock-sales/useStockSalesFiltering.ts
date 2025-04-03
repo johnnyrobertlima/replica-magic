@@ -64,8 +64,9 @@ export const useStockSalesFiltering = (
     
     // Apply stock filter only if user wants to hide zero stock items
     if (!showZeroStock) {
-      result = result.filter(item => (item.FISICO || 0) > 0);
-      console.log(`Total após filtrar itens com estoque zero: ${result.length}`);
+      // Changed from FISICO to DISPONIVEL
+      result = result.filter(item => (item.DISPONIVEL || 0) > 0);
+      console.log(`Total após filtrar itens com estoque disponível zero: ${result.length}`);
     }
     
     setFilteredItems(result);
