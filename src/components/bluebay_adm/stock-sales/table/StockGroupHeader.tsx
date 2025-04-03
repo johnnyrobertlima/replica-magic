@@ -34,7 +34,7 @@ export const StockGroupHeader: React.FC<StockGroupHeaderProps> = ({ group, onTog
         {formatTableNumber(group.totalReservado)}
       </TableCell>
       <TableCell className="font-medium text-right">
-        {formatTableNumber(group.totalQtdVendida)}
+        {formatTableNumber(group.totalVendido)}
       </TableCell>
       <TableCell className="font-medium text-right">
         {formatCurrency(group.totalValorVendido)}
