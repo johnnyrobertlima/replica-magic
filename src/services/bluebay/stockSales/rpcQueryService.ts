@@ -21,7 +21,7 @@ export const fetchStockSalesViaRpc = async (
     // Calculate the date 60 days ago for identifying new products
     const sixtyDaysAgo = calculateNewProductCutoffDate();
     
-    // Since our RPC function doesn't support built-in pagination, we'll implement client-side batching
+    // Execute RPC query with head:false e count:exact para garantir que todos registros sejam retornados
     const result = await executeRpcQuery(startDate, endDate, sixtyDaysAgo);
     
     if (result.error) {
