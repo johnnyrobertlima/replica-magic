@@ -40,7 +40,25 @@ export const fetchInBatches = async ({
       }
       
       // Aplica condições adicionais
-      countQuery = applyConditionsToQuery(countQuery, conditions);
+      for (const condition of conditions) {
+        switch (condition.type) {
+          case 'gt':
+            countQuery = countQuery.gt(condition.column, condition.value);
+            break;
+          case 'lt':
+            countQuery = countQuery.lt(condition.column, condition.value);
+            break;
+          case 'gte':
+            countQuery = countQuery.gte(condition.column, condition.value);
+            break;
+          case 'lte':
+            countQuery = countQuery.lte(condition.column, condition.value);
+            break;
+          case 'in':
+            countQuery = countQuery.in(condition.column, condition.value);
+            break;
+        }
+      }
       
       const { count: exactCount, error: countError } = await countQuery;
       
@@ -71,10 +89,28 @@ export const fetchInBatches = async ({
         }
       }
       
-      // Aplica condições adicionais sem causar recursão de tipos
-      query = applyConditionsToQuery(query, conditions);
+      // Aplica condições adicionais
+      for (const condition of conditions) {
+        switch (condition.type) {
+          case 'gt':
+            query = query.gt(condition.column, condition.value);
+            break;
+          case 'lt':
+            query = query.lt(condition.column, condition.value);
+            break;
+          case 'gte':
+            query = query.gte(condition.column, condition.value);
+            break;
+          case 'lte':
+            query = query.lte(condition.column, condition.value);
+            break;
+          case 'in':
+            query = query.in(condition.column, condition.value);
+            break;
+        }
+      }
       
-      // Executa a consulta - Usando nome diferente para evitar conflito de variáveis
+      // Executa a consulta
       const { data, error, count: resultCount } = await query;
       
       if (error) {
@@ -108,37 +144,3 @@ export const fetchInBatches = async ({
     throw error;
   }
 };
-
-/**
- * Função auxiliar para aplicar condições à consulta
- * Esta função utiliza tipagem 'any' para evitar problemas de recursão de tipos
- */
-function applyConditionsToQuery(query: any, conditions: QueryCondition[]): any {
-  if (!conditions || conditions.length === 0) {
-    return query;
-  }
-  
-  let result = query;
-  
-  for (const condition of conditions) {
-    switch (condition.type) {
-      case 'gt':
-        result = result.gt(condition.column, condition.value);
-        break;
-      case 'lt':
-        result = result.lt(condition.column, condition.value);
-        break;
-      case 'gte':
-        result = result.gte(condition.column, condition.value);
-        break;
-      case 'lte':
-        result = result.lte(condition.column, condition.value);
-        break;
-      case 'in':
-        result = result.in(condition.column, condition.value);
-        break;
-    }
-  }
-  
-  return result;
-}
