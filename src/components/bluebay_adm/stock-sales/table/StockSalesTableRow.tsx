@@ -1,63 +1,58 @@
-
 import React from "react";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { StockItem } from "@/services/bluebay/stockSales/types";
-import { ItemBadges } from "./ItemBadges";
-import { StockTurnoverIndicator } from "./StockTurnoverIndicator";
-import { formatTableDate, formatTableNumber, formatTablePercentage } from "../utils/formatters";
-import { formatCurrency } from "@/utils/formatters";
+import { formatCurrency, formatPercentage } from "../utils/formatters";
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface StockSalesTableRowProps {
   item: StockItem;
-  index: number; // Use index to ensure unique keys
+  index: number;
+  isGroupedView?: boolean;
 }
 
-export const StockSalesTableRow: React.FC<StockSalesTableRowProps> = ({ item, index }) => {
-  const isLowStock = (item.FISICO || 0) < 5;
-  
-  // Convert bigint or number to standard number for comparison
-  const ranking = item.RANKING !== null ? Number(item.RANKING) : 0;
-  const isTop10 = ranking > 0 && ranking <= 10;
-  
-  // Generate a truly unique key using both item code and index
-  const uniqueKey = `${item.ITEM_CODIGO}-${index}`;
+export const StockSalesTableRow: React.FC<StockSalesTableRowProps> = ({ 
+  item, 
+  index,
+  isGroupedView = false
+}) => {
+  // Zebra-striping for better readability
+  const isEven = index % 2 === 0;
+  const baseClassName = isEven ? "bg-white" : "bg-gray-50";
+  const hoverClassName = "hover:bg-gray-100";
+  const paddingClassName = isGroupedView ? "pl-10" : ""; // Indent items in grouped view
   
   return (
-    <TableRow 
-      key={uniqueKey}
-      className={`
-        ${isLowStock ? 'bg-red-50' : ''}
-        ${item.PRODUTO_NOVO ? 'bg-blue-50' : ''}
-        ${isTop10 ? 'bg-yellow-50' : ''}
-        hover:bg-gray-100 transition-colors
-      `}
-    >
-      <TableCell className="font-medium">
-        {item.ITEM_CODIGO}
-        <ItemBadges 
-          isNew={item.PRODUTO_NOVO} 
-          isTop10={isTop10} 
-          ranking={ranking} 
-        />
+    <TableRow className={`${baseClassName} ${hoverClassName} transition-colors`}>
+      {!isGroupedView && (
+        <>
+          <TableCell className="font-medium">{item.ITEM_CODIGO}</TableCell>
+          <TableCell>{item.DESCRICAO || '-'}</TableCell>
+          <TableCell>{item.GRU_DESCRICAO || 'Sem Grupo'}</TableCell>
+        </>
+      )}
+      
+      {isGroupedView && (
+        <TableCell className={`font-medium ${paddingClassName}`}>
+          <div className="flex flex-col">
+            <span>{item.ITEM_CODIGO}</span>
+            <span className="text-sm text-gray-500">{item.DESCRICAO || '-'}</span>
+          </div>
+        </TableCell>
+      )}
+      
+      <TableCell className="text-right">{Number(item.FISICO || 0).toLocaleString()}</TableCell>
+      <TableCell className="text-right">{Number(item.DISPONIVEL || 0).toLocaleString()}</TableCell>
+      <TableCell className="text-right">{Number(item.RESERVADO || 0).toLocaleString()}</TableCell>
+      <TableCell className="text-right">{Number(item.QTD_VENDIDA || 0).toLocaleString()}</TableCell>
+      <TableCell className="text-right">{formatCurrency(item.VALOR_TOTAL_VENDIDO || 0)}</TableCell>
+      <TableCell className="text-right">{Number(item.GIRO_ESTOQUE || 0).toFixed(2)}</TableCell>
+      <TableCell className="text-right">{formatPercentage(item.PERCENTUAL_ESTOQUE_VENDIDO || 0)}</TableCell>
+      <TableCell className="text-right">{Number(item.DIAS_COBERTURA || 0).toFixed(0)}</TableCell>
+      <TableCell className="text-center">
+        {item.DATA_ULTIMA_VENDA ? format(new Date(item.DATA_ULTIMA_VENDA), 'dd/MM/yyyy', { locale: ptBR }) : '-'}
       </TableCell>
-      <TableCell>{item.DESCRICAO}</TableCell>
-      <TableCell>{item.GRU_DESCRICAO}</TableCell>
-      <TableCell className={isLowStock ? 'text-red-600 font-bold' : ''}>
-        {formatTableNumber(item.FISICO, 0)}
-      </TableCell>
-      <TableCell>{formatTableNumber(item.DISPONIVEL, 0)}</TableCell>
-      <TableCell>{formatTableNumber(item.RESERVADO, 0)}</TableCell>
-      <TableCell>{formatTableNumber(item.QTD_VENDIDA, 0)}</TableCell>
-      <TableCell>{formatCurrency(item.VALOR_TOTAL_VENDIDO)}</TableCell>
-      <TableCell>
-        <StockTurnoverIndicator turnover={item.GIRO_ESTOQUE} />
-      </TableCell>
-      <TableCell>{formatTablePercentage(item.PERCENTUAL_ESTOQUE_VENDIDO)}</TableCell>
-      <TableCell>
-        {item.DIAS_COBERTURA >= 999 ? '∞' : formatTableNumber(item.DIAS_COBERTURA, 0)}
-      </TableCell>
-      <TableCell>{formatTableDate(item.DATA_ULTIMA_VENDA)}</TableCell>
-      <TableCell>{item.RANKING !== null ? Number(item.RANKING) : '-'}</TableCell>
+      <TableCell className="text-right">{item.RANKING !== null ? Number(item.RANKING).toFixed(0) : '-'}</TableCell>
     </TableRow>
   );
 };
