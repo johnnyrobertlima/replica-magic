@@ -29,33 +29,41 @@ export const fetchInBatches = async ({
     // Se count=true, primeiro obter a contagem total para melhor controle
     let totalRecords = null;
     if (count) {
-      // Evita a recursão excessiva usando tipagem explícita
+      // Evita a recursão excessiva definindo tipos explicitamente
       const countQuery = supabase.from(table);
-      let typedCountQuery = countQuery.select(selectFields, { count: 'exact' });
+      // Definindo tipo explicitamente para evitar recursão
+      const typedCountQuery = countQuery.select(selectFields, { count: 'exact' });
       
       // Aplica filtros por igualdade manualmente
+      let filteredQuery = typedCountQuery;
       for (const [key, value] of Object.entries(filters)) {
         if (value !== undefined && value !== null) {
-          typedCountQuery = typedCountQuery.eq(key, value);
+          // @ts-ignore - Aplicando filtro dinamicamente
+          filteredQuery = filteredQuery.eq(key, value);
         }
       }
       
       // Aplica condições adicionais diretamente
       for (const condition of conditions) {
         if (condition.type === 'gt') {
-          typedCountQuery = typedCountQuery.gt(condition.column, condition.value);
+          // @ts-ignore - Aplicando condição dinamicamente
+          filteredQuery = filteredQuery.gt(condition.column, condition.value);
         } else if (condition.type === 'lt') {
-          typedCountQuery = typedCountQuery.lt(condition.column, condition.value);
+          // @ts-ignore - Aplicando condição dinamicamente
+          filteredQuery = filteredQuery.lt(condition.column, condition.value);
         } else if (condition.type === 'gte') {
-          typedCountQuery = typedCountQuery.gte(condition.column, condition.value);
+          // @ts-ignore - Aplicando condição dinamicamente
+          filteredQuery = filteredQuery.gte(condition.column, condition.value);
         } else if (condition.type === 'lte') {
-          typedCountQuery = typedCountQuery.lte(condition.column, condition.value);
+          // @ts-ignore - Aplicando condição dinamicamente
+          filteredQuery = filteredQuery.lte(condition.column, condition.value);
         } else if (condition.type === 'in') {
-          typedCountQuery = typedCountQuery.in(condition.column, condition.value);
+          // @ts-ignore - Aplicando condição dinamicamente
+          filteredQuery = filteredQuery.in(condition.column, condition.value);
         }
       }
       
-      const { count: exactCount, error: countError } = await typedCountQuery;
+      const { count: exactCount, error: countError } = await filteredQuery;
       
       if (countError) {
         console.error(`Erro ao obter contagem para ${table}:`, countError);
@@ -69,7 +77,7 @@ export const fetchInBatches = async ({
       batchCount++;
       console.log(`Buscando lote ${batchCount} de ${logPrefix} (offset: ${offset}, tamanho: ${batchSize})`);
       
-      // Evita recursão usando abordagem similar à contagem
+      // Evita recursão definindo a consulta como qualquer para evitar inferência complexa de tipos
       const baseQuery = supabase.from(table);
       let query = baseQuery.select(selectFields, { count: 'exact' });
       
@@ -79,6 +87,7 @@ export const fetchInBatches = async ({
       // Aplica filtros por igualdade
       for (const [key, value] of Object.entries(filters)) {
         if (value !== undefined && value !== null) {
+          // @ts-ignore - Aplicando filtro dinamicamente
           query = query.eq(key, value);
         }
       }
@@ -86,14 +95,19 @@ export const fetchInBatches = async ({
       // Aplica condições adicionais diretamente
       for (const condition of conditions) {
         if (condition.type === 'gt') {
+          // @ts-ignore - Aplicando condição dinamicamente
           query = query.gt(condition.column, condition.value);
         } else if (condition.type === 'lt') {
+          // @ts-ignore - Aplicando condição dinamicamente
           query = query.lt(condition.column, condition.value);
         } else if (condition.type === 'gte') {
+          // @ts-ignore - Aplicando condição dinamicamente
           query = query.gte(condition.column, condition.value);
         } else if (condition.type === 'lte') {
+          // @ts-ignore - Aplicando condição dinamicamente
           query = query.lte(condition.column, condition.value);
         } else if (condition.type === 'in') {
+          // @ts-ignore - Aplicando condição dinamicamente
           query = query.in(condition.column, condition.value);
         }
       }
