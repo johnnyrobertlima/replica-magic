@@ -30,7 +30,7 @@ export const ColumnManager: React.FC<ColumnManagerProps> = ({
           <span>Colunas</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-64 p-4" align="end">
+      <PopoverContent className="w-64 p-4 bg-white" align="end">
         <div className="space-y-1">
           <h4 className="font-medium text-sm mb-3">Gerenciar Colunas</h4>
           <div className="grid grid-cols-1 gap-3">
