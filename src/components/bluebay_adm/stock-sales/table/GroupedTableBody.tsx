@@ -8,11 +8,13 @@ import { StockSalesTableRow } from "./StockSalesTableRow";
 interface GroupedTableBodyProps {
   groupedData: GroupedStockData[];
   toggleGroup: (groupName: string) => void;
+  visibleColumns: Record<string, boolean>;
 }
 
 export const GroupedTableBody: React.FC<GroupedTableBodyProps> = ({
   groupedData,
-  toggleGroup
+  toggleGroup,
+  visibleColumns
 }) => {
   return (
     <TableBody>
@@ -22,6 +24,7 @@ export const GroupedTableBody: React.FC<GroupedTableBodyProps> = ({
           <StockGroupHeader 
             group={group}
             onToggle={() => toggleGroup(group.groupName)}
+            visibleColumns={visibleColumns}
           />
           
           {/* Group Items (when expanded) */}
@@ -31,6 +34,7 @@ export const GroupedTableBody: React.FC<GroupedTableBodyProps> = ({
               item={item} 
               index={itemIndex}
               isGroupedView
+              visibleColumns={visibleColumns}
             />
           ))}
         </React.Fragment>

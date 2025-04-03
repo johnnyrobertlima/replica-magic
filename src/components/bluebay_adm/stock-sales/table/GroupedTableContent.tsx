@@ -15,27 +15,31 @@ interface GroupedTableContentProps {
     direction: 'asc' | 'desc';
   };
   onSort: (key: keyof StockItem) => void;
+  visibleColumns: Record<string, boolean>;
 }
 
 export const GroupedTableContent: React.FC<GroupedTableContentProps> = ({
   groupedData,
   toggleGroup,
   sortConfig,
-  onSort
+  onSort,
+  visibleColumns
 }) => {
   return (
     <div className="relative border rounded-md">
       <div className="overflow-hidden">
         <ScrollArea className="h-[calc(100vh-300px)]">
-          <div className="min-w-max">
+          <div className="min-w-max relative">
             <Table className="w-auto min-w-full border-collapse">
               <GroupedTableHeader 
                 sortConfig={sortConfig}
                 onSort={onSort}
+                visibleColumns={visibleColumns}
               />
               <GroupedTableBody 
                 groupedData={groupedData}
                 toggleGroup={toggleGroup}
+                visibleColumns={visibleColumns}
               />
             </Table>
           </div>

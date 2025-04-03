@@ -14,6 +14,8 @@ interface TableSortableHeaderProps {
   onSort: (key: keyof StockItem) => void;
   width?: string;
   align?: 'left' | 'right' | 'center';
+  isSticky?: boolean;
+  left?: number;
 }
 
 export const TableSortableHeader: React.FC<TableSortableHeaderProps> = ({
@@ -22,21 +24,31 @@ export const TableSortableHeader: React.FC<TableSortableHeaderProps> = ({
   currentSortConfig,
   onSort,
   width = 'auto',
-  align = 'left'
+  align = 'left',
+  isSticky = false,
+  left = 0
 }) => {
   const isActive = currentSortConfig.key === sortKey;
   const alignmentClass = align === 'right' ? 'justify-end' : align === 'center' ? 'justify-center' : 'justify-start';
   
+  const stickyStyles = isSticky ? {
+    position: 'sticky',
+    left: `${left}px`,
+    zIndex: 35,
+    backgroundColor: '#f9fafb'
+  } : {};
+  
   return (
     <TableHead 
-      className={`cursor-pointer hover:bg-muted/50 whitespace-nowrap bg-gray-50 font-medium`}
+      className={`cursor-pointer hover:bg-muted/50 whitespace-nowrap bg-gray-50 font-medium ${isSticky ? 'shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]' : ''}`}
       onClick={() => onSort(sortKey)}
       style={{ 
         position: 'sticky', 
         top: 0, 
         zIndex: 30, 
         minWidth: width === 'auto' ? 'auto' : width,
-        width: width === 'auto' ? 'auto' : width
+        width: width === 'auto' ? 'auto' : width,
+        ...stickyStyles
       }}
     >
       <div className={`flex items-center ${alignmentClass} w-full`}>

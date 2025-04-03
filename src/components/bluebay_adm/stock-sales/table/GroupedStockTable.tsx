@@ -1,11 +1,12 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { StockItem } from "@/services/bluebay/stockSales/types";
 import { TableLoadingState } from "./TableLoadingState";
 import { TableEmptyState } from "./TableEmptyState";
 import { useStockGrouping } from "@/hooks/bluebay_adm/stock-sales/useStockGrouping";
 import { GroupedTableActions } from "./GroupedTableActions";
 import { GroupedTableContent } from "./GroupedTableContent";
+import { ColumnManager } from "./ColumnManager";
 
 interface GroupedStockTableProps {
   items: StockItem[];
@@ -16,6 +17,21 @@ interface GroupedStockTableProps {
   };
   onSort: (key: keyof StockItem) => void;
 }
+
+// Column definitions for our table
+const COLUMN_OPTIONS = [
+  { id: "FISICO", label: "Estoque Físico" },
+  { id: "DISPONIVEL", label: "Disponível" },
+  { id: "RESERVADO", label: "Reservado" },
+  { id: "ENTROU", label: "Entrou" },
+  { id: "QTD_VENDIDA", label: "Qtd. Vendida" },
+  { id: "VALOR_TOTAL_VENDIDO", label: "Valor Vendido" },
+  { id: "GIRO_ESTOQUE", label: "Giro Estoque" },
+  { id: "PERCENTUAL_ESTOQUE_VENDIDO", label: "% Vendido" },
+  { id: "DIAS_COBERTURA", label: "Dias Cobertura" },
+  { id: "DATA_ULTIMA_VENDA", label: "Última Venda" },
+  { id: "RANKING", label: "Ranking" },
+];
 
 export const GroupedStockTable: React.FC<GroupedStockTableProps> = ({
   items,
@@ -30,6 +46,29 @@ export const GroupedStockTable: React.FC<GroupedStockTableProps> = ({
     collapseAllGroups
   } = useStockGrouping(items);
 
+  // State for visible columns
+  const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>({
+    FISICO: true,
+    DISPONIVEL: true,
+    RESERVADO: true,
+    ENTROU: true,
+    QTD_VENDIDA: true,
+    VALOR_TOTAL_VENDIDO: true,
+    GIRO_ESTOQUE: true,
+    PERCENTUAL_ESTOQUE_VENDIDO: true,
+    DIAS_COBERTURA: true,
+    DATA_ULTIMA_VENDA: true,
+    RANKING: true,
+  });
+
+  // Handle column visibility toggle
+  const handleColumnToggle = (columnId: string, isVisible: boolean) => {
+    setVisibleColumns(prev => ({
+      ...prev,
+      [columnId]: isVisible
+    }));
+  };
+
   if (isLoading) {
     return <TableLoadingState />;
   }
@@ -40,18 +79,27 @@ export const GroupedStockTable: React.FC<GroupedStockTableProps> = ({
 
   return (
     <div className="relative">
-      <GroupedTableActions 
-        groupCount={groupedData.length}
-        totalItems={items.length}
-        expandAllGroups={expandAllGroups}
-        collapseAllGroups={collapseAllGroups}
-      />
+      <div className="flex justify-between items-center mb-4">
+        <GroupedTableActions 
+          groupCount={groupedData.length}
+          totalItems={items.length}
+          expandAllGroups={expandAllGroups}
+          collapseAllGroups={collapseAllGroups}
+        />
+        
+        <ColumnManager 
+          columns={COLUMN_OPTIONS}
+          visibleColumns={visibleColumns}
+          onColumnToggle={handleColumnToggle}
+        />
+      </div>
       
       <GroupedTableContent 
         groupedData={groupedData}
         toggleGroup={toggleGroup}
         sortConfig={sortConfig}
         onSort={onSort}
+        visibleColumns={visibleColumns}
       />
     </div>
   );
