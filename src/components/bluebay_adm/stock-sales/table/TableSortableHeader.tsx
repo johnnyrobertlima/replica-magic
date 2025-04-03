@@ -12,19 +12,21 @@ interface TableSortableHeaderProps {
     direction: 'asc' | 'desc';
   };
   onSort: (key: keyof StockItem) => void;
+  className?: string;
 }
 
 export const TableSortableHeader: React.FC<TableSortableHeaderProps> = ({
   sortKey,
   label,
   currentSortConfig,
-  onSort
+  onSort,
+  className = ""
 }) => {
   const isActive = currentSortConfig.key === sortKey;
   
   return (
     <TableHead 
-      className="cursor-pointer hover:bg-muted/50"
+      className={`cursor-pointer hover:bg-muted/50 ${className}`}
       onClick={() => onSort(sortKey)}
     >
       <div className="flex items-center">

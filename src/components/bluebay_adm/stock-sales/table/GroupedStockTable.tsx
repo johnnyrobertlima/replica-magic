@@ -77,52 +77,114 @@ export const GroupedStockTable: React.FC<GroupedStockTableProps> = ({
       </div>
       
       <div className="relative border rounded-md overflow-hidden">
-        <div className="overflow-hidden">
-          <Table className="border-collapse">
-            <TableHeader className="bg-background sticky top-0 z-20">
-              <TableRow>
-                <TableSortableHeader sortKey="GRU_DESCRICAO" label="Grupo" currentSortConfig={sortConfig} onSort={onSort} />
-                <TableSortableHeader sortKey="FISICO" label="Estoque Físico" currentSortConfig={sortConfig} onSort={onSort} />
-                <TableSortableHeader sortKey="DISPONIVEL" label="Disponível" currentSortConfig={sortConfig} onSort={onSort} />
-                <TableSortableHeader sortKey="RESERVADO" label="Reservado" currentSortConfig={sortConfig} onSort={onSort} />
-                <TableSortableHeader sortKey="QTD_VENDIDA" label="Qtd. Vendida" currentSortConfig={sortConfig} onSort={onSort} />
-                <TableSortableHeader sortKey="VALOR_TOTAL_VENDIDO" label="Valor Vendido" currentSortConfig={sortConfig} onSort={onSort} />
-                <TableSortableHeader sortKey="GIRO_ESTOQUE" label="Giro Estoque" currentSortConfig={sortConfig} onSort={onSort} />
-                <TableSortableHeader sortKey="PERCENTUAL_ESTOQUE_VENDIDO" label="% Vendido" currentSortConfig={sortConfig} onSort={onSort} />
-                <TableSortableHeader sortKey="DIAS_COBERTURA" label="Dias Cobertura" currentSortConfig={sortConfig} onSort={onSort} />
-                <TableSortableHeader sortKey="DATA_ULTIMA_VENDA" label="Última Venda" currentSortConfig={sortConfig} onSort={onSort} />
-                <TableSortableHeader sortKey="RANKING" label="Ranking" currentSortConfig={sortConfig} onSort={onSort} />
-              </TableRow>
-            </TableHeader>
-          </Table>
-        </div>
+        <Table className="border-collapse">
+          <TableHeader className="bg-background sticky top-0 z-20">
+            <TableRow>
+              <TableSortableHeader 
+                sortKey="GRU_DESCRICAO" 
+                label="Grupo" 
+                currentSortConfig={sortConfig} 
+                onSort={onSort} 
+                className="w-[250px]"
+              />
+              <TableSortableHeader 
+                sortKey="FISICO" 
+                label="Estoque Físico" 
+                currentSortConfig={sortConfig} 
+                onSort={onSort} 
+                className="text-right w-[150px]"
+              />
+              <TableSortableHeader 
+                sortKey="DISPONIVEL" 
+                label="Disponível" 
+                currentSortConfig={sortConfig} 
+                onSort={onSort} 
+                className="text-right w-[120px]"
+              />
+              <TableSortableHeader 
+                sortKey="RESERVADO" 
+                label="Reservado" 
+                currentSortConfig={sortConfig} 
+                onSort={onSort} 
+                className="text-right w-[120px]"
+              />
+              <TableSortableHeader 
+                sortKey="QTD_VENDIDA" 
+                label="Qtd. Vendida" 
+                currentSortConfig={sortConfig} 
+                onSort={onSort} 
+                className="text-right w-[130px]"
+              />
+              <TableSortableHeader 
+                sortKey="VALOR_TOTAL_VENDIDO" 
+                label="Valor Vendido" 
+                currentSortConfig={sortConfig} 
+                onSort={onSort} 
+                className="text-right w-[150px]"
+              />
+              <TableSortableHeader 
+                sortKey="GIRO_ESTOQUE" 
+                label="Giro Estoque" 
+                currentSortConfig={sortConfig} 
+                onSort={onSort} 
+                className="text-right w-[120px]"
+              />
+              <TableSortableHeader 
+                sortKey="PERCENTUAL_ESTOQUE_VENDIDO" 
+                label="% Vendido" 
+                currentSortConfig={sortConfig} 
+                onSort={onSort} 
+                className="text-right w-[120px]"
+              />
+              <TableSortableHeader 
+                sortKey="DIAS_COBERTURA" 
+                label="Dias Cobertura" 
+                currentSortConfig={sortConfig} 
+                onSort={onSort} 
+                className="text-right w-[140px]"
+              />
+              <TableSortableHeader 
+                sortKey="DATA_ULTIMA_VENDA" 
+                label="Última Venda" 
+                currentSortConfig={sortConfig} 
+                onSort={onSort} 
+                className="text-center w-[130px]"
+              />
+              <TableSortableHeader 
+                sortKey="RANKING" 
+                label="Ranking" 
+                currentSortConfig={sortConfig} 
+                onSort={onSort} 
+                className="text-right w-[100px]"
+              />
+            </TableRow>
+          </TableHeader>
+        </Table>
         
         <ScrollArea className="h-[calc(100vh-380px)]">
-          <div className="overflow-x-auto">
-            <Table className="border-collapse min-w-full">
-              <TableBody>
-                {groupedData.map((group) => (
-                  <React.Fragment key={group.groupName}>
-                    {/* Group Header Row */}
-                    <StockGroupHeader 
-                      group={group}
-                      onToggle={() => toggleGroup(group.groupName)}
+          <Table className="border-collapse">
+            <TableBody>
+              {groupedData.map((group) => (
+                <React.Fragment key={group.groupName}>
+                  {/* Group Header Row */}
+                  <StockGroupHeader 
+                    group={group}
+                    onToggle={() => toggleGroup(group.groupName)}
+                  />
+                  
+                  {/* Group Items (when expanded) */}
+                  {group.isExpanded && group.items.map((item, itemIndex) => (
+                    <StockSalesTableRow 
+                      key={`${item.ITEM_CODIGO}-${itemIndex}`} 
+                      item={item} 
+                      index={itemIndex}
+                      isGroupedView
                     />
-                    
-                    {/* Group Items (when expanded) */}
-                    {group.isExpanded && group.items.map((item, itemIndex) => (
-                      <StockSalesTableRow 
-                        key={`${item.ITEM_CODIGO}-${itemIndex}`} 
-                        item={item} 
-                        index={itemIndex}
-                        isGroupedView
-                      />
-                    ))}
-                  </React.Fragment>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                  ))}
+                </React.Fragment>
+              ))}
+            </TableBody>
+          </Table>
         </ScrollArea>
       </div>
     </div>
