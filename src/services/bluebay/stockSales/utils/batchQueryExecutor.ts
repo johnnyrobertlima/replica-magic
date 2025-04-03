@@ -74,7 +74,7 @@ export const fetchInBatches = async ({
       // Aplica condições adicionais sem causar recursão de tipos
       query = applyConditionsToQuery(query, conditions);
       
-      // Executa a consulta - Renomeado batchCount para resultCount para evitar conflito
+      // Executa a consulta - Renomeado para evitar conflito com a variável batchCount
       const { data, error, count: resultCount } = await query;
       
       if (error) {
