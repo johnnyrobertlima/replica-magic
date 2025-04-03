@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState } from "react";
 import { StockItem } from "@/services/bluebay/stockSales/types";
 import { TableLoadingState } from "./table/TableLoadingState";
 import { TableEmptyState } from "./table/TableEmptyState";
@@ -32,18 +32,8 @@ export const StockSalesAnalyticsTable: React.FC<StockSalesAnalyticsTableProps> =
   sortConfig,
   onSort,
 }) => {
+  // No display count limit - showing all items
   const [viewMode, setViewMode] = useState<"list" | "grouped">("grouped"); // Default to grouped view
-  const [currentItems, setCurrentItems] = useState<StockItem[]>([]);
-  
-  // Use effect to lazily update items when viewMode changes to prevent UI freeze
-  useEffect(() => {
-    // Small delay to allow tab switch UI to complete first
-    const timer = setTimeout(() => {
-      setCurrentItems(items);
-    }, 50);
-    
-    return () => clearTimeout(timer);
-  }, [items, viewMode]);
   
   if (isLoading) {
     return <TableLoadingState />;
@@ -55,10 +45,7 @@ export const StockSalesAnalyticsTable: React.FC<StockSalesAnalyticsTableProps> =
 
   return (
     <div className="relative">
-      <Tabs 
-        value={viewMode} 
-        onValueChange={(value) => setViewMode(value as "list" | "grouped")}
-      >
+      <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as "list" | "grouped")}>
         <div className="flex justify-between items-center mb-4">
           <div className="text-sm text-gray-500">
             Exibindo total de {items.length} registros.
@@ -76,56 +63,47 @@ export const StockSalesAnalyticsTable: React.FC<StockSalesAnalyticsTableProps> =
         </div>
         
         <TabsContent value="grouped" className="mt-0">
-          {viewMode === "grouped" && (
-            <GroupedStockTable 
-              items={currentItems}
-              isLoading={isLoading}
-              sortConfig={sortConfig}
-              onSort={onSort}
-            />
-          )}
+          <GroupedStockTable 
+            items={items}
+            isLoading={isLoading}
+            sortConfig={sortConfig}
+            onSort={onSort}
+          />
         </TabsContent>
         
         <TabsContent value="list" className="mt-0">
-          {viewMode === "list" && (
-            <div className="border rounded-md overflow-hidden">
-              <div className="sticky top-0 z-30 bg-white">
-                <Table className="border-collapse">
-                  <TableHeader>
-                    <TableRow>
-                      <TableSortableHeader sortKey="ITEM_CODIGO" label="Código" currentSortConfig={sortConfig} onSort={onSort} className="w-[120px]" />
-                      <TableSortableHeader sortKey="DESCRICAO" label="Descrição" currentSortConfig={sortConfig} onSort={onSort} className="w-[250px]" />
-                      <TableSortableHeader sortKey="GRU_DESCRICAO" label="Grupo" currentSortConfig={sortConfig} onSort={onSort} className="w-[150px]" />
-                      <TableSortableHeader sortKey="FISICO" label="Estoque Físico" currentSortConfig={sortConfig} onSort={onSort} align="right" className="w-[150px]" />
-                      <TableSortableHeader sortKey="DISPONIVEL" label="Disponível" currentSortConfig={sortConfig} onSort={onSort} align="right" className="w-[120px]" />
-                      <TableSortableHeader sortKey="RESERVADO" label="Reservado" currentSortConfig={sortConfig} onSort={onSort} align="right" className="w-[120px]" />
-                      <TableSortableHeader sortKey="QTD_VENDIDA" label="Qtd. Vendida" currentSortConfig={sortConfig} onSort={onSort} align="right" className="w-[130px]" />
-                      <TableSortableHeader sortKey="VALOR_TOTAL_VENDIDO" label="Valor Vendido" currentSortConfig={sortConfig} onSort={onSort} align="right" className="w-[150px]" />
-                      <TableSortableHeader sortKey="GIRO_ESTOQUE" label="Giro Estoque" currentSortConfig={sortConfig} onSort={onSort} align="right" className="w-[120px]" />
-                      <TableSortableHeader sortKey="PERCENTUAL_ESTOQUE_VENDIDO" label="% Vendido" currentSortConfig={sortConfig} onSort={onSort} align="right" className="w-[120px]" />
-                      <TableSortableHeader sortKey="DIAS_COBERTURA" label="Dias Cobertura" currentSortConfig={sortConfig} onSort={onSort} align="right" className="w-[140px]" />
-                      <TableSortableHeader sortKey="DATA_ULTIMA_VENDA" label="Última Venda" currentSortConfig={sortConfig} onSort={onSort} align="center" className="w-[130px]" />
-                      <TableSortableHeader sortKey="RANKING" label="Ranking" currentSortConfig={sortConfig} onSort={onSort} align="right" className="w-[100px]" />
-                    </TableRow>
-                  </TableHeader>
-                </Table>
-              </div>
-              
-              <ScrollArea className="h-[calc(100vh-300px)]">
-                <Table className="border-collapse">
-                  <TableBody>
-                    {currentItems.map((item, index) => (
-                      <StockSalesTableRow 
-                        key={`${item.ITEM_CODIGO}-${index}`} 
-                        item={item} 
-                        index={index} 
-                      />
-                    ))}
-                  </TableBody>
-                </Table>
-              </ScrollArea>
+          <ScrollArea className="h-[calc(100vh-250px)]">
+            <div className="overflow-x-auto">
+              <Table className="border-collapse min-w-full">
+                <TableHeader className="bg-gray-50 sticky top-0 z-10">
+                  <TableRow className="sticky top-0 z-10 bg-gray-50">
+                    <TableSortableHeader sortKey="ITEM_CODIGO" label="Código" currentSortConfig={sortConfig} onSort={onSort} />
+                    <TableSortableHeader sortKey="DESCRICAO" label="Descrição" currentSortConfig={sortConfig} onSort={onSort} />
+                    <TableSortableHeader sortKey="GRU_DESCRICAO" label="Grupo" currentSortConfig={sortConfig} onSort={onSort} />
+                    <TableSortableHeader sortKey="FISICO" label="Estoque Físico" currentSortConfig={sortConfig} onSort={onSort} />
+                    <TableSortableHeader sortKey="DISPONIVEL" label="Disponível" currentSortConfig={sortConfig} onSort={onSort} />
+                    <TableSortableHeader sortKey="RESERVADO" label="Reservado" currentSortConfig={sortConfig} onSort={onSort} />
+                    <TableSortableHeader sortKey="QTD_VENDIDA" label="Qtd. Vendida" currentSortConfig={sortConfig} onSort={onSort} />
+                    <TableSortableHeader sortKey="VALOR_TOTAL_VENDIDO" label="Valor Vendido" currentSortConfig={sortConfig} onSort={onSort} />
+                    <TableSortableHeader sortKey="GIRO_ESTOQUE" label="Giro Estoque" currentSortConfig={sortConfig} onSort={onSort} />
+                    <TableSortableHeader sortKey="PERCENTUAL_ESTOQUE_VENDIDO" label="% Vendido" currentSortConfig={sortConfig} onSort={onSort} />
+                    <TableSortableHeader sortKey="DIAS_COBERTURA" label="Dias Cobertura" currentSortConfig={sortConfig} onSort={onSort} />
+                    <TableSortableHeader sortKey="DATA_ULTIMA_VENDA" label="Última Venda" currentSortConfig={sortConfig} onSort={onSort} />
+                    <TableSortableHeader sortKey="RANKING" label="Ranking" currentSortConfig={sortConfig} onSort={onSort} />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {items.map((item, index) => (
+                    <StockSalesTableRow 
+                      key={`${item.ITEM_CODIGO}-${index}`} 
+                      item={item} 
+                      index={index} 
+                    />
+                  ))}
+                </TableBody>
+              </Table>
             </div>
-          )}
+          </ScrollArea>
         </TabsContent>
       </Tabs>
     </div>

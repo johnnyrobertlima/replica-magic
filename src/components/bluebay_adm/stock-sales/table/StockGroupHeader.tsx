@@ -17,43 +17,41 @@ export const StockGroupHeader: React.FC<StockGroupHeaderProps> = ({ group, onTog
       className="bg-muted/50 hover:bg-muted/70 cursor-pointer transition-colors"
       onClick={onToggle}
     >
-      <TableCell className="font-semibold w-[250px]">
-        <div className="flex items-center">
-          {group.isExpanded ? 
-            <ChevronDown className="h-4 w-4 mr-2 flex-shrink-0 text-primary" /> : 
-            <ChevronRight className="h-4 w-4 mr-2 flex-shrink-0 text-primary" />
-          }
-          <span className="truncate">{group.groupName} ({group.totalItems} itens)</span>
-        </div>
+      <TableCell className="font-semibold flex items-center">
+        {group.isExpanded ? 
+          <ChevronDown className="h-4 w-4 mr-2" /> : 
+          <ChevronRight className="h-4 w-4 mr-2" />
+        }
+        {group.groupName} ({group.totalItems} itens)
       </TableCell>
-      <TableCell className="font-medium text-right w-[150px]">
+      <TableCell className="font-medium text-right">
         {formatTableNumber(group.totalFisico)}
       </TableCell>
-      <TableCell className="font-medium text-right w-[120px]">
+      <TableCell className="font-medium text-right">
         {formatTableNumber(group.totalDisponivel)}
       </TableCell>
-      <TableCell className="font-medium text-right w-[120px]">
+      <TableCell className="font-medium text-right">
         {formatTableNumber(group.totalReservado)}
       </TableCell>
-      <TableCell className="font-medium text-right w-[130px]">
+      <TableCell className="font-medium text-right">
         {formatTableNumber(group.totalVendido)}
       </TableCell>
-      <TableCell className="font-medium text-right w-[150px]">
+      <TableCell className="font-medium text-right">
         {formatCurrency(group.totalValorVendido)}
       </TableCell>
-      <TableCell className="font-medium text-right w-[120px]">
+      <TableCell className="font-medium text-right">
         <StockTurnoverIndicator turnover={group.giroEstoqueGrupo} />
       </TableCell>
-      <TableCell className="font-medium text-right w-[120px]">
+      <TableCell className="font-medium text-right">
         {formatTablePercentage(group.percentualVendidoGrupo)}
       </TableCell>
-      <TableCell className="font-medium text-right w-[140px]">
+      <TableCell className="font-medium text-right">
         {Math.round(group.diasCoberturaGrupo).toLocaleString()}
       </TableCell>
-      <TableCell className="font-medium text-center w-[130px]">
+      <TableCell className="font-medium text-center">
         -
       </TableCell>
-      <TableCell className="font-medium text-right w-[100px]">
+      <TableCell className="font-medium text-right">
         -
       </TableCell>
     </TableRow>
