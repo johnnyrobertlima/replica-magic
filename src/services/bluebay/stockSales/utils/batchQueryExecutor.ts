@@ -12,7 +12,7 @@ export const fetchInBatches = async ({
   selectFields,
   filters = {},
   conditions = [],
-  batchSize = 1000,
+  batchSize = 2000, // Aumentado para 2000 itens por lote
   logPrefix = "Dados"
 }: FetchBatchesParams): Promise<any[]> => {
   try {
@@ -21,6 +21,8 @@ export const fetchInBatches = async ({
     let hasMore = true;
     let batchCount = 0;
     let totalProcessed = 0;
+    
+    console.log(`Iniciando busca em lotes para ${table}. Tamanho do lote: ${batchSize}`);
     
     while (hasMore) {
       batchCount++;

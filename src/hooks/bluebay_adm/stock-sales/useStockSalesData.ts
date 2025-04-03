@@ -59,6 +59,9 @@ export const useStockSalesData = () => {
     // Check if data is using sample data
     setUsingSampleData(data.length > 0 && data[0].hasOwnProperty('isSampleData'));
     
+    // Log the total count of items received
+    console.log(`Total de itens recebidos antes do processamento: ${data.length}`);
+    
     // Create a Map to store unique items by their ITEM_CODIGO
     const uniqueItemsMap = new Map<string, StockItem>();
     
@@ -73,7 +76,10 @@ export const useStockSalesData = () => {
     });
     
     // Convert the Map values back to an array
-    return Array.from(uniqueItemsMap.values());
+    const uniqueItems = Array.from(uniqueItemsMap.values());
+    console.log(`Total de itens únicos após processamento: ${uniqueItems.length}`);
+    
+    return uniqueItems;
   };
 
   /**

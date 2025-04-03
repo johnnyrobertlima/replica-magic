@@ -33,13 +33,14 @@ export const StockSalesAnalyticsTable: React.FC<StockSalesAnalyticsTableProps> =
   onSort,
 }) => {
   const [visibleItems, setVisibleItems] = useState<StockItem[]>([]);
-  const [displayCount, setDisplayCount] = useState(100);
+  const [displayCount, setDisplayCount] = useState(500); // Increased initial load count
   const [viewMode, setViewMode] = useState<"list" | "grouped">("grouped"); // Default to grouped view
   
   // Load a limited number of items initially for better performance
   useEffect(() => {
     if (items.length > 0) {
       setVisibleItems(items.slice(0, displayCount));
+      console.log(`Carregando ${displayCount} itens de ${items.length} disponíveis`);
     } else {
       setVisibleItems([]);
     }
@@ -49,10 +50,12 @@ export const StockSalesAnalyticsTable: React.FC<StockSalesAnalyticsTableProps> =
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const target = e.currentTarget;
     if (
-      target.scrollHeight - target.scrollTop - target.clientHeight < 200 &&
+      target.scrollHeight - target.scrollTop - target.clientHeight < 300 &&
       displayCount < items.length
     ) {
-      setDisplayCount(prev => Math.min(prev + 100, items.length));
+      const newDisplayCount = Math.min(displayCount + 500, items.length); // Load 500 more items at a time
+      console.log(`Carregando mais itens: ${displayCount} -> ${newDisplayCount}`);
+      setDisplayCount(newDisplayCount);
     }
   };
 
@@ -143,7 +146,7 @@ export const StockSalesAnalyticsTable: React.FC<StockSalesAnalyticsTableProps> =
             <div className="mt-4 text-center">
               <button 
                 className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-                onClick={() => setDisplayCount(prev => Math.min(prev + 500, items.length))}
+                onClick={() => setDisplayCount(prev => Math.min(prev + 1000, items.length))}
               >
                 Carregar mais ({items.length - displayCount} restantes)
               </button>

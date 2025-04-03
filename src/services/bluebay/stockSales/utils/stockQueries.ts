@@ -7,6 +7,8 @@ import { fetchInBatches } from "./batchQueryExecutor";
  */
 export const fetchStockData = async (): Promise<any[]> => {
   try {
+    console.log("Iniciando busca completa de dados de estoque");
+    
     const stockData = await fetchInBatches({
       table: "BLUEBAY_ESTOQUE",
       selectFields: `
@@ -18,7 +20,7 @@ export const fetchStockData = async (): Promise<any[]> => {
         "LIMITE"
       `,
       // No filters applied so we get ALL stock items
-      batchSize: 5000,
+      batchSize: 5000, // Increased batch size for more efficient loading
       logPrefix: "estoque"
     });
     
@@ -27,7 +29,7 @@ export const fetchStockData = async (): Promise<any[]> => {
       return [];
     }
     
-    console.log(`Encontrados ${stockData.length} registros de estoque`);
+    console.log(`Encontrados ${stockData.length} registros de estoque no total`);
     return stockData;
   } catch (error) {
     handleApiError("Erro ao buscar dados de estoque", error);
@@ -40,14 +42,17 @@ export const fetchStockData = async (): Promise<any[]> => {
  */
 export const fetchStockItemsPaginated = async (): Promise<any[]> => {
   try {
+    console.log("Iniciando busca paginada completa de itens de estoque");
+    
     const stockItems = await fetchInBatches({
       table: "BLUEBAY_ESTOQUE",
       selectFields: "*",
       // No filters applied so we get ALL stock items
-      batchSize: 5000,
+      batchSize: 5000, // Increased batch size
       logPrefix: "estoque paginado"
     });
     
+    console.log(`Busca paginada completa: ${stockItems.length} itens de estoque obtidos`);
     return stockItems;
   } catch (error) {
     handleApiError("Erro ao buscar itens de estoque paginados", error);

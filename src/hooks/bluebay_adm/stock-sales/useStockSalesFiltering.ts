@@ -19,6 +19,8 @@ export const useStockSalesFiltering = (
       !EXCLUDED_GROUPS.includes(item.GRU_DESCRICAO || '')
     );
     
+    console.log(`Total após filtrar grupos excluídos: ${result.length}`);
+    
     // Apply search filter if the user has entered a search term
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
@@ -26,11 +28,13 @@ export const useStockSalesFiltering = (
         (item.ITEM_CODIGO && item.ITEM_CODIGO.toLowerCase().includes(term)) ||
         (item.DESCRICAO && item.DESCRICAO.toLowerCase().includes(term))
       );
+      console.log(`Total após filtrar por termo de busca "${searchTerm}": ${result.length}`);
     }
     
     // Apply group filter only if a specific group is selected
     if (groupFilter && groupFilter !== "all") {
       result = result.filter(item => item.GRU_DESCRICAO === groupFilter);
+      console.log(`Total após filtrar por grupo "${groupFilter}": ${result.length}`);
     }
     
     // Apply cadastro year filter only if a specific year is selected
@@ -41,11 +45,13 @@ export const useStockSalesFiltering = (
         const cadastroDate = new Date(item.DATACADASTRO);
         return cadastroDate.getFullYear() >= minYear;
       });
+      console.log(`Total após filtrar por ano de cadastro >= ${minCadastroYear}: ${result.length}`);
     }
     
     // Apply stock filter only if user wants to hide zero stock items
     if (!showZeroStock) {
       result = result.filter(item => (item.FISICO || 0) > 0);
+      console.log(`Total após filtrar itens com estoque zero: ${result.length}`);
     }
     
     setFilteredItems(result);
