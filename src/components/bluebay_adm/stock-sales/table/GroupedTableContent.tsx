@@ -39,7 +39,7 @@ export const GroupedTableContent: React.FC<GroupedTableContentProps> = ({
               />
             </Table>
           </div>
-          <ScrollBar orientation="horizontal" />
+          <ScrollBar orientation="horizontal" className="bg-gray-100" />
         </ScrollArea>
       </div>
     </div>

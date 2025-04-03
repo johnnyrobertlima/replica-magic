@@ -17,7 +17,7 @@ export const GroupedTableHeader: React.FC<GroupedTableHeaderProps> = ({
   onSort
 }) => {
   return (
-    <TableHeader className="sticky top-0 z-20">
+    <TableHeader className="sticky top-0 z-30 bg-gray-50 shadow-sm">
       <TableRow>
         <TableSortableHeader 
           sortKey="GRU_DESCRICAO" 

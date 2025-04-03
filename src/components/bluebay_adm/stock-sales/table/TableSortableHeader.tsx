@@ -29,12 +29,12 @@ export const TableSortableHeader: React.FC<TableSortableHeaderProps> = ({
   
   return (
     <TableHead 
-      className={`cursor-pointer hover:bg-muted/50 whitespace-nowrap bg-gray-50`}
+      className={`cursor-pointer hover:bg-muted/50 whitespace-nowrap bg-gray-50 font-medium`}
       onClick={() => onSort(sortKey)}
       style={{ 
         position: 'sticky', 
         top: 0, 
-        zIndex: 20, 
+        zIndex: 30, 
         minWidth: width === 'auto' ? 'auto' : width,
         width: width === 'auto' ? 'auto' : width
       }}

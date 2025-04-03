@@ -22,6 +22,26 @@
   input, select, textarea, button, .bg-input {
     @apply bg-white;
   }
+  
+  /* Estilização das barras de rolagem nativas */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #c8c8c9;
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #a0a0a1;
+  }
 }
 
 @layer components {
