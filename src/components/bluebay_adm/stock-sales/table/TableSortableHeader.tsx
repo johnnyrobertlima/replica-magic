@@ -31,7 +31,7 @@ export const TableSortableHeader: React.FC<TableSortableHeaderProps> = ({
   const isActive = currentSortConfig.key === sortKey;
   const alignmentClass = align === 'right' ? 'justify-end' : align === 'center' ? 'justify-center' : 'justify-start';
   
-  const stickyStyles = isSticky ? {
+  const stickyStyles: React.CSSProperties = isSticky ? {
     position: 'sticky',
     left: `${left}px`,
     zIndex: 35,

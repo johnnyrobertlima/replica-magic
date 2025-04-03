@@ -34,6 +34,21 @@ export const StockSalesAnalyticsTable: React.FC<StockSalesAnalyticsTableProps> =
 }) => {
   const [viewMode, setViewMode] = useState<"list" | "grouped">("grouped");
   
+  // Define default visible columns
+  const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>({
+    FISICO: true,
+    DISPONIVEL: true,
+    RESERVADO: true,
+    ENTROU: true,
+    QTD_VENDIDA: true,
+    VALOR_TOTAL_VENDIDO: true,
+    GIRO_ESTOQUE: true,
+    PERCENTUAL_ESTOQUE_VENDIDO: true,
+    DIAS_COBERTURA: true,
+    DATA_ULTIMA_VENDA: true,
+    RANKING: true,
+  });
+  
   // Memoize the list view table content to improve performance
   const listViewContent = useMemo(() => {
     if (isLoading) {
@@ -71,7 +86,8 @@ export const StockSalesAnalyticsTable: React.FC<StockSalesAnalyticsTableProps> =
                   <StockSalesTableRow 
                     key={`${item.ITEM_CODIGO}-${index}`} 
                     item={item} 
-                    index={index} 
+                    index={index}
+                    visibleColumns={visibleColumns}
                   />
                 ))}
               </TableBody>
@@ -81,7 +97,7 @@ export const StockSalesAnalyticsTable: React.FC<StockSalesAnalyticsTableProps> =
         </ScrollArea>
       </div>
     );
-  }, [items, isLoading, sortConfig, onSort]);
+  }, [items, isLoading, sortConfig, onSort, visibleColumns]);
 
   if (isLoading) {
     return <TableLoadingState />;
