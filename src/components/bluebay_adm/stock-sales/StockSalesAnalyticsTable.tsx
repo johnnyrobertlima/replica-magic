@@ -32,7 +32,7 @@ export const StockSalesAnalyticsTable: React.FC<StockSalesAnalyticsTableProps> =
   sortConfig,
   onSort,
 }) => {
-  // Removed displayCount state - always show all items
+  // No display count limit - showing all items
   const [viewMode, setViewMode] = useState<"list" | "grouped">("grouped"); // Default to grouped view
   
   if (isLoading) {

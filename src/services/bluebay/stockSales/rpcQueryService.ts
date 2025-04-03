@@ -7,6 +7,7 @@ import { handleApiError, logDataValidationError } from "./errorHandlingService";
 
 /**
  * Fetches stock sales analytics data using the RPC function
+ * with pagination to retrieve all records
  */
 export const fetchStockSalesViaRpc = async (
   startDate: string,
@@ -21,17 +22,47 @@ export const fetchStockSalesViaRpc = async (
     // Calculate the date 60 days ago for identifying new products
     const sixtyDaysAgo = calculateNewProductCutoffDate();
     
-    // Execute RPC query with head:false e count:exact para garantir que todos registros sejam retornados
-    const result = await executeRpcQuery(startDate, endDate, sixtyDaysAgo);
+    // Fetch all records using pagination
+    let allData: any[] = [];
+    let hasMore = true;
+    let page = 0;
+    const pageSize = 1000; // Max items per page
     
-    if (result.error) {
-      throw new Error(`RPC Error: ${result.error.message}`);
-    }
+    console.log("Iniciando busca paginada via RPC para obter todos os registros");
+    
+    while (hasMore) {
+      // Execute RPC query with pagination parameters
+      const result = await executeRpcQuery(
+        startDate, 
+        endDate, 
+        sixtyDaysAgo,
+        page * pageSize,
+        pageSize
+      );
+      
+      if (result.error) {
+        console.error(`Erro na página ${page} da consulta RPC:`, result.error);
+        throw new Error(`RPC Error: ${result.error.message}`);
+      }
 
-    const data = result.data || [];
-    console.log(`Recebidos ${data.length} registros via RPC`);
+      const pageData = result.data || [];
+      console.log(`Recebidos ${pageData.length} registros na página ${page} via RPC`);
+      
+      // Add this page's data to our collection
+      allData = [...allData, ...pageData];
+      
+      // Check if we need to fetch more pages
+      hasMore = pageData.length === pageSize;
+      page++;
+      
+      if (hasMore) {
+        console.log(`Buscando próxima página (${page}) via RPC...`);
+      }
+    }
     
-    return processRpcResult(data);
+    console.log(`Total de ${allData.length} registros obtidos via RPC em ${page} páginas`);
+    
+    return processRpcResult(allData);
   } catch (error) {
     handleApiError("Erro ao carregar dados via RPC", error);
     return fallbackToDirectQueries(startDate, endDate);
@@ -46,18 +77,22 @@ const calculateNewProductCutoffDate = (): string => {
 };
 
 /**
- * Executes the RPC query
+ * Executes the RPC query with pagination parameters
  */
 const executeRpcQuery = async (
   startDate: string, 
   endDate: string, 
-  newProductDate: string
+  newProductDate: string,
+  offset: number = 0,
+  limit: number = 1000
 ) => {
   return await supabase
     .rpc('get_stock_sales_analytics', { 
       p_start_date: startDate,
       p_end_date: endDate,
-      p_new_product_date: newProductDate
+      p_new_product_date: newProductDate,
+      p_limit: limit,     // Add limit parameter to the RPC function
+      p_offset: offset    // Add offset parameter to the RPC function
     }, {
       head: false,
       count: 'exact'

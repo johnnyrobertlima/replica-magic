@@ -29,10 +29,10 @@ export const useStockSalesData = () => {
         console.log(`Carregando relatório de estoque-vendas para o período: ${startDateFormatted} até ${endDateFormatted}`);
         
         try {
-          // Use the enhanced fetching with fallbacks
+          // Use the enhanced fetching with fallbacks and handle all data
           const data = await fetchStockSalesAnalytics(startDateFormatted, endDateFormatted);
           
-          // Update the state with the processed data, no longer filtering duplicates
+          // Update the state with the complete data set
           updateStateWithData(data);
         } catch (fetchError) {
           handleDataFetchError(fetchError);
@@ -59,7 +59,7 @@ export const useStockSalesData = () => {
     // Log the total count of items received
     console.log(`Total de itens recebidos: ${items.length}`);
     
-    // Set items directly without filtering duplicates
+    // Set items directly without any limits
     setItems(items);
     
     if (items.length === 0) {
