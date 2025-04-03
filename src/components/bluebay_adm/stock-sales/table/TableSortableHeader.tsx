@@ -29,9 +29,15 @@ export const TableSortableHeader: React.FC<TableSortableHeaderProps> = ({
   
   return (
     <TableHead 
-      className={`cursor-pointer hover:bg-muted/50 whitespace-nowrap sticky top-0 z-10 ${width}`}
+      className={`cursor-pointer hover:bg-muted/50 whitespace-nowrap sticky top-0 z-10`}
       onClick={() => onSort(sortKey)}
-      style={{ position: 'sticky', top: 0, zIndex: 20, minWidth: width === 'auto' ? 'auto' : width }}
+      style={{ 
+        position: 'sticky', 
+        top: 0, 
+        zIndex: 20, 
+        minWidth: width === 'auto' ? 'auto' : width,
+        width: width === 'auto' ? 'auto' : width
+      }}
     >
       <div className={`flex items-center ${alignmentClass} w-full`}>
         {label}

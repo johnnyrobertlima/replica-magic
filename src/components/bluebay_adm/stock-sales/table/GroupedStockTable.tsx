@@ -11,7 +11,7 @@ import { TableLoadingState } from "./TableLoadingState";
 import { TableEmptyState } from "./TableEmptyState";
 import { TableSortableHeader } from "./TableSortableHeader";
 import { StockSalesTableRow } from "./StockSalesTableRow";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { GroupedStockData, useStockGrouping } from "@/hooks/bluebay_adm/stock-sales/useStockGrouping";
 import { StockGroupHeader } from "./StockGroupHeader";
 import { ChevronDown, ChevronUp } from "lucide-react";
@@ -53,7 +53,7 @@ export const GroupedStockTable: React.FC<GroupedStockTableProps> = ({
     return (
       <div className="relative border rounded-md">
         <div className="overflow-hidden">
-          <ScrollArea className="h-[calc(100vh-300px)]" orientation="both">
+          <ScrollArea className="h-[calc(100vh-300px)]">
             <div className="min-w-max">
               <Table className="w-auto min-w-full border-collapse">
                 <TableHeader className="bg-gray-50 sticky top-0 z-20">
@@ -170,6 +170,7 @@ export const GroupedStockTable: React.FC<GroupedStockTableProps> = ({
                 </TableBody>
               </Table>
             </div>
+            <ScrollBar orientation="horizontal" />
           </ScrollArea>
         </div>
       </div>

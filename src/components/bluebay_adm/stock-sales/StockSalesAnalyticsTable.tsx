@@ -6,7 +6,7 @@ import { TableEmptyState } from "./table/TableEmptyState";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GroupedStockTable } from "./table/GroupedStockTable";
 import { LayersIcon, ListIcon } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
   Table,
   TableBody,
@@ -46,7 +46,7 @@ export const StockSalesAnalyticsTable: React.FC<StockSalesAnalyticsTableProps> =
 
     return (
       <div className="relative border rounded-md">
-        <ScrollArea className="h-[calc(100vh-250px)]" orientation="both">
+        <ScrollArea className="h-[calc(100vh-250px)]">
           <div className="min-w-max">
             <Table className="w-auto min-w-full border-collapse">
               <TableHeader className="bg-gray-50 sticky top-0 z-20">
@@ -77,6 +77,7 @@ export const StockSalesAnalyticsTable: React.FC<StockSalesAnalyticsTableProps> =
               </TableBody>
             </Table>
           </div>
+          <ScrollBar orientation="horizontal" />
         </ScrollArea>
       </div>
     );
