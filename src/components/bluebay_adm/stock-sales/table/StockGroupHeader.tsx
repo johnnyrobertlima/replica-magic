@@ -19,7 +19,7 @@ export const StockGroupHeader: React.FC<StockGroupHeaderProps> = ({
 }) => {
   return (
     <TableRow 
-      className="bg-muted/50 hover:bg-muted/70 cursor-pointer transition-colors"
+      className="bg-muted/50 hover:bg-muted/70 cursor-pointer transition-colors group-header"
       onClick={onToggle}
     >
       <TableCell className="font-semibold flex items-center min-w-[250px] max-w-[250px] sticky left-0 z-20 bg-gray-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
@@ -34,31 +34,31 @@ export const StockGroupHeader: React.FC<StockGroupHeaderProps> = ({
       
       {visibleColumns.FISICO && (
         <TableCell className="font-medium text-right min-w-[120px]">
-          {formatTableNumber(group.totalFisico)}
+          {formatTableNumber(group.totalFisico, 0)}
         </TableCell>
       )}
       
       {visibleColumns.DISPONIVEL && (
         <TableCell className="font-medium text-right min-w-[120px]">
-          {formatTableNumber(group.totalDisponivel)}
+          {formatTableNumber(group.totalDisponivel, 0)}
         </TableCell>
       )}
       
       {visibleColumns.RESERVADO && (
         <TableCell className="font-medium text-right min-w-[120px]">
-          {formatTableNumber(group.totalReservado)}
+          {formatTableNumber(group.totalReservado, 0)}
         </TableCell>
       )}
       
       {visibleColumns.ENTROU && (
         <TableCell className="font-medium text-right min-w-[120px]">
-          {formatTableNumber(group.totalEntrou || 0)}
+          {formatTableNumber(group.totalEntrou || 0, 0)}
         </TableCell>
       )}
       
       {visibleColumns.QTD_VENDIDA && (
         <TableCell className="font-medium text-right min-w-[120px]">
-          {formatTableNumber(group.totalVendido)}
+          {formatTableNumber(group.totalVendido, 0)}
         </TableCell>
       )}
       

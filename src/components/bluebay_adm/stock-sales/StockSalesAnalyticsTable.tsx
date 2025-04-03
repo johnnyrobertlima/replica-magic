@@ -64,9 +64,9 @@ export const StockSalesAnalyticsTable: React.FC<StockSalesAnalyticsTableProps> =
         <ScrollArea className="h-[calc(100vh-250px)]">
           <div className="min-w-max">
             <Table className="w-auto min-w-full border-collapse">
-              <TableHeader className="sticky top-0 z-20">
+              <TableHeader className="sticky-header">
                 <TableRow>
-                  <TableSortableHeader sortKey="ITEM_CODIGO" label="Código" currentSortConfig={sortConfig} onSort={onSort} width="120px" />
+                  <TableSortableHeader sortKey="ITEM_CODIGO" label="Código" currentSortConfig={sortConfig} onSort={onSort} width="120px" isSticky={true} left={0} />
                   <TableSortableHeader sortKey="DESCRICAO" label="Descrição" currentSortConfig={sortConfig} onSort={onSort} width="180px" />
                   <TableSortableHeader sortKey="GRU_DESCRICAO" label="Grupo" currentSortConfig={sortConfig} onSort={onSort} width="150px" />
                   <TableSortableHeader sortKey="FISICO" label="Estoque Físico" currentSortConfig={sortConfig} onSort={onSort} width="120px" align="right" />
