@@ -12,7 +12,7 @@ export const fetchInBatches = async ({
   selectFields,
   filters = {},
   conditions = [],
-  batchSize = 1000, // Definido para 1000 itens por lote conforme solicitado
+  batchSize = 5000, // Aumentado para 5000 itens por lote
   logPrefix = "Dados",
   count = false
 }: FetchBatchesParams): Promise<any[]> => {
@@ -74,8 +74,8 @@ export const fetchInBatches = async ({
       // Aplica condições adicionais sem causar recursão de tipos
       query = applyConditionsToQuery(query, conditions);
       
-      // Executa a consulta
-      const { data, error, count: batchCount } = await query;
+      // Executa a consulta - Renomeado batchCount para resultCount para evitar conflito
+      const { data, error, count: resultCount } = await query;
       
       if (error) {
         console.error(`Erro ao buscar lote ${batchCount} de ${logPrefix}:`, error);
