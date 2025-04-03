@@ -2,8 +2,9 @@
 import React from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { formatCurrency } from "@/components/bluebay_adm/stock-sales/utils/formatters";
+import { formatCurrency, formatTableNumber, formatTablePercentage } from "../utils/formatters";
 import { GroupedStockData } from "@/hooks/bluebay_adm/stock-sales/useStockGrouping";
+import { StockTurnoverIndicator } from "./StockTurnoverIndicator";
 
 interface StockGroupHeaderProps {
   group: GroupedStockData;
@@ -24,24 +25,33 @@ export const StockGroupHeader: React.FC<StockGroupHeaderProps> = ({ group, onTog
         {group.groupName} ({group.totalItems} itens)
       </TableCell>
       <TableCell className="font-medium text-right">
-        {group.totalFisico.toLocaleString()}
+        {formatTableNumber(group.totalFisico)}
       </TableCell>
       <TableCell className="font-medium text-right">
-        {group.totalDisponivel.toLocaleString()}
+        {formatTableNumber(group.totalDisponivel)}
       </TableCell>
       <TableCell className="font-medium text-right">
-        {group.totalReservado.toLocaleString()}
+        {formatTableNumber(group.totalReservado)}
       </TableCell>
       <TableCell className="font-medium text-right">
-        {/* These would be calculated if we had the data */}
+        {formatTableNumber(group.totalQtdVendida)}
+      </TableCell>
+      <TableCell className="font-medium text-right">
+        {formatCurrency(group.totalValorVendido)}
+      </TableCell>
+      <TableCell className="font-medium text-right">
+        <StockTurnoverIndicator turnover={group.giroEstoqueGrupo} />
+      </TableCell>
+      <TableCell className="font-medium text-right">
+        {formatTablePercentage(group.percentualVendidoGrupo)}
+      </TableCell>
+      <TableCell className="font-medium text-right">
+        {Math.round(group.diasCoberturaGrupo).toLocaleString()}
+      </TableCell>
+      <TableCell className="font-medium text-center">
         -
       </TableCell>
       <TableCell className="font-medium text-right">
-        {/* These would be calculated if we had the data */}
-        -
-      </TableCell>
-      <TableCell className="font-medium text-right">
-        {/* These would be calculated if we had the data */}
         -
       </TableCell>
     </TableRow>

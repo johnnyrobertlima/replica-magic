@@ -9,6 +9,11 @@ export interface GroupedStockData {
   totalFisico: number;
   totalDisponivel: number;
   totalReservado: number;
+  totalQtdVendida: number;
+  totalValorVendido: number;
+  giroEstoqueGrupo: number;
+  percentualVendidoGrupo: number;
+  diasCoberturaGrupo: number;
   isExpanded: boolean;
 }
 
@@ -30,15 +35,41 @@ export const useStockGrouping = (items: StockItem[]) => {
     });
     
     // Convert to array format with totals
-    const groupedArray: GroupedStockData[] = Object.entries(groups).map(([groupName, groupItems]) => ({
-      groupName,
-      items: groupItems,
-      totalItems: groupItems.length,
-      totalFisico: groupItems.reduce((sum, item) => sum + (Number(item.FISICO) || 0), 0),
-      totalDisponivel: groupItems.reduce((sum, item) => sum + (Number(item.DISPONIVEL) || 0), 0),
-      totalReservado: groupItems.reduce((sum, item) => sum + (Number(item.RESERVADO) || 0), 0),
-      isExpanded: expandedGroups.has(groupName)
-    }));
+    const groupedArray: GroupedStockData[] = Object.entries(groups).map(([groupName, groupItems]) => {
+      // Calculate basic totals
+      const totalFisico = groupItems.reduce((sum, item) => sum + (Number(item.FISICO) || 0), 0);
+      const totalDisponivel = groupItems.reduce((sum, item) => sum + (Number(item.DISPONIVEL) || 0), 0);
+      const totalReservado = groupItems.reduce((sum, item) => sum + (Number(item.RESERVADO) || 0), 0);
+      const totalQtdVendida = groupItems.reduce((sum, item) => sum + (Number(item.QTD_VENDIDA) || 0), 0);
+      const totalValorVendido = groupItems.reduce((sum, item) => sum + (Number(item.VALOR_TOTAL_VENDIDO) || 0), 0);
+      
+      // Calculate performance indicators for the group
+      const giroEstoqueGrupo = totalFisico > 0 ? totalQtdVendida / totalFisico : 0;
+      
+      const percentualVendidoGrupo = (totalQtdVendida + totalFisico) > 0 
+        ? (totalQtdVendida / (totalQtdVendida + totalFisico)) * 100 
+        : 0;
+      
+      // Calcular dias de cobertura (baseado na média diária de vendas)
+      // Assumindo que os dados são de um período determinado (ex: 30 dias)
+      const mediaVendasDiaria = totalQtdVendida / 30; // Assumindo 30 dias para simplicidade
+      const diasCoberturaGrupo = mediaVendasDiaria > 0 ? totalFisico / mediaVendasDiaria : totalFisico > 0 ? 999 : 0;
+      
+      return {
+        groupName,
+        items: groupItems,
+        totalItems: groupItems.length,
+        totalFisico,
+        totalDisponivel,
+        totalReservado,
+        totalQtdVendida,
+        totalValorVendido,
+        giroEstoqueGrupo,
+        percentualVendidoGrupo,
+        diasCoberturaGrupo,
+        isExpanded: expandedGroups.has(groupName)
+      };
+    });
     
     // Sort by group name alphabetically
     groupedArray.sort((a, b) => a.groupName.localeCompare(b.groupName));

@@ -11,7 +11,7 @@ export const StockTurnoverIndicator: React.FC<StockTurnoverIndicatorProps> = ({ 
   if (turnover === null || turnover === undefined) return <span>-</span>;
   
   return (
-    <div className="flex items-center">
+    <div className="flex items-center justify-end">
       {formatTableNumber(turnover)}
       {turnover > 1 ? (
         <TrendingUp className="ml-1 h-4 w-4 text-green-600" />
