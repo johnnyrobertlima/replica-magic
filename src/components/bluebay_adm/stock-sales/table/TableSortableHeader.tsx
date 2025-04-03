@@ -43,9 +43,6 @@ export const TableSortableHeader: React.FC<TableSortableHeaderProps> = ({
       className={`cursor-pointer hover:bg-muted/50 whitespace-nowrap bg-gray-50 font-medium ${isSticky ? 'shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]' : ''}`}
       onClick={() => onSort(sortKey)}
       style={{ 
-        position: 'sticky', 
-        top: 0, 
-        zIndex: 30, 
         minWidth: width === 'auto' ? 'auto' : width,
         width: width === 'auto' ? 'auto' : width,
         ...stickyStyles

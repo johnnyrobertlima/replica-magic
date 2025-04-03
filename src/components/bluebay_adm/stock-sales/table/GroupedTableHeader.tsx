@@ -19,7 +19,7 @@ export const GroupedTableHeader: React.FC<GroupedTableHeaderProps> = ({
   visibleColumns
 }) => {
   return (
-    <TableHeader className="sticky-header">
+    <TableHeader className="sticky top-0 z-40 bg-gray-50 shadow-sm">
       <TableRow>
         <TableSortableHeader 
           sortKey="GRU_DESCRICAO" 
