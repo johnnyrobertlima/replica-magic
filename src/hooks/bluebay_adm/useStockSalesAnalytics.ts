@@ -30,6 +30,12 @@ export const useStockSalesAnalytics = () => {
     setMinCadastroYear,
     showZeroStock,
     setShowZeroStock,
+    showLowStock,
+    setShowLowStock,
+    filterLowStock,
+    showNewProducts,
+    setShowNewProducts,
+    filterNewProducts,
     availableGroups,
     updateAvailableGroups,
     clearFilters
@@ -44,7 +50,9 @@ export const useStockSalesAnalytics = () => {
     searchTerm,
     groupFilter,
     minCadastroYear,
-    showZeroStock
+    showZeroStock,
+    showLowStock,
+    showNewProducts
   );
 
   // Summary statistics
@@ -80,6 +88,12 @@ export const useStockSalesAnalytics = () => {
     minCadastroYear,
     setMinCadastroYear,
     showZeroStock,
-    setShowZeroStock
+    setShowZeroStock,
+    showLowStock,
+    setShowLowStock,
+    filterLowStock,
+    showNewProducts,
+    setShowNewProducts,
+    filterNewProducts
   };
 };

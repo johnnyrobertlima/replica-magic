@@ -1,31 +1,23 @@
 
 import React from "react";
 import { DatePickerWithRange } from "@/components/ui/date-range-picker";
-import { DateRange } from "@/hooks/bluebay_adm/useStockSalesAnalytics";
+import { DateRange } from "@/hooks/bluebay_adm/stock-sales/useStockSalesFilters";
 
 interface DateRangeFilterSectionProps {
   dateRange: DateRange;
-  onDateRangeChange: (range: DateRange) => void;
+  onDateRangeChange: (dateRange: DateRange) => void;
 }
 
 export const DateRangeFilterSection: React.FC<DateRangeFilterSectionProps> = ({
   dateRange,
-  onDateRangeChange,
+  onDateRangeChange
 }) => {
   return (
-    <div className="flex-1">
-      <DatePickerWithRange
-        dateRange={{
-          from: dateRange.startDate,
-          to: dateRange.endDate
-        }}
-        onDateRangeChange={(range) => {
-          onDateRangeChange({
-            startDate: range.from,
-            endDate: range.to
-          });
-        }}
-        className="w-full"
+    <div className="space-y-2">
+      <h3 className="text-sm font-medium text-gray-700">Período de Venda</h3>
+      <DatePickerWithRange 
+        dateRange={dateRange} 
+        onDateRangeChange={onDateRangeChange} 
       />
     </div>
   );

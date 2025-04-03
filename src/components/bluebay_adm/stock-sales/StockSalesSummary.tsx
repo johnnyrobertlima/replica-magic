@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 
 interface SummaryStats {
   totalItems: number;
@@ -27,11 +28,15 @@ interface SummaryStats {
 interface StockSalesSummaryProps {
   stats: SummaryStats | null;
   usingSampleData?: boolean;
+  onFilterLowStock: () => void;
+  onFilterNewProducts: () => void;
 }
 
 export const StockSalesSummary: React.FC<StockSalesSummaryProps> = ({ 
   stats, 
-  usingSampleData = false 
+  usingSampleData = false,
+  onFilterLowStock,
+  onFilterNewProducts
 }) => {
   if (!stats) return null;
 
@@ -73,7 +78,7 @@ export const StockSalesSummary: React.FC<StockSalesSummaryProps> = ({
           </CardContent>
         </Card>
         
-        <Card className="bg-red-50 border-red-200">
+        <Card className="bg-red-50 border-red-200 cursor-pointer hover:bg-red-100 transition-colors" onClick={onFilterLowStock}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Estoque Baixo</CardTitle>
             <AlertTriangle className="h-4 w-4 text-red-500" />
@@ -81,12 +86,12 @@ export const StockSalesSummary: React.FC<StockSalesSummaryProps> = ({
           <CardContent>
             <div className="text-2xl font-bold text-red-600">{stats.lowStockItems.toLocaleString('pt-BR')}</div>
             <p className="text-xs text-red-600">
-              Itens com menos de 5 unidades
+              Itens com menos de 100 unidades disponíveis
             </p>
           </CardContent>
         </Card>
         
-        <Card className="bg-blue-50 border-blue-200">
+        <Card className="bg-blue-50 border-blue-200 cursor-pointer hover:bg-blue-100 transition-colors" onClick={onFilterNewProducts}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Novos Produtos</CardTitle>
             <BadgeAlert className="h-4 w-4 text-blue-500" />

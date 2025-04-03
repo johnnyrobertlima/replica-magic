@@ -28,7 +28,9 @@ const BluebayAdmStockSalesAnalytics = () => {
     minCadastroYear,
     setMinCadastroYear,
     showZeroStock,
-    setShowZeroStock
+    setShowZeroStock,
+    filterLowStock,
+    filterNewProducts
   } = useStockSalesAnalytics();
 
   return (
@@ -63,6 +65,8 @@ const BluebayAdmStockSalesAnalytics = () => {
             <StockSalesSummary 
               stats={getSummaryStats()} 
               usingSampleData={usingSampleData}
+              onFilterLowStock={filterLowStock}
+              onFilterNewProducts={filterNewProducts}
             />
             
             <div className="bg-white shadow rounded-lg overflow-hidden border">

@@ -76,7 +76,7 @@ export const StockSalesAnalyticsTable: React.FC<StockSalesAnalyticsTableProps> =
             <div className="overflow-x-auto">
               <Table className="border-collapse min-w-full">
                 <TableHeader className="bg-gray-50 sticky top-0 z-10">
-                  <TableRow>
+                  <TableRow className="sticky top-0 z-10 bg-gray-50">
                     <TableSortableHeader sortKey="ITEM_CODIGO" label="Código" currentSortConfig={sortConfig} onSort={onSort} />
                     <TableSortableHeader sortKey="DESCRICAO" label="Descrição" currentSortConfig={sortConfig} onSort={onSort} />
                     <TableSortableHeader sortKey="GRU_DESCRICAO" label="Grupo" currentSortConfig={sortConfig} onSort={onSort} />

@@ -8,7 +8,9 @@ export const useStockSalesFiltering = (
   searchTerm: string,
   groupFilter: string,
   minCadastroYear: string,
-  showZeroStock: boolean
+  showZeroStock: boolean,
+  showLowStock: boolean = false,
+  showNewProducts: boolean = false
 ) => {
   const [filteredItems, setFilteredItems] = useState<StockItem[]>([]);
 
@@ -48,6 +50,18 @@ export const useStockSalesFiltering = (
       console.log(`Total após filtrar por ano de cadastro >= ${minCadastroYear}: ${result.length}`);
     }
     
+    // Apply low stock filter if enabled
+    if (showLowStock) {
+      result = result.filter(item => (item.DISPONIVEL || 0) < 100);
+      console.log(`Total após filtrar por estoque baixo (<100): ${result.length}`);
+    }
+    
+    // Apply new products filter if enabled
+    if (showNewProducts) {
+      result = result.filter(item => item.PRODUTO_NOVO);
+      console.log(`Total após filtrar por produtos novos: ${result.length}`);
+    }
+    
     // Apply stock filter only if user wants to hide zero stock items
     if (!showZeroStock) {
       result = result.filter(item => (item.FISICO || 0) > 0);
@@ -55,7 +69,7 @@ export const useStockSalesFiltering = (
     }
     
     setFilteredItems(result);
-  }, [items, searchTerm, groupFilter, minCadastroYear, showZeroStock]);
+  }, [items, searchTerm, groupFilter, minCadastroYear, showZeroStock, showLowStock, showNewProducts]);
 
   return { filteredItems };
 };

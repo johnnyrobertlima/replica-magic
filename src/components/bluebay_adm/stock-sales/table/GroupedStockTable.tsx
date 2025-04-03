@@ -80,7 +80,7 @@ export const GroupedStockTable: React.FC<GroupedStockTableProps> = ({
         <div className="overflow-x-auto">
           <Table className="border-collapse min-w-full">
             <TableHeader className="bg-gray-50 sticky top-0 z-10">
-              <TableRow>
+              <TableRow className="sticky top-0 z-10 bg-gray-50">
                 <TableSortableHeader sortKey="GRU_DESCRICAO" label="Grupo" currentSortConfig={sortConfig} onSort={onSort} />
                 <TableSortableHeader sortKey="FISICO" label="Estoque Físico" currentSortConfig={sortConfig} onSort={onSort} />
                 <TableSortableHeader sortKey="DISPONIVEL" label="Disponível" currentSortConfig={sortConfig} onSort={onSort} />

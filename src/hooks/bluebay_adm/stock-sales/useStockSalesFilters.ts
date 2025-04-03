@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
-import { format, subDays } from "date-fns";
+import { StockItem } from "@/services/bluebay/stockSales/types";
+import { subYears } from "date-fns";
 
 export interface DateRange {
   startDate: Date | null;
@@ -8,20 +9,16 @@ export interface DateRange {
 }
 
 export const useStockSalesFilters = () => {
-  // Filter states
   const [searchTerm, setSearchTerm] = useState("");
   const [groupFilter, setGroupFilter] = useState("all");
   const [availableGroups, setAvailableGroups] = useState<string[]>([]);
   const [minCadastroYear, setMinCadastroYear] = useState("all");
-  const [showZeroStock, setShowZeroStock] = useState(true); // Set to true to show all items by default
-
-  // Initialize available groups from items
-  const updateAvailableGroups = (items: any[]) => {
-    if (!items || items.length === 0) {
-      setAvailableGroups([]);
-      return;
-    }
-
+  const [showZeroStock, setShowZeroStock] = useState(true);
+  const [showLowStock, setShowLowStock] = useState(false);
+  const [showNewProducts, setShowNewProducts] = useState(false);
+  
+  // Update available groups based on items
+  const updateAvailableGroups = (items: StockItem[]) => {
     const groups = new Set<string>();
     
     items.forEach(item => {
@@ -30,18 +27,31 @@ export const useStockSalesFilters = () => {
       }
     });
     
-    const sortedGroups = Array.from(groups).sort((a, b) => a.localeCompare(b));
-    setAvailableGroups(sortedGroups);
+    setAvailableGroups(Array.from(groups).sort());
   };
-
-  // Function to clear all filters
+  
+  // Filter by low stock (less than 100 units available)
+  const filterLowStock = () => {
+    setShowLowStock(true);
+    setShowNewProducts(false);
+  };
+  
+  // Filter by new products
+  const filterNewProducts = () => {
+    setShowNewProducts(true);
+    setShowLowStock(false);
+  };
+  
+  // Clear all filters
   const clearFilters = () => {
     setSearchTerm("");
     setGroupFilter("all");
     setMinCadastroYear("all");
-    setShowZeroStock(true); // Reset to show all items
+    setShowZeroStock(true);
+    setShowLowStock(false);
+    setShowNewProducts(false);
   };
-
+  
   return {
     searchTerm,
     setSearchTerm,
@@ -51,6 +61,12 @@ export const useStockSalesFilters = () => {
     setMinCadastroYear,
     showZeroStock,
     setShowZeroStock,
+    showLowStock,
+    setShowLowStock,
+    filterLowStock,
+    showNewProducts,
+    setShowNewProducts,
+    filterNewProducts,
     availableGroups,
     updateAvailableGroups,
     clearFilters
