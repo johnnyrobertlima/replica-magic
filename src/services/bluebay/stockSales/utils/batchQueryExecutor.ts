@@ -13,7 +13,8 @@ export const fetchInBatches = async ({
   filters = {},
   conditions = [],
   batchSize = 1000, // Definido para 1000 itens por lote conforme solicitado
-  logPrefix = "Dados"
+  logPrefix = "Dados",
+  count = false
 }: FetchBatchesParams): Promise<any[]> => {
   try {
     let offset = 0;
@@ -24,6 +25,33 @@ export const fetchInBatches = async ({
     
     console.log(`Iniciando busca em lotes para ${table}. Tamanho do lote: ${batchSize}`);
     
+    // Se count=true, primeiro obter a contagem total para melhor controle
+    let totalRecords = null;
+    if (count) {
+      let countQuery = supabase
+        .from(table)
+        .select(selectFields, { count: 'exact' });
+      
+      // Aplica filtros por igualdade
+      for (const [key, value] of Object.entries(filters)) {
+        if (value !== undefined && value !== null) {
+          countQuery = countQuery.eq(key, value);
+        }
+      }
+      
+      // Aplica condições adicionais
+      countQuery = applyConditionsToQuery(countQuery, conditions);
+      
+      const { count: exactCount, error: countError } = await countQuery;
+      
+      if (countError) {
+        console.error(`Erro ao obter contagem para ${table}:`, countError);
+      } else if (exactCount !== null) {
+        totalRecords = exactCount;
+        console.log(`Total estimado de registros em ${table}: ${totalRecords}`);
+      }
+    }
+    
     while (hasMore) {
       batchCount++;
       console.log(`Buscando lote ${batchCount} de ${logPrefix} (offset: ${offset}, tamanho: ${batchSize})`);
@@ -31,7 +59,7 @@ export const fetchInBatches = async ({
       // Inicia a consulta básica
       let query = supabase
         .from(table)
-        .select(selectFields);
+        .select(selectFields, { count: 'exact' });
       
       // Aplica a paginação
       query = query.range(offset, offset + batchSize - 1);
@@ -47,7 +75,7 @@ export const fetchInBatches = async ({
       query = applyConditionsToQuery(query, conditions);
       
       // Executa a consulta
-      const { data, error, count } = await query;
+      const { data, error, count: batchCount } = await query;
       
       if (error) {
         console.error(`Erro ao buscar lote ${batchCount} de ${logPrefix}:`, error);
@@ -66,6 +94,10 @@ export const fetchInBatches = async ({
         hasMore = data.length === batchSize;
         
         console.log(`Processado lote ${batchCount} de ${logPrefix}: ${data.length} registros. Total acumulado: ${totalProcessed}`);
+        
+        if (totalRecords) {
+          console.log(`Progresso: ${totalProcessed}/${totalRecords} (${Math.round(totalProcessed/totalRecords*100)}%)`);
+        }
       }
     }
     
