@@ -86,14 +86,18 @@ const executeRpcQuery = async (
   offset: number = 0,
   limit: number = 1000
 ) => {
+  // As seen in the types diff, the RPC function can be called with two different parameter sets
+  // Use a type cast to inform TypeScript that we're using the paginated version
+  const params: any = { 
+    p_start_date: startDate,
+    p_end_date: endDate,
+    p_new_product_date: newProductDate,
+    p_limit: limit,
+    p_offset: offset
+  };
+  
   return await supabase
-    .rpc('get_stock_sales_analytics', { 
-      p_start_date: startDate,
-      p_end_date: endDate,
-      p_new_product_date: newProductDate,
-      p_limit: limit,     // Add limit parameter to the RPC function
-      p_offset: offset    // Add offset parameter to the RPC function
-    }, {
+    .rpc('get_stock_sales_analytics', params, {
       head: false,
       count: 'exact'
     });
