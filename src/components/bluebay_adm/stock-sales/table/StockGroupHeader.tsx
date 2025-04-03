@@ -17,12 +17,14 @@ export const StockGroupHeader: React.FC<StockGroupHeaderProps> = ({ group, onTog
       className="bg-muted/50 hover:bg-muted/70 cursor-pointer transition-colors"
       onClick={onToggle}
     >
-      <TableCell className="font-semibold flex items-center w-[250px]">
-        {group.isExpanded ? 
-          <ChevronDown className="h-4 w-4 mr-2" /> : 
-          <ChevronRight className="h-4 w-4 mr-2" />
-        }
-        {group.groupName} ({group.totalItems} itens)
+      <TableCell className="font-semibold w-[250px]">
+        <div className="flex items-center">
+          {group.isExpanded ? 
+            <ChevronDown className="h-4 w-4 mr-2 flex-shrink-0" /> : 
+            <ChevronRight className="h-4 w-4 mr-2 flex-shrink-0" />
+          }
+          <span className="truncate">{group.groupName} ({group.totalItems} itens)</span>
+        </div>
       </TableCell>
       <TableCell className="font-medium text-right w-[150px]">
         {formatTableNumber(group.totalFisico)}

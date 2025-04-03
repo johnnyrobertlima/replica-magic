@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -40,6 +40,9 @@ export const GroupedStockTable: React.FC<GroupedStockTableProps> = ({
     collapseAllGroups
   } = useStockGrouping(items);
 
+  // Use memoization to prevent unnecessary recalculations
+  const memoizedGroupedData = useMemo(() => groupedData, [groupedData]);
+
   if (isLoading) {
     return <TableLoadingState />;
   }
@@ -52,7 +55,7 @@ export const GroupedStockTable: React.FC<GroupedStockTableProps> = ({
     <div className="relative">
       <div className="flex justify-between items-center mb-4">
         <div className="text-sm text-gray-500">
-          {groupedData.length} grupos, {items.length} itens no total
+          {memoizedGroupedData.length} grupos, {items.length} itens no total
         </div>
         <div className="flex gap-2">
           <Button 
@@ -164,7 +167,7 @@ export const GroupedStockTable: React.FC<GroupedStockTableProps> = ({
         <ScrollArea className="h-[calc(100vh-380px)]">
           <Table className="border-collapse">
             <TableBody>
-              {groupedData.map((group) => (
+              {memoizedGroupedData.map((group) => (
                 <React.Fragment key={group.groupName}>
                   {/* Group Header Row */}
                   <StockGroupHeader 
@@ -172,7 +175,7 @@ export const GroupedStockTable: React.FC<GroupedStockTableProps> = ({
                     onToggle={() => toggleGroup(group.groupName)}
                   />
                   
-                  {/* Group Items (when expanded) */}
+                  {/* Group Items (when expanded) - only render if the group is expanded */}
                   {group.isExpanded && group.items.map((item, itemIndex) => (
                     <StockSalesTableRow 
                       key={`${item.ITEM_CODIGO}-${itemIndex}`} 

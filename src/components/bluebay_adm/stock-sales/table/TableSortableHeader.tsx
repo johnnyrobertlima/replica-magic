@@ -26,13 +26,13 @@ export const TableSortableHeader: React.FC<TableSortableHeaderProps> = ({
   
   return (
     <TableHead 
-      className={`cursor-pointer hover:bg-muted/50 ${className}`}
+      className={`cursor-pointer hover:bg-muted/50 sticky top-0 z-20 ${className}`}
       onClick={() => onSort(sortKey)}
     >
-      <div className="flex items-center">
+      <div className="flex items-center w-full justify-start">
         {label}
         <ArrowUpDown 
-          className={`inline ml-1 h-4 w-4 ${isActive ? 'text-primary' : 'text-gray-400'}`}
+          className={`ml-1 h-4 w-4 flex-shrink-0 ${isActive ? 'text-primary' : 'text-gray-400'}`}
         />
       </div>
     </TableHead>

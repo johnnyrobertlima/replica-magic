@@ -2,7 +2,7 @@
 import React from "react";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { StockItem } from "@/services/bluebay/stockSales/types";
-import { formatCurrency, formatPercentage } from "../utils/formatters";
+import { formatCurrency, formatPercentage, formatTableNumber } from "../utils/formatters";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -28,8 +28,16 @@ export const StockSalesTableRow: React.FC<StockSalesTableRowProps> = ({
       {!isGroupedView && (
         <>
           <TableCell className="font-medium w-[120px]">{item.ITEM_CODIGO}</TableCell>
-          <TableCell className="w-[250px]">{item.DESCRICAO || '-'}</TableCell>
-          <TableCell className="w-[150px]">{item.GRU_DESCRICAO || 'Sem Grupo'}</TableCell>
+          <TableCell className="w-[250px]">
+            <span className="line-clamp-1" title={item.DESCRICAO || '-'}>
+              {item.DESCRICAO || '-'}
+            </span>
+          </TableCell>
+          <TableCell className="w-[150px]">
+            <span className="line-clamp-1" title={item.GRU_DESCRICAO || 'Sem Grupo'}>
+              {item.GRU_DESCRICAO || 'Sem Grupo'}
+            </span>
+          </TableCell>
         </>
       )}
       
@@ -37,15 +45,17 @@ export const StockSalesTableRow: React.FC<StockSalesTableRowProps> = ({
         <TableCell className={`font-medium ${paddingClassName} w-[250px]`}>
           <div className="flex flex-col">
             <span>{item.ITEM_CODIGO}</span>
-            <span className="text-sm text-gray-500">{item.DESCRICAO || '-'}</span>
+            <span className="text-sm text-gray-500 truncate" title={item.DESCRICAO || '-'}>
+              {item.DESCRICAO || '-'}
+            </span>
           </div>
         </TableCell>
       )}
       
-      <TableCell className="text-right w-[150px]">{Number(item.FISICO || 0).toLocaleString()}</TableCell>
-      <TableCell className="text-right w-[120px]">{Number(item.DISPONIVEL || 0).toLocaleString()}</TableCell>
-      <TableCell className="text-right w-[120px]">{Number(item.RESERVADO || 0).toLocaleString()}</TableCell>
-      <TableCell className="text-right w-[130px]">{Number(item.QTD_VENDIDA || 0).toLocaleString()}</TableCell>
+      <TableCell className="text-right w-[150px]">{formatTableNumber(item.FISICO || 0)}</TableCell>
+      <TableCell className="text-right w-[120px]">{formatTableNumber(item.DISPONIVEL || 0)}</TableCell>
+      <TableCell className="text-right w-[120px]">{formatTableNumber(item.RESERVADO || 0)}</TableCell>
+      <TableCell className="text-right w-[130px]">{formatTableNumber(item.QTD_VENDIDA || 0)}</TableCell>
       <TableCell className="text-right w-[150px]">{formatCurrency(item.VALOR_TOTAL_VENDIDO || 0)}</TableCell>
       <TableCell className="text-right w-[120px]">{Number(item.GIRO_ESTOQUE || 0).toFixed(2)}</TableCell>
       <TableCell className="text-right w-[120px]">{formatPercentage(item.PERCENTUAL_ESTOQUE_VENDIDO || 0)}</TableCell>

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { BluebayAdmBanner } from "@/components/bluebay_adm/BluebayAdmBanner";
 import { BluebayAdmMenu } from "@/components/bluebay_adm/BluebayAdmMenu";
 import { useStockSalesAnalytics } from "@/hooks/bluebay_adm/useStockSalesAnalytics";
@@ -32,6 +32,9 @@ const BluebayAdmStockSalesAnalytics = () => {
     filterLowStock,
     filterNewProducts
   } = useStockSalesAnalytics();
+
+  // Use memoization to prevent unnecessary re-renders
+  const memoizedItems = useMemo(() => items, [items]);
 
   return (
     <main className="container-fluid p-0 max-w-full">
@@ -72,7 +75,7 @@ const BluebayAdmStockSalesAnalytics = () => {
             <div className="bg-white shadow rounded-lg overflow-hidden border">
               <div className="p-4 sm:p-6">
                 <StockSalesAnalyticsTable 
-                  items={items}
+                  items={memoizedItems}
                   isLoading={isLoading}
                   sortConfig={sortConfig}
                   onSort={handleSort}
