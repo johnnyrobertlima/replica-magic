@@ -88,40 +88,25 @@ const processRpcResult = (data: any): StockItem[] => {
  * Transforms raw data into StockItem objects
  */
 const transformDataToStockItems = (data: any[]): StockItem[] => {
-  // Use a Set to track item codes we've already processed to avoid duplicates
-  const processedItemCodes = new Set<string>();
-  const transformedData: StockItem[] = [];
-  
-  for (const item of data) {
-    // Skip this item if we've already processed it
-    if (processedItemCodes.has(item.item_codigo)) {
-      console.log(`Skipping duplicate item: ${item.item_codigo}`);
-      continue;
-    }
-    
-    // Add this item code to our processed set
-    processedItemCodes.add(item.item_codigo);
-    
-    transformedData.push({
-      ITEM_CODIGO: item.item_codigo,
-      DESCRICAO: item.descricao,
-      GRU_DESCRICAO: item.gru_descricao,
-      DATACADASTRO: item.datacadastro,
-      FISICO: item.fisico,
-      DISPONIVEL: item.disponivel,
-      RESERVADO: item.reservado,
-      ENTROU: item.entrou,
-      LIMITE: item.limite,
-      QTD_VENDIDA: item.qtd_vendida,
-      VALOR_TOTAL_VENDIDO: item.valor_total_vendido,
-      DATA_ULTIMA_VENDA: item.data_ultima_venda,
-      GIRO_ESTOQUE: item.giro_estoque,
-      PERCENTUAL_ESTOQUE_VENDIDO: item.percentual_estoque_vendido,
-      DIAS_COBERTURA: item.dias_cobertura,
-      PRODUTO_NOVO: item.produto_novo,
-      RANKING: item.ranking
-    });
-  }
-  
-  return transformedData;
+  // We're no longer skipping items with the same ITEM_CODIGO
+  // Just transform each item directly without filtering duplicates
+  return data.map(item => ({
+    ITEM_CODIGO: item.item_codigo,
+    DESCRICAO: item.descricao,
+    GRU_DESCRICAO: item.gru_descricao,
+    DATACADASTRO: item.datacadastro,
+    FISICO: item.fisico,
+    DISPONIVEL: item.disponivel,
+    RESERVADO: item.reservado,
+    ENTROU: item.entrou,
+    LIMITE: item.limite,
+    QTD_VENDIDA: item.qtd_vendida,
+    VALOR_TOTAL_VENDIDO: item.valor_total_vendido,
+    DATA_ULTIMA_VENDA: item.data_ultima_venda,
+    GIRO_ESTOQUE: item.giro_estoque,
+    PERCENTUAL_ESTOQUE_VENDIDO: item.percentual_estoque_vendido,
+    DIAS_COBERTURA: item.dias_cobertura,
+    PRODUTO_NOVO: item.produto_novo,
+    RANKING: item.ranking
+  }));
 };

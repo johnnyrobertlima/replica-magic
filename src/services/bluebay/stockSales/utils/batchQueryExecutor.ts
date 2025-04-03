@@ -14,7 +14,7 @@ export const fetchInBatches = async ({
   conditions = [],
   batchSize = 5000, // Aumentado para 5000 itens por lote para melhor desempenho
   logPrefix = "Dados",
-  count = false
+  count = true
 }: FetchBatchesParams): Promise<any[]> => {
   try {
     let offset = 0;

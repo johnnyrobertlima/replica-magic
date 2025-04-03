@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { StockItem } from "@/services/bluebay/stockSales/types";
 import { TableLoadingState } from "./table/TableLoadingState";
 import { TableEmptyState } from "./table/TableEmptyState";
@@ -32,33 +32,9 @@ export const StockSalesAnalyticsTable: React.FC<StockSalesAnalyticsTableProps> =
   sortConfig,
   onSort,
 }) => {
-  const [visibleItems, setVisibleItems] = useState<StockItem[]>([]);
-  const [displayCount, setDisplayCount] = useState(500); // Increased initial load count
+  // Removed displayCount state - always show all items
   const [viewMode, setViewMode] = useState<"list" | "grouped">("grouped"); // Default to grouped view
   
-  // Load a limited number of items initially for better performance
-  useEffect(() => {
-    if (items.length > 0) {
-      setVisibleItems(items.slice(0, displayCount));
-      console.log(`Carregando ${displayCount} itens de ${items.length} disponíveis`);
-    } else {
-      setVisibleItems([]);
-    }
-  }, [items, displayCount]);
-
-  // Load more items when scrolling
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const target = e.currentTarget;
-    if (
-      target.scrollHeight - target.scrollTop - target.clientHeight < 300 &&
-      displayCount < items.length
-    ) {
-      const newDisplayCount = Math.min(displayCount + 500, items.length); // Load 500 more items at a time
-      console.log(`Carregando mais itens: ${displayCount} -> ${newDisplayCount}`);
-      setDisplayCount(newDisplayCount);
-    }
-  };
-
   if (isLoading) {
     return <TableLoadingState />;
   }
@@ -67,25 +43,12 @@ export const StockSalesAnalyticsTable: React.FC<StockSalesAnalyticsTableProps> =
     return <TableEmptyState />;
   }
 
-  // Create a Set to track item codes and prevent duplicates
-  const processedCodes = new Set<string>();
-  
-  // Filter out duplicate items based on ITEM_CODIGO
-  const uniqueItems = visibleItems.filter(item => {
-    if (processedCodes.has(item.ITEM_CODIGO)) {
-      return false;
-    }
-    processedCodes.add(item.ITEM_CODIGO);
-    return true;
-  });
-
   return (
     <div className="relative">
       <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as "list" | "grouped")}>
         <div className="flex justify-between items-center mb-4">
           <div className="text-sm text-gray-500">
-            Exibindo {uniqueItems.length} de {items.length} registros. 
-            {displayCount < items.length && " Role para baixo para carregar mais."}
+            Exibindo total de {items.length} registros.
           </div>
           <TabsList>
             <TabsTrigger value="grouped" className="flex items-center gap-1">
@@ -101,7 +64,7 @@ export const StockSalesAnalyticsTable: React.FC<StockSalesAnalyticsTableProps> =
         
         <TabsContent value="grouped" className="mt-0">
           <GroupedStockTable 
-            items={uniqueItems}
+            items={items}
             isLoading={isLoading}
             sortConfig={sortConfig}
             onSort={onSort}
@@ -109,7 +72,7 @@ export const StockSalesAnalyticsTable: React.FC<StockSalesAnalyticsTableProps> =
         </TabsContent>
         
         <TabsContent value="list" className="mt-0">
-          <ScrollArea className="h-[calc(100vh-250px)]" onScrollCapture={handleScroll}>
+          <ScrollArea className="h-[calc(100vh-250px)]">
             <div className="overflow-x-auto">
               <Table className="border-collapse min-w-full">
                 <TableHeader className="bg-gray-50 sticky top-0 z-10">
@@ -130,7 +93,7 @@ export const StockSalesAnalyticsTable: React.FC<StockSalesAnalyticsTableProps> =
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {uniqueItems.map((item, index) => (
+                  {items.map((item, index) => (
                     <StockSalesTableRow 
                       key={`${item.ITEM_CODIGO}-${index}`} 
                       item={item} 
@@ -141,17 +104,6 @@ export const StockSalesAnalyticsTable: React.FC<StockSalesAnalyticsTableProps> =
               </Table>
             </div>
           </ScrollArea>
-          
-          {displayCount < items.length && (
-            <div className="mt-4 text-center">
-              <button 
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-                onClick={() => setDisplayCount(prev => Math.min(prev + 1000, items.length))}
-              >
-                Carregar mais ({items.length - displayCount} restantes)
-              </button>
-            </div>
-          )}
         </TabsContent>
       </Tabs>
     </div>

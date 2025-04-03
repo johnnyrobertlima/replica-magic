@@ -32,11 +32,8 @@ export const useStockSalesData = () => {
           // Use the enhanced fetching with fallbacks
           const data = await fetchStockSalesAnalytics(startDateFormatted, endDateFormatted);
           
-          // Process the data to ensure uniqueness and integrity
-          const processedData = processDataForDisplay(data);
-          
-          // Update the state with the processed data
-          updateStateWithData(processedData);
+          // Update the state with the processed data, no longer filtering duplicates
+          updateStateWithData(data);
         } catch (fetchError) {
           handleDataFetchError(fetchError);
         }
@@ -53,42 +50,19 @@ export const useStockSalesData = () => {
   };
 
   /**
-   * Processes data to ensure uniqueness and data integrity
-   */
-  const processDataForDisplay = (data: StockItem[]): StockItem[] => {
-    // Check if data is using sample data
-    setUsingSampleData(data.length > 0 && data[0].hasOwnProperty('isSampleData'));
-    
-    // Log the total count of items received
-    console.log(`Total de itens recebidos antes do processamento: ${data.length}`);
-    
-    // Create a Map to store unique items by their ITEM_CODIGO
-    const uniqueItemsMap = new Map<string, StockItem>();
-    
-    // Process the data to ensure we only have unique items
-    data.forEach(item => {
-      // Only add the item if it doesn't already exist in our map
-      if (!uniqueItemsMap.has(item.ITEM_CODIGO)) {
-        uniqueItemsMap.set(item.ITEM_CODIGO, item);
-      } else {
-        console.log(`Duplicate item found and skipped: ${item.ITEM_CODIGO}`);
-      }
-    });
-    
-    // Convert the Map values back to an array
-    const uniqueItems = Array.from(uniqueItemsMap.values());
-    console.log(`Total de itens únicos após processamento: ${uniqueItems.length}`);
-    
-    return uniqueItems;
-  };
-
-  /**
    * Updates state based on processed data
    */
-  const updateStateWithData = (uniqueItems: StockItem[]) => {
-    setItems(uniqueItems);
+  const updateStateWithData = (items: StockItem[]) => {
+    // Check if data is using sample data
+    setUsingSampleData(items.length > 0 && items[0].hasOwnProperty('isSampleData'));
     
-    if (uniqueItems.length === 0) {
+    // Log the total count of items received
+    console.log(`Total de itens recebidos: ${items.length}`);
+    
+    // Set items directly without filtering duplicates
+    setItems(items);
+    
+    if (items.length === 0) {
       toast({
         title: "Nenhum dado encontrado",
         description: "Não foram encontrados dados para o período selecionado.",
@@ -97,7 +71,7 @@ export const useStockSalesData = () => {
     } else {
       toast({
         title: "Dados carregados",
-        description: `Carregados ${uniqueItems.length} registros de estoque e vendas.`,
+        description: `Carregados ${items.length} registros de estoque e vendas.`,
         variant: "default",
       });
     }
