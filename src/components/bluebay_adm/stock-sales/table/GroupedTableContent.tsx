@@ -1,5 +1,5 @@
 
-import React, { useMemo } from "react";
+import React from "react";
 import { Table } from "@/components/ui/table";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { GroupedStockData } from "@/hooks/bluebay_adm/stock-sales/useStockGrouping";
