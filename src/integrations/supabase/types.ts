@@ -1476,6 +1476,14 @@ export type Database = {
       }
     }
     Views: {
+      bluebay_view_faturamento_resumo: {
+        Row: {
+          ITEM_CODIGO: string | null
+          media_valor_unitario: number | null
+          total_quantidade: number | null
+        }
+        Relationships: []
+      }
       mv_faturamento_resumido: {
         Row: {
           CENTROCUSTO: string | null

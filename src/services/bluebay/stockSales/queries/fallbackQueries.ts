@@ -7,7 +7,8 @@ import { processStockAndSalesData } from "../dataProcessingUtils";
 import {
   fetchStockItemsPaginated,
   fetchItemDetailsBatch,
-  fetchSalesDataPaginated
+  fetchSalesDataPaginated,
+  fetchCostDataFromView
 } from "../utils/queryUtils";
 
 /**
@@ -57,11 +58,17 @@ export const fetchStockSalesWithPagination = async (
     const allSalesData = await fetchSalesDataPaginated(startDate, endDate);
     console.log(`Obtidos ${allSalesData.length} registros de vendas com paginação`);
     
+    // Fetch cost data from the view
+    console.log("Etapa 6: Buscando dados de custo da view");
+    const costData = await fetchCostDataFromView();
+    console.log(`Obtidos ${costData.length} registros de custo da view`);
+    
     // Process the data using the utility function
-    console.log("Etapa 6: Processando dados para cálculo dos indicadores");
+    console.log("Etapa 7: Processando dados para cálculo dos indicadores");
     const combinedData = processStockAndSalesData(
       allStockItems,
       allSalesData,
+      costData,
       sixtyDaysAgo,
       startDate,
       endDate

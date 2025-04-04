@@ -7,7 +7,8 @@ import { processStockAndSalesData } from "../dataProcessingUtils";
 import {
   fetchStockData,
   fetchItemDataInBatches,
-  fetchSalesDataInBatches
+  fetchSalesDataInBatches,
+  fetchCostDataFromView
 } from "../utils/queryUtils";
 
 /**
@@ -81,11 +82,17 @@ export const fetchStockSalesWithDirectQueries = async (
       const allSalesData = await fetchSalesDataInBatches(startDate, endDate);
       console.log(`Obtidos ${allSalesData.length} registros de vendas`);
       
+      // Fetch cost data from the view
+      console.log("Etapa 7: Buscando dados de custo da view");
+      const costData = await fetchCostDataFromView();
+      console.log(`Obtidos ${costData.length} registros de custo da view`);
+      
       // Process the data to calculate analytics
-      console.log("Etapa 7: Processando dados para cálculo de indicadores");
+      console.log("Etapa 8: Processando dados para cálculo de indicadores");
       const processedData = processStockAndSalesData(
         combinedStockData, 
-        allSalesData, 
+        allSalesData,
+        costData,
         sixtyDaysAgo, 
         startDate, 
         endDate

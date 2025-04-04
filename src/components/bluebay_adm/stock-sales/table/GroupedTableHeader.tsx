@@ -1,8 +1,8 @@
 
 import React from "react";
-import { StockItem } from "@/services/bluebay/stockSales/types";
-import { TableHead, TableRow } from "@/components/ui/table";
+import { TableHeader, TableRow } from "@/components/ui/table";
 import { TableSortableHeader } from "./TableSortableHeader";
+import { StockItem } from "@/services/bluebay/stockSales/types";
 
 interface GroupedTableHeaderProps {
   sortConfig: {
@@ -19,143 +19,175 @@ export const GroupedTableHeader: React.FC<GroupedTableHeaderProps> = ({
   visibleColumns
 }) => {
   return (
-    <TableRow className="sticky-header top-0 z-40 bg-white">
-      <TableSortableHeader 
-        sortKey="ITEM_CODIGO" 
-        label="Código" 
-        currentSortConfig={sortConfig} 
-        onSort={onSort} 
-        width="120px"
-        isSticky={true}
-        left={0}
-      />
-      <TableSortableHeader 
-        sortKey="DESCRICAO" 
-        label="Descrição" 
-        currentSortConfig={sortConfig} 
-        onSort={onSort} 
-        width="180px"
-      />
-      {visibleColumns.FISICO && (
+    <TableHeader className="sticky-header">
+      <TableRow>
         <TableSortableHeader 
-          sortKey="FISICO" 
-          label="Estoque Físico" 
+          sortKey="ITEM_CODIGO" 
+          label="Código" 
           currentSortConfig={sortConfig} 
           onSort={onSort} 
           width="120px"
-          align="right"
+          isSticky={true}
+          left={0}
         />
-      )}
-      {visibleColumns.DISPONIVEL && (
         <TableSortableHeader 
-          sortKey="DISPONIVEL" 
-          label="Disponível" 
+          sortKey="DESCRICAO" 
+          label="Descrição" 
           currentSortConfig={sortConfig} 
           onSort={onSort} 
-          width="120px"
-          align="right"
+          width="180px"
         />
-      )}
-      {visibleColumns.RESERVADO && (
         <TableSortableHeader 
-          sortKey="RESERVADO" 
-          label="Reservado" 
-          currentSortConfig={sortConfig} 
-          onSort={onSort} 
-          width="120px"
-          align="right"
-        />
-      )}
-      {visibleColumns.ENTROU && (
-        <TableSortableHeader 
-          sortKey="ENTROU" 
-          label="Entrou" 
-          currentSortConfig={sortConfig} 
-          onSort={onSort} 
-          width="120px"
-          align="right"
-        />
-      )}
-      {visibleColumns.QTD_VENDIDA && (
-        <TableSortableHeader 
-          sortKey="QTD_VENDIDA" 
-          label="Qtd. Vendida" 
-          currentSortConfig={sortConfig} 
-          onSort={onSort} 
-          width="120px"
-          align="right"
-        />
-      )}
-      {visibleColumns.VALOR_TOTAL_VENDIDO && (
-        <TableSortableHeader 
-          sortKey="VALOR_TOTAL_VENDIDO" 
-          label="Valor Vendido" 
+          sortKey="GRU_DESCRICAO" 
+          label="Grupo" 
           currentSortConfig={sortConfig} 
           onSort={onSort} 
           width="150px"
-          align="right"
         />
-      )}
-      {visibleColumns.PRECO_MEDIO && (
-        <TableSortableHeader 
-          sortKey="PRECO_MEDIO" 
-          label="Preço Médio" 
-          currentSortConfig={sortConfig} 
-          onSort={onSort} 
-          width="150px"
-          align="right"
-        />
-      )}
-      {visibleColumns.GIRO_ESTOQUE && (
-        <TableSortableHeader 
-          sortKey="GIRO_ESTOQUE" 
-          label="Giro Estoque" 
-          currentSortConfig={sortConfig} 
-          onSort={onSort} 
-          width="120px"
-          align="right"
-        />
-      )}
-      {visibleColumns.PERCENTUAL_ESTOQUE_VENDIDO && (
-        <TableSortableHeader 
-          sortKey="PERCENTUAL_ESTOQUE_VENDIDO" 
-          label="% Vendido" 
-          currentSortConfig={sortConfig} 
-          onSort={onSort} 
-          width="100px"
-          align="right"
-        />
-      )}
-      {visibleColumns.DIAS_COBERTURA && (
-        <TableSortableHeader 
-          sortKey="DIAS_COBERTURA" 
-          label="Dias Cobertura" 
-          currentSortConfig={sortConfig} 
-          onSort={onSort} 
-          width="120px"
-          align="right"
-        />
-      )}
-      {visibleColumns.DATA_ULTIMA_VENDA && (
-        <TableSortableHeader 
-          sortKey="DATA_ULTIMA_VENDA" 
-          label="Última Venda" 
-          currentSortConfig={sortConfig} 
-          onSort={onSort} 
-          width="120px"
-          align="center"
-        />
-      )}
-      {visibleColumns.RANKING && (
-        <TableSortableHeader 
-          sortKey="RANKING" 
-          label="Ranking" 
-          currentSortConfig={sortConfig} 
-          onSort={onSort} 
-          width="100px"
-          align="right"
-        />
-      )}
-    </TableRow>
+        
+        {visibleColumns.FISICO && (
+          <TableSortableHeader 
+            sortKey="FISICO" 
+            label="Estoque Físico" 
+            currentSortConfig={sortConfig} 
+            onSort={onSort} 
+            width="120px" 
+            align="right"
+          />
+        )}
+        
+        {visibleColumns.DISPONIVEL && (
+          <TableSortableHeader 
+            sortKey="DISPONIVEL" 
+            label="Disponível" 
+            currentSortConfig={sortConfig} 
+            onSort={onSort} 
+            width="120px" 
+            align="right"
+          />
+        )}
+        
+        {visibleColumns.RESERVADO && (
+          <TableSortableHeader 
+            sortKey="RESERVADO" 
+            label="Reservado" 
+            currentSortConfig={sortConfig} 
+            onSort={onSort} 
+            width="120px" 
+            align="right"
+          />
+        )}
+        
+        {visibleColumns.ENTROU && (
+          <TableSortableHeader 
+            sortKey="ENTROU" 
+            label="Entrou" 
+            currentSortConfig={sortConfig} 
+            onSort={onSort} 
+            width="120px" 
+            align="right"
+          />
+        )}
+        
+        {visibleColumns.QTD_VENDIDA && (
+          <TableSortableHeader 
+            sortKey="QTD_VENDIDA" 
+            label="Qtd. Vendida" 
+            currentSortConfig={sortConfig} 
+            onSort={onSort} 
+            width="120px" 
+            align="right"
+          />
+        )}
+        
+        {visibleColumns.VALOR_TOTAL_VENDIDO && (
+          <TableSortableHeader 
+            sortKey="VALOR_TOTAL_VENDIDO" 
+            label="Valor Vendido" 
+            currentSortConfig={sortConfig} 
+            onSort={onSort} 
+            width="150px" 
+            align="right"
+          />
+        )}
+        
+        {visibleColumns.PRECO_MEDIO && (
+          <TableSortableHeader 
+            sortKey="PRECO_MEDIO" 
+            label="Preço Médio" 
+            currentSortConfig={sortConfig} 
+            onSort={onSort} 
+            width="150px" 
+            align="right"
+          />
+        )}
+        
+        {visibleColumns.CUSTO_MEDIO && (
+          <TableSortableHeader 
+            sortKey="CUSTO_MEDIO" 
+            label="Custo Médio" 
+            currentSortConfig={sortConfig} 
+            onSort={onSort} 
+            width="150px" 
+            align="right"
+          />
+        )}
+        
+        {visibleColumns.GIRO_ESTOQUE && (
+          <TableSortableHeader 
+            sortKey="GIRO_ESTOQUE" 
+            label="Giro Estoque" 
+            currentSortConfig={sortConfig} 
+            onSort={onSort} 
+            width="120px" 
+            align="right"
+          />
+        )}
+        
+        {visibleColumns.PERCENTUAL_ESTOQUE_VENDIDO && (
+          <TableSortableHeader 
+            sortKey="PERCENTUAL_ESTOQUE_VENDIDO" 
+            label="% Vendido" 
+            currentSortConfig={sortConfig} 
+            onSort={onSort} 
+            width="100px" 
+            align="right"
+          />
+        )}
+        
+        {visibleColumns.DIAS_COBERTURA && (
+          <TableSortableHeader 
+            sortKey="DIAS_COBERTURA" 
+            label="Dias Cobertura" 
+            currentSortConfig={sortConfig} 
+            onSort={onSort} 
+            width="120px" 
+            align="right"
+          />
+        )}
+        
+        {visibleColumns.DATA_ULTIMA_VENDA && (
+          <TableSortableHeader 
+            sortKey="DATA_ULTIMA_VENDA" 
+            label="Última Venda" 
+            currentSortConfig={sortConfig} 
+            onSort={onSort} 
+            width="120px" 
+            align="center"
+          />
+        )}
+        
+        {visibleColumns.RANKING && (
+          <TableSortableHeader 
+            sortKey="RANKING" 
+            label="Ranking" 
+            currentSortConfig={sortConfig} 
+            onSort={onSort} 
+            width="100px" 
+            align="right"
+          />
+        )}
+      </TableRow>
+    </TableHeader>
   );
 };

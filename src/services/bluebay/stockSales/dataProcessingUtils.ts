@@ -6,7 +6,8 @@ import { StockItem } from "./types";
  */
 export const processStockAndSalesData = (
   stockItems: any[], 
-  salesData: any[], 
+  salesData: any[],
+  costData: any[],
   newProductDate: string,
   startDate: string,
   endDate: string
@@ -54,6 +55,15 @@ export const processStockAndSalesData = (
     
     return acc;
   }, {});
+
+  // Create a map of cost data by item code
+  const costByItem = new Map();
+  costData.forEach(item => {
+    costByItem.set(item.ITEM_CODIGO, {
+      CUSTO_MEDIO: Number(item.media_valor_unitario) || 0,
+      ENTROU: Number(item.total_quantidade) || 0
+    });
+  });
   
   // Calculate date range for average daily sales
   const startDateObj = new Date(startDate);
@@ -96,6 +106,9 @@ export const processStockAndSalesData = (
       valores: []
     };
     
+    // Obter dados de custo da view
+    const costInfo = costByItem.get(itemCode) || { CUSTO_MEDIO: 0, ENTROU: 0 };
+    
     const qtdVendida = salesInfo.QTD_VENDIDA;
     const mediaVendasDiaria = qtdVendida / daysDiff;
     
@@ -127,11 +140,12 @@ export const processStockAndSalesData = (
       FISICO: fisico,
       DISPONIVEL: Number(item["DISPONIVEL"]) || 0,
       RESERVADO: Number(item["RESERVADO"]) || 0,
-      ENTROU: Number(item["ENTROU"]) || 0,
+      ENTROU: costInfo.ENTROU, // Valor da view bluebay_view_faturamento_resumo
       LIMITE: Number(item["LIMITE"]) || 0,
       QTD_VENDIDA: qtdVendida,
       VALOR_TOTAL_VENDIDO: salesInfo.VALOR_TOTAL_VENDIDO,
       PRECO_MEDIO: precoMedio,
+      CUSTO_MEDIO: costInfo.CUSTO_MEDIO, // Valor da view bluebay_view_faturamento_resumo
       DATA_ULTIMA_VENDA: salesInfo.DATA_ULTIMA_VENDA,
       GIRO_ESTOQUE: giroEstoque,
       PERCENTUAL_ESTOQUE_VENDIDO: percentualEstoqueVendido,

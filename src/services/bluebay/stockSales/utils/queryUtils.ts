@@ -1,4 +1,5 @@
 
+
 // Main barrel file that exports all query utilities
 import { fetchInBatches } from './batchQueryExecutor';
 import { 
@@ -13,6 +14,9 @@ import {
   fetchSalesDataInBatches, 
   fetchSalesDataPaginated 
 } from './sales';
+import { 
+  fetchCostDataFromView 
+} from './costData';
 import type { 
   SupabaseTable, 
   ConditionOperator, 
@@ -40,5 +44,9 @@ export {
   
   // Sales queries
   fetchSalesDataInBatches,
-  fetchSalesDataPaginated
+  fetchSalesDataPaginated,
+  
+  // Cost data queries
+  fetchCostDataFromView
 };
+
