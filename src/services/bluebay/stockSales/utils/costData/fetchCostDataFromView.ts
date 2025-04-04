@@ -10,8 +10,9 @@ export const fetchCostDataFromView = async (): Promise<any[]> => {
   try {
     console.log("Buscando dados de custo médio da view bluebay_view_faturamento_resumo");
     
+    // Use 'from' with a string cast to handle the view that's not in the TypeScript definitions
     const { data, error } = await supabase
-      .from('bluebay_view_faturamento_resumo')
+      .from('bluebay_view_faturamento_resumo' as any)
       .select('ITEM_CODIGO, media_valor_unitario, total_quantidade');
       
     if (error) {
