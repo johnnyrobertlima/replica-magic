@@ -30,7 +30,7 @@ export const fetchInBatches = async ({
     let totalRecords = null;
     if (count) {
       // Evita a recursão excessiva definindo tipos explicitamente
-      const countQuery = supabase.from(table);
+      const countQuery = supabase.from(table as any);
       // Definindo tipo explicitamente para evitar recursão
       const typedCountQuery = countQuery.select(selectFields, { count: 'exact' });
       
@@ -78,7 +78,7 @@ export const fetchInBatches = async ({
       console.log(`Buscando lote ${batchCount} de ${logPrefix} (offset: ${offset}, tamanho: ${batchSize})`);
       
       // Evita recursão definindo a consulta como qualquer para evitar inferência complexa de tipos
-      const baseQuery = supabase.from(table);
+      const baseQuery = supabase.from(table as any);
       let query = baseQuery.select(selectFields, { count: 'exact' });
       
       // Aplica a paginação

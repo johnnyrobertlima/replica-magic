@@ -4,12 +4,9 @@ import { StockItem } from "../types";
 import { generateSampleStockData } from "../sampleDataGenerator";
 import { handleApiError } from "../errorHandlingService";
 import { processStockAndSalesData } from "../dataProcessingUtils";
-import {
-  fetchStockItemsPaginated,
-  fetchItemDetailsBatch,
-  fetchSalesDataPaginated,
-  fetchPurchaseDataInBatches
-} from "../utils/queryUtils";
+import { fetchStockItemsPaginated } from "../utils/stock";
+import { fetchItemDataInBatches } from "../utils/itemQueries";
+import { fetchSalesDataInBatches, fetchPurchaseDataInBatches } from "../utils/sales";
 
 /**
  * Paginated fallback method to fetch stock and sales data
@@ -42,7 +39,7 @@ export const fetchStockSalesWithPagination = async (
     
     // Fetch item details in batches
     console.log("Etapa 3: Buscando detalhes dos itens em lotes");
-    const allItemDetails = await fetchItemDetailsBatch(itemCodes, 500);
+    const allItemDetails = await fetchItemDataInBatches(itemCodes);
     
     console.log(`Obtidos detalhes para ${allItemDetails.length} itens de ${itemCodes.length} códigos`);
     
@@ -55,7 +52,7 @@ export const fetchStockSalesWithPagination = async (
     
     // Fetch sales data for the period in batches
     console.log(`Etapa 5: Buscando dados de vendas para o período ${startDate} a ${endDate}`);
-    const allSalesData = await fetchSalesDataPaginated(startDate, endDate);
+    const allSalesData = await fetchSalesDataInBatches(startDate, endDate);
     console.log(`Obtidos ${allSalesData.length} registros de vendas com paginação`);
     
     // Fetch purchase data for cost calculation
