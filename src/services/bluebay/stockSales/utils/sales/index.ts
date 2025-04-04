@@ -1,8 +1,3 @@
 
-import { fetchSalesDataInBatches } from "./fetchSalesDataInBatches";
-import { fetchSalesDataPaginated } from "./fetchSalesDataPaginated";
-
-export {
-  fetchSalesDataInBatches,
-  fetchSalesDataPaginated
-};
+export { fetchSalesDataInBatches } from './fetchSalesDataInBatches';
+export { fetchSalesDataPaginated } from './fetchSalesDataPaginated';
