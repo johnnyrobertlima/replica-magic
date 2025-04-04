@@ -57,11 +57,17 @@ export const fetchStockSalesWithPagination = async (
     const allSalesData = await fetchSalesDataPaginated(startDate, endDate);
     console.log(`Obtidos ${allSalesData.length} registros de vendas com paginação`);
     
+    // We'll need to get purchase data for cost calculation
+    console.log(`Etapa 6: Buscando dados de compras para o período ${startDate} a ${endDate}`);
+    // Assume we have a similar function for purchase data (implement if needed)
+    const allPurchaseData = []; // Empty array for now as a placeholder
+    
     // Process the data using the utility function
-    console.log("Etapa 6: Processando dados para cálculo dos indicadores");
+    console.log("Etapa 7: Processando dados para cálculo dos indicadores");
     const combinedData = processStockAndSalesData(
       allStockItems,
       allSalesData,
+      allPurchaseData, // Add the purchase data parameter
       sixtyDaysAgo,
       startDate,
       endDate
