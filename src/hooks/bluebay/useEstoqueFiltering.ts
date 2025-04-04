@@ -45,6 +45,7 @@ export const useEstoqueFiltering = (estoqueItems: EstoqueItem[]) => {
     const grouped: Record<string, EstoqueItem[]> = {};
     
     filtered.forEach(item => {
+      // Ensure we have a valid group name
       const groupName = item.GRU_DESCRICAO || 'Sem Grupo';
       if (!grouped[groupName]) {
         grouped[groupName] = [];
@@ -59,7 +60,13 @@ export const useEstoqueFiltering = (estoqueItems: EstoqueItem[]) => {
       totalFisico: items.reduce((sum, item) => sum + (Number(item.FISICO) || 0), 0)
     }));
     
-    groupedArray.sort((a, b) => a.groupName.localeCompare(b.groupName));
+    // Safe sort that handles undefined values
+    groupedArray.sort((a, b) => {
+      // Ensure we have valid strings before comparing
+      const groupNameA = a.groupName || '';
+      const groupNameB = b.groupName || '';
+      return groupNameA.localeCompare(groupNameB);
+    });
     
     console.log(`Total de grupos após agrupamento: ${groupedArray.length}`);
     console.log(`Total de itens em todos os grupos: ${groupedArray.reduce((sum, group) => sum + group.totalItems, 0)}`);
