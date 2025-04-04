@@ -1,29 +1,37 @@
 
 import React from "react";
 import { Badge } from "@/components/ui/badge";
-import { Star } from "lucide-react";
-import { StockItem } from "@/services/bluebay/stockSales/types";
 
 interface ItemBadgesProps {
-  item: StockItem;
+  isNew: boolean;
+  isLowStock: boolean;
+  isTop: boolean;
 }
 
-export const ItemBadges: React.FC<ItemBadgesProps> = ({ item }) => {
-  const isNew = !!item.PRODUTO_NOVO;
-  const isTop10 = item.RANKING !== null && item.RANKING <= 10;
-  const ranking = item.RANKING ? Number(item.RANKING) : undefined;
-
+export const ItemBadges: React.FC<ItemBadgesProps> = ({ 
+  isNew, 
+  isLowStock, 
+  isTop 
+}) => {
   return (
-    <>
+    <div className="flex gap-1 ml-2">
       {isNew && (
-        <Badge className="ml-2 bg-blue-600">Novo</Badge>
-      )}
-      {isTop10 && ranking && (
-        <Badge className="ml-2 bg-yellow-600">
-          <Star className="h-3 w-3 mr-1" />
-          Top {ranking}
+        <Badge variant="secondary" className="bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs">
+          Novo
         </Badge>
       )}
-    </>
+      
+      {isLowStock && (
+        <Badge variant="outline" className="border-red-500 text-red-500 hover:bg-red-50 text-xs">
+          Baixo
+        </Badge>
+      )}
+      
+      {isTop && (
+        <Badge variant="outline" className="border-green-500 text-green-500 hover:bg-green-50 text-xs">
+          Top 10
+        </Badge>
+      )}
+    </div>
   );
 };

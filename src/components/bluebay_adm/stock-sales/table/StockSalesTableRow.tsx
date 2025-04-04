@@ -37,9 +37,9 @@ export const StockSalesTableRow: React.FC<StockSalesTableRowProps> = ({
         <div className="flex items-center">
           <span className="whitespace-nowrap">{item.ITEM_CODIGO}</span>
           <ItemBadges 
-            isNewProduct={isNewProduct} 
-            hasLowStock={hasLowStock} 
-            isTopProduct={isTopProduct}
+            isNew={isNewProduct} 
+            isLowStock={hasLowStock} 
+            isTop={isTopProduct}
           />
         </div>
       </TableCell>
@@ -96,7 +96,7 @@ export const StockSalesTableRow: React.FC<StockSalesTableRowProps> = ({
       
       {visibleColumns.GIRO_ESTOQUE && (
         <TableCell className="p-2 text-right">
-          <StockTurnoverIndicator value={item.GIRO_ESTOQUE} />
+          <StockTurnoverIndicator turnover={item.GIRO_ESTOQUE} />
         </TableCell>
       )}
       

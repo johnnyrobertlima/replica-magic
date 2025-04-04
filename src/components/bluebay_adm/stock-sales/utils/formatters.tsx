@@ -36,6 +36,21 @@ export const formatCurrency = (value: number | null | undefined): string => {
   }).format(value);
 };
 
+export const formatDate = (date: Date | null): string => {
+  if (!date) return "-";
+  try {
+    return format(date, "dd/MM/yyyy", { locale: ptBR });
+  } catch (e) {
+    return "-";
+  }
+};
+
+export const formatNumber = (value: number | null | undefined): string => {
+  if (value === null || value === undefined) return '0';
+  
+  return new Intl.NumberFormat('pt-BR').format(value);
+};
+
 export const formatPercentage = (value: number | null | undefined): string => {
   if (value === null || value === undefined) return '0%';
   

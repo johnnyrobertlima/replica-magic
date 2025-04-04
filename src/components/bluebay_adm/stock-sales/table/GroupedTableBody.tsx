@@ -33,7 +33,6 @@ export const GroupedTableBody: React.FC<GroupedTableBodyProps> = ({
               key={`${item.ITEM_CODIGO}-${itemIndex}`} 
               item={item} 
               index={itemIndex}
-              isGroupedView
               visibleColumns={visibleColumns}
             />
           ))}
