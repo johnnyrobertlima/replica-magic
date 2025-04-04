@@ -84,8 +84,13 @@ export const useStockGrouping = (items: StockItem[]) => {
       };
     });
 
-    // Sort groups by name
-    groupsArray.sort((a, b) => a.groupName.localeCompare(b.groupName));
+    // Sort groups by name - Add safe comparison to handle undefined values
+    groupsArray.sort((a, b) => {
+      // Ensure we have valid strings before comparing
+      const groupNameA = a.groupName || '';
+      const groupNameB = b.groupName || '';
+      return groupNameA.localeCompare(groupNameB);
+    });
     
     setGroupedData(groupsArray);
   };
