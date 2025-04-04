@@ -12,7 +12,8 @@ import {
 import { 
   fetchSalesDataInBatches,
   fetchPurchaseDataInBatches, 
-  fetchSalesDataPaginated 
+  fetchSalesDataPaginated,
+  fetchPurchaseDataPaginated
 } from './sales';
 import type { 
   SupabaseTable, 
@@ -42,5 +43,6 @@ export {
   // Sales queries
   fetchSalesDataInBatches,
   fetchPurchaseDataInBatches,
-  fetchSalesDataPaginated
+  fetchSalesDataPaginated,
+  fetchPurchaseDataPaginated
 };
