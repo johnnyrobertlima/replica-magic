@@ -64,7 +64,7 @@ export const fetchCostDataFromView = async (): Promise<CostDataRecord[]> => {
       }
 
       // Busca específica pelo item MS-101/PB para diagnóstico
-      const targetItem = data.find(item => {
+      const targetItem = data.find((item: Record<string, any>) => {
         const itemCode = item.ITEM_CODIGO || item.item_codigo;
         return itemCode === 'MS-101/PB' || 
                (typeof itemCode === 'string' && itemCode.trim() === 'MS-101/PB');
@@ -86,8 +86,8 @@ export const fetchCostDataFromView = async (): Promise<CostDataRecord[]> => {
         console.log("*** ITEM MS-101/PB NÃO ENCONTRADO NA VIEW ***");
         
         // Tentar buscar nomes similares
-        const similarItems = data.filter(item => {
-          const codigo = item.ITEM_CODIGO || item.item_codigo;
+        const similarItems = data.filter((item: Record<string, any>) => {
+          const codigo = item.ITEM_CODIGO || item.item_codigo || '';
           return typeof codigo === 'string' && codigo.includes('MS-101');
         });
         
@@ -97,7 +97,8 @@ export const fetchCostDataFromView = async (): Promise<CostDataRecord[]> => {
       }
     }
     
-    return (data || []) as CostDataRecord[];
+    // Ensure we return an array of CostDataRecord objects
+    return (data && Array.isArray(data)) ? data.map((item: any) => item as CostDataRecord) : [];
   } catch (error) {
     handleApiError("Erro ao buscar dados de custo da view", error);
     console.warn("Não foi possível obter dados de custo da view");
@@ -130,14 +131,14 @@ export const fetchItemCostData = async (itemCode: string): Promise<CostDataRecor
       console.log(`Dados obtidos para o item ${cleanedItemCode}:`, exactResult.data[0]);
       
       // Verificar o campo de custo
-      const exactData = exactResult.data[0];
+      const exactData = exactResult.data[0] as Record<string, any>;
       if ('media_valor_unitario' in exactData && exactData.media_valor_unitario) {
         console.log(`Valor de media_valor_unitario: ${exactData.media_valor_unitario}`);
       } else if ('MEDIA_VALOR_UNITARIO' in exactData && exactData.MEDIA_VALOR_UNITARIO) {
         console.log(`Valor de MEDIA_VALOR_UNITARIO: ${exactData.MEDIA_VALOR_UNITARIO}`);
       }
       
-      return exactData as CostDataRecord;
+      return exactData as unknown as CostDataRecord;
     }
     
     console.warn(`Nenhum resultado encontrado para o item ${cleanedItemCode} com ITEM_CODIGO maiúsculo`);
@@ -154,14 +155,14 @@ export const fetchItemCostData = async (itemCode: string): Promise<CostDataRecor
       console.log(`Dados obtidos com consulta alternativa (minúsculas):`, lowerResult.data[0]);
       
       // Verificar o campo de custo
-      const lowerData = lowerResult.data[0];
+      const lowerData = lowerResult.data[0] as Record<string, any>;
       if ('media_valor_unitario' in lowerData && lowerData.media_valor_unitario) {
         console.log(`Valor de media_valor_unitario: ${lowerData.media_valor_unitario}`);
       } else if ('MEDIA_VALOR_UNITARIO' in lowerData && lowerData.MEDIA_VALOR_UNITARIO) {
         console.log(`Valor de MEDIA_VALOR_UNITARIO: ${lowerData.MEDIA_VALOR_UNITARIO}`);
       }
       
-      return lowerData as CostDataRecord;
+      return lowerData as unknown as CostDataRecord;
     }
     
     console.warn(`Nenhum resultado encontrado para o item ${cleanedItemCode} com item_codigo minúsculo`);
@@ -182,7 +183,7 @@ export const fetchItemCostData = async (itemCode: string): Promise<CostDataRecor
       
       // Verificar se algum dos resultados corresponde exatamente ao código (ignorando espaços)
       const exactMatch = fuzzyResult.data.find(
-        item => {
+        (item: Record<string, any>) => {
           const dbItemCode = item.ITEM_CODIGO || '';
           return typeof dbItemCode === 'string' && dbItemCode.trim() === cleanedItemCode;
         }
@@ -190,12 +191,12 @@ export const fetchItemCostData = async (itemCode: string): Promise<CostDataRecor
       
       if (exactMatch) {
         console.log(`Correspondência exata encontrada na busca aproximada:`, exactMatch);
-        return exactMatch as CostDataRecord;
+        return exactMatch as unknown as CostDataRecord;
       }
       
       // Retornar o primeiro resultado aproximado se não houver correspondência exata
       console.log(`Usando primeiro resultado aproximado:`, fuzzyResult.data[0]);
-      return fuzzyResult.data[0] as CostDataRecord;
+      return fuzzyResult.data[0] as unknown as CostDataRecord;
     }
     
     console.warn(`Nenhum resultado encontrado para o item ${cleanedItemCode} após todas as tentativas`);
