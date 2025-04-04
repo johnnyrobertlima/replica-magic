@@ -148,6 +148,7 @@ const transformDataToStockItems = (data: any[]): StockItem[] => {
     PERCENTUAL_ESTOQUE_VENDIDO: item.percentual_estoque_vendido,
     DIAS_COBERTURA: item.dias_cobertura,
     PRODUTO_NOVO: item.produto_novo,
-    RANKING: item.ranking
+    RANKING: item.ranking,
+    teste: 0 // Add the missing teste field
   }));
 };

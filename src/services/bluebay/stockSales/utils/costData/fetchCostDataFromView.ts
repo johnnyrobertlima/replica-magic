@@ -4,7 +4,8 @@ import { handleApiError } from "../../errorHandlingService";
 
 // Define a type for the cost data records to avoid type issues
 interface CostDataRecord {
-  ITEM_CODIGO: string;
+  ITEM_CODIGO?: string;
+  item_codigo?: string;
   media_valor_unitario?: number;
   MEDIA_VALOR_UNITARIO?: number;
   total_quantidade?: number;
@@ -64,8 +65,9 @@ export const fetchCostDataFromView = async (): Promise<CostDataRecord[]> => {
 
       // Busca específica pelo item MS-101/PB para diagnóstico
       const targetItem = data.find(item => 
-        item.ITEM_CODIGO === 'MS-101/PB' || 
-        (typeof item.ITEM_CODIGO === 'string' && item.ITEM_CODIGO.trim() === 'MS-101/PB')
+        (item.ITEM_CODIGO === 'MS-101/PB' || item.item_codigo === 'MS-101/PB') || 
+        (typeof item.ITEM_CODIGO === 'string' && item.ITEM_CODIGO.trim() === 'MS-101/PB') ||
+        (typeof item.item_codigo === 'string' && item.item_codigo.trim() === 'MS-101/PB')
       );
       
       if (targetItem) {
@@ -85,12 +87,12 @@ export const fetchCostDataFromView = async (): Promise<CostDataRecord[]> => {
         
         // Tentar buscar nomes similares
         const similarItems = data.filter(item => {
-          const codigo = item.ITEM_CODIGO || '';
-          return codigo.includes('MS-101');
+          const codigo = item.ITEM_CODIGO || item.item_codigo || '';
+          return typeof codigo === 'string' && codigo.includes('MS-101');
         });
         
         if (similarItems.length > 0) {
-          console.log("Items similares encontrados:", similarItems.map(i => i.ITEM_CODIGO));
+          console.log("Items similares encontrados:", similarItems.map(i => i.ITEM_CODIGO || i.item_codigo));
         }
       }
     }

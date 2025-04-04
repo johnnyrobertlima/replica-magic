@@ -18,6 +18,7 @@ export const generateSampleStockData = (): StockItem[] => {
     const valorUnitario = Math.floor(Math.random() * 200) + 50;
     const valorTotal = vendido * valorUnitario;
     const custoMedio = Math.floor(Math.random() * 150) + 30; // Generate sample cost data
+    const valorTeste = Math.floor(Math.random() * 180) + 40; // Generate sample teste data
     
     sampleData.push({
       ITEM_CODIGO: `ITEM${i.toString().padStart(4, '0')}`,
@@ -38,7 +39,8 @@ export const generateSampleStockData = (): StockItem[] => {
       PERCENTUAL_ESTOQUE_VENDIDO: (vendido + fisico) > 0 ? (vendido / (vendido + fisico)) * 100 : 0,
       DIAS_COBERTURA: vendido > 0 ? fisico / (vendido / 30) : fisico > 0 ? 999 : 0,
       PRODUTO_NOVO: i % 10 === 0,
-      RANKING: vendido > 0 ? Math.floor(Math.random() * 50) + 1 : null
+      RANKING: vendido > 0 ? Math.floor(Math.random() * 50) + 1 : null,
+      teste: valorTeste // Add the missing teste field with sample data
     });
   }
   
