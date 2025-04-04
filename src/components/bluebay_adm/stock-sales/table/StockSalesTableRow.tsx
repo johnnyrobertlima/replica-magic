@@ -5,7 +5,8 @@ import { cn } from "@/lib/utils";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { ItemBadges } from "./ItemBadges";
 import { StockTurnoverIndicator } from "./StockTurnoverIndicator";
-import { formatCurrency, formatDate, formatNumber, formatPercentage } from "../utils/formatters";
+import { formatCurrency, formatNumber, formatPercentage } from "../utils/formatters";
+import { format } from "date-fns";
 
 interface StockSalesTableRowProps {
   item: StockItem;
@@ -19,9 +20,15 @@ export const StockSalesTableRow: React.FC<StockSalesTableRowProps> = ({
   visibleColumns
 }) => {
   const isEven = index % 2 === 0;
-  const hasLowStock = (item.DISPONIVEL || 0) < 100;
+  // Updated to use a threshold of 5 units instead of 100
+  const hasLowStock = (item.DISPONIVEL || 0) < 5;
   const isNewProduct = item.PRODUTO_NOVO;
   const isTopProduct = (item.RANKING || 0) <= 10;
+  
+  // Helper function to format dates
+  const formatDate = (date: Date) => {
+    return format(date, 'dd/MM/yyyy');
+  };
   
   return (
     <TableRow 

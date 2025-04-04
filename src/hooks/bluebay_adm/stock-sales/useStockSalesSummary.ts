@@ -21,8 +21,8 @@ export const useStockSalesSummary = (items: StockItem[]) => {
       totalStock: items.reduce((sum, item) => sum + (item.FISICO || 0), 0),
       totalSales: items.reduce((sum, item) => sum + (item.QTD_VENDIDA || 0), 0),
       totalValue: items.reduce((sum, item) => sum + (item.VALOR_TOTAL_VENDIDO || 0), 0),
-      // This consistently uses DISPONIVEL for low stock count
-      lowStockItems: items.filter(item => (item.DISPONIVEL || 0) < 100).length,
+      // Updated to use a threshold of 5 units for low stock
+      lowStockItems: items.filter(item => (item.DISPONIVEL || 0) < 5).length,
       newProducts: items.filter(item => item.PRODUTO_NOVO).length,
       top10Items: items.filter(item => (item.RANKING || 0) <= 10).length
     };

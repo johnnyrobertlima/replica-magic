@@ -86,7 +86,7 @@ export const StockSalesSummary: React.FC<StockSalesSummaryProps> = ({
           <CardContent>
             <div className="text-2xl font-bold text-red-600">{stats.lowStockItems.toLocaleString('pt-BR')}</div>
             <p className="text-xs text-red-600">
-              Itens com menos de 100 unidades disponíveis
+              Itens com menos de 5 unidades disponíveis
             </p>
           </CardContent>
         </Card>

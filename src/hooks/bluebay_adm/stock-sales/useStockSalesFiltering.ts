@@ -52,8 +52,9 @@ export const useStockSalesFiltering = (
     
     // Apply low stock filter if enabled
     if (showLowStock) {
-      result = result.filter(item => (item.DISPONIVEL || 0) < 100);
-      console.log(`Total após filtrar por estoque baixo (<100): ${result.length}`);
+      // Updated to use a threshold of 5 units instead of 100
+      result = result.filter(item => (item.DISPONIVEL || 0) < 5);
+      console.log(`Total após filtrar por estoque baixo (<5): ${result.length}`);
     }
     
     // Apply new products filter if enabled
@@ -64,7 +65,6 @@ export const useStockSalesFiltering = (
     
     // Apply stock filter only if user wants to hide zero stock items
     if (!showZeroStock) {
-      // Changed from FISICO to DISPONIVEL
       result = result.filter(item => (item.DISPONIVEL || 0) > 0);
       console.log(`Total após filtrar itens com estoque disponível zero: ${result.length}`);
     }
