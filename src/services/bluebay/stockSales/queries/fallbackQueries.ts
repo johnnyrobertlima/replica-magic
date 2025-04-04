@@ -3,7 +3,7 @@ import { format, subDays } from "date-fns";
 import { StockItem } from "../types";
 import { generateSampleStockData } from "../sampleDataGenerator";
 import { handleApiError } from "../errorHandlingService";
-import { processStockAndSalesData } from "../dataProcessingUtils";
+import { processStockAndSalesData } from "../dataProcessing";
 import {
   fetchStockItemsPaginated,
   fetchItemDetailsBatch,
