@@ -57,8 +57,6 @@ export const StockSalesTableRow: React.FC<StockSalesTableRowProps> = ({
         </div>
       </TableCell>
       
-      <TableCell className="p-2">{item.GRU_DESCRICAO}</TableCell>
-      
       {visibleColumns.FISICO && (
         <TableCell className="p-2 text-right">
           {formatNumber(item.FISICO)}
@@ -98,6 +96,18 @@ export const StockSalesTableRow: React.FC<StockSalesTableRowProps> = ({
       {visibleColumns.PRECO_MEDIO && (
         <TableCell className="p-2 text-right">
           {formatCurrency(item.PRECO_MEDIO)}
+        </TableCell>
+      )}
+      
+      {visibleColumns.CUSTO_MEDIO && (
+        <TableCell className="p-2 text-right">
+          {formatCurrency(item.CUSTO_MEDIO)}
+        </TableCell>
+      )}
+      
+      {visibleColumns.LUCRO && (
+        <TableCell className="p-2 text-right">
+          {formatCurrency(item.LUCRO)}
         </TableCell>
       )}
       

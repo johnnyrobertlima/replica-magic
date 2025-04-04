@@ -1,10 +1,11 @@
 
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { StockItem } from "@/services/bluebay/stockSales/types";
 
 export interface GroupedStockData {
   groupName: string;
   items: StockItem[];
+  isExpanded: boolean;
   totalItems: number;
   totalFisico: number;
   totalDisponivel: number;
@@ -12,87 +13,108 @@ export interface GroupedStockData {
   totalEntrou: number;
   totalVendido: number;
   totalValorVendido: number;
+  totalCusto: number;
+  totalLucro: number;
   giroEstoqueGrupo: number;
   percentualVendidoGrupo: number;
   diasCoberturaGrupo: number;
-  isExpanded: boolean;
 }
 
 export const useStockGrouping = (items: StockItem[]) => {
-  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
-  
-  // Group items by GRU_DESCRICAO
-  const groupedData = useMemo(() => {
-    const groups: Record<string, StockItem[]> = {};
-    
+  const [groupedData, setGroupedData] = useState<GroupedStockData[]>([]);
+
+  // Process items and group them by GRU_DESCRICAO
+  useEffect(() => {
+    processGroups();
+  }, [items]);
+
+  // Process and group items
+  const processGroups = () => {
     // Group items by GRU_DESCRICAO
-    items.forEach(item => {
+    const groupedItems = items.reduce((acc, item) => {
       const groupName = item.GRU_DESCRICAO || 'Sem Grupo';
-      if (!groups[groupName]) {
-        groups[groupName] = [];
-      }
-      groups[groupName].push(item);
-    });
-    
-    // Create formatted grouped data with calculations
-    return Object.entries(groups).map(([groupName, groupItems]) => {
-      // Calculate group totals
-      const totalFisico = groupItems.reduce((sum, item) => sum + (item.FISICO || 0), 0);
-      const totalDisponivel = groupItems.reduce((sum, item) => sum + (item.DISPONIVEL || 0), 0);
-      const totalReservado = groupItems.reduce((sum, item) => sum + (item.RESERVADO || 0), 0);
-      const totalEntrou = groupItems.reduce((sum, item) => sum + (item.ENTROU || 0), 0);
-      const totalVendido = groupItems.reduce((sum, item) => sum + (item.QTD_VENDIDA || 0), 0);
-      const totalValorVendido = groupItems.reduce((sum, item) => sum + (item.VALOR_TOTAL_VENDIDO || 0), 0);
       
-      // Calculate derived metrics for the group
+      if (!acc[groupName]) {
+        acc[groupName] = [];
+      }
+      
+      acc[groupName].push(item);
+      return acc;
+    }, {} as Record<string, StockItem[]>);
+
+    // Convert grouped items to array format with calculations
+    const groupsArray = Object.entries(groupedItems).map(([groupName, items]) => {
+      // Calculate group totals
+      const totalFisico = items.reduce((sum, item) => sum + (item.FISICO || 0), 0);
+      const totalDisponivel = items.reduce((sum, item) => sum + (item.DISPONIVEL || 0), 0);
+      const totalReservado = items.reduce((sum, item) => sum + (item.RESERVADO || 0), 0);
+      const totalEntrou = items.reduce((sum, item) => sum + (item.ENTROU || 0), 0);
+      const totalVendido = items.reduce((sum, item) => sum + (item.QTD_VENDIDA || 0), 0);
+      const totalValorVendido = items.reduce((sum, item) => sum + (item.VALOR_TOTAL_VENDIDO || 0), 0);
+      const totalCusto = items.reduce((sum, item) => sum + (item.CUSTO_MEDIO || 0), 0);
+      const totalLucro = items.reduce((sum, item) => sum + (item.LUCRO || 0), 0);
+      
+      // Group indicators
       const giroEstoqueGrupo = totalFisico > 0 ? totalVendido / totalFisico : 0;
-      const percentualVendidoGrupo = (totalFisico + totalVendido) > 0 
-        ? (totalVendido / (totalFisico + totalVendido)) * 100 
+      const percentualVendidoGrupo = (totalVendido + totalFisico) > 0 
+        ? (totalVendido / (totalVendido + totalFisico)) * 100 
         : 0;
+        
+      // Calculate average daily sales for the group
       const diasCoberturaGrupo = totalVendido > 0 
-        ? (totalFisico / (totalVendido / 30)) 
-        : (totalFisico > 0 ? 999 : 0);
+        ? totalFisico / (totalVendido / 90) // Assuming 90 days period
+        : totalFisico > 0 ? 999 : 0;
       
       return {
         groupName,
-        items: groupItems,
-        totalItems: groupItems.length,
+        items: items.sort((a, b) => a.ITEM_CODIGO.localeCompare(b.ITEM_CODIGO)),
+        isExpanded: false, // Start collapsed
+        totalItems: items.length,
         totalFisico,
         totalDisponivel,
         totalReservado,
         totalEntrou,
         totalVendido,
         totalValorVendido,
+        totalCusto,
+        totalLucro,
         giroEstoqueGrupo,
         percentualVendidoGrupo,
-        diasCoberturaGrupo,
-        isExpanded: !!expandedGroups[groupName]
+        diasCoberturaGrupo
       };
-    }).sort((a, b) => a.groupName.localeCompare(b.groupName));
-  }, [items, expandedGroups]);
-  
-  // Toggle a group's expanded state
-  const toggleGroup = (groupName: string) => {
-    setExpandedGroups(prev => ({
-      ...prev,
-      [groupName]: !prev[groupName]
-    }));
+    });
+
+    // Sort groups by name
+    groupsArray.sort((a, b) => a.groupName.localeCompare(b.groupName));
+    
+    setGroupedData(groupsArray);
   };
-  
+
+  // Toggle the expansion state of a group
+  const toggleGroup = (groupName: string) => {
+    setGroupedData(prevData => 
+      prevData.map(group => 
+        group.groupName === groupName 
+          ? { ...group, isExpanded: !group.isExpanded } 
+          : group
+      )
+    );
+  };
+
   // Expand all groups
   const expandAllGroups = () => {
-    const newExpandedGroups: Record<string, boolean> = {};
-    groupedData.forEach(group => {
-      newExpandedGroups[group.groupName] = true;
-    });
-    setExpandedGroups(newExpandedGroups);
+    setGroupedData(prevData => 
+      prevData.map(group => ({ ...group, isExpanded: true }))
+    );
   };
-  
+
   // Collapse all groups
   const collapseAllGroups = () => {
-    setExpandedGroups({});
+    setGroupedData(prevData => 
+      prevData.map(group => ({ ...group, isExpanded: false }))
+    );
   };
-  
+
   return {
     groupedData,
     toggleGroup,

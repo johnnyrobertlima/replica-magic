@@ -7,7 +7,8 @@ import { processStockAndSalesData } from "../dataProcessingUtils";
 import {
   fetchStockData,
   fetchItemDataInBatches,
-  fetchSalesDataInBatches
+  fetchSalesDataInBatches,
+  fetchPurchaseDataInBatches
 } from "../utils/queryUtils";
 
 /**
@@ -76,16 +77,22 @@ export const fetchStockSalesWithDirectQueries = async (
         };
       });
       
-      // Fetch sales data for the specified period
+      // Fetch sales data for the specified period (TIPO = S)
       console.log(`Etapa 6: Buscando dados de vendas para o período ${startDate} até ${endDate}`);
       const allSalesData = await fetchSalesDataInBatches(startDate, endDate);
       console.log(`Obtidos ${allSalesData.length} registros de vendas`);
+
+      // Fetch purchase data for the specified period (TIPO = E, TRANSACAO = 200)
+      console.log(`Etapa 7: Buscando dados de compras para o período ${startDate} até ${endDate}`);
+      const allPurchaseData = await fetchPurchaseDataInBatches(startDate, endDate);
+      console.log(`Obtidos ${allPurchaseData.length} registros de compras`);
       
       // Process the data to calculate analytics
-      console.log("Etapa 7: Processando dados para cálculo de indicadores");
+      console.log("Etapa 8: Processando dados para cálculo de indicadores");
       const processedData = processStockAndSalesData(
         combinedStockData, 
-        allSalesData, 
+        allSalesData,
+        allPurchaseData,
         sixtyDaysAgo, 
         startDate, 
         endDate
@@ -104,3 +111,4 @@ export const fetchStockSalesWithDirectQueries = async (
     return generateSampleStockData();
   }
 };
+

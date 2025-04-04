@@ -106,6 +106,26 @@ export const GroupedTableHeader: React.FC<GroupedTableHeaderProps> = ({
           align="right"
         />
       )}
+      {visibleColumns.CUSTO_MEDIO && (
+        <TableSortableHeader 
+          sortKey="CUSTO_MEDIO" 
+          label="Custo" 
+          currentSortConfig={sortConfig} 
+          onSort={onSort} 
+          width="150px"
+          align="right"
+        />
+      )}
+      {visibleColumns.LUCRO && (
+        <TableSortableHeader 
+          sortKey="LUCRO" 
+          label="Lucro" 
+          currentSortConfig={sortConfig} 
+          onSort={onSort} 
+          width="150px"
+          align="right"
+        />
+      )}
       {visibleColumns.GIRO_ESTOQUE && (
         <TableSortableHeader 
           sortKey="GIRO_ESTOQUE" 

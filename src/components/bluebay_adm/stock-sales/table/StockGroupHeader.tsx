@@ -68,6 +68,24 @@ export const StockGroupHeader: React.FC<StockGroupHeaderProps> = ({
         </TableCell>
       )}
       
+      {visibleColumns.PRECO_MEDIO && (
+        <TableCell className="font-medium text-right min-w-[150px]">
+          {group.totalVendido > 0 ? formatCurrency(group.totalValorVendido / group.totalVendido) : '-'}
+        </TableCell>
+      )}
+      
+      {visibleColumns.CUSTO_MEDIO && (
+        <TableCell className="font-medium text-right min-w-[150px]">
+          {group.totalCusto ? formatCurrency(group.totalCusto / group.totalItems) : '-'}
+        </TableCell>
+      )}
+      
+      {visibleColumns.LUCRO && (
+        <TableCell className="font-medium text-right min-w-[150px]">
+          {formatCurrency(group.totalLucro || 0)}
+        </TableCell>
+      )}
+      
       {visibleColumns.GIRO_ESTOQUE && (
         <TableCell className="font-medium text-right min-w-[120px]">
           <StockTurnoverIndicator turnover={group.giroEstoqueGrupo} />

@@ -20,4 +20,6 @@ export interface StockItem {
   DIAS_COBERTURA: number;
   PRODUTO_NOVO: boolean;
   RANKING: bigint | number | null; // Updated to accept bigint from PostgreSQL
+  CUSTO_MEDIO: number; // New field for average purchase cost
+  LUCRO: number; // New field for profit calculation
 }
