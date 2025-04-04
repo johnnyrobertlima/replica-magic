@@ -1,52 +1,6 @@
 
-
-// Main barrel file that exports all query utilities
-import { fetchInBatches } from './batchQueryExecutor';
-import { 
-  fetchStockData, 
-  fetchStockItemsPaginated 
-} from './stock';
-import { 
-  fetchItemDataInBatches, 
-  fetchItemDetailsBatch 
-} from './itemQueries';
-import { 
-  fetchSalesDataInBatches, 
-  fetchSalesDataPaginated 
-} from './sales';
-import { 
-  fetchCostDataFromView 
-} from './costData';
-import type { 
-  SupabaseTable, 
-  ConditionOperator, 
-  QueryCondition, 
-  FetchBatchesParams 
-} from './queryTypes';
-
-export {
-  // Types
-  type SupabaseTable,
-  type ConditionOperator,
-  type QueryCondition,
-  type FetchBatchesParams,
-  
-  // Core batch query function
-  fetchInBatches,
-  
-  // Stock queries
-  fetchStockData,
-  fetchStockItemsPaginated,
-  
-  // Item queries
-  fetchItemDataInBatches,
-  fetchItemDetailsBatch,
-  
-  // Sales queries
-  fetchSalesDataInBatches,
-  fetchSalesDataPaginated,
-  
-  // Cost data queries
-  fetchCostDataFromView
-};
-
+// This is a barrel file to export the various query utility functions
+export { fetchStockData } from './stock';
+export { fetchItemDataInBatches } from './itemQueries';
+export { fetchSalesDataInBatches } from './sales';
+export { fetchCostDataFromView } from './costData/fetchCostDataFromView';
