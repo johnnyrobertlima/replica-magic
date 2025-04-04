@@ -1,4 +1,3 @@
-
 import { StockItem } from "./types";
 
 /**
@@ -64,6 +63,8 @@ export const processStockAndSalesData = (
   
   if (costData.length > 0) {
     console.log("Amostra de dados de custo:", costData[0]);
+    // Log the field names in the first item to see what's available
+    console.log("Campos disponíveis:", Object.keys(costData[0]));
   }
   
   costData.forEach(item => {
@@ -72,18 +73,76 @@ export const processStockAndSalesData = (
       return;
     }
     
-    // Extract the required fields, using appropriate field names from the view
-    const custoMedio = Number(item.media_valor_unitario || item.MEDIA_VALOR_UNITARIO || 0);
-    const qtdEntrou = Number(item.total_quantidade || item.TOTAL_QUANTIDADE || 0);
+    // Attempt to get the cost value based on possible field names
+    // Try lowercase first, then uppercase, or default to 0 if not found
+    let custoMedio = 0;
+    let qtdEntrou = 0;
     
+    // For debugging every field
+    console.log(`Analisando item: ${item.ITEM_CODIGO}`);
+    
+    // Handle media_valor_unitario field (check various possible case variations)
+    if ('media_valor_unitario' in item) {
+      custoMedio = Number(item.media_valor_unitario);
+      console.log(`Usando media_valor_unitario: ${custoMedio}`);
+    } else if ('MEDIA_VALOR_UNITARIO' in item) {
+      custoMedio = Number(item.MEDIA_VALOR_UNITARIO);
+      console.log(`Usando MEDIA_VALOR_UNITARIO: ${custoMedio}`);
+    } else if ('valorMedio' in item) {
+      custoMedio = Number(item.valorMedio);
+      console.log(`Usando valorMedio: ${custoMedio}`);
+    } else if ('VALOR_MEDIO' in item) {
+      custoMedio = Number(item.VALOR_MEDIO);
+      console.log(`Usando VALOR_MEDIO: ${custoMedio}`);
+    } else {
+      console.warn(`Não foi possível encontrar o campo de custo médio para o item ${item.ITEM_CODIGO}`);
+      // Try to find a field that might contain cost value
+      const costField = Object.keys(item).find(key => 
+        key.toLowerCase().includes('valor') && 
+        key.toLowerCase().includes('media'));
+      
+      if (costField) {
+        custoMedio = Number(item[costField]);
+        console.log(`Encontrado campo alternativo para custo: ${costField} = ${custoMedio}`);
+      }
+    }
+    
+    // Handle total_quantidade field (check various possible case variations)
+    if ('total_quantidade' in item) {
+      qtdEntrou = Number(item.total_quantidade);
+      console.log(`Usando total_quantidade: ${qtdEntrou}`);
+    } else if ('TOTAL_QUANTIDADE' in item) {
+      qtdEntrou = Number(item.TOTAL_QUANTIDADE);
+      console.log(`Usando TOTAL_QUANTIDADE: ${qtdEntrou}`);
+    } else if ('quantidade' in item) {
+      qtdEntrou = Number(item.quantidade);
+      console.log(`Usando quantidade: ${qtdEntrou}`);
+    } else if ('QUANTIDADE' in item) {
+      qtdEntrou = Number(item.QUANTIDADE);
+      console.log(`Usando QUANTIDADE: ${qtdEntrou}`);
+    } else {
+      console.warn(`Não foi possível encontrar o campo de quantidade para o item ${item.ITEM_CODIGO}`);
+      // Try to find a field that might contain quantity value
+      const quantityField = Object.keys(item).find(key => 
+        key.toLowerCase().includes('quantidade') || 
+        key.toLowerCase().includes('qty') ||
+        key.toLowerCase().includes('quant'));
+      
+      if (quantityField) {
+        qtdEntrou = Number(item[quantityField]);
+        console.log(`Encontrado campo alternativo para quantidade: ${quantityField} = ${qtdEntrou}`);
+      }
+    }
+    
+    // Store values in the map
     costByItem.set(item.ITEM_CODIGO, {
       CUSTO_MEDIO: custoMedio,
       ENTROU: qtdEntrou
     });
     
-    // Log some data to verify we're getting the right values
+    // Log some data for verification
     if (costByItem.size <= 5) {
-      console.log(`Custo para item ${item.ITEM_CODIGO}: ${custoMedio}, Entrou: ${qtdEntrou}`);
+      console.log(`Custo mapeado para item ${item.ITEM_CODIGO}: CUSTO_MEDIO=${custoMedio}, ENTROU=${qtdEntrou}`);
     }
   });
   
@@ -129,7 +188,16 @@ export const processStockAndSalesData = (
     };
     
     // Obter dados de custo da view
-    const costInfo = costByItem.get(itemCode) || { CUSTO_MEDIO: 0, ENTROU: 0 };
+    const costInfo = costByItem.get(itemCode);
+    
+    // If we found cost data for this item, log it for debugging
+    if (costInfo) {
+      console.log(`Dados de custo para ${itemCode}: CUSTO_MEDIO=${costInfo.CUSTO_MEDIO}, ENTROU=${costInfo.ENTROU}`);
+    } else {
+      console.log(`Não foram encontrados dados de custo para o item ${itemCode}`);
+    }
+    
+    const costInfoToUse = costInfo || { CUSTO_MEDIO: 0, ENTROU: 0 };
     
     const qtdVendida = salesInfo.QTD_VENDIDA;
     const mediaVendasDiaria = qtdVendida / daysDiff;
@@ -162,12 +230,12 @@ export const processStockAndSalesData = (
       FISICO: fisico,
       DISPONIVEL: Number(item["DISPONIVEL"]) || 0,
       RESERVADO: Number(item["RESERVADO"]) || 0,
-      ENTROU: costInfo.ENTROU, // Valor da view bluebay_view_faturamento_resumo
+      ENTROU: costInfoToUse.ENTROU,
       LIMITE: Number(item["LIMITE"]) || 0,
       QTD_VENDIDA: qtdVendida,
       VALOR_TOTAL_VENDIDO: salesInfo.VALOR_TOTAL_VENDIDO,
       PRECO_MEDIO: precoMedio,
-      CUSTO_MEDIO: costInfo.CUSTO_MEDIO, // Valor da view bluebay_view_faturamento_resumo
+      CUSTO_MEDIO: costInfoToUse.CUSTO_MEDIO,
       DATA_ULTIMA_VENDA: salesInfo.DATA_ULTIMA_VENDA,
       GIRO_ESTOQUE: giroEstoque,
       PERCENTUAL_ESTOQUE_VENDIDO: percentualEstoqueVendido,

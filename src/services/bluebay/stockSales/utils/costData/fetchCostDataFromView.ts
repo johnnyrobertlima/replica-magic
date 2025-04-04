@@ -24,6 +24,31 @@ export const fetchCostDataFromView = async (): Promise<any[]> => {
     // Log a sample of the data to help with debugging
     if (data && data.length > 0) {
       console.log("Exemplo de dados retornados da view:", data[0]);
+      
+      // Check if the field names match what we expect
+      const firstItem = data[0];
+      const keys = Object.keys(firstItem);
+      console.log("Campos disponíveis na view:", keys);
+      
+      // Log exact field names to confirm case sensitivity
+      if ('media_valor_unitario' in firstItem) {
+        console.log("Campo media_valor_unitario encontrado com valor:", firstItem.media_valor_unitario);
+      } else if ('MEDIA_VALOR_UNITARIO' in firstItem) {
+        console.log("Campo MEDIA_VALOR_UNITARIO encontrado com valor:", firstItem.MEDIA_VALOR_UNITARIO);
+      } else {
+        console.log("Campo de custo médio não encontrado no formato esperado");
+        
+        // Try to locate a field that might contain the cost data
+        const potentialCostField = keys.find(key => 
+          key.toLowerCase().includes('valor') || 
+          key.toLowerCase().includes('media') || 
+          key.toLowerCase().includes('custo')
+        );
+        
+        if (potentialCostField) {
+          console.log(`Campo potencial para custo médio: ${potentialCostField} = ${firstItem[potentialCostField]}`);
+        }
+      }
     }
     
     return data || [];
@@ -53,6 +78,17 @@ export const fetchItemCostData = async (itemCode: string): Promise<any> => {
     }
     
     console.log(`Dados de custo obtidos para o item ${itemCode}:`, data);
+    
+    // Log field values for debugging
+    Object.keys(data).forEach(key => {
+      if (key.toLowerCase().includes('valor') || 
+          key.toLowerCase().includes('media') || 
+          key.toLowerCase().includes('custo') ||
+          key.toLowerCase().includes('quantidade')) {
+        console.log(`Campo ${key}: ${data[key]}`);
+      }
+    });
+    
     return data;
   } catch (error) {
     console.error(`Erro ao buscar custo para o item ${itemCode}:`, error);

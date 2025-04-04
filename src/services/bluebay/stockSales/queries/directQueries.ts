@@ -87,6 +87,24 @@ export const fetchStockSalesWithDirectQueries = async (
       const costData = await fetchCostDataFromView();
       console.log(`Obtidos ${costData.length} registros de custo da view`);
       
+      // Test a few item codes to confirm cost data retrieval
+      if (combinedStockData.length > 0) {
+        const testItems = combinedStockData.slice(0, 3);
+        for (const testItem of testItems) {
+          const itemCode = testItem.ITEM_CODIGO;
+          console.log(`Verificando dados de custo para item específico: ${itemCode}`);
+          const itemCostData = await fetchItemCostData(itemCode);
+          if (itemCostData) {
+            // Find matching cost data in the full dataset
+            const costEntry = costData.find(item => item.ITEM_CODIGO === itemCode);
+            console.log(`Dados de custo via fetchItemCostData:`, itemCostData);
+            console.log(`Dados de custo via fetchCostDataFromView:`, costEntry);
+          } else {
+            console.warn(`Não foi encontrado custo para o item ${itemCode}`);
+          }
+        }
+      }
+      
       // Process the data to calculate analytics
       console.log("Etapa 8: Processando dados para cálculo de indicadores");
       const processedData = processStockAndSalesData(
