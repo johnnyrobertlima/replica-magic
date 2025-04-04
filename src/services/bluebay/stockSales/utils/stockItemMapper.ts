@@ -62,13 +62,13 @@ export const mapStockItems = (
     
     if (isTargetItem) {
       if (costInfo) {
-        logItemDiagnostics('MS-101/PB', `Dados de custo encontrados: CUSTO_MEDIO=${costInfo.CUSTO_MEDIO}, ENTROU=${costInfo.ENTROU}`);
+        logItemDiagnostics('MS-101/PB', `Dados de custo encontrados: CUSTO_MEDIO=${costInfo.CUSTO_MEDIO}, ENTROU=${costInfo.ENTROU}, teste=${costInfo.teste}`);
       } else {
         logItemDiagnostics('MS-101/PB', `Não foram encontrados dados de custo`);
       }
     }
     
-    const costInfoToUse = costInfo || { CUSTO_MEDIO: 0, ENTROU: 0 };
+    const costInfoToUse = costInfo || { CUSTO_MEDIO: 0, ENTROU: 0, teste: 0 };
     
     const qtdVendida = salesInfo.QTD_VENDIDA;
     const mediaVendasDiaria = qtdVendida / daysDiff;
@@ -112,7 +112,8 @@ export const mapStockItems = (
       PERCENTUAL_ESTOQUE_VENDIDO: percentualEstoqueVendido,
       DIAS_COBERTURA: diasCobertura,
       PRODUTO_NOVO: !!produtoNovo,
-      RANKING: null // Will be assigned later
+      RANKING: null, // Will be assigned later
+      teste: costInfoToUse.teste // Nova coluna para valor de teste
     };
     
     if (isTargetItem) {

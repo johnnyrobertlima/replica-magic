@@ -28,6 +28,7 @@ const COLUMN_OPTIONS = [
   { id: "VALOR_TOTAL_VENDIDO", label: "Valor Vendido" },
   { id: "PRECO_MEDIO", label: "Preço Médio" },
   { id: "CUSTO_MEDIO", label: "Custo Médio" }, // Nova coluna de custo médio
+  { id: "teste", label: "Teste (media_valor)" }, // Nova coluna de teste
   { id: "GIRO_ESTOQUE", label: "Giro Estoque" },
   { id: "PERCENTUAL_ESTOQUE_VENDIDO", label: "% Vendido" },
   { id: "DIAS_COBERTURA", label: "Dias Cobertura" },
@@ -57,7 +58,8 @@ export const GroupedStockTable: React.FC<GroupedStockTableProps> = ({
     QTD_VENDIDA: true,
     VALOR_TOTAL_VENDIDO: true,
     PRECO_MEDIO: true,
-    CUSTO_MEDIO: true, // Nova coluna de custo médio
+    CUSTO_MEDIO: true,
+    teste: true, // Nova coluna de teste
     GIRO_ESTOQUE: true,
     PERCENTUAL_ESTOQUE_VENDIDO: true,
     DIAS_COBERTURA: true,

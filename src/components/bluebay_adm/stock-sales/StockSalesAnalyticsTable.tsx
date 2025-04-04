@@ -43,7 +43,7 @@ export const StockSalesAnalyticsTable: React.FC<StockSalesAnalyticsTableProps> =
     QTD_VENDIDA: true,
     VALOR_TOTAL_VENDIDO: true,
     PRECO_MEDIO: true,
-    CUSTO_MEDIO: true, // Nova coluna de custo médio
+    CUSTO_MEDIO: true,
     GIRO_ESTOQUE: true,
     PERCENTUAL_ESTOQUE_VENDIDO: true,
     DIAS_COBERTURA: true,
@@ -79,6 +79,8 @@ export const StockSalesAnalyticsTable: React.FC<StockSalesAnalyticsTableProps> =
                   <TableSortableHeader sortKey="VALOR_TOTAL_VENDIDO" label="Valor Vendido" currentSortConfig={sortConfig} onSort={onSort} width="150px" align="right" />
                   <TableSortableHeader sortKey="PRECO_MEDIO" label="Preço Médio" currentSortConfig={sortConfig} onSort={onSort} width="150px" align="right" />
                   <TableSortableHeader sortKey="CUSTO_MEDIO" label="Custo Médio" currentSortConfig={sortConfig} onSort={onSort} width="150px" align="right" />
+                  {/* Nova coluna para o valor de teste */}
+                  <TableSortableHeader sortKey="teste" label="Teste (media_valor)" currentSortConfig={sortConfig} onSort={onSort} width="150px" align="right" />
                   <TableSortableHeader sortKey="GIRO_ESTOQUE" label="Giro Estoque" currentSortConfig={sortConfig} onSort={onSort} width="120px" align="right" />
                   <TableSortableHeader sortKey="PERCENTUAL_ESTOQUE_VENDIDO" label="% Vendido" currentSortConfig={sortConfig} onSort={onSort} width="100px" align="right" />
                   <TableSortableHeader sortKey="DIAS_COBERTURA" label="Dias Cobertura" currentSortConfig={sortConfig} onSort={onSort} width="120px" align="right" />

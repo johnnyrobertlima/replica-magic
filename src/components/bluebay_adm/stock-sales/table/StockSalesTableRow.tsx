@@ -106,6 +106,11 @@ export const StockSalesTableRow: React.FC<StockSalesTableRowProps> = ({
           {formatCurrency(item.CUSTO_MEDIO)}
         </TableCell>
       )}
+
+      {/* Nova coluna para o valor de teste */}
+      <TableCell className="p-2 text-right">
+        {formatCurrency(item.teste)}
+      </TableCell>
       
       {visibleColumns.GIRO_ESTOQUE && (
         <TableCell className="p-2 text-right">
@@ -139,3 +144,4 @@ export const StockSalesTableRow: React.FC<StockSalesTableRowProps> = ({
     </TableRow>
   );
 };
+

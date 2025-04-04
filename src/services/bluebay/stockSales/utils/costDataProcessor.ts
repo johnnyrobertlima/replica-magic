@@ -56,20 +56,25 @@ export const processCostData = (costData: any[]) => {
     
     // Attempt to get the cost value based on possible field names
     let custoMedio = 0;
+    let valorTesteOriginal = 0;  // Novo campo para obter o valor original da coluna media_valor_unitario
     let qtdEntrou = 0;
     
     // Handle media_valor_unitario field (check various possible case variations)
     if ('media_valor_unitario' in item && item.media_valor_unitario !== null) {
       custoMedio = Number(item.media_valor_unitario);
+      valorTesteOriginal = Number(item.media_valor_unitario);  // Salvar valor original
       if (isTargetItem) logItemDiagnostics("MS-101/PB", `Usando media_valor_unitario: ${custoMedio}`);
     } else if ('MEDIA_VALOR_UNITARIO' in item && item.MEDIA_VALOR_UNITARIO !== null) {
       custoMedio = Number(item.MEDIA_VALOR_UNITARIO);
+      valorTesteOriginal = Number(item.MEDIA_VALOR_UNITARIO);  // Salvar valor original
       if (isTargetItem) logItemDiagnostics("MS-101/PB", `Usando MEDIA_VALOR_UNITARIO: ${custoMedio}`);
     } else if ('valorMedio' in item && item.valorMedio !== null) {
       custoMedio = Number(item.valorMedio);
+      valorTesteOriginal = Number(item.valorMedio);  // Salvar valor original
       if (isTargetItem) logItemDiagnostics("MS-101/PB", `Usando valorMedio: ${custoMedio}`);
     } else if ('VALOR_MEDIO' in item && item.VALOR_MEDIO !== null) {
       custoMedio = Number(item.VALOR_MEDIO);
+      valorTesteOriginal = Number(item.VALOR_MEDIO);  // Salvar valor original
       if (isTargetItem) logItemDiagnostics("MS-101/PB", `Usando VALOR_MEDIO: ${custoMedio}`);
     } else {
       // Try to find a field that might contain cost value
@@ -84,6 +89,7 @@ export const processCostData = (costData: any[]) => {
         for (const field of costFields) {
           if (item[field] !== null && !isNaN(Number(item[field]))) {
             custoMedio = Number(item[field]);
+            valorTesteOriginal = Number(item[field]);  // Salvar valor original
             if (isTargetItem) logItemDiagnostics("MS-101/PB", `Encontrado campo alternativo para custo: ${field} = ${custoMedio}`);
             break;
           }
@@ -130,17 +136,19 @@ export const processCostData = (costData: any[]) => {
     
     // Garantir que valores NaN sejam tratados como zero
     custoMedio = isNaN(custoMedio) ? 0 : custoMedio;
+    valorTesteOriginal = isNaN(valorTesteOriginal) ? 0 : valorTesteOriginal;
     qtdEntrou = isNaN(qtdEntrou) ? 0 : qtdEntrou;
     
     // Store values in the map
     costByItem.set(itemCode, {
       CUSTO_MEDIO: custoMedio,
-      ENTROU: qtdEntrou
+      ENTROU: qtdEntrou,
+      teste: valorTesteOriginal  // Nova propriedade para o valor original
     });
     
     // Log some data for verification
     if (costByItem.size <= 5 || isTargetItem) {
-      logDebugInfo(`Custo mapeado para item ${itemCode}: CUSTO_MEDIO=${custoMedio}, ENTROU=${qtdEntrou}`);
+      logDebugInfo(`Custo mapeado para item ${itemCode}: CUSTO_MEDIO=${custoMedio}, ENTROU=${qtdEntrou}, teste=${valorTesteOriginal}`);
     }
   });
   
@@ -148,7 +156,7 @@ export const processCostData = (costData: any[]) => {
   const ms101PbCost = costByItem.get('MS-101/PB');
   if (ms101PbCost) {
     console.log('======== DIAGNÓSTICO FINAL ========');
-    console.log(`MS-101/PB: Custo médio = ${ms101PbCost.CUSTO_MEDIO}, Qtd = ${ms101PbCost.ENTROU}`);
+    console.log(`MS-101/PB: Custo médio = ${ms101PbCost.CUSTO_MEDIO}, Qtd = ${ms101PbCost.ENTROU}, teste = ${ms101PbCost.teste}`);
     console.log('==================================');
   } else {
     console.log('======== DIAGNÓSTICO FINAL ========');
@@ -162,8 +170,8 @@ export const processCostData = (costData: any[]) => {
 /**
  * Função específica para buscar o custo de um item diretamente
  */
-export const getItemCost = (item: string, costMap: Map<string, any>): {CUSTO_MEDIO: number, ENTROU: number} => {
-  if (!item) return { CUSTO_MEDIO: 0, ENTROU: 0 };
+export const getItemCost = (item: string, costMap: Map<string, any>): {CUSTO_MEDIO: number, ENTROU: number, teste: number} => {
+  if (!item) return { CUSTO_MEDIO: 0, ENTROU: 0, teste: 0 };
   
   // Limpar o código do item de possíveis espaços
   const cleanItemCode = item.trim();
@@ -176,7 +184,11 @@ export const getItemCost = (item: string, costMap: Map<string, any>): {CUSTO_MED
       console.log(`DIAGNÓSTICO CUSTO: Encontrado custo para MS-101/PB: ${JSON.stringify(costData)}`);
     }
     
-    return costData;
+    return {
+      CUSTO_MEDIO: costData.CUSTO_MEDIO || 0,
+      ENTROU: costData.ENTROU || 0,
+      teste: costData.teste || 0
+    };
   }
   
   // Não encontrado - tentar buscar com outras variações de case
@@ -190,7 +202,11 @@ export const getItemCost = (item: string, costMap: Map<string, any>): {CUSTO_MED
     if (cleanItemCode === 'MS-101/PB') {
       console.log(`DIAGNÓSTICO CUSTO: Encontrado custo para MS-101/PB com case diferente (${matchingKey}): ${JSON.stringify(costData)}`);
     }
-    return costData;
+    return {
+      CUSTO_MEDIO: costData.CUSTO_MEDIO || 0,
+      ENTROU: costData.ENTROU || 0,
+      teste: costData.teste || 0
+    };
   }
   
   // Ainda não encontrado, registrar diagnóstico para itens específicos
@@ -211,5 +227,6 @@ export const getItemCost = (item: string, costMap: Map<string, any>): {CUSTO_MED
     }
   }
   
-  return { CUSTO_MEDIO: 0, ENTROU: 0 };
+  return { CUSTO_MEDIO: 0, ENTROU: 0, teste: 0 };
 };
+
