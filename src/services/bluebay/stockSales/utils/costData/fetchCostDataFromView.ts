@@ -104,35 +104,35 @@ export const fetchItemCostData = async (itemCode: string): Promise<CostDataRecor
   try {
     console.log(`Buscando dados de custo para o item ${itemCode}`);
     
-    // Fix: Simplified approach to avoid excessive type instantiation
-    const { data, error } = await supabase
+    // Fix: Use explicit type annotation to avoid excessive type instantiation
+    const result = await supabase
       .from('bluebay_view_faturamento_resumo')
       .select('*')
       .eq('ITEM_CODIGO', itemCode);
       
-    if (error) {
-      console.error(`Erro na consulta para o item ${itemCode}:`, error);
+    if (result.error) {
+      console.error(`Erro na consulta para o item ${itemCode}:`, result.error);
       return null;
     }
     
-    if (!data || data.length === 0) {
+    if (!result.data || result.data.length === 0) {
       // Try alternative approach with lowercase field
-      const altResult = await supabase
+      const altQuery = await supabase
         .from('bluebay_view_faturamento_resumo')
         .select('*')
         .eq('item_codigo', itemCode);
       
-      if (altResult.error || !altResult.data || altResult.data.length === 0) {
+      if (altQuery.error || !altQuery.data || altQuery.data.length === 0) {
         console.warn(`Nenhum resultado encontrado para o item ${itemCode}`);
         return null;
       }
       
-      console.log(`Dados obtidos com consulta alternativa:`, altResult.data[0]);
-      return altResult.data[0] as CostDataRecord;
+      console.log(`Dados obtidos com consulta alternativa:`, altQuery.data[0]);
+      return altQuery.data[0] as CostDataRecord;
     }
     
-    console.log(`Dados de custo obtidos para o item ${itemCode}:`, data[0]);
-    return data[0] as CostDataRecord;
+    console.log(`Dados de custo obtidos para o item ${itemCode}:`, result.data[0]);
+    return result.data[0] as CostDataRecord;
   } catch (error) {
     console.error(`Erro ao buscar custo para o item ${itemCode}:`, error);
     return null;
