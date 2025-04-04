@@ -20,10 +20,12 @@ export const fetchCostDataFromView = async (): Promise<CostDataRecord[]> => {
   try {
     console.log("Buscando dados de custo médio da view bluebay_view_faturamento_resumo");
     
-    // Query all data from the view without filtering
-    const { data, error } = await supabase
+    // Query all data from the view without filtering - use explicit typing
+    const response = await supabase
       .from('bluebay_view_faturamento_resumo')
       .select('*');
+      
+    const { data, error } = response;
       
     if (error) {
       throw new Error(`Erro ao consultar view de custos: ${error.message}`);
@@ -61,7 +63,11 @@ export const fetchCostDataFromView = async (): Promise<CostDataRecord[]> => {
       }
 
       // Busca específica pelo item MS-101/PB para diagnóstico
-      const targetItem = data.find(item => item.ITEM_CODIGO === 'MS-101/PB');
+      const targetItem = data.find(item => 
+        item.ITEM_CODIGO === 'MS-101/PB' || 
+        (typeof item.ITEM_CODIGO === 'string' && item.ITEM_CODIGO.trim() === 'MS-101/PB')
+      );
+      
       if (targetItem) {
         console.log("*** ITEM ESPECÍFICO ENCONTRADO: MS-101/PB ***");
         console.log("Dados completos do item na view:", targetItem);
@@ -107,91 +113,88 @@ export const fetchItemCostData = async (itemCode: string): Promise<CostDataRecor
     // Limpar possíveis espaços ou caracteres ocultos no código do item
     const cleanedItemCode = itemCode.trim();
     
-    // Usar tipagem explícita para evitar inferência excessiva
-    type QueryResponse = {
-      data: CostDataRecord[] | null;
-      error: any;
-    };
-    
-    // Primeira tentativa: consulta com ITEM_CODIGO em maiúsculas (formato correto)
-    const result: QueryResponse = await supabase
+    // Tentativa 1: Busca exata com ITEM_CODIGO (maiúsculo)
+    const exactResult = await supabase
       .from('bluebay_view_faturamento_resumo')
       .select('*')
       .eq('ITEM_CODIGO', cleanedItemCode);
       
-    if (result.error) {
-      console.error(`Erro na consulta para o item ${cleanedItemCode}:`, result.error);
+    if (exactResult.error) {
+      console.error(`Erro na consulta para o item ${cleanedItemCode}:`, exactResult.error);
       return null;
     }
     
-    if (!result.data || result.data.length === 0) {
-      console.warn(`Nenhum resultado encontrado para o item ${cleanedItemCode} com ITEM_CODIGO maiúsculo`);
+    if (exactResult.data && exactResult.data.length > 0) {
+      console.log(`Dados obtidos para o item ${cleanedItemCode}:`, exactResult.data[0]);
       
-      // Segunda tentativa: consulta com item_codigo em minúsculas
-      const altQuery: QueryResponse = await supabase
-        .from('bluebay_view_faturamento_resumo')
-        .select('*')
-        .eq('item_codigo', cleanedItemCode);
-      
-      if (altQuery.error || !altQuery.data || altQuery.data.length === 0) {
-        console.warn(`Nenhum resultado encontrado para o item ${cleanedItemCode} com item_codigo minúsculo`);
-        
-        // Tentar buscar por aproximação (LIKE) se as buscas exatas falharem
-        const fuzzyQuery: QueryResponse = await supabase
-          .from('bluebay_view_faturamento_resumo')
-          .select('*')
-          .ilike('ITEM_CODIGO', `%${cleanedItemCode}%`);
-          
-        if (!fuzzyQuery.error && fuzzyQuery.data && fuzzyQuery.data.length > 0) {
-          console.log(`Encontrados ${fuzzyQuery.data.length} resultados com busca aproximada para ${cleanedItemCode}`);
-          console.log('Primeiro resultado aproximado:', fuzzyQuery.data[0]);
-          
-          // Verificar se algum dos resultados corresponde exatamente ao código
-          const exactMatch = fuzzyQuery.data.find(
-            item => item.ITEM_CODIGO && item.ITEM_CODIGO.trim() === cleanedItemCode
-          );
-          
-          if (exactMatch) {
-            console.log(`Correspondência exata encontrada na busca aproximada:`, exactMatch);
-            return exactMatch;
-          }
-          
-          // Se não houver correspondência exata, usar o primeiro resultado
-          return fuzzyQuery.data[0];
-        }
-        
-        console.warn(`Nenhum resultado encontrado para o item ${cleanedItemCode} após todas as tentativas`);
-        return null;
+      // Verificar o campo de custo
+      const exactData = exactResult.data[0];
+      if ('media_valor_unitario' in exactData && exactData.media_valor_unitario) {
+        console.log(`Valor de media_valor_unitario: ${exactData.media_valor_unitario}`);
+      } else if ('MEDIA_VALOR_UNITARIO' in exactData && exactData.MEDIA_VALOR_UNITARIO) {
+        console.log(`Valor de MEDIA_VALOR_UNITARIO: ${exactData.MEDIA_VALOR_UNITARIO}`);
       }
       
-      console.log(`Dados obtidos com consulta alternativa (minúsculas):`, altQuery.data[0]);
-      
-      // Verificar especificamente o valor do custo médio
-      const altData = altQuery.data[0];
-      if (altData) {
-        if ('media_valor_unitario' in altData) {
-          console.log(`Valor de media_valor_unitario: ${altData.media_valor_unitario}`);
-        } else if ('MEDIA_VALOR_UNITARIO' in altData) {
-          console.log(`Valor de MEDIA_VALOR_UNITARIO: ${altData.MEDIA_VALOR_UNITARIO}`);
-        }
-      }
-      
-      return altData;
+      return exactData;
     }
     
-    console.log(`Dados de custo obtidos para o item ${cleanedItemCode}:`, result.data[0]);
+    console.warn(`Nenhum resultado encontrado para o item ${cleanedItemCode} com ITEM_CODIGO maiúsculo`);
     
-    // Verificar especificamente o valor do custo médio
-    const itemData = result.data[0];
-    if (itemData) {
-      if ('media_valor_unitario' in itemData) {
-        console.log(`Valor de media_valor_unitario: ${itemData.media_valor_unitario}`);
-      } else if ('MEDIA_VALOR_UNITARIO' in itemData) {
-        console.log(`Valor de MEDIA_VALOR_UNITARIO: ${itemData.MEDIA_VALOR_UNITARIO}`);
+    // Tentativa 2: Busca com item_codigo (minúsculo)
+    const lowerResult = await supabase
+      .from('bluebay_view_faturamento_resumo')
+      .select('*')
+      .eq('item_codigo', cleanedItemCode);
+    
+    if (lowerResult.error) {
+      console.error(`Erro na consulta alternativa para o item ${cleanedItemCode}:`, lowerResult.error);
+    } else if (lowerResult.data && lowerResult.data.length > 0) {
+      console.log(`Dados obtidos com consulta alternativa (minúsculas):`, lowerResult.data[0]);
+      
+      // Verificar o campo de custo
+      const lowerData = lowerResult.data[0];
+      if ('media_valor_unitario' in lowerData && lowerData.media_valor_unitario) {
+        console.log(`Valor de media_valor_unitario: ${lowerData.media_valor_unitario}`);
+      } else if ('MEDIA_VALOR_UNITARIO' in lowerData && lowerData.MEDIA_VALOR_UNITARIO) {
+        console.log(`Valor de MEDIA_VALOR_UNITARIO: ${lowerData.MEDIA_VALOR_UNITARIO}`);
       }
+      
+      return lowerData;
     }
     
-    return itemData;
+    console.warn(`Nenhum resultado encontrado para o item ${cleanedItemCode} com item_codigo minúsculo`);
+    
+    // Tentativa 3: Busca aproximada (LIKE)
+    const fuzzyResult = await supabase
+      .from('bluebay_view_faturamento_resumo')
+      .select('*')
+      .ilike('ITEM_CODIGO', `%${cleanedItemCode}%`);
+      
+    if (fuzzyResult.error) {
+      console.error(`Erro na busca aproximada para o item ${cleanedItemCode}:`, fuzzyResult.error);
+      return null;
+    }
+    
+    if (fuzzyResult.data && fuzzyResult.data.length > 0) {
+      console.log(`Encontrados ${fuzzyResult.data.length} resultados com busca aproximada para ${cleanedItemCode}`);
+      
+      // Verificar se algum dos resultados corresponde exatamente ao código (ignorando espaços)
+      const exactMatch = fuzzyResult.data.find(
+        item => item.ITEM_CODIGO && item.ITEM_CODIGO.trim() === cleanedItemCode
+      );
+      
+      if (exactMatch) {
+        console.log(`Correspondência exata encontrada na busca aproximada:`, exactMatch);
+        return exactMatch;
+      }
+      
+      // Retornar o primeiro resultado aproximado se não houver correspondência exata
+      console.log(`Usando primeiro resultado aproximado:`, fuzzyResult.data[0]);
+      return fuzzyResult.data[0];
+    }
+    
+    console.warn(`Nenhum resultado encontrado para o item ${cleanedItemCode} após todas as tentativas`);
+    return null;
   } catch (error) {
     console.error(`Erro ao buscar custo para o item ${itemCode}:`, error);
     return null;
