@@ -98,7 +98,7 @@ export const fetchCostDataFromView = async (): Promise<CostDataRecord[]> => {
     }
     
     // Ensure we return an array of CostDataRecord objects
-    return (data && Array.isArray(data)) ? data.map((item: any) => item as CostDataRecord) : [];
+    return (data && Array.isArray(data)) ? data.map((item) => item as CostDataRecord) : [];
   } catch (error) {
     handleApiError("Erro ao buscar dados de custo da view", error);
     console.warn("Não foi possível obter dados de custo da view");
@@ -138,7 +138,6 @@ export const fetchItemCostData = async (itemCode: string): Promise<CostDataRecor
         console.log(`Valor de MEDIA_VALOR_UNITARIO: ${exactData.MEDIA_VALOR_UNITARIO}`);
       }
       
-      // Use a simple type assertion instead of a potentially recursive one
       return exactData as CostDataRecord;
     }
     
@@ -163,7 +162,6 @@ export const fetchItemCostData = async (itemCode: string): Promise<CostDataRecor
         console.log(`Valor de MEDIA_VALOR_UNITARIO: ${lowerData.MEDIA_VALOR_UNITARIO}`);
       }
       
-      // Use a simple type assertion instead of a potentially recursive one
       return lowerData as CostDataRecord;
     }
     
