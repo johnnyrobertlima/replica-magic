@@ -16,6 +16,7 @@ export const generateSampleStockData = (): StockItem[] => {
     const fisico = Math.floor(Math.random() * 100) + 1;
     const vendido = Math.floor(Math.random() * 50);
     const valorUnitario = Math.floor(Math.random() * 200) + 50;
+    const valorTotal = vendido * valorUnitario;
     
     sampleData.push({
       ITEM_CODIGO: `ITEM${i.toString().padStart(4, '0')}`,
@@ -28,7 +29,8 @@ export const generateSampleStockData = (): StockItem[] => {
       ENTROU: Math.floor(Math.random() * 20),
       LIMITE: 100,
       QTD_VENDIDA: vendido,
-      VALOR_TOTAL_VENDIDO: vendido * valorUnitario,
+      VALOR_TOTAL_VENDIDO: valorTotal,
+      PRECO_MEDIO: vendido > 0 ? valorTotal / vendido : 0,
       DATA_ULTIMA_VENDA: vendido > 0 ? new Date().toISOString() : null,
       GIRO_ESTOQUE: fisico > 0 ? vendido / fisico : 0,
       PERCENTUAL_ESTOQUE_VENDIDO: (vendido + fisico) > 0 ? (vendido / (vendido + fisico)) * 100 : 0,

@@ -2,6 +2,7 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import { ArrowDownIcon, ArrowRightIcon, ArrowUpIcon } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface StockTurnoverIndicatorProps {
   turnover: number;
@@ -24,23 +25,44 @@ export const StockTurnoverIndicator: React.FC<StockTurnoverIndicatorProps> = ({ 
   return (
     <div className="flex items-center justify-end gap-1">
       <span>{turnover.toFixed(2)}</span>
+      
       {isLow && (
-        <ArrowDownIcon 
-          className="h-4 w-4 text-red-500" 
-          title="Giro baixo" 
-        />
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <ArrowDownIcon className="h-4 w-4 text-red-500" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Giro baixo</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       )}
+      
       {!isLow && !isHigh && (
-        <ArrowRightIcon
-          className="h-4 w-4 text-amber-500"
-          title="Giro médio"
-        />
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <ArrowRightIcon className="h-4 w-4 text-amber-500" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Giro médio</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       )}
+      
       {isHigh && (
-        <ArrowUpIcon
-          className="h-4 w-4 text-green-500"
-          title="Giro alto"
-        />
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <ArrowUpIcon className="h-4 w-4 text-green-500" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Giro alto</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       )}
     </div>
   );
