@@ -4,3 +4,4 @@ export { fetchStockData, fetchStockItemsPaginated } from './stock';
 export { fetchItemDataInBatches, fetchItemDetailsBatch } from './itemQueries';
 export { fetchSalesDataInBatches, fetchSalesDataPaginated } from './sales';
 export { fetchCostDataFromView, fetchItemCostData } from './costData';
+export { processCostData, getItemCost } from './costDataProcessor';

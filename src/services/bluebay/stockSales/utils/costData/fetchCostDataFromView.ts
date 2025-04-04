@@ -102,37 +102,96 @@ export const fetchCostDataFromView = async (): Promise<CostDataRecord[]> => {
  */
 export const fetchItemCostData = async (itemCode: string): Promise<CostDataRecord | null> => {
   try {
-    console.log(`Buscando dados de custo para o item ${itemCode}`);
+    console.log(`Buscando dados de custo para o item "${itemCode}"`);
     
-    // Fix: Use explicit type annotation to avoid excessive type instantiation
-    const result = await supabase
+    // Limpar possíveis espaços ou caracteres ocultos no código do item
+    const cleanedItemCode = itemCode.trim();
+    
+    // Usar tipagem explícita para evitar inferência excessiva
+    type QueryResponse = {
+      data: CostDataRecord[] | null;
+      error: any;
+    };
+    
+    // Primeira tentativa: consulta com ITEM_CODIGO em maiúsculas (formato correto)
+    const result: QueryResponse = await supabase
       .from('bluebay_view_faturamento_resumo')
       .select('*')
-      .eq('ITEM_CODIGO', itemCode);
+      .eq('ITEM_CODIGO', cleanedItemCode);
       
     if (result.error) {
-      console.error(`Erro na consulta para o item ${itemCode}:`, result.error);
+      console.error(`Erro na consulta para o item ${cleanedItemCode}:`, result.error);
       return null;
     }
     
     if (!result.data || result.data.length === 0) {
-      // Try alternative approach with lowercase field
-      const altQuery = await supabase
+      console.warn(`Nenhum resultado encontrado para o item ${cleanedItemCode} com ITEM_CODIGO maiúsculo`);
+      
+      // Segunda tentativa: consulta com item_codigo em minúsculas
+      const altQuery: QueryResponse = await supabase
         .from('bluebay_view_faturamento_resumo')
         .select('*')
-        .eq('item_codigo', itemCode);
+        .eq('item_codigo', cleanedItemCode);
       
       if (altQuery.error || !altQuery.data || altQuery.data.length === 0) {
-        console.warn(`Nenhum resultado encontrado para o item ${itemCode}`);
+        console.warn(`Nenhum resultado encontrado para o item ${cleanedItemCode} com item_codigo minúsculo`);
+        
+        // Tentar buscar por aproximação (LIKE) se as buscas exatas falharem
+        const fuzzyQuery: QueryResponse = await supabase
+          .from('bluebay_view_faturamento_resumo')
+          .select('*')
+          .ilike('ITEM_CODIGO', `%${cleanedItemCode}%`);
+          
+        if (!fuzzyQuery.error && fuzzyQuery.data && fuzzyQuery.data.length > 0) {
+          console.log(`Encontrados ${fuzzyQuery.data.length} resultados com busca aproximada para ${cleanedItemCode}`);
+          console.log('Primeiro resultado aproximado:', fuzzyQuery.data[0]);
+          
+          // Verificar se algum dos resultados corresponde exatamente ao código
+          const exactMatch = fuzzyQuery.data.find(
+            item => item.ITEM_CODIGO && item.ITEM_CODIGO.trim() === cleanedItemCode
+          );
+          
+          if (exactMatch) {
+            console.log(`Correspondência exata encontrada na busca aproximada:`, exactMatch);
+            return exactMatch;
+          }
+          
+          // Se não houver correspondência exata, usar o primeiro resultado
+          return fuzzyQuery.data[0];
+        }
+        
+        console.warn(`Nenhum resultado encontrado para o item ${cleanedItemCode} após todas as tentativas`);
         return null;
       }
       
-      console.log(`Dados obtidos com consulta alternativa:`, altQuery.data[0]);
-      return altQuery.data[0] as CostDataRecord;
+      console.log(`Dados obtidos com consulta alternativa (minúsculas):`, altQuery.data[0]);
+      
+      // Verificar especificamente o valor do custo médio
+      const altData = altQuery.data[0];
+      if (altData) {
+        if ('media_valor_unitario' in altData) {
+          console.log(`Valor de media_valor_unitario: ${altData.media_valor_unitario}`);
+        } else if ('MEDIA_VALOR_UNITARIO' in altData) {
+          console.log(`Valor de MEDIA_VALOR_UNITARIO: ${altData.MEDIA_VALOR_UNITARIO}`);
+        }
+      }
+      
+      return altData;
     }
     
-    console.log(`Dados de custo obtidos para o item ${itemCode}:`, result.data[0]);
-    return result.data[0] as CostDataRecord;
+    console.log(`Dados de custo obtidos para o item ${cleanedItemCode}:`, result.data[0]);
+    
+    // Verificar especificamente o valor do custo médio
+    const itemData = result.data[0];
+    if (itemData) {
+      if ('media_valor_unitario' in itemData) {
+        console.log(`Valor de media_valor_unitario: ${itemData.media_valor_unitario}`);
+      } else if ('MEDIA_VALOR_UNITARIO' in itemData) {
+        console.log(`Valor de MEDIA_VALOR_UNITARIO: ${itemData.MEDIA_VALOR_UNITARIO}`);
+      }
+    }
+    
+    return itemData;
   } catch (error) {
     console.error(`Erro ao buscar custo para o item ${itemCode}:`, error);
     return null;

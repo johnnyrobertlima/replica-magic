@@ -73,9 +73,9 @@ export const processCostData = (costData: any[]) => {
       // Try to find a field that might contain cost value
       const costField = Object.keys(item).find(key => 
         key.toLowerCase().includes('valor') && 
-        key.toLowerCase().includes('medio') || 
+        (key.toLowerCase().includes('medio') || 
         key.toLowerCase().includes('media') ||
-        key.toLowerCase().includes('custo')
+        key.toLowerCase().includes('custo'))
       );
       
       if (costField) {
@@ -115,6 +115,10 @@ export const processCostData = (costData: any[]) => {
       }
     }
     
+    // Garantir que valores NaN sejam tratados como zero
+    custoMedio = isNaN(custoMedio) ? 0 : custoMedio;
+    qtdEntrou = isNaN(qtdEntrou) ? 0 : qtdEntrou;
+    
     // Store values in the map
     costByItem.set(itemCode, {
       CUSTO_MEDIO: custoMedio,
@@ -128,4 +132,45 @@ export const processCostData = (costData: any[]) => {
   });
   
   return costByItem;
+};
+
+/**
+ * Função específica para buscar o custo de um item diretamente
+ */
+export const getItemCost = (item: string, costMap: Map<string, any>): {CUSTO_MEDIO: number, ENTROU: number} => {
+  if (!item) return { CUSTO_MEDIO: 0, ENTROU: 0 };
+  
+  // Limpar o código do item de possíveis espaços
+  const cleanItemCode = item.trim();
+  
+  // Verificar se temos o item no mapa de custos
+  if (costMap.has(cleanItemCode)) {
+    const costData = costMap.get(cleanItemCode);
+    
+    if (cleanItemCode === 'MS-101/PB') {
+      console.log(`DIAGNÓSTICO CUSTO: Encontrado custo para MS-101/PB: ${JSON.stringify(costData)}`);
+    }
+    
+    return costData;
+  }
+  
+  // Não encontrado
+  if (cleanItemCode === 'MS-101/PB') {
+    console.log(`DIAGNÓSTICO CUSTO: MS-101/PB NÃO ENCONTRADO no mapa de custos!`);
+    console.log(`Mapa contém ${costMap.size} itens.`);
+    
+    // Verificar se há itens similares
+    const similarKeys = Array.from(costMap.keys()).filter(key => 
+      key.includes('MS-101') || key.includes('ms-101')
+    );
+    
+    if (similarKeys.length > 0) {
+      console.log(`Códigos similares encontrados: ${similarKeys.join(', ')}`);
+      similarKeys.forEach(key => {
+        console.log(`Custo para ${key}: ${JSON.stringify(costMap.get(key))}`);
+      });
+    }
+  }
+  
+  return { CUSTO_MEDIO: 0, ENTROU: 0 };
 };
