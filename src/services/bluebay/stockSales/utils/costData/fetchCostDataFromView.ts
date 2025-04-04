@@ -2,7 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { handleApiError } from "../../errorHandlingService";
 
-// Define a type for the cost data records to avoid type issues
+// Define a proper interface for the cost data records to avoid type issues
 interface CostDataRecord {
   ITEM_CODIGO?: string;
   item_codigo?: string;
@@ -64,11 +64,11 @@ export const fetchCostDataFromView = async (): Promise<CostDataRecord[]> => {
       }
 
       // Busca específica pelo item MS-101/PB para diagnóstico
-      const targetItem = data.find(item => 
-        (item.ITEM_CODIGO === 'MS-101/PB' || item.item_codigo === 'MS-101/PB') || 
-        (typeof item.ITEM_CODIGO === 'string' && item.ITEM_CODIGO.trim() === 'MS-101/PB') ||
-        (typeof item.item_codigo === 'string' && item.item_codigo.trim() === 'MS-101/PB')
-      );
+      const targetItem = data.find(item => {
+        const itemCode = item.ITEM_CODIGO || item.item_codigo;
+        return itemCode === 'MS-101/PB' || 
+               (typeof itemCode === 'string' && itemCode.trim() === 'MS-101/PB');
+      });
       
       if (targetItem) {
         console.log("*** ITEM ESPECÍFICO ENCONTRADO: MS-101/PB ***");
@@ -87,7 +87,7 @@ export const fetchCostDataFromView = async (): Promise<CostDataRecord[]> => {
         
         // Tentar buscar nomes similares
         const similarItems = data.filter(item => {
-          const codigo = item.ITEM_CODIGO || item.item_codigo || '';
+          const codigo = item.ITEM_CODIGO || item.item_codigo;
           return typeof codigo === 'string' && codigo.includes('MS-101');
         });
         
@@ -97,7 +97,7 @@ export const fetchCostDataFromView = async (): Promise<CostDataRecord[]> => {
       }
     }
     
-    return data as CostDataRecord[] || [];
+    return (data || []) as CostDataRecord[];
   } catch (error) {
     handleApiError("Erro ao buscar dados de custo da view", error);
     console.warn("Não foi possível obter dados de custo da view");
@@ -137,7 +137,7 @@ export const fetchItemCostData = async (itemCode: string): Promise<CostDataRecor
         console.log(`Valor de MEDIA_VALOR_UNITARIO: ${exactData.MEDIA_VALOR_UNITARIO}`);
       }
       
-      return exactData;
+      return exactData as CostDataRecord;
     }
     
     console.warn(`Nenhum resultado encontrado para o item ${cleanedItemCode} com ITEM_CODIGO maiúsculo`);
@@ -161,7 +161,7 @@ export const fetchItemCostData = async (itemCode: string): Promise<CostDataRecor
         console.log(`Valor de MEDIA_VALOR_UNITARIO: ${lowerData.MEDIA_VALOR_UNITARIO}`);
       }
       
-      return lowerData;
+      return lowerData as CostDataRecord;
     }
     
     console.warn(`Nenhum resultado encontrado para o item ${cleanedItemCode} com item_codigo minúsculo`);
@@ -182,17 +182,20 @@ export const fetchItemCostData = async (itemCode: string): Promise<CostDataRecor
       
       // Verificar se algum dos resultados corresponde exatamente ao código (ignorando espaços)
       const exactMatch = fuzzyResult.data.find(
-        item => item.ITEM_CODIGO && item.ITEM_CODIGO.trim() === cleanedItemCode
+        item => {
+          const dbItemCode = item.ITEM_CODIGO || '';
+          return typeof dbItemCode === 'string' && dbItemCode.trim() === cleanedItemCode;
+        }
       );
       
       if (exactMatch) {
         console.log(`Correspondência exata encontrada na busca aproximada:`, exactMatch);
-        return exactMatch;
+        return exactMatch as CostDataRecord;
       }
       
       // Retornar o primeiro resultado aproximado se não houver correspondência exata
       console.log(`Usando primeiro resultado aproximado:`, fuzzyResult.data[0]);
-      return fuzzyResult.data[0];
+      return fuzzyResult.data[0] as CostDataRecord;
     }
     
     console.warn(`Nenhum resultado encontrado para o item ${cleanedItemCode} após todas as tentativas`);
