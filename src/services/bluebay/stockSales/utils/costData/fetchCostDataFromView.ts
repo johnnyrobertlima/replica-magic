@@ -104,22 +104,27 @@ export const fetchItemCostData = async (itemCode: string): Promise<CostDataRecor
   try {
     console.log(`Buscando dados de custo para o item ${itemCode}`);
     
-    const { data, error } = await supabase
+    // Using explicit typings to resolve deep instantiation error
+    const response = await supabase
       .from('bluebay_view_faturamento_resumo')
       .select('*')
       .eq('ITEM_CODIGO', itemCode)
       .single();
+    
+    const { data, error } = response;
       
     if (error) {
       console.warn(`Erro ao buscar custo para o item ${itemCode}: ${error.message}`);
       
       // Tentar consulta alternativa com campo em lowercase
       console.log(`Tentando consulta alternativa para o item ${itemCode}`);
-      const alternativeQuery = await supabase
+      const alternativeResponse = await supabase
         .from('bluebay_view_faturamento_resumo')
         .select('*')
         .eq('item_codigo', itemCode)
         .single();
+        
+      const alternativeQuery = alternativeResponse;
         
       if (alternativeQuery.error) {
         console.warn(`Também falhou com item_codigo em lowercase: ${alternativeQuery.error.message}`);
