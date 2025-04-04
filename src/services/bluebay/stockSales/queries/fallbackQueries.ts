@@ -4,9 +4,11 @@ import { StockItem } from "../types";
 import { generateSampleStockData } from "../sampleDataGenerator";
 import { handleApiError } from "../errorHandlingService";
 import { processStockAndSalesData } from "../dataProcessingUtils";
-import { fetchStockItemsPaginated } from "../utils/stock";
-import { fetchItemDataInBatches } from "../utils/itemQueries";
-import { fetchSalesDataInBatches, fetchPurchaseDataInBatches } from "../utils/sales";
+import {
+  fetchStockItemsPaginated,
+  fetchItemDetailsBatch,
+  fetchSalesDataPaginated
+} from "../utils/queryUtils";
 
 /**
  * Paginated fallback method to fetch stock and sales data
@@ -39,7 +41,7 @@ export const fetchStockSalesWithPagination = async (
     
     // Fetch item details in batches
     console.log("Etapa 3: Buscando detalhes dos itens em lotes");
-    const allItemDetails = await fetchItemDataInBatches(itemCodes);
+    const allItemDetails = await fetchItemDetailsBatch(itemCodes, 500);
     
     console.log(`Obtidos detalhes para ${allItemDetails.length} itens de ${itemCodes.length} códigos`);
     
@@ -52,20 +54,14 @@ export const fetchStockSalesWithPagination = async (
     
     // Fetch sales data for the period in batches
     console.log(`Etapa 5: Buscando dados de vendas para o período ${startDate} a ${endDate}`);
-    const allSalesData = await fetchSalesDataInBatches(startDate, endDate);
+    const allSalesData = await fetchSalesDataPaginated(startDate, endDate);
     console.log(`Obtidos ${allSalesData.length} registros de vendas com paginação`);
     
-    // Fetch purchase data for cost calculation
-    console.log(`Etapa 6: Buscando dados de compras para o período ${startDate} a ${endDate}`);
-    const allPurchaseData = await fetchPurchaseDataInBatches(startDate, endDate);
-    console.log(`Obtidos ${allPurchaseData.length} registros de compras com paginação`);
-    
     // Process the data using the utility function
-    console.log("Etapa 7: Processando dados para cálculo dos indicadores");
+    console.log("Etapa 6: Processando dados para cálculo dos indicadores");
     const combinedData = processStockAndSalesData(
       allStockItems,
       allSalesData,
-      allPurchaseData,
       sixtyDaysAgo,
       startDate,
       endDate

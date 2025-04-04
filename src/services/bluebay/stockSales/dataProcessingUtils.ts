@@ -1,3 +1,4 @@
+
 import { StockItem } from "./types";
 
 /**
@@ -6,7 +7,6 @@ import { StockItem } from "./types";
 export const processStockAndSalesData = (
   stockItems: any[], 
   salesData: any[], 
-  purchaseData: any[], // Added parameter for purchase data
   newProductDate: string,
   startDate: string,
   endDate: string
@@ -54,28 +54,6 @@ export const processStockAndSalesData = (
     
     return acc;
   }, {});
-
-  // Group purchase data by item code (TIPO = E, TRANSACAO = 200)
-  const purchaseByItem = purchaseData.reduce((acc, purchase) => {
-    const itemCode = purchase["ITEM_CODIGO"];
-    if (!itemCode) return acc;
-    
-    if (!acc[itemCode]) {
-      acc[itemCode] = {
-        TOTAL_QTD_COMPRADA: 0,
-        TOTAL_VALOR_COMPRA: 0
-      };
-    }
-    
-    // Add purchase quantity and value
-    const quantidade = Number(purchase["QUANTIDADE"]) || 0;
-    const valorUnitario = Number(purchase["VALOR_UNITARIO"]) || 0;
-    
-    acc[itemCode].TOTAL_QTD_COMPRADA += quantidade;
-    acc[itemCode].TOTAL_VALOR_COMPRA += quantidade * valorUnitario;
-    
-    return acc;
-  }, {});
   
   // Calculate date range for average daily sales
   const startDateObj = new Date(startDate);
@@ -118,12 +96,6 @@ export const processStockAndSalesData = (
       valores: []
     };
     
-    // Get purchase info for the item
-    const purchaseInfo = purchaseByItem[itemCode] || {
-      TOTAL_QTD_COMPRADA: 0,
-      TOTAL_VALOR_COMPRA: 0
-    };
-    
     const qtdVendida = salesInfo.QTD_VENDIDA;
     const mediaVendasDiaria = qtdVendida / daysDiff;
     
@@ -132,17 +104,6 @@ export const processStockAndSalesData = (
     if (qtdVendida > 0 && salesInfo.VALOR_TOTAL_VENDIDO > 0) {
       precoMedio = salesInfo.VALOR_TOTAL_VENDIDO / qtdVendida;
     }
-    
-    // Calculate custo médio (average purchase cost)
-    let custoMedio = 0;
-    if (purchaseInfo.TOTAL_QTD_COMPRADA > 0) {
-      custoMedio = purchaseInfo.TOTAL_VALOR_COMPRA / purchaseInfo.TOTAL_QTD_COMPRADA;
-    }
-    
-    // Calculate lucro (profit)
-    const valorVendido = salesInfo.VALOR_TOTAL_VENDIDO || 0;
-    const custoTotal = custoMedio * qtdVendida;
-    const lucro = valorVendido - custoTotal;
     
     // Calculate indicators
     const giroEstoque = fisico > 0 ? qtdVendida / fisico : 0;
@@ -176,9 +137,7 @@ export const processStockAndSalesData = (
       PERCENTUAL_ESTOQUE_VENDIDO: percentualEstoqueVendido,
       DIAS_COBERTURA: diasCobertura,
       PRODUTO_NOVO: !!produtoNovo,
-      RANKING: null, // Will be assigned later
-      CUSTO_MEDIO: custoMedio,
-      LUCRO: lucro
+      RANKING: null // Will be assigned later
     });
     
     return acc;
