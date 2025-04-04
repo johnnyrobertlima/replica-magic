@@ -67,7 +67,12 @@ export const useStockGrouping = (items: StockItem[]) => {
       
       return {
         groupName,
-        items: items.sort((a, b) => a.ITEM_CODIGO.localeCompare(b.ITEM_CODIGO)),
+        items: items.sort((a, b) => {
+          // Ensure we have valid strings before comparing item codes
+          const codeA = a.ITEM_CODIGO || '';
+          const codeB = b.ITEM_CODIGO || '';
+          return codeA.localeCompare(codeB);
+        }),
         isExpanded: false, // Start collapsed
         totalItems: items.length,
         totalFisico,
