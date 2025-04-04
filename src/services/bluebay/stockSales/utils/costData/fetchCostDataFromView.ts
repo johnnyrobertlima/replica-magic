@@ -49,6 +49,34 @@ export const fetchCostDataFromView = async (): Promise<any[]> => {
           console.log(`Campo potencial para custo médio: ${potentialCostField} = ${firstItem[potentialCostField]}`);
         }
       }
+
+      // Busca específica pelo item MS-101/PB para diagnóstico
+      const targetItem = data.find(item => item.ITEM_CODIGO === 'MS-101/PB' || item.item_codigo === 'MS-101/PB');
+      if (targetItem) {
+        console.log("*** ITEM ESPECÍFICO ENCONTRADO: MS-101/PB ***");
+        console.log("Dados completos do item na view:", targetItem);
+        
+        // Verificar todos os campos que podem conter o valor do custo
+        Object.keys(targetItem).forEach(key => {
+          if (key.toLowerCase().includes('valor') || 
+              key.toLowerCase().includes('media') || 
+              key.toLowerCase().includes('custo')) {
+            console.log(`Campo ${key}: ${targetItem[key]}`);
+          }
+        });
+      } else {
+        console.log("*** ITEM MS-101/PB NÃO ENCONTRADO NA VIEW ***");
+        
+        // Tentar buscar nomes similares
+        const similarItems = data.filter(item => {
+          const codigo = item.ITEM_CODIGO || item.item_codigo || '';
+          return codigo.includes('MS-101');
+        });
+        
+        if (similarItems.length > 0) {
+          console.log("Items similares encontrados:", similarItems.map(i => i.ITEM_CODIGO || i.item_codigo));
+        }
+      }
     }
     
     return data || [];
@@ -74,7 +102,22 @@ export const fetchItemCostData = async (itemCode: string): Promise<any> => {
       
     if (error) {
       console.warn(`Erro ao buscar custo para o item ${itemCode}: ${error.message}`);
-      return null;
+      
+      // Tentar consulta alternativa com campo em lowercase
+      console.log(`Tentando consulta alternativa para o item ${itemCode}`);
+      const alternativeQuery = await supabase
+        .from('bluebay_view_faturamento_resumo')
+        .select('*')
+        .eq('item_codigo', itemCode)
+        .single();
+        
+      if (alternativeQuery.error) {
+        console.warn(`Também falhou com item_codigo em lowercase: ${alternativeQuery.error.message}`);
+        return null;
+      }
+      
+      console.log(`Dados obtidos com consulta alternativa:`, alternativeQuery.data);
+      return alternativeQuery.data;
     }
     
     console.log(`Dados de custo obtidos para o item ${itemCode}:`, data);

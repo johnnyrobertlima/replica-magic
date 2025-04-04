@@ -87,23 +87,38 @@ export const fetchStockSalesWithDirectQueries = async (
       console.log("Etapa 7: Buscando dados de custo da view");
       const costData = await fetchCostDataFromView();
       console.log(`Obtidos ${costData.length} registros de custo da view`);
+
+      // Verificação específica para o item MS-101/PB
+      console.log("Verificando especificamente o item MS-101/PB");
+      const itemCode = "MS-101/PB";
+      const itemCostData = await fetchItemCostData(itemCode);
       
-      // Test a few item codes to confirm cost data retrieval
-      if (combinedStockData.length > 0) {
-        const testItems = combinedStockData.slice(0, 3);
-        for (const testItem of testItems) {
-          const itemCode = testItem.ITEM_CODIGO;
-          console.log(`Verificando dados de custo para item específico: ${itemCode}`);
-          const itemCostData = await fetchItemCostData(itemCode);
-          if (itemCostData) {
-            // Find matching cost data in the full dataset
-            const costEntry = costData.find(item => item.ITEM_CODIGO === itemCode);
-            console.log(`Dados de custo via fetchItemCostData:`, itemCostData);
-            console.log(`Dados de custo via fetchCostDataFromView:`, costEntry);
-          } else {
-            console.warn(`Não foi encontrado custo para o item ${itemCode}`);
-          }
+      if (itemCostData) {
+        console.log("*** DADOS DE CUSTO PARA MS-101/PB ***");
+        console.log(JSON.stringify(itemCostData, null, 2));
+        
+        // Verificar se o item existe no conjunto completo de custos
+        const costEntry = costData.find(item => 
+          (item.ITEM_CODIGO === itemCode || item.item_codigo === itemCode)
+        );
+        
+        if (costEntry) {
+          console.log("*** MS-101/PB ENCONTRADO NO CONJUNTO DE CUSTOS ***");
+          console.log(JSON.stringify(costEntry, null, 2));
+        } else {
+          console.log("*** MS-101/PB NÃO ENCONTRADO NO CONJUNTO DE CUSTOS! ***");
         }
+        
+        // Verificar se o item existe nos dados de estoque
+        const stockEntry = stockData.find(item => item.ITEM_CODIGO === itemCode);
+        if (stockEntry) {
+          console.log("*** MS-101/PB ENCONTRADO NOS DADOS DE ESTOQUE ***");
+          console.log(JSON.stringify(stockEntry, null, 2));
+        } else {
+          console.log("*** MS-101/PB NÃO ENCONTRADO NOS DADOS DE ESTOQUE! ***");
+        }
+      } else {
+        console.warn(`Não foi encontrado custo para o item ${itemCode}`);
       }
       
       // Process the data to calculate analytics
@@ -118,6 +133,17 @@ export const fetchStockSalesWithDirectQueries = async (
       );
       
       console.log(`Processamento concluído: ${processedData.length} itens com indicadores calculados`);
+      
+      // Verificação final do resultado processado para o item específico
+      const processedItem = processedData.find(item => item.ITEM_CODIGO === 'MS-101/PB');
+      if (processedItem) {
+        console.log("*** ITEM MS-101/PB NO RESULTADO FINAL ***");
+        console.log(`CUSTO_MEDIO: ${processedItem.CUSTO_MEDIO}`);
+        console.log(`ENTROU: ${processedItem.ENTROU}`);
+      } else {
+        console.log("*** ITEM MS-101/PB NÃO ENCONTRADO NO RESULTADO FINAL ***");
+      }
+      
       return processedData;
       
     } catch (queryError) {
