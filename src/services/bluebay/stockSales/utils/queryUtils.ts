@@ -56,6 +56,31 @@ export const fetchItemDataInBatches = async (itemCodes: string[]) => {
 };
 
 /**
+ * Fetch stock items paginated - for fallback queries
+ */
+export const fetchStockItemsPaginated = async () => {
+  try {
+    console.log("Buscando itens de estoque com paginação");
+    return await fetchInBatches({
+      table: "BLUEBAY_ESTOQUE",
+      selectFields: "*",
+      filters: { LOCAL: 1 },
+      logPrefix: "Estoque Paginado"
+    });
+  } catch (error) {
+    handleApiError("Erro ao buscar itens de estoque paginados", error);
+    return [];
+  }
+};
+
+/**
+ * Fetch item details in batches - fallback function
+ */
+export const fetchItemDetailsBatch = async (itemCodes: string[], batchSize = 500) => {
+  return fetchItemDataInBatches(itemCodes);
+};
+
+/**
  * Fetch sales data (TIPO = S) in batches for the specified period
  */
 export const fetchSalesDataInBatches = async (startDate: string, endDate: string) => {
@@ -75,6 +100,13 @@ export const fetchSalesDataInBatches = async (startDate: string, endDate: string
     handleApiError("Erro ao buscar dados de vendas", error);
     return [];
   }
+};
+
+/**
+ * Fetch sales data with pagination - for fallback
+ */
+export const fetchSalesDataPaginated = async (startDate: string, endDate: string) => {
+  return fetchSalesDataInBatches(startDate, endDate);
 };
 
 /**
