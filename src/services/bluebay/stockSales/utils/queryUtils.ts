@@ -10,7 +10,8 @@ import {
   fetchItemDetailsBatch 
 } from './itemQueries';
 import { 
-  fetchSalesDataInBatches, 
+  fetchSalesDataInBatches,
+  fetchPurchaseDataInBatches, 
   fetchSalesDataPaginated 
 } from './sales';
 import type { 
@@ -40,5 +41,6 @@ export {
   
   // Sales queries
   fetchSalesDataInBatches,
+  fetchPurchaseDataInBatches,
   fetchSalesDataPaginated
 };

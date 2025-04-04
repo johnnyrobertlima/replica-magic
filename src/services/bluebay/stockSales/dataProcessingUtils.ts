@@ -6,7 +6,8 @@ import { StockItem } from "./types";
  */
 export const processStockAndSalesData = (
   stockItems: any[], 
-  salesData: any[], 
+  salesData: any[],
+  purchaseData: any[],
   newProductDate: string,
   startDate: string,
   endDate: string
@@ -54,6 +55,29 @@ export const processStockAndSalesData = (
     
     return acc;
   }, {});
+
+  // Process purchase data for cost calculation
+  const purchaseByItem = purchaseData.reduce((acc, purchase) => {
+    const itemCode = purchase["ITEM_CODIGO"];
+    if (!itemCode) return acc;
+    
+    if (!acc[itemCode]) {
+      acc[itemCode] = {
+        totalQuantity: 0,
+        totalValue: 0
+      };
+    }
+    
+    const quantity = Number(purchase["QUANTIDADE"]) || 0;
+    const unitValue = Number(purchase["VALOR_UNITARIO"]) || 0;
+    
+    if (quantity > 0 && unitValue > 0) {
+      acc[itemCode].totalQuantity += quantity;
+      acc[itemCode].totalValue += quantity * unitValue;
+    }
+    
+    return acc;
+  }, {});
   
   // Calculate date range for average daily sales
   const startDateObj = new Date(startDate);
@@ -96,6 +120,12 @@ export const processStockAndSalesData = (
       valores: []
     };
     
+    // Get purchase cost data
+    const purchaseInfo = purchaseByItem[itemCode] || { totalQuantity: 0, totalValue: 0 };
+    const custoMedio = purchaseInfo.totalQuantity > 0 
+      ? purchaseInfo.totalValue / purchaseInfo.totalQuantity 
+      : 0;
+    
     const qtdVendida = salesInfo.QTD_VENDIDA;
     const mediaVendasDiaria = qtdVendida / daysDiff;
     
@@ -132,6 +162,7 @@ export const processStockAndSalesData = (
       QTD_VENDIDA: qtdVendida,
       VALOR_TOTAL_VENDIDO: salesInfo.VALOR_TOTAL_VENDIDO,
       PRECO_MEDIO: precoMedio,
+      CUSTO_MEDIO: custoMedio, // Added average cost
       DATA_ULTIMA_VENDA: salesInfo.DATA_ULTIMA_VENDA,
       GIRO_ESTOQUE: giroEstoque,
       PERCENTUAL_ESTOQUE_VENDIDO: percentualEstoqueVendido,
