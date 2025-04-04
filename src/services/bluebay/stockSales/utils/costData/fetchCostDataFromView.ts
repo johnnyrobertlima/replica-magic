@@ -104,18 +104,23 @@ export const fetchItemCostData = async (itemCode: string): Promise<CostDataRecor
   try {
     console.log(`Buscando dados de custo para o item ${itemCode}`);
     
-    // Use a different approach to avoid type instantiation issues
+    // Simplify the approach to avoid type instantiation issues
     // First try with uppercase ITEM_CODIGO
-    let result = null;
+    let queryResult;
     
     try {
-      const queryResult = await supabase
+      // First attempt - using uppercase item code
+      queryResult = await supabase
         .from('bluebay_view_faturamento_resumo')
         .select('*')
         .eq('ITEM_CODIGO', itemCode);
       
+      if (queryResult.error) {
+        throw new Error(queryResult.error.message);
+      }
+      
       if (queryResult.data && queryResult.data.length > 0) {
-        result = queryResult.data[0];
+        const result = queryResult.data[0];
         console.log(`Dados de custo obtidos para o item ${itemCode}:`, result);
         
         // Log field values for debugging
@@ -134,16 +139,20 @@ export const fetchItemCostData = async (itemCode: string): Promise<CostDataRecor
       console.error("Erro na primeira tentativa:", firstError);
     }
     
-    // Second attempt with lowercase item_codigo
     try {
+      // Second attempt - using lowercase item code
       console.log(`Tentando consulta alternativa para o item ${itemCode}`);
-      const queryResult = await supabase
+      queryResult = await supabase
         .from('bluebay_view_faturamento_resumo')
         .select('*')
         .eq('item_codigo', itemCode);
       
+      if (queryResult.error) {
+        throw new Error(queryResult.error.message);
+      }
+      
       if (queryResult.data && queryResult.data.length > 0) {
-        result = queryResult.data[0];
+        const result = queryResult.data[0];
         console.log(`Dados obtidos com consulta alternativa:`, result);
         return result as CostDataRecord;
       }
@@ -159,4 +168,3 @@ export const fetchItemCostData = async (itemCode: string): Promise<CostDataRecor
     return null;
   }
 };
-
