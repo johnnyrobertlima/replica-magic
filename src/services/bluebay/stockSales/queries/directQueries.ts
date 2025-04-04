@@ -8,7 +8,8 @@ import {
   fetchStockData,
   fetchItemDataInBatches,
   fetchSalesDataInBatches,
-  fetchCostDataFromView
+  fetchCostDataFromView,
+  fetchItemCostData
 } from "../utils/queryUtils";
 
 /**
