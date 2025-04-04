@@ -3,12 +3,11 @@ import { format, subDays } from "date-fns";
 import { StockItem } from "../types";
 import { generateSampleStockData } from "../sampleDataGenerator";
 import { handleApiError } from "../errorHandlingService";
-import { processStockAndSalesData } from "../dataProcessing";
+import { processStockAndSalesData } from "../dataProcessingUtils";
 import {
   fetchStockItemsPaginated,
   fetchItemDetailsBatch,
-  fetchSalesDataPaginated,
-  fetchPurchaseDataPaginated
+  fetchSalesDataPaginated
 } from "../utils/queryUtils";
 
 /**
@@ -58,17 +57,11 @@ export const fetchStockSalesWithPagination = async (
     const allSalesData = await fetchSalesDataPaginated(startDate, endDate);
     console.log(`Obtidos ${allSalesData.length} registros de vendas com paginação`);
     
-    // Fetch purchase data for cost calculation
-    console.log(`Etapa 6: Buscando dados de compras para o período ${startDate} a ${endDate}`);
-    const allPurchaseData = await fetchPurchaseDataPaginated(startDate, endDate);
-    console.log(`Obtidos ${allPurchaseData.length} registros de compras com paginação`);
-    
     // Process the data using the utility function
-    console.log("Etapa 7: Processando dados para cálculo dos indicadores");
+    console.log("Etapa 6: Processando dados para cálculo dos indicadores");
     const combinedData = processStockAndSalesData(
       allStockItems,
       allSalesData,
-      allPurchaseData,
       sixtyDaysAgo,
       startDate,
       endDate

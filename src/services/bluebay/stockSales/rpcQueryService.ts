@@ -142,7 +142,6 @@ const transformDataToStockItems = (data: any[]): StockItem[] => {
     QTD_VENDIDA: item.qtd_vendida,
     VALOR_TOTAL_VENDIDO: item.valor_total_vendido,
     PRECO_MEDIO: item.valor_total_vendido > 0 && item.qtd_vendida > 0 ? item.valor_total_vendido / item.qtd_vendida : 0,
-    CUSTO_MEDIO: item.custo_medio || 0, // Adding CUSTO_MEDIO with fallback to 0
     DATA_ULTIMA_VENDA: item.data_ultima_venda,
     GIRO_ESTOQUE: item.giro_estoque,
     PERCENTUAL_ESTOQUE_VENDIDO: item.percentual_estoque_vendido,

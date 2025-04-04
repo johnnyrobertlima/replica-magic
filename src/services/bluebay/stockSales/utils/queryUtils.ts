@@ -10,10 +10,8 @@ import {
   fetchItemDetailsBatch 
 } from './itemQueries';
 import { 
-  fetchSalesDataInBatches,
-  fetchPurchaseDataInBatches, 
-  fetchSalesDataPaginated,
-  fetchPurchaseDataPaginated
+  fetchSalesDataInBatches, 
+  fetchSalesDataPaginated 
 } from './sales';
 import type { 
   SupabaseTable, 
@@ -42,7 +40,5 @@ export {
   
   // Sales queries
   fetchSalesDataInBatches,
-  fetchPurchaseDataInBatches,
-  fetchSalesDataPaginated,
-  fetchPurchaseDataPaginated
+  fetchSalesDataPaginated
 };

@@ -100,12 +100,6 @@ export const StockSalesTableRow: React.FC<StockSalesTableRowProps> = ({
           {formatCurrency(item.PRECO_MEDIO)}
         </TableCell>
       )}
-
-      {visibleColumns.CUSTO_MEDIO && (
-        <TableCell className="p-2 text-right">
-          {formatCurrency(item.CUSTO_MEDIO)}
-        </TableCell>
-      )}
       
       {visibleColumns.GIRO_ESTOQUE && (
         <TableCell className="p-2 text-right">

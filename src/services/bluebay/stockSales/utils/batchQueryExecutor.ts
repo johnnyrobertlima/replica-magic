@@ -60,9 +60,6 @@ export const fetchInBatches = async ({
         } else if (condition.type === 'in') {
           // @ts-ignore - Aplicando condição dinamicamente
           filteredQuery = filteredQuery.in(condition.column, condition.value);
-        } else if (condition.type === 'eq') {
-          // @ts-ignore - Aplicando condição dinamicamente
-          filteredQuery = filteredQuery.eq(condition.column, condition.value);
         }
       }
       
@@ -112,9 +109,6 @@ export const fetchInBatches = async ({
         } else if (condition.type === 'in') {
           // @ts-ignore - Aplicando condição dinamicamente
           query = query.in(condition.column, condition.value);
-        } else if (condition.type === 'eq') {
-          // @ts-ignore - Aplicando condição dinamicamente
-          query = query.eq(condition.column, condition.value);
         }
       }
       

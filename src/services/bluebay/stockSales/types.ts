@@ -14,7 +14,6 @@ export interface StockItem {
   QTD_VENDIDA: number;
   VALOR_TOTAL_VENDIDO: number;
   PRECO_MEDIO: number;
-  CUSTO_MEDIO: number; // New field for average cost
   DATA_ULTIMA_VENDA: string | null;
   GIRO_ESTOQUE: number;
   PERCENTUAL_ESTOQUE_VENDIDO: number;

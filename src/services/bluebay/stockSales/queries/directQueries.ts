@@ -3,12 +3,11 @@ import { format, subDays } from "date-fns";
 import { StockItem } from "../types";
 import { generateSampleStockData } from "../sampleDataGenerator";
 import { handleApiError } from "../errorHandlingService";
-import { processStockAndSalesData } from "../dataProcessing";
+import { processStockAndSalesData } from "../dataProcessingUtils";
 import {
   fetchStockData,
   fetchItemDataInBatches,
-  fetchSalesDataInBatches,
-  fetchPurchaseDataInBatches
+  fetchSalesDataInBatches
 } from "../utils/queryUtils";
 
 /**
@@ -81,18 +80,12 @@ export const fetchStockSalesWithDirectQueries = async (
       console.log(`Etapa 6: Buscando dados de vendas para o período ${startDate} até ${endDate}`);
       const allSalesData = await fetchSalesDataInBatches(startDate, endDate);
       console.log(`Obtidos ${allSalesData.length} registros de vendas`);
-
-      // Fetch purchase data for calculating cost
-      console.log(`Etapa 7: Buscando dados de compras para o período ${startDate} até ${endDate}`);
-      const allPurchaseData = await fetchPurchaseDataInBatches(startDate, endDate);
-      console.log(`Obtidos ${allPurchaseData.length} registros de compras`);
       
       // Process the data to calculate analytics
-      console.log("Etapa 8: Processando dados para cálculo de indicadores");
+      console.log("Etapa 7: Processando dados para cálculo de indicadores");
       const processedData = processStockAndSalesData(
         combinedStockData, 
-        allSalesData,
-        allPurchaseData,
+        allSalesData, 
         sixtyDaysAgo, 
         startDate, 
         endDate

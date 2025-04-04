@@ -9,8 +9,8 @@ export type SupabaseTable =
   | "BLUEBAY_PEDIDO"
   | "BLUEBAY_PESSOA";
 
-// Update ConditionOperator to include 'eq' operator
-export type ConditionOperator = 'gt' | 'lt' | 'gte' | 'lte' | 'in' | 'eq';
+// Update ConditionOperator to include 'gte' operator
+export type ConditionOperator = 'gt' | 'lt' | 'gte' | 'lte' | 'in';
 
 // Define condition type
 export interface QueryCondition {
