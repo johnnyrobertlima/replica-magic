@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { StockItem } from "../types";
 import { handleApiError } from "../errorHandlingService";
@@ -22,7 +23,7 @@ export const fetchStockSalesWithDirectQueries = async (
     // Fetch stock data
     console.log("Buscando dados de estoque...");
     const stockResult = await supabase
-      .from('bluebay_estoque')
+      .from('BLUEBAY_ESTOQUE')
       .select('*');
     
     if (stockResult.error) {
@@ -35,7 +36,7 @@ export const fetchStockSalesWithDirectQueries = async (
     // Fetch sales data for the specified date range
     console.log(`Buscando dados de vendas para o período ${startDate} a ${endDate}...`);
     const salesResult = await supabase
-      .from('bluebay_vendas')
+      .from('BLUEBAY_FATURAMENTO')
       .select('*')
       .gte('DATA_EMISSAO', startDate)
       .lte('DATA_EMISSAO', endDate);
