@@ -2,11 +2,21 @@
 import { supabase } from "@/integrations/supabase/client";
 import { handleApiError } from "../../errorHandlingService";
 
+// Define a type for the cost data records to avoid type issues
+interface CostDataRecord {
+  ITEM_CODIGO: string;
+  media_valor_unitario?: number;
+  MEDIA_VALOR_UNITARIO?: number;
+  total_quantidade?: number;
+  TOTAL_QUANTIDADE?: number;
+  [key: string]: any; // Allow other properties
+}
+
 /**
  * Fetches cost data from the bluebay_view_faturamento_resumo view
  * This provides average cost (media_valor_unitario) and total quantity (total_quantidade)
  */
-export const fetchCostDataFromView = async (): Promise<any[]> => {
+export const fetchCostDataFromView = async (): Promise<CostDataRecord[]> => {
   try {
     console.log("Buscando dados de custo médio da view bluebay_view_faturamento_resumo");
     
@@ -51,7 +61,7 @@ export const fetchCostDataFromView = async (): Promise<any[]> => {
       }
 
       // Busca específica pelo item MS-101/PB para diagnóstico
-      const targetItem = data.find(item => item.ITEM_CODIGO === 'MS-101/PB' || item.item_codigo === 'MS-101/PB');
+      const targetItem = data.find(item => item.ITEM_CODIGO === 'MS-101/PB');
       if (targetItem) {
         console.log("*** ITEM ESPECÍFICO ENCONTRADO: MS-101/PB ***");
         console.log("Dados completos do item na view:", targetItem);
@@ -69,17 +79,17 @@ export const fetchCostDataFromView = async (): Promise<any[]> => {
         
         // Tentar buscar nomes similares
         const similarItems = data.filter(item => {
-          const codigo = item.ITEM_CODIGO || item.item_codigo || '';
+          const codigo = item.ITEM_CODIGO || '';
           return codigo.includes('MS-101');
         });
         
         if (similarItems.length > 0) {
-          console.log("Items similares encontrados:", similarItems.map(i => i.ITEM_CODIGO || i.item_codigo));
+          console.log("Items similares encontrados:", similarItems.map(i => i.ITEM_CODIGO));
         }
       }
     }
     
-    return data || [];
+    return data as CostDataRecord[] || [];
   } catch (error) {
     handleApiError("Erro ao buscar dados de custo da view", error);
     console.warn("Não foi possível obter dados de custo da view");
@@ -90,7 +100,7 @@ export const fetchCostDataFromView = async (): Promise<any[]> => {
 /**
  * Fetches cost data for a specific item from the bluebay_view_faturamento_resumo view
  */
-export const fetchItemCostData = async (itemCode: string): Promise<any> => {
+export const fetchItemCostData = async (itemCode: string): Promise<CostDataRecord | null> => {
   try {
     console.log(`Buscando dados de custo para o item ${itemCode}`);
     
@@ -117,7 +127,7 @@ export const fetchItemCostData = async (itemCode: string): Promise<any> => {
       }
       
       console.log(`Dados obtidos com consulta alternativa:`, alternativeQuery.data);
-      return alternativeQuery.data;
+      return alternativeQuery.data as CostDataRecord;
     }
     
     console.log(`Dados de custo obtidos para o item ${itemCode}:`, data);
@@ -134,7 +144,7 @@ export const fetchItemCostData = async (itemCode: string): Promise<any> => {
       });
     }
     
-    return data;
+    return data as CostDataRecord;
   } catch (error) {
     console.error(`Erro ao buscar custo para o item ${itemCode}:`, error);
     return null;
