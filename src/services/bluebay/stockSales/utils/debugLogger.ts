@@ -30,3 +30,17 @@ export const logError = (...args: any[]): void => {
 export const logItemDiagnostics = (itemCode: string, message: string, data?: any): void => {
   console.log(`DIAGNÓSTICO ${itemCode}: ${message}`, data ?? '');
 };
+
+/**
+ * Log cost-specific diagnostic information
+ */
+export const logCostDiagnostics = (itemCode: string, message: string, data?: any): void => {
+  console.log(`CUSTO ${itemCode}: ${message}`, data ?? '');
+};
+
+/**
+ * Log sales-specific diagnostic information
+ */
+export const logSalesDiagnostics = (itemCode: string, message: string, data?: any): void => {
+  console.log(`VENDAS ${itemCode}: ${message}`, data ?? '');
+};

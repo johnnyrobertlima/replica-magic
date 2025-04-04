@@ -3,7 +3,7 @@
  * Utility functions to process cost data for stock analytics
  */
 
-import { logDebugInfo } from "./debugLogger";
+import { logDebugInfo, logItemDiagnostics } from "./debugLogger";
 
 /**
  * Processes cost data records and creates a map for lookup
@@ -25,10 +25,10 @@ export const processCostData = (costData: any[]) => {
   );
   
   if (targetItemCost) {
-    logDebugInfo("*** ITEM MS-101/PB ENCONTRADO NOS DADOS DE CUSTO ***");
+    logItemDiagnostics("MS-101/PB", "ENCONTRADO NOS DADOS DE CUSTO", targetItemCost);
     logDebugInfo("Dados completos:", targetItemCost);
   } else {
-    logDebugInfo("*** ITEM MS-101/PB NÃO ENCONTRADO NOS DADOS DE CUSTO ***");
+    logItemDiagnostics("MS-101/PB", "NÃO ENCONTRADO NOS DADOS DE CUSTO");
   }
   
   costData.forEach(item => {
@@ -49,7 +49,7 @@ export const processCostData = (costData: any[]) => {
     const isTargetItem = itemCode === 'MS-101/PB';
     
     if (isTargetItem) {
-      logDebugInfo("Processando item específico MS-101/PB");
+      logItemDiagnostics("MS-101/PB", "Processando item específico");
     }
     
     // Attempt to get the cost value based on possible field names
@@ -59,16 +59,16 @@ export const processCostData = (costData: any[]) => {
     // Handle media_valor_unitario field (check various possible case variations)
     if ('media_valor_unitario' in item) {
       custoMedio = Number(item.media_valor_unitario);
-      if (isTargetItem) logDebugInfo(`Usando media_valor_unitario: ${custoMedio}`);
+      if (isTargetItem) logItemDiagnostics("MS-101/PB", `Usando media_valor_unitario: ${custoMedio}`);
     } else if ('MEDIA_VALOR_UNITARIO' in item) {
       custoMedio = Number(item.MEDIA_VALOR_UNITARIO);
-      if (isTargetItem) logDebugInfo(`Usando MEDIA_VALOR_UNITARIO: ${custoMedio}`);
+      if (isTargetItem) logItemDiagnostics("MS-101/PB", `Usando MEDIA_VALOR_UNITARIO: ${custoMedio}`);
     } else if ('valorMedio' in item) {
       custoMedio = Number(item.valorMedio);
-      if (isTargetItem) logDebugInfo(`Usando valorMedio: ${custoMedio}`);
+      if (isTargetItem) logItemDiagnostics("MS-101/PB", `Usando valorMedio: ${custoMedio}`);
     } else if ('VALOR_MEDIO' in item) {
       custoMedio = Number(item.VALOR_MEDIO);
-      if (isTargetItem) logDebugInfo(`Usando VALOR_MEDIO: ${custoMedio}`);
+      if (isTargetItem) logItemDiagnostics("MS-101/PB", `Usando VALOR_MEDIO: ${custoMedio}`);
     } else {
       // Try to find a field that might contain cost value
       const costField = Object.keys(item).find(key => 
@@ -80,9 +80,9 @@ export const processCostData = (costData: any[]) => {
       
       if (costField) {
         custoMedio = Number(item[costField]);
-        if (isTargetItem) logDebugInfo(`Encontrado campo alternativo para custo: ${costField} = ${custoMedio}`);
+        if (isTargetItem) logItemDiagnostics("MS-101/PB", `Encontrado campo alternativo para custo: ${costField} = ${custoMedio}`);
       } else if (isTargetItem) {
-        console.warn(`Não foi possível encontrar o campo de custo médio para o item MS-101/PB`);
+        logItemDiagnostics("MS-101/PB", `Não foi possível encontrar o campo de custo médio`);
         logDebugInfo("Campos disponíveis:", Object.keys(item));
       }
     }
@@ -90,16 +90,16 @@ export const processCostData = (costData: any[]) => {
     // Handle total_quantidade field (check various possible case variations)
     if ('total_quantidade' in item) {
       qtdEntrou = Number(item.total_quantidade);
-      if (isTargetItem) logDebugInfo(`Usando total_quantidade: ${qtdEntrou}`);
+      if (isTargetItem) logItemDiagnostics("MS-101/PB", `Usando total_quantidade: ${qtdEntrou}`);
     } else if ('TOTAL_QUANTIDADE' in item) {
       qtdEntrou = Number(item.TOTAL_QUANTIDADE);
-      if (isTargetItem) logDebugInfo(`Usando TOTAL_QUANTIDADE: ${qtdEntrou}`);
+      if (isTargetItem) logItemDiagnostics("MS-101/PB", `Usando TOTAL_QUANTIDADE: ${qtdEntrou}`);
     } else if ('quantidade' in item) {
       qtdEntrou = Number(item.quantidade);
-      if (isTargetItem) logDebugInfo(`Usando quantidade: ${qtdEntrou}`);
+      if (isTargetItem) logItemDiagnostics("MS-101/PB", `Usando quantidade: ${qtdEntrou}`);
     } else if ('QUANTIDADE' in item) {
       qtdEntrou = Number(item.QUANTIDADE);
-      if (isTargetItem) logDebugInfo(`Usando QUANTIDADE: ${qtdEntrou}`);
+      if (isTargetItem) logItemDiagnostics("MS-101/PB", `Usando QUANTIDADE: ${qtdEntrou}`);
     } else {
       // Try to find a field that might contain quantity value
       const quantityField = Object.keys(item).find(key => 
@@ -109,9 +109,9 @@ export const processCostData = (costData: any[]) => {
       
       if (quantityField) {
         qtdEntrou = Number(item[quantityField]);
-        if (isTargetItem) logDebugInfo(`Encontrado campo alternativo para quantidade: ${quantityField} = ${qtdEntrou}`);
+        if (isTargetItem) logItemDiagnostics("MS-101/PB", `Encontrado campo alternativo para quantidade: ${quantityField} = ${qtdEntrou}`);
       } else if (isTargetItem) {
-        console.warn(`Não foi possível encontrar o campo de quantidade para o item MS-101/PB`);
+        logItemDiagnostics("MS-101/PB", `Não foi possível encontrar o campo de quantidade`);
       }
     }
     

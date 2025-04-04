@@ -104,61 +104,35 @@ export const fetchItemCostData = async (itemCode: string): Promise<CostDataRecor
   try {
     console.log(`Buscando dados de custo para o item ${itemCode}`);
     
-    // Using a simpler approach with direct any casting to avoid type inference issues
-    let result: CostDataRecord | null = null;
+    // Fix: Simplified approach to avoid excessive type instantiation
+    const { data, error } = await supabase
+      .from('bluebay_view_faturamento_resumo')
+      .select('*')
+      .eq('ITEM_CODIGO', itemCode);
+      
+    if (error) {
+      console.error(`Erro na consulta para o item ${itemCode}:`, error);
+      return null;
+    }
     
-    // First attempt - using uppercase item code
-    try {
-      const { data, error } = await supabase
+    if (!data || data.length === 0) {
+      // Try alternative approach with lowercase field
+      const altResult = await supabase
         .from('bluebay_view_faturamento_resumo')
         .select('*')
-        .eq('ITEM_CODIGO', itemCode);
+        .eq('item_codigo', itemCode);
       
-      if (error) throw error;
+      if (altResult.error || !altResult.data || altResult.data.length === 0) {
+        console.warn(`Nenhum resultado encontrado para o item ${itemCode}`);
+        return null;
+      }
       
-      if (data && data.length > 0) {
-        result = data[0] as CostDataRecord;
-        console.log(`Dados de custo obtidos para o item ${itemCode}:`, result);
-        
-        // Log field values for debugging
-        Object.keys(result).forEach(key => {
-          if (key.toLowerCase().includes('valor') || 
-              key.toLowerCase().includes('media') || 
-              key.toLowerCase().includes('custo') ||
-              key.toLowerCase().includes('quantidade')) {
-            console.log(`Campo ${key}: ${result![key]}`);
-          }
-        });
-      }
-    } catch (firstError) {
-      console.error("Erro na primeira tentativa:", firstError);
+      console.log(`Dados obtidos com consulta alternativa:`, altResult.data[0]);
+      return altResult.data[0] as CostDataRecord;
     }
     
-    // If first attempt failed, try lowercase
-    if (!result) {
-      try {
-        console.log(`Tentando consulta alternativa para o item ${itemCode}`);
-        const { data, error } = await supabase
-          .from('bluebay_view_faturamento_resumo')
-          .select('*')
-          .eq('item_codigo', itemCode);
-        
-        if (error) throw error;
-        
-        if (data && data.length > 0) {
-          result = data[0] as CostDataRecord;
-          console.log(`Dados obtidos com consulta alternativa:`, result);
-        }
-      } catch (secondError) {
-        console.error("Erro na segunda tentativa:", secondError);
-      }
-    }
-    
-    if (!result) {
-      console.warn(`Nenhum resultado encontrado para o item ${itemCode}`);
-    }
-    
-    return result;
+    console.log(`Dados de custo obtidos para o item ${itemCode}:`, data[0]);
+    return data[0] as CostDataRecord;
   } catch (error) {
     console.error(`Erro ao buscar custo para o item ${itemCode}:`, error);
     return null;

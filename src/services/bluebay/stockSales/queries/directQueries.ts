@@ -2,7 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { StockItem } from "../types";
 import { handleApiError } from "../errorHandlingService";
-import { processStockAndSalesData } from "../dataProcessingUtils";
+import { processStockAndSalesData } from "../processors/stockSalesProcessor";
 import { format, subDays } from "date-fns";
 import { fetchCostDataFromView } from "../utils/costData";
 
