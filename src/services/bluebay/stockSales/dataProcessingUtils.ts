@@ -58,11 +58,33 @@ export const processStockAndSalesData = (
 
   // Create a map of cost data by item code
   const costByItem = new Map();
+  
+  // Log cost data to help with debugging
+  console.log("Processando dados de custo:", costData.length, "registros");
+  
+  if (costData.length > 0) {
+    console.log("Amostra de dados de custo:", costData[0]);
+  }
+  
   costData.forEach(item => {
+    if (!item.ITEM_CODIGO) {
+      console.warn("Item sem código encontrado nos dados de custo:", item);
+      return;
+    }
+    
+    // Extract the required fields, using appropriate field names from the view
+    const custoMedio = Number(item.media_valor_unitario || item.MEDIA_VALOR_UNITARIO || 0);
+    const qtdEntrou = Number(item.total_quantidade || item.TOTAL_QUANTIDADE || 0);
+    
     costByItem.set(item.ITEM_CODIGO, {
-      CUSTO_MEDIO: Number(item.media_valor_unitario) || 0,
-      ENTROU: Number(item.total_quantidade) || 0
+      CUSTO_MEDIO: custoMedio,
+      ENTROU: qtdEntrou
     });
+    
+    // Log some data to verify we're getting the right values
+    if (costByItem.size <= 5) {
+      console.log(`Custo para item ${item.ITEM_CODIGO}: ${custoMedio}, Entrou: ${qtdEntrou}`);
+    }
   });
   
   // Calculate date range for average daily sales

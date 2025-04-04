@@ -1,6 +1,2 @@
 
-import { fetchCostDataFromView } from "./fetchCostDataFromView";
-
-export {
-  fetchCostDataFromView
-};
+export { fetchCostDataFromView, fetchItemCostData } from './fetchCostDataFromView';
