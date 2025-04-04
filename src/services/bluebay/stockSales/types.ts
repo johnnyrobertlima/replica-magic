@@ -13,6 +13,7 @@ export interface StockItem {
   LIMITE: number;
   QTD_VENDIDA: number;
   VALOR_TOTAL_VENDIDO: number;
+  PRECO_MEDIO: number;
   DATA_ULTIMA_VENDA: string | null;
   GIRO_ESTOQUE: number;
   PERCENTUAL_ESTOQUE_VENDIDO: number;

@@ -21,7 +21,10 @@ export const processStockAndSalesData = (
         QTD_VENDIDA: 0,
         VALOR_TOTAL_VENDIDO: 0,
         DATA_ULTIMA_VENDA: null,
-        salesDates: []
+        salesDates: [],
+        // Arrays para armazenar quantidades e valores para cálculo da média ponderada
+        quantidades: [],
+        valores: []
       };
     }
     
@@ -31,6 +34,12 @@ export const processStockAndSalesData = (
     
     acc[itemCode].QTD_VENDIDA += quantidade;
     acc[itemCode].VALOR_TOTAL_VENDIDO += quantidade * valorUnitario;
+    
+    // Armazena os valores para cálculo da média ponderada
+    if (quantidade > 0 && valorUnitario > 0) {
+      acc[itemCode].quantidades.push(quantidade);
+      acc[itemCode].valores.push(valorUnitario);
+    }
     
     // Track sales date for calculating the last sale date
     if (sale["DATA_EMISSAO"]) {
@@ -82,11 +91,19 @@ export const processStockAndSalesData = (
     const salesInfo = salesByItem[itemCode] || {
       QTD_VENDIDA: 0,
       VALOR_TOTAL_VENDIDO: 0,
-      DATA_ULTIMA_VENDA: null
+      DATA_ULTIMA_VENDA: null,
+      quantidades: [],
+      valores: []
     };
     
     const qtdVendida = salesInfo.QTD_VENDIDA;
     const mediaVendasDiaria = qtdVendida / daysDiff;
+    
+    // Calcular preço médio ponderado
+    let precoMedio = 0;
+    if (qtdVendida > 0 && salesInfo.VALOR_TOTAL_VENDIDO > 0) {
+      precoMedio = salesInfo.VALOR_TOTAL_VENDIDO / qtdVendida;
+    }
     
     // Calculate indicators
     const giroEstoque = fisico > 0 ? qtdVendida / fisico : 0;
@@ -114,6 +131,7 @@ export const processStockAndSalesData = (
       LIMITE: Number(item["LIMITE"]) || 0,
       QTD_VENDIDA: qtdVendida,
       VALOR_TOTAL_VENDIDO: salesInfo.VALOR_TOTAL_VENDIDO,
+      PRECO_MEDIO: precoMedio,
       DATA_ULTIMA_VENDA: salesInfo.DATA_ULTIMA_VENDA,
       GIRO_ESTOQUE: giroEstoque,
       PERCENTUAL_ESTOQUE_VENDIDO: percentualEstoqueVendido,
