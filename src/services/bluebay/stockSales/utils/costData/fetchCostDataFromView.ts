@@ -92,7 +92,7 @@ export const fetchCostDataFromView = async (): Promise<CostDataRecord[]> => {
         });
         
         if (similarItems.length > 0) {
-          console.log("Items similares encontrados:", similarItems.map(i => i.ITEM_CODIGO || i.item_codigo));
+          console.log("Items similares encontrados:", similarItems.map((i: Record<string, any>) => i.ITEM_CODIGO || i.item_codigo));
         }
       }
     }
@@ -138,7 +138,8 @@ export const fetchItemCostData = async (itemCode: string): Promise<CostDataRecor
         console.log(`Valor de MEDIA_VALOR_UNITARIO: ${exactData.MEDIA_VALOR_UNITARIO}`);
       }
       
-      return exactData as unknown as CostDataRecord;
+      // Use a simple type assertion instead of a potentially recursive one
+      return exactData as CostDataRecord;
     }
     
     console.warn(`Nenhum resultado encontrado para o item ${cleanedItemCode} com ITEM_CODIGO maiúsculo`);
@@ -162,7 +163,8 @@ export const fetchItemCostData = async (itemCode: string): Promise<CostDataRecor
         console.log(`Valor de MEDIA_VALOR_UNITARIO: ${lowerData.MEDIA_VALOR_UNITARIO}`);
       }
       
-      return lowerData as unknown as CostDataRecord;
+      // Use a simple type assertion instead of a potentially recursive one
+      return lowerData as CostDataRecord;
     }
     
     console.warn(`Nenhum resultado encontrado para o item ${cleanedItemCode} com item_codigo minúsculo`);
@@ -191,12 +193,12 @@ export const fetchItemCostData = async (itemCode: string): Promise<CostDataRecor
       
       if (exactMatch) {
         console.log(`Correspondência exata encontrada na busca aproximada:`, exactMatch);
-        return exactMatch as unknown as CostDataRecord;
+        return exactMatch as CostDataRecord;
       }
       
       // Retornar o primeiro resultado aproximado se não houver correspondência exata
       console.log(`Usando primeiro resultado aproximado:`, fuzzyResult.data[0]);
-      return fuzzyResult.data[0] as unknown as CostDataRecord;
+      return fuzzyResult.data[0] as CostDataRecord;
     }
     
     console.warn(`Nenhum resultado encontrado para o item ${cleanedItemCode} após todas as tentativas`);
