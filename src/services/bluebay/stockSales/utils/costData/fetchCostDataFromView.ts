@@ -104,47 +104,57 @@ export const fetchItemCostData = async (itemCode: string): Promise<CostDataRecor
   try {
     console.log(`Buscando dados de custo para o item ${itemCode}`);
     
-    // First attempt with uppercase ITEM_CODIGO - using raw response handling to avoid deep types
-    let response = await supabase
+    // Creating simple any-typed variables to avoid deep type instantiation
+    let data: any = null;
+    let error: any = null;
+    
+    // First attempt with uppercase ITEM_CODIGO
+    const firstAttempt = await supabase
       .from('bluebay_view_faturamento_resumo')
       .select('*')
       .eq('ITEM_CODIGO', itemCode)
       .single();
+      
+    data = firstAttempt.data;
+    error = firstAttempt.error;
     
-    if (!response.error) {
-      console.log(`Dados de custo obtidos para o item ${itemCode}:`, response.data);
+    if (!error) {
+      console.log(`Dados de custo obtidos para o item ${itemCode}:`, data);
       
       // Log field values for debugging
-      if (response.data) {
-        Object.keys(response.data).forEach(key => {
+      if (data) {
+        Object.keys(data).forEach(key => {
           if (key.toLowerCase().includes('valor') || 
               key.toLowerCase().includes('media') || 
               key.toLowerCase().includes('custo') ||
               key.toLowerCase().includes('quantidade')) {
-            console.log(`Campo ${key}: ${response.data[key]}`);
+            console.log(`Campo ${key}: ${data[key]}`);
           }
         });
       }
       
-      return response.data as CostDataRecord;
+      return data as CostDataRecord;
     }
     
-    console.warn(`Erro ao buscar custo para o item ${itemCode}: ${response.error.message}`);
+    console.warn(`Erro ao buscar custo para o item ${itemCode}: ${error.message}`);
     
-    // Second attempt with lowercase item_codigo - using raw response handling to avoid deep types
+    // Second attempt with lowercase item_codigo
     console.log(`Tentando consulta alternativa para o item ${itemCode}`);
-    response = await supabase
+    const secondAttempt = await supabase
       .from('bluebay_view_faturamento_resumo')
       .select('*')
       .eq('item_codigo', itemCode)
       .single();
     
-    if (!response.error) {
-      console.log(`Dados obtidos com consulta alternativa:`, response.data);
-      return response.data as CostDataRecord;
+    data = secondAttempt.data;
+    error = secondAttempt.error;
+    
+    if (!error) {
+      console.log(`Dados obtidos com consulta alternativa:`, data);
+      return data as CostDataRecord;
     }
     
-    console.warn(`Também falhou com item_codigo em lowercase: ${response.error.message}`);
+    console.warn(`Também falhou com item_codigo em lowercase: ${error.message}`);
     return null;
   } catch (error) {
     console.error(`Erro ao buscar custo para o item ${itemCode}:`, error);
