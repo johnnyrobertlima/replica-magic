@@ -1,10 +1,11 @@
 
 import { logItemDiagnostics } from "./debugLogger";
+import { CostDataRecord, getItemCode, getMediaValorUnitario, getTotalQuantidade } from "./costData/costDataTypes";
 
 /**
  * Process cost data from the view to create a lookup map by item code
  */
-export const processCostData = (costData: any[]): Map<string, any> => {
+export const processCostData = (costData: CostDataRecord[]): Map<string, any> => {
   if (!costData || costData.length === 0) {
     console.log("Nenhum dado de custo para processar");
     return new Map();
@@ -20,10 +21,10 @@ export const processCostData = (costData: any[]): Map<string, any> => {
   const costByItem = new Map<string, any>();
   
   costData.forEach(item => {
-    // Handle different field naming conventions in the data source
-    const itemCode = item.ITEM_CODIGO || item.item_codigo;
-    const mediaValorUnitario = item.media_valor_unitario || item.MEDIA_VALOR_UNITARIO || 0;
-    const totalQuantidade = item.total_quantidade || item.TOTAL_QUANTIDADE || 0;
+    // Use utility functions to get values regardless of casing
+    const itemCode = getItemCode(item);
+    const mediaValorUnitario = getMediaValorUnitario(item) || 0;
+    const totalQuantidade = getTotalQuantidade(item) || 0;
     
     if (!itemCode) {
       return; // Skip if no item code
