@@ -33,12 +33,15 @@ export const useDashboardComercial = (): UseDashboardComercialReturn => {
   const [dashboardData, setDashboardData] = useState<DashboardComercialData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
+  const [requestId, setRequestId] = useState<number>(0);
   
   const { toast } = useToast();
 
   const setDateRange = useCallback((start: Date, end: Date) => {
     setStartDate(start);
     setEndDate(end);
+    // Incrementar o requestId para forçar nova busca quando as datas mudam
+    setRequestId(prev => prev + 1);
   }, []);
 
   const fetchData = useCallback(async () => {
@@ -64,17 +67,21 @@ export const useDashboardComercial = (): UseDashboardComercialReturn => {
   }, [startDate, endDate, toast]);
 
   const refreshData = useCallback(async () => {
+    if (isLoading) return; // Evitar múltiplas requisições simultâneas
+    
     toast({
       title: "Atualizando dados",
       description: "Carregando informações mais recentes...",
     });
-    await fetchData();
-  }, [fetchData, toast]);
+    
+    // Incrementar o requestId para forçar nova busca mesmo com as mesmas datas
+    setRequestId(prev => prev + 1);
+  }, [isLoading, toast]);
 
-  // Carregar dados iniciais
+  // Carregar dados quando requestId mudar (seja por mudança nas datas ou por refresh explícito)
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+  }, [fetchData, requestId]);
 
   return {
     dashboardData,

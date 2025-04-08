@@ -1,5 +1,5 @@
 
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { DateRange } from 'react-day-picker';
 import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,14 @@ export const DashboardComercialFilters = ({
     from: startDate,
     to: endDate
   });
+
+  // Atualiza o filtro local quando as props mudam
+  useEffect(() => {
+    setLocalDateRange({
+      from: startDate,
+      to: endDate
+    });
+  }, [startDate, endDate]);
 
   const handleDateRangeChange = useCallback((range: DateRange) => {
     if (range?.from && range?.to) {
