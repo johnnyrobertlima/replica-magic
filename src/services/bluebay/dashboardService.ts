@@ -839,4 +839,151 @@ const fetchRepresentativeData = async (filters: {
         return;
       }
       
-      const repName = repNameMap.get(repCode) || `Rep #${repCode
+      const repName = repNameMap.get(repCode) || `Rep #${repCode}`;
+      const orderData = repOrderMap.get(repCode) || { total: 0, count: 0 };
+      const totalBilled = repBillingMap.get(repCode) || 0;
+      const conversionRate = orderData.total > 0 ? (totalBilled / orderData.total) * 100 : 0;
+      const averageTicket = orderData.count > 0 ? orderData.total / orderData.count : 0;
+      
+      repItems.push({
+        code: repCode.toString(),
+        name: repName,
+        totalOrders: orderData.total,
+        totalBilled,
+        conversionRate,
+        averageTicket
+      });
+    });
+
+    // Ordena por valor faturado
+    repItems.sort((a, b) => b.totalBilled - a.totalBilled);
+
+    return { 
+      data: { items: repItems },
+      totalCount: uniqueReps.length
+    };
+  } catch (error) {
+    console.error('Erro ao buscar dados de representantes:', error);
+    throw error;
+  }
+};
+
+/**
+ * Busca dados de eficiência de entrega em lotes para superar limites de consulta
+ */
+const fetchDeliveryData = async (filters: {
+  startDate: Date | null;
+  endDate: Date | null;
+  brand: string | null;
+  representative: string | null;
+  status: string | null;
+}): Promise<DeliveryData> => {
+  try {
+    // Converte datas para strings para a consulta
+    const startDateStr = filters.startDate ? format(filters.startDate, 'yyyy-MM-dd') : '';
+    const endDateStr = filters.endDate ? format(filters.endDate, 'yyyy-MM-dd') : '';
+    
+    console.log(`Buscando dados de eficiência de entrega de ${startDateStr} até ${endDateStr}`);
+
+    // Busca dados de pedidos em lotes
+    let allOrderData: any[] = [];
+    let hasMoreOrders = true;
+    let orderOffset = 0;
+    const batchSize = 10000;
+    
+    while (hasMoreOrders) {
+      let orderQuery = supabase
+        .from('BLUEBAY_PEDIDO')
+        .select('*')
+        .range(orderOffset, orderOffset + batchSize - 1);
+
+      // Adiciona filtros de data se fornecidos
+      if (startDateStr && endDateStr) {
+        orderQuery = orderQuery
+          .gte('DATA_PEDIDO', startDateStr)
+          .lte('DATA_PEDIDO', endDateStr + 'T23:59:59.999Z');
+      }
+
+      // Adiciona filtro de marca se fornecido
+      if (filters.brand && filters.brand !== 'all') {
+        orderQuery = orderQuery.eq('CENTROCUSTO', filters.brand);
+      }
+
+      // Adiciona filtro de representante se fornecido
+      if (filters.representative && filters.representative !== 'all') {
+        orderQuery = orderQuery.eq('REPRESENTANTE', parseInt(filters.representative));
+      }
+
+      // Adiciona filtro de status se fornecido (mas geralmente queremos todos os status para análise de entrega)
+      if (filters.status && filters.status !== 'all') {
+        orderQuery = orderQuery.eq('STATUS', filters.status);
+      }
+
+      const { data: orderBatch, error: orderError } = await orderQuery;
+
+      if (orderError) {
+        console.error('Erro ao buscar lote de dados de pedidos para eficiência de entrega:', orderError);
+        break;
+      }
+
+      if (!orderBatch || orderBatch.length === 0) {
+        hasMoreOrders = false;
+      } else {
+        allOrderData = [...allOrderData, ...orderBatch];
+        orderOffset += batchSize;
+        hasMoreOrders = orderBatch.length === batchSize;
+      }
+    }
+
+    console.log(`Processando ${allOrderData.length} pedidos para análise de eficiência de entrega`);
+
+    // Contadores para análise
+    let totalFullyDelivered = 0;
+    let totalPartialDelivered = 0;
+    let totalOpen = 0;
+    let totalItems = 0;
+    let totalRemainingQuantity = 0;
+
+    // Analisa cada pedido
+    allOrderData.forEach(order => {
+      // Obtém quantidades
+      const qtdePedida = parseFloat((order.QTDE_PEDIDA || 0).toString());
+      const qtdeEntregue = parseFloat((order.QTDE_ENTREGUE || 0).toString());
+      const qtdeSaldo = parseFloat((order.QTDE_SALDO || 0).toString());
+      
+      // Incrementa contador total
+      totalItems++;
+      
+      // Acumula quantidade pendente
+      totalRemainingQuantity += qtdeSaldo;
+      
+      // Classifica o item
+      if (qtdeSaldo === 0 && qtdeEntregue > 0) {
+        // Totalmente entregue
+        totalFullyDelivered++;
+      } else if (qtdeEntregue > 0 && qtdeSaldo > 0) {
+        // Parcialmente entregue
+        totalPartialDelivered++;
+      } else if (qtdeSaldo > 0 && qtdeEntregue === 0) {
+        // Totalmente em aberto
+        totalOpen++;
+      }
+    });
+
+    // Calcula percentuais
+    const fullyDeliveredPercentage = totalItems > 0 ? (totalFullyDelivered / totalItems) * 100 : 0;
+    const partialPercentage = totalItems > 0 ? (totalPartialDelivered / totalItems) * 100 : 0;
+    const openPercentage = totalItems > 0 ? (totalOpen / totalItems) * 100 : 0;
+    const averageRemainingQuantity = totalItems > 0 ? totalRemainingQuantity / totalItems : 0;
+
+    return {
+      fullyDeliveredPercentage,
+      partialPercentage,
+      openPercentage,
+      averageRemainingQuantity
+    };
+  } catch (error) {
+    console.error('Erro ao buscar dados de eficiência de entrega:', error);
+    throw error;
+  }
+};
