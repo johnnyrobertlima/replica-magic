@@ -20,15 +20,33 @@ export interface FaturamentoItem {
   DATA_EMISSAO?: string | Date;
 }
 
+export interface PedidoItem {
+  MATRIZ: number;
+  FILIAL: number;
+  PED_NUMPEDIDO: string;
+  PED_ANOBASE: number;
+  MPED_NUMORDEM: number;
+  ITEM_CODIGO?: string;
+  PES_CODIGO?: number;
+  QTDE_PEDIDA?: number;
+  QTDE_ENTREGUE?: number;
+  QTDE_SALDO?: number;
+  STATUS?: string;
+  DATA_PEDIDO?: string | Date;
+  VALOR_UNITARIO?: number;
+}
+
 export interface DailyFaturamento {
   date: string;
   total: number;
+  pedidoTotal: number;
   formattedDate: string;
 }
 
 export interface MonthlyFaturamento {
   month: string;
   total: number;
+  pedidoTotal: number;
   formattedMonth: string;
 }
 
@@ -39,6 +57,7 @@ export interface DashboardComercialData {
   totalItens: number;
   mediaValorItem: number;
   faturamentoItems: FaturamentoItem[];
+  pedidoItems: PedidoItem[];
   dataRangeInfo: {
     startDateRequested: string;
     endDateRequested: string;

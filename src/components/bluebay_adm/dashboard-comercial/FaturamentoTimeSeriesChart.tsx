@@ -10,7 +10,8 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  TooltipProps
+  TooltipProps,
+  Legend
 } from 'recharts';
 import { DailyFaturamento, MonthlyFaturamento } from '@/services/bluebay/dashboardComercialTypes';
 
@@ -31,9 +32,12 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
     return (
       <div className="bg-background border border-border p-4 rounded-md shadow-md">
         <p className="font-medium text-foreground">{label}</p>
-        <p className="text-primary">
-          {currencyFormatter.format(payload[0].value)}
-        </p>
+        {payload.map((entry, index) => (
+          <p key={`tooltip-${index}`} style={{ color: entry.color }} className="text-sm">
+            {entry.name === 'Faturado' ? 'Faturamento: ' : 'Pedido: '}
+            {currencyFormatter.format(entry.value)}
+          </p>
+        ))}
       </div>
     );
   }
@@ -44,6 +48,7 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 interface ChartData {
   label: string;
   value: number;
+  pedidoValue: number;
   formattedLabel: string;
 }
 
@@ -71,6 +76,7 @@ export const FaturamentoTimeSeriesChart = ({
       return monthlyData.map(item => ({
         label: item.month,
         value: item.total,
+        pedidoValue: item.pedidoTotal,
         formattedLabel: item.formattedMonth
       }));
     } else {
@@ -78,6 +84,7 @@ export const FaturamentoTimeSeriesChart = ({
       return dailyData.map(item => ({
         label: item.date,
         value: item.total,
+        pedidoValue: item.pedidoTotal,
         formattedLabel: item.formattedDate
       }));
     }
@@ -115,13 +122,25 @@ export const FaturamentoTimeSeriesChart = ({
                 tickFormatter={(value) => currencyFormatter.format(value)}
               />
               <Tooltip content={<CustomTooltip />} />
+              <Legend />
               <Line
+                name="Faturado"
                 type="monotone"
                 dataKey="value"
                 stroke="#10b981"
                 strokeWidth={2}
                 dot={{ r: 3 }}
                 activeDot={{ r: 6 }}
+              />
+              <Line
+                name="Pedido"
+                type="monotone"
+                dataKey="pedidoValue"
+                stroke="#3b82f6"
+                strokeWidth={2}
+                dot={{ r: 3 }}
+                activeDot={{ r: 6 }}
+                strokeDasharray="5 5"
               />
             </LineChart>
           </ResponsiveContainer>

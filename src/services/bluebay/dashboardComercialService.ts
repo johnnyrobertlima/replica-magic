@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from 'date-fns';
 import { fetchInBatches } from "./utils/batchFetchUtils";
 import { processarDadosFaturamento } from "./utils/faturamentoDataUtils";
-import { DashboardComercialData, FaturamentoItem } from "./dashboardComercialTypes";
+import { DashboardComercialData, FaturamentoItem, PedidoItem } from "./dashboardComercialTypes";
 
 /**
  * Busca dados de faturamento para o dashboard comercial
@@ -33,9 +33,28 @@ export const fetchDashboardComercialData = async (
       return await query;
     };
     
-    // Buscar todos os dados de faturamento usando o utilitário de lotes
-    const faturamentoData = await fetchInBatches<FaturamentoItem>(fetchFaturamentoBatch, 1000);
+    // Função para buscar dados de pedidos em lotes
+    const fetchPedidoBatch = async (offset: number, limit: number) => {
+      const query = supabase
+        .from('BLUEBAY_PEDIDO')
+        .select('*', { count: 'exact', head: false })
+        .eq('CENTROCUSTO', 'BLUEBAY') // Filtrar apenas pedidos da BLUEBAY
+        .in('STATUS', ['1', '2', '3']) // Pedidos em aberto, parciais ou concluídos
+        .gte('DATA_PEDIDO', startDateStr)
+        .lte('DATA_PEDIDO', `${endDateStr}T23:59:59.999`)
+        .range(offset, offset + limit - 1);
+      
+      return await query;
+    };
+    
+    // Buscar todos os dados de faturamento e pedidos usando o utilitário de lotes
+    const [faturamentoData, pedidoData] = await Promise.all([
+      fetchInBatches<FaturamentoItem>(fetchFaturamentoBatch, 1000),
+      fetchInBatches<PedidoItem>(fetchPedidoBatch, 1000)
+    ]);
+    
     console.log(`Total de registros de faturamento recuperados: ${faturamentoData?.length || 0}`);
+    console.log(`Total de registros de pedidos recuperados: ${pedidoData?.length || 0}`);
 
     // Processar os dados de faturamento usando o utilitário de processamento
     const {
@@ -46,7 +65,7 @@ export const fetchDashboardComercialData = async (
       mediaValorItem,
       minDate,
       maxDate
-    } = processarDadosFaturamento(faturamentoData);
+    } = processarDadosFaturamento(faturamentoData, pedidoData);
 
     // Verificar se os dados cobrem todo o período solicitado
     // Consideramos que temos dados completos se temos pelo menos algum dado 
@@ -60,6 +79,7 @@ export const fetchDashboardComercialData = async (
       totalItens,
       mediaValorItem,
       faturamentoItems: faturamentoData,
+      pedidoItems: pedidoData,
       dataRangeInfo: {
         startDateRequested: startDateStr,
         endDateRequested: endDateStr,
