@@ -26,7 +26,7 @@ export const FiltersProvider = ({ children }: { children: ReactNode }) => {
       startDate: subMonths(new Date(), 6),
       endDate: new Date(),
     },
-    brand: null,
+    brand: null, // Default to null to show all brands/cost centers
     status: null,
   });
 

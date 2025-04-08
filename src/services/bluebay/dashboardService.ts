@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { 
   KpiData, 
@@ -90,7 +91,7 @@ const fetchKpiData = async (filters: {
       if (filters.brand && filters.brand !== 'all') {
         orderQuery = orderQuery.eq('CENTROCUSTO', filters.brand);
       }
-      // Removida restrição de CENTROCUSTO = 'BK'
+      // Nota: Removida a restrição de CENTROCUSTO = 'BK' para permitir todos os centros
 
       // Adicionar filtro de status, se fornecido
       if (filters.status && filters.status !== 'all') {

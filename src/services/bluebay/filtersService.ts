@@ -16,10 +16,13 @@ export const fetchFilterOptions = async () => {
 
     // Get unique brands
     const brands = Array.from(new Set(brandsData.map(b => b.CENTROCUSTO)))
+      .filter(Boolean) // Filter out null/undefined/empty values
       .map(centrocusto => ({
         value: centrocusto, 
         label: centrocusto
       }));
+
+    console.log("Centros de custo disponíveis:", brands.map(b => b.value).join(", "));
 
     // Fetch representatives
     const { data: reps, error: repsError } = await supabase
