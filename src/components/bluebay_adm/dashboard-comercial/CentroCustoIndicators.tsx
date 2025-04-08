@@ -1,7 +1,9 @@
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { FaturamentoItem, PedidoItem } from '@/services/bluebay/dashboardComercialTypes';
+import { Badge } from '@/components/ui/badge';
+import { Check } from 'lucide-react';
 
 // Formatador de números para moeda brasileira
 const formatCurrency = new Intl.NumberFormat('pt-BR', {
@@ -25,12 +27,16 @@ interface CentroCustoIndicatorsProps {
   faturamentoItems: FaturamentoItem[];
   pedidoItems: PedidoItem[];
   isLoading: boolean;
+  selectedCentroCusto: string | null;
+  onCentroCustoSelect: (centroCusto: string | null) => void;
 }
 
 export const CentroCustoIndicators = ({ 
   faturamentoItems, 
   pedidoItems, 
-  isLoading 
+  isLoading,
+  selectedCentroCusto,
+  onCentroCustoSelect
 }: CentroCustoIndicatorsProps) => {
   // Processar os dados por CENTROCUSTO
   const indicadoresPorCentroCusto = useMemo(() => {
@@ -95,6 +101,16 @@ export const CentroCustoIndicators = ({
       .sort((a, b) => a.nome.localeCompare(b.nome));
   }, [faturamentoItems, pedidoItems]);
 
+  const handleCentroCustoClick = (centroCusto: string) => {
+    if (selectedCentroCusto === centroCusto) {
+      // Se já está selecionado, desmarcar (filtro removido)
+      onCentroCustoSelect(null);
+    } else {
+      // Selecionar este centroCusto como filtro
+      onCentroCustoSelect(centroCusto);
+    }
+  };
+
   if (isLoading) {
     return (
       <Card className="mb-6">
@@ -112,8 +128,17 @@ export const CentroCustoIndicators = ({
 
   return (
     <Card className="mb-6">
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Indicadores por Centro de Custo</CardTitle>
+        {selectedCentroCusto && (
+          <Badge 
+            variant="outline" 
+            className="cursor-pointer hover:bg-secondary"
+            onClick={() => onCentroCustoSelect(null)}
+          >
+            Limpar filtro
+          </Badge>
+        )}
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
@@ -132,9 +157,17 @@ export const CentroCustoIndicators = ({
               {indicadoresPorCentroCusto.map((centro, index) => (
                 <tr 
                   key={index} 
-                  className={`${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-gray-100`}
+                  className={`${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-gray-100 cursor-pointer ${
+                    selectedCentroCusto === centro.nome ? 'bg-primary/10' : ''
+                  }`}
+                  onClick={() => handleCentroCustoClick(centro.nome)}
                 >
-                  <td className="py-3 px-4 font-medium">{centro.nome}</td>
+                  <td className="py-3 px-4 font-medium flex items-center">
+                    {selectedCentroCusto === centro.nome && (
+                      <Check className="h-4 w-4 mr-2 text-primary" />
+                    )}
+                    {centro.nome}
+                  </td>
                   <td className="py-3 px-4 text-right">{formatCurrency.format(centro.totalFaturado)}</td>
                   <td className="py-3 px-4 text-right">{formatNumber.format(centro.totalItensFaturados)}</td>
                   <td className="py-3 px-4 text-right">{formatCurrency.format(centro.ticketMedioFaturado)}</td>

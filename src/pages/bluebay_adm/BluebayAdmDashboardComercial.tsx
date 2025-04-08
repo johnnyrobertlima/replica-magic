@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { BluebayAdmBanner } from "@/components/bluebay_adm/BluebayAdmBanner";
 import { BluebayAdmMenu } from "@/components/bluebay_adm/BluebayAdmMenu";
 import { FaturamentoTimeSeriesChart } from "@/components/bluebay_adm/dashboard-comercial/FaturamentoTimeSeriesChart";
@@ -9,6 +10,7 @@ import { CentroCustoIndicators } from "@/components/bluebay_adm/dashboard-comerc
 import { useDashboardComercial } from "@/hooks/bluebay_adm/dashboard/useDashboardComercial";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Info } from "lucide-react";
+import { FaturamentoItem, PedidoItem } from "@/services/bluebay/dashboardComercialTypes";
 
 const BluebayAdmDashboardComercial = () => {
   const {
@@ -19,9 +21,39 @@ const BluebayAdmDashboardComercial = () => {
     setDateRange,
     refreshData
   } = useDashboardComercial();
+  
+  // Estado para controlar o filtro de Centro de Custo
+  const [selectedCentroCusto, setSelectedCentroCusto] = useState<string | null>(null);
+
+  // Filtrar dados com base no Centro de Custo selecionado
+  const filteredFaturamentoItems = selectedCentroCusto 
+    ? dashboardData?.faturamentoItems.filter(item => {
+        const pedidoCorrespondente = dashboardData.pedidoItems.find(p => 
+          p.PED_NUMPEDIDO === item.PED_NUMPEDIDO && 
+          p.PED_ANOBASE === item.PED_ANOBASE && 
+          p.MPED_NUMORDEM === item.MPED_NUMORDEM
+        );
+        return pedidoCorrespondente?.CENTROCUSTO === selectedCentroCusto;
+      }) 
+    : dashboardData?.faturamentoItems || [];
+  
+  const filteredPedidoItems = selectedCentroCusto 
+    ? dashboardData?.pedidoItems.filter(item => item.CENTROCUSTO === selectedCentroCusto)
+    : dashboardData?.pedidoItems || [];
+
+  // Recalcular totais com base nos itens filtrados
+  const calculatedTotals = {
+    totalFaturado: filteredFaturamentoItems.reduce((sum, item) => sum + (item.VALOR_NOTA || 0), 0),
+    totalItens: filteredFaturamentoItems.reduce((sum, item) => sum + (item.QUANTIDADE || 0), 0),
+    mediaValorItem: 0
+  };
+  
+  calculatedTotals.mediaValorItem = calculatedTotals.totalItens > 0 
+    ? calculatedTotals.totalFaturado / calculatedTotals.totalItens 
+    : 0;
 
   // Verifica se há dados disponíveis
-  const hasData = dashboardData?.faturamentoItems && dashboardData.faturamentoItems.length > 0;
+  const hasData = filteredFaturamentoItems.length > 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -54,9 +86,9 @@ const BluebayAdmDashboardComercial = () => {
         
         <div className="mb-6">
           <FaturamentoKpiCards
-            totalFaturado={dashboardData?.totalFaturado || 0}
-            totalItens={dashboardData?.totalItens || 0}
-            mediaValorItem={dashboardData?.mediaValorItem || 0}
+            totalFaturado={calculatedTotals.totalFaturado}
+            totalItens={calculatedTotals.totalItens}
+            mediaValorItem={calculatedTotals.mediaValorItem}
             isLoading={isLoading}
           />
         </div>
@@ -71,17 +103,19 @@ const BluebayAdmDashboardComercial = () => {
           />
         </div>
         
-        {/* Indicadores por Centro de Custo */}
+        {/* Indicadores por Centro de Custo com funcionalidade de filtro */}
         <CentroCustoIndicators 
           faturamentoItems={dashboardData?.faturamentoItems || []}
           pedidoItems={dashboardData?.pedidoItems || []}
           isLoading={isLoading}
+          selectedCentroCusto={selectedCentroCusto}
+          onCentroCustoSelect={setSelectedCentroCusto}
         />
         
-        {/* Tabela de Notas Fiscais e Pedidos */}
+        {/* Tabela de Notas Fiscais e Pedidos (filtrada pelo Centro de Custo selecionado) */}
         <FaturamentoTable 
-          faturamentoData={dashboardData?.faturamentoItems || []}
-          pedidoData={dashboardData?.pedidoItems || []}
+          faturamentoData={filteredFaturamentoItems}
+          pedidoData={filteredPedidoItems}
           isLoading={isLoading}
         />
       </div>
