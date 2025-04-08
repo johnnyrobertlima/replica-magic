@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { 
   KpiData, 
@@ -99,6 +98,7 @@ const fetchKpiData = async (filters: {
       if (filters.brand && filters.brand !== 'all') {
         orderQuery = orderQuery.eq('CENTROCUSTO', filters.brand);
       }
+      // Removendo a restrição de CENTROCUSTO = 'BK' para essa página específica
 
       // Adicionar filtro de representante, se fornecido
       if (filters.representative && filters.representative !== 'all') {
@@ -279,6 +279,7 @@ const fetchTimeSeriesData = async (filters: {
       if (filters.brand && filters.brand !== 'all') {
         orderQuery = orderQuery.eq('CENTROCUSTO', filters.brand);
       }
+      // Removendo a restrição de CENTROCUSTO = 'BK' para essa página específica
 
       // Adicionar filtro de representante, se fornecido
       if (filters.representative && filters.representative !== 'all') {
@@ -838,204 +839,4 @@ const fetchRepresentativeData = async (filters: {
         return;
       }
       
-      const repName = repNameMap.get(repCode) || `Rep #${repCode}`;
-      const orderData = repOrderMap.get(repCode) || { total: 0, count: 0 };
-      const totalBilled = repBillingMap.get(repCode) || 0;
-      const conversionRate = orderData.total > 0 ? (totalBilled / orderData.total) * 100 : 0;
-      const averageTicket = orderData.count > 0 ? orderData.total / orderData.count : 0;
-      
-      repItems.push({
-        code: repCode.toString(),
-        name: repName,
-        totalOrders: orderData.total,
-        totalBilled,
-        conversionRate,
-        averageTicket
-      });
-    });
-
-    // Ordena por valor faturado
-    repItems.sort((a, b) => b.totalBilled - a.totalBilled);
-
-    return { 
-      data: { items: repItems },
-      totalCount: uniqueReps.length
-    };
-  } catch (error) {
-    console.error('Erro ao buscar dados de representantes:', error);
-    throw error;
-  }
-};
-
-/**
- * Busca dados de eficiência de entrega com opção de buscar todos os dados
- */
-const fetchDeliveryData = async (filters: {
-  startDate: Date | null;
-  endDate: Date | null;
-  brand: string | null;
-  representative: string | null;
-  status: string | null;
-}): Promise<DeliveryData> => {
-  try {
-    // Converte datas para strings para a consulta
-    const startDateStr = filters.startDate ? format(filters.startDate, 'yyyy-MM-dd') : '';
-    const endDateStr = filters.endDate ? format(filters.endDate, 'yyyy-MM-dd') : '';
-    
-    console.log(`Buscando dados de entrega de ${startDateStr} até ${endDateStr}`);
-
-    // Busca todos os dados de pedidos em lotes
-    let allOrderData: any[] = [];
-    let hasMoreOrders = true;
-    let orderOffset = 0;
-    const batchSize = 10000;
-    
-    while (hasMoreOrders) {
-      let orderQuery = supabase
-        .from('BLUEBAY_PEDIDO')
-        .select('*')
-        .range(orderOffset, orderOffset + batchSize - 1);
-
-      // Adiciona filtros de data se fornecidos
-      if (startDateStr && endDateStr) {
-        orderQuery = orderQuery
-          .gte('DATA_PEDIDO', startDateStr)
-          .lte('DATA_PEDIDO', endDateStr + 'T23:59:59.999Z');
-      }
-
-      // Adiciona filtro de marca se fornecido
-      if (filters.brand && filters.brand !== 'all') {
-        orderQuery = orderQuery.eq('CENTROCUSTO', filters.brand);
-      }
-
-      // Adiciona filtro de representante se fornecido
-      if (filters.representative && filters.representative !== 'all') {
-        orderQuery = orderQuery.eq('REPRESENTANTE', parseInt(filters.representative));
-      }
-
-      // Adiciona filtro de status se fornecido
-      if (filters.status && filters.status !== 'all') {
-        orderQuery = orderQuery.eq('STATUS', filters.status);
-      }
-
-      const { data: orderBatch, error: orderError } = await orderQuery;
-
-      if (orderError) {
-        console.error('Erro ao buscar lote de dados de entrega:', orderError);
-        break;
-      }
-
-      if (!orderBatch || orderBatch.length === 0) {
-        hasMoreOrders = false;
-      } else {
-        allOrderData = [...allOrderData, ...orderBatch];
-        orderOffset += batchSize;
-        hasMoreOrders = orderBatch.length === batchSize;
-      }
-    }
-
-    console.log(`Processando dados de entrega de ${allOrderData.length} pedidos`);
-
-    // Conta pedidos por status
-    let fullyDelivered = 0; // STATUS = 3
-    let partialDelivery = 0; // STATUS = 2
-    let openOrders = 0;     // STATUS = 1 ou STATUS = 0
-    let totalRemainingQty = 0;
-    let totalOrders = 0;
-    
-    allOrderData.forEach(order => {
-      const status = order.STATUS;
-      const remainingQty = parseFloat((order.QTDE_SALDO || 0).toString());
-      
-      totalOrders++;
-      totalRemainingQty += remainingQty;
-      
-      if (status === '3') {
-        fullyDelivered++;
-      } else if (status === '2') {
-        partialDelivery++;
-      } else if (status === '1' || status === '0') {
-        openOrders++;
-      }
-    });
-    
-    // Calcula percentuais
-    const fullyDeliveredPercentage = totalOrders > 0 ? (fullyDelivered / totalOrders) * 100 : 0;
-    const partialPercentage = totalOrders > 0 ? (partialDelivery / totalOrders) * 100 : 0;
-    const openPercentage = totalOrders > 0 ? (openOrders / totalOrders) * 100 : 0;
-    const averageRemainingQuantity = totalOrders > 0 ? totalRemainingQty / totalOrders : 0;
-    
-    return {
-      fullyDeliveredPercentage,
-      partialPercentage,
-      openPercentage,
-      averageRemainingQuantity
-    };
-  } catch (error) {
-    console.error('Erro ao buscar dados de entrega:', error);
-    throw error;
-  }
-};
-
-// Geradores de dados simulados para fallback
-function generateMockKpiData(): KpiData {
-  return {
-    totalOrders: 1250000,
-    totalBilled: 850000,
-    conversionRate: 68,
-    orderedPieces: 6500,
-    billedPieces: 4400,
-    averageDiscount: 8.5
-  };
-}
-
-function generateMockTimeSeriesData(): TimeSeriesData {
-  const currentDate = new Date();
-  const months = [];
-  
-  for (let i = 5; i >= 0; i--) {
-    const date = new Date(currentDate);
-    date.setMonth(date.getMonth() - i);
-    
-    months.push({
-      date: format(date, 'MMM yyyy'),
-      ordersValue: 180000 + Math.round(Math.random() * 50000),
-      billedValue: 130000 + Math.round(Math.random() * 40000),
-      orderedPieces: 900 + Math.round(Math.random() * 200),
-      billedPieces: 600 + Math.round(Math.random() * 180)
-    });
-  }
-  
-  return { monthlySeries: months };
-}
-
-function generateMockBrandData(): BrandData {
-  return {
-    items: [
-      { brand: "Squad", totalOrders: 420000, totalBilled: 310000, conversionRate: 73.8, volume: 1800 },
-      { brand: "Blunt", totalOrders: 350000, totalBilled: 245000, conversionRate: 70.0, volume: 1500 },
-      { brand: "Skate", totalOrders: 280000, totalBilled: 180000, conversionRate: 64.3, volume: 1200 },
-      { brand: "Hondar", totalOrders: 200000, totalBilled: 115000, conversionRate: 57.5, volume: 900 }
-    ]
-  };
-}
-
-function generateMockRepresentativeData(): RepresentativeData {
-  return {
-    items: [
-      { code: "1", name: "João Silva", totalOrders: 380000, totalBilled: 285000, conversionRate: 75.0, averageTicket: 12500 },
-      { code: "2", name: "Maria Santos", totalOrders: 320000, totalBilled: 210000, conversionRate: 65.6, averageTicket: 10500 },
-      { code: "3", name: "Carlos Oliveira", totalOrders: 290000, totalBilled: 195000, conversionRate: 67.2, averageTicket: 9750 },
-      { code: "4", name: "Ana Pereira", totalOrders: 260000, totalBilled: 160000, conversionRate: 61.5, averageTicket: 8000 }
-    ]
-  };
-}
-
-function generateMockDeliveryData(): DeliveryData {
-  return {
-    fullyDeliveredPercentage: 65,
-    partialPercentage: 20,
-    openPercentage: 15,
-    averageRemainingQuantity: 12.5
-  };
-}
+      const repName = repNameMap.get(repCode) || `Rep #${repCode
