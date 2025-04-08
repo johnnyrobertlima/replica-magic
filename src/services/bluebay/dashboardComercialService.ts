@@ -35,16 +35,19 @@ export const fetchDashboardComercialData = async (
     
     // Função para buscar dados de pedidos em lotes
     const fetchPedidoBatch = async (offset: number, limit: number) => {
+      console.log(`Buscando lote de pedidos ${offset / limit + 1}`);
+      
       const query = supabase
-        .from('BLUEBAY_PEDIDO') // Certifique-se de que está consultando a tabela correta
+        .from('BLUEBAY_PEDIDO')
         .select('*', { count: 'exact', head: false })
         .eq('CENTROCUSTO', 'BLUEBAY') // Filtrar apenas pedidos da BLUEBAY
-        .in('STATUS', ['1', '2', '3']) // Pedidos em aberto, parciais ou concluídos
-        .gte('DATA_PEDIDO', startDateStr) // Usando DATA_PEDIDO para pedidos
+        .gte('DATA_PEDIDO', startDateStr)
         .lte('DATA_PEDIDO', `${endDateStr}T23:59:59.999`)
         .range(offset, offset + limit - 1);
       
-      return await query;
+      const result = await query;
+      console.log(`Lote de pedidos ${offset / limit + 1}: ${result.data?.length || 0} registros`);
+      return result;
     };
     
     // Buscar todos os dados de faturamento e pedidos usando o utilitário de lotes
@@ -79,7 +82,7 @@ export const fetchDashboardComercialData = async (
       totalItens,
       mediaValorItem,
       faturamentoItems: faturamentoData,
-      pedidoItems: pedidoData, // Incluindo os itens de pedido nos dados retornados
+      pedidoItems: pedidoData,
       dataRangeInfo: {
         startDateRequested: startDateStr,
         endDateRequested: endDateStr,

@@ -1,55 +1,51 @@
 
-import { PostgrestError } from "@supabase/supabase-js";
+import { PostgrestError, PostgrestResponse } from '@supabase/supabase-js';
 
 /**
- * Busca dados em lotes para superar o limite de 1000 registros por consulta do Supabase
- * Função genérica que pode ser reutilizada em diferentes serviços
+ * Busca dados em lotes para otimizar consultas grandes
  */
-export const fetchInBatches = async <T>(
-  query: (offset: number, limit: number) => Promise<{ data: T[] | null, error: PostgrestError | null, count?: number | null }>,
-  batchSize: number = 1000, // O limite padrão do Supabase é 1000, então usamos isso como tamanho do lote
-  maxBatches: number = 1000 // Limite de segurança para evitar loops infinitos
-): Promise<T[]> => {
+export async function fetchInBatches<T>(
+  fetchBatchFunction: (offset: number, limit: number) => Promise<PostgrestResponse<T>>,
+  batchSize: number = 1000
+): Promise<T[]> {
   let allData: T[] = [];
-  let hasMore = true;
   let offset = 0;
+  let hasMore = true;
   let batchCount = 0;
-  
-  while (hasMore && batchCount < maxBatches) {
-    batchCount++;
-    console.log(`Buscando lote ${batchCount} (offset: ${offset}, tamanho: ${batchSize})`);
-    
-    try {
-      const { data, error } = await query(offset, batchSize);
+  let error: PostgrestError | null = null;
+
+  try {
+    while (hasMore) {
+      batchCount++;
+      console.log(`Buscando lote ${batchCount} (offset: ${offset}, tamanho: ${batchSize})`);
       
-      if (error) {
-        console.error(`Erro ao buscar lote ${batchCount}:`, error);
-        throw error;
+      const response = await fetchBatchFunction(offset, batchSize);
+      
+      if (response.error) {
+        error = response.error;
+        console.error(`Erro ao buscar lote ${batchCount}:`, response.error);
+        break;
       }
       
-      if (!data || data.length === 0) {
+      const batchData = response.data || [];
+      
+      if (batchData.length === 0) {
         console.log(`Nenhum dado encontrado no lote ${batchCount}`);
-        hasMore = false;
-      } else {
-        allData = [...allData, ...data];
-        console.log(`Processado lote ${batchCount}: ${data.length} registros. Total acumulado: ${allData.length}`);
-        
-        // Continua buscando se o número de registros retornados for igual ao tamanho do lote
-        // Esta é a correção principal: no Supabase, precisamos continuar mesmo quando recebemos exatamente 1000 registros
-        hasMore = data.length === batchSize;
-        offset += batchSize;
+        break;
       }
-    } catch (error) {
-      console.error(`Falha ao buscar lote ${batchCount}:`, error);
-      // Em caso de falha, interrompemos o loop mas retornamos os dados já coletados
-      hasMore = false;
+      
+      allData = [...allData, ...batchData];
+      console.log(`Processado lote ${batchCount}: ${batchData.length} registros. Total acumulado: ${allData.length}`);
+      
+      // Verifica se há mais dados para buscar
+      hasMore = batchData.length === batchSize;
+      offset += batchSize;
     }
+    
+    console.log(`Total de ${allData.length} registros carregados em ${batchCount} lotes`);
+    return allData;
+  } catch (err) {
+    console.error("Erro durante a busca em lote:", err);
+    throw err;
   }
-  
-  if (batchCount >= maxBatches) {
-    console.warn(`Limite de ${maxBatches} lotes atingido. Pode haver mais dados não recuperados.`);
-  }
-  
-  console.log(`Total de ${allData.length} registros carregados em ${batchCount} lotes`);
-  return allData;
-};
+}
