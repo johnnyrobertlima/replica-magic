@@ -1,11 +1,8 @@
 
 /**
  * This file is kept for backward compatibility.
- * It re-exports stock query functions from their dedicated modules.
+ * Note: We have removed references to BLUEBAY_ESTOQUE and BLUEBAY_ITEM tables
+ * as per instructions to not consult these tables in the dashboard
  */
-import { fetchStockData, fetchStockItemsPaginated } from './stock';
 
-export {
-  fetchStockData,
-  fetchStockItemsPaginated
-};
+export {};

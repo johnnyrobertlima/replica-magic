@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { 
   KpiData, 
@@ -95,7 +96,6 @@ const fetchKpiData = async (filters: {
       if (filters.brand && filters.brand !== 'all') {
         orderQuery = orderQuery.eq('CENTROCUSTO', filters.brand);
       }
-      // Nota: Removida a restrição de CENTROCUSTO = 'BK' para permitir todos os centros
 
       // Adicionar filtro de status, se fornecido
       if (filters.status && filters.status !== 'all') {
@@ -270,7 +270,6 @@ const fetchTimeSeriesData = async (filters: {
       if (filters.brand && filters.brand !== 'all') {
         orderQuery = orderQuery.eq('CENTROCUSTO', filters.brand);
       }
-      // Removida restrição de CENTROCUSTO = 'BK'
 
       // Adicionar filtro de status, se fornecido
       if (filters.status && filters.status !== 'all') {
@@ -337,7 +336,7 @@ const fetchTimeSeriesData = async (filters: {
       
       if (!monthlyData.has(monthKey)) {
         monthlyData.set(monthKey, {
-          date: format(orderDate, 'MMM yyyy'),
+          date: monthKey,
           ordersValue: 0,
           billedValue: 0,
           orderedPieces: 0,
@@ -359,7 +358,7 @@ const fetchTimeSeriesData = async (filters: {
       
       if (!monthlyData.has(monthKey)) {
         monthlyData.set(monthKey, {
-          date: format(billingDate, 'MMM yyyy'),
+          date: monthKey,
           ordersValue: 0,
           billedValue: 0,
           orderedPieces: 0,
@@ -602,6 +601,7 @@ const fetchBrandData = async (filters: {
 
 /**
  * Busca dados de eficiência de entrega em lotes para superar limites de consulta
+ * sem utilizar as tabelas BLUEBAY_ESTOQUE e BLUEBAY_ITEM
  */
 const fetchDeliveryData = async (filters: {
   startDate: Date | null;

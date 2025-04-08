@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const fetchFilterOptions = async () => {
   try {
-    // Fetch brands (CENTROCUSTO) without any restrictions
+    // Fetch all distinct cost centers (CENTROCUSTO)
     const { data: brandsData, error: brandsError } = await supabase
       .from('BLUEBAY_PEDIDO')
       .select('CENTROCUSTO')
@@ -11,13 +11,13 @@ export const fetchFilterOptions = async () => {
       .order('CENTROCUSTO');
     
     if (brandsError) {
-      throw new Error(`Error fetching brands: ${brandsError.message}`);
+      throw new Error(`Error fetching cost centers: ${brandsError.message}`);
     }
 
     // Log raw data to see what's actually coming from the database
     console.log("Raw CENTROCUSTO data from database:", brandsData);
 
-    // Get unique brands
+    // Get unique cost centers
     const brands = Array.from(new Set(brandsData.map(b => b.CENTROCUSTO)))
       .filter(Boolean) // Filter out null/undefined/empty values
       .map(centrocusto => ({
