@@ -31,6 +31,7 @@ export async function fetchInBatches<T>(
       
       if (batchData.length === 0) {
         console.log(`Nenhum dado encontrado no lote ${batchCount}`);
+        hasMore = false;
         break;
       }
       

@@ -40,7 +40,8 @@ export const fetchDashboardComercialData = async (
       const query = supabase
         .from('BLUEBAY_PEDIDO')
         .select('*', { count: 'exact', head: false })
-        .eq('CENTROCUSTO', 'BLUEBAY') // Filtrar apenas pedidos da BLUEBAY
+        // Filtro removido: .eq('CENTROCUSTO', 'BLUEBAY')
+        // Agora busca todos os pedidos independente da marca (CENTROCUSTO)
         .gte('DATA_PEDIDO', startDateStr)
         .lte('DATA_PEDIDO', `${endDateStr}T23:59:59.999`)
         .range(offset, offset + limit - 1);
