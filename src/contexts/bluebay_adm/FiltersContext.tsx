@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
 import { subMonths } from 'date-fns';
 
 export interface DashboardFilters {
@@ -30,26 +30,27 @@ export const FiltersProvider = ({ children }: { children: ReactNode }) => {
     status: null,
   });
 
-  const updateDateRange = (startDate: Date, endDate: Date) => {
+  const updateDateRange = useCallback((startDate: Date, endDate: Date) => {
+    console.log("FiltersContext - Atualizando range de datas:", { startDate, endDate });
     setFilters((prev) => ({
       ...prev,
       dateRange: { startDate, endDate },
     }));
-  };
+  }, []);
 
-  const updateBrand = (brand: string | null) => {
+  const updateBrand = useCallback((brand: string | null) => {
     setFilters((prev) => ({
       ...prev,
       brand,
     }));
-  };
+  }, []);
 
-  const updateStatus = (status: string | null) => {
+  const updateStatus = useCallback((status: string | null) => {
     setFilters((prev) => ({
       ...prev,
       status,
     }));
-  };
+  }, []);
 
   return (
     <FiltersContext.Provider

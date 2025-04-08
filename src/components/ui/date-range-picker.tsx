@@ -61,6 +61,22 @@ export function DatePickerWithRange({
     },
   ];
 
+  // Garante que sempre temos valores válidos para exibição
+  const displayRange = React.useMemo(() => {
+    return {
+      from: dateRange?.from || null,
+      to: dateRange?.to || null
+    };
+  }, [dateRange]);
+
+  // Garantir que mudanças no calendário são registradas corretamente
+  const handleCalendarSelect = (range: DateRange | undefined) => {
+    if (range) {
+      console.log("DatePickerWithRange - Calendário selecionou:", range);
+      onDateRangeChange(range);
+    }
+  };
+
   return (
     <div className={cn("grid gap-2", className)}>
       <Popover>
@@ -70,18 +86,18 @@ export function DatePickerWithRange({
             variant={"outline"}
             className={cn(
               "w-[300px] justify-start text-left font-normal bg-white",
-              !dateRange && "text-muted-foreground"
+              !displayRange.from && !displayRange.to && "text-muted-foreground"
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {dateRange?.from ? (
-              dateRange.to ? (
+            {displayRange.from ? (
+              displayRange.to ? (
                 <>
-                  {format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} -{" "}
-                  {format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}
+                  {format(displayRange.from, "dd/MM/yyyy", { locale: ptBR })} -{" "}
+                  {format(displayRange.to, "dd/MM/yyyy", { locale: ptBR })}
                 </>
               ) : (
-                format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })
+                format(displayRange.from, "dd/MM/yyyy", { locale: ptBR })
               )
             ) : (
               <span>Selecione um período</span>
@@ -111,9 +127,9 @@ export function DatePickerWithRange({
             <Calendar
               initialFocus
               mode="range"
-              defaultMonth={dateRange?.from}
-              selected={dateRange}
-              onSelect={onDateRangeChange}
+              defaultMonth={displayRange.from || undefined}
+              selected={displayRange}
+              onSelect={handleCalendarSelect}
               numberOfMonths={2}
               className="p-3 pointer-events-auto bg-white"
             />

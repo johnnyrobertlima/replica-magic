@@ -33,14 +33,24 @@ export const DashboardFilters = ({ onFilterChange }: DashboardFiltersProps) => {
     to: filters.dateRange.endDate
   });
 
+  // Atualiza o estado local quando os filtros mudam
+  useEffect(() => {
+    setLocalDateRange({
+      from: filters.dateRange.startDate,
+      to: filters.dateRange.endDate
+    });
+  }, [filters.dateRange.startDate, filters.dateRange.endDate]);
+
   const handleDateRangeChange = (range: DateRange) => {
-    if (range.from && range.to) {
+    if (range?.from && range?.to) {
+      console.log("Nova seleção de datas:", range);
       setLocalDateRange(range);
     }
   };
 
   const applyDateRange = () => {
-    if (localDateRange.from && localDateRange.to) {
+    if (localDateRange?.from && localDateRange?.to) {
+      console.log("Aplicando intervalo de datas:", localDateRange);
       updateDateRange(localDateRange.from, localDateRange.to);
     }
   };
