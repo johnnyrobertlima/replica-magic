@@ -1,3 +1,4 @@
+
 import { 
   KpiData, 
   TimeSeriesData,
@@ -20,7 +21,7 @@ export const fetchBluebayDashboardData = async (filters: DashboardFilterParams) 
     
     // Parse representative to ensure we pass a number if needed
     let representativeId: number | null = null;
-    if (filters.representative) {
+    if (filters.representative && filters.representative !== 'all') {
       representativeId = parseInt(filters.representative, 10);
       // If parsing fails, keep it as null
       if (isNaN(representativeId)) {

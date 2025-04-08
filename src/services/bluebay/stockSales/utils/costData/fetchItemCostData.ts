@@ -26,8 +26,10 @@ export const fetchItemCostData = async (itemCodes: string[]): Promise<CostDataRe
     const results: CostDataRecord[] = [];
     
     for (const batch of batches) {
+      // Use a raw query with the 'from' function to avoid type issues
+      // TypeScript won't complain about tables not in the schema this way
       const { data, error } = await supabase
-        .from('vw_custos_items')
+        .from('vw_custos_items' as any)
         .select('*')
         .in('ITEM_CODIGO', batch);
       
@@ -38,7 +40,7 @@ export const fetchItemCostData = async (itemCodes: string[]): Promise<CostDataRe
       
       if (data) {
         // Use type assertion to avoid deep instantiation issues
-        results.push(...(data as CostDataRecord[]));
+        results.push(...(data as unknown as CostDataRecord[]));
       }
     }
     
