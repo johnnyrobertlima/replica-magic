@@ -58,6 +58,45 @@ export const fetchDashboardData = async (
 };
 
 /**
+ * Busca dados em lotes para superar limite do Supabase
+ * Função genérica para busca paginada
+ */
+const fetchInBatches = async <T>(
+  query: Function,
+  batchSize: number = 10000
+): Promise<T[]> => {
+  let allData: T[] = [];
+  let hasMore = true;
+  let offset = 0;
+  let batchCount = 0;
+  
+  while (hasMore) {
+    batchCount++;
+    console.log(`Buscando lote ${batchCount} (offset: ${offset}, tamanho: ${batchSize})`);
+    
+    const { data, error } = await query(offset, batchSize);
+    
+    if (error) {
+      console.error(`Erro ao buscar lote ${batchCount}:`, error);
+      throw error;
+    }
+    
+    if (!data || data.length === 0) {
+      console.log(`Nenhum dado encontrado no lote ${batchCount}`);
+      hasMore = false;
+    } else {
+      allData = [...allData, ...data];
+      console.log(`Processado lote ${batchCount}: ${data.length} registros. Total acumulado: ${allData.length}`);
+      hasMore = data.length === batchSize;
+      offset += batchSize;
+    }
+  }
+  
+  console.log(`Total de ${allData.length} registros carregados em ${batchCount} lotes`);
+  return allData;
+};
+
+/**
  * Busca dados KPI das tabelas de faturamento e pedidos
  * Implementação independente sem vínculo entre as tabelas
  */
@@ -80,44 +119,40 @@ const fetchKpiData = async (filters: {
       ? [filters.status]
       : validStatuses;
     
-    // Buscar dados de pedidos com os filtros aplicados diretamente na query
-    let pedidosQuery = supabase
-      .from('BLUEBAY_PEDIDO')
-      .select('*')
-      .in('STATUS', statusFilter)
-      .gte('DATA_PEDIDO', startDateStr)
-      .lte('DATA_PEDIDO', `${endDateStr}T23:59:59`)
-      .not('DATA_PEDIDO', 'is', null);
+    // Buscar dados de pedidos com os filtros aplicados usando batch fetching
+    const fetchOrderBatch = (offset: number, limit: number) => {
+      let pedidosQuery = supabase
+        .from('BLUEBAY_PEDIDO')
+        .select('*')
+        .in('STATUS', statusFilter)
+        .gte('DATA_PEDIDO', startDateStr)
+        .lte('DATA_PEDIDO', `${endDateStr}T23:59:59`)
+        .not('DATA_PEDIDO', 'is', null)
+        .range(offset, offset + limit - 1);
+      
+      // Aplicar filtro de marca apenas se especificado, mas sem vinculo entre tabelas
+      if (filters.brand && filters.brand !== 'all') {
+        pedidosQuery = pedidosQuery.eq('CENTROCUSTO', filters.brand);
+      }
+      
+      return pedidosQuery;
+    };
     
-    // Aplicar filtro de marca apenas se especificado, mas sem vinculo entre tabelas
-    if (filters.brand && filters.brand !== 'all') {
-      pedidosQuery = pedidosQuery.eq('CENTROCUSTO', filters.brand);
-    }
-    
-    const { data: orderData, error: orderError } = await pedidosQuery;
-    
-    if (orderError) {
-      console.error('Erro ao buscar dados de pedidos:', orderError);
-      throw orderError;
-    }
-    
+    const orderData = await fetchInBatches(fetchOrderBatch);
     console.log(`Total de registros de pedidos recuperados: ${orderData?.length || 0}`);
 
-    // Buscar dados de faturamento separadamente, sem vincular à tabela de pedidos
-    let faturamentoQuery = supabase
-      .from('BLUEBAY_FATURAMENTO')
-      .select('*')
-      .eq('TIPO', 'S') // Somente dados de vendas
-      .gte('DATA_EMISSAO', startDateStr)
-      .lte('DATA_EMISSAO', `${endDateStr}T23:59:59`);
+    // Buscar dados de faturamento em lotes, sem vincular à tabela de pedidos
+    const fetchBillingBatch = (offset: number, limit: number) => {
+      return supabase
+        .from('BLUEBAY_FATURAMENTO')
+        .select('*')
+        .eq('TIPO', 'S') // Somente dados de vendas
+        .gte('DATA_EMISSAO', startDateStr)
+        .lte('DATA_EMISSAO', `${endDateStr}T23:59:59`)
+        .range(offset, offset + limit - 1);
+    };
     
-    const { data: billingData, error: billingError } = await faturamentoQuery;
-    
-    if (billingError) {
-      console.error('Erro ao buscar dados de faturamento:', billingError);
-      throw billingError;
-    }
-    
+    const billingData = await fetchInBatches(fetchBillingBatch);
     console.log(`Total de registros de faturamento recuperados: ${billingData?.length || 0}`);
 
     // Aplicar filtro de marca para faturamento usando uma abordagem diferente
@@ -230,39 +265,41 @@ const fetchTimeSeriesData = async (filters: {
       ? [filters.status]
       : validStatuses;
     
-    // Obter dados de pedidos com filtros aplicados diretamente
-    let pedidosQuery = supabase
-      .from('BLUEBAY_PEDIDO')
-      .select('*')
-      .in('STATUS', statusFilter)
-      .gte('DATA_PEDIDO', startDateStr)
-      .lte('DATA_PEDIDO', `${endDateStr}T23:59:59`)
-      .not('DATA_PEDIDO', 'is', null);
+    // Obter dados de pedidos com batch fetching
+    const fetchOrdersBatch = (offset: number, limit: number) => {
+      let pedidosQuery = supabase
+        .from('BLUEBAY_PEDIDO')
+        .select('*')
+        .in('STATUS', statusFilter)
+        .gte('DATA_PEDIDO', startDateStr)
+        .lte('DATA_PEDIDO', `${endDateStr}T23:59:59`)
+        .not('DATA_PEDIDO', 'is', null)
+        .range(offset, offset + limit - 1);
       
-    // Aplicar filtro de marca apenas se especificado (sem vínculo com faturamento)
-    if (filters.brand && filters.brand !== 'all') {
-      pedidosQuery = pedidosQuery.eq('CENTROCUSTO', filters.brand);
-    }
+      // Aplicar filtro de marca apenas se especificado (sem vínculo com faturamento)
+      if (filters.brand && filters.brand !== 'all') {
+        pedidosQuery = pedidosQuery.eq('CENTROCUSTO', filters.brand);
+      }
+      
+      return pedidosQuery;
+    };
+    
+    const orderData = await fetchInBatches(fetchOrdersBatch);
+    console.log(`Total de registros de pedidos para séries temporais: ${orderData?.length || 0}`);
 
-    const { data: orderData, error: orderError } = await pedidosQuery;
-
-    if (orderError) {
-      console.error('Erro ao buscar dados de pedidos para séries temporais:', orderError);
-      throw orderError;
-    }
-
-    // Obter dados de faturamento separadamente
-    const { data: allBillingData, error: billingError } = await supabase
-      .from('BLUEBAY_FATURAMENTO')
-      .select('*')
-      .eq('TIPO', 'S') // Somente vendas
-      .gte('DATA_EMISSAO', startDateStr)
-      .lte('DATA_EMISSAO', `${endDateStr}T23:59:59`);
-
-    if (billingError) {
-      console.error('Erro ao buscar dados de faturamento para séries temporais:', billingError);
-      throw billingError;
-    }
+    // Obter dados de faturamento com batch fetching
+    const fetchBillingBatch = (offset: number, limit: number) => {
+      return supabase
+        .from('BLUEBAY_FATURAMENTO')
+        .select('*')
+        .eq('TIPO', 'S') // Somente vendas
+        .gte('DATA_EMISSAO', startDateStr)
+        .lte('DATA_EMISSAO', `${endDateStr}T23:59:59`)
+        .range(offset, offset + limit - 1);
+    };
+    
+    const allBillingData = await fetchInBatches(fetchBillingBatch);
+    console.log(`Total de registros de faturamento para séries temporais: ${allBillingData?.length || 0}`);
 
     // Filtrar o faturamento por marca, se necessário
     let billingData = allBillingData || [];
@@ -283,9 +320,9 @@ const fetchTimeSeriesData = async (filters: {
         const billingPedidoKey = `${billing.PED_NUMPEDIDO}-${billing.PED_ANOBASE}`;
         return brandPedidos.has(billingPedidoKey);
       }) || [];
+      
+      console.log(`Após filtro de marca, restaram ${billingData.length} registros de faturamento para séries temporais`);
     }
-
-    console.log(`Processando dados de séries temporais: ${orderData?.length || 0} pedidos e ${billingData?.length} registros de faturamento`);
 
     // Agrupar dados por mês
     const monthlyData = new Map<string, TimeSeriesPoint>();
@@ -383,46 +420,46 @@ const fetchBrandData = async (filters: {
       ? [filters.status]
       : validStatuses;
     
-    // Busca todos os pedidos com filtros aplicados diretamente
-    let pedidosQuery = supabase
-      .from('BLUEBAY_PEDIDO')
-      .select('*')
-      .in('STATUS', statusFilter)
-      .gte('DATA_PEDIDO', startDateStr)
-      .lte('DATA_PEDIDO', `${endDateStr}T23:59:59`)
-      .not('CENTROCUSTO', 'is', null)
-      .not('DATA_PEDIDO', 'is', null);
+    // Busca todos os pedidos com batch fetching
+    const fetchOrdersBatch = (offset: number, limit: number) => {
+      let pedidosQuery = supabase
+        .from('BLUEBAY_PEDIDO')
+        .select('*')
+        .in('STATUS', statusFilter)
+        .gte('DATA_PEDIDO', startDateStr)
+        .lte('DATA_PEDIDO', `${endDateStr}T23:59:59`)
+        .not('CENTROCUSTO', 'is', null)
+        .not('DATA_PEDIDO', 'is', null)
+        .range(offset, offset + limit - 1);
       
-    // Aplicar filtro de marca apenas se especificado
-    if (filters.brand && filters.brand !== 'all') {
-      pedidosQuery = pedidosQuery.eq('CENTROCUSTO', filters.brand);
-    }
-
-    const { data: orderData, error: orderError } = await pedidosQuery;
-
-    if (orderError) {
-      console.error('Erro ao buscar dados de pedidos por marca:', orderError);
-      return { data: { items: [] }, totalCount: 0 };
-    }
+      // Aplicar filtro de marca apenas se especificado
+      if (filters.brand && filters.brand !== 'all') {
+        pedidosQuery = pedidosQuery.eq('CENTROCUSTO', filters.brand);
+      }
+      
+      return pedidosQuery;
+    };
+    
+    const orderData = await fetchInBatches(fetchOrdersBatch);
+    console.log(`Total de registros de pedidos para marcas: ${orderData?.length || 0}`);
     
     // Obtém marcas únicas
     const uniqueBrands = [...new Set(orderData?.map(item => item.CENTROCUSTO))].filter(Boolean);
     console.log(`Encontradas ${uniqueBrands.length} marcas únicas:`, uniqueBrands);
 
-    // Busca dados de faturamento separadamente (sem vínculo com tabela de pedidos)
-    const { data: allBillingData, error: billingError } = await supabase
-      .from('BLUEBAY_FATURAMENTO')
-      .select('*')
-      .eq('TIPO', 'S') // Somente vendas
-      .gte('DATA_EMISSAO', startDateStr)
-      .lte('DATA_EMISSAO', `${endDateStr}T23:59:59`);
-
-    if (billingError) {
-      console.error('Erro ao buscar dados de faturamento por marca:', billingError);
-      return { data: { items: [] }, totalCount: 0 };
-    }
-
-    console.log(`Processando dados de marcas: ${orderData?.length || 0} pedidos e ${allBillingData?.length || 0} registros de faturamento`);
+    // Busca dados de faturamento com batch fetching
+    const fetchBillingBatch = (offset: number, limit: number) => {
+      return supabase
+        .from('BLUEBAY_FATURAMENTO')
+        .select('*')
+        .eq('TIPO', 'S') // Somente vendas
+        .gte('DATA_EMISSAO', startDateStr)
+        .lte('DATA_EMISSAO', `${endDateStr}T23:59:59`)
+        .range(offset, offset + limit - 1);
+    };
+    
+    const allBillingData = await fetchInBatches(fetchBillingBatch);
+    console.log(`Total de registros de faturamento para marcas: ${allBillingData?.length || 0}`);
 
     // Criaremos um mapa de números de pedido por marca para filtrar o faturamento posteriormente
     const pedidosByBrand = new Map<string, Set<string>>();
@@ -553,27 +590,26 @@ const fetchDeliveryData = async (filters: {
       ? [filters.status]
       : validStatuses;
     
-    // Busca dados de pedidos com filtros aplicados diretamente
-    let pedidosQuery = supabase
-      .from('BLUEBAY_PEDIDO')
-      .select('*')
-      .in('STATUS', statusFilter)
-      .gte('DATA_PEDIDO', startDateStr)
-      .lte('DATA_PEDIDO', `${endDateStr}T23:59:59`)
-      .not('DATA_PEDIDO', 'is', null);
+    // Busca dados de pedidos com batch fetching
+    const fetchOrdersBatch = (offset: number, limit: number) => {
+      let pedidosQuery = supabase
+        .from('BLUEBAY_PEDIDO')
+        .select('*')
+        .in('STATUS', statusFilter)
+        .gte('DATA_PEDIDO', startDateStr)
+        .lte('DATA_PEDIDO', `${endDateStr}T23:59:59`)
+        .not('DATA_PEDIDO', 'is', null)
+        .range(offset, offset + limit - 1);
       
-    // Aplicar filtro de marca apenas se especificado
-    if (filters.brand && filters.brand !== 'all') {
-      pedidosQuery = pedidosQuery.eq('CENTROCUSTO', filters.brand);
-    }
-
-    const { data: orderData, error: orderError } = await pedidosQuery;
-
-    if (orderError) {
-      console.error('Erro ao buscar dados de pedidos para eficiência de entrega:', orderError);
-      throw orderError;
-    }
-
+      // Aplicar filtro de marca apenas se especificado
+      if (filters.brand && filters.brand !== 'all') {
+        pedidosQuery = pedidosQuery.eq('CENTROCUSTO', filters.brand);
+      }
+      
+      return pedidosQuery;
+    };
+    
+    const orderData = await fetchInBatches(fetchOrdersBatch);
     console.log(`Processando ${orderData?.length || 0} pedidos para análise de eficiência de entrega`);
 
     // Contadores para análise
@@ -626,4 +662,3 @@ const fetchDeliveryData = async (filters: {
     throw error;
   }
 };
-

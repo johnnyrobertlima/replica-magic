@@ -45,13 +45,9 @@ export const DashboardFilters = ({ onFilterChange }: DashboardFiltersProps) => {
     if (range?.from && range?.to) {
       console.log("Nova seleção de datas:", range);
       setLocalDateRange(range);
-    }
-  };
-
-  const applyDateRange = () => {
-    if (localDateRange?.from && localDateRange?.to) {
-      console.log("Aplicando intervalo de datas:", localDateRange);
-      updateDateRange(localDateRange.from, localDateRange.to);
+      
+      // Aplicamos automaticamente o intervalo de datas quando o usuário seleciona
+      updateDateRange(range.from, range.to);
     }
   };
 
@@ -114,14 +110,6 @@ export const DashboardFilters = ({ onFilterChange }: DashboardFiltersProps) => {
                 dateRange={localDateRange}
                 onDateRangeChange={handleDateRangeChange}
               />
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className="self-start"
-                onClick={applyDateRange}
-              >
-                Aplicar período
-              </Button>
             </div>
           </div>
           
