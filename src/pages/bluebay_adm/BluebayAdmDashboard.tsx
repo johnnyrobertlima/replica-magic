@@ -11,6 +11,7 @@ import { useDashboardData } from "@/hooks/bluebay_adm/dashboard/useDashboardData
 import { DashboardFilters } from "@/components/bluebay_adm/dashboard/DashboardFilters";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FiltersProvider } from "@/contexts/bluebay_adm/FiltersContext";
+import { PaginationControls } from "@/components/bluebay_adm/financial/PaginationControls";
 
 const BluebayAdmDashboard = () => {
   return (
@@ -49,6 +50,8 @@ const DashboardContent = () => {
     brandData,
     representativeData,
     deliveryData,
+    brandPagination,
+    repPagination,
   } = useDashboardData();
 
   if (isLoading) {
@@ -72,7 +75,13 @@ const DashboardContent = () => {
       <KpiCards data={kpiData} />
       <TimeSeriesCharts data={timeSeriesData} />
       <BrandPerformance data={brandData} />
+      {brandPagination && brandData?.items?.length > 0 && (
+        <PaginationControls pagination={brandPagination} itemCount={brandData.items.length} />
+      )}
       <RepresentativeRanking data={representativeData} />
+      {repPagination && representativeData?.items?.length > 0 && (
+        <PaginationControls pagination={repPagination} itemCount={representativeData.items.length} />
+      )}
       <DeliveryEfficiency data={deliveryData} />
     </>
   );

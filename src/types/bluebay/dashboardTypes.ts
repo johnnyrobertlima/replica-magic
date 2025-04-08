@@ -64,4 +64,16 @@ export interface DashboardFilterParams {
   brand: string | null;
   representative: string | null;
   status: string | null;
+  pagination?: {
+    brandPagination?: { page: number, pageSize: number };
+    repPagination?: { page: number, pageSize: number };
+    noLimits?: boolean;
+  };
+}
+
+// Dashboard Pagination Types
+export interface DashboardPagination {
+  page: number;
+  pageSize: number;
+  totalCount: number;
 }

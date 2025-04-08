@@ -1,51 +1,59 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import type { CostDataRecord } from './costDataTypes';
+import { processCostData } from './costDataProcessor';
+import { fetchCostDataFromView } from './fetchCostDataFromView';
 
 /**
- * Fetches cost data for specific items
- * @param itemCodes Array of item codes to fetch cost data for
+ * Fetches item cost data using different strategies:
+ * 1. First trying to fetch specific item by code
+ * 2. If that fails, falls back to fetching all cost data
+ * 3. Returns processed cost data for the specific item code
  */
-export const fetchItemCostData = async (itemCodes: string[]): Promise<CostDataRecord[]> => {
-  if (!itemCodes || itemCodes.length === 0) {
-    return [];
-  }
-  
+export const fetchItemCostData = async (
+  itemCode: string
+): Promise<CostDataRecord | undefined> => {
   try {
-    console.log("Fetching cost data for items:", itemCodes.length);
+    console.log(`Fetching cost data for item: ${itemCode}`);
     
-    // Batch the requests to avoid query string limitations
-    const batchSize = 50;
-    const batches = [];
+    // First try to query by specific item code for better performance
+    const { data: specificItemData, error: specificError } = await supabase
+      .from('vw_custos_items' as any)
+      .select('*')
+      .eq('ITEM_CODIGO', itemCode)
+      .limit(1);
     
-    for (let i = 0; i < itemCodes.length; i += batchSize) {
-      const batchCodes = itemCodes.slice(i, i + batchSize);
-      batches.push(batchCodes);
+    if (specificError) {
+      console.error(`Error fetching specific cost for item ${itemCode}:`, specificError);
     }
     
-    const results: CostDataRecord[] = [];
-    
-    for (const batch of batches) {
-      // Use a type assertion to avoid TypeScript deep instantiation issues
-      const { data, error } = await supabase
-        .from('vw_custos_items' as any)
-        .select('*')
-        .in('ITEM_CODIGO', batch);
-      
-      if (error) {
-        console.error("Error fetching cost data batch:", error);
-        continue;
-      }
-      
-      if (data) {
-        // Use type assertion to avoid deep instantiation issues
-        results.push(...(data as unknown as CostDataRecord[]));
-      }
+    // If we found the item directly, return the processed data
+    if (specificItemData && specificItemData.length > 0) {
+      console.log(`Found cost data directly for item ${itemCode}`);
+      return processCostData([specificItemData[0] as unknown as CostDataRecord])[0];
     }
     
-    return results;
+    // If direct query failed, try getting from all cost data
+    console.log(`No specific cost data found for ${itemCode}, trying general cost data`);
+    
+    // Fetch all cost data with a reasonable limit
+    const allCostData = await fetchCostDataFromView({ limit: 5000 });
+    
+    // Process all cost data
+    const processedData = processCostData(allCostData);
+    
+    // Find the cost data for the requested item
+    const itemCostData = processedData.find(item => item.ITEM_CODIGO === itemCode);
+    
+    if (itemCostData) {
+      console.log(`Found cost data for item ${itemCode} in general cost data`);
+      return itemCostData;
+    }
+    
+    console.log(`No cost data found for item ${itemCode}`);
+    return undefined;
   } catch (error) {
-    console.error("Error in fetchItemCostData:", error);
-    return [];
+    console.error(`Error in fetchItemCostData for ${itemCode}:`, error);
+    return undefined;
   }
 };

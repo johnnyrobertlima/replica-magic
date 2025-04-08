@@ -1,35 +1,21 @@
 
 /**
- * Type definition for cost data records from database
+ * Represents a record from the cost data view
  */
 export interface CostDataRecord {
+  // Item identification
   ITEM_CODIGO: string;
+  DESCRICAO?: string;
+  
+  // Cost information - may vary depending on the cost calculation method
   CUSTO_MEDIO?: number;
-  VALOR_VENDA?: number;
-  MARGEM?: number;
-  DATA_ATUALIZACAO?: string;
+  CUSTO_ATUAL?: number;
+  CUSTO_REPOSICAO?: number;
+  CUSTO_ULTIMA_ENTRADA?: number;
+  
+  // Timestamps for tracking
+  DATA_ATUALIZACAO?: string | Date;
+  
+  // Additional fields that might be in the cost view
+  [key: string]: any;
 }
-
-/**
- * Utility function to safely get item code from cost data record
- * regardless of casing
- */
-export const getItemCode = (item: Record<string, any>): string => {
-  return item.ITEM_CODIGO || item.item_codigo || '';
-};
-
-/**
- * Utility function to safely get media valor unitario from cost data record
- * regardless of casing
- */
-export const getMediaValorUnitario = (item: Record<string, any>): number | undefined => {
-  return item.MEDIA_VALOR_UNITARIO || item.media_valor_unitario;
-};
-
-/**
- * Utility function to safely get total quantidade from cost data record
- * regardless of casing
- */
-export const getTotalQuantidade = (item: Record<string, any>): number | undefined => {
-  return item.TOTAL_QUANTIDADE || item.total_quantidade;
-};

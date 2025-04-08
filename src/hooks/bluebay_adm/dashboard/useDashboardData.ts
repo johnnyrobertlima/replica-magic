@@ -10,6 +10,7 @@ import {
   RepresentativeData,
   DeliveryData
 } from "@/types/bluebay/dashboardTypes";
+import { usePagination } from "@/hooks/bluebay/hooks/usePagination";
 
 export const useDashboardData = () => {
   const { filters } = useFilters();
@@ -20,6 +21,10 @@ export const useDashboardData = () => {
   const [representativeData, setRepresentativeData] = useState<RepresentativeData | null>(null);
   const [deliveryData, setDeliveryData] = useState<DeliveryData | null>(null);
 
+  // Initialize pagination hooks for different data types that might need it
+  const brandPagination = usePagination(1000);
+  const repPagination = usePagination(1000);
+
   const fetchData = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -27,13 +32,34 @@ export const useDashboardData = () => {
       const startDate = format(filters.dateRange.startDate, 'yyyy-MM-dd');
       const endDate = format(filters.dateRange.endDate, 'yyyy-MM-dd');
 
+      // Pass pagination information to the fetch function
       const result = await fetchDashboardData({
         startDate: filters.dateRange.startDate,
         endDate: filters.dateRange.endDate,
         brand: filters.brand,
         representative: filters.representative,
-        status: filters.status
+        status: filters.status,
+        pagination: {
+          brandPagination: {
+            page: brandPagination.currentPage,
+            pageSize: brandPagination.pageSize
+          },
+          repPagination: {
+            page: repPagination.currentPage,
+            pageSize: repPagination.pageSize
+          },
+          noLimits: true // Flag to indicate we want to fetch all data with no limits
+        }
       });
+
+      // Update pagination total counts if included in the response
+      if (result.totalCounts?.brands) {
+        brandPagination.updateTotalCount(result.totalCounts.brands);
+      }
+
+      if (result.totalCounts?.representatives) {
+        repPagination.updateTotalCount(result.totalCounts.representatives);
+      }
 
       setKpiData(result.kpiData);
       setTimeSeriesData(result.timeSeriesData);
@@ -45,11 +71,19 @@ export const useDashboardData = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [filters]);
+  }, [filters, brandPagination, repPagination]);
 
+  // Initial data fetch
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // When pagination changes, fetch data again
+  useEffect(() => {
+    if (!isLoading) {
+      fetchData();
+    }
+  }, [brandPagination.currentPage, repPagination.currentPage]);
 
   return {
     isLoading,
@@ -58,6 +92,8 @@ export const useDashboardData = () => {
     brandData,
     representativeData,
     deliveryData,
+    brandPagination,
+    repPagination,
     refreshData: fetchData
   };
 };

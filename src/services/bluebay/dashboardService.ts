@@ -7,13 +7,14 @@ import {
   BrandPerformanceItem,
   RepresentativeData, 
   RepresentativeItem,
-  DeliveryData
+  DeliveryData,
+  DashboardFilterParams
 } from "@/types/bluebay/dashboardTypes";
 import { format, subMonths, parseISO } from 'date-fns';
 
 /**
- * Fetches dashboard data from the database
- * @param params Filter parameters for the query
+ * Fetches dashboard data from the database with pagination support
+ * and option to fetch all data without limits
  */
 export const fetchDashboardData = async (
   filters: {
@@ -22,21 +23,36 @@ export const fetchDashboardData = async (
     brand: string | null;
     representative: string | null;
     status: string | null;
+    pagination?: {
+      brandPagination?: { page: number, pageSize: number };
+      repPagination?: { page: number, pageSize: number };
+      noLimits?: boolean; // Flag to fetch all data without limits
+    }
   }
 ) => {
   try {
+    console.log("Fetching dashboard data with filters:", filters);
+    console.log("Pagination settings:", filters.pagination);
+    
     const kpiData = await fetchKpiData(filters);
     const timeSeriesData = await fetchTimeSeriesData(filters);
     const brandData = await fetchBrandData(filters);
     const representativeData = await fetchRepresentativeData(filters);
     const deliveryData = await fetchDeliveryData(filters);
 
+    // Track total counts for pagination
+    const totalCounts = {
+      brands: brandData.totalCount || 0,
+      representatives: representativeData.totalCount || 0
+    };
+
     return {
       kpiData,
       timeSeriesData,
-      brandData,
-      representativeData,
-      deliveryData
+      brandData: brandData.data,
+      representativeData: representativeData.data,
+      deliveryData,
+      totalCounts
     };
   } catch (error) {
     console.error("Error fetching dashboard data:", error);
@@ -52,6 +68,7 @@ export const fetchDashboardData = async (
 
 /**
  * Fetches KPI data from Bluebay faturamento and pedido tables
+ * with option to fetch all data without limits
  */
 const fetchKpiData = async (filters: {
   startDate: Date | null;
@@ -59,13 +76,16 @@ const fetchKpiData = async (filters: {
   brand: string | null;
   representative: string | null;
   status: string | null;
+  pagination?: any;
 }): Promise<KpiData> => {
   try {
     // Convert dates to strings for the query
     const startDateStr = filters.startDate ? format(filters.startDate, 'yyyy-MM-dd') : '';
     const endDateStr = filters.endDate ? format(filters.endDate, 'yyyy-MM-dd') : '';
 
-    // First get the pedido (orders) data
+    console.log(`Fetching KPI data from ${startDateStr} to ${endDateStr}`);
+    
+    // First get the pedido (orders) data - no limit needed since we're aggregating
     let orderQuery = supabase
       .from('BLUEBAY_PEDIDO')
       .select('*');
@@ -99,7 +119,7 @@ const fetchKpiData = async (filters: {
       return generateMockKpiData();
     }
 
-    // Now get the faturamento (billing) data
+    // Now get the faturamento (billing) data - no limit needed since we're aggregating
     let billingQuery = supabase
       .from('BLUEBAY_FATURAMENTO')
       .select('*')
@@ -118,6 +138,8 @@ const fetchKpiData = async (filters: {
       console.error('Error fetching billing data:', billingError);
       return generateMockKpiData();
     }
+
+    console.log(`Processing KPI data from ${orderData?.length || 0} orders and ${billingData?.length || 0} billing records`);
 
     // Process and summarize data
     const totalOrders = orderData.reduce((sum, item) => {
@@ -172,6 +194,7 @@ const fetchKpiData = async (filters: {
 
 /**
  * Fetches time series data for the dashboard
+ * with option to fetch all data without limits
  */
 const fetchTimeSeriesData = async (filters: {
   startDate: Date | null;
@@ -179,6 +202,7 @@ const fetchTimeSeriesData = async (filters: {
   brand: string | null;
   representative: string | null;
   status: string | null;
+  pagination?: any;
 }): Promise<TimeSeriesData> => {
   try {
     // Convert dates to strings for the query or use last 6 months if not provided
@@ -192,8 +216,10 @@ const fetchTimeSeriesData = async (filters: {
     
     const startDateStr = format(startDate, 'yyyy-MM-dd');
     const endDateStr = format(endDate, 'yyyy-MM-dd');
+    
+    console.log(`Fetching time series data from ${startDateStr} to ${endDateStr}`);
 
-    // Get orders data
+    // Get orders data - no limit needed as we'll group by month
     let orderQuery = supabase
       .from('BLUEBAY_PEDIDO')
       .select('*')
@@ -222,7 +248,7 @@ const fetchTimeSeriesData = async (filters: {
       return generateMockTimeSeriesData();
     }
 
-    // Get billing data
+    // Get billing data - no limit needed as we'll group by month
     let billingQuery = supabase
       .from('BLUEBAY_FATURAMENTO')
       .select('*')
@@ -236,6 +262,8 @@ const fetchTimeSeriesData = async (filters: {
       console.error('Error fetching billing time series data:', billingError);
       return generateMockTimeSeriesData();
     }
+
+    console.log(`Processing time series data from ${orderData?.length || 0} orders and ${billingData?.length || 0} billing records`);
 
     // Group data by month
     const monthlyData = new Map<string, TimeSeriesPoint>();
@@ -300,7 +328,8 @@ const fetchTimeSeriesData = async (filters: {
 };
 
 /**
- * Fetches brand performance data
+ * Fetches all brand data in batches if necessary to overcome query limits
+ * with option to fetch all data without limits
  */
 const fetchBrandData = async (filters: {
   startDate: Date | null;
@@ -308,14 +337,55 @@ const fetchBrandData = async (filters: {
   brand: string | null;
   representative: string | null;
   status: string | null;
-}): Promise<BrandData> => {
+  pagination?: {
+    brandPagination?: { page: number, pageSize: number };
+    noLimits?: boolean;
+  };
+}): Promise<{data: BrandData, totalCount: number}> => {
   try {
-    // Try to use direct querying instead of RPC which might not exist yet
     // Convert dates to strings for the query
     const startDateStr = filters.startDate ? format(filters.startDate, 'yyyy-MM-dd') : '';
     const endDateStr = filters.endDate ? format(filters.endDate, 'yyyy-MM-dd') : '';
+    
+    console.log(`Fetching brand data from ${startDateStr} to ${endDateStr}`);
 
-    // Fetch order data grouped by brand (CENTROCUSTO)
+    // Fetch all unique brands first to get total count
+    let brandListQuery = supabase
+      .from('BLUEBAY_PEDIDO')
+      .select('CENTROCUSTO', { count: 'exact', head: false })
+      .not('CENTROCUSTO', 'is', null);
+
+    // Add date filters if provided
+    if (startDateStr && endDateStr) {
+      brandListQuery = brandListQuery
+        .gte('DATA_PEDIDO', startDateStr)
+        .lte('DATA_PEDIDO', endDateStr + 'T23:59:59Z');
+    }
+
+    const { data: brandsList, error: brandsListError, count: brandsCount } = await brandListQuery;
+
+    if (brandsListError) {
+      console.error('Error fetching brands list:', brandsListError);
+      return { data: { items: [] }, totalCount: 0 };
+    }
+
+    // Get unique brands
+    const uniqueBrands = [...new Set(brandsList?.map(item => item.CENTROCUSTO))];
+    console.log(`Found ${uniqueBrands.length} unique brands`);
+
+    // Calculate pagination or fetch all
+    let processedBrands: string[] = uniqueBrands;
+
+    // Apply pagination if noLimits is false and pagination info is provided
+    if (!filters.pagination?.noLimits && filters.pagination?.brandPagination) {
+      const { page, pageSize } = filters.pagination.brandPagination;
+      const startIdx = (page - 1) * pageSize;
+      const endIdx = startIdx + pageSize;
+      processedBrands = uniqueBrands.slice(startIdx, endIdx);
+      console.log(`Using paged brands: ${processedBrands.length} brands from index ${startIdx} to ${endIdx-1}`);
+    }
+
+    // Fetch order data for all brands without limit to get accurate aggregations
     let orderQuery = supabase
       .from('BLUEBAY_PEDIDO')
       .select('*');
@@ -341,10 +411,10 @@ const fetchBrandData = async (filters: {
 
     if (orderError) {
       console.error('Error fetching order data by brand:', orderError);
-      return generateMockBrandData();
+      return { data: generateMockBrandData(), totalCount: 0 };
     }
 
-    // Fetch billing data
+    // Fetch billing data for all brands without limit to get accurate aggregations
     let billingQuery = supabase
       .from('BLUEBAY_FATURAMENTO')
       .select('*')
@@ -361,8 +431,10 @@ const fetchBrandData = async (filters: {
 
     if (billingError) {
       console.error('Error fetching billing data by brand:', billingError);
-      return generateMockBrandData();
+      return { data: generateMockBrandData(), totalCount: 0 };
     }
+
+    console.log(`Processing brand data from ${orderData?.length || 0} orders and ${billingData?.length || 0} billing records`);
 
     // Group order data by brand
     const brandOrderMap = new Map<string, { total: number, pieces: number }>();
@@ -404,15 +476,17 @@ const fetchBrandData = async (filters: {
       brandBillingMap.set(brand, brandBillingMap.get(brand)! + value);
     });
 
-    // Combine the data
+    // Combine the data for only the brands in our processed list
     const brandItems: BrandPerformanceItem[] = [];
     
-    brandOrderMap.forEach((orderData, brand) => {
+    // Process all unique brands or the paginated subset
+    processedBrands.forEach(brand => {
       // Skip if brand filter is applied and this isn't the filtered brand
       if (filters.brand && filters.brand !== 'all' && brand !== filters.brand) {
         return;
       }
       
+      const orderData = brandOrderMap.get(brand) || { total: 0, pieces: 0 };
       const totalBilled = brandBillingMap.get(brand) || 0;
       const conversionRate = orderData.total > 0 ? (totalBilled / orderData.total) * 100 : 0;
       
@@ -425,39 +499,21 @@ const fetchBrandData = async (filters: {
       });
     });
 
-    // Add any brands that exist in billing but not in orders
-    brandBillingMap.forEach((billedValue, brand) => {
-      // Skip if already processed
-      if (brandOrderMap.has(brand)) {
-        return;
-      }
-      
-      // Skip if brand filter is applied and this isn't the filtered brand
-      if (filters.brand && filters.brand !== 'all' && brand !== filters.brand) {
-        return;
-      }
-      
-      brandItems.push({
-        brand,
-        totalOrders: 0,
-        totalBilled: billedValue,
-        conversionRate: 0,
-        volume: 0
-      });
-    });
-
     // Sort by total billed value
     brandItems.sort((a, b) => b.totalBilled - a.totalBilled);
 
-    return { items: brandItems };
+    return { 
+      data: { items: brandItems },
+      totalCount: uniqueBrands.length
+    };
   } catch (error) {
     console.error('Error fetching brand data:', error);
-    return generateMockBrandData();
+    return { data: generateMockBrandData(), totalCount: 0 };
   }
 };
 
 /**
- * Fetches representative performance data
+ * Fetches representative performance data with option to fetch all data
  */
 const fetchRepresentativeData = async (filters: {
   startDate: Date | null;
@@ -465,20 +521,55 @@ const fetchRepresentativeData = async (filters: {
   brand: string | null;
   representative: string | null;
   status: string | null;
-}): Promise<RepresentativeData> => {
+  pagination?: {
+    repPagination?: { page: number, pageSize: number };
+    noLimits?: boolean;
+  };
+}): Promise<{data: RepresentativeData, totalCount: number}> => {
   try {
     // Convert dates to strings for the query
     const startDateStr = filters.startDate ? format(filters.startDate, 'yyyy-MM-dd') : '';
     const endDateStr = filters.endDate ? format(filters.endDate, 'yyyy-MM-dd') : '';
+    
+    console.log(`Fetching representative data from ${startDateStr} to ${endDateStr}`);
 
-    // First get the representative names
+    // First get all unique representatives to get total count
+    let repListQuery = supabase
+      .from('BLUEBAY_PEDIDO')
+      .select('REPRESENTANTE', { count: 'exact', head: false })
+      .not('REPRESENTANTE', 'is', null);
+
+    // Add date filters if provided
+    if (startDateStr && endDateStr) {
+      repListQuery = repListQuery
+        .gte('DATA_PEDIDO', startDateStr)
+        .lte('DATA_PEDIDO', endDateStr + 'T23:59:59Z');
+    }
+
+    // Add brand filter if provided
+    if (filters.brand && filters.brand !== 'all') {
+      repListQuery = repListQuery.eq('CENTROCUSTO', filters.brand);
+    }
+
+    const { data: repsList, error: repsListError, count: repsCount } = await repListQuery;
+
+    if (repsListError) {
+      console.error('Error fetching representatives list:', repsListError);
+      return { data: { items: [] }, totalCount: 0 };
+    }
+
+    // Get unique representatives
+    const uniqueReps = [...new Set(repsList?.map(item => item.REPRESENTANTE))].filter(Boolean);
+    console.log(`Found ${uniqueReps.length} unique representatives`);
+
+    // Fetch all representatives' names
     const { data: representatives, error: repError } = await supabase
       .from('vw_representantes')
       .select('*');
 
     if (repError) {
       console.error('Error fetching representatives:', repError);
-      return generateMockRepresentativeData();
+      return { data: generateMockRepresentativeData(), totalCount: 0 };
     }
 
     // Create a map of rep codes to names
@@ -489,7 +580,19 @@ const fetchRepresentativeData = async (filters: {
       });
     }
 
-    // Fetch order data grouped by representative
+    // Calculate pagination or fetch all
+    let processedReps: number[] = uniqueReps;
+
+    // Apply pagination if noLimits is false and pagination info is provided
+    if (!filters.pagination?.noLimits && filters.pagination?.repPagination) {
+      const { page, pageSize } = filters.pagination.repPagination;
+      const startIdx = (page - 1) * pageSize;
+      const endIdx = startIdx + pageSize;
+      processedReps = uniqueReps.slice(startIdx, endIdx);
+      console.log(`Using paged representatives: ${processedReps.length} reps from index ${startIdx} to ${endIdx-1}`);
+    }
+
+    // Fetch order data for all representatives without limit
     let orderQuery = supabase
       .from('BLUEBAY_PEDIDO')
       .select('*');
@@ -506,11 +609,6 @@ const fetchRepresentativeData = async (filters: {
       orderQuery = orderQuery.eq('CENTROCUSTO', filters.brand);
     }
 
-    // Add representative filter if provided
-    if (filters.representative && filters.representative !== 'all') {
-      orderQuery = orderQuery.eq('REPRESENTANTE', parseInt(filters.representative));
-    }
-
     // Add status filter if provided
     if (filters.status && filters.status !== 'all') {
       orderQuery = orderQuery.eq('STATUS', filters.status);
@@ -520,7 +618,7 @@ const fetchRepresentativeData = async (filters: {
 
     if (orderError) {
       console.error('Error fetching order data by representative:', orderError);
-      return generateMockRepresentativeData();
+      return { data: generateMockRepresentativeData(), totalCount: 0 };
     }
 
     // Group order data by representative
@@ -568,8 +666,10 @@ const fetchRepresentativeData = async (filters: {
 
     if (billingError) {
       console.error('Error fetching billing data by representative:', billingError);
-      return generateMockRepresentativeData();
+      return { data: generateMockRepresentativeData(), totalCount: 0 };
     }
+
+    console.log(`Processing representative data from ${orderData?.length || 0} orders and ${billingData?.length || 0} billing records`);
     
     // Process billing data using the order-to-rep mapping
     const repBillingMap = new Map<number, number>();
@@ -592,8 +692,15 @@ const fetchRepresentativeData = async (filters: {
     // Combine the data
     const repItems: RepresentativeItem[] = [];
     
-    repOrderMap.forEach((orderData, repCode) => {
+    // Process only the representatives in our processed list
+    processedReps.forEach(repCode => {
+      // Skip if rep filter is applied and this isn't the filtered rep
+      if (filters.representative && filters.representative !== 'all' && repCode.toString() !== filters.representative) {
+        return;
+      }
+      
       const repName = repNameMap.get(repCode) || `Rep #${repCode}`;
+      const orderData = repOrderMap.get(repCode) || { total: 0, count: 0 };
       const totalBilled = repBillingMap.get(repCode) || 0;
       const conversionRate = orderData.total > 0 ? (totalBilled / orderData.total) * 100 : 0;
       const averageTicket = orderData.count > 0 ? orderData.total / orderData.count : 0;
@@ -611,15 +718,18 @@ const fetchRepresentativeData = async (filters: {
     // Sort by total billed value
     repItems.sort((a, b) => b.totalBilled - a.totalBilled);
 
-    return { items: repItems };
+    return { 
+      data: { items: repItems },
+      totalCount: uniqueReps.length
+    };
   } catch (error) {
     console.error('Error fetching representative data:', error);
-    return generateMockRepresentativeData();
+    return { data: generateMockRepresentativeData(), totalCount: 0 };
   }
 };
 
 /**
- * Fetches delivery efficiency data
+ * Fetches delivery efficiency data with option to fetch all data
  */
 const fetchDeliveryData = async (filters: {
   startDate: Date | null;
@@ -627,13 +737,16 @@ const fetchDeliveryData = async (filters: {
   brand: string | null;
   representative: string | null;
   status: string | null;
+  pagination?: any;
 }): Promise<DeliveryData> => {
   try {
     // Convert dates to strings for the query
     const startDateStr = filters.startDate ? format(filters.startDate, 'yyyy-MM-dd') : '';
     const endDateStr = filters.endDate ? format(filters.endDate, 'yyyy-MM-dd') : '';
+    
+    console.log(`Fetching delivery data from ${startDateStr} to ${endDateStr}`);
 
-    // Fetch order data
+    // Fetch all order data - no limit needed as we're aggregating
     let orderQuery = supabase
       .from('BLUEBAY_PEDIDO')
       .select('*');
@@ -666,6 +779,8 @@ const fetchDeliveryData = async (filters: {
       console.error('Error fetching order delivery data:', orderError);
       return generateMockDeliveryData();
     }
+
+    console.log(`Processing delivery data from ${orderData?.length || 0} orders`);
 
     // Count orders by status
     let fullyDelivered = 0; // STATUS = 3
