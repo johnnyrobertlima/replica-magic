@@ -25,25 +25,27 @@ const BluebayAdmDashboard = () => {
       <FiltersProvider>
         <div className="container mx-auto px-4 py-6">
           <DashboardHeader />
-          <DashboardFiltersWrapper />
-          <DashboardContent />
+          <BluebayDashboardContent />
         </div>
       </FiltersProvider>
     </main>
   );
 };
 
-// Componente separado para usar hooks dentro do contexto FiltersProvider
-const DashboardFiltersWrapper = () => {
+// Component that contains all dashboard content, nested inside FiltersProvider
+const BluebayDashboardContent = () => {
   const { refreshData } = useDashboardData();
   
   return (
-    <DashboardFilters onFilterChange={refreshData} />
+    <>
+      <DashboardFilters onFilterChange={refreshData} />
+      <DashboardDataContent />
+    </>
   );
 };
 
 // Componente separado para usar hooks dentro do contexto FiltersProvider
-const DashboardContent = () => {
+const DashboardDataContent = () => {
   const {
     isLoading,
     kpiData,
