@@ -42,31 +42,16 @@ export const CentroCustoIndicators = ({
   const indicadoresPorCentroCusto = useMemo(() => {
     const centroCustoMap = new Map<string, CentroCustoData>();
     
-    // Processar dados de faturamento
+    // Criar mapa de faturamento por número de pedido
+    const faturamentoPorPedido = new Map<string, FaturamentoItem[]>();
     faturamentoItems.forEach(item => {
-      // Buscar o pedido correspondente para obter o CENTROCUSTO
-      const pedidoCorrespondente = pedidoItems.find(p => 
-        p.PED_NUMPEDIDO === item.PED_NUMPEDIDO && 
-        p.PED_ANOBASE === item.PED_ANOBASE && 
-        p.MPED_NUMORDEM === item.MPED_NUMORDEM
-      );
+      if (!item.PED_NUMPEDIDO || !item.PED_ANOBASE) return;
       
-      const centroCusto = pedidoCorrespondente?.CENTROCUSTO || 'Não identificado';
-      
-      if (!centroCustoMap.has(centroCusto)) {
-        centroCustoMap.set(centroCusto, {
-          nome: centroCusto,
-          totalFaturado: 0,
-          totalItensFaturados: 0,
-          ticketMedioFaturado: 0,
-          totalPedidos: 0,
-          totalItensPedidos: 0
-        });
+      const pedidoKey = `${item.PED_NUMPEDIDO}-${item.PED_ANOBASE}-${item.MPED_NUMORDEM || ''}`;
+      if (!faturamentoPorPedido.has(pedidoKey)) {
+        faturamentoPorPedido.set(pedidoKey, []);
       }
-      
-      const data = centroCustoMap.get(centroCusto)!;
-      data.totalFaturado += item.VALOR_NOTA || 0;
-      data.totalItensFaturados += item.QUANTIDADE || 0;
+      faturamentoPorPedido.get(pedidoKey)?.push(item);
     });
     
     // Processar dados de pedidos
@@ -85,9 +70,78 @@ export const CentroCustoIndicators = ({
       }
       
       const data = centroCustoMap.get(centroCusto)!;
-      const valorPedido = (item.VALOR_UNITARIO || 0) * (item.QTDE_PEDIDA || 0);
+      
+      // Acumular valores de pedidos
+      const valorPedido = (item.QTDE_PEDIDA || 0) * (item.VALOR_UNITARIO || 0);
       data.totalPedidos += valorPedido;
       data.totalItensPedidos += item.QTDE_PEDIDA || 0;
+      
+      // Verificar se há faturamento para este pedido
+      const pedidoKey = `${item.PED_NUMPEDIDO}-${item.PED_ANOBASE}-${item.MPED_NUMORDEM}`;
+      const faturamentoItems = faturamentoPorPedido.get(pedidoKey) || [];
+      
+      // Acumular valores de faturamento relacionados a este pedido
+      faturamentoItems.forEach(fatItem => {
+        data.totalFaturado += fatItem.VALOR_NOTA || 0;
+        data.totalItensFaturados += fatItem.QUANTIDADE || 0;
+      });
+    });
+    
+    // Processar notas fiscais sem pedidos associados (não identificado)
+    const pedidosProcessados = new Set<string>();
+    
+    // Marcar todos os pedidos já processados
+    pedidoItems.forEach(item => {
+      if (!item.PED_NUMPEDIDO || !item.PED_ANOBASE) return;
+      const pedidoKey = `${item.PED_NUMPEDIDO}-${item.PED_ANOBASE}-${item.MPED_NUMORDEM}`;
+      pedidosProcessados.add(pedidoKey);
+    });
+    
+    // Verificar notas fiscais sem pedidos associados e atribuir ao "Não identificado"
+    faturamentoItems.forEach(item => {
+      if (!item.PED_NUMPEDIDO || !item.PED_ANOBASE) {
+        // Nota sem pedido associado vai para "Não identificado"
+        const centroCusto = 'Não identificado';
+        
+        if (!centroCustoMap.has(centroCusto)) {
+          centroCustoMap.set(centroCusto, {
+            nome: centroCusto,
+            totalFaturado: 0,
+            totalItensFaturados: 0,
+            ticketMedioFaturado: 0,
+            totalPedidos: 0,
+            totalItensPedidos: 0
+          });
+        }
+        
+        const data = centroCustoMap.get(centroCusto)!;
+        data.totalFaturado += item.VALOR_NOTA || 0;
+        data.totalItensFaturados += item.QUANTIDADE || 0;
+        return;
+      }
+      
+      // Verificar se este item de faturamento já foi processado através de um pedido
+      const pedidoKey = `${item.PED_NUMPEDIDO}-${item.PED_ANOBASE}-${item.MPED_NUMORDEM || ''}`;
+      
+      if (!pedidosProcessados.has(pedidoKey)) {
+        // Este item de faturamento não tem pedido correspondente no array de pedidos
+        const centroCusto = 'Não identificado';
+        
+        if (!centroCustoMap.has(centroCusto)) {
+          centroCustoMap.set(centroCusto, {
+            nome: centroCusto,
+            totalFaturado: 0,
+            totalItensFaturados: 0,
+            ticketMedioFaturado: 0,
+            totalPedidos: 0,
+            totalItensPedidos: 0
+          });
+        }
+        
+        const data = centroCustoMap.get(centroCusto)!;
+        data.totalFaturado += item.VALOR_NOTA || 0;
+        data.totalItensFaturados += item.QUANTIDADE || 0;
+      }
     });
     
     // Calcular ticket médio para cada centro de custo

@@ -10,7 +10,6 @@ import { CentroCustoIndicators } from "@/components/bluebay_adm/dashboard-comerc
 import { useDashboardComercial } from "@/hooks/bluebay_adm/dashboard/useDashboardComercial";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Info } from "lucide-react";
-import { FaturamentoItem, PedidoItem } from "@/services/bluebay/dashboardComercialTypes";
 
 const BluebayAdmDashboardComercial = () => {
   const {
@@ -28,17 +27,35 @@ const BluebayAdmDashboardComercial = () => {
   // Filtrar dados com base no Centro de Custo selecionado
   const filteredFaturamentoItems = selectedCentroCusto 
     ? dashboardData?.faturamentoItems.filter(item => {
-        const pedidoCorrespondente = dashboardData.pedidoItems.find(p => 
-          p.PED_NUMPEDIDO === item.PED_NUMPEDIDO && 
-          p.PED_ANOBASE === item.PED_ANOBASE && 
-          p.MPED_NUMORDEM === item.MPED_NUMORDEM
-        );
-        return pedidoCorrespondente?.CENTROCUSTO === selectedCentroCusto;
+        // Se o Centro de Custo for "Não identificado"
+        if (selectedCentroCusto === "Não identificado") {
+          // Verificar se há um pedido correspondente
+          const pedidoCorrespondente = dashboardData.pedidoItems.find(p => 
+            p.PED_NUMPEDIDO === item.PED_NUMPEDIDO && 
+            p.PED_ANOBASE === item.PED_ANOBASE && 
+            p.MPED_NUMORDEM === item.MPED_NUMORDEM
+          );
+          
+          // Retornar true se não houver pedido correspondente (é "Não identificado")
+          return !pedidoCorrespondente;
+        } else {
+          // Para outros centros de custo, buscar o pedido correspondente
+          const pedidoCorrespondente = dashboardData.pedidoItems.find(p => 
+            p.PED_NUMPEDIDO === item.PED_NUMPEDIDO && 
+            p.PED_ANOBASE === item.PED_ANOBASE && 
+            p.MPED_NUMORDEM === item.MPED_NUMORDEM
+          );
+          
+          // Verificar se o pedido tem o centro de custo selecionado
+          return pedidoCorrespondente?.CENTROCUSTO === selectedCentroCusto;
+        }
       }) 
     : dashboardData?.faturamentoItems || [];
   
   const filteredPedidoItems = selectedCentroCusto 
-    ? dashboardData?.pedidoItems.filter(item => item.CENTROCUSTO === selectedCentroCusto)
+    ? (selectedCentroCusto === "Não identificado" 
+        ? [] // Para "Não identificado", não há pedidos, apenas itens de faturamento sem pedido correspondente
+        : dashboardData?.pedidoItems.filter(item => item.CENTROCUSTO === selectedCentroCusto))
     : dashboardData?.pedidoItems || [];
 
   // Recalcular totais com base nos itens filtrados
@@ -53,7 +70,8 @@ const BluebayAdmDashboardComercial = () => {
     : 0;
 
   // Verifica se há dados disponíveis
-  const hasData = filteredFaturamentoItems.length > 0;
+  const hasData = !isLoading && dashboardData && dashboardData.faturamentoItems.length > 0;
+  const hasFilteredData = filteredFaturamentoItems.length > 0;
 
   return (
     <div className="min-h-screen bg-background">
