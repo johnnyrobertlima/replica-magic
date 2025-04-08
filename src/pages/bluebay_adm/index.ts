@@ -8,6 +8,7 @@ import BluebayAdmPedidos from './BluebayAdmPedidos';
 import BluebayAdmFinanceiroManager from './BluebayAdmFinanceiroManager';
 import BluebayAdmRequests from './BluebayAdmRequests';
 import BluebayAdmAnaliseDeCompra from './BluebayAdmAnaliseDeCompra';
+import BluebayAdmDashboardComercial from './BluebayAdmDashboardComercial';
 
 export {
   BluebayAdmReports,
@@ -18,5 +19,6 @@ export {
   BluebayAdmPedidos,
   BluebayAdmFinanceiroManager,
   BluebayAdmRequests,
-  BluebayAdmAnaliseDeCompra
+  BluebayAdmAnaliseDeCompra,
+  BluebayAdmDashboardComercial
 };

@@ -11,7 +11,8 @@ import {
   BluebayAdmPedidos, 
   BluebayAdmFinanceiroManager, 
   BluebayAdmRequests,
-  BluebayAdmAnaliseDeCompra 
+  BluebayAdmAnaliseDeCompra, 
+  BluebayAdmDashboardComercial
 } from "@/pages/bluebay_adm";
 import BluebayAdmStockSalesAnalytics from "@/pages/bluebay_adm/BluebayAdmStockSalesAnalytics";
 
@@ -35,6 +36,11 @@ export const bluebayAdmRoutes = (
     <Route path="/client-area/bluebay_adm/dashboard" element={
       <PermissionGuard resourcePath="/client-area/bluebay_adm/dashboard">
         <BluebayAdmDashboard />
+      </PermissionGuard>
+    } />
+    <Route path="/client-area/bluebay_adm/dashboard_comercial" element={
+      <PermissionGuard resourcePath="/client-area/bluebay_adm/dashboard">
+        <BluebayAdmDashboardComercial />
       </PermissionGuard>
     } />
     <Route path="/client-area/bluebay_adm/clients" element={
