@@ -6,6 +6,7 @@
 import { StockItem } from "../types";
 import { logItemDiagnostics } from "./debugLogger";
 import { CostDataRecord } from "./costData/costDataTypes";
+import { getItemCost } from "./costDataProcessor";
 
 /**
  * Creates a map of item details by item code
