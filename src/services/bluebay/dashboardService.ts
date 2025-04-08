@@ -1,540 +1,730 @@
+
+import { supabase } from "@/integrations/supabase/client";
 import { 
   KpiData, 
-  TimeSeriesData,
-  BrandData,
-  RepresentativeData,
-  DeliveryData,
-  DashboardFilterParams
+  TimeSeriesData, 
+  TimeSeriesPoint, 
+  BrandData, 
+  BrandPerformanceItem,
+  RepresentativeData, 
+  RepresentativeItem,
+  DeliveryData
 } from "@/types/bluebay/dashboardTypes";
-import { supabase } from "@/integrations/supabase/client";
-import { format, parseISO, startOfMonth, endOfMonth } from "date-fns";
+import { format, subMonths, parseISO } from 'date-fns';
 
 /**
- * Fetches dashboard data based on filters
+ * Fetches dashboard data from the database
+ * @param params Filter parameters for the query
  */
-export const fetchBluebayDashboardData = async (filters: DashboardFilterParams) => {
+export const fetchDashboardData = async (
+  filters: {
+    startDate: Date | null;
+    endDate: Date | null;
+    brand: string | null;
+    representative: string | null;
+    status: string | null;
+  }
+) => {
   try {
-    console.info("Fetching dashboard data with params:", filters);
-    
-    // Parse representative to ensure we pass a number if needed
-    let representativeId: number | null = null;
-    if (filters.representative && filters.representative !== 'all') {
-      representativeId = parseInt(filters.representative, 10);
-      // If parsing fails, keep it as null
-      if (isNaN(representativeId)) {
-        representativeId = null;
-      }
-    }
+    const kpiData = await fetchKpiData(filters);
+    const timeSeriesData = await fetchTimeSeriesData(filters);
+    const brandData = await fetchBrandData(filters);
+    const representativeData = await fetchRepresentativeData(filters);
+    const deliveryData = await fetchDeliveryData(filters);
 
-    // Fetch data from Supabase
-    const [kpiData, timeSeriesData, brandData, representativeData, deliveryData] = await Promise.all([
-      fetchKpiData(filters),
-      fetchTimeSeriesData(filters),
-      fetchBrandData(filters),
-      fetchRepresentativeData(filters),
-      fetchDeliveryData(filters)
-    ]);
-    
     return {
-      kpi: kpiData,
-      timeSeries: timeSeriesData,
-      brands: brandData,
-      representatives: representativeData,
-      delivery: deliveryData
+      kpiData,
+      timeSeriesData,
+      brandData,
+      representativeData,
+      deliveryData
     };
   } catch (error) {
     console.error("Error fetching dashboard data:", error);
-    throw error;
+    return {
+      kpiData: generateMockKpiData(),
+      timeSeriesData: generateMockTimeSeriesData(),
+      brandData: generateMockBrandData(),
+      representativeData: generateMockRepresentativeData(),
+      deliveryData: generateMockDeliveryData()
+    };
   }
 };
 
 /**
- * Fetch KPI data
+ * Fetches KPI data from Bluebay faturamento and pedido tables
  */
-async function fetchKpiData(filters: DashboardFilterParams): Promise<KpiData> {
+const fetchKpiData = async (filters: {
+  startDate: Date | null;
+  endDate: Date | null;
+  brand: string | null;
+  representative: string | null;
+  status: string | null;
+}): Promise<KpiData> => {
   try {
-    // Query for orders data (BLUEBAY_PEDIDO)
-    let ordersQuery = supabase
+    // Convert dates to strings for the query
+    const startDateStr = filters.startDate ? format(filters.startDate, 'yyyy-MM-dd') : '';
+    const endDateStr = filters.endDate ? format(filters.endDate, 'yyyy-MM-dd') : '';
+
+    // First get the pedido (orders) data
+    let orderQuery = supabase
       .from('BLUEBAY_PEDIDO')
-      .select('QTDE_PEDIDA, QTDE_ENTREGUE, QTDE_SALDO, VALOR_UNITARIO')
-      .gte('DATA_PEDIDO', filters.startDate)
-      .lte('DATA_PEDIDO', filters.endDate);
+      .select('*');
 
-    // Apply filters
-    if (filters.brand) {
-      ordersQuery = ordersQuery.eq('CENTROCUSTO', filters.brand);
-    }
-    
-    if (filters.representative) {
-      ordersQuery = ordersQuery.eq('REPRESENTANTE', filters.representative);
+    // Add date filters if provided
+    if (startDateStr && endDateStr) {
+      orderQuery = orderQuery
+        .gte('DATA_PEDIDO', startDateStr)
+        .lte('DATA_PEDIDO', endDateStr + 'T23:59:59Z');
     }
 
-    if (filters.status) {
-      ordersQuery = ordersQuery.eq('STATUS', filters.status);
+    // Add brand filter if provided
+    if (filters.brand && filters.brand !== 'all') {
+      orderQuery = orderQuery.eq('CENTROCUSTO', filters.brand);
     }
 
-    // Query for billing data (BLUEBAY_FATURAMENTO)
+    // Add representative filter if provided
+    if (filters.representative && filters.representative !== 'all') {
+      orderQuery = orderQuery.eq('REPRESENTANTE', parseInt(filters.representative));
+    }
+
+    // Add status filter if provided
+    if (filters.status && filters.status !== 'all') {
+      orderQuery = orderQuery.eq('STATUS', filters.status);
+    }
+
+    const { data: orderData, error: orderError } = await orderQuery;
+
+    if (orderError) {
+      console.error('Error fetching order data:', orderError);
+      return generateMockKpiData();
+    }
+
+    // Now get the faturamento (billing) data
     let billingQuery = supabase
       .from('BLUEBAY_FATURAMENTO')
-      .select('QUANTIDADE, VALOR_UNITARIO, VALOR_DESCONTO')
-      .eq('TIPO', 'S') // Only sales
-      .gte('DATA_EMISSAO', filters.startDate)
-      .lte('DATA_EMISSAO', filters.endDate);
+      .select('*')
+      .eq('TIPO', 'S'); // Only sales data (S = Saida)
+
+    // Add date filters if provided
+    if (startDateStr && endDateStr) {
+      billingQuery = billingQuery
+        .gte('DATA_EMISSAO', startDateStr)
+        .lte('DATA_EMISSAO', endDateStr + 'T23:59:59Z');
+    }
     
-    const [ordersResult, billingResult] = await Promise.all([
-      ordersQuery,
-      billingQuery
-    ]);
+    const { data: billingData, error: billingError } = await billingQuery;
 
-    if (ordersResult.error) {
-      throw ordersResult.error;
+    if (billingError) {
+      console.error('Error fetching billing data:', billingError);
+      return generateMockKpiData();
     }
 
-    if (billingResult.error) {
-      throw billingResult.error;
-    }
+    // Process and summarize data
+    const totalOrders = orderData.reduce((sum, item) => {
+      const value = item.TOTAL_PRODUTO || 0;
+      return sum + parseFloat(value.toString());
+    }, 0);
 
-    const orders = ordersResult.data || [];
-    const billings = billingResult.data || [];
+    const orderedPieces = orderData.reduce((sum, item) => {
+      const qty = item.QTDE_PEDIDA || 0;
+      return sum + parseFloat(qty.toString());
+    }, 0);
 
-    // Calculate KPIs
-    let totalOrders = 0;
-    let orderedPieces = 0;
+    const totalBilled = billingData.reduce((sum, item) => {
+      const value = item.VALOR_NOTA || 0;
+      return sum + parseFloat(value.toString());
+    }, 0);
 
-    for (const order of orders) {
-      totalOrders += Number(order.QTDE_PEDIDA) * Number(order.VALOR_UNITARIO);
-      orderedPieces += Number(order.QTDE_PEDIDA);
-    }
+    const billedPieces = billingData.reduce((sum, item) => {
+      const qty = item.QUANTIDADE || 0;
+      return sum + parseFloat(qty.toString());
+    }, 0);
 
-    let totalBilled = 0;
-    let billedPieces = 0;
-    let totalDiscount = 0;
-
-    for (const billing of billings) {
-      const quantity = Number(billing.QUANTIDADE);
-      const unitValue = Number(billing.VALOR_UNITARIO);
-      const discount = Number(billing.VALOR_DESCONTO);
-      
-      billedPieces += quantity;
-      totalBilled += quantity * unitValue;
-      totalDiscount += discount;
-    }
-
+    // Calculate conversion rate
     const conversionRate = totalOrders > 0 ? (totalBilled / totalOrders) * 100 : 0;
-    const averageDiscount = totalBilled > 0 ? (totalDiscount / totalBilled) * 100 : 0;
+
+    // Calculate weighted average discount
+    const totalBeforeDiscount = billingData.reduce((sum, item) => {
+      const qty = parseFloat((item.QUANTIDADE || 0).toString());
+      const unitPrice = parseFloat((item.VALOR_UNITARIO || 0).toString());
+      return sum + (qty * unitPrice);
+    }, 0);
+
+    const totalDiscount = billingData.reduce((sum, item) => {
+      return sum + parseFloat((item.VALOR_DESCONTO || 0).toString());
+    }, 0);
+
+    const averageDiscount = totalBeforeDiscount > 0 ? (totalDiscount / totalBeforeDiscount) * 100 : 0;
 
     return {
-      totalOrders: totalOrders,
-      totalBilled: totalBilled,
-      conversionRate: conversionRate,
-      orderedPieces: orderedPieces,
-      billedPieces: billedPieces,
-      averageDiscount: averageDiscount
+      totalOrders,
+      totalBilled,
+      conversionRate,
+      orderedPieces,
+      billedPieces,
+      averageDiscount
     };
   } catch (error) {
-    console.error("Error fetching KPI data:", error);
-    return getMockKpiData(); // Fallback to mock data if error
+    console.error('Error calculating KPI data:', error);
+    return generateMockKpiData();
   }
-}
+};
 
 /**
- * Fetch time series data
+ * Fetches time series data for the dashboard
  */
-async function fetchTimeSeriesData(filters: DashboardFilterParams): Promise<TimeSeriesData> {
+const fetchTimeSeriesData = async (filters: {
+  startDate: Date | null;
+  endDate: Date | null;
+  brand: string | null;
+  representative: string | null;
+  status: string | null;
+}): Promise<TimeSeriesData> => {
   try {
-    // Parse start and end dates
-    const startDate = parseISO(filters.startDate);
-    const endDate = parseISO(filters.endDate);
+    // Convert dates to strings for the query or use last 6 months if not provided
+    let startDate = filters.startDate;
+    let endDate = filters.endDate;
     
-    // Create an array of month periods between start and end date
-    const months = [];
-    let currentDate = startOfMonth(startDate);
-    const lastMonth = endOfMonth(endDate);
-
-    while (currentDate <= lastMonth) {
-      const month = format(currentDate, 'yyyy-MM');
-      const monthStart = format(startOfMonth(currentDate), 'yyyy-MM-dd');
-      const monthEnd = format(endOfMonth(currentDate), 'yyyy-MM-dd');
-      
-      months.push({ month, monthStart, monthEnd });
-      currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
-    }
-
-    // Fetch data for each month
-    const monthlyData = await Promise.all(
-      months.map(async ({ month, monthStart, monthEnd }) => {
-        // Query orders for the month
-        let ordersQuery = supabase
-          .from('BLUEBAY_PEDIDO')
-          .select('QTDE_PEDIDA, VALOR_UNITARIO')
-          .gte('DATA_PEDIDO', monthStart)
-          .lte('DATA_PEDIDO', monthEnd);
-
-        // Query billings for the month
-        let billingsQuery = supabase
-          .from('BLUEBAY_FATURAMENTO')
-          .select('QUANTIDADE, VALOR_UNITARIO')
-          .eq('TIPO', 'S')
-          .gte('DATA_EMISSAO', monthStart)
-          .lte('DATA_EMISSAO', monthEnd);
-        
-        // Apply filters
-        if (filters.brand) {
-          ordersQuery = ordersQuery.eq('CENTROCUSTO', filters.brand);
-        }
-        
-        if (filters.representative) {
-          ordersQuery = ordersQuery.eq('REPRESENTANTE', filters.representative);
-        }
-
-        if (filters.status) {
-          ordersQuery = ordersQuery.eq('STATUS', filters.status);
-        }
-
-        const [ordersResult, billingsResult] = await Promise.all([
-          ordersQuery,
-          billingsQuery
-        ]);
-
-        const orders = ordersResult.data || [];
-        const billings = billingsResult.data || [];
-
-        // Calculate monthly totals
-        let ordersValue = 0;
-        let orderedPieces = 0;
-        for (const order of orders) {
-          ordersValue += Number(order.QTDE_PEDIDA) * Number(order.VALOR_UNITARIO);
-          orderedPieces += Number(order.QTDE_PEDIDA);
-        }
-
-        let billedValue = 0;
-        let billedPieces = 0;
-        for (const billing of billings) {
-          billedValue += Number(billing.QUANTIDADE) * Number(billing.VALOR_UNITARIO);
-          billedPieces += Number(billing.QUANTIDADE);
-        }
-
-        return {
-          date: month,
-          ordersValue,
-          billedValue,
-          orderedPieces,
-          billedPieces
-        };
-      })
-    );
-
-    return { monthlySeries: monthlyData };
-  } catch (error) {
-    console.error("Error fetching time series data:", error);
-    return getMockTimeSeriesData(); // Fallback to mock data if error
-  }
-}
-
-/**
- * Fetch brand performance data
- */
-async function fetchBrandData(filters: DashboardFilterParams): Promise<BrandData> {
-  try {
-    // Query orders grouped by CENTROCUSTO (brand)
-    const { data: ordersData, error: ordersError } = await supabase
-      .rpc('get_orders_by_brand', {
-        start_date: filters.startDate,
-        end_date: filters.endDate,
-        rep_id: filters.representative,
-        status_filter: filters.status
-      });
-
-    if (ordersError) {
-      throw ordersError;
-    }
-
-    if (!ordersData || ordersData.length === 0) {
-      // Fallback to manual query if RPC fails or doesn't exist
-      const brandItems = await manuallyFetchBrandData(filters);
-      return { items: brandItems };
-    }
-
-    const brandItems = ordersData.map(item => ({
-      brand: item.centrocusto || 'Sem marca',
-      totalOrders: Number(item.total_orders) || 0,
-      totalBilled: Number(item.total_billed) || 0,
-      conversionRate: Number(item.conversion_rate) || 0,
-      volume: Number(item.volume) || 0
-    }));
-
-    return { items: brandItems };
-  } catch (error) {
-    console.error("Error fetching brand data:", error);
-    
-    // Try manual fallback
-    try {
-      const brandItems = await manuallyFetchBrandData(filters);
-      return { items: brandItems };
-    } catch (fallbackError) {
-      console.error("Fallback brand data query also failed:", fallbackError);
-      return getMockBrandData(); // Fallback to mock data if all fails
-    }
-  }
-}
-
-/**
- * Manual query to fetch brand data if RPC fails
- */
-async function manuallyFetchBrandData(filters: DashboardFilterParams): Promise<BrandPerformanceItem[]> {
-  // Query orders grouped by CENTROCUSTO (brand)
-  let ordersQuery = supabase
-    .from('BLUEBAY_PEDIDO')
-    .select('CENTROCUSTO, QTDE_PEDIDA, VALOR_UNITARIO')
-    .gte('DATA_PEDIDO', filters.startDate)
-    .lte('DATA_PEDIDO', filters.endDate);
-
-  // Query billings for the period
-  let billingQuery = supabase
-    .from('BLUEBAY_FATURAMENTO')
-    .select('PED_NUMPEDIDO, PED_ANOBASE, QUANTIDADE, VALOR_UNITARIO')
-    .eq('TIPO', 'S')
-    .gte('DATA_EMISSAO', filters.startDate)
-    .lte('DATA_EMISSAO', filters.endDate);
-
-  // Apply filters
-  if (filters.representative) {
-    ordersQuery = ordersQuery.eq('REPRESENTANTE', filters.representative);
-  }
-
-  if (filters.status) {
-    ordersQuery = ordersQuery.eq('STATUS', filters.status);
-  }
-
-  if (filters.brand) {
-    ordersQuery = ordersQuery.eq('CENTROCUSTO', filters.brand);
-  }
-
-  const [ordersResult, billingResult] = await Promise.all([
-    ordersQuery,
-    billingQuery
-  ]);
-
-  if (ordersResult.error) {
-    throw ordersResult.error;
-  }
-
-  if (billingResult.error) {
-    throw billingResult.error;
-  }
-
-  const orders = ordersResult.data || [];
-  const billings = billingResult.data || [];
-
-  // Group orders by brand
-  const brandMap = new Map();
-  
-  // Process orders
-  orders.forEach(order => {
-    const brand = order.CENTROCUSTO || 'Sem marca';
-    if (!brandMap.has(brand)) {
-      brandMap.set(brand, {
-        brand,
-        totalOrders: 0,
-        totalBilled: 0,
-        volume: 0,
-        orderedPieces: 0,
-        billedPieces: 0
-      });
+    if (!startDate || !endDate) {
+      endDate = new Date();
+      startDate = subMonths(endDate, 6);
     }
     
-    const brandData = brandMap.get(brand);
-    brandData.totalOrders += Number(order.QTDE_PEDIDA) * Number(order.VALOR_UNITARIO);
-    brandData.orderedPieces += Number(order.QTDE_PEDIDA);
-  });
-  
-  // Process billings
-  // In a real scenario, we would need to join billing with orders to get the brand
-  // For now, let's just add billing data to "Brand A" as an example
-  let totalBilledValue = 0;
-  let totalBilledPieces = 0;
-  
-  billings.forEach(billing => {
-    totalBilledValue += Number(billing.QUANTIDADE) * Number(billing.VALOR_UNITARIO);
-    totalBilledPieces += Number(billing.QUANTIDADE);
-  });
-  
-  // Transform map to array and calculate conversion rates
-  const brandItems = Array.from(brandMap.values()).map(brandData => {
-    // For simplicity, we'll distribute the billing proportionally based on order amounts
-    const shareOfOrders = brandMap.size > 0 ? brandData.totalOrders / totalBilledValue : 0;
-    const estimatedBilled = totalBilledValue * shareOfOrders;
-    const estimatedBilledPieces = totalBilledPieces * shareOfOrders;
-    
-    return {
-      brand: brandData.brand,
-      totalOrders: brandData.totalOrders,
-      totalBilled: estimatedBilled,
-      conversionRate: brandData.totalOrders > 0 ? (estimatedBilled / brandData.totalOrders) * 100 : 0,
-      volume: estimatedBilledPieces
-    };
-  });
+    const startDateStr = format(startDate, 'yyyy-MM-dd');
+    const endDateStr = format(endDate, 'yyyy-MM-dd');
 
-  return brandItems;
-}
-
-/**
- * Fetch representative performance data
- */
-async function fetchRepresentativeData(filters: DashboardFilterParams): Promise<RepresentativeData> {
-  try {
-    // Query for orders grouped by representative
-    let query = supabase
+    // Get orders data
+    let orderQuery = supabase
       .from('BLUEBAY_PEDIDO')
-      .select('REPRESENTANTE, QTDE_PEDIDA, QTDE_ENTREGUE, VALOR_UNITARIO, PES_CODIGO')
-      .gte('DATA_PEDIDO', filters.startDate)
-      .lte('DATA_PEDIDO', filters.endDate);
+      .select('*')
+      .gte('DATA_PEDIDO', startDateStr)
+      .lte('DATA_PEDIDO', endDateStr + 'T23:59:59Z');
 
-    // Apply filters
-    if (filters.brand) {
-      query = query.eq('CENTROCUSTO', filters.brand);
-    }
-    
-    if (filters.representative) {
-      query = query.eq('REPRESENTANTE', filters.representative);
+    // Add brand filter if provided
+    if (filters.brand && filters.brand !== 'all') {
+      orderQuery = orderQuery.eq('CENTROCUSTO', filters.brand);
     }
 
-    if (filters.status) {
-      query = query.eq('STATUS', filters.status);
+    // Add representative filter if provided
+    if (filters.representative && filters.representative !== 'all') {
+      orderQuery = orderQuery.eq('REPRESENTANTE', parseInt(filters.representative));
     }
 
-    const { data, error } = await query;
-
-    if (error) {
-      throw error;
+    // Add status filter if provided
+    if (filters.status && filters.status !== 'all') {
+      orderQuery = orderQuery.eq('STATUS', filters.status);
     }
 
-    // Group by representative
-    const repMap = new Map();
-    
-    // Process data
-    for (const item of data || []) {
-      const repCode = String(item.REPRESENTANTE || 'unknown');
+    const { data: orderData, error: orderError } = await orderQuery;
+
+    if (orderError) {
+      console.error('Error fetching order time series data:', orderError);
+      return generateMockTimeSeriesData();
+    }
+
+    // Get billing data
+    let billingQuery = supabase
+      .from('BLUEBAY_FATURAMENTO')
+      .select('*')
+      .eq('TIPO', 'S') // Only sales
+      .gte('DATA_EMISSAO', startDateStr)
+      .lte('DATA_EMISSAO', endDateStr + 'T23:59:59Z');
+
+    const { data: billingData, error: billingError } = await billingQuery;
+
+    if (billingError) {
+      console.error('Error fetching billing time series data:', billingError);
+      return generateMockTimeSeriesData();
+    }
+
+    // Group data by month
+    const monthlyData = new Map<string, TimeSeriesPoint>();
+
+    // Process order data
+    orderData.forEach(order => {
+      if (!order.DATA_PEDIDO) return;
       
-      if (!repMap.has(repCode)) {
-        repMap.set(repCode, {
-          code: repCode,
-          name: `Rep. ${repCode}`, // We should do a separate query to get rep names
-          totalOrders: 0,
-          totalBilled: 0,
-          clientCount: new Set(),
+      const orderDate = typeof order.DATA_PEDIDO === 'string' ? parseISO(order.DATA_PEDIDO) : new Date(order.DATA_PEDIDO);
+      const monthKey = format(orderDate, 'yyyy-MM');
+      
+      if (!monthlyData.has(monthKey)) {
+        monthlyData.set(monthKey, {
+          date: format(orderDate, 'MMM yyyy'),
+          ordersValue: 0,
+          billedValue: 0,
           orderedPieces: 0,
-          deliveredPieces: 0
+          billedPieces: 0
         });
       }
       
-      const repData = repMap.get(repCode);
-      const orderValue = Number(item.QTDE_PEDIDA) * Number(item.VALOR_UNITARIO);
-      const billedValue = Number(item.QTDE_ENTREGUE) * Number(item.VALOR_UNITARIO);
+      const monthData = monthlyData.get(monthKey)!;
+      monthData.ordersValue += parseFloat((order.TOTAL_PRODUTO || 0).toString());
+      monthData.orderedPieces += parseFloat((order.QTDE_PEDIDA || 0).toString());
+    });
+
+    // Process billing data
+    billingData.forEach(item => {
+      if (!item.DATA_EMISSAO) return;
       
-      repData.totalOrders += orderValue;
-      repData.totalBilled += billedValue;
-      repData.orderedPieces += Number(item.QTDE_PEDIDA);
-      repData.deliveredPieces += Number(item.QTDE_ENTREGUE);
-      repData.clientCount.add(item.PES_CODIGO);
-    }
-    
-    // Try to fetch representative names
-    try {
-      const { data: reps } = await supabase
-        .from('vw_representantes')
-        .select('*');
-        
-      if (reps && reps.length > 0) {
-        for (const rep of reps) {
-          if (repMap.has(String(rep.codigo_representante))) {
-            repMap.get(String(rep.codigo_representante)).name = rep.nome_representante || `Rep. ${rep.codigo_representante}`;
-          }
-        }
+      const billingDate = typeof item.DATA_EMISSAO === 'string' ? parseISO(item.DATA_EMISSAO) : new Date(item.DATA_EMISSAO);
+      const monthKey = format(billingDate, 'yyyy-MM');
+      
+      if (!monthlyData.has(monthKey)) {
+        monthlyData.set(monthKey, {
+          date: format(billingDate, 'MMM yyyy'),
+          ordersValue: 0,
+          billedValue: 0,
+          orderedPieces: 0,
+          billedPieces: 0
+        });
       }
-    } catch (nameError) {
-      console.warn("Could not fetch representative names:", nameError);
-    }
+      
+      const monthData = monthlyData.get(monthKey)!;
+      monthData.billedValue += parseFloat((item.VALOR_NOTA || 0).toString());
+      monthData.billedPieces += parseFloat((item.QUANTIDADE || 0).toString());
+    });
 
-    // Transform to array with calculated values
-    const items = Array.from(repMap.values()).map(rep => ({
-      code: rep.code,
-      name: rep.name,
-      totalOrders: rep.totalOrders,
-      totalBilled: rep.totalBilled,
-      conversionRate: rep.totalOrders > 0 ? (rep.totalBilled / rep.totalOrders) * 100 : 0,
-      averageTicket: rep.clientCount.size > 0 ? rep.totalBilled / rep.clientCount.size : 0
-    }));
+    // Convert map to array and sort by date
+    const monthlySeries = Array.from(monthlyData.values())
+      .sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        return dateA.getTime() - dateB.getTime();
+      });
 
-    return { items };
+    return { monthlySeries };
   } catch (error) {
-    console.error("Error fetching representative data:", error);
-    return getMockRepresentativeData(); // Fallback to mock data
+    console.error('Error fetching time series data:', error);
+    return generateMockTimeSeriesData();
   }
-}
+};
 
 /**
- * Fetch delivery efficiency data
+ * Fetches brand performance data
  */
-async function fetchDeliveryData(filters: DashboardFilterParams): Promise<DeliveryData> {
+const fetchBrandData = async (filters: {
+  startDate: Date | null;
+  endDate: Date | null;
+  brand: string | null;
+  representative: string | null;
+  status: string | null;
+}): Promise<BrandData> => {
   try {
-    // Query orders to analyze delivery status
-    let query = supabase
-      .from('BLUEBAY_PEDIDO')
-      .select('STATUS, QTDE_PEDIDA, QTDE_ENTREGUE, QTDE_SALDO')
-      .gte('DATA_PEDIDO', filters.startDate)
-      .lte('DATA_PEDIDO', filters.endDate);
-
-    // Apply filters
-    if (filters.brand) {
-      query = query.eq('CENTROCUSTO', filters.brand);
+    // Try to use RPC function if it exists
+    try {
+      const { data, error } = await supabase.rpc('get_brand_performance', {
+        start_date: filters.startDate ? format(filters.startDate, 'yyyy-MM-dd') : null,
+        end_date: filters.endDate ? format(filters.endDate, 'yyyy-MM-dd') : null,
+        brand_filter: filters.brand === 'all' ? null : filters.brand,
+        rep_filter: filters.representative === 'all' ? null : filters.representative
+      });
+      
+      if (error) {
+        console.error('Error using RPC for brand data:', error);
+        // Fall back to direct query
+      } else if (Array.isArray(data) && data.length > 0) {
+        // Process the RPC data
+        const brandItems = data.map(item => ({
+          brand: item.centrocusto || 'Sem Marca',
+          totalOrders: parseFloat(item.total_orders || '0'),
+          totalBilled: parseFloat(item.total_billed || '0'),
+          conversionRate: item.total_orders > 0 ? (item.total_billed / item.total_orders) * 100 : 0,
+          volume: parseInt(item.total_pieces || '0')
+        }));
+        
+        return { items: brandItems };
+      }
+    } catch (rpcError) {
+      console.error('RPC error:', rpcError);
+      // Continue with direct query approach
     }
     
-    if (filters.representative) {
-      query = query.eq('REPRESENTANTE', filters.representative);
+    // Convert dates to strings for the query
+    const startDateStr = filters.startDate ? format(filters.startDate, 'yyyy-MM-dd') : '';
+    const endDateStr = filters.endDate ? format(filters.endDate, 'yyyy-MM-dd') : '';
+
+    // Fetch order data grouped by brand (CENTROCUSTO)
+    let orderQuery = supabase
+      .from('BLUEBAY_PEDIDO')
+      .select('*');
+
+    // Add date filters if provided
+    if (startDateStr && endDateStr) {
+      orderQuery = orderQuery
+        .gte('DATA_PEDIDO', startDateStr)
+        .lte('DATA_PEDIDO', endDateStr + 'T23:59:59Z');
     }
 
-    if (filters.status) {
-      query = query.eq('STATUS', filters.status);
+    // Add representative filter if provided
+    if (filters.representative && filters.representative !== 'all') {
+      orderQuery = orderQuery.eq('REPRESENTANTE', parseInt(filters.representative));
     }
 
-    const { data, error } = await query;
-
-    if (error) {
-      throw error;
+    // Add status filter if provided
+    if (filters.status && filters.status !== 'all') {
+      orderQuery = orderQuery.eq('STATUS', filters.status);
     }
 
-    let fullyDeliveredCount = 0;
-    let partialCount = 0;
-    let openCount = 0;
+    const { data: orderData, error: orderError } = await orderQuery;
+
+    if (orderError) {
+      console.error('Error fetching order data by brand:', orderError);
+      return generateMockBrandData();
+    }
+
+    // Fetch billing data
+    let billingQuery = supabase
+      .from('BLUEBAY_FATURAMENTO')
+      .select('*')
+      .eq('TIPO', 'S'); // Only sales
+
+    // Add date filters if provided
+    if (startDateStr && endDateStr) {
+      billingQuery = billingQuery
+        .gte('DATA_EMISSAO', startDateStr)
+        .lte('DATA_EMISSAO', endDateStr + 'T23:59:59Z');
+    }
+
+    const { data: billingData, error: billingError } = await billingQuery;
+
+    if (billingError) {
+      console.error('Error fetching billing data by brand:', billingError);
+      return generateMockBrandData();
+    }
+
+    // Group order data by brand
+    const brandOrderMap = new Map<string, { total: number, pieces: number }>();
+    
+    orderData.forEach(order => {
+      const brand = order.CENTROCUSTO || 'Sem Marca';
+      const value = parseFloat((order.TOTAL_PRODUTO || 0).toString());
+      const pieces = parseFloat((order.QTDE_PEDIDA || 0).toString());
+      
+      if (!brandOrderMap.has(brand)) {
+        brandOrderMap.set(brand, { total: 0, pieces: 0 });
+      }
+      
+      const currentData = brandOrderMap.get(brand)!;
+      currentData.total += value;
+      currentData.pieces += pieces;
+    });
+
+    // Find matching PO numbers to group billing data by brand
+    const brandBillingMap = new Map<string, number>();
+    
+    // Create a map from order number to brand
+    const orderToBrandMap = new Map<string, string>();
+    orderData.forEach(order => {
+      const orderKey = `${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`;
+      orderToBrandMap.set(orderKey, order.CENTROCUSTO || 'Sem Marca');
+    });
+    
+    // Process billing data using the order-to-brand mapping
+    billingData.forEach(item => {
+      const orderKey = `${item.PED_NUMPEDIDO}-${item.PED_ANOBASE}`;
+      const brand = orderToBrandMap.get(orderKey) || 'Sem Marca';
+      const value = parseFloat((item.VALOR_NOTA || 0).toString());
+      
+      if (!brandBillingMap.has(brand)) {
+        brandBillingMap.set(brand, 0);
+      }
+      
+      brandBillingMap.set(brand, brandBillingMap.get(brand)! + value);
+    });
+
+    // Combine the data
+    const brandItems: BrandPerformanceItem[] = [];
+    
+    brandOrderMap.forEach((orderData, brand) => {
+      // Skip if brand filter is applied and this isn't the filtered brand
+      if (filters.brand && filters.brand !== 'all' && brand !== filters.brand) {
+        return;
+      }
+      
+      const totalBilled = brandBillingMap.get(brand) || 0;
+      const conversionRate = orderData.total > 0 ? (totalBilled / orderData.total) * 100 : 0;
+      
+      brandItems.push({
+        brand,
+        totalOrders: orderData.total,
+        totalBilled,
+        conversionRate,
+        volume: orderData.pieces
+      });
+    });
+
+    // Add any brands that exist in billing but not in orders
+    brandBillingMap.forEach((billedValue, brand) => {
+      // Skip if already processed
+      if (brandOrderMap.has(brand)) {
+        return;
+      }
+      
+      // Skip if brand filter is applied and this isn't the filtered brand
+      if (filters.brand && filters.brand !== 'all' && brand !== filters.brand) {
+        return;
+      }
+      
+      brandItems.push({
+        brand,
+        totalOrders: 0,
+        totalBilled: billedValue,
+        conversionRate: 0,
+        volume: 0
+      });
+    });
+
+    // Sort by total billed value
+    brandItems.sort((a, b) => b.totalBilled - a.totalBilled);
+
+    return { items: brandItems };
+  } catch (error) {
+    console.error('Error fetching brand data:', error);
+    return generateMockBrandData();
+  }
+};
+
+/**
+ * Fetches representative performance data
+ */
+const fetchRepresentativeData = async (filters: {
+  startDate: Date | null;
+  endDate: Date | null;
+  brand: string | null;
+  representative: string | null;
+  status: string | null;
+}): Promise<RepresentativeData> => {
+  try {
+    // Convert dates to strings for the query
+    const startDateStr = filters.startDate ? format(filters.startDate, 'yyyy-MM-dd') : '';
+    const endDateStr = filters.endDate ? format(filters.endDate, 'yyyy-MM-dd') : '';
+
+    // First get the representative names
+    const { data: representatives, error: repError } = await supabase
+      .from('vw_representantes')
+      .select('*');
+
+    if (repError) {
+      console.error('Error fetching representatives:', repError);
+      return generateMockRepresentativeData();
+    }
+
+    // Create a map of rep codes to names
+    const repNameMap = new Map<number, string>();
+    if (representatives && Array.isArray(representatives)) {
+      representatives.forEach(rep => {
+        repNameMap.set(rep.PES_CODIGO, rep.PES_NOME || 'Representante sem nome');
+      });
+    }
+
+    // Fetch order data grouped by representative
+    let orderQuery = supabase
+      .from('BLUEBAY_PEDIDO')
+      .select('*');
+
+    // Add date filters if provided
+    if (startDateStr && endDateStr) {
+      orderQuery = orderQuery
+        .gte('DATA_PEDIDO', startDateStr)
+        .lte('DATA_PEDIDO', endDateStr + 'T23:59:59Z');
+    }
+
+    // Add brand filter if provided
+    if (filters.brand && filters.brand !== 'all') {
+      orderQuery = orderQuery.eq('CENTROCUSTO', filters.brand);
+    }
+
+    // Add representative filter if provided
+    if (filters.representative && filters.representative !== 'all') {
+      orderQuery = orderQuery.eq('REPRESENTANTE', parseInt(filters.representative));
+    }
+
+    // Add status filter if provided
+    if (filters.status && filters.status !== 'all') {
+      orderQuery = orderQuery.eq('STATUS', filters.status);
+    }
+
+    const { data: orderData, error: orderError } = await orderQuery;
+
+    if (orderError) {
+      console.error('Error fetching order data by representative:', orderError);
+      return generateMockRepresentativeData();
+    }
+
+    // Group order data by representative
+    const repOrderMap = new Map<number, { total: number, count: number }>();
+    
+    orderData.forEach(order => {
+      const repCode = order.REPRESENTANTE;
+      if (!repCode) return;
+      
+      const value = parseFloat((order.TOTAL_PRODUTO || 0).toString());
+      
+      if (!repOrderMap.has(repCode)) {
+        repOrderMap.set(repCode, { total: 0, count: 0 });
+      }
+      
+      const currentData = repOrderMap.get(repCode)!;
+      currentData.total += value;
+      currentData.count += 1; // Count orders for average ticket calculation
+    });
+
+    // Find matching PO numbers to group billing data by representative
+    // Create a map from order number to representative
+    const orderToRepMap = new Map<string, number>();
+    orderData.forEach(order => {
+      if (!order.REPRESENTANTE) return;
+      
+      const orderKey = `${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`;
+      orderToRepMap.set(orderKey, order.REPRESENTANTE);
+    });
+    
+    // Fetch billing data
+    let billingQuery = supabase
+      .from('BLUEBAY_FATURAMENTO')
+      .select('*')
+      .eq('TIPO', 'S'); // Only sales
+
+    // Add date filters if provided
+    if (startDateStr && endDateStr) {
+      billingQuery = billingQuery
+        .gte('DATA_EMISSAO', startDateStr)
+        .lte('DATA_EMISSAO', endDateStr + 'T23:59:59Z');
+    }
+
+    const { data: billingData, error: billingError } = await billingQuery;
+
+    if (billingError) {
+      console.error('Error fetching billing data by representative:', billingError);
+      return generateMockRepresentativeData();
+    }
+    
+    // Process billing data using the order-to-rep mapping
+    const repBillingMap = new Map<number, number>();
+    
+    billingData.forEach(item => {
+      const orderKey = `${item.PED_NUMPEDIDO}-${item.PED_ANOBASE}`;
+      const repCode = orderToRepMap.get(orderKey);
+      
+      if (!repCode) return; // Skip if no representative found
+      
+      const value = parseFloat((item.VALOR_NOTA || 0).toString());
+      
+      if (!repBillingMap.has(repCode)) {
+        repBillingMap.set(repCode, 0);
+      }
+      
+      repBillingMap.set(repCode, repBillingMap.get(repCode)! + value);
+    });
+
+    // Combine the data
+    const repItems: RepresentativeItem[] = [];
+    
+    repOrderMap.forEach((orderData, repCode) => {
+      const repName = repNameMap.get(repCode) || `Rep #${repCode}`;
+      const totalBilled = repBillingMap.get(repCode) || 0;
+      const conversionRate = orderData.total > 0 ? (totalBilled / orderData.total) * 100 : 0;
+      const averageTicket = orderData.count > 0 ? orderData.total / orderData.count : 0;
+      
+      repItems.push({
+        code: repCode.toString(),
+        name: repName,
+        totalOrders: orderData.total,
+        totalBilled,
+        conversionRate,
+        averageTicket
+      });
+    });
+
+    // Sort by total billed value
+    repItems.sort((a, b) => b.totalBilled - a.totalBilled);
+
+    return { items: repItems };
+  } catch (error) {
+    console.error('Error fetching representative data:', error);
+    return generateMockRepresentativeData();
+  }
+};
+
+/**
+ * Fetches delivery efficiency data
+ */
+const fetchDeliveryData = async (filters: {
+  startDate: Date | null;
+  endDate: Date | null;
+  brand: string | null;
+  representative: string | null;
+  status: string | null;
+}): Promise<DeliveryData> => {
+  try {
+    // Convert dates to strings for the query
+    const startDateStr = filters.startDate ? format(filters.startDate, 'yyyy-MM-dd') : '';
+    const endDateStr = filters.endDate ? format(filters.endDate, 'yyyy-MM-dd') : '';
+
+    // Fetch order data
+    let orderQuery = supabase
+      .from('BLUEBAY_PEDIDO')
+      .select('*');
+
+    // Add date filters if provided
+    if (startDateStr && endDateStr) {
+      orderQuery = orderQuery
+        .gte('DATA_PEDIDO', startDateStr)
+        .lte('DATA_PEDIDO', endDateStr + 'T23:59:59Z');
+    }
+
+    // Add brand filter if provided
+    if (filters.brand && filters.brand !== 'all') {
+      orderQuery = orderQuery.eq('CENTROCUSTO', filters.brand);
+    }
+
+    // Add representative filter if provided
+    if (filters.representative && filters.representative !== 'all') {
+      orderQuery = orderQuery.eq('REPRESENTANTE', parseInt(filters.representative));
+    }
+
+    // Add status filter if provided
+    if (filters.status && filters.status !== 'all') {
+      orderQuery = orderQuery.eq('STATUS', filters.status);
+    }
+
+    const { data: orderData, error: orderError } = await orderQuery;
+
+    if (orderError) {
+      console.error('Error fetching order delivery data:', orderError);
+      return generateMockDeliveryData();
+    }
+
+    // Count orders by status
+    let fullyDelivered = 0; // STATUS = 3
+    let partialDelivery = 0; // STATUS = 2
+    let openOrders = 0;     // STATUS = 1 or STATUS = 0
     let totalRemainingQty = 0;
     let totalOrders = 0;
-
-    // Process data to calculate delivery metrics
-    for (const order of data || []) {
-      totalOrders++;
+    
+    orderData.forEach(order => {
+      const status = order.STATUS;
+      const remainingQty = parseFloat((order.QTDE_SALDO || 0).toString());
       
-      // Analyze delivery status based on STATUS field
-      // STATUS: 0 = Bloqueado, 1 = Em Aberto, 2 = Parcial, 3 = Total, 4 = Cancelado
-      if (order.STATUS === '3') {
-        fullyDeliveredCount++;
-      } else if (order.STATUS === '2') {
-        partialCount++;
-        totalRemainingQty += Number(order.QTDE_SALDO);
-      } else if (order.STATUS === '1') {
-        openCount++;
-        totalRemainingQty += Number(order.QTDE_SALDO);
+      totalOrders++;
+      totalRemainingQty += remainingQty;
+      
+      if (status === '3') {
+        fullyDelivered++;
+      } else if (status === '2') {
+        partialDelivery++;
+      } else if (status === '1' || status === '0') {
+        openOrders++;
       }
-    }
-
+    });
+    
     // Calculate percentages
-    const fullyDeliveredPercentage = totalOrders > 0 ? (fullyDeliveredCount / totalOrders) * 100 : 0;
-    const partialPercentage = totalOrders > 0 ? (partialCount / totalOrders) * 100 : 0;
-    const openPercentage = totalOrders > 0 ? (openCount / totalOrders) * 100 : 0;
-    const averageRemainingQuantity = (partialCount + openCount) > 0 
-      ? totalRemainingQty / (partialCount + openCount) 
-      : 0;
-
+    const fullyDeliveredPercentage = totalOrders > 0 ? (fullyDelivered / totalOrders) * 100 : 0;
+    const partialPercentage = totalOrders > 0 ? (partialDelivery / totalOrders) * 100 : 0;
+    const openPercentage = totalOrders > 0 ? (openOrders / totalOrders) * 100 : 0;
+    const averageRemainingQuantity = totalOrders > 0 ? totalRemainingQty / totalOrders : 0;
+    
     return {
       fullyDeliveredPercentage,
       partialPercentage,
@@ -542,59 +732,70 @@ async function fetchDeliveryData(filters: DashboardFilterParams): Promise<Delive
       averageRemainingQuantity
     };
   } catch (error) {
-    console.error("Error fetching delivery data:", error);
-    return getMockDeliveryData(); // Fallback to mock data
+    console.error('Error fetching delivery data:', error);
+    return generateMockDeliveryData();
   }
-}
+};
 
-// Mock data generator functions (keeping as fallbacks)
-function getMockKpiData(): KpiData {
+// Mock data generators for fallback
+function generateMockKpiData(): KpiData {
   return {
-    totalOrders: 1250,
+    totalOrders: 1250000,
     totalBilled: 850000,
-    conversionRate: 0.76,
-    orderedPieces: 8500,
-    billedPieces: 7300,
-    averageDiscount: 0.12
+    conversionRate: 68,
+    orderedPieces: 6500,
+    billedPieces: 4400,
+    averageDiscount: 8.5
   };
 }
 
-function getMockTimeSeriesData(): TimeSeriesData {
-  return {
-    monthlySeries: [
-      { date: "2025-01", ordersValue: 210000, billedValue: 185000, orderedPieces: 1200, billedPieces: 1050 },
-      { date: "2025-02", ordersValue: 240000, billedValue: 210000, orderedPieces: 1400, billedPieces: 1300 },
-      { date: "2025-03", ordersValue: 300000, billedValue: 275000, orderedPieces: 1800, billedPieces: 1650 },
-      { date: "2025-04", ordersValue: 350000, billedValue: 330000, orderedPieces: 2100, billedPieces: 1950 }
-    ]
-  };
+function generateMockTimeSeriesData(): TimeSeriesData {
+  const currentDate = new Date();
+  const months = [];
+  
+  for (let i = 5; i >= 0; i--) {
+    const date = new Date(currentDate);
+    date.setMonth(date.getMonth() - i);
+    
+    months.push({
+      date: format(date, 'MMM yyyy'),
+      ordersValue: 180000 + Math.round(Math.random() * 50000),
+      billedValue: 130000 + Math.round(Math.random() * 40000),
+      orderedPieces: 900 + Math.round(Math.random() * 200),
+      billedPieces: 600 + Math.round(Math.random() * 180)
+    });
+  }
+  
+  return { monthlySeries: months };
 }
 
-function getMockBrandData(): BrandData {
+function generateMockBrandData(): BrandData {
   return {
     items: [
-      { brand: "Brand A", totalOrders: 320000, totalBilled: 295000, conversionRate: 0.92, volume: 1800 },
-      { brand: "Brand B", totalOrders: 280000, totalBilled: 240000, conversionRate: 0.86, volume: 1500 },
-      { brand: "Brand C", totalOrders: 180000, totalBilled: 150000, conversionRate: 0.83, volume: 1200 }
+      { brand: "Squad", totalOrders: 420000, totalBilled: 310000, conversionRate: 73.8, volume: 1800 },
+      { brand: "Blunt", totalOrders: 350000, totalBilled: 245000, conversionRate: 70.0, volume: 1500 },
+      { brand: "Skate", totalOrders: 280000, totalBilled: 180000, conversionRate: 64.3, volume: 1200 },
+      { brand: "Hondar", totalOrders: 200000, totalBilled: 115000, conversionRate: 57.5, volume: 900 }
     ]
   };
 }
 
-function getMockRepresentativeData(): RepresentativeData {
+function generateMockRepresentativeData(): RepresentativeData {
   return {
     items: [
-      { code: "1", name: "John Smith", totalOrders: 120000, totalBilled: 115000, conversionRate: 0.96, averageTicket: 5750 },
-      { code: "2", name: "Mary Johnson", totalOrders: 180000, totalBilled: 165000, conversionRate: 0.92, averageTicket: 6350 },
-      { code: "3", name: "Robert Brown", totalOrders: 220000, totalBilled: 195000, conversionRate: 0.89, averageTicket: 5100 }
+      { code: "1", name: "João Silva", totalOrders: 380000, totalBilled: 285000, conversionRate: 75.0, averageTicket: 12500 },
+      { code: "2", name: "Maria Santos", totalOrders: 320000, totalBilled: 210000, conversionRate: 65.6, averageTicket: 10500 },
+      { code: "3", name: "Carlos Oliveira", totalOrders: 290000, totalBilled: 195000, conversionRate: 67.2, averageTicket: 9750 },
+      { code: "4", name: "Ana Pereira", totalOrders: 260000, totalBilled: 160000, conversionRate: 61.5, averageTicket: 8000 }
     ]
   };
 }
 
-function getMockDeliveryData(): DeliveryData {
+function generateMockDeliveryData(): DeliveryData {
   return {
-    fullyDeliveredPercentage: 0.72,
-    partialPercentage: 0.18,
-    openPercentage: 0.10,
-    averageRemainingQuantity: 11.5
+    fullyDeliveredPercentage: 65,
+    partialPercentage: 20,
+    openPercentage: 15,
+    averageRemainingQuantity: 12.5
   };
 }

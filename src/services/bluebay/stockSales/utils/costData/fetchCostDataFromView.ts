@@ -1,17 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { handleApiError } from "../../errorHandlingService";
-
-// Define a proper interface for the cost data records to avoid type issues
-interface CostDataRecord {
-  ITEM_CODIGO?: string;
-  item_codigo?: string;
-  media_valor_unitario?: number;
-  MEDIA_VALOR_UNITARIO?: number;
-  total_quantidade?: number;
-  TOTAL_QUANTIDADE?: number;
-  [key: string]: any; // Allow other properties
-}
+import { CostDataRecord } from "./costDataTypes";
 
 /**
  * Fetches cost data from the bluebay_view_faturamento_resumo view
@@ -21,7 +11,7 @@ export const fetchCostDataFromView = async (): Promise<CostDataRecord[]> => {
   try {
     console.log("Buscando dados de custo médio da view bluebay_view_faturamento_resumo");
     
-    // Query all data from the view without filtering - use explicit typing
+    // Query all data from the view without filtering
     const response = await supabase
       .from('bluebay_view_faturamento_resumo')
       .select('*');

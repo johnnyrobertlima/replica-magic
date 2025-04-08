@@ -26,8 +26,7 @@ export const fetchItemCostData = async (itemCodes: string[]): Promise<CostDataRe
     const results: CostDataRecord[] = [];
     
     for (const batch of batches) {
-      // Use a raw query with the 'from' function to avoid type issues
-      // TypeScript won't complain about tables not in the schema this way
+      // Use a type assertion to avoid TypeScript deep instantiation issues
       const { data, error } = await supabase
         .from('vw_custos_items' as any)
         .select('*')
