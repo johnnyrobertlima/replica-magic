@@ -35,8 +35,7 @@ export const DashboardContent = ({
     filteredPedidoItems,
     calculatedTotals,
     naoIdentificados,
-    hasFilteredData,
-    ambiguityDetected
+    hasFilteredData
   } = useDataFiltering(dashboardData, selectedCentroCusto, isLoading);
 
   // Verifica se há dados disponíveis
@@ -47,8 +46,7 @@ export const DashboardContent = ({
       <DashboardAlerts 
         hasData={hasData} 
         isLoading={isLoading} 
-        naoIdentificados={naoIdentificados}
-        ambiguityDetected={ambiguityDetected}
+        naoIdentificados={naoIdentificados} 
       />
 
       <div className="mb-6">

@@ -1,17 +1,16 @@
 
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Info } from "lucide-react";
+import { Info } from "lucide-react";
 
 interface DashboardAlertsProps {
   hasData: boolean;
   isLoading: boolean;
   naoIdentificados: any[];
-  ambiguityDetected?: boolean;
 }
 
-export const DashboardAlerts = ({ hasData, isLoading, naoIdentificados, ambiguityDetected = false }: DashboardAlertsProps) => {
-  // Procurar nota 252566 entre os não identificados ou com ambiguidade
-  const nota252566NaoIdentificada = naoIdentificados.find(item => item.faturamento.NOTA === '252566');
+export const DashboardAlerts = ({ hasData, isLoading, naoIdentificados }: DashboardAlertsProps) => {
+  // Procurar nota 252770 entre os não identificados
+  const nota252770NaoIdentificada = naoIdentificados.find(item => item.faturamento.NOTA === '252770');
 
   if (!hasData && !isLoading) {
     return (
@@ -26,31 +25,17 @@ export const DashboardAlerts = ({ hasData, isLoading, naoIdentificados, ambiguit
     );
   }
 
-  // Mostrar alerta específico se houver ambiguidade na nota 252566
-  if (ambiguityDetected && hasData) {
-    return (
-      <Alert variant="warning" className="mb-4">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Ambiguidade detectada na nota 252566</AlertTitle>
-        <AlertDescription>
-          Foram encontrados múltiplos pedidos correspondentes à nota 252566.
-          O sistema utilizou regras de prioridade para selecionar o pedido mais relevante.
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
-  // Mostrar alerta específico se a nota 252566 estiver entre os não identificados
-  if (nota252566NaoIdentificada && hasData) {
+  // Mostrar alerta específico se a nota 252770 estiver entre os não identificados
+  if (nota252770NaoIdentificada && hasData) {
     return (
       <Alert variant="warning" className="mb-4">
         <Info className="h-4 w-4" />
-        <AlertTitle>Nota 252566 sem associação com pedido</AlertTitle>
+        <AlertTitle>Nota 252770 sem associação com pedido</AlertTitle>
         <AlertDescription>
-          A nota fiscal 252566 não foi associada a nenhum pedido existente.
-          Valores dos campos: PED_NUMPEDIDO={nota252566NaoIdentificada.faturamento.PED_NUMPEDIDO}, 
-          PED_ANOBASE={nota252566NaoIdentificada.faturamento.PED_ANOBASE},
-          MPED_NUMORDEM={nota252566NaoIdentificada.faturamento.MPED_NUMORDEM}
+          A nota fiscal 252770 não foi associada a nenhum pedido existente.
+          Valores dos campos: PED_NUMPEDIDO={nota252770NaoIdentificada.faturamento.PED_NUMPEDIDO}, 
+          PED_ANOBASE={nota252770NaoIdentificada.faturamento.PED_ANOBASE},
+          MPED_NUMORDEM={nota252770NaoIdentificada.faturamento.MPED_NUMORDEM}
         </AlertDescription>
       </Alert>
     );

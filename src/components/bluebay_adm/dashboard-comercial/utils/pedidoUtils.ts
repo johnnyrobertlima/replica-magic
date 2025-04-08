@@ -1,4 +1,3 @@
-
 import { FaturamentoItem, PedidoItem } from '@/services/bluebay/dashboardComercialTypes';
 
 /**
@@ -12,7 +11,6 @@ export const normalizeValue = (value: any): string => {
 /**
  * Encontra um pedido correspondente a um item de faturamento
  * usando uma estratégia em três etapas para melhorar a correspondência
- * e garantir que não haja associações duplicadas
  */
 export const encontrarPedidoCorrespondente = (item: any, pedidos: any[]) => {
   if (!item.PED_NUMPEDIDO && !item.PED_ANOBASE) return null;
@@ -20,107 +18,41 @@ export const encontrarPedidoCorrespondente = (item: any, pedidos: any[]) => {
   const itemNumPedido = normalizeValue(item.PED_NUMPEDIDO);
   const itemAnoBase = normalizeValue(item.PED_ANOBASE);
   
-  // Primeira etapa: confirmar que temos uma chave válida
-  if (!itemNumPedido || !itemAnoBase) {
-    console.log(`Chave de pedido inválida para nota ${item.NOTA}: PED_NUMPEDIDO=${itemNumPedido}, PED_ANOBASE=${itemAnoBase}`);
-    return null;
-  }
-
-  // Segunda etapa: Busca com chave composta completa (PED_NUMPEDIDO + PED_ANOBASE + MPED_NUMORDEM)
+  // Primeiro, tentamos com o MPED_NUMORDEM (correspondência completa)
   if (item.MPED_NUMORDEM !== null && item.MPED_NUMORDEM !== undefined) {
     const itemNumOrdem = normalizeValue(item.MPED_NUMORDEM);
     
-    const pedidoCompleto = pedidos.find(p => 
+    const pedido = pedidos.find(p => 
       normalizeValue(p.PED_NUMPEDIDO) === itemNumPedido &&
-      normalizeValue(p.PED_ANOBASE) === itemAnoBase &&
+      normalizeValue(p.PED_ANOBASE) === itemNumPedido &&
       normalizeValue(p.MPED_NUMORDEM) === itemNumOrdem
     );
     
-    if (pedidoCompleto) {
-      // Diagnóstico para nota específica 252566
-      if (item.NOTA === '252566') {
-        console.log('Associação encontrada para nota 252566 (chave completa):', {
-          faturamento: {
-            NOTA: item.NOTA,
-            PED_NUMPEDIDO: itemNumPedido,
-            PED_ANOBASE: itemAnoBase,
-            MPED_NUMORDEM: itemNumOrdem
-          },
-          pedido: {
-            PED_NUMPEDIDO: normalizeValue(pedidoCompleto.PED_NUMPEDIDO),
-            PED_ANOBASE: normalizeValue(pedidoCompleto.PED_ANOBASE),
-            MPED_NUMORDEM: normalizeValue(pedidoCompleto.MPED_NUMORDEM),
-            CENTROCUSTO: pedidoCompleto.CENTROCUSTO
-          }
-        });
-      }
-      return pedidoCompleto;
-    }
+    if (pedido) return pedido;
   }
 
-  // Terceira etapa: Busca com chave composta principal (PED_NUMPEDIDO + PED_ANOBASE)
-  const pedidosSemNumOrdem = pedidos.filter(p => 
+  // Corrigido: Segunda tentativa - comparar PED_NUMPEDIDO, PED_ANOBASE e MPED_NUMORDEM
+  // com validação mais precisa dos tipos de dados
+  const pedidoComNumOrdem = pedidos.find(p => {
+    const pNumPedido = normalizeValue(p.PED_NUMPEDIDO);
+    const pAnoBase = normalizeValue(p.PED_ANOBASE);
+    const pNumOrdem = normalizeValue(p.MPED_NUMORDEM);
+    const itemNumOrdem = normalizeValue(item.MPED_NUMORDEM);
+    
+    return pNumPedido === itemNumPedido && 
+           pAnoBase === itemAnoBase && 
+           pNumOrdem === itemNumOrdem;
+  });
+  
+  if (pedidoComNumOrdem) return pedidoComNumOrdem;
+
+  // Terceira tentativa - comparação flexível apenas com PED_NUMPEDIDO e PED_ANOBASE
+  const pedidoSemNumOrdem = pedidos.find(p => 
     normalizeValue(p.PED_NUMPEDIDO) === itemNumPedido &&
     normalizeValue(p.PED_ANOBASE) === itemAnoBase
   );
-  
-  // Verificar se há múltiplos pedidos correspondentes (possível ambiguidade)
-  if (pedidosSemNumOrdem.length > 1) {
-    console.warn(`Múltiplos pedidos encontrados para a nota ${item.NOTA}: `, {
-      PED_NUMPEDIDO: itemNumPedido,
-      PED_ANOBASE: itemAnoBase,
-      quantidade: pedidosSemNumOrdem.length,
-      pedidos: pedidosSemNumOrdem.map(p => ({
-        CENTROCUSTO: p.CENTROCUSTO,
-        PED_NUMPEDIDO: p.PED_NUMPEDIDO,
-        PED_ANOBASE: p.PED_ANOBASE,
-        MPED_NUMORDEM: p.MPED_NUMORDEM
-      }))
-    });
-    
-    // Em caso de ambiguidade, tentamos priorizar pelo centro de custo mais relevante
-    // Ou pelo primeiro pedido encontrado se todos tiverem o mesmo centro de custo
-    const centrosCusto = pedidosSemNumOrdem.map(p => p.CENTROCUSTO);
-    const centrosUnicos = [...new Set(centrosCusto)];
-    
-    if (centrosUnicos.length === 1) {
-      // Se todos têm o mesmo centro de custo, usamos o primeiro
-      return pedidosSemNumOrdem[0];
-    } else {
-      // Prioridade para centros de custo mais relevantes
-      const prioridadeCentros = ['BLUEBAY', 'BKINICIAL', 'JAB'];
-      
-      for (const centro of prioridadeCentros) {
-        const pedidoEncontrado = pedidosSemNumOrdem.find(p => p.CENTROCUSTO === centro);
-        if (pedidoEncontrado) return pedidoEncontrado;
-      }
-      
-      // Se nenhum dos centros prioritários foi encontrado, usa o primeiro
-      return pedidosSemNumOrdem[0];
-    }
-  }
-  
-  // Se houver apenas um resultado, retorná-lo
-  if (pedidosSemNumOrdem.length === 1) {
-    // Diagnóstico para nota específica 252566
-    if (item.NOTA === '252566') {
-      console.log('Associação encontrada para nota 252566 (chave parcial):', {
-        faturamento: {
-          NOTA: item.NOTA,
-          PED_NUMPEDIDO: itemNumPedido,
-          PED_ANOBASE: itemAnoBase,
-        },
-        pedido: {
-          PED_NUMPEDIDO: normalizeValue(pedidosSemNumOrdem[0].PED_NUMPEDIDO),
-          PED_ANOBASE: normalizeValue(pedidosSemNumOrdem[0].PED_ANOBASE),
-          CENTROCUSTO: pedidosSemNumOrdem[0].CENTROCUSTO
-        }
-      });
-    }
-    return pedidosSemNumOrdem[0];
-  }
 
-  return null;
+  return pedidoSemNumOrdem;
 };
 
 /**
@@ -146,37 +78,11 @@ export const processarIndicadoresCentroCusto = (
   faturamentoItems.forEach(item => {
     if (!item.PED_NUMPEDIDO || !item.PED_ANOBASE) return;
     
-    const pedidoKey = `${normalizeValue(item.PED_NUMPEDIDO)}-${normalizeValue(item.PED_ANOBASE)}`;
+    const pedidoKey = `${normalizeValue(item.PED_NUMPEDIDO)}-${normalizeValue(item.PED_ANOBASE)}-${normalizeValue(item.MPED_NUMORDEM || '')}`;
     if (!faturamentoPorPedido.has(pedidoKey)) {
       faturamentoPorPedido.set(pedidoKey, []);
     }
     faturamentoPorPedido.get(pedidoKey)?.push(item);
-  });
-  
-  // Para diagnóstico: verificar múltiplos pedidos com a mesma chave
-  const pedidosPorChave = new Map<string, PedidoItem[]>();
-  pedidoItems.forEach(item => {
-    if (!item.PED_NUMPEDIDO || !item.PED_ANOBASE) return;
-    const pedidoKey = `${normalizeValue(item.PED_NUMPEDIDO)}-${normalizeValue(item.PED_ANOBASE)}`;
-    if (!pedidosPorChave.has(pedidoKey)) {
-      pedidosPorChave.set(pedidoKey, []);
-    }
-    pedidosPorChave.get(pedidoKey)?.push(item);
-  });
-  
-  // Identificar chaves com múltiplos pedidos (possível ambiguidade)
-  pedidosPorChave.forEach((pedidos, chave) => {
-    if (pedidos.length > 1) {
-      console.warn(`Múltiplos pedidos com a mesma chave: ${chave}`, {
-        quantidade: pedidos.length,
-        pedidos: pedidos.map(p => ({
-          CENTROCUSTO: p.CENTROCUSTO,
-          PED_NUMPEDIDO: p.PED_NUMPEDIDO,
-          PED_ANOBASE: p.PED_ANOBASE,
-          MPED_NUMORDEM: p.MPED_NUMORDEM
-        }))
-      });
-    }
   });
   
   // Processar dados de pedidos
@@ -202,18 +108,18 @@ export const processarIndicadoresCentroCusto = (
     data.totalItensPedidos += item.QTDE_PEDIDA || 0;
     
     // Verificar se há faturamento para este pedido usando a nova função de busca
-    if (!item.PED_NUMPEDIDO || !item.PED_ANOBASE) return;
-    const pedidoKey = `${normalizeValue(item.PED_NUMPEDIDO)}-${normalizeValue(item.PED_ANOBASE)}`;
-    const faturamentoItems = faturamentoPorPedido.get(pedidoKey) || [];
+    const pedidoKey1 = `${normalizeValue(item.PED_NUMPEDIDO)}-${normalizeValue(item.PED_ANOBASE)}-${normalizeValue(item.MPED_NUMORDEM)}`;
+    const pedidoKey2 = `${normalizeValue(item.PED_NUMPEDIDO)}-${normalizeValue(item.PED_ANOBASE)}-`;
+    
+    // Procura com a chave completa ou com a chave parcial (sem MPED_NUMORDEM)
+    const faturamentoItems1 = faturamentoPorPedido.get(pedidoKey1) || [];
+    const faturamentoItems2 = faturamentoPorPedido.get(pedidoKey2) || [];
+    const todosItens = [...faturamentoItems1, ...faturamentoItems2];
     
     // Acumular valores de faturamento relacionados a este pedido
-    faturamentoItems.forEach(fatItem => {
-      // Verificar se este faturamento realmente corresponde a este pedido específico
-      const realMatch = encontrarPedidoCorrespondente(fatItem, [item]);
-      if (realMatch) {
-        data.totalFaturado += fatItem.VALOR_NOTA || 0;
-        data.totalItensFaturados += fatItem.QUANTIDADE || 0;
-      }
+    todosItens.forEach(fatItem => {
+      data.totalFaturado += fatItem.VALOR_NOTA || 0;
+      data.totalItensFaturados += fatItem.QUANTIDADE || 0;
     });
   });
   
@@ -223,16 +129,19 @@ export const processarIndicadoresCentroCusto = (
   // Marcar todos os pedidos já processados
   pedidoItems.forEach(item => {
     if (!item.PED_NUMPEDIDO || !item.PED_ANOBASE) return;
-    const pedidoKey = `${normalizeValue(item.PED_NUMPEDIDO)}-${normalizeValue(item.PED_ANOBASE)}`;
-    pedidosProcessados.add(pedidoKey);
+    
+    // Gerar ambas as chaves possíveis (com e sem MPED_NUMORDEM)
+    const pedidoKey1 = `${normalizeValue(item.PED_NUMPEDIDO)}-${normalizeValue(item.PED_ANOBASE)}-${normalizeValue(item.MPED_NUMORDEM)}`;
+    const pedidoKey2 = `${normalizeValue(item.PED_NUMPEDIDO)}-${normalizeValue(item.PED_ANOBASE)}-`;
+    
+    pedidosProcessados.add(pedidoKey1);
+    pedidosProcessados.add(pedidoKey2);
   });
   
   // Verificar notas fiscais sem pedidos associados e atribuir ao "Não identificado"
   faturamentoItems.forEach(item => {
-    // Verificar se este item de faturamento já foi processado através de um pedido
-    const pedidoCorrespondente = encontrarPedidoCorrespondente(item, pedidoItems);
-    
-    if (!pedidoCorrespondente) {
+    // Casos em que a nota não tem referência a pedido
+    if (!item.PED_NUMPEDIDO || !item.PED_ANOBASE) {
       const centroCusto = 'Não identificado';
       
       if (!centroCustoMap.has(centroCusto)) {
@@ -249,15 +158,30 @@ export const processarIndicadoresCentroCusto = (
       const data = centroCustoMap.get(centroCusto)!;
       data.totalFaturado += item.VALOR_NOTA || 0;
       data.totalItensFaturados += item.QUANTIDADE || 0;
+      return;
+    }
+    
+    // Verificar se este item de faturamento já foi processado através de um pedido
+    const pedidoCorrespondente = encontrarPedidoCorrespondente(item, pedidoItems);
+    
+    if (!pedidoCorrespondente) {
+      // Este item de faturamento não tem pedido correspondente
+      const centroCusto = 'Não identificado';
       
-      // Log de diagnóstico para notas sem pedido correspondente
-      if (item.PED_NUMPEDIDO && item.PED_ANOBASE) {
-        console.log(`Nota sem pedido correspondente: ${item.NOTA}`, {
-          PED_NUMPEDIDO: item.PED_NUMPEDIDO,
-          PED_ANOBASE: item.PED_ANOBASE,
-          MPED_NUMORDEM: item.MPED_NUMORDEM
+      if (!centroCustoMap.has(centroCusto)) {
+        centroCustoMap.set(centroCusto, {
+          nome: centroCusto,
+          totalFaturado: 0,
+          totalItensFaturados: 0,
+          ticketMedioFaturado: 0,
+          totalPedidos: 0,
+          totalItensPedidos: 0
         });
       }
+      
+      const data = centroCustoMap.get(centroCusto)!;
+      data.totalFaturado += item.VALOR_NOTA || 0;
+      data.totalItensFaturados += item.QUANTIDADE || 0;
     }
   });
   
