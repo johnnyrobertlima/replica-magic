@@ -33,8 +33,8 @@ export const GroupFilter: React.FC<GroupFilterProps> = ({
         <SelectContent>
           <SelectItem value="all">Todos os grupos</SelectItem>
           {options && options.map((group) => (
-            <SelectItem key={group} value={group}>
-              {group}
+            <SelectItem key={group} value={group || "sem-nome"}>
+              {group || "Sem nome"}
             </SelectItem>
           ))}
         </SelectContent>

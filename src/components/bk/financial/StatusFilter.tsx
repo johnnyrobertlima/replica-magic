@@ -28,7 +28,7 @@ export const StatusFilter = ({ selectedStatus, onStatusChange, statuses }: Statu
         <SelectContent>
           <SelectItem value="all">Todos os status</SelectItem>
           {statuses.map((status) => (
-            <SelectItem key={status} value={status}>
+            <SelectItem key={status} value={status || "não-definido"}>
               {status || "Não definido"}
             </SelectItem>
           ))}

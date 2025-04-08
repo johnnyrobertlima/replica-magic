@@ -1,30 +1,23 @@
 
-/**
- * Simplified type for cost data records
- * Using a Record type to avoid excessive type depth issues
- */
-export type CostDataRecord = Record<string, any>;
-
-/**
- * Helper function to get the item code from the record
- * Handles case-insensitive field names
- */
-export function getItemCode(record: CostDataRecord): string | null {
-  return record.ITEM_CODIGO || record.item_codigo || null;
+export interface CostDataRecord {
+  ITEM_CODIGO?: string;
+  item_codigo?: string; // lowercase variant sometimes returned by API
+  MEDIA_VALOR_UNITARIO?: number;
+  media_valor_unitario?: number;  // lowercase variant
+  TOTAL_QUANTIDADE?: number;
+  total_quantidade?: number; // lowercase variant
+  [key: string]: any; // Allow for other properties
 }
 
-/**
- * Helper function to get the media valor unitario from the record
- * Handles case-insensitive field names
- */
-export function getMediaValorUnitario(record: CostDataRecord): number | null {
-  return record.MEDIA_VALOR_UNITARIO || record.media_valor_unitario || null;
-}
+// Helper functions to safely access data regardless of case
+export const getItemCode = (record: CostDataRecord): string => {
+  return record?.ITEM_CODIGO || record?.item_codigo || '';
+};
 
-/**
- * Helper function to get the total quantidade from the record
- * Handles case-insensitive field names
- */
-export function getTotalQuantidade(record: CostDataRecord): number | null {
-  return record.TOTAL_QUANTIDADE || record.total_quantidade || record.ENTROU || record.entrou || null;
-}
+export const getMediaValorUnitario = (record: CostDataRecord): number => {
+  return record?.MEDIA_VALOR_UNITARIO || record?.media_valor_unitario || 0;
+};
+
+export const getTotalQuantidade = (record: CostDataRecord): number => {
+  return record?.TOTAL_QUANTIDADE || record?.total_quantidade || 0;
+};

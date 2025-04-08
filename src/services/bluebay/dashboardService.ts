@@ -426,6 +426,10 @@ export const fetchFilterOptions = async () => {
     return { brands, representatives, statuses };
   } catch (error) {
     console.error("Error fetching filter options:", error);
-    throw error;
+    return {
+      brands: [],
+      representatives: [],
+      statuses: []
+    };
   }
 };

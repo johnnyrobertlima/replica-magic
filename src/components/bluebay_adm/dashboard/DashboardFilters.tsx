@@ -52,15 +52,15 @@ export const DashboardFilters = ({ onFilterChange }: DashboardFiltersProps) => {
           
           <div>
             <Select
-              value={filters.brand || ""}
-              onValueChange={value => updateBrand(value === "" ? null : value)}
+              value={filters.brand || "all"}
+              onValueChange={value => updateBrand(value === "all" ? null : value)}
               disabled={isLoading}
             >
               <SelectTrigger className="bg-white">
                 <SelectValue placeholder="Marca (Centrocusto)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas as Marcas</SelectItem>
+                <SelectItem value="all">Todas as Marcas</SelectItem>
                 {filterOptions.brands.map(brand => (
                   <SelectItem key={brand.value} value={brand.value}>
                     {brand.label}
@@ -72,15 +72,15 @@ export const DashboardFilters = ({ onFilterChange }: DashboardFiltersProps) => {
           
           <div>
             <Select
-              value={filters.representative || ""}
-              onValueChange={value => updateRepresentative(value === "" ? null : value)}
+              value={filters.representative || "all"}
+              onValueChange={value => updateRepresentative(value === "all" ? null : value)}
               disabled={isLoading}
             >
               <SelectTrigger className="bg-white">
                 <SelectValue placeholder="Representante" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os Representantes</SelectItem>
+                <SelectItem value="all">Todos os Representantes</SelectItem>
                 {filterOptions.representatives.map(rep => (
                   <SelectItem key={rep.value} value={rep.value}>
                     {rep.label}
@@ -92,15 +92,15 @@ export const DashboardFilters = ({ onFilterChange }: DashboardFiltersProps) => {
           
           <div>
             <Select
-              value={filters.status || ""}
-              onValueChange={value => updateStatus(value === "" ? null : value)}
+              value={filters.status || "all"}
+              onValueChange={value => updateStatus(value === "all" ? null : value)}
               disabled={isLoading}
             >
               <SelectTrigger className="bg-white">
                 <SelectValue placeholder="Status do Pedido" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os Status</SelectItem>
+                <SelectItem value="all">Todos os Status</SelectItem>
                 {filterOptions.statuses.map(status => (
                   <SelectItem key={status.value} value={status.value}>
                     {status.label}

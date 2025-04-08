@@ -26,7 +26,7 @@ export const fetchItemCostData = async (itemCode: string): Promise<CostDataRecor
     if (exactResult.data && exactResult.data.length > 0) {
       console.log(`Dados obtidos para o item ${cleanedItemCode}:`, exactResult.data[0]);
       
-      // Use simple Record type to avoid deep instantiation
+      // Use the defined CostDataRecord type
       const resultData = exactResult.data[0] as CostDataRecord;
       
       if ('media_valor_unitario' in resultData && resultData.media_valor_unitario) {
@@ -70,7 +70,7 @@ async function tryAlternativeFieldName(itemCode: string): Promise<CostDataRecord
   if (lowerResult.data && lowerResult.data.length > 0) {
     console.log(`Dados obtidos com consulta alternativa (minúsculas):`, lowerResult.data[0]);
     
-    // Using the defined CostDataRecord type instead of generic Record
+    // Using the defined CostDataRecord type 
     const resultData = lowerResult.data[0] as CostDataRecord;
     
     if ('media_valor_unitario' in resultData && resultData.media_valor_unitario) {
