@@ -26,6 +26,7 @@ export const fetchDashboardComercialData = async (
         .from('BLUEBAY_FATURAMENTO')
         .select('*', { count: 'exact', head: false })
         .eq('TIPO', 'S') // Somente dados de vendas
+        .neq('STATUS', '4') // Excluir notas canceladas (STATUS = 4)
         .gte('DATA_EMISSAO', startDateStr)
         .lte('DATA_EMISSAO', `${endDateStr}T23:59:59.999`)
         .range(offset, offset + limit - 1);
