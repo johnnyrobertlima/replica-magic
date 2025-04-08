@@ -58,7 +58,8 @@ export const fetchDashboardData = async (
 };
 
 /**
- * Busca dados KPI das tabelas de faturamento e pedidos com suporte a lotes
+ * Busca dados KPI das tabelas de faturamento e pedidos
+ * Reformulado para usar cálculos corretos e filtros apropriados
  */
 const fetchKpiData = async (filters: {
   startDate: Date | null;
@@ -67,17 +68,25 @@ const fetchKpiData = async (filters: {
   status: string | null;
 }): Promise<KpiData> => {
   try {
-    // Converte as datas para strings para a consulta
+    // Converte as datas para strings no formato SQL
     const startDateStr = filters.startDate ? format(filters.startDate, 'yyyy-MM-dd') : '';
     const endDateStr = filters.endDate ? format(filters.endDate, 'yyyy-MM-dd') : '';
 
     console.log(`Buscando dados KPI de ${startDateStr} até ${endDateStr}`);
     
-    // Buscar dados de pedidos diretamente - ajustado conforme o SQL de exemplo
+    // Define os status válidos para filtrar
+    const validStatuses = ['0', '1', '2', '3'];
+    const statusFilter = filters.status && filters.status !== 'all' 
+      ? [filters.status]
+      : validStatuses;
+    
+    // Buscar dados de pedidos com os filtros aplicados diretamente na query
     const { data: orderData, error: orderError } = await supabase
       .from('BLUEBAY_PEDIDO')
       .select('*')
-      .in('STATUS', ['0', '1', '2', '3'])
+      .in('STATUS', statusFilter)
+      .gte('DATA_PEDIDO', startDateStr)
+      .lte('DATA_PEDIDO', `${endDateStr}T23:59:59`)
       .not('DATA_PEDIDO', 'is', null);
     
     if (orderError) {
@@ -87,33 +96,18 @@ const fetchKpiData = async (filters: {
     
     console.log(`Total de registros de pedidos recuperados: ${orderData?.length || 0}`);
 
-    // Filtramos os pedidos pelo período após obtê-los para garantir compatibilidade
-    const filteredOrderData = orderData?.filter(order => {
-      if (!startDateStr || !endDateStr || !order.DATA_PEDIDO) return false;
-      
-      const orderDate = new Date(order.DATA_PEDIDO);
-      const startDate = new Date(startDateStr);
-      const endDate = new Date(endDateStr);
-      endDate.setHours(23, 59, 59, 999); // Ajuste para incluir todo o dia final
-      
-      return orderDate >= startDate && orderDate <= endDate;
-    }) || [];
-
     // Aplicar filtro de marca, se fornecido
     const brandFilteredOrders = filters.brand && filters.brand !== 'all'
-      ? filteredOrderData.filter(order => order.CENTROCUSTO === filters.brand)
-      : filteredOrderData;
+      ? orderData?.filter(order => order.CENTROCUSTO === filters.brand)
+      : orderData;
 
-    // Aplicar filtro de status, se fornecido além dos padrões
-    const statusFilteredOrders = filters.status && filters.status !== 'all'
-      ? brandFilteredOrders.filter(order => order.STATUS === filters.status)
-      : brandFilteredOrders;
-
-    // Buscar dados de faturamento
+    // Buscar dados de faturamento com filtros aplicados diretamente na query
     const { data: billingData, error: billingError } = await supabase
       .from('BLUEBAY_FATURAMENTO')
       .select('*')
-      .eq('TIPO', 'S'); // Somente dados de vendas
+      .eq('TIPO', 'S') // Somente dados de vendas
+      .gte('DATA_EMISSAO', startDateStr)
+      .lte('DATA_EMISSAO', `${endDateStr}T23:59:59`);
     
     if (billingError) {
       console.error('Erro ao buscar dados de faturamento:', billingError);
@@ -122,21 +116,10 @@ const fetchKpiData = async (filters: {
     
     console.log(`Total de registros de faturamento recuperados: ${billingData?.length || 0}`);
 
-    // Filtramos o faturamento pelo período após obtê-los
-    const filteredBillingData = billingData?.filter(billing => {
-      if (!startDateStr || !endDateStr || !billing.DATA_EMISSAO) return false;
-      
-      const billingDate = new Date(billing.DATA_EMISSAO);
-      const startDate = new Date(startDateStr);
-      const endDate = new Date(endDateStr);
-      endDate.setHours(23, 59, 59, 999); // Ajuste para incluir todo o dia final
-      
-      return billingDate >= startDate && billingDate <= endDate;
-    }) || [];
-
     // Aplicar filtro de marca via join com pedidos
     const brandFilteredBilling = filters.brand && filters.brand !== 'all'
-      ? filteredBillingData.filter(billing => {
+      ? billingData?.filter(billing => {
+          // Para encontrar faturamentos da marca específica, usamos o código do pedido
           const pedido = orderData?.find(order => 
             order.PED_NUMPEDIDO === billing.PED_NUMPEDIDO && 
             order.PED_ANOBASE === billing.PED_ANOBASE &&
@@ -144,27 +127,27 @@ const fetchKpiData = async (filters: {
           );
           return !!pedido;
         })
-      : filteredBillingData;
+      : billingData;
 
-    // Processa e sumariza dados
-    const totalOrders = statusFilteredOrders.reduce((sum, item) => {
+    // Processa e sumariza dados - usando cálculo correto (QTDE * VALOR_UNITARIO)
+    const totalOrders = (brandFilteredOrders || []).reduce((sum, item) => {
       const value = (item.QTDE_PEDIDA || 0) * (item.VALOR_UNITARIO || 0);
       return sum + parseFloat(value.toString());
     }, 0);
 
-    const orderedPieces = statusFilteredOrders.reduce((sum, item) => {
+    const orderedPieces = (brandFilteredOrders || []).reduce((sum, item) => {
       const qty = item.QTDE_PEDIDA || 0;
       return sum + parseFloat(qty.toString());
     }, 0);
 
-    // Calculando o total faturado usando QUANTIDADE * VALOR_UNITARIO corretamente
-    const totalBilled = brandFilteredBilling.reduce((sum, item) => {
+    // Calculando o total faturado usando QUANTIDADE * VALOR_UNITARIO
+    const totalBilled = (brandFilteredBilling || []).reduce((sum, item) => {
       const quantidade = parseFloat((item.QUANTIDADE || 0).toString());
       const valorUnitario = parseFloat((item.VALOR_UNITARIO || 0).toString());
       return sum + (quantidade * valorUnitario);
     }, 0);
 
-    const billedPieces = brandFilteredBilling.reduce((sum, item) => {
+    const billedPieces = (brandFilteredBilling || []).reduce((sum, item) => {
       const qty = item.QUANTIDADE || 0;
       return sum + parseFloat(qty.toString());
     }, 0);
@@ -173,13 +156,13 @@ const fetchKpiData = async (filters: {
     const conversionRate = totalOrders > 0 ? (totalBilled / totalOrders) * 100 : 0;
 
     // Calcular médio ponderado de desconto
-    const totalBeforeDiscount = brandFilteredBilling.reduce((sum, item) => {
+    const totalBeforeDiscount = (brandFilteredBilling || []).reduce((sum, item) => {
       const qty = parseFloat((item.QUANTIDADE || 0).toString());
       const unitPrice = parseFloat((item.VALOR_UNITARIO || 0).toString());
       return sum + (qty * unitPrice);
     }, 0);
 
-    const totalDiscount = brandFilteredBilling.reduce((sum, item) => {
+    const totalDiscount = (brandFilteredBilling || []).reduce((sum, item) => {
       return sum + parseFloat((item.VALOR_DESCONTO || 0).toString());
     }, 0);
 
@@ -201,7 +184,7 @@ const fetchKpiData = async (filters: {
 
 /**
  * Busca dados de séries temporais para o dashboard
- * com suporte a lotes para superar limites de consulta
+ * Reformulado para usar filtros corretos e agrupamento por mês
  */
 const fetchTimeSeriesData = async (filters: {
   startDate: Date | null;
@@ -210,7 +193,7 @@ const fetchTimeSeriesData = async (filters: {
   status: string | null;
 }): Promise<TimeSeriesData> => {
   try {
-    // Converte datas para strings para a consulta ou usa últimos 6 meses se não fornecidas
+    // Converte datas para strings para a consulta
     let startDate = filters.startDate;
     let endDate = filters.endDate;
     
@@ -224,11 +207,19 @@ const fetchTimeSeriesData = async (filters: {
     
     console.log(`Buscando dados de séries temporais de ${startDateStr} até ${endDateStr}`);
 
-    // Obter dados de pedidos conforme SQL de exemplo
+    // Define os status válidos para filtrar
+    const validStatuses = ['0', '1', '2', '3'];
+    const statusFilter = filters.status && filters.status !== 'all' 
+      ? [filters.status]
+      : validStatuses;
+    
+    // Obter dados de pedidos com filtros aplicados diretamente na query
     const { data: orderData, error: orderError } = await supabase
       .from('BLUEBAY_PEDIDO')
       .select('*')
-      .in('STATUS', ['0', '1', '2', '3'])
+      .in('STATUS', statusFilter)
+      .gte('DATA_PEDIDO', startDateStr)
+      .lte('DATA_PEDIDO', `${endDateStr}T23:59:59`)
       .not('DATA_PEDIDO', 'is', null);
 
     if (orderError) {
@@ -236,58 +227,44 @@ const fetchTimeSeriesData = async (filters: {
       throw orderError;
     }
 
-    // Filtrar por data manualmente
-    const filteredOrderData = orderData?.filter(order => {
-      if (!order.DATA_PEDIDO) return false;
-      
-      const orderDate = new Date(order.DATA_PEDIDO);
-      const startDate = new Date(startDateStr);
-      const endDate = new Date(endDateStr);
-      endDate.setHours(23, 59, 59, 999);
-      
-      return orderDate >= startDate && orderDate <= endDate;
-    }) || [];
-
     // Aplicar filtro de marca, se fornecido
     const brandFilteredOrders = filters.brand && filters.brand !== 'all'
-      ? filteredOrderData.filter(order => order.CENTROCUSTO === filters.brand)
-      : filteredOrderData;
+      ? orderData?.filter(order => order.CENTROCUSTO === filters.brand)
+      : orderData;
 
-    // Aplicar filtro de status, se fornecido além dos padrões
-    const statusFilteredOrders = filters.status && filters.status !== 'all'
-      ? brandFilteredOrders.filter(order => order.STATUS === filters.status)
-      : brandFilteredOrders;
-
-    // Obter dados de faturamento
+    // Obter dados de faturamento com filtros aplicados diretamente na query
     const { data: billingData, error: billingError } = await supabase
       .from('BLUEBAY_FATURAMENTO')
       .select('*')
-      .eq('TIPO', 'S'); // Somente vendas
+      .eq('TIPO', 'S') // Somente vendas
+      .gte('DATA_EMISSAO', startDateStr)
+      .lte('DATA_EMISSAO', `${endDateStr}T23:59:59`);
 
     if (billingError) {
       console.error('Erro ao buscar dados de faturamento para séries temporais:', billingError);
       throw billingError;
     }
 
-    // Filtrar por data manualmente
-    const filteredBillingData = billingData?.filter(billing => {
-      if (!billing.DATA_EMISSAO) return false;
-      
-      const billingDate = new Date(billing.DATA_EMISSAO);
-      const startDate = new Date(startDateStr);
-      const endDate = new Date(endDateStr);
-      endDate.setHours(23, 59, 59, 999);
-      
-      return billingDate >= startDate && billingDate <= endDate;
-    }) || [];
+    // Aplicar filtro de marca via join com pedidos
+    const brandFilteredBilling = filters.brand && filters.brand !== 'all'
+      ? billingData?.filter(billing => {
+          // Para encontrar faturamentos da marca específica, usamos o código do pedido
+          const pedido = orderData?.find(order => 
+            order.PED_NUMPEDIDO === billing.PED_NUMPEDIDO && 
+            order.PED_ANOBASE === billing.PED_ANOBASE &&
+            order.CENTROCUSTO === filters.brand
+          );
+          return !!pedido;
+        })
+      : billingData;
 
-    console.log(`Processando dados de séries temporais de ${statusFilteredOrders.length} pedidos e ${filteredBillingData.length} registros de faturamento`);
+    console.log(`Processando dados de séries temporais de ${brandFilteredOrders?.length || 0} pedidos e ${brandFilteredBilling?.length || 0} registros de faturamento`);
 
     // Agrupar dados por mês
     const monthlyData = new Map<string, TimeSeriesPoint>();
 
     // Processar dados de pedidos
-    statusFilteredOrders.forEach(order => {
+    (brandFilteredOrders || []).forEach(order => {
       if (!order.DATA_PEDIDO) return;
       
       const orderDate = typeof order.DATA_PEDIDO === 'string' ? parseISO(order.DATA_PEDIDO) : new Date(order.DATA_PEDIDO);
@@ -304,13 +281,14 @@ const fetchTimeSeriesData = async (filters: {
       }
       
       const monthData = monthlyData.get(monthKey)!;
+      // Cálculo correto usando QTDE_PEDIDA * VALOR_UNITARIO
       const orderValue = (order.QTDE_PEDIDA || 0) * (order.VALOR_UNITARIO || 0);
       monthData.ordersValue += parseFloat(orderValue.toString());
       monthData.orderedPieces += parseFloat((order.QTDE_PEDIDA || 0).toString());
     });
 
     // Processar dados de faturamento
-    filteredBillingData.forEach(item => {
+    (brandFilteredBilling || []).forEach(item => {
       if (!item.DATA_EMISSAO) return;
       
       const billingDate = typeof item.DATA_EMISSAO === 'string' ? parseISO(item.DATA_EMISSAO) : new Date(item.DATA_EMISSAO);
@@ -328,7 +306,7 @@ const fetchTimeSeriesData = async (filters: {
       
       const monthData = monthlyData.get(monthKey)!;
       
-      // Calculando o valor faturado usando QUANTIDADE * VALOR_UNITARIO em vez de VALOR_NOTA
+      // Cálculo correto usando QUANTIDADE * VALOR_UNITARIO
       const quantidade = parseFloat((item.QUANTIDADE || 0).toString());
       const valorUnitario = parseFloat((item.VALOR_UNITARIO || 0).toString());
       monthData.billedValue += quantidade * valorUnitario;
@@ -352,8 +330,8 @@ const fetchTimeSeriesData = async (filters: {
 };
 
 /**
- * Busca dados de todas as marcas em lotes se necessário para superar limites de consulta
- * com opção de buscar todos os dados sem limites
+ * Busca dados de todas as marcas (CENTROCUSTO)
+ * Reformulado para usar filtros corretos
  */
 const fetchBrandData = async (filters: {
   startDate: Date | null;
@@ -372,11 +350,19 @@ const fetchBrandData = async (filters: {
     
     console.log(`Buscando dados de marcas de ${startDateStr} até ${endDateStr}`);
 
-    // Busca todos os pedidos com status válidos conforme SQL de exemplo
+    // Define os status válidos para filtrar
+    const validStatuses = ['0', '1', '2', '3'];
+    const statusFilter = filters.status && filters.status !== 'all' 
+      ? [filters.status]
+      : validStatuses;
+    
+    // Busca todos os pedidos com filtros aplicados diretamente na query
     const { data: orderData, error: orderError } = await supabase
       .from('BLUEBAY_PEDIDO')
       .select('*')
-      .in('STATUS', ['0', '1', '2', '3'])
+      .in('STATUS', statusFilter)
+      .gte('DATA_PEDIDO', startDateStr)
+      .lte('DATA_PEDIDO', `${endDateStr}T23:59:59`)
       .not('CENTROCUSTO', 'is', null)
       .not('DATA_PEDIDO', 'is', null);
 
@@ -384,57 +370,30 @@ const fetchBrandData = async (filters: {
       console.error('Erro ao buscar dados de pedidos por marca:', orderError);
       return { data: { items: [] }, totalCount: 0 };
     }
-
-    // Filtrar por período manualmente
-    const filteredOrderData = orderData?.filter(order => {
-      if (!startDateStr || !endDateStr || !order.DATA_PEDIDO) return false;
-      
-      const orderDate = new Date(order.DATA_PEDIDO);
-      const startDate = new Date(startDateStr);
-      const endDate = new Date(endDateStr);
-      endDate.setHours(23, 59, 59, 999);
-      
-      return orderDate >= startDate && orderDate <= endDate;
-    }) || [];
     
-    // Aplicar filtro de status adicional, se fornecido
-    const statusFilteredOrders = filters.status && filters.status !== 'all'
-      ? filteredOrderData.filter(order => order.STATUS === filters.status)
-      : filteredOrderData;
-
     // Obtém marcas únicas
-    const uniqueBrands = [...new Set(statusFilteredOrders?.map(item => item.CENTROCUSTO))].filter(Boolean);
+    const uniqueBrands = [...new Set(orderData?.map(item => item.CENTROCUSTO))].filter(Boolean);
     console.log(`Encontradas ${uniqueBrands.length} marcas únicas:`, uniqueBrands);
 
-    // Busca dados de faturamento
+    // Busca dados de faturamento com filtros aplicados diretamente na query
     const { data: billingData, error: billingError } = await supabase
       .from('BLUEBAY_FATURAMENTO')
       .select('*')
-      .eq('TIPO', 'S'); // Somente vendas
+      .eq('TIPO', 'S') // Somente vendas
+      .gte('DATA_EMISSAO', startDateStr)
+      .lte('DATA_EMISSAO', `${endDateStr}T23:59:59`);
 
     if (billingError) {
       console.error('Erro ao buscar dados de faturamento por marca:', billingError);
       return { data: { items: [] }, totalCount: 0 };
     }
 
-    // Filtrar por período manualmente
-    const filteredBillingData = billingData?.filter(billing => {
-      if (!startDateStr || !endDateStr || !billing.DATA_EMISSAO) return false;
-      
-      const billingDate = new Date(billing.DATA_EMISSAO);
-      const startDate = new Date(startDateStr);
-      const endDate = new Date(endDateStr);
-      endDate.setHours(23, 59, 59, 999);
-      
-      return billingDate >= startDate && billingDate <= endDate;
-    }) || [];
+    console.log(`Processando dados de marcas de ${orderData?.length || 0} pedidos e ${billingData?.length || 0} registros de faturamento`);
 
-    console.log(`Processando dados de marcas de ${statusFilteredOrders.length} pedidos e ${filteredBillingData.length} registros de faturamento`);
-
-    // Agrupa dados de pedidos por marca
+    // Agrupa dados de pedidos por marca usando o cálculo correto (QTDE_PEDIDA * VALOR_UNITARIO)
     const brandOrderMap = new Map<string, { total: number, pieces: number }>();
     
-    statusFilteredOrders.forEach(order => {
+    (orderData || []).forEach(order => {
       const brand = order.CENTROCUSTO || 'Sem Marca';
       const value = (order.QTDE_PEDIDA || 0) * (order.VALOR_UNITARIO || 0);
       const pieces = parseFloat((order.QTDE_PEDIDA || 0).toString());
@@ -450,7 +409,7 @@ const fetchBrandData = async (filters: {
 
     // Cria um mapa de número do pedido para marca
     const orderToBrandMap = new Map<string, string>();
-    statusFilteredOrders.forEach(order => {
+    (orderData || []).forEach(order => {
       const orderKey = `${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`;
       orderToBrandMap.set(orderKey, order.CENTROCUSTO || 'Sem Marca');
     });
@@ -458,7 +417,7 @@ const fetchBrandData = async (filters: {
     // Calcula o valor faturado usando QUANTIDADE * VALOR_UNITARIO
     const brandBillingMap = new Map<string, number>();
     
-    filteredBillingData.forEach(item => {
+    (billingData || []).forEach(item => {
       const orderKey = `${item.PED_NUMPEDIDO}-${item.PED_ANOBASE}`;
       const brand = orderToBrandMap.get(orderKey) || 'Sem Marca';
       const quantidade = parseFloat((item.QUANTIDADE || 0).toString());
@@ -518,7 +477,8 @@ const fetchBrandData = async (filters: {
 };
 
 /**
- * Busca dados de eficiência de entrega em lotes para superar limites de consulta
+ * Busca dados de eficiência de entrega
+ * Reformulado para usar filtros corretos
  */
 const fetchDeliveryData = async (filters: {
   startDate: Date | null;
@@ -533,11 +493,19 @@ const fetchDeliveryData = async (filters: {
     
     console.log(`Buscando dados de eficiência de entrega de ${startDateStr} até ${endDateStr}`);
 
-    // Busca dados de pedidos direto com os status necessários para entrega
+    // Define os status válidos para filtrar
+    const validStatuses = ['0', '1', '2', '3'];
+    const statusFilter = filters.status && filters.status !== 'all' 
+      ? [filters.status]
+      : validStatuses;
+    
+    // Busca dados de pedidos com filtros aplicados diretamente na query
     const { data: orderData, error: orderError } = await supabase
       .from('BLUEBAY_PEDIDO')
       .select('*')
-      .in('STATUS', ['0', '1', '2', '3'])
+      .in('STATUS', statusFilter)
+      .gte('DATA_PEDIDO', startDateStr)
+      .lte('DATA_PEDIDO', `${endDateStr}T23:59:59`)
       .not('DATA_PEDIDO', 'is', null);
 
     if (orderError) {
@@ -545,29 +513,12 @@ const fetchDeliveryData = async (filters: {
       throw orderError;
     }
 
-    // Filtrar por período manualmente
-    const filteredOrderData = orderData?.filter(order => {
-      if (!startDateStr || !endDateStr || !order.DATA_PEDIDO) return false;
-      
-      const orderDate = new Date(order.DATA_PEDIDO);
-      const startDate = new Date(startDateStr);
-      const endDate = new Date(endDateStr);
-      endDate.setHours(23, 59, 59, 999);
-      
-      return orderDate >= startDate && orderDate <= endDate;
-    }) || [];
-
     // Aplicar filtro de marca, se fornecido
     const brandFilteredOrders = filters.brand && filters.brand !== 'all'
-      ? filteredOrderData.filter(order => order.CENTROCUSTO === filters.brand)
-      : filteredOrderData;
-      
-    // Aplicar filtro de status adicional, se fornecido
-    const statusFilteredOrders = filters.status && filters.status !== 'all'
-      ? brandFilteredOrders.filter(order => order.STATUS === filters.status)
-      : brandFilteredOrders;
+      ? orderData?.filter(order => order.CENTROCUSTO === filters.brand)
+      : orderData;
 
-    console.log(`Processando ${statusFilteredOrders.length} pedidos para análise de eficiência de entrega`);
+    console.log(`Processando ${brandFilteredOrders?.length || 0} pedidos para análise de eficiência de entrega`);
 
     // Contadores para análise
     let totalFullyDelivered = 0;
@@ -577,7 +528,7 @@ const fetchDeliveryData = async (filters: {
     let totalRemainingQuantity = 0;
 
     // Analisa cada pedido
-    statusFilteredOrders.forEach(order => {
+    (brandFilteredOrders || []).forEach(order => {
       // Obtém quantidades
       const qtdePedida = parseFloat((order.QTDE_PEDIDA || 0).toString());
       const qtdeEntregue = parseFloat((order.QTDE_ENTREGUE || 0).toString());
