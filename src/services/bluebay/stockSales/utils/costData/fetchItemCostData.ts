@@ -1,126 +1,50 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { CostDataRecord } from "./costDataTypes";
+import type { CostDataRecord } from './costDataTypes';
 
 /**
- * Fetches cost data for a specific item from the bluebay_view_faturamento_resumo view
+ * Fetches cost data for specific items
+ * @param itemCodes Array of item codes to fetch cost data for
  */
-export const fetchItemCostData = async (itemCode: string): Promise<CostDataRecord | null> => {
+export const fetchItemCostData = async (itemCodes: string[]): Promise<CostDataRecord[]> => {
+  if (!itemCodes || itemCodes.length === 0) {
+    return [];
+  }
+  
   try {
-    console.log(`Buscando dados de custo para o item "${itemCode}"`);
+    console.log("Fetching cost data for items:", itemCodes.length);
     
-    // Limpar possíveis espaços ou caracteres ocultos no código do item
-    const cleanedItemCode = itemCode.trim();
+    // Batch the requests to avoid query string limitations
+    const batchSize = 50;
+    const batches = [];
     
-    // Tentativa 1: Busca exata com ITEM_CODIGO (maiúsculo)
-    const exactResult = await supabase
-      .from('bluebay_view_faturamento_resumo')
-      .select('*')
-      .eq('ITEM_CODIGO', cleanedItemCode);
-      
-    if (exactResult.error) {
-      console.error(`Erro na consulta para o item ${cleanedItemCode}:`, exactResult.error);
-      return null;
+    for (let i = 0; i < itemCodes.length; i += batchSize) {
+      const batchCodes = itemCodes.slice(i, i + batchSize);
+      batches.push(batchCodes);
     }
     
-    if (exactResult.data && exactResult.data.length > 0) {
-      console.log(`Dados obtidos para o item ${cleanedItemCode}:`, exactResult.data[0]);
+    const results: CostDataRecord[] = [];
+    
+    for (const batch of batches) {
+      const { data, error } = await supabase
+        .from('vw_custos_items')
+        .select('*')
+        .in('ITEM_CODIGO', batch);
       
-      // Use the defined CostDataRecord type
-      const resultData = exactResult.data[0] as CostDataRecord;
-      
-      if ('media_valor_unitario' in resultData && resultData.media_valor_unitario) {
-        console.log(`Valor de media_valor_unitario: ${resultData.media_valor_unitario}`);
-      } else if ('MEDIA_VALOR_UNITARIO' in resultData && resultData.MEDIA_VALOR_UNITARIO) {
-        console.log(`Valor de MEDIA_VALOR_UNITARIO: ${resultData.MEDIA_VALOR_UNITARIO}`);
+      if (error) {
+        console.error("Error fetching cost data batch:", error);
+        continue;
       }
       
-      return resultData;
+      if (data) {
+        // Use type assertion to avoid deep instantiation issues
+        results.push(...(data as CostDataRecord[]));
+      }
     }
     
-    console.warn(`Nenhum resultado encontrado para o item ${cleanedItemCode} com ITEM_CODIGO maiúsculo`);
-    
-    // Tentativa 2: Busca com item_codigo (minúsculo)
-    const lowerResult = await tryAlternativeFieldName(cleanedItemCode);
-    if (lowerResult) return lowerResult;
-    
-    // Tentativa 3: Busca aproximada (LIKE)
-    return await tryFuzzySearch(cleanedItemCode);
-    
+    return results;
   } catch (error) {
-    console.error(`Erro ao buscar custo para o item ${itemCode}:`, error);
-    return null;
+    console.error("Error in fetchItemCostData:", error);
+    return [];
   }
 };
-
-/**
- * Try searching with lowercase field name
- */
-async function tryAlternativeFieldName(itemCode: string): Promise<CostDataRecord | null> {
-  const lowerResult = await supabase
-    .from('bluebay_view_faturamento_resumo')
-    .select('*')
-    .eq('item_codigo', itemCode);
-  
-  if (lowerResult.error) {
-    console.error(`Erro na consulta alternativa para o item ${itemCode}:`, lowerResult.error);
-    return null;
-  } 
-  
-  if (lowerResult.data && lowerResult.data.length > 0) {
-    console.log(`Dados obtidos com consulta alternativa (minúsculas):`, lowerResult.data[0]);
-    
-    // Using the defined CostDataRecord type 
-    const resultData = lowerResult.data[0] as CostDataRecord;
-    
-    if ('media_valor_unitario' in resultData && resultData.media_valor_unitario) {
-      console.log(`Valor de media_valor_unitario: ${resultData.media_valor_unitario}`);
-    } else if ('MEDIA_VALOR_UNITARIO' in resultData && resultData.MEDIA_VALOR_UNITARIO) {
-      console.log(`Valor de MEDIA_VALOR_UNITARIO: ${resultData.MEDIA_VALOR_UNITARIO}`);
-    }
-    
-    return resultData;
-  }
-  
-  console.warn(`Nenhum resultado encontrado para o item ${itemCode} com item_codigo minúsculo`);
-  return null;
-}
-
-/**
- * Try fuzzy search with LIKE operator
- */
-async function tryFuzzySearch(itemCode: string): Promise<CostDataRecord | null> {
-  const fuzzyResult = await supabase
-    .from('bluebay_view_faturamento_resumo')
-    .select('*')
-    .ilike('ITEM_CODIGO', `%${itemCode}%`);
-    
-  if (fuzzyResult.error) {
-    console.error(`Erro na busca aproximada para o item ${itemCode}:`, fuzzyResult.error);
-    return null;
-  }
-  
-  if (fuzzyResult.data && fuzzyResult.data.length > 0) {
-    console.log(`Encontrados ${fuzzyResult.data.length} resultados com busca aproximada para ${itemCode}`);
-    
-    // Verificar se algum dos resultados corresponde exatamente ao código (ignorando espaços)
-    const exactMatch = fuzzyResult.data.find(
-      (item) => {
-        const dbItemCode = item.ITEM_CODIGO || '';
-        return typeof dbItemCode === 'string' && dbItemCode.trim() === itemCode;
-      }
-    );
-    
-    if (exactMatch) {
-      console.log(`Correspondência exata encontrada na busca aproximada:`, exactMatch);
-      return exactMatch as CostDataRecord;
-    }
-    
-    // Retornar o primeiro resultado aproximado se não houver correspondência exata
-    console.log(`Usando primeiro resultado aproximado:`, fuzzyResult.data[0]);
-    return fuzzyResult.data[0] as CostDataRecord;
-  }
-  
-  console.warn(`Nenhum resultado encontrado para o item ${itemCode} após todas as tentativas`);
-  return null;
-}

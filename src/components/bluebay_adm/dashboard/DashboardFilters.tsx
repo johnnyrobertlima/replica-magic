@@ -62,8 +62,8 @@ export const DashboardFilters = ({ onFilterChange }: DashboardFiltersProps) => {
               <SelectContent>
                 <SelectItem value="all">Todas as Marcas</SelectItem>
                 {filterOptions.brands.map(brand => (
-                  <SelectItem key={brand.value} value={brand.value}>
-                    {brand.label}
+                  <SelectItem key={brand.value} value={brand.value || "sem-marca"}>
+                    {brand.label || "Sem marca"}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -82,8 +82,8 @@ export const DashboardFilters = ({ onFilterChange }: DashboardFiltersProps) => {
               <SelectContent>
                 <SelectItem value="all">Todos os Representantes</SelectItem>
                 {filterOptions.representatives.map(rep => (
-                  <SelectItem key={rep.value} value={rep.value}>
-                    {rep.label}
+                  <SelectItem key={rep.value} value={rep.value || "sem-representante"}>
+                    {rep.label || "Sem representante"}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -102,8 +102,8 @@ export const DashboardFilters = ({ onFilterChange }: DashboardFiltersProps) => {
               <SelectContent>
                 <SelectItem value="all">Todos os Status</SelectItem>
                 {filterOptions.statuses.map(status => (
-                  <SelectItem key={status.value} value={status.value}>
-                    {status.label}
+                  <SelectItem key={status.value} value={status.value || "sem-status"}>
+                    {status.label || "Sem status"}
                   </SelectItem>
                 ))}
               </SelectContent>
