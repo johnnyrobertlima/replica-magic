@@ -1,6 +1,5 @@
-
 import { useState, useCallback, useEffect } from 'react';
-import { subMonths } from 'date-fns';
+import { subDays } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
 import { 
   fetchDashboardComercialData
@@ -35,7 +34,7 @@ const defaultData: DashboardComercialData = {
 };
 
 export const useDashboardComercial = (): UseDashboardComercialReturn => {
-  const [startDate, setStartDate] = useState<Date>(subMonths(new Date(), 6));
+  const [startDate, setStartDate] = useState<Date>(subDays(new Date(), 7));
   const [endDate, setEndDate] = useState<Date>(new Date());
   
   const [dashboardData, setDashboardData] = useState<DashboardComercialData | null>(null);

@@ -70,9 +70,10 @@ const BluebayAdmDashboardComercial = () => {
           />
         </div>
         
-        {/* Tabela de Notas Fiscais */}
+        {/* Tabela de Notas Fiscais e Pedidos */}
         <FaturamentoTable 
           faturamentoData={dashboardData?.faturamentoItems || []}
+          pedidoData={dashboardData?.pedidoItems || []}
           isLoading={isLoading}
         />
       </div>
