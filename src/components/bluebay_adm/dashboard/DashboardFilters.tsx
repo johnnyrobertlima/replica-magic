@@ -46,14 +46,15 @@ export const DashboardFilters = ({ onFilterChange }: DashboardFiltersProps) => {
   };
 
   const handleExportData = () => {
+    // Pass an empty object as argument to exportToExcel to fix the TypeScript error
     toast({
       title: "Exportação iniciada",
       description: "Preparando dados para exportação...",
     });
     
     setTimeout(() => {
-      // Esta função seria implementada em exportUtils.ts
-      exportToExcel();
+      // Pass an empty object as argument to exportToExcel
+      exportToExcel({});
       
       toast({
         title: "Exportação concluída",
