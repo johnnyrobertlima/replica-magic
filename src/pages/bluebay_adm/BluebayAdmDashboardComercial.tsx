@@ -1,16 +1,10 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { BluebayAdmBanner } from "@/components/bluebay_adm/BluebayAdmBanner";
 import { BluebayAdmMenu } from "@/components/bluebay_adm/BluebayAdmMenu";
-import { FaturamentoTimeSeriesChart } from "@/components/bluebay_adm/dashboard-comercial/FaturamentoTimeSeriesChart";
-import { FaturamentoKpiCards } from "@/components/bluebay_adm/dashboard-comercial/FaturamentoKpiCards";
 import { DashboardComercialFilters } from "@/components/bluebay_adm/dashboard-comercial/DashboardComercialFilters";
-import { FaturamentoTable } from "@/components/bluebay_adm/dashboard-comercial/FaturamentoTable";
-import { CentroCustoIndicators } from "@/components/bluebay_adm/dashboard-comercial/CentroCustoIndicators";
 import { useDashboardComercial } from "@/hooks/bluebay_adm/dashboard/useDashboardComercial";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Info } from "lucide-react";
-import { encontrarPedidoCorrespondente } from "@/components/bluebay_adm/dashboard-comercial/utils/pedidoUtils";
+import { DashboardContent } from "@/components/bluebay_adm/dashboard-comercial/DashboardContent";
 
 const BluebayAdmDashboardComercial = () => {
   const {
@@ -24,78 +18,6 @@ const BluebayAdmDashboardComercial = () => {
   
   // Estado para controlar o filtro de Centro de Custo
   const [selectedCentroCusto, setSelectedCentroCusto] = useState<string | null>(null);
-  // Estado para armazenar as correspondências não encontradas para debug
-  const [naoIdentificados, setNaoIdentificados] = useState<any[]>([]);
-  
-  // Efeito para coletar diagnósticos quando os dados mudam
-  useEffect(() => {
-    if (!dashboardData) return;
-    
-    // Coletar itens não identificados para diagnóstico
-    const diagnosticos: any[] = [];
-    dashboardData.faturamentoItems.forEach(item => {
-      if (!item.PED_NUMPEDIDO || !item.PED_ANOBASE) return;
-      
-      const pedido = encontrarPedidoCorrespondente(item, dashboardData.pedidoItems);
-      if (!pedido) {
-        diagnosticos.push({
-          faturamento: {
-            PED_NUMPEDIDO: item.PED_NUMPEDIDO,
-            PED_ANOBASE: item.PED_ANOBASE,
-            MPED_NUMORDEM: item.MPED_NUMORDEM,
-            VALOR_NOTA: item.VALOR_NOTA,
-            DATA_EMISSAO: item.DATA_EMISSAO
-          }
-        });
-      }
-    });
-    
-    if (diagnosticos.length > 0) {
-      console.log(`Encontrados ${diagnosticos.length} itens de faturamento sem correspondência`, diagnosticos);
-      setNaoIdentificados(diagnosticos);
-    }
-  }, [dashboardData]);
-
-  // Filtrar dados com base no Centro de Custo selecionado usando a lógica aprimorada
-  const filteredFaturamentoItems = selectedCentroCusto 
-    ? dashboardData?.faturamentoItems.filter(item => {
-        // Se o Centro de Custo for "Não identificado"
-        if (selectedCentroCusto === "Não identificado") {
-          // Verificar se há um pedido correspondente
-          const pedidoCorrespondente = encontrarPedidoCorrespondente(item, dashboardData.pedidoItems);
-          
-          // Retornar true se não houver pedido correspondente (é "Não identificado")
-          return !pedidoCorrespondente;
-        } else {
-          // Para outros centros de custo, buscar o pedido correspondente
-          const pedidoCorrespondente = encontrarPedidoCorrespondente(item, dashboardData.pedidoItems);
-          
-          // Verificar se o pedido tem o centro de custo selecionado
-          return pedidoCorrespondente?.CENTROCUSTO === selectedCentroCusto;
-        }
-      }) 
-    : dashboardData?.faturamentoItems || [];
-  
-  const filteredPedidoItems = selectedCentroCusto 
-    ? (selectedCentroCusto === "Não identificado" 
-        ? [] // Para "Não identificado", não há pedidos, apenas itens de faturamento sem pedido correspondente
-        : dashboardData?.pedidoItems.filter(item => item.CENTROCUSTO === selectedCentroCusto))
-    : dashboardData?.pedidoItems || [];
-
-  // Recalcular totais com base nos itens filtrados
-  const calculatedTotals = {
-    totalFaturado: filteredFaturamentoItems.reduce((sum, item) => sum + (item.VALOR_NOTA || 0), 0),
-    totalItens: filteredFaturamentoItems.reduce((sum, item) => sum + (item.QUANTIDADE || 0), 0),
-    mediaValorItem: 0
-  };
-  
-  calculatedTotals.mediaValorItem = calculatedTotals.totalItens > 0 
-    ? calculatedTotals.totalFaturado / calculatedTotals.totalItens 
-    : 0;
-
-  // Verifica se há dados disponíveis
-  const hasData = !isLoading && dashboardData && dashboardData.faturamentoItems.length > 0;
-  const hasFilteredData = filteredFaturamentoItems.length > 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -114,64 +36,14 @@ const BluebayAdmDashboardComercial = () => {
           onRefresh={refreshData}
           isLoading={isLoading}
         />
-        
-        {!hasData && !isLoading && (
-          <Alert variant="destructive" className="mb-4">
-            <Info className="h-4 w-4" />
-            <AlertTitle>Nenhum dado encontrado</AlertTitle>
-            <AlertDescription>
-              Não foram encontrados dados de faturamento para o período selecionado.
-              Tente selecionar outro intervalo de datas.
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        {/* Mostra alerta se houver muitos itens não identificados */}
-        {naoIdentificados.length > 10 && hasData && (
-          <Alert className="mb-4">
-            <Info className="h-4 w-4" />
-            <AlertTitle>Notas fiscais sem associação com pedidos</AlertTitle>
-            <AlertDescription>
-              Existem {naoIdentificados.length} notas fiscais que possuem número de pedido, 
-              mas não foram associadas a nenhum pedido existente. 
-              Estas notas aparecem como "Não identificado".
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        <div className="mb-6">
-          <FaturamentoKpiCards
-            totalFaturado={calculatedTotals.totalFaturado}
-            totalItens={calculatedTotals.totalItens}
-            mediaValorItem={calculatedTotals.mediaValorItem}
-            isLoading={isLoading}
-          />
-        </div>
 
-        <div className="grid grid-cols-1 gap-6 mb-8">
-          <FaturamentoTimeSeriesChart
-            dailyData={dashboardData?.dailyFaturamento || []}
-            monthlyData={dashboardData?.monthlyFaturamento || []}
-            startDate={startDate}
-            endDate={endDate}
-            isLoading={isLoading}
-          />
-        </div>
-        
-        {/* Indicadores por Centro de Custo com funcionalidade de filtro */}
-        <CentroCustoIndicators 
-          faturamentoItems={dashboardData?.faturamentoItems || []}
-          pedidoItems={dashboardData?.pedidoItems || []}
-          isLoading={isLoading}
+        <DashboardContent
+          dashboardData={dashboardData}
           selectedCentroCusto={selectedCentroCusto}
-          onCentroCustoSelect={setSelectedCentroCusto}
-        />
-        
-        {/* Tabela de Notas Fiscais e Pedidos (filtrada pelo Centro de Custo selecionado) */}
-        <FaturamentoTable 
-          faturamentoData={filteredFaturamentoItems}
-          pedidoData={filteredPedidoItems}
+          setSelectedCentroCusto={setSelectedCentroCusto}
           isLoading={isLoading}
+          startDate={startDate}
+          endDate={endDate}
         />
       </div>
     </div>
