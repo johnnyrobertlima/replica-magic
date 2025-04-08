@@ -13,6 +13,7 @@ interface FilteredData {
   };
   naoIdentificados: any[];
   hasFilteredData: boolean;
+  ambiguityDetected: boolean;
 }
 
 export const useDataFiltering = (
@@ -25,6 +26,7 @@ export const useDataFiltering = (
 ): FilteredData => {
   // Estado para armazenar as correspondências não encontradas para debug
   const [naoIdentificados, setNaoIdentificados] = useState<any[]>([]);
+  const [ambiguityDetected, setAmbiguityDetected] = useState<boolean>(false);
 
   // Efeito para coletar diagnósticos quando os dados mudam
   useEffect(() => {
@@ -32,19 +34,36 @@ export const useDataFiltering = (
     
     // Coletar itens não identificados para diagnóstico
     const diagnosticos: any[] = [];
+    const ambiguidadeDetectada = { detected: false };
     
-    // Procurar especificamente a nota 252770 para análise detalhada
-    const nota252770 = dashboardData.faturamentoItems.find(item => item.NOTA === '252770');
-    if (nota252770) {
-      const pedidoCorrespondente = encontrarPedidoCorrespondente(nota252770, dashboardData.pedidoItems);
-      console.log('Análise específica da nota 252770:', {
-        notaData: {
-          PED_NUMPEDIDO: nota252770.PED_NUMPEDIDO,
-          PED_ANOBASE: nota252770.PED_ANOBASE,
-          MPED_NUMORDEM: nota252770.MPED_NUMORDEM,
-          VALOR_NOTA: nota252770.VALOR_NOTA,
-          DATA_EMISSAO: nota252770.DATA_EMISSAO
-        },
+    // Procurar especificamente a nota 252566 para análise detalhada
+    const nota252566 = dashboardData.faturamentoItems.find(item => item.NOTA === '252566');
+    if (nota252566) {
+      console.log('Analisando nota 252566:', {
+        PED_NUMPEDIDO: nota252566.PED_NUMPEDIDO,
+        PED_ANOBASE: nota252566.PED_ANOBASE,
+        MPED_NUMORDEM: nota252566.MPED_NUMORDEM,
+      });
+      
+      // Buscar todos os pedidos que possam corresponder à nota 252566
+      const pedidosPotenciais = dashboardData.pedidoItems.filter(p => 
+        String(p.PED_NUMPEDIDO).trim() === String(nota252566.PED_NUMPEDIDO).trim() && 
+        String(p.PED_ANOBASE).trim() === String(nota252566.PED_ANOBASE).trim()
+      );
+      
+      console.log(`Encontrados ${pedidosPotenciais.length} pedidos potenciais para a nota 252566:`, 
+        pedidosPotenciais.map(p => ({
+          PED_NUMPEDIDO: p.PED_NUMPEDIDO,
+          PED_ANOBASE: p.PED_ANOBASE,
+          MPED_NUMORDEM: p.MPED_NUMORDEM,
+          CENTROCUSTO: p.CENTROCUSTO
+        }))
+      );
+      
+      // Usar a função melhorada para encontrar o pedido correto
+      const pedidoCorrespondente = encontrarPedidoCorrespondente(nota252566, dashboardData.pedidoItems);
+      
+      console.log('Resultado da busca para nota 252566:', {
         pedidoEncontrado: pedidoCorrespondente ? {
           PED_NUMPEDIDO: pedidoCorrespondente.PED_NUMPEDIDO,
           PED_ANOBASE: pedidoCorrespondente.PED_ANOBASE,
@@ -52,6 +71,12 @@ export const useDataFiltering = (
           CENTROCUSTO: pedidoCorrespondente.CENTROCUSTO
         } : 'Pedido não encontrado'
       });
+      
+      // Detectar ambiguidade para a nota 252566
+      if (pedidosPotenciais.length > 1) {
+        ambiguidadeDetectada.detected = true;
+        console.warn('AMBIGUIDADE DETECTADA para nota 252566!');
+      }
     }
     
     // Coleta diagnóstico para todos os itens sem correspondência
@@ -81,6 +106,9 @@ export const useDataFiltering = (
       
       setNaoIdentificados(diagnosticos);
     }
+    
+    // Atualizar estado de ambiguidade
+    setAmbiguityDetected(ambiguidadeDetectada.detected);
   }, [dashboardData]);
 
   // Filtrar dados com base no Centro de Custo selecionado usando a lógica aprimorada
@@ -127,6 +155,7 @@ export const useDataFiltering = (
     filteredPedidoItems,
     calculatedTotals,
     naoIdentificados,
-    hasFilteredData
+    hasFilteredData,
+    ambiguityDetected
   };
 };
