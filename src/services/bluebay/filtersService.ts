@@ -4,16 +4,22 @@ import { supabase } from "@/integrations/supabase/client";
 export const fetchFilterOptions = async () => {
   try {
     // Fetch brands (CENTROCUSTO)
-    const { data: brands, error: brandsError } = await supabase
+    const { data: brandsData, error: brandsError } = await supabase
       .from('BLUEBAY_PEDIDO')
       .select('CENTROCUSTO')
       .not('CENTROCUSTO', 'is', null)
-      .order('CENTROCUSTO')
-      .distinct();
+      .order('CENTROCUSTO');
     
     if (brandsError) {
       throw new Error(`Error fetching brands: ${brandsError.message}`);
     }
+
+    // Get unique brands
+    const brands = Array.from(new Set(brandsData.map(b => b.CENTROCUSTO)))
+      .map(centrocusto => ({
+        value: centrocusto, 
+        label: centrocusto
+      }));
 
     // Fetch representatives
     const { data: reps, error: repsError } = await supabase
@@ -35,10 +41,7 @@ export const fetchFilterOptions = async () => {
     ];
 
     return {
-      brands: brands.map(b => ({ 
-        value: b.CENTROCUSTO, 
-        label: b.CENTROCUSTO 
-      })),
+      brands,
       representatives: reps.map(r => ({ 
         value: r.codigo_representante.toString(), 
         label: r.nome_representante || `Representante ${r.codigo_representante}` 

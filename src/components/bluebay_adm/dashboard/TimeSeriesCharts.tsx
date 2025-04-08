@@ -10,7 +10,8 @@ import { format, parse } from "date-fns";
 // Format month year for display
 const formatMonthYear = (dateStr: string) => {
   try {
-    const date = parse(dateStr, 'yyyy-MM', ptBR);
+    // Fix: Ensure correct parameter order and type
+    const date = parse(dateStr, 'yyyy-MM', { locale: ptBR });
     return format(date, 'MMM/yy', { locale: ptBR });
   } catch (e) {
     return dateStr;

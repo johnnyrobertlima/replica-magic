@@ -22,6 +22,7 @@ export const fetchBluebayDashboardData = async (params: DashboardFilterParams) =
       pedidosQuery.eq('CENTROCUSTO', params.brand);
     }
     if (params.representative) {
+      // Ensure representative is compared as string
       pedidosQuery.eq('REPRESENTANTE', params.representative);
     }
     if (params.status) {
@@ -361,63 +362,68 @@ const calculateDeliveryData = (pedidos) => {
 
 export const fetchFilterOptions = async () => {
   try {
-    // Fetch brands (CENTROCUSTO)
-    const { data: brands, error: brandsError } = await supabase
+    // Fetch brands (CENTROCUSTO) - avoid using distinct
+    const { data: brandsData, error: brandsError } = await supabase
       .from('BLUEBAY_PEDIDO')
       .select('CENTROCUSTO')
       .not('CENTROCUSTO', 'is', null)
-      .order('CENTROCUSTO')
-      .distinct();
+      .order('CENTROCUSTO');
     
     if (brandsError) {
       throw new Error(`Error fetching brands: ${brandsError.message}`);
     }
 
-    // Fetch representatives
-    const { data: reps, error: repsError } = await supabase
+    // Get unique brands manually
+    const brandSet = new Set(brandsData.map(b => b.CENTROCUSTO));
+    const brands = Array.from(brandSet).map(brand => ({
+      value: brand,
+      label: brand
+    }));
+
+    // Fetch representatives - avoid using distinct
+    const { data: repsData, error: repsError } = await supabase
       .from('BLUEBAY_PEDIDO')
       .select('REPRESENTANTE')
       .not('REPRESENTANTE', 'is', null)
-      .order('REPRESENTANTE')
-      .distinct();
+      .order('REPRESENTANTE');
     
     if (repsError) {
       throw new Error(`Error fetching representatives: ${repsError.message}`);
     }
 
-    // Get unique status values
-    const { data: statuses, error: statusesError } = await supabase
+    // Get unique representatives manually
+    const repSet = new Set(repsData.map(r => r.REPRESENTANTE));
+    const representatives = Array.from(repSet).map(rep => ({
+      value: rep.toString(),
+      label: `Representante ${rep}`
+    }));
+
+    // Get unique status values - avoid using distinct
+    const { data: statusesData, error: statusesError } = await supabase
       .from('BLUEBAY_PEDIDO')
       .select('STATUS')
       .not('STATUS', 'is', null)
-      .order('STATUS')
-      .distinct();
+      .order('STATUS');
     
     if (statusesError) {
       throw new Error(`Error fetching statuses: ${statusesError.message}`);
     }
 
-    return {
-      brands: brands.map(b => ({ 
-        value: b.CENTROCUSTO, 
-        label: b.CENTROCUSTO 
-      })),
-      representatives: reps.map(r => ({ 
-        value: r.REPRESENTANTE.toString(), 
-        label: `Representante ${r.REPRESENTANTE}` 
-      })),
-      statuses: statuses.map(s => {
-        let label = "Desconhecido";
-        switch (s.STATUS) {
-          case "0": label = "Em Digitação"; break;
-          case "1": label = "Em Aberto"; break;
-          case "2": label = "Atendido Parcialmente"; break;
-          case "3": label = "Totalmente Atendido"; break;
-          case "4": label = "Cancelado"; break;
-        }
-        return { value: s.STATUS, label };
-      }),
-    };
+    // Get unique statuses manually
+    const statusSet = new Set(statusesData.map(s => s.STATUS));
+    const statuses = Array.from(statusSet).map(status => {
+      let label = "Desconhecido";
+      switch (status) {
+        case "0": label = "Em Digitação"; break;
+        case "1": label = "Em Aberto"; break;
+        case "2": label = "Atendido Parcialmente"; break;
+        case "3": label = "Totalmente Atendido"; break;
+        case "4": label = "Cancelado"; break;
+      }
+      return { value: status, label };
+    });
+
+    return { brands, representatives, statuses };
   } catch (error) {
     console.error("Error fetching filter options:", error);
     throw error;

@@ -1,6 +1,8 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { CostDataRecord } from "./costDataTypes";
+
+// Define simplified types to avoid deep instantiation
+type CostDataRecord = Record<string, any>;
 
 /**
  * Fetches cost data for a specific item from the bluebay_view_faturamento_resumo view
@@ -34,7 +36,7 @@ export const fetchItemCostData = async (itemCode: string): Promise<CostDataRecor
         console.log(`Valor de MEDIA_VALOR_UNITARIO: ${exactData.MEDIA_VALOR_UNITARIO}`);
       }
       
-      return exactData as CostDataRecord;
+      return exactData;
     }
     
     console.warn(`Nenhum resultado encontrado para o item ${cleanedItemCode} com ITEM_CODIGO maiúsculo`);
@@ -44,7 +46,7 @@ export const fetchItemCostData = async (itemCode: string): Promise<CostDataRecor
     if (lowerResult) return lowerResult;
     
     // Tentativa 3: Busca aproximada (LIKE)
-    return tryFuzzySearch(cleanedItemCode);
+    return await tryFuzzySearch(cleanedItemCode);
     
   } catch (error) {
     console.error(`Erro ao buscar custo para o item ${itemCode}:`, error);
@@ -77,7 +79,7 @@ async function tryAlternativeFieldName(itemCode: string): Promise<CostDataRecord
       console.log(`Valor de MEDIA_VALOR_UNITARIO: ${lowerData.MEDIA_VALOR_UNITARIO}`);
     }
     
-    return lowerData as CostDataRecord;
+    return lowerData;
   }
   
   console.warn(`Nenhum resultado encontrado para o item ${itemCode} com item_codigo minúsculo`);
@@ -103,7 +105,7 @@ async function tryFuzzySearch(itemCode: string): Promise<CostDataRecord | null> 
     
     // Verificar se algum dos resultados corresponde exatamente ao código (ignorando espaços)
     const exactMatch = fuzzyResult.data.find(
-      (item: Record<string, any>) => {
+      (item) => {
         const dbItemCode = item.ITEM_CODIGO || '';
         return typeof dbItemCode === 'string' && dbItemCode.trim() === itemCode;
       }
@@ -111,12 +113,12 @@ async function tryFuzzySearch(itemCode: string): Promise<CostDataRecord | null> 
     
     if (exactMatch) {
       console.log(`Correspondência exata encontrada na busca aproximada:`, exactMatch);
-      return exactMatch as CostDataRecord;
+      return exactMatch;
     }
     
     // Retornar o primeiro resultado aproximado se não houver correspondência exata
     console.log(`Usando primeiro resultado aproximado:`, fuzzyResult.data[0]);
-    return fuzzyResult.data[0] as CostDataRecord;
+    return fuzzyResult.data[0];
   }
   
   console.warn(`Nenhum resultado encontrado para o item ${itemCode} após todas as tentativas`);
