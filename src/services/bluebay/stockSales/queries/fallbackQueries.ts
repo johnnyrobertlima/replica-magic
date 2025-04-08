@@ -5,11 +5,11 @@ import { generateSampleStockData } from "../sampleDataGenerator";
 import { handleApiError } from "../errorHandlingService";
 import { processStockAndSalesData } from "../processors/stockSalesProcessor";
 import {
-  fetchStockItemsPaginated,
-  fetchItemDetailsBatch,
   fetchSalesDataPaginated,
   fetchCostDataFromView
 } from "../utils/queryUtils";
+import { fetchStockItemsPaginated } from "../utils/stock/fetchStockItemsPaginated"; 
+import { fetchItemDetailsBatch } from "../utils/itemQueries";
 
 /**
  * Paginated fallback method to fetch stock and sales data
@@ -81,3 +81,6 @@ export const fetchStockSalesWithPagination = async (
     return generateSampleStockData(); // Last resort - generate sample data
   }
 };
+
+// Export for backward compatibility, referencing the imported function
+export const fetchStockSalesWithDirectQueries = directQueriesFunction;
