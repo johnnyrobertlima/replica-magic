@@ -12,7 +12,7 @@ import {
   ResponsiveContainer,
   TooltipProps
 } from 'recharts';
-import { DailyFaturamento, MonthlyFaturamento } from '@/services/bluebay/dashboardComercialService';
+import { DailyFaturamento, MonthlyFaturamento } from '@/services/bluebay/dashboardComercialTypes';
 
 // Formatador de números para moeda brasileira
 const currencyFormatter = new Intl.NumberFormat('pt-BR', {
