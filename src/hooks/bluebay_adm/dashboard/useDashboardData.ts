@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { format } from "date-fns";
 import { useFilters } from "@/contexts/bluebay_adm/FiltersContext";
-import { fetchBluebayDashboardData } from "@/services/bluebay/dashboardService";
+import { fetchDashboardData } from "@/services/bluebay/dashboardService";
 import { 
   KpiData, 
   TimeSeriesData,
@@ -27,19 +27,19 @@ export const useDashboardData = () => {
       const startDate = format(filters.dateRange.startDate, 'yyyy-MM-dd');
       const endDate = format(filters.dateRange.endDate, 'yyyy-MM-dd');
 
-      const result = await fetchBluebayDashboardData({
-        startDate,
-        endDate,
+      const result = await fetchDashboardData({
+        startDate: filters.dateRange.startDate,
+        endDate: filters.dateRange.endDate,
         brand: filters.brand,
         representative: filters.representative,
         status: filters.status
       });
 
-      setKpiData(result.kpi);
-      setTimeSeriesData(result.timeSeries);
-      setBrandData(result.brands);
-      setRepresentativeData(result.representatives);
-      setDeliveryData(result.delivery);
+      setKpiData(result.kpiData);
+      setTimeSeriesData(result.timeSeriesData);
+      setBrandData(result.brandData);
+      setRepresentativeData(result.representativeData);
+      setDeliveryData(result.deliveryData);
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
     } finally {

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { 
   KpiData, 
@@ -311,35 +310,7 @@ const fetchBrandData = async (filters: {
   status: string | null;
 }): Promise<BrandData> => {
   try {
-    // Try to use RPC function if it exists
-    try {
-      const { data, error } = await supabase.rpc('get_brand_performance', {
-        start_date: filters.startDate ? format(filters.startDate, 'yyyy-MM-dd') : null,
-        end_date: filters.endDate ? format(filters.endDate, 'yyyy-MM-dd') : null,
-        brand_filter: filters.brand === 'all' ? null : filters.brand,
-        rep_filter: filters.representative === 'all' ? null : filters.representative
-      });
-      
-      if (error) {
-        console.error('Error using RPC for brand data:', error);
-        // Fall back to direct query
-      } else if (Array.isArray(data) && data.length > 0) {
-        // Process the RPC data
-        const brandItems = data.map(item => ({
-          brand: item.centrocusto || 'Sem Marca',
-          totalOrders: parseFloat(item.total_orders || '0'),
-          totalBilled: parseFloat(item.total_billed || '0'),
-          conversionRate: item.total_orders > 0 ? (item.total_billed / item.total_orders) * 100 : 0,
-          volume: parseInt(item.total_pieces || '0')
-        }));
-        
-        return { items: brandItems };
-      }
-    } catch (rpcError) {
-      console.error('RPC error:', rpcError);
-      // Continue with direct query approach
-    }
-    
+    // Try to use direct querying instead of RPC which might not exist yet
     // Convert dates to strings for the query
     const startDateStr = filters.startDate ? format(filters.startDate, 'yyyy-MM-dd') : '';
     const endDateStr = filters.endDate ? format(filters.endDate, 'yyyy-MM-dd') : '';
@@ -514,7 +485,7 @@ const fetchRepresentativeData = async (filters: {
     const repNameMap = new Map<number, string>();
     if (representatives && Array.isArray(representatives)) {
       representatives.forEach(rep => {
-        repNameMap.set(rep.PES_CODIGO, rep.PES_NOME || 'Representante sem nome');
+        repNameMap.set(rep.codigo_representante, rep.nome_representante || 'Representante sem nome');
       });
     }
 
