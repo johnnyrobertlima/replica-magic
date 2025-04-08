@@ -31,7 +31,7 @@ export const fetchDashboardData = async (
   }
 ) => {
   try {
-    console.log("Buscando dados do dashboard com filtros:", filters);
+    console.log("Buscando dados do dashboard com filtros aplicados");
     
     const kpiData = await fetchKpiData(filters);
     const timeSeriesData = await fetchTimeSeriesData(filters);
@@ -193,9 +193,11 @@ const fetchKpiData = async (filters: {
       return sum + parseFloat(qty.toString());
     }, 0);
 
+    // MUDANÇA: Calculando o total faturado usando QUANTIDADE * VALOR_UNITARIO em vez de VALOR_NOTA
     const totalBilled = allBillingData.reduce((sum, item) => {
-      const value = item.VALOR_NOTA || 0;
-      return sum + parseFloat(value.toString());
+      const quantidade = parseFloat((item.QUANTIDADE || 0).toString());
+      const valorUnitario = parseFloat((item.VALOR_UNITARIO || 0).toString());
+      return sum + (quantidade * valorUnitario);
     }, 0);
 
     const billedPieces = allBillingData.reduce((sum, item) => {
@@ -379,7 +381,12 @@ const fetchTimeSeriesData = async (filters: {
       }
       
       const monthData = monthlyData.get(monthKey)!;
-      monthData.billedValue += parseFloat((item.VALOR_NOTA || 0).toString());
+      
+      // MUDANÇA: Calculando o valor faturado usando QUANTIDADE * VALOR_UNITARIO em vez de VALOR_NOTA
+      const quantidade = parseFloat((item.QUANTIDADE || 0).toString());
+      const valorUnitario = parseFloat((item.VALOR_UNITARIO || 0).toString());
+      monthData.billedValue += quantidade * valorUnitario;
+      
       monthData.billedPieces += parseFloat((item.QUANTIDADE || 0).toString());
     });
 
@@ -550,19 +557,21 @@ const fetchBrandData = async (filters: {
       orderToBrandMap.set(orderKey, order.CENTROCUSTO || 'Sem Marca');
     });
     
-    // Processa dados de faturamento usando o mapeamento de pedido para marca
+    // MUDANÇA: Calcula o valor faturado usando QUANTIDADE * VALOR_UNITARIO em vez de VALOR_NOTA
     const brandBillingMap = new Map<string, number>();
     
     allBillingData.forEach(item => {
       const orderKey = `${item.PED_NUMPEDIDO}-${item.PED_ANOBASE}`;
       const brand = orderToBrandMap.get(orderKey) || 'Sem Marca';
-      const value = parseFloat((item.VALOR_NOTA || 0).toString());
+      const quantidade = parseFloat((item.QUANTIDADE || 0).toString());
+      const valorUnitario = parseFloat((item.VALOR_UNITARIO || 0).toString());
+      const valorFaturado = quantidade * valorUnitario;
       
       if (!brandBillingMap.has(brand)) {
         brandBillingMap.set(brand, 0);
       }
       
-      brandBillingMap.set(brand, brandBillingMap.get(brand)! + value);
+      brandBillingMap.set(brand, brandBillingMap.get(brand)! + valorFaturado);
     });
 
     // Combina os dados para todas as marcas únicas
@@ -787,7 +796,7 @@ const fetchRepresentativeData = async (filters: {
 
     console.log(`Processando dados de representantes de ${allOrderData.length} pedidos e ${allBillingData.length} registros de faturamento`);
     
-    // Processa dados de faturamento usando o mapeamento de pedido para representante
+    // MUDANÇA: Calcula o valor faturado usando QUANTIDADE * VALOR_UNITARIO em vez de VALOR_NOTA
     const repBillingMap = new Map<number, number>();
     
     allBillingData.forEach(item => {
@@ -796,13 +805,15 @@ const fetchRepresentativeData = async (filters: {
       
       if (!repCode) return; // Pula se nenhum representante for encontrado
       
-      const value = parseFloat((item.VALOR_NOTA || 0).toString());
+      const quantidade = parseFloat((item.QUANTIDADE || 0).toString());
+      const valorUnitario = parseFloat((item.VALOR_UNITARIO || 0).toString());
+      const valorFaturado = quantidade * valorUnitario;
       
       if (!repBillingMap.has(repCode)) {
         repBillingMap.set(repCode, 0);
       }
       
-      repBillingMap.set(repCode, repBillingMap.get(repCode)! + value);
+      repBillingMap.set(repCode, repBillingMap.get(repCode)! + valorFaturado);
     });
 
     // Aplica paginação ou busca todos
