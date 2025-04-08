@@ -11,6 +11,50 @@ import {
 } from "@/types/bluebay/dashboardTypes";
 import { format, subMonths, parseISO } from 'date-fns';
 
+// Define tipos específicos para os dados das tabelas
+interface BluebayPedidoItem {
+  MATRIZ: number;
+  FILIAL: number;
+  PED_ANOBASE: number;
+  MPED_NUMORDEM: number;
+  PED_NUMPEDIDO: string;
+  PES_CODIGO?: number;
+  CENTROCUSTO?: string;
+  STATUS?: string;
+  QTDE_PEDIDA?: number;
+  QTDE_ENTREGUE?: number;
+  QTDE_SALDO?: number;
+  VALOR_UNITARIO?: number;
+  TOTAL_PRODUTO?: number;
+  DATA_PEDIDO?: string | Date;
+  ITEM_CODIGO?: string;
+  REPRESENTANTE?: number;
+  PEDIDO?: string;
+  PEDIDO_CLIENTE?: string;
+  PEDIDO_OUTRO?: string;
+}
+
+interface BluebayFaturamentoItem {
+  MATRIZ: number;
+  FILIAL: number;
+  ID_EF_DOCFISCAL: number;
+  ID_EF_DOCFISCAL_ITEM: number;
+  PED_ANOBASE?: number;
+  MPED_NUMORDEM?: number;
+  PES_CODIGO?: number;
+  TRANSACAO?: number;
+  QUANTIDADE?: number;
+  VALOR_UNITARIO?: number;
+  VALOR_DESCONTO?: number;
+  VALOR_NOTA?: number;
+  DATA_EMISSAO?: string | Date;
+  PED_NUMPEDIDO?: string;
+  ITEM_CODIGO?: string;
+  TIPO?: string;
+  NOTA?: string;
+  STATUS?: string;
+}
+
 /**
  * Busca dados do dashboard em lotes para superar limites de consulta
  */
@@ -138,7 +182,7 @@ const fetchKpiData = async (filters: {
       return pedidosQuery;
     };
     
-    const orderData = await fetchInBatches(fetchOrderBatch);
+    const orderData = await fetchInBatches<BluebayPedidoItem>(fetchOrderBatch);
     console.log(`Total de registros de pedidos recuperados: ${orderData?.length || 0}`);
 
     // Buscar dados de faturamento em lotes, sem vincular à tabela de pedidos
@@ -152,7 +196,7 @@ const fetchKpiData = async (filters: {
         .range(offset, offset + limit - 1);
     };
     
-    const billingData = await fetchInBatches(fetchBillingBatch);
+    const billingData = await fetchInBatches<BluebayFaturamentoItem>(fetchBillingBatch);
     console.log(`Total de registros de faturamento recuperados: ${billingData?.length || 0}`);
 
     // Aplicar filtro de marca para faturamento usando uma abordagem diferente
@@ -284,7 +328,7 @@ const fetchTimeSeriesData = async (filters: {
       return pedidosQuery;
     };
     
-    const orderData = await fetchInBatches(fetchOrdersBatch);
+    const orderData = await fetchInBatches<BluebayPedidoItem>(fetchOrdersBatch);
     console.log(`Total de registros de pedidos para séries temporais: ${orderData?.length || 0}`);
 
     // Obter dados de faturamento com batch fetching
@@ -298,7 +342,7 @@ const fetchTimeSeriesData = async (filters: {
         .range(offset, offset + limit - 1);
     };
     
-    const allBillingData = await fetchInBatches(fetchBillingBatch);
+    const allBillingData = await fetchInBatches<BluebayFaturamentoItem>(fetchBillingBatch);
     console.log(`Total de registros de faturamento para séries temporais: ${allBillingData?.length || 0}`);
 
     // Filtrar o faturamento por marca, se necessário
@@ -440,11 +484,11 @@ const fetchBrandData = async (filters: {
       return pedidosQuery;
     };
     
-    const orderData = await fetchInBatches(fetchOrdersBatch);
+    const orderData = await fetchInBatches<BluebayPedidoItem>(fetchOrdersBatch);
     console.log(`Total de registros de pedidos para marcas: ${orderData?.length || 0}`);
     
     // Obtém marcas únicas
-    const uniqueBrands = [...new Set(orderData?.map(item => item.CENTROCUSTO))].filter(Boolean);
+    const uniqueBrands = [...new Set(orderData?.map(item => item.CENTROCUSTO))].filter(Boolean) as string[];
     console.log(`Encontradas ${uniqueBrands.length} marcas únicas:`, uniqueBrands);
 
     // Busca dados de faturamento com batch fetching
@@ -458,7 +502,7 @@ const fetchBrandData = async (filters: {
         .range(offset, offset + limit - 1);
     };
     
-    const allBillingData = await fetchInBatches(fetchBillingBatch);
+    const allBillingData = await fetchInBatches<BluebayFaturamentoItem>(fetchBillingBatch);
     console.log(`Total de registros de faturamento para marcas: ${allBillingData?.length || 0}`);
 
     // Criaremos um mapa de números de pedido por marca para filtrar o faturamento posteriormente
@@ -609,7 +653,7 @@ const fetchDeliveryData = async (filters: {
       return pedidosQuery;
     };
     
-    const orderData = await fetchInBatches(fetchOrdersBatch);
+    const orderData = await fetchInBatches<BluebayPedidoItem>(fetchOrdersBatch);
     console.log(`Processando ${orderData?.length || 0} pedidos para análise de eficiência de entrega`);
 
     // Contadores para análise
