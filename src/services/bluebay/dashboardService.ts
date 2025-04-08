@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardFilterParams } from "@/types/bluebay/dashboardTypes";
 
@@ -22,8 +21,8 @@ export const fetchBluebayDashboardData = async (params: DashboardFilterParams) =
       pedidosQuery.eq('CENTROCUSTO', params.brand);
     }
     if (params.representative) {
-      // Ensure representative is compared as string
-      pedidosQuery.eq('REPRESENTANTE', params.representative);
+      // Fix: Convert representative to string explicitly
+      pedidosQuery.eq('REPRESENTANTE', params.representative.toString());
     }
     if (params.status) {
       pedidosQuery.eq('STATUS', params.status);

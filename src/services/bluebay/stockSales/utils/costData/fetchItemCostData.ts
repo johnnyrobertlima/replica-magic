@@ -1,8 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-
-// Define simplified types to avoid deep instantiation
-type CostDataRecord = Record<string, any>;
+import { CostDataRecord } from "./costDataTypes";
 
 /**
  * Fetches cost data for a specific item from the bluebay_view_faturamento_resumo view
@@ -28,7 +26,7 @@ export const fetchItemCostData = async (itemCode: string): Promise<CostDataRecor
     if (exactResult.data && exactResult.data.length > 0) {
       console.log(`Dados obtidos para o item ${cleanedItemCode}:`, exactResult.data[0]);
       
-      // Verificar o campo de custo
+      // Use simple Record type to avoid deep instantiation
       const exactData = exactResult.data[0] as Record<string, any>;
       if ('media_valor_unitario' in exactData && exactData.media_valor_unitario) {
         console.log(`Valor de media_valor_unitario: ${exactData.media_valor_unitario}`);
@@ -71,7 +69,7 @@ async function tryAlternativeFieldName(itemCode: string): Promise<CostDataRecord
   if (lowerResult.data && lowerResult.data.length > 0) {
     console.log(`Dados obtidos com consulta alternativa (minúsculas):`, lowerResult.data[0]);
     
-    // Verificar o campo de custo
+    // Simple Record type to avoid deep instantiation
     const lowerData = lowerResult.data[0] as Record<string, any>;
     if ('media_valor_unitario' in lowerData && lowerData.media_valor_unitario) {
       console.log(`Valor de media_valor_unitario: ${lowerData.media_valor_unitario}`);
