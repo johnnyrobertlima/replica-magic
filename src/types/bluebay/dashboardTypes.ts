@@ -1,0 +1,67 @@
+
+// KPI Data Types
+export interface KpiData {
+  totalOrders: number;
+  totalBilled: number;
+  conversionRate: number;
+  orderedPieces: number;
+  billedPieces: number;
+  averageDiscount: number;
+}
+
+// Time Series Data Types
+export interface TimeSeriesPoint {
+  date: string;
+  ordersValue: number;
+  billedValue: number;
+  orderedPieces: number;
+  billedPieces: number;
+}
+
+export interface TimeSeriesData {
+  monthlySeries: TimeSeriesPoint[];
+}
+
+// Brand Performance Types
+export interface BrandPerformanceItem {
+  brand: string;
+  totalOrders: number;
+  totalBilled: number;
+  conversionRate: number;
+  volume: number;
+}
+
+export interface BrandData {
+  items: BrandPerformanceItem[];
+}
+
+// Representative Data Types
+export interface RepresentativeItem {
+  code: string;
+  name: string;
+  totalOrders: number;
+  totalBilled: number;
+  conversionRate: number;
+  averageTicket: number;
+}
+
+export interface RepresentativeData {
+  items: RepresentativeItem[];
+}
+
+// Delivery Efficiency Types
+export interface DeliveryData {
+  fullyDeliveredPercentage: number;
+  partialPercentage: number;
+  openPercentage: number;
+  averageRemainingQuantity: number;
+}
+
+// Dashboard Filters Types
+export interface DashboardFilterParams {
+  startDate: string;
+  endDate: string;
+  brand: string | null;
+  representative: string | null;
+  status: string | null;
+}
