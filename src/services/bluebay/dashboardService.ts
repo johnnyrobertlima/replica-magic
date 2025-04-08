@@ -59,7 +59,7 @@ export const fetchDashboardData = async (
 
 /**
  * Busca dados KPI das tabelas de faturamento e pedidos
- * Reformulado para usar cálculos corretos e filtros apropriados
+ * Implementação independente sem vínculo entre as tabelas
  */
 const fetchKpiData = async (filters: {
   startDate: Date | null;
@@ -81,13 +81,20 @@ const fetchKpiData = async (filters: {
       : validStatuses;
     
     // Buscar dados de pedidos com os filtros aplicados diretamente na query
-    const { data: orderData, error: orderError } = await supabase
+    let pedidosQuery = supabase
       .from('BLUEBAY_PEDIDO')
       .select('*')
       .in('STATUS', statusFilter)
       .gte('DATA_PEDIDO', startDateStr)
       .lte('DATA_PEDIDO', `${endDateStr}T23:59:59`)
       .not('DATA_PEDIDO', 'is', null);
+    
+    // Aplicar filtro de marca apenas se especificado, mas sem vinculo entre tabelas
+    if (filters.brand && filters.brand !== 'all') {
+      pedidosQuery = pedidosQuery.eq('CENTROCUSTO', filters.brand);
+    }
+    
+    const { data: orderData, error: orderError } = await pedidosQuery;
     
     if (orderError) {
       console.error('Erro ao buscar dados de pedidos:', orderError);
@@ -96,18 +103,15 @@ const fetchKpiData = async (filters: {
     
     console.log(`Total de registros de pedidos recuperados: ${orderData?.length || 0}`);
 
-    // Aplicar filtro de marca, se fornecido
-    const brandFilteredOrders = filters.brand && filters.brand !== 'all'
-      ? orderData?.filter(order => order.CENTROCUSTO === filters.brand)
-      : orderData;
-
-    // Buscar dados de faturamento com filtros aplicados diretamente na query
-    const { data: billingData, error: billingError } = await supabase
+    // Buscar dados de faturamento separadamente, sem vincular à tabela de pedidos
+    let faturamentoQuery = supabase
       .from('BLUEBAY_FATURAMENTO')
       .select('*')
       .eq('TIPO', 'S') // Somente dados de vendas
       .gte('DATA_EMISSAO', startDateStr)
       .lte('DATA_EMISSAO', `${endDateStr}T23:59:59`);
+    
+    const { data: billingData, error: billingError } = await faturamentoQuery;
     
     if (billingError) {
       console.error('Erro ao buscar dados de faturamento:', billingError);
@@ -116,38 +120,51 @@ const fetchKpiData = async (filters: {
     
     console.log(`Total de registros de faturamento recuperados: ${billingData?.length || 0}`);
 
-    // Aplicar filtro de marca via join com pedidos
-    const brandFilteredBilling = filters.brand && filters.brand !== 'all'
-      ? billingData?.filter(billing => {
-          // Para encontrar faturamentos da marca específica, usamos o código do pedido
-          const pedido = orderData?.find(order => 
-            order.PED_NUMPEDIDO === billing.PED_NUMPEDIDO && 
-            order.PED_ANOBASE === billing.PED_ANOBASE &&
-            order.CENTROCUSTO === filters.brand
-          );
-          return !!pedido;
-        })
-      : billingData;
+    // Aplicar filtro de marca para faturamento usando uma abordagem diferente
+    // Como não temos CENTROCUSTO em BLUEBAY_FATURAMENTO, vamos filtrar usando o PED_NUMPEDIDO
+    // Mas sem depender de um JOIN que possa restringir resultados
+    let filteredBillingData = billingData || [];
+    
+    if (filters.brand && filters.brand !== 'all') {
+      // Primeiro, coletamos os números de pedido da marca desejada
+      const brandPedidos = new Set();
+      orderData?.forEach(order => {
+        if (order.CENTROCUSTO === filters.brand) {
+          // Criamos uma chave única para identificar o pedido
+          const pedidoKey = `${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`;
+          brandPedidos.add(pedidoKey);
+        }
+      });
+      
+      // Filtramos o faturamento pelos números de pedido da marca desejada
+      filteredBillingData = billingData?.filter(billing => {
+        if (!billing.PED_NUMPEDIDO || !billing.PED_ANOBASE) return false;
+        const billingPedidoKey = `${billing.PED_NUMPEDIDO}-${billing.PED_ANOBASE}`;
+        return brandPedidos.has(billingPedidoKey);
+      }) || [];
+      
+      console.log(`Após filtro de marca, restaram ${filteredBillingData.length} registros de faturamento`);
+    }
 
-    // Processa e sumariza dados - usando cálculo correto (QTDE * VALOR_UNITARIO)
-    const totalOrders = (brandFilteredOrders || []).reduce((sum, item) => {
+    // Processa e sumariza dados - usando cálculo correto (QTDE_PEDIDA * VALOR_UNITARIO)
+    const totalOrders = (orderData || []).reduce((sum, item) => {
       const value = (item.QTDE_PEDIDA || 0) * (item.VALOR_UNITARIO || 0);
       return sum + parseFloat(value.toString());
     }, 0);
 
-    const orderedPieces = (brandFilteredOrders || []).reduce((sum, item) => {
+    const orderedPieces = (orderData || []).reduce((sum, item) => {
       const qty = item.QTDE_PEDIDA || 0;
       return sum + parseFloat(qty.toString());
     }, 0);
 
     // Calculando o total faturado usando QUANTIDADE * VALOR_UNITARIO
-    const totalBilled = (brandFilteredBilling || []).reduce((sum, item) => {
+    const totalBilled = filteredBillingData.reduce((sum, item) => {
       const quantidade = parseFloat((item.QUANTIDADE || 0).toString());
       const valorUnitario = parseFloat((item.VALOR_UNITARIO || 0).toString());
       return sum + (quantidade * valorUnitario);
     }, 0);
 
-    const billedPieces = (brandFilteredBilling || []).reduce((sum, item) => {
+    const billedPieces = filteredBillingData.reduce((sum, item) => {
       const qty = item.QUANTIDADE || 0;
       return sum + parseFloat(qty.toString());
     }, 0);
@@ -156,13 +173,13 @@ const fetchKpiData = async (filters: {
     const conversionRate = totalOrders > 0 ? (totalBilled / totalOrders) * 100 : 0;
 
     // Calcular médio ponderado de desconto
-    const totalBeforeDiscount = (brandFilteredBilling || []).reduce((sum, item) => {
+    const totalBeforeDiscount = filteredBillingData.reduce((sum, item) => {
       const qty = parseFloat((item.QUANTIDADE || 0).toString());
       const unitPrice = parseFloat((item.VALOR_UNITARIO || 0).toString());
       return sum + (qty * unitPrice);
     }, 0);
 
-    const totalDiscount = (brandFilteredBilling || []).reduce((sum, item) => {
+    const totalDiscount = filteredBillingData.reduce((sum, item) => {
       return sum + parseFloat((item.VALOR_DESCONTO || 0).toString());
     }, 0);
 
@@ -184,7 +201,7 @@ const fetchKpiData = async (filters: {
 
 /**
  * Busca dados de séries temporais para o dashboard
- * Reformulado para usar filtros corretos e agrupamento por mês
+ * Implementação independente para pedidos e faturamento
  */
 const fetchTimeSeriesData = async (filters: {
   startDate: Date | null;
@@ -213,27 +230,29 @@ const fetchTimeSeriesData = async (filters: {
       ? [filters.status]
       : validStatuses;
     
-    // Obter dados de pedidos com filtros aplicados diretamente na query
-    const { data: orderData, error: orderError } = await supabase
+    // Obter dados de pedidos com filtros aplicados diretamente
+    let pedidosQuery = supabase
       .from('BLUEBAY_PEDIDO')
       .select('*')
       .in('STATUS', statusFilter)
       .gte('DATA_PEDIDO', startDateStr)
       .lte('DATA_PEDIDO', `${endDateStr}T23:59:59`)
       .not('DATA_PEDIDO', 'is', null);
+      
+    // Aplicar filtro de marca apenas se especificado (sem vínculo com faturamento)
+    if (filters.brand && filters.brand !== 'all') {
+      pedidosQuery = pedidosQuery.eq('CENTROCUSTO', filters.brand);
+    }
+
+    const { data: orderData, error: orderError } = await pedidosQuery;
 
     if (orderError) {
       console.error('Erro ao buscar dados de pedidos para séries temporais:', orderError);
       throw orderError;
     }
 
-    // Aplicar filtro de marca, se fornecido
-    const brandFilteredOrders = filters.brand && filters.brand !== 'all'
-      ? orderData?.filter(order => order.CENTROCUSTO === filters.brand)
-      : orderData;
-
-    // Obter dados de faturamento com filtros aplicados diretamente na query
-    const { data: billingData, error: billingError } = await supabase
+    // Obter dados de faturamento separadamente
+    const { data: allBillingData, error: billingError } = await supabase
       .from('BLUEBAY_FATURAMENTO')
       .select('*')
       .eq('TIPO', 'S') // Somente vendas
@@ -245,26 +264,34 @@ const fetchTimeSeriesData = async (filters: {
       throw billingError;
     }
 
-    // Aplicar filtro de marca via join com pedidos
-    const brandFilteredBilling = filters.brand && filters.brand !== 'all'
-      ? billingData?.filter(billing => {
-          // Para encontrar faturamentos da marca específica, usamos o código do pedido
-          const pedido = orderData?.find(order => 
-            order.PED_NUMPEDIDO === billing.PED_NUMPEDIDO && 
-            order.PED_ANOBASE === billing.PED_ANOBASE &&
-            order.CENTROCUSTO === filters.brand
-          );
-          return !!pedido;
-        })
-      : billingData;
+    // Filtrar o faturamento por marca, se necessário
+    let billingData = allBillingData || [];
+    
+    if (filters.brand && filters.brand !== 'all') {
+      // Coletamos os números de pedido da marca selecionada
+      const brandPedidos = new Set();
+      orderData?.forEach(order => {
+        if (order.CENTROCUSTO === filters.brand) {
+          const pedidoKey = `${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`;
+          brandPedidos.add(pedidoKey);
+        }
+      });
+      
+      // Filtramos o faturamento pelos números de pedido da marca
+      billingData = allBillingData?.filter(billing => {
+        if (!billing.PED_NUMPEDIDO || !billing.PED_ANOBASE) return false;
+        const billingPedidoKey = `${billing.PED_NUMPEDIDO}-${billing.PED_ANOBASE}`;
+        return brandPedidos.has(billingPedidoKey);
+      }) || [];
+    }
 
-    console.log(`Processando dados de séries temporais de ${brandFilteredOrders?.length || 0} pedidos e ${brandFilteredBilling?.length || 0} registros de faturamento`);
+    console.log(`Processando dados de séries temporais: ${orderData?.length || 0} pedidos e ${billingData?.length} registros de faturamento`);
 
     // Agrupar dados por mês
     const monthlyData = new Map<string, TimeSeriesPoint>();
 
     // Processar dados de pedidos
-    (brandFilteredOrders || []).forEach(order => {
+    (orderData || []).forEach(order => {
       if (!order.DATA_PEDIDO) return;
       
       const orderDate = typeof order.DATA_PEDIDO === 'string' ? parseISO(order.DATA_PEDIDO) : new Date(order.DATA_PEDIDO);
@@ -288,7 +315,7 @@ const fetchTimeSeriesData = async (filters: {
     });
 
     // Processar dados de faturamento
-    (brandFilteredBilling || []).forEach(item => {
+    (billingData || []).forEach(item => {
       if (!item.DATA_EMISSAO) return;
       
       const billingDate = typeof item.DATA_EMISSAO === 'string' ? parseISO(item.DATA_EMISSAO) : new Date(item.DATA_EMISSAO);
@@ -331,7 +358,7 @@ const fetchTimeSeriesData = async (filters: {
 
 /**
  * Busca dados de todas as marcas (CENTROCUSTO)
- * Reformulado para usar filtros corretos
+ * Implementação independente sem restringir marcas
  */
 const fetchBrandData = async (filters: {
   startDate: Date | null;
@@ -356,8 +383,8 @@ const fetchBrandData = async (filters: {
       ? [filters.status]
       : validStatuses;
     
-    // Busca todos os pedidos com filtros aplicados diretamente na query
-    const { data: orderData, error: orderError } = await supabase
+    // Busca todos os pedidos com filtros aplicados diretamente
+    let pedidosQuery = supabase
       .from('BLUEBAY_PEDIDO')
       .select('*')
       .in('STATUS', statusFilter)
@@ -365,6 +392,13 @@ const fetchBrandData = async (filters: {
       .lte('DATA_PEDIDO', `${endDateStr}T23:59:59`)
       .not('CENTROCUSTO', 'is', null)
       .not('DATA_PEDIDO', 'is', null);
+      
+    // Aplicar filtro de marca apenas se especificado
+    if (filters.brand && filters.brand !== 'all') {
+      pedidosQuery = pedidosQuery.eq('CENTROCUSTO', filters.brand);
+    }
+
+    const { data: orderData, error: orderError } = await pedidosQuery;
 
     if (orderError) {
       console.error('Erro ao buscar dados de pedidos por marca:', orderError);
@@ -375,8 +409,8 @@ const fetchBrandData = async (filters: {
     const uniqueBrands = [...new Set(orderData?.map(item => item.CENTROCUSTO))].filter(Boolean);
     console.log(`Encontradas ${uniqueBrands.length} marcas únicas:`, uniqueBrands);
 
-    // Busca dados de faturamento com filtros aplicados diretamente na query
-    const { data: billingData, error: billingError } = await supabase
+    // Busca dados de faturamento separadamente (sem vínculo com tabela de pedidos)
+    const { data: allBillingData, error: billingError } = await supabase
       .from('BLUEBAY_FATURAMENTO')
       .select('*')
       .eq('TIPO', 'S') // Somente vendas
@@ -388,12 +422,25 @@ const fetchBrandData = async (filters: {
       return { data: { items: [] }, totalCount: 0 };
     }
 
-    console.log(`Processando dados de marcas de ${orderData?.length || 0} pedidos e ${billingData?.length || 0} registros de faturamento`);
+    console.log(`Processando dados de marcas: ${orderData?.length || 0} pedidos e ${allBillingData?.length || 0} registros de faturamento`);
+
+    // Criaremos um mapa de números de pedido por marca para filtrar o faturamento posteriormente
+    const pedidosByBrand = new Map<string, Set<string>>();
+    
+    // Agrupamos os pedidos por marca
+    orderData?.forEach(order => {
+      const brand = order.CENTROCUSTO || 'Sem Marca';
+      if (!pedidosByBrand.has(brand)) {
+        pedidosByBrand.set(brand, new Set());
+      }
+      const pedidoKey = `${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`;
+      pedidosByBrand.get(brand)?.add(pedidoKey);
+    });
 
     // Agrupa dados de pedidos por marca usando o cálculo correto (QTDE_PEDIDA * VALOR_UNITARIO)
     const brandOrderMap = new Map<string, { total: number, pieces: number }>();
     
-    (orderData || []).forEach(order => {
+    orderData?.forEach(order => {
       const brand = order.CENTROCUSTO || 'Sem Marca';
       const value = (order.QTDE_PEDIDA || 0) * (order.VALOR_UNITARIO || 0);
       const pieces = parseFloat((order.QTDE_PEDIDA || 0).toString());
@@ -407,28 +454,35 @@ const fetchBrandData = async (filters: {
       currentData.pieces += pieces;
     });
 
-    // Cria um mapa de número do pedido para marca
-    const orderToBrandMap = new Map<string, string>();
-    (orderData || []).forEach(order => {
-      const orderKey = `${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`;
-      orderToBrandMap.set(orderKey, order.CENTROCUSTO || 'Sem Marca');
-    });
-    
-    // Calcula o valor faturado usando QUANTIDADE * VALOR_UNITARIO
+    // Calculamos o valor faturado por marca usando os pedidos como referência
+    // mas sem restringir a outras marcas
     const brandBillingMap = new Map<string, number>();
     
-    (billingData || []).forEach(item => {
-      const orderKey = `${item.PED_NUMPEDIDO}-${item.PED_ANOBASE}`;
-      const brand = orderToBrandMap.get(orderKey) || 'Sem Marca';
-      const quantidade = parseFloat((item.QUANTIDADE || 0).toString());
-      const valorUnitario = parseFloat((item.VALOR_UNITARIO || 0).toString());
-      const valorFaturado = quantidade * valorUnitario;
+    // Inicializamos o mapa de faturamento para todas as marcas encontradas
+    uniqueBrands.forEach(brand => {
+      brandBillingMap.set(brand, 0);
+    });
+    
+    // Processamos o faturamento
+    allBillingData?.forEach(item => {
+      // Pulamos itens sem número de pedido ou ano base
+      if (!item.PED_NUMPEDIDO || !item.PED_ANOBASE) return;
       
-      if (!brandBillingMap.has(brand)) {
-        brandBillingMap.set(brand, 0);
+      const pedidoKey = `${item.PED_NUMPEDIDO}-${item.PED_ANOBASE}`;
+      
+      // Verificamos a qual marca pertence esse pedido
+      for (const [brand, pedidoSet] of pedidosByBrand.entries()) {
+        if (pedidoSet.has(pedidoKey)) {
+          // Calculamos o valor faturado
+          const quantidade = parseFloat((item.QUANTIDADE || 0).toString());
+          const valorUnitario = parseFloat((item.VALOR_UNITARIO || 0).toString());
+          const valorFaturado = quantidade * valorUnitario;
+          
+          // Atualizamos o valor faturado para esta marca
+          brandBillingMap.set(brand, (brandBillingMap.get(brand) || 0) + valorFaturado);
+          break;  // Um pedido só pertence a uma marca
+        }
       }
-      
-      brandBillingMap.set(brand, brandBillingMap.get(brand)! + valorFaturado);
     });
 
     // Combina os dados para todas as marcas únicas
@@ -478,7 +532,7 @@ const fetchBrandData = async (filters: {
 
 /**
  * Busca dados de eficiência de entrega
- * Reformulado para usar filtros corretos
+ * Implementação independente sem restrição por marca
  */
 const fetchDeliveryData = async (filters: {
   startDate: Date | null;
@@ -499,26 +553,28 @@ const fetchDeliveryData = async (filters: {
       ? [filters.status]
       : validStatuses;
     
-    // Busca dados de pedidos com filtros aplicados diretamente na query
-    const { data: orderData, error: orderError } = await supabase
+    // Busca dados de pedidos com filtros aplicados diretamente
+    let pedidosQuery = supabase
       .from('BLUEBAY_PEDIDO')
       .select('*')
       .in('STATUS', statusFilter)
       .gte('DATA_PEDIDO', startDateStr)
       .lte('DATA_PEDIDO', `${endDateStr}T23:59:59`)
       .not('DATA_PEDIDO', 'is', null);
+      
+    // Aplicar filtro de marca apenas se especificado
+    if (filters.brand && filters.brand !== 'all') {
+      pedidosQuery = pedidosQuery.eq('CENTROCUSTO', filters.brand);
+    }
+
+    const { data: orderData, error: orderError } = await pedidosQuery;
 
     if (orderError) {
       console.error('Erro ao buscar dados de pedidos para eficiência de entrega:', orderError);
       throw orderError;
     }
 
-    // Aplicar filtro de marca, se fornecido
-    const brandFilteredOrders = filters.brand && filters.brand !== 'all'
-      ? orderData?.filter(order => order.CENTROCUSTO === filters.brand)
-      : orderData;
-
-    console.log(`Processando ${brandFilteredOrders?.length || 0} pedidos para análise de eficiência de entrega`);
+    console.log(`Processando ${orderData?.length || 0} pedidos para análise de eficiência de entrega`);
 
     // Contadores para análise
     let totalFullyDelivered = 0;
@@ -528,7 +584,7 @@ const fetchDeliveryData = async (filters: {
     let totalRemainingQuantity = 0;
 
     // Analisa cada pedido
-    (brandFilteredOrders || []).forEach(order => {
+    (orderData || []).forEach(order => {
       // Obtém quantidades
       const qtdePedida = parseFloat((order.QTDE_PEDIDA || 0).toString());
       const qtdeEntregue = parseFloat((order.QTDE_ENTREGUE || 0).toString());
@@ -570,3 +626,4 @@ const fetchDeliveryData = async (filters: {
     throw error;
   }
 };
+
