@@ -10,6 +10,7 @@ import {
 } from "../utils/queryUtils";
 import { fetchStockItemsPaginated } from "../utils/stock/fetchStockItemsPaginated"; 
 import { fetchItemDetailsBatch } from "../utils/itemQueries";
+import { fetchStockSalesWithDirectQueries as directQueriesFunction } from "../directQueriesService";
 
 /**
  * Paginated fallback method to fetch stock and sales data
