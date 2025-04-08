@@ -71,8 +71,8 @@ export const FaturamentoTimeSeriesChart = ({
     // Determinar se deve usar dados diários ou mensais
     const monthsDiff = differenceInMonths(endDate, startDate);
     
-    // Se o período for maior que 3 meses, usa dados mensais
-    if (monthsDiff > 3) {
+    // Se o período for maior que 2 meses, usa dados mensais
+    if (monthsDiff > 2) {
       return monthlyData.map(item => ({
         label: item.month,
         value: item.total,
@@ -93,7 +93,7 @@ export const FaturamentoTimeSeriesChart = ({
   return (
     <Card className="col-span-full">
       <CardHeader>
-        <CardTitle>Evolução de Faturamento</CardTitle>
+        <CardTitle>Evolução do Período</CardTitle>
       </CardHeader>
       <CardContent className="h-[400px]">
         {isLoading ? (

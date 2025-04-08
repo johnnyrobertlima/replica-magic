@@ -5,6 +5,7 @@ import { FaturamentoTimeSeriesChart } from "@/components/bluebay_adm/dashboard-c
 import { FaturamentoKpiCards } from "@/components/bluebay_adm/dashboard-comercial/FaturamentoKpiCards";
 import { DashboardComercialFilters } from "@/components/bluebay_adm/dashboard-comercial/DashboardComercialFilters";
 import { FaturamentoTable } from "@/components/bluebay_adm/dashboard-comercial/FaturamentoTable";
+import { CentroCustoIndicators } from "@/components/bluebay_adm/dashboard-comercial/CentroCustoIndicators";
 import { useDashboardComercial } from "@/hooks/bluebay_adm/dashboard/useDashboardComercial";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Info } from "lucide-react";
@@ -69,6 +70,13 @@ const BluebayAdmDashboardComercial = () => {
             isLoading={isLoading}
           />
         </div>
+        
+        {/* Indicadores por Centro de Custo */}
+        <CentroCustoIndicators 
+          faturamentoItems={dashboardData?.faturamentoItems || []}
+          pedidoItems={dashboardData?.pedidoItems || []}
+          isLoading={isLoading}
+        />
         
         {/* Tabela de Notas Fiscais e Pedidos */}
         <FaturamentoTable 
