@@ -1,4 +1,5 @@
 
+// Re-export functions and types from individual files
 export { fetchItemCostData } from './fetchItemCostData';
 export type { CostDataRecord } from './costDataTypes';
 export { getItemCode, getMediaValorUnitario, getTotalQuantidade } from './costDataTypes';

@@ -27,14 +27,15 @@ export const fetchItemCostData = async (itemCode: string): Promise<CostDataRecor
       console.log(`Dados obtidos para o item ${cleanedItemCode}:`, exactResult.data[0]);
       
       // Use simple Record type to avoid deep instantiation
-      const exactData = exactResult.data[0] as Record<string, any>;
-      if ('media_valor_unitario' in exactData && exactData.media_valor_unitario) {
-        console.log(`Valor de media_valor_unitario: ${exactData.media_valor_unitario}`);
-      } else if ('MEDIA_VALOR_UNITARIO' in exactData && exactData.MEDIA_VALOR_UNITARIO) {
-        console.log(`Valor de MEDIA_VALOR_UNITARIO: ${exactData.MEDIA_VALOR_UNITARIO}`);
+      const resultData = exactResult.data[0] as CostDataRecord;
+      
+      if ('media_valor_unitario' in resultData && resultData.media_valor_unitario) {
+        console.log(`Valor de media_valor_unitario: ${resultData.media_valor_unitario}`);
+      } else if ('MEDIA_VALOR_UNITARIO' in resultData && resultData.MEDIA_VALOR_UNITARIO) {
+        console.log(`Valor de MEDIA_VALOR_UNITARIO: ${resultData.MEDIA_VALOR_UNITARIO}`);
       }
       
-      return exactData;
+      return resultData;
     }
     
     console.warn(`Nenhum resultado encontrado para o item ${cleanedItemCode} com ITEM_CODIGO maiúsculo`);
@@ -69,15 +70,16 @@ async function tryAlternativeFieldName(itemCode: string): Promise<CostDataRecord
   if (lowerResult.data && lowerResult.data.length > 0) {
     console.log(`Dados obtidos com consulta alternativa (minúsculas):`, lowerResult.data[0]);
     
-    // Simple Record type to avoid deep instantiation
-    const lowerData = lowerResult.data[0] as Record<string, any>;
-    if ('media_valor_unitario' in lowerData && lowerData.media_valor_unitario) {
-      console.log(`Valor de media_valor_unitario: ${lowerData.media_valor_unitario}`);
-    } else if ('MEDIA_VALOR_UNITARIO' in lowerData && lowerData.MEDIA_VALOR_UNITARIO) {
-      console.log(`Valor de MEDIA_VALOR_UNITARIO: ${lowerData.MEDIA_VALOR_UNITARIO}`);
+    // Using the defined CostDataRecord type instead of generic Record
+    const resultData = lowerResult.data[0] as CostDataRecord;
+    
+    if ('media_valor_unitario' in resultData && resultData.media_valor_unitario) {
+      console.log(`Valor de media_valor_unitario: ${resultData.media_valor_unitario}`);
+    } else if ('MEDIA_VALOR_UNITARIO' in resultData && resultData.MEDIA_VALOR_UNITARIO) {
+      console.log(`Valor de MEDIA_VALOR_UNITARIO: ${resultData.MEDIA_VALOR_UNITARIO}`);
     }
     
-    return lowerData;
+    return resultData;
   }
   
   console.warn(`Nenhum resultado encontrado para o item ${itemCode} com item_codigo minúsculo`);
@@ -111,12 +113,12 @@ async function tryFuzzySearch(itemCode: string): Promise<CostDataRecord | null> 
     
     if (exactMatch) {
       console.log(`Correspondência exata encontrada na busca aproximada:`, exactMatch);
-      return exactMatch;
+      return exactMatch as CostDataRecord;
     }
     
     // Retornar o primeiro resultado aproximado se não houver correspondência exata
     console.log(`Usando primeiro resultado aproximado:`, fuzzyResult.data[0]);
-    return fuzzyResult.data[0];
+    return fuzzyResult.data[0] as CostDataRecord;
   }
   
   console.warn(`Nenhum resultado encontrado para o item ${itemCode} após todas as tentativas`);
