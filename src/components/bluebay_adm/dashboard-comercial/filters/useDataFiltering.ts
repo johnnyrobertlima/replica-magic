@@ -32,6 +32,29 @@ export const useDataFiltering = (
     
     // Coletar itens não identificados para diagnóstico
     const diagnosticos: any[] = [];
+    
+    // Procurar especificamente a nota 252770 para análise detalhada
+    const nota252770 = dashboardData.faturamentoItems.find(item => item.NOTA === '252770');
+    if (nota252770) {
+      const pedidoCorrespondente = encontrarPedidoCorrespondente(nota252770, dashboardData.pedidoItems);
+      console.log('Análise específica da nota 252770:', {
+        notaData: {
+          PED_NUMPEDIDO: nota252770.PED_NUMPEDIDO,
+          PED_ANOBASE: nota252770.PED_ANOBASE,
+          MPED_NUMORDEM: nota252770.MPED_NUMORDEM,
+          VALOR_NOTA: nota252770.VALOR_NOTA,
+          DATA_EMISSAO: nota252770.DATA_EMISSAO
+        },
+        pedidoEncontrado: pedidoCorrespondente ? {
+          PED_NUMPEDIDO: pedidoCorrespondente.PED_NUMPEDIDO,
+          PED_ANOBASE: pedidoCorrespondente.PED_ANOBASE,
+          MPED_NUMORDEM: pedidoCorrespondente.MPED_NUMORDEM,
+          CENTROCUSTO: pedidoCorrespondente.CENTROCUSTO
+        } : 'Pedido não encontrado'
+      });
+    }
+    
+    // Coleta diagnóstico para todos os itens sem correspondência
     dashboardData.faturamentoItems.forEach(item => {
       if (!item.PED_NUMPEDIDO || !item.PED_ANOBASE) return;
       
@@ -39,6 +62,7 @@ export const useDataFiltering = (
       if (!pedido) {
         diagnosticos.push({
           faturamento: {
+            NOTA: item.NOTA,
             PED_NUMPEDIDO: item.PED_NUMPEDIDO,
             PED_ANOBASE: item.PED_ANOBASE,
             MPED_NUMORDEM: item.MPED_NUMORDEM,
@@ -51,6 +75,10 @@ export const useDataFiltering = (
     
     if (diagnosticos.length > 0) {
       console.log(`Encontrados ${diagnosticos.length} itens de faturamento sem correspondência`, diagnosticos);
+      // Mostrar os primeiros 10 itens para não sobrecarregar o console
+      const primeiros10 = diagnosticos.slice(0, 10);
+      console.log('Primeiros 10 itens não identificados:', primeiros10);
+      
       setNaoIdentificados(diagnosticos);
     }
   }, [dashboardData]);

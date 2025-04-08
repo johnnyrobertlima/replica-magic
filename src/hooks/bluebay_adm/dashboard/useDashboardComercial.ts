@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from 'react';
 import { subDays } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
@@ -23,7 +24,7 @@ const defaultData: DashboardComercialData = {
   totalItens: 0,
   mediaValorItem: 0,
   faturamentoItems: [],
-  pedidoItems: [], // Added this missing property
+  pedidoItems: [],
   dataRangeInfo: {
     startDateRequested: '',
     endDateRequested: '',
@@ -34,7 +35,7 @@ const defaultData: DashboardComercialData = {
 };
 
 export const useDashboardComercial = (): UseDashboardComercialReturn => {
-  const [startDate, setStartDate] = useState<Date>(subDays(new Date(), 7));
+  const [startDate, setStartDate] = useState<Date>(subDays(new Date(), 30));
   const [endDate, setEndDate] = useState<Date>(new Date());
   
   const [dashboardData, setDashboardData] = useState<DashboardComercialData | null>(null);
@@ -58,6 +59,22 @@ export const useDashboardComercial = (): UseDashboardComercialReturn => {
       const data = await fetchDashboardComercialData(startDate, endDate);
       setDashboardData(data);
       console.log('Dados carregados com sucesso:', data);
+      
+      // Diagnóstico específico para a nota 252770
+      const nota252770 = data.faturamentoItems.find(item => item.NOTA === '252770');
+      if (nota252770) {
+        console.log('Nota 252770 encontrada:', nota252770);
+        
+        // Verificar se existem pedidos com os mesmos dados
+        const pedidosCorrespondentes = data.pedidoItems.filter(p => 
+          p.PED_NUMPEDIDO === nota252770.PED_NUMPEDIDO && 
+          p.PED_ANOBASE === nota252770.PED_ANOBASE
+        );
+        
+        console.log('Pedidos correspondentes para nota 252770:', pedidosCorrespondentes);
+      } else {
+        console.log('Nota 252770 não encontrada nos dados carregados');
+      }
       
       if (data.faturamentoItems.length === 0) {
         toast({

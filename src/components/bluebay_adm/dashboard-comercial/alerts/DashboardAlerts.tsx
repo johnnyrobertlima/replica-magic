@@ -9,6 +9,9 @@ interface DashboardAlertsProps {
 }
 
 export const DashboardAlerts = ({ hasData, isLoading, naoIdentificados }: DashboardAlertsProps) => {
+  // Procurar nota 252770 entre os não identificados
+  const nota252770NaoIdentificada = naoIdentificados.find(item => item.faturamento.NOTA === '252770');
+
   if (!hasData && !isLoading) {
     return (
       <Alert variant="destructive" className="mb-4">
@@ -17,6 +20,22 @@ export const DashboardAlerts = ({ hasData, isLoading, naoIdentificados }: Dashbo
         <AlertDescription>
           Não foram encontrados dados de faturamento para o período selecionado.
           Tente selecionar outro intervalo de datas.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  // Mostrar alerta específico se a nota 252770 estiver entre os não identificados
+  if (nota252770NaoIdentificada && hasData) {
+    return (
+      <Alert variant="warning" className="mb-4">
+        <Info className="h-4 w-4" />
+        <AlertTitle>Nota 252770 sem associação com pedido</AlertTitle>
+        <AlertDescription>
+          A nota fiscal 252770 não foi associada a nenhum pedido existente.
+          Valores dos campos: PED_NUMPEDIDO={nota252770NaoIdentificada.faturamento.PED_NUMPEDIDO}, 
+          PED_ANOBASE={nota252770NaoIdentificada.faturamento.PED_ANOBASE},
+          MPED_NUMORDEM={nota252770NaoIdentificada.faturamento.MPED_NUMORDEM}
         </AlertDescription>
       </Alert>
     );

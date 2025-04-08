@@ -1,4 +1,3 @@
-
 import { FaturamentoItem, PedidoItem } from '@/services/bluebay/dashboardComercialTypes';
 
 /**
@@ -11,7 +10,7 @@ export const normalizeValue = (value: any): string => {
 
 /**
  * Encontra um pedido correspondente a um item de faturamento
- * usando uma estratégia em duas etapas para melhorar a correspondência
+ * usando uma estratégia em três etapas para melhorar a correspondência
  */
 export const encontrarPedidoCorrespondente = (item: any, pedidos: any[]) => {
   if (!item.PED_NUMPEDIDO && !item.PED_ANOBASE) return null;
@@ -19,27 +18,41 @@ export const encontrarPedidoCorrespondente = (item: any, pedidos: any[]) => {
   const itemNumPedido = normalizeValue(item.PED_NUMPEDIDO);
   const itemAnoBase = normalizeValue(item.PED_ANOBASE);
   
-  // Primeiro, tentamos com o MPED_NUMORDEM
+  // Primeiro, tentamos com o MPED_NUMORDEM (correspondência completa)
   if (item.MPED_NUMORDEM !== null && item.MPED_NUMORDEM !== undefined) {
     const itemNumOrdem = normalizeValue(item.MPED_NUMORDEM);
     
     const pedido = pedidos.find(p => 
       normalizeValue(p.PED_NUMPEDIDO) === itemNumPedido &&
-      normalizeValue(p.PED_ANOBASE) === itemAnoBase &&
+      normalizeValue(p.PED_ANOBASE) === itemNumPedido &&
       normalizeValue(p.MPED_NUMORDEM) === itemNumOrdem
     );
     
     if (pedido) return pedido;
   }
 
-  // Se não encontrou com MPED_NUMORDEM, tenta só com PED_NUMPEDIDO e PED_ANOBASE
-  // Esta é uma estratégia de fallback para melhorar a associação
-  const pedido = pedidos.find(p => 
+  // Corrigido: Segunda tentativa - comparar PED_NUMPEDIDO, PED_ANOBASE e MPED_NUMORDEM
+  // com validação mais precisa dos tipos de dados
+  const pedidoComNumOrdem = pedidos.find(p => {
+    const pNumPedido = normalizeValue(p.PED_NUMPEDIDO);
+    const pAnoBase = normalizeValue(p.PED_ANOBASE);
+    const pNumOrdem = normalizeValue(p.MPED_NUMORDEM);
+    const itemNumOrdem = normalizeValue(item.MPED_NUMORDEM);
+    
+    return pNumPedido === itemNumPedido && 
+           pAnoBase === itemAnoBase && 
+           pNumOrdem === itemNumOrdem;
+  });
+  
+  if (pedidoComNumOrdem) return pedidoComNumOrdem;
+
+  // Terceira tentativa - comparação flexível apenas com PED_NUMPEDIDO e PED_ANOBASE
+  const pedidoSemNumOrdem = pedidos.find(p => 
     normalizeValue(p.PED_NUMPEDIDO) === itemNumPedido &&
     normalizeValue(p.PED_ANOBASE) === itemAnoBase
   );
 
-  return pedido;
+  return pedidoSemNumOrdem;
 };
 
 /**
