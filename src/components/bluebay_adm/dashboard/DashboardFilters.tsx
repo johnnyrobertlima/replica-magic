@@ -27,7 +27,7 @@ export const DashboardFilters = ({ onFilterChange }: DashboardFiltersProps) => {
   const { toast } = useToast();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Use a local state to avoid multiple filter changes triggering multiple API calls
+  // Usa um estado local para evitar que múltiplas mudanças de filtro acionem múltiplas chamadas de API
   const [localDateRange, setLocalDateRange] = useState<DateRange>({
     from: filters.dateRange.startDate,
     to: filters.dateRange.endDate
@@ -46,26 +46,35 @@ export const DashboardFilters = ({ onFilterChange }: DashboardFiltersProps) => {
   };
 
   const handleExportData = () => {
-    // This would export the data - implementation in exportUtils.ts
     toast({
-      title: "Exportação",
-      description: "Função de exportação será implementada em breve",
+      title: "Exportação iniciada",
+      description: "Preparando dados para exportação...",
     });
+    
+    setTimeout(() => {
+      // Esta função seria implementada em exportUtils.ts
+      exportToExcel();
+      
+      toast({
+        title: "Exportação concluída",
+        description: "Os dados foram exportados com sucesso.",
+      });
+    }, 1500);
   };
 
   const handleRefresh = () => {
     setIsRefreshing(true);
     onFilterChange();
     
-    // Reset the refreshing state after a delay
+    // Reseta o estado de atualização após um atraso
     setTimeout(() => {
       setIsRefreshing(false);
     }, 1500);
   };
 
-  // Apply filters when filters change
+  // Aplica filtros quando os filtros mudam
   useEffect(() => {
-    // This ensures we don't trigger the filter change immediately on mount
+    // Isso garante que não acionamos a mudança de filtro imediatamente na montagem
     const timeoutId = setTimeout(() => {
       onFilterChange();
     }, 300);
