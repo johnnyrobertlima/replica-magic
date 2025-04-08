@@ -10,6 +10,7 @@ import { CentroCustoIndicators } from "@/components/bluebay_adm/dashboard-comerc
 import { useDashboardComercial } from "@/hooks/bluebay_adm/dashboard/useDashboardComercial";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Info } from "lucide-react";
+import { encontrarPedidoCorrespondente } from "@/components/bluebay_adm/dashboard-comercial/utils/pedidoUtils";
 
 const BluebayAdmDashboardComercial = () => {
   const {
@@ -25,42 +26,6 @@ const BluebayAdmDashboardComercial = () => {
   const [selectedCentroCusto, setSelectedCentroCusto] = useState<string | null>(null);
   // Estado para armazenar as correspondências não encontradas para debug
   const [naoIdentificados, setNaoIdentificados] = useState<any[]>([]);
-
-  // Função para normalizar valores antes da comparação
-  const normalizeValue = (value: any): string => {
-    if (value === null || value === undefined) return '';
-    return String(value).trim();
-  };
-
-  // Função auxiliar para encontrar pedido correspondente
-  const encontrarPedidoCorrespondente = (item: any, pedidos: any[]) => {
-    if (!item.PED_NUMPEDIDO && !item.PED_ANOBASE) return null;
-
-    const itemNumPedido = normalizeValue(item.PED_NUMPEDIDO);
-    const itemAnoBase = normalizeValue(item.PED_ANOBASE);
-    
-    // Primeiro, tentamos com o MPED_NUMORDEM
-    if (item.MPED_NUMORDEM !== null && item.MPED_NUMORDEM !== undefined) {
-      const itemNumOrdem = normalizeValue(item.MPED_NUMORDEM);
-      
-      const pedido = pedidos.find(p => 
-        normalizeValue(p.PED_NUMPEDIDO) === itemNumPedido &&
-        normalizeValue(p.PED_ANOBASE) === itemAnoBase &&
-        normalizeValue(p.MPED_NUMORDEM) === itemNumOrdem
-      );
-      
-      if (pedido) return pedido;
-    }
-
-    // Se não encontrou com MPED_NUMORDEM, tenta só com PED_NUMPEDIDO e PED_ANOBASE
-    // Esta é uma estratégia de fallback para melhorar a associação
-    const pedido = pedidos.find(p => 
-      normalizeValue(p.PED_NUMPEDIDO) === itemNumPedido &&
-      normalizeValue(p.PED_ANOBASE) === itemAnoBase
-    );
-
-    return pedido;
-  };
   
   // Efeito para coletar diagnósticos quando os dados mudam
   useEffect(() => {
