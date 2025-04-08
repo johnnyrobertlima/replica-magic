@@ -35,20 +35,6 @@ export interface BrandData {
   items: BrandPerformanceItem[];
 }
 
-// Representative Data Types
-export interface RepresentativeItem {
-  code: string;
-  name: string;
-  totalOrders: number;
-  totalBilled: number;
-  conversionRate: number;
-  averageTicket: number;
-}
-
-export interface RepresentativeData {
-  items: RepresentativeItem[];
-}
-
 // Delivery Efficiency Types
 export interface DeliveryData {
   fullyDeliveredPercentage: number;
@@ -62,11 +48,9 @@ export interface DashboardFilterParams {
   startDate: string;
   endDate: string;
   brand: string | null;
-  representative: string | null;
   status: string | null;
   pagination?: {
     brandPagination?: { page: number, pageSize: number };
-    repPagination?: { page: number, pageSize: number };
     noLimits?: boolean;
   };
 }

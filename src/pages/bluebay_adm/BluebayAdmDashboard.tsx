@@ -5,7 +5,6 @@ import { DashboardHeader } from "@/components/bluebay_adm/dashboard/DashboardHea
 import { KpiCards } from "@/components/bluebay_adm/dashboard/KpiCards";
 import { TimeSeriesCharts } from "@/components/bluebay_adm/dashboard/TimeSeriesCharts";
 import { BrandPerformance } from "@/components/bluebay_adm/dashboard/BrandPerformance";
-import { RepresentativeRanking } from "@/components/bluebay_adm/dashboard/RepresentativeRanking";
 import { DeliveryEfficiency } from "@/components/bluebay_adm/dashboard/DeliveryEfficiency";
 import { useDashboardData } from "@/hooks/bluebay_adm/dashboard/useDashboardData";
 import { DashboardFilters } from "@/components/bluebay_adm/dashboard/DashboardFilters";
@@ -16,7 +15,6 @@ import { Suspense, lazy } from "react";
 
 // Componentes lazy-loaded para melhorar o desempenho inicial
 const LazyBrandPerformance = lazy(() => import('@/components/bluebay_adm/dashboard/BrandPerformance').then(module => ({ default: module.BrandPerformance })));
-const LazyRepresentativeRanking = lazy(() => import('@/components/bluebay_adm/dashboard/RepresentativeRanking').then(module => ({ default: module.RepresentativeRanking })));
 
 const BluebayAdmDashboard = () => {
   return (
@@ -51,10 +49,8 @@ const DashboardContent = () => {
     kpiData,
     timeSeriesData,
     brandData,
-    representativeData,
     deliveryData,
     brandPagination,
-    repPagination,
   } = useDashboardData();
 
   if (isLoading) {
@@ -67,7 +63,6 @@ const DashboardContent = () => {
         </div>
         <Skeleton className="h-80 w-full" />
         <Skeleton className="h-80 w-full" />
-        <Skeleton className="h-64 w-full" />
         <Skeleton className="h-64 w-full" />
       </div>
     );
@@ -82,13 +77,6 @@ const DashboardContent = () => {
         <LazyBrandPerformance data={brandData} />
         {brandPagination && brandData?.items?.length > 0 && (
           <PaginationControls pagination={brandPagination} itemCount={brandData.items.length} />
-        )}
-      </Suspense>
-      
-      <Suspense fallback={<Skeleton className="h-80 w-full" />}>
-        <LazyRepresentativeRanking data={representativeData} />
-        {repPagination && representativeData?.items?.length > 0 && (
-          <PaginationControls pagination={repPagination} itemCount={representativeData.items.length} />
         )}
       </Suspense>
       

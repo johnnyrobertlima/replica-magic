@@ -22,7 +22,7 @@ interface DashboardFiltersProps {
 }
 
 export const DashboardFilters = ({ onFilterChange }: DashboardFiltersProps) => {
-  const { filters, updateDateRange, updateBrand, updateRepresentative, updateStatus } = useFilters();
+  const { filters, updateDateRange, updateBrand, updateStatus } = useFilters();
   const { filterOptions, isLoading } = useDashboardFilters();
   const { toast } = useToast();
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -89,7 +89,7 @@ export const DashboardFilters = ({ onFilterChange }: DashboardFiltersProps) => {
   return (
     <Card className="mb-6">
       <CardContent className="p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="lg:col-span-2">
             <div className="flex flex-col space-y-2">
               <DatePickerWithRange
@@ -129,26 +129,6 @@ export const DashboardFilters = ({ onFilterChange }: DashboardFiltersProps) => {
           
           <div>
             <Select
-              value={filters.representative || "all"}
-              onValueChange={value => updateRepresentative(value === "all" ? null : value)}
-              disabled={isLoading || isRefreshing}
-            >
-              <SelectTrigger className="bg-white">
-                <SelectValue placeholder="Representante" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os Representantes</SelectItem>
-                {filterOptions.representatives.map(rep => (
-                  <SelectItem key={rep.value} value={rep.value || "sem-representante"}>
-                    {rep.label || "Sem representante"}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div>
-            <Select
               value={filters.status || "all"}
               onValueChange={value => updateStatus(value === "all" ? null : value)}
               disabled={isLoading || isRefreshing}
@@ -167,7 +147,7 @@ export const DashboardFilters = ({ onFilterChange }: DashboardFiltersProps) => {
             </Select>
           </div>
 
-          <div className="flex justify-end gap-2 col-span-1 lg:col-span-5">
+          <div className="flex justify-end gap-2 col-span-1 lg:col-span-4">
             <Button 
               variant="outline" 
               onClick={handleExportData}

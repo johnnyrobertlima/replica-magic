@@ -8,7 +8,6 @@ export interface DashboardFilters {
     endDate: Date;
   };
   brand: string | null;
-  representative: string | null;
   status: string | null;
 }
 
@@ -16,7 +15,6 @@ interface FiltersContextType {
   filters: DashboardFilters;
   updateDateRange: (startDate: Date, endDate: Date) => void;
   updateBrand: (brand: string | null) => void;
-  updateRepresentative: (representative: string | null) => void;
   updateStatus: (status: string | null) => void;
 }
 
@@ -29,7 +27,6 @@ export const FiltersProvider = ({ children }: { children: ReactNode }) => {
       endDate: new Date(),
     },
     brand: null,
-    representative: null,
     status: null,
   });
 
@@ -47,13 +44,6 @@ export const FiltersProvider = ({ children }: { children: ReactNode }) => {
     }));
   };
 
-  const updateRepresentative = (representative: string | null) => {
-    setFilters((prev) => ({
-      ...prev,
-      representative,
-    }));
-  };
-
   const updateStatus = (status: string | null) => {
     setFilters((prev) => ({
       ...prev,
@@ -67,7 +57,6 @@ export const FiltersProvider = ({ children }: { children: ReactNode }) => {
         filters,
         updateDateRange,
         updateBrand,
-        updateRepresentative,
         updateStatus,
       }}
     >

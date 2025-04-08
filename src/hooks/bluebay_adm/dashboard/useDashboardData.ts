@@ -7,7 +7,6 @@ import {
   KpiData, 
   TimeSeriesData,
   BrandData,
-  RepresentativeData,
   DeliveryData
 } from "@/types/bluebay/dashboardTypes";
 import { usePagination } from "@/hooks/bluebay/hooks/usePagination";
@@ -20,23 +19,19 @@ export const useDashboardData = () => {
   const [kpiData, setKpiData] = useState<KpiData | null>(null);
   const [timeSeriesData, setTimeSeriesData] = useState<TimeSeriesData | null>(null);
   const [brandData, setBrandData] = useState<BrandData | null>(null);
-  const [representativeData, setRepresentativeData] = useState<RepresentativeData | null>(null);
   const [deliveryData, setDeliveryData] = useState<DeliveryData | null>(null);
   const isMountedRef = useRef(true);
 
-  // Inicializa paginações com limites maiores para evitar truncamento de dados
+  // Inicializa paginação com limites maiores para evitar truncamento de dados
   const brandPagination = usePagination(5000);
-  const repPagination = usePagination(5000);
   
   // Prepara parâmetros de query que podemos usar para chaves de cache
   const queryParams = {
     startDate: filters.dateRange.startDate ? format(filters.dateRange.startDate, 'yyyy-MM-dd') : '',
     endDate: filters.dateRange.endDate ? format(filters.dateRange.endDate, 'yyyy-MM-dd') : '',
     brand: filters.brand || 'all',
-    representative: filters.representative || 'all',
     status: filters.status || 'all',
-    brandPage: brandPagination.currentPage,
-    repPage: repPagination.currentPage
+    brandPage: brandPagination.currentPage
   };
 
   // Usa React Query para obtenção de dados com cache
@@ -50,16 +45,11 @@ export const useDashboardData = () => {
           startDate: filters.dateRange.startDate,
           endDate: filters.dateRange.endDate,
           brand: filters.brand,
-          representative: filters.representative,
           status: filters.status,
           pagination: {
             brandPagination: {
               page: brandPagination.currentPage,
               pageSize: brandPagination.pageSize
-            },
-            repPagination: {
-              page: repPagination.currentPage,
-              pageSize: repPagination.pageSize
             },
             noLimits: true // Indicador para buscar todos os dados, ignorando limites
           }
@@ -88,27 +78,21 @@ export const useDashboardData = () => {
       setKpiData(dashboardData.kpiData);
       setTimeSeriesData(dashboardData.timeSeriesData);
       setBrandData(dashboardData.brandData);
-      setRepresentativeData(dashboardData.representativeData);
       setDeliveryData(dashboardData.deliveryData);
       
       // Atualiza contagens totais de paginação se incluídas na resposta
       if (dashboardData.totalCounts?.brands) {
         brandPagination.updateTotalCount(dashboardData.totalCounts.brands);
       }
-
-      if (dashboardData.totalCounts?.representatives) {
-        repPagination.updateTotalCount(dashboardData.totalCounts.representatives);
-      }
       
       setIsLoading(false);
     }
-  }, [dashboardData, brandPagination, repPagination]);
+  }, [dashboardData, brandPagination]);
 
   // Efeito para definir estado de carregamento quando os parâmetros de consulta mudam
   useEffect(() => {
     setIsLoading(true);
-  }, [queryParams.startDate, queryParams.endDate, queryParams.brand, 
-      queryParams.representative, queryParams.status]);
+  }, [queryParams.startDate, queryParams.endDate, queryParams.brand, queryParams.status]);
 
   // Limpa componente
   useEffect(() => {
@@ -138,10 +122,8 @@ export const useDashboardData = () => {
     kpiData,
     timeSeriesData,
     brandData,
-    representativeData,
     deliveryData,
     brandPagination,
-    repPagination,
     refreshData
   };
 };
