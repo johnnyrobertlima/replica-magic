@@ -1,11 +1,10 @@
-
 import { useState, useCallback, useEffect } from 'react';
 import { subMonths } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
 import { 
-  fetchDashboardComercialData, 
-  DashboardComercialData 
+  fetchDashboardComercialData
 } from '@/services/bluebay/dashboardComercialService';
+import { DashboardComercialData } from '@/services/bluebay/dashboardComercialTypes';
 
 interface UseDashboardComercialReturn {
   dashboardData: DashboardComercialData | null;
@@ -34,7 +33,6 @@ const defaultData: DashboardComercialData = {
 };
 
 export const useDashboardComercial = (): UseDashboardComercialReturn => {
-  // Inicializa com data de início como 6 meses atrás e fim como hoje
   const [startDate, setStartDate] = useState<Date>(subMonths(new Date(), 6));
   const [endDate, setEndDate] = useState<Date>(new Date());
   
@@ -48,7 +46,6 @@ export const useDashboardComercial = (): UseDashboardComercialReturn => {
   const setDateRange = useCallback((start: Date, end: Date) => {
     setStartDate(start);
     setEndDate(end);
-    // Incrementar o requestId para forçar nova busca quando as datas mudam
     setRequestId(prev => prev + 1);
   }, []);
 
@@ -61,7 +58,6 @@ export const useDashboardComercial = (): UseDashboardComercialReturn => {
       setDashboardData(data);
       console.log('Dados carregados com sucesso:', data);
       
-      // Verifica se não há dados e mostra uma notificação
       if (data.faturamentoItems.length === 0) {
         toast({
           title: "Sem dados disponíveis",
@@ -70,7 +66,6 @@ export const useDashboardComercial = (): UseDashboardComercialReturn => {
         });
       } 
       else {
-        // Notificação de sucesso ao carregar os dados
         toast({
           title: "Dados carregados com sucesso",
           description: `Foram encontrados ${data.faturamentoItems.length} registros de faturamento.`,
@@ -92,18 +87,16 @@ export const useDashboardComercial = (): UseDashboardComercialReturn => {
   }, [startDate, endDate, toast]);
 
   const refreshData = useCallback(async () => {
-    if (isLoading) return; // Evitar múltiplas requisições simultâneas
+    if (isLoading) return;
     
     toast({
       title: "Atualizando dados",
       description: "Carregando informações mais recentes...",
     });
     
-    // Incrementar o requestId para forçar nova busca mesmo com as mesmas datas
     setRequestId(prev => prev + 1);
   }, [isLoading, toast]);
 
-  // Carregar dados quando requestId mudar (seja por mudança nas datas ou por refresh explícito)
   useEffect(() => {
     fetchData();
   }, [fetchData, requestId]);

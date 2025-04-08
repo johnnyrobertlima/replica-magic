@@ -1,0 +1,49 @@
+
+export interface FaturamentoItem {
+  MATRIZ: number;
+  FILIAL: number;
+  ID_EF_DOCFISCAL: number;
+  ID_EF_DOCFISCAL_ITEM: number;
+  PED_NUMPEDIDO?: string;
+  PED_ANOBASE?: number;
+  MPED_NUMORDEM?: number;
+  ITEM_CODIGO?: string;
+  PES_CODIGO?: number;
+  TIPO?: string;
+  NOTA?: string;
+  TRANSACAO?: number;
+  QUANTIDADE?: number;
+  VALOR_UNITARIO?: number;
+  VALOR_DESCONTO?: number;
+  VALOR_NOTA?: number;
+  STATUS?: string;
+  DATA_EMISSAO?: string | Date;
+}
+
+export interface DailyFaturamento {
+  date: string;
+  total: number;
+  formattedDate: string;
+}
+
+export interface MonthlyFaturamento {
+  month: string;
+  total: number;
+  formattedMonth: string;
+}
+
+export interface DashboardComercialData {
+  dailyFaturamento: DailyFaturamento[];
+  monthlyFaturamento: MonthlyFaturamento[];
+  totalFaturado: number;
+  totalItens: number;
+  mediaValorItem: number;
+  faturamentoItems: FaturamentoItem[];
+  dataRangeInfo: {
+    startDateRequested: string;
+    endDateRequested: string;
+    startDateActual: string | null;
+    endDateActual: string | null;
+    hasCompleteData: boolean;
+  };
+}
