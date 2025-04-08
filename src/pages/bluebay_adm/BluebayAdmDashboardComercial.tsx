@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BluebayAdmBanner } from "@/components/bluebay_adm/BluebayAdmBanner";
 import { BluebayAdmMenu } from "@/components/bluebay_adm/BluebayAdmMenu";
 import { FaturamentoTimeSeriesChart } from "@/components/bluebay_adm/dashboard-comercial/FaturamentoTimeSeriesChart";
@@ -23,28 +23,87 @@ const BluebayAdmDashboardComercial = () => {
   
   // Estado para controlar o filtro de Centro de Custo
   const [selectedCentroCusto, setSelectedCentroCusto] = useState<string | null>(null);
+  // Estado para armazenar as correspondências não encontradas para debug
+  const [naoIdentificados, setNaoIdentificados] = useState<any[]>([]);
 
-  // Filtrar dados com base no Centro de Custo selecionado
+  // Função para normalizar valores antes da comparação
+  const normalizeValue = (value: any): string => {
+    if (value === null || value === undefined) return '';
+    return String(value).trim();
+  };
+
+  // Função auxiliar para encontrar pedido correspondente
+  const encontrarPedidoCorrespondente = (item: any, pedidos: any[]) => {
+    if (!item.PED_NUMPEDIDO && !item.PED_ANOBASE) return null;
+
+    const itemNumPedido = normalizeValue(item.PED_NUMPEDIDO);
+    const itemAnoBase = normalizeValue(item.PED_ANOBASE);
+    
+    // Primeiro, tentamos com o MPED_NUMORDEM
+    if (item.MPED_NUMORDEM !== null && item.MPED_NUMORDEM !== undefined) {
+      const itemNumOrdem = normalizeValue(item.MPED_NUMORDEM);
+      
+      const pedido = pedidos.find(p => 
+        normalizeValue(p.PED_NUMPEDIDO) === itemNumPedido &&
+        normalizeValue(p.PED_ANOBASE) === itemAnoBase &&
+        normalizeValue(p.MPED_NUMORDEM) === itemNumOrdem
+      );
+      
+      if (pedido) return pedido;
+    }
+
+    // Se não encontrou com MPED_NUMORDEM, tenta só com PED_NUMPEDIDO e PED_ANOBASE
+    // Esta é uma estratégia de fallback para melhorar a associação
+    const pedido = pedidos.find(p => 
+      normalizeValue(p.PED_NUMPEDIDO) === itemNumPedido &&
+      normalizeValue(p.PED_ANOBASE) === itemAnoBase
+    );
+
+    return pedido;
+  };
+  
+  // Efeito para coletar diagnósticos quando os dados mudam
+  useEffect(() => {
+    if (!dashboardData) return;
+    
+    // Coletar itens não identificados para diagnóstico
+    const diagnosticos: any[] = [];
+    dashboardData.faturamentoItems.forEach(item => {
+      if (!item.PED_NUMPEDIDO || !item.PED_ANOBASE) return;
+      
+      const pedido = encontrarPedidoCorrespondente(item, dashboardData.pedidoItems);
+      if (!pedido) {
+        diagnosticos.push({
+          faturamento: {
+            PED_NUMPEDIDO: item.PED_NUMPEDIDO,
+            PED_ANOBASE: item.PED_ANOBASE,
+            MPED_NUMORDEM: item.MPED_NUMORDEM,
+            VALOR_NOTA: item.VALOR_NOTA,
+            DATA_EMISSAO: item.DATA_EMISSAO
+          }
+        });
+      }
+    });
+    
+    if (diagnosticos.length > 0) {
+      console.log(`Encontrados ${diagnosticos.length} itens de faturamento sem correspondência`, diagnosticos);
+      setNaoIdentificados(diagnosticos);
+    }
+  }, [dashboardData]);
+
+  // Filtrar dados com base no Centro de Custo selecionado usando a lógica aprimorada
   const filteredFaturamentoItems = selectedCentroCusto 
     ? dashboardData?.faturamentoItems.filter(item => {
         // Se o Centro de Custo for "Não identificado"
         if (selectedCentroCusto === "Não identificado") {
           // Verificar se há um pedido correspondente
-          const pedidoCorrespondente = dashboardData.pedidoItems.find(p => 
-            p.PED_NUMPEDIDO === item.PED_NUMPEDIDO && 
-            p.PED_ANOBASE === item.PED_ANOBASE && 
-            p.MPED_NUMORDEM === item.MPED_NUMORDEM
-          );
+          const pedidoCorrespondente = encontrarPedidoCorrespondente(item, dashboardData.pedidoItems);
           
           // Retornar true se não houver pedido correspondente (é "Não identificado")
           return !pedidoCorrespondente;
         } else {
           // Para outros centros de custo, buscar o pedido correspondente
-          const pedidoCorrespondente = dashboardData.pedidoItems.find(p => 
-            p.PED_NUMPEDIDO === item.PED_NUMPEDIDO && 
-            p.PED_ANOBASE === item.PED_ANOBASE && 
-            p.MPED_NUMORDEM === item.MPED_NUMORDEM
-          );
+          const pedidoCorrespondente = encontrarPedidoCorrespondente(item, dashboardData.pedidoItems);
           
           // Verificar se o pedido tem o centro de custo selecionado
           return pedidoCorrespondente?.CENTROCUSTO === selectedCentroCusto;
@@ -98,6 +157,19 @@ const BluebayAdmDashboardComercial = () => {
             <AlertDescription>
               Não foram encontrados dados de faturamento para o período selecionado.
               Tente selecionar outro intervalo de datas.
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {/* Mostra alerta se houver muitos itens não identificados */}
+        {naoIdentificados.length > 10 && hasData && (
+          <Alert className="mb-4">
+            <Info className="h-4 w-4" />
+            <AlertTitle>Notas fiscais sem associação com pedidos</AlertTitle>
+            <AlertDescription>
+              Existem {naoIdentificados.length} notas fiscais que possuem número de pedido, 
+              mas não foram associadas a nenhum pedido existente. 
+              Estas notas aparecem como "Não identificado".
             </AlertDescription>
           </Alert>
         )}
