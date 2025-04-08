@@ -5,8 +5,6 @@ import {
   TimeSeriesPoint, 
   BrandData, 
   BrandPerformanceItem,
-  RepresentativeData, 
-  RepresentativeItem,
   DeliveryData,
   DashboardFilterParams
 } from "@/types/bluebay/dashboardTypes";
@@ -20,11 +18,9 @@ export const fetchDashboardData = async (
     startDate: Date | null;
     endDate: Date | null;
     brand: string | null;
-    representative: string | null;
     status: string | null;
     pagination?: {
       brandPagination?: { page: number, pageSize: number };
-      repPagination?: { page: number, pageSize: number };
       noLimits?: boolean;
     }
   }
@@ -35,20 +31,17 @@ export const fetchDashboardData = async (
     const kpiData = await fetchKpiData(filters);
     const timeSeriesData = await fetchTimeSeriesData(filters);
     const brandResults = await fetchBrandData(filters);
-    const representativeResults = await fetchRepresentativeData(filters);
     const deliveryData = await fetchDeliveryData(filters);
 
     // Registra contagens totais para paginação
     const totalCounts = {
-      brands: brandResults.totalCount || 0,
-      representatives: representativeResults.totalCount || 0
+      brands: brandResults.totalCount || 0
     };
 
     return {
       kpiData,
       timeSeriesData,
       brandData: brandResults.data,
-      representativeData: representativeResults.data,
       deliveryData,
       totalCounts
     };
@@ -65,7 +58,6 @@ const fetchKpiData = async (filters: {
   startDate: Date | null;
   endDate: Date | null;
   brand: string | null;
-  representative: string | null;
   status: string | null;
 }): Promise<KpiData> => {
   try {
@@ -99,11 +91,6 @@ const fetchKpiData = async (filters: {
         orderQuery = orderQuery.eq('CENTROCUSTO', filters.brand);
       }
       // Removida restrição de CENTROCUSTO = 'BK'
-
-      // Adicionar filtro de representante, se fornecido
-      if (filters.representative && filters.representative !== 'all') {
-        orderQuery = orderQuery.eq('REPRESENTANTE', parseInt(filters.representative));
-      }
 
       // Adicionar filtro de status, se fornecido
       if (filters.status && filters.status !== 'all') {
@@ -243,7 +230,6 @@ const fetchTimeSeriesData = async (filters: {
   startDate: Date | null;
   endDate: Date | null;
   brand: string | null;
-  representative: string | null;
   status: string | null;
 }): Promise<TimeSeriesData> => {
   try {
@@ -280,11 +266,6 @@ const fetchTimeSeriesData = async (filters: {
         orderQuery = orderQuery.eq('CENTROCUSTO', filters.brand);
       }
       // Removida restrição de CENTROCUSTO = 'BK'
-
-      // Adicionar filtro de representante, se fornecido
-      if (filters.representative && filters.representative !== 'all') {
-        orderQuery = orderQuery.eq('REPRESENTANTE', parseInt(filters.representative));
-      }
 
       // Adicionar filtro de status, se fornecido
       if (filters.status && filters.status !== 'all') {
@@ -414,7 +395,6 @@ const fetchBrandData = async (filters: {
   startDate: Date | null;
   endDate: Date | null;
   brand: string | null;
-  representative: string | null;
   status: string | null;
   pagination?: {
     brandPagination?: { page: number, pageSize: number };
@@ -469,11 +449,6 @@ const fetchBrandData = async (filters: {
         orderQuery = orderQuery
           .gte('DATA_PEDIDO', startDateStr)
           .lte('DATA_PEDIDO', endDateStr + 'T23:59:59.999Z');
-      }
-
-      // Adiciona filtro de representante se fornecido
-      if (filters.representative && filters.representative !== 'all') {
-        orderQuery = orderQuery.eq('REPRESENTANTE', parseInt(filters.representative));
       }
 
       // Adiciona filtro de status se fornecido
@@ -621,261 +596,12 @@ const fetchBrandData = async (filters: {
 };
 
 /**
- * Busca dados de desempenho de representantes com opção de buscar todos os dados
- */
-const fetchRepresentativeData = async (filters: {
-  startDate: Date | null;
-  endDate: Date | null;
-  brand: string | null;
-  representative: string | null;
-  status: string | null;
-  pagination?: {
-    repPagination?: { page: number, pageSize: number };
-    noLimits?: boolean;
-  };
-}): Promise<{data: RepresentativeData, totalCount: number}> => {
-  try {
-    // Converte datas para strings para a consulta
-    const startDateStr = filters.startDate ? format(filters.startDate, 'yyyy-MM-dd') : '';
-    const endDateStr = filters.endDate ? format(filters.endDate, 'yyyy-MM-dd') : '';
-    
-    console.log(`Buscando dados de representantes de ${startDateStr} até ${endDateStr}`);
-
-    // Obtém todos os representantes únicos primeiro
-    let repListQuery = supabase
-      .from('BLUEBAY_PEDIDO')
-      .select('REPRESENTANTE')
-      .not('REPRESENTANTE', 'is', null);
-
-    // Adiciona filtros de data se fornecidos
-    if (startDateStr && endDateStr) {
-      repListQuery = repListQuery
-        .gte('DATA_PEDIDO', startDateStr)
-        .lte('DATA_PEDIDO', endDateStr + 'T23:59:59.999Z');
-    }
-
-    // Adiciona filtro de marca se fornecido
-    if (filters.brand && filters.brand !== 'all') {
-      repListQuery = repListQuery.eq('CENTROCUSTO', filters.brand);
-    }
-
-    const { data: repsList, error: repsListError } = await repListQuery;
-
-    if (repsListError) {
-      console.error('Erro ao buscar lista de representantes:', repsListError);
-      return { data: { items: [] }, totalCount: 0 };
-    }
-
-    // Obtém representantes únicos
-    const uniqueReps = [...new Set(repsList?.map(item => item.REPRESENTANTE))].filter(Boolean);
-    console.log(`Encontrados ${uniqueReps.length} representantes únicos`);
-
-    // Busca nomes de todos os representantes
-    const { data: representatives, error: repError } = await supabase
-      .from('vw_representantes')
-      .select('*');
-
-    if (repError) {
-      console.error('Erro ao buscar representantes:', repError);
-      return { data: { items: [] }, totalCount: 0 };
-    }
-
-    // Cria um mapa de códigos para nomes de representantes
-    const repNameMap = new Map<number, string>();
-    if (representatives && Array.isArray(representatives)) {
-      representatives.forEach(rep => {
-        repNameMap.set(rep.codigo_representante, rep.nome_representante || 'Representante sem nome');
-      });
-    }
-
-    // Busca dados de pedidos em lotes
-    let allOrderData: any[] = [];
-    let hasMoreOrders = true;
-    let orderOffset = 0;
-    const batchSize = 10000;
-    
-    while (hasMoreOrders) {
-      let orderQuery = supabase
-        .from('BLUEBAY_PEDIDO')
-        .select('*')
-        .range(orderOffset, orderOffset + batchSize - 1);
-
-      // Adiciona filtros de data se fornecidos
-      if (startDateStr && endDateStr) {
-        orderQuery = orderQuery
-          .gte('DATA_PEDIDO', startDateStr)
-          .lte('DATA_PEDIDO', endDateStr + 'T23:59:59.999Z');
-      }
-
-      // Adiciona filtro de marca se fornecido
-      if (filters.brand && filters.brand !== 'all') {
-        orderQuery = orderQuery.eq('CENTROCUSTO', filters.brand);
-      }
-
-      // Adiciona filtro de status se fornecido
-      if (filters.status && filters.status !== 'all') {
-        orderQuery = orderQuery.eq('STATUS', filters.status);
-      }
-
-      const { data: orderBatch, error: orderError } = await orderQuery;
-
-      if (orderError) {
-        console.error('Erro ao buscar lote de dados de pedidos por representante:', orderError);
-        break;
-      }
-
-      if (!orderBatch || orderBatch.length === 0) {
-        hasMoreOrders = false;
-      } else {
-        allOrderData = [...allOrderData, ...orderBatch];
-        orderOffset += batchSize;
-        hasMoreOrders = orderBatch.length === batchSize;
-      }
-    }
-
-    // Agrupa dados de pedidos por representante
-    const repOrderMap = new Map<number, { total: number, count: number }>();
-    
-    allOrderData.forEach(order => {
-      const repCode = order.REPRESENTANTE;
-      if (!repCode) return;
-      
-      const value = parseFloat((order.TOTAL_PRODUTO || 0).toString());
-      
-      if (!repOrderMap.has(repCode)) {
-        repOrderMap.set(repCode, { total: 0, count: 0 });
-      }
-      
-      const currentData = repOrderMap.get(repCode)!;
-      currentData.total += value;
-      currentData.count += 1; // Conta pedidos para cálculo do ticket médio
-    });
-
-    // Cria um mapa de número do pedido para representante
-    const orderToRepMap = new Map<string, number>();
-    allOrderData.forEach(order => {
-      if (!order.REPRESENTANTE) return;
-      
-      const orderKey = `${order.PED_NUMPEDIDO}-${order.PED_ANOBASE}`;
-      orderToRepMap.set(orderKey, order.REPRESENTANTE);
-    });
-    
-    // Busca dados de faturamento em lotes
-    let allBillingData: any[] = [];
-    let hasMoreBilling = true;
-    let billingOffset = 0;
-    
-    while (hasMoreBilling) {
-      let billingQuery = supabase
-        .from('BLUEBAY_FATURAMENTO')
-        .select('*')
-        .eq('TIPO', 'S') // Somente vendas
-        .range(billingOffset, billingOffset + batchSize - 1);
-
-      // Adiciona filtros de data se fornecidos
-      if (startDateStr && endDateStr) {
-        billingQuery = billingQuery
-          .gte('DATA_EMISSAO', startDateStr)
-          .lte('DATA_EMISSAO', endDateStr + 'T23:59:59.999Z');
-      }
-
-      const { data: billingBatch, error: billingError } = await billingQuery;
-
-      if (billingError) {
-        console.error('Erro ao buscar lote de dados de faturamento por representante:', billingError);
-        break;
-      }
-
-      if (!billingBatch || billingBatch.length === 0) {
-        hasMoreBilling = false;
-      } else {
-        allBillingData = [...allBillingData, ...billingBatch];
-        billingOffset += batchSize;
-        hasMoreBilling = billingBatch.length === batchSize;
-      }
-    }
-
-    console.log(`Processando dados de representantes de ${allOrderData.length} pedidos e ${allBillingData.length} registros de faturamento`);
-    
-    // MUDANÇA: Calcula o valor faturado usando QUANTIDADE * VALOR_UNITARIO em vez de VALOR_NOTA
-    const repBillingMap = new Map<number, number>();
-    
-    allBillingData.forEach(item => {
-      const orderKey = `${item.PED_NUMPEDIDO}-${item.PED_ANOBASE}`;
-      const repCode = orderToRepMap.get(orderKey);
-      
-      if (!repCode) return; // Pula se nenhum representante for encontrado
-      
-      const quantidade = parseFloat((item.QUANTIDADE || 0).toString());
-      const valorUnitario = parseFloat((item.VALOR_UNITARIO || 0).toString());
-      const valorFaturado = quantidade * valorUnitario;
-      
-      if (!repBillingMap.has(repCode)) {
-        repBillingMap.set(repCode, 0);
-      }
-      
-      repBillingMap.set(repCode, repBillingMap.get(repCode)! + valorFaturado);
-    });
-
-    // Aplica paginação ou busca todos
-    let processedReps = uniqueReps;
-
-    // Aplica paginação se noLimits for false e as informações de paginação forem fornecidas
-    if (!filters.pagination?.noLimits && filters.pagination?.repPagination) {
-      const { page, pageSize } = filters.pagination.repPagination;
-      const startIdx = (page - 1) * pageSize;
-      const endIdx = startIdx + pageSize;
-      processedReps = uniqueReps.slice(startIdx, endIdx);
-      console.log(`Usando representantes paginados: ${processedReps.length} reps do índice ${startIdx} a ${endIdx-1}`);
-    }
-
-    // Combina os dados
-    const repItems: RepresentativeItem[] = [];
-    
-    // Processa apenas os representantes em nossa lista processada
-    processedReps.forEach(repCode => {
-      // Pula se o filtro de representante for aplicado e este não for o representante filtrado
-      if (filters.representative && filters.representative !== 'all' && repCode.toString() !== filters.representative) {
-        return;
-      }
-      
-      const repName = repNameMap.get(repCode) || `Rep #${repCode}`;
-      const orderData = repOrderMap.get(repCode) || { total: 0, count: 0 };
-      const totalBilled = repBillingMap.get(repCode) || 0;
-      const conversionRate = orderData.total > 0 ? (totalBilled / orderData.total) * 100 : 0;
-      const averageTicket = orderData.count > 0 ? orderData.total / orderData.count : 0;
-      
-      repItems.push({
-        code: repCode.toString(),
-        name: repName,
-        totalOrders: orderData.total,
-        totalBilled,
-        conversionRate,
-        averageTicket
-      });
-    });
-
-    // Ordena por valor faturado
-    repItems.sort((a, b) => b.totalBilled - a.totalBilled);
-
-    return { 
-      data: { items: repItems },
-      totalCount: uniqueReps.length
-    };
-  } catch (error) {
-    console.error('Erro ao buscar dados de representantes:', error);
-    throw error;
-  }
-};
-
-/**
  * Busca dados de eficiência de entrega em lotes para superar limites de consulta
  */
 const fetchDeliveryData = async (filters: {
   startDate: Date | null;
   endDate: Date | null;
   brand: string | null;
-  representative: string | null;
   status: string | null;
 }): Promise<DeliveryData> => {
   try {
@@ -907,11 +633,6 @@ const fetchDeliveryData = async (filters: {
       // Adiciona filtro de marca se fornecido
       if (filters.brand && filters.brand !== 'all') {
         orderQuery = orderQuery.eq('CENTROCUSTO', filters.brand);
-      }
-
-      // Adiciona filtro de representante se fornecido
-      if (filters.representative && filters.representative !== 'all') {
-        orderQuery = orderQuery.eq('REPRESENTANTE', parseInt(filters.representative));
       }
 
       // Adiciona filtro de status se fornecido (mas geralmente queremos todos os status para análise de entrega)
