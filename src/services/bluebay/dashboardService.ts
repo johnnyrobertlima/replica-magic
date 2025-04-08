@@ -98,7 +98,7 @@ const fetchKpiData = async (filters: {
       if (filters.brand && filters.brand !== 'all') {
         orderQuery = orderQuery.eq('CENTROCUSTO', filters.brand);
       }
-      // Removendo a restrição de CENTROCUSTO = 'BK' para essa página específica
+      // Removida restrição de CENTROCUSTO = 'BK'
 
       // Adicionar filtro de representante, se fornecido
       if (filters.representative && filters.representative !== 'all') {
@@ -279,7 +279,7 @@ const fetchTimeSeriesData = async (filters: {
       if (filters.brand && filters.brand !== 'all') {
         orderQuery = orderQuery.eq('CENTROCUSTO', filters.brand);
       }
-      // Removendo a restrição de CENTROCUSTO = 'BK' para essa página específica
+      // Removida restrição de CENTROCUSTO = 'BK'
 
       // Adicionar filtro de representante, se fornecido
       if (filters.representative && filters.representative !== 'all') {
