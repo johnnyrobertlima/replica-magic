@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const fetchFilterOptions = async () => {
   try {
-    // Fetch brands (CENTROCUSTO)
+    // Fetch brands (CENTROCUSTO) without any restrictions
     const { data: brandsData, error: brandsError } = await supabase
       .from('BLUEBAY_PEDIDO')
       .select('CENTROCUSTO')
@@ -14,6 +14,9 @@ export const fetchFilterOptions = async () => {
       throw new Error(`Error fetching brands: ${brandsError.message}`);
     }
 
+    // Log raw data to see what's actually coming from the database
+    console.log("Raw CENTROCUSTO data from database:", brandsData);
+
     // Get unique brands
     const brands = Array.from(new Set(brandsData.map(b => b.CENTROCUSTO)))
       .filter(Boolean) // Filter out null/undefined/empty values
@@ -22,7 +25,7 @@ export const fetchFilterOptions = async () => {
         label: centrocusto
       }));
 
-    console.log("Centros de custo disponíveis:", brands.map(b => b.value).join(", "));
+    console.log("Centros de custo disponíveis após processamento:", brands.map(b => b.value).join(", "));
 
     // Fetch representatives
     const { data: reps, error: repsError } = await supabase

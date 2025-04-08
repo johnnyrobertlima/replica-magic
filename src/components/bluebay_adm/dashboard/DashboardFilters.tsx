@@ -76,6 +76,14 @@ export const DashboardFilters = ({ onFilterChange }: DashboardFiltersProps) => {
     }, 1500);
   };
 
+  // Log filter options when they change to help debugging
+  useEffect(() => {
+    if (filterOptions.brands.length > 0) {
+      console.log("Opções de filtro de marca carregadas:", 
+        filterOptions.brands.map(b => b.value).join(", "));
+    }
+  }, [filterOptions.brands]);
+
   // Aplica filtros quando os filtros mudam
   useEffect(() => {
     // Isso garante que não acionamos a mudança de filtro imediatamente na montagem

@@ -20,7 +20,15 @@ export const useDashboardFilters = () => {
     const loadFilterOptions = async () => {
       try {
         setIsLoading(true);
+        console.log("Carregando opções de filtro...");
+        
         const options = await fetchFilterOptions();
+        
+        console.log("Opções de filtro carregadas:", {
+          brands: options.brands.length,
+          statuses: options.statuses.length
+        });
+        
         setFilterOptions(options);
       } catch (error) {
         console.error("Error loading filter options:", error);

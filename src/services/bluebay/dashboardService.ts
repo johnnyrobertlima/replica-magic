@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { 
   KpiData, 
@@ -27,7 +26,12 @@ export const fetchDashboardData = async (
   }
 ) => {
   try {
-    console.log("Buscando dados do dashboard com filtros aplicados");
+    console.log("Buscando dados do dashboard com filtros aplicados:", JSON.stringify({
+      startDate: filters.startDate,
+      endDate: filters.endDate,
+      brand: filters.brand,
+      status: filters.status
+    }, null, 2));
     
     const kpiData = await fetchKpiData(filters);
     const timeSeriesData = await fetchTimeSeriesData(filters);
@@ -431,7 +435,7 @@ const fetchBrandData = async (filters: {
 
     // Obtém marcas únicas
     const uniqueBrands = [...new Set(brandsData?.map(item => item.CENTROCUSTO))].filter(Boolean);
-    console.log(`Encontradas ${uniqueBrands.length} marcas únicas`);
+    console.log(`Encontradas ${uniqueBrands.length} marcas únicas:`, uniqueBrands);
 
     // Busca dados de pedidos em lotes
     let allOrderData: any[] = [];
