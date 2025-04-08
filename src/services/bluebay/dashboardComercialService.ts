@@ -43,6 +43,13 @@ export interface DashboardComercialData {
   totalItens: number;
   mediaValorItem: number;
   faturamentoItems: FaturamentoItem[];
+  dataRangeInfo: {
+    startDateRequested: string;
+    endDateRequested: string;
+    startDateActual: string | null;
+    endDateActual: string | null;
+    hasCompleteData: boolean;
+  };
 }
 
 /**
@@ -121,6 +128,10 @@ export const fetchDashboardComercialData = async (
     let totalFaturado = 0;
     let totalItens = 0;
 
+    // Datas para verificar o intervalo real dos dados
+    let minDate: Date | null = null;
+    let maxDate: Date | null = null;
+
     // Processar os dados de faturamento
     faturamentoData.forEach(item => {
       if (!item.DATA_EMISSAO || !item.QUANTIDADE || !item.VALOR_UNITARIO) return;
@@ -128,6 +139,14 @@ export const fetchDashboardComercialData = async (
       const itemDate = typeof item.DATA_EMISSAO === 'string' 
         ? parseISO(item.DATA_EMISSAO) 
         : new Date(item.DATA_EMISSAO);
+      
+      // Atualiza as datas min/max para informar ao usuário o intervalo real de dados
+      if (!minDate || itemDate < minDate) {
+        minDate = itemDate;
+      }
+      if (!maxDate || itemDate > maxDate) {
+        maxDate = itemDate;
+      }
       
       // Formato yyyy-MM-dd para agrupamento diário
       const dayKey = format(itemDate, 'yyyy-MM-dd');
@@ -173,6 +192,12 @@ export const fetchDashboardComercialData = async (
     // Calcular média por item
     const mediaValorItem = totalItens > 0 ? totalFaturado / totalItens : 0;
 
+    // Verificar se os dados cobrem todo o período solicitado
+    const hasCompleteData = 
+      (minDate && maxDate && startDate && endDate) ? 
+      (minDate <= startDate && maxDate >= endDate) : 
+      false;
+
     // Retornar os dados processados, incluindo os itens originais para a tabela
     const returnData: DashboardComercialData = {
       dailyFaturamento,
@@ -180,7 +205,14 @@ export const fetchDashboardComercialData = async (
       totalFaturado,
       totalItens,
       mediaValorItem,
-      faturamentoItems: faturamentoData
+      faturamentoItems: faturamentoData,
+      dataRangeInfo: {
+        startDateRequested: startDateStr,
+        endDateRequested: endDateStr,
+        startDateActual: minDate ? format(minDate, 'yyyy-MM-dd') : null,
+        endDateActual: maxDate ? format(maxDate, 'yyyy-MM-dd') : null,
+        hasCompleteData
+      }
     };
 
     console.log(`Processamento concluído: ${dailyFaturamento.length} dias, ${monthlyFaturamento.length} meses`);

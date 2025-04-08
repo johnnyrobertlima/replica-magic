@@ -23,7 +23,14 @@ const defaultData: DashboardComercialData = {
   totalFaturado: 0,
   totalItens: 0,
   mediaValorItem: 0,
-  faturamentoItems: []
+  faturamentoItems: [],
+  dataRangeInfo: {
+    startDateRequested: '',
+    endDateRequested: '',
+    startDateActual: null,
+    endDateActual: null,
+    hasCompleteData: false
+  }
 };
 
 export const useDashboardComercial = (): UseDashboardComercialReturn => {
@@ -53,6 +60,24 @@ export const useDashboardComercial = (): UseDashboardComercialReturn => {
       const data = await fetchDashboardComercialData(startDate, endDate);
       setDashboardData(data);
       console.log('Dados carregados com sucesso:', data);
+      
+      // Verifica se não há dados e mostra uma notificação
+      if (data.faturamentoItems.length === 0) {
+        toast({
+          title: "Sem dados disponíveis",
+          description: "Não foram encontrados dados de faturamento para o período selecionado.",
+          variant: "warning",
+        });
+      }
+      
+      // Verifica se há dados limitados e mostra uma notificação
+      else if (!data.dataRangeInfo.hasCompleteData) {
+        toast({
+          title: "Dados parciais",
+          description: "Os dados disponíveis não cobrem todo o período solicitado.",
+          variant: "default",
+        });
+      }
     } catch (err) {
       console.error('Erro ao buscar dados do dashboard comercial:', err);
       setError(err instanceof Error ? err : new Error('Erro desconhecido ao buscar dados'));
