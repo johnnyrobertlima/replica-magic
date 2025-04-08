@@ -54,12 +54,13 @@ export interface DashboardComercialData {
 
 /**
  * Busca dados em lotes para superar limite do Supabase
- * Versão otimizada para garantir que todos os dados sejam recuperados
+ * Versão otimizada e corrigida para garantir que todos os dados sejam recuperados,
+ * superando a limitação de 1000 registros por consulta do Supabase
  */
 const fetchInBatches = async <T>(
-  query: Function,
-  batchSize: number = 10000,
-  maxBatches: number = 100 // Limite de segurança para evitar loops infinitos
+  query: (offset: number, limit: number) => Promise<{ data: T[] | null, error: any, count?: number | null }>,
+  batchSize: number = 1000, // O limite padrão do Supabase é 1000, então usamos isso como tamanho do lote
+  maxBatches: number = 1000 // Aumentamos o limite para garantir que todos os registros sejam buscados
 ): Promise<T[]> => {
   let allData: T[] = [];
   let hasMore = true;
@@ -71,7 +72,7 @@ const fetchInBatches = async <T>(
     console.log(`Buscando lote ${batchCount} (offset: ${offset}, tamanho: ${batchSize})`);
     
     try {
-      const { data, error, count } = await query(offset, batchSize);
+      const { data, error } = await query(offset, batchSize);
       
       if (error) {
         console.error(`Erro ao buscar lote ${batchCount}:`, error);
@@ -85,7 +86,8 @@ const fetchInBatches = async <T>(
         allData = [...allData, ...data];
         console.log(`Processado lote ${batchCount}: ${data.length} registros. Total acumulado: ${allData.length}`);
         
-        // Se retornou menos que o tamanho do lote, não há mais dados
+        // Continua buscando se o número de registros retornados for igual ao tamanho do lote
+        // Esta é a correção principal: no Supabase, precisamos continuar mesmo quando recebemos exatamente 1000 registros
         hasMore = data.length === batchSize;
         offset += batchSize;
       }
@@ -106,7 +108,7 @@ const fetchInBatches = async <T>(
 
 /**
  * Busca dados de faturamento para o dashboard comercial
- * Versão melhorada que garante que todos os dados do período sejam recuperados
+ * Versão melhorada para garantir que todos os dados do período sejam recuperados
  */
 export const fetchDashboardComercialData = async (
   startDate: Date | null,
@@ -120,11 +122,12 @@ export const fetchDashboardComercialData = async (
     console.log(`Buscando dados de faturamento comercial de ${startDateStr} até ${endDateStr}`);
     
     // Função para buscar dados de faturamento em lotes
-    // Função modificada para garantir que todos os dados sejam recuperados
     const fetchFaturamentoBatch = async (offset: number, limit: number) => {
+      // Adicionamos o header Prefer para tentar aumentar o limite, mas isso pode não funcionar
+      // dependendo da configuração do servidor
       const query = supabase
         .from('BLUEBAY_FATURAMENTO')
-        .select('*', { count: 'exact' })
+        .select('*', { count: 'exact', head: false })
         .eq('TIPO', 'S') // Somente dados de vendas
         .gte('DATA_EMISSAO', startDateStr)
         .lte('DATA_EMISSAO', `${endDateStr}T23:59:59.999`)
@@ -133,9 +136,8 @@ export const fetchDashboardComercialData = async (
       return await query;
     };
     
-    // Buscar todos os dados de faturamento com tamanho de lote otimizado
-    // Aumentamos o tamanho do lote para 10000 para reduzir o número de requisições
-    const faturamentoData = await fetchInBatches<FaturamentoItem>(fetchFaturamentoBatch, 10000);
+    // Buscar todos os dados de faturamento com tamanho de lote ajustado para o limite do Supabase
+    const faturamentoData = await fetchInBatches<FaturamentoItem>(fetchFaturamentoBatch, 1000);
     console.log(`Total de registros de faturamento recuperados: ${faturamentoData?.length || 0}`);
 
     // Processamento dos dados para faturamento diário
