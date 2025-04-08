@@ -40,7 +40,7 @@ export const fetchDashboardComercialData = async (
         .select('*', { count: 'exact', head: false })
         .eq('CENTROCUSTO', 'BLUEBAY') // Filtrar apenas pedidos da BLUEBAY
         .in('STATUS', ['1', '2', '3']) // Pedidos em aberto, parciais ou concluídos
-        .gte('DATA_PEDIDO', startDateStr)
+        .gte('DATA_PEDIDO', startDateStr) // Usando DATA_PEDIDO para pedidos
         .lte('DATA_PEDIDO', `${endDateStr}T23:59:59.999`)
         .range(offset, offset + limit - 1);
       
@@ -79,7 +79,7 @@ export const fetchDashboardComercialData = async (
       totalItens,
       mediaValorItem,
       faturamentoItems: faturamentoData,
-      pedidoItems: pedidoData,
+      pedidoItems: pedidoData, // Incluindo os itens de pedido nos dados retornados
       dataRangeInfo: {
         startDateRequested: startDateStr,
         endDateRequested: endDateStr,

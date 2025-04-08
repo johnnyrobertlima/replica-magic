@@ -72,10 +72,11 @@ export const processarDadosFaturamento = (faturamentoData: FaturamentoItem[], pe
     totalItens += quantidade;
   });
   
-  // Processar os dados de pedido
+  // Processar os dados de pedido usando DATA_PEDIDO
   pedidoData.forEach(item => {
     if (!item.DATA_PEDIDO || !item.QTDE_PEDIDA || !item.VALOR_UNITARIO) return;
     
+    // Usando DATA_PEDIDO para o gráfico de pedidos
     const itemDate = typeof item.DATA_PEDIDO === 'string' 
       ? parseISO(item.DATA_PEDIDO) 
       : new Date(item.DATA_PEDIDO);

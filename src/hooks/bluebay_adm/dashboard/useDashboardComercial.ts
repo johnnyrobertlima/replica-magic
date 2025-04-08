@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from 'react';
 import { subMonths } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
@@ -23,6 +24,7 @@ const defaultData: DashboardComercialData = {
   totalItens: 0,
   mediaValorItem: 0,
   faturamentoItems: [],
+  pedidoItems: [], // Added this missing property
   dataRangeInfo: {
     startDateRequested: '',
     endDateRequested: '',
