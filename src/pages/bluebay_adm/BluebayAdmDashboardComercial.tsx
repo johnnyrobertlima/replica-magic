@@ -7,7 +7,7 @@ import { DashboardComercialFilters } from "@/components/bluebay_adm/dashboard-co
 import { FaturamentoTable } from "@/components/bluebay_adm/dashboard-comercial/FaturamentoTable";
 import { useDashboardComercial } from "@/hooks/bluebay_adm/dashboard/useDashboardComercial";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { InfoCircle } from "lucide-react";
+import { Info } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from 'date-fns/locale';
 
@@ -61,7 +61,7 @@ const BluebayAdmDashboardComercial = () => {
         
         {hasLimitedData && (
           <Alert variant="warning" className="mb-4">
-            <InfoCircle className="h-4 w-4" />
+            <Info className="h-4 w-4" />
             <AlertTitle>Dados limitados</AlertTitle>
             <AlertDescription>
               O período solicitado ({formattedStartDate} - {formattedEndDate}) contém dados apenas no intervalo 
@@ -72,7 +72,7 @@ const BluebayAdmDashboardComercial = () => {
 
         {!hasData && !isLoading && (
           <Alert variant="destructive" className="mb-4">
-            <InfoCircle className="h-4 w-4" />
+            <Info className="h-4 w-4" />
             <AlertTitle>Nenhum dado encontrado</AlertTitle>
             <AlertDescription>
               Não foram encontrados dados de faturamento para o período selecionado.

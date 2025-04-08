@@ -66,7 +66,7 @@ export const useDashboardComercial = (): UseDashboardComercialReturn => {
         toast({
           title: "Sem dados disponíveis",
           description: "Não foram encontrados dados de faturamento para o período selecionado.",
-          variant: "warning",
+          variant: "destructive",
         });
       }
       
