@@ -36,7 +36,7 @@ export const fetchDashboardComercialData = async (
     // Função para buscar dados de pedidos em lotes
     const fetchPedidoBatch = async (offset: number, limit: number) => {
       const query = supabase
-        .from('BLUEBAY_PEDIDO')
+        .from('BLUEBAY_PEDIDO') // Certifique-se de que está consultando a tabela correta
         .select('*', { count: 'exact', head: false })
         .eq('CENTROCUSTO', 'BLUEBAY') // Filtrar apenas pedidos da BLUEBAY
         .in('STATUS', ['1', '2', '3']) // Pedidos em aberto, parciais ou concluídos

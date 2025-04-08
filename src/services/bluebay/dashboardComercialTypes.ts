@@ -34,6 +34,7 @@ export interface PedidoItem {
   STATUS?: string;
   DATA_PEDIDO?: string | Date;
   VALOR_UNITARIO?: number;
+  CENTROCUSTO?: string; // Added this missing property
 }
 
 export interface DailyFaturamento {
