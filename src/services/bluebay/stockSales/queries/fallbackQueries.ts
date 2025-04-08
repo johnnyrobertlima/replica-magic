@@ -10,7 +10,8 @@ import {
 } from "../utils/queryUtils";
 import { fetchStockItemsPaginated } from "../utils/stock/fetchStockItemsPaginated"; 
 import { fetchItemDetailsBatch } from "../utils/itemQueries";
-import { fetchStockSalesWithDirectQueries as directQueriesFunction } from "../directQueriesService";
+// Import directly from the file that contains the original function definition
+import { fetchStockSalesWithDirectQueries as directQueries } from "../queries/directQueries";
 
 /**
  * Paginated fallback method to fetch stock and sales data
@@ -83,5 +84,5 @@ export const fetchStockSalesWithPagination = async (
   }
 };
 
-// Export for backward compatibility, referencing the imported function
-export const fetchStockSalesWithDirectQueries = directQueriesFunction;
+// Export for backward compatibility
+export const fetchStockSalesWithDirectQueries = directQueries;

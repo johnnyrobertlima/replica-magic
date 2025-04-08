@@ -2,6 +2,7 @@
 import { StockItem } from "./types";
 import { handleApiError } from "./errorHandlingService";
 import { generateSampleStockData } from "./sampleDataGenerator";
+// Import the function directly from its source file
 import { fetchStockSalesWithDirectQueries as directQueriesFunction } from "./queries/directQueries";
 import { fetchStockSalesWithPagination } from "./queries/fallbackQueries";
 
@@ -34,5 +35,5 @@ export const fallbackToDirectQueries = async (
   }
 };
 
-// Export for backward compatibility, referencing the imported function
-export const fetchStockSalesWithDirectQueries = directQueriesFunction;
+// Export the function from its source
+export { directQueriesFunction as fetchStockSalesWithDirectQueries };
