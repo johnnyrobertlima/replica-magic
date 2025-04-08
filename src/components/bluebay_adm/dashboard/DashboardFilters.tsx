@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 import { 
   Select,
@@ -15,6 +15,7 @@ import { useDashboardFilters } from "@/hooks/bluebay_adm/dashboard/useDashboardF
 import { Button } from "@/components/ui/button";
 import { DownloadIcon, RefreshCw } from "lucide-react";
 import { exportToExcel } from "@/utils/exportUtils";
+import { useToast } from "@/components/ui/use-toast";
 
 interface DashboardFiltersProps {
   onFilterChange: () => void;
@@ -23,20 +24,53 @@ interface DashboardFiltersProps {
 export const DashboardFilters = ({ onFilterChange }: DashboardFiltersProps) => {
   const { filters, updateDateRange, updateBrand, updateRepresentative, updateStatus } = useFilters();
   const { filterOptions, isLoading } = useDashboardFilters();
+  const { toast } = useToast();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Use a local state to avoid multiple filter changes triggering multiple API calls
+  const [localDateRange, setLocalDateRange] = useState<DateRange>({
+    from: filters.dateRange.startDate,
+    to: filters.dateRange.endDate
+  });
 
   const handleDateRangeChange = (range: DateRange) => {
     if (range.from && range.to) {
-      updateDateRange(range.from, range.to);
+      setLocalDateRange(range);
+    }
+  };
+
+  const applyDateRange = () => {
+    if (localDateRange.from && localDateRange.to) {
+      updateDateRange(localDateRange.from, localDateRange.to);
     }
   };
 
   const handleExportData = () => {
     // This would export the data - implementation in exportUtils.ts
-    alert("Função de exportação será implementada em breve");
+    toast({
+      title: "Exportação",
+      description: "Função de exportação será implementada em breve",
+    });
   };
 
-  useEffect(() => {
+  const handleRefresh = () => {
+    setIsRefreshing(true);
     onFilterChange();
+    
+    // Reset the refreshing state after a delay
+    setTimeout(() => {
+      setIsRefreshing(false);
+    }, 1500);
+  };
+
+  // Apply filters when filters change
+  useEffect(() => {
+    // This ensures we don't trigger the filter change immediately on mount
+    const timeoutId = setTimeout(() => {
+      onFilterChange();
+    }, 300);
+    
+    return () => clearTimeout(timeoutId);
   }, [filters, onFilterChange]);
 
   return (
@@ -44,17 +78,27 @@ export const DashboardFilters = ({ onFilterChange }: DashboardFiltersProps) => {
       <CardContent className="p-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <div className="lg:col-span-2">
-            <DatePickerWithRange
-              dateRange={{ from: filters.dateRange.startDate, to: filters.dateRange.endDate }}
-              onDateRangeChange={handleDateRangeChange}
-            />
+            <div className="flex flex-col space-y-2">
+              <DatePickerWithRange
+                dateRange={localDateRange}
+                onDateRangeChange={handleDateRangeChange}
+              />
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="self-start"
+                onClick={applyDateRange}
+              >
+                Aplicar período
+              </Button>
+            </div>
           </div>
           
           <div>
             <Select
               value={filters.brand || "all"}
               onValueChange={value => updateBrand(value === "all" ? null : value)}
-              disabled={isLoading}
+              disabled={isLoading || isRefreshing}
             >
               <SelectTrigger className="bg-white">
                 <SelectValue placeholder="Marca (Centrocusto)" />
@@ -74,7 +118,7 @@ export const DashboardFilters = ({ onFilterChange }: DashboardFiltersProps) => {
             <Select
               value={filters.representative || "all"}
               onValueChange={value => updateRepresentative(value === "all" ? null : value)}
-              disabled={isLoading}
+              disabled={isLoading || isRefreshing}
             >
               <SelectTrigger className="bg-white">
                 <SelectValue placeholder="Representante" />
@@ -94,7 +138,7 @@ export const DashboardFilters = ({ onFilterChange }: DashboardFiltersProps) => {
             <Select
               value={filters.status || "all"}
               onValueChange={value => updateStatus(value === "all" ? null : value)}
-              disabled={isLoading}
+              disabled={isLoading || isRefreshing}
             >
               <SelectTrigger className="bg-white">
                 <SelectValue placeholder="Status do Pedido" />
@@ -115,6 +159,7 @@ export const DashboardFilters = ({ onFilterChange }: DashboardFiltersProps) => {
               variant="outline" 
               onClick={handleExportData}
               className="bg-white"
+              disabled={isLoading || isRefreshing}
             >
               <DownloadIcon className="mr-2 h-4 w-4" />
               Exportar Dados
@@ -122,9 +167,10 @@ export const DashboardFilters = ({ onFilterChange }: DashboardFiltersProps) => {
             
             <Button 
               variant="default" 
-              onClick={onFilterChange}
+              onClick={handleRefresh}
+              disabled={isLoading || isRefreshing}
             >
-              <RefreshCw className="mr-2 h-4 w-4" />
+              <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
               Atualizar
             </Button>
           </div>
