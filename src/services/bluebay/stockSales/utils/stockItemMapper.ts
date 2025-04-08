@@ -5,6 +5,7 @@
 
 import { StockItem } from "../types";
 import { logItemDiagnostics } from "./debugLogger";
+import { CostDataRecord } from "./costData/costDataTypes";
 
 /**
  * Creates a map of item details by item code
@@ -29,7 +30,7 @@ export const createItemDetailsMap = (stockItems: any[]) => {
 export const mapStockItems = (
   stockItems: any[], 
   salesByItem: Record<string, any>, 
-  costByItem: Map<string, any>, 
+  costRecords: CostDataRecord[], 
   itemDetailsMap: Map<string, any>,
   daysDiff: number,
   newProductDate: string,
@@ -54,8 +55,8 @@ export const mapStockItems = (
       valores: []
     };
     
-    // Obter dados de custo da view
-    const costInfo = costByItem.get(itemCode);
+    // Get cost data from the processed records
+    const costInfo = getItemCost(itemCode, costRecords);
     
     // If we found cost data for this item, log it for debugging
     const isTargetItem = itemCode === 'MS-101/PB';
@@ -68,7 +69,16 @@ export const mapStockItems = (
       }
     }
     
-    const costInfoToUse = costInfo || { CUSTO_MEDIO: 0, ENTROU: 0, teste: 0 };
+    // Create default values if cost info is missing
+    const costInfoToUse = costInfo || { 
+      ITEM_CODIGO: itemCode,
+      CUSTO_MEDIO: 0, 
+      CUSTO_ATUAL: 0,
+      CUSTO_REPOSICAO: 0,
+      CUSTO_ULTIMA_ENTRADA: 0,
+      ENTROU: 0, 
+      teste: 0 
+    };
     
     const qtdVendida = salesInfo.QTD_VENDIDA;
     const mediaVendasDiaria = qtdVendida / daysDiff;

@@ -4,7 +4,7 @@
  */
 import { StockItem } from "../types";
 import { groupSalesByItem } from "../utils/salesDataProcessor";
-import { processCostData } from "../utils/costDataProcessor";
+import { processCostData, getItemCost } from "../utils/costDataProcessor";
 import { createItemDetailsMap, mapStockItems } from "../utils/stockItemMapper";
 import { assignRankings } from "../utils/rankingUtils";
 import { logDebugInfo } from "../utils/debugLogger";
@@ -27,7 +27,7 @@ export const processStockAndSalesData = (
 
   // Process cost data to create a lookup map
   logDebugInfo("Processando dados de custo...");
-  const costByItem = processCostData(costData);
+  const processedCostData = processCostData(costData);
   
   // Calculate date range for average daily sales
   const daysDiff = calculateDateDiffInDays(startDate, endDate);
@@ -45,7 +45,7 @@ export const processStockAndSalesData = (
   const processedItems = mapStockItems(
     stockItems,
     salesByItem,
-    costByItem,
+    processedCostData,
     itemDetailsMap,
     daysDiff,
     newProductDate,

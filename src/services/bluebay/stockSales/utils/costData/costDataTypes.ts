@@ -16,6 +16,10 @@ export interface CostDataRecord {
   // Timestamps for tracking
   DATA_ATUALIZACAO?: string | Date;
   
+  // Added fields for backward compatibility
+  ENTROU?: number;
+  teste?: number;
+  
   // Additional fields that might be in the cost view
   [key: string]: any;
 }
