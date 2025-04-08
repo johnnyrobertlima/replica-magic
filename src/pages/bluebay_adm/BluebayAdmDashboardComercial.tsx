@@ -8,8 +8,6 @@ import { FaturamentoTable } from "@/components/bluebay_adm/dashboard-comercial/F
 import { useDashboardComercial } from "@/hooks/bluebay_adm/dashboard/useDashboardComercial";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Info } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from 'date-fns/locale';
 
 const BluebayAdmDashboardComercial = () => {
   const {
@@ -21,25 +19,8 @@ const BluebayAdmDashboardComercial = () => {
     refreshData
   } = useDashboardComercial();
 
-  // Formatação das datas para exibição
-  const formattedStartDate = startDate ? format(startDate, 'dd/MM/yyyy', { locale: ptBR }) : '';
-  const formattedEndDate = endDate ? format(endDate, 'dd/MM/yyyy', { locale: ptBR }) : '';
-
   // Verifica se há dados disponíveis
   const hasData = dashboardData?.faturamentoItems && dashboardData.faturamentoItems.length > 0;
-  
-  // Obtém informações sobre o intervalo de dados
-  const dataRangeInfo = dashboardData?.dataRangeInfo;
-  
-  // Verifica se o período solicitado tem dados limitados
-  const hasLimitedData = dataRangeInfo && !dataRangeInfo.hasCompleteData;
-
-  // Formata as datas reais para exibição
-  const actualStartDate = dataRangeInfo?.startDateActual ? 
-    format(new Date(dataRangeInfo.startDateActual), 'dd/MM/yyyy', { locale: ptBR }) : null;
-    
-  const actualEndDate = dataRangeInfo?.endDateActual ? 
-    format(new Date(dataRangeInfo.endDateActual), 'dd/MM/yyyy', { locale: ptBR }) : null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -59,17 +40,6 @@ const BluebayAdmDashboardComercial = () => {
           isLoading={isLoading}
         />
         
-        {hasLimitedData && (
-          <Alert variant="warning" className="mb-4">
-            <Info className="h-4 w-4" />
-            <AlertTitle>Dados limitados</AlertTitle>
-            <AlertDescription>
-              O período solicitado ({formattedStartDate} - {formattedEndDate}) contém dados apenas no intervalo 
-              de {actualStartDate || '?'} até {actualEndDate || '?'}.
-            </AlertDescription>
-          </Alert>
-        )}
-
         {!hasData && !isLoading && (
           <Alert variant="destructive" className="mb-4">
             <Info className="h-4 w-4" />

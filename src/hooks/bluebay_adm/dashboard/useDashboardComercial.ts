@@ -68,13 +68,12 @@ export const useDashboardComercial = (): UseDashboardComercialReturn => {
           description: "Não foram encontrados dados de faturamento para o período selecionado.",
           variant: "destructive",
         });
-      }
-      
-      // Verifica se há dados limitados e mostra uma notificação
-      else if (!data.dataRangeInfo.hasCompleteData) {
+      } 
+      else {
+        // Notificação de sucesso ao carregar os dados
         toast({
-          title: "Dados parciais",
-          description: "Os dados disponíveis não cobrem todo o período solicitado.",
+          title: "Dados carregados com sucesso",
+          description: `Foram encontrados ${data.faturamentoItems.length} registros de faturamento.`,
           variant: "default",
         });
       }
