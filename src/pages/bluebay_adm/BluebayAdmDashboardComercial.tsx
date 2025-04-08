@@ -4,6 +4,7 @@ import { BluebayAdmMenu } from "@/components/bluebay_adm/BluebayAdmMenu";
 import { FaturamentoTimeSeriesChart } from "@/components/bluebay_adm/dashboard-comercial/FaturamentoTimeSeriesChart";
 import { FaturamentoKpiCards } from "@/components/bluebay_adm/dashboard-comercial/FaturamentoKpiCards";
 import { DashboardComercialFilters } from "@/components/bluebay_adm/dashboard-comercial/DashboardComercialFilters";
+import { FaturamentoTable } from "@/components/bluebay_adm/dashboard-comercial/FaturamentoTable";
 import { useDashboardComercial } from "@/hooks/bluebay_adm/dashboard/useDashboardComercial";
 
 const BluebayAdmDashboardComercial = () => {
@@ -52,6 +53,12 @@ const BluebayAdmDashboardComercial = () => {
             isLoading={isLoading}
           />
         </div>
+        
+        {/* Tabela de Notas Fiscais */}
+        <FaturamentoTable 
+          faturamentoData={dashboardData?.faturamentoItems || []}
+          isLoading={isLoading}
+        />
       </div>
     </div>
   );

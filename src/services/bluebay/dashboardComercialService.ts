@@ -42,6 +42,7 @@ export interface DashboardComercialData {
   totalFaturado: number;
   totalItens: number;
   mediaValorItem: number;
+  faturamentoItems: FaturamentoItem[];
 }
 
 /**
@@ -172,13 +173,14 @@ export const fetchDashboardComercialData = async (
     // Calcular média por item
     const mediaValorItem = totalItens > 0 ? totalFaturado / totalItens : 0;
 
-    // Determinar qual conjunto de dados retornar com base no período
-    let returnData: DashboardComercialData = {
+    // Retornar os dados processados, incluindo os itens originais para a tabela
+    const returnData: DashboardComercialData = {
       dailyFaturamento,
       monthlyFaturamento,
       totalFaturado,
       totalItens,
-      mediaValorItem
+      mediaValorItem,
+      faturamentoItems: faturamentoData
     };
 
     console.log(`Processamento concluído: ${dailyFaturamento.length} dias, ${monthlyFaturamento.length} meses`);

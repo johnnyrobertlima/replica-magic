@@ -22,7 +22,8 @@ const defaultData: DashboardComercialData = {
   monthlyFaturamento: [],
   totalFaturado: 0,
   totalItens: 0,
-  mediaValorItem: 0
+  mediaValorItem: 0,
+  faturamentoItems: []
 };
 
 export const useDashboardComercial = (): UseDashboardComercialReturn => {
