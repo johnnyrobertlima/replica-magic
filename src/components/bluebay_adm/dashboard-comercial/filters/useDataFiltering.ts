@@ -27,6 +27,10 @@ export const useDataFiltering = (
   const filterByCentroCusto = useCallback((item: any) => {
     if (!selectedCentroCusto) return true;
     
+    // Caso especial para "Não identificado" - só precisa verificar no frontend
+    // já que no backend já fizemos a filtragem apropriada
+    if (selectedCentroCusto === "Não identificado") return true;
+    
     // Check multiple possible field names for centro de custo
     // Including data from related tables that might be nested
     return (

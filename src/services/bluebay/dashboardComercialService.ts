@@ -68,13 +68,101 @@ export const fetchDashboardComercialData = async (
     let faturamentoItems: FaturamentoItem[] = [];
     let pedidoItems: PedidoItem[] = [];
 
-    // Caso 1: Se houver filtro de centro de custo, fazemos primeiramente a busca de pedidos
-    // e depois buscamos o faturamento correspondente
-    if (centroCusto) {
+    // Caso especial: quando o filtro é "Não identificado", precisamos buscar todos os 
+    // faturamentos e depois filtrar os não associados a pedidos
+    if (centroCusto === "Não identificado") {
+      console.log("Buscando faturamentos sem centro de custo associado");
+      
+      // Buscar todos os faturamentos no período
+      faturamentoItems = await fetchInBatches<FaturamentoItem>(
+        async (offset, limit) => {
+          return supabase
+            .from('BLUEBAY_FATURAMENTO')
+            .select('*')
+            .gte('DATA_EMISSAO', formattedStartDate)
+            .lte('DATA_EMISSAO', formattedEndDate)
+            .range(offset, offset + limit - 1);
+        },
+        1000
+      );
+      
+      console.log(`Encontrados ${faturamentoItems.length} registros de faturamento para verificação`);
+      
+      // Buscar todos os pedidos para poder associar e encontrar os "não identificados"
+      const todosOsPedidos = await fetchInBatches<PedidoItem>(
+        async (offset, limit) => {
+          return supabase
+            .from('BLUEBAY_PEDIDO')
+            .select('*')
+            .gte('DATA_PEDIDO', formattedStartDate)
+            .lte('DATA_PEDIDO', formattedEndDate)
+            .range(offset, offset + limit - 1);
+        },
+        1000
+      );
+      
+      console.log(`Encontrados ${todosOsPedidos.length} pedidos para associação`);
+      
+      // Criar um Map de pedidos indexados por chave composta para busca rápida
+      const pedidosMap = new Map<string, PedidoItem>();
+      todosOsPedidos.forEach(pedido => {
+        // Criar múltiplas chaves para cada pedido para permitir diferentes estratégias de match
+        if (pedido.PED_NUMPEDIDO && pedido.PED_ANOBASE) {
+          // Chave com todos os campos
+          const chaveCompleta = createCompositeKey(pedido);
+          pedidosMap.set(chaveCompleta, pedido);
+          
+          // Chave sem item_codigo
+          const chaveSemItem = `${normalizeValue(pedido.PED_NUMPEDIDO)}|${normalizeValue(pedido.PED_ANOBASE)}|${normalizeValue(pedido.MPED_NUMORDEM)}|`;
+          pedidosMap.set(chaveSemItem, pedido);
+          
+          // Chave simplificada apenas com número de pedido e ano
+          const chaveSimples = `${normalizeValue(pedido.PED_NUMPEDIDO)}|${normalizeValue(pedido.PED_ANOBASE)}||`;
+          pedidosMap.set(chaveSimples, pedido);
+        }
+      });
+      
+      // Filtrar apenas os faturamentos que não têm pedido correspondente ou que não possuem centro de custo
+      const naoIdentificados = faturamentoItems.filter(faturamento => {
+        // Se não tiver número de pedido, é não identificado
+        if (!faturamento.PED_NUMPEDIDO || !faturamento.PED_ANOBASE) return true;
+        
+        // Tentar encontrar pedido correspondente
+        let pedidoCorrespondente: PedidoItem | undefined;
+        
+        // Verificar com a chave composta
+        const chaveCompleta = createCompositeKey(faturamento);
+        pedidoCorrespondente = pedidosMap.get(chaveCompleta);
+        
+        if (!pedidoCorrespondente) {
+          // Verificar com chave sem item
+          const chaveSemItem = `${normalizeValue(faturamento.PED_NUMPEDIDO)}|${normalizeValue(faturamento.PED_ANOBASE)}|${normalizeValue(faturamento.MPED_NUMORDEM)}|`;
+          pedidoCorrespondente = pedidosMap.get(chaveSemItem);
+        }
+        
+        if (!pedidoCorrespondente) {
+          // Verificar com chave simples
+          const chaveSimples = `${normalizeValue(faturamento.PED_NUMPEDIDO)}|${normalizeValue(faturamento.PED_ANOBASE)}||`;
+          pedidoCorrespondente = pedidosMap.get(chaveSimples);
+        }
+        
+        // Se não encontrou pedido OU o pedido não tem centro de custo, é "não identificado"
+        return !pedidoCorrespondente || !pedidoCorrespondente.CENTROCUSTO;
+      });
+      
+      // Atualizar faturamentoItems para conter apenas os não identificados
+      faturamentoItems = naoIdentificados;
+      console.log(`Encontrados ${faturamentoItems.length} registros de faturamento sem centro de custo identificado`);
+      
+      // Os pedidos ficam vazios, já que "Não identificado" significa que não há pedido correspondente
+      pedidoItems = [];
+    }
+    // Caso 1: Se houver filtro de centro de custo (diferente de "Não identificado"), 
+    // fazemos primeiramente a busca de pedidos e depois buscamos o faturamento correspondente
+    else if (centroCusto) {
       console.log("Buscando pedidos filtrados por centro de custo:", centroCusto);
       
-      // 1. Primeiro, buscar os pedidos do centro de custo específico usando fetchInBatches
-      // para evitar limitação de 1000 registros
+      // 1. Primeiro, buscar os pedidos do centro de custo específico 
       pedidoItems = await fetchInBatches<PedidoItem>(
         async (offset, limit) => {
           return supabase
@@ -115,18 +203,6 @@ export const fetchDashboardComercialData = async (
             const lotePedidos = pedidoItems.slice(i, i + tamanhoBatch);
             
             console.log(`Buscando faturamentos para lote de ${lotePedidos.length} pedidos (${i+1} até ${Math.min(i + tamanhoBatch, pedidoItems.length)} de ${pedidoItems.length})`);
-            
-            // Construir condições OR para cada pedido do lote
-            const filterCriteria = lotePedidos.map(pedido => {
-              const conditions = supabase
-                .from('BLUEBAY_FATURAMENTO')
-                .select('*')
-                .eq('PED_NUMPEDIDO', pedido.PED_NUMPEDIDO)
-                .eq('PED_ANOBASE', pedido.PED_ANOBASE)
-                .eq('MPED_NUMORDEM', pedido.MPED_NUMORDEM);
-              
-              return conditions;
-            });
             
             // Executar consultas em paralelo para cada pedido no lote
             const faturamentosPromises = lotePedidos.map(pedido => 
