@@ -9,7 +9,15 @@ import { createSeparation, createSeparationItems } from "./separationDbService";
 export const processSelectedItems = (
   selectedItems: string[],
   groupedOrders: Record<string, ClientOrderGroup>,
-  selectedItemsDetails?: Record<string, { qtde: number; valor: number; clientName?: string; clientCode?: number }>
+  selectedItemsDetails?: Record<string, { 
+    qtde: number; 
+    valor: number; 
+    clientName?: string; 
+    clientCode?: number;
+    pedido?: string;  // Número do pedido associado ao item
+    DESCRICAO?: string | null;
+    PES_CODIGO?: number;
+  }>
 ) => {
   if (selectedItems.length === 0) {
     return { success: false, message: "Nenhum item selecionado", items: [] };
@@ -20,25 +28,33 @@ export const processSelectedItems = (
     item: any;
     PES_CODIGO: number | null;
     APELIDO: string | null;
-    clientCardName?: string; // Novo campo para o nome do cliente do card
+    clientCardName?: string; // Nome do cliente do card
   }> = [];
 
   // Coletar informações sobre os clientes que contêm os itens selecionados
-  const clientsForItems: Record<string, { clientName: string; PES_CODIGO: number }> = {};
+  const clientsForItems: Record<string, { 
+    clientName: string; 
+    PES_CODIGO: number;
+    pedido?: string; // Adicionado para rastrear o pedido de cada item
+  }> = {};
   
   // Primeiro identifica a qual cliente cada item pertence (do card de onde foi selecionado)
+  // e também armazena o número do pedido associado
   if (selectedItemsDetails) {
     Object.entries(selectedItemsDetails).forEach(([itemCode, details]) => {
       if (details.clientName && details.clientCode) {
         clientsForItems[itemCode] = {
           clientName: details.clientName,
-          PES_CODIGO: details.clientCode
+          PES_CODIGO: details.clientCode,
+          pedido: details.pedido // Capturar o número do pedido dos detalhes
         };
+        console.log(`Item ${itemCode} associado ao cliente ${details.clientName} e pedido ${details.pedido || 'Não informado'}`);
       }
     });
   }
 
   // Agora coleta apenas os itens correspondentes ao cliente apropriado
+  // incluindo explicitamente o número do pedido
   Object.entries(groupedOrders).forEach(([clientName, group]) => {
     group.allItems.forEach(item => {
       if (selectedItems.includes(item.ITEM_CODIGO)) {
@@ -50,9 +66,14 @@ export const processSelectedItems = (
           
           console.log('PES_CODIGO original:', item.PES_CODIGO);
           console.log('PES_CODIGO processado:', pesCodigoNumerico);
+          console.log('Pedido do item:', item.pedido);
+          console.log('Pedido das informações do cliente:', itemClient.pedido);
+
+          // Usar o pedido do item se disponível, ou o pedido das informações do cliente como fallback
+          const pedidoFinal = item.pedido || itemClient.pedido || '';
 
           allSelectedItems.push({
-            pedido: item.pedido,
+            pedido: pedidoFinal,
             item: item,
             PES_CODIGO: pesCodigoNumerico,
             APELIDO: item.APELIDO,
@@ -67,7 +88,7 @@ export const processSelectedItems = (
           console.log('PES_CODIGO processado:', pesCodigoNumerico);
 
           allSelectedItems.push({
-            pedido: item.pedido,
+            pedido: item.pedido || '',
             item: item,
             PES_CODIGO: pesCodigoNumerico,
             APELIDO: item.APELIDO,
@@ -124,6 +145,11 @@ export const createSeparationsForClients = async (
     const clientName = clientItem.APELIDO || "Cliente Sem Nome";
 
     console.log(`Processando cliente: ${clientName} (código: ${clienteCode})`);
+    console.log(`Itens para separação:`, items.map(i => ({
+      item_codigo: i.item.ITEM_CODIGO,
+      pedido: i.pedido,
+      descricao: i.item.DESCRICAO
+    })));
     
     if (!clienteCode) {
       console.error(`Cliente ${clientName} sem código válido:`, clientItem);

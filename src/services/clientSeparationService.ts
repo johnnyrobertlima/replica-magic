@@ -55,12 +55,12 @@ export async function sendToSeparation({ items }: SeparationRequest) {
       
       const valorTotal = clienteItems.reduce((sum, item) => sum + (item.qtdeSaldo * item.valorUnitario), 0);
       
-      // Remove user_email from the insert as it doesn't exist in the schema
+      // Remover user_email do insert pois não existe no esquema
       const { data, error } = await supabase
         .from('separacoes')
         .insert({
           cliente_codigo: clienteNumerico,
-          cliente_nome: 'Cliente ' + clienteKey, // This should be replaced with actual client name if available
+          cliente_nome: 'Cliente ' + clienteKey, // Substituir com o nome real do cliente se disponível
           quantidade_itens: clienteItems.length,
           valor_total: valorTotal,
           status: 'pendente'
@@ -78,7 +78,7 @@ export async function sendToSeparation({ items }: SeparationRequest) {
       // Add separation items
       const separationItems = clienteItems.map(item => ({
         separacao_id: data.id,
-        pedido: item.pedido,
+        pedido: item.pedido,  // Garantir que o pedido seja incluído
         item_codigo: item.itemCodigo,
         descricao: item.descricao,
         quantidade_pedida: item.qtdeSaldo,

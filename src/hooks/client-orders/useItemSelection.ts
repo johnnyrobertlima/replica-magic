@@ -43,15 +43,18 @@ export const useItemSelection = (
         const clientName = item.APELIDO || '';
         const clientCode = item.PES_CODIGO;
         
+        // Importante: capturar e armazenar o número do pedido
         newSelectedItemsDetails[itemCode] = { 
           qtde, 
           valor,
-          clientName, // Armazenar o nome do cliente
-          clientCode,  // Armazenar o código do cliente
-          pedido: item.pedido,
+          clientName,
+          clientCode,
+          pedido: item.pedido, // Armazenar o número do pedido explicitamente
           DESCRICAO: item.DESCRICAO,
           PES_CODIGO: item.PES_CODIGO
         };
+        
+        console.log(`Item ${itemCode} selecionado do pedido ${item.pedido}`);
       }
       
       console.log("Updated selection state:", {

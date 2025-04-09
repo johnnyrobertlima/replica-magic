@@ -39,17 +39,25 @@ export const createSeparationItems = async (
   separacaoId: string, 
   items: any[]
 ) => {
-  const separacaoItens = items.map(({ pedido, item }) => ({
-    separacao_id: separacaoId,
-    pedido: pedido,
-    item_codigo: item.ITEM_CODIGO,
-    descricao: item.DESCRICAO,
-    quantidade_pedida: item.QTDE_SALDO,
-    valor_unitario: item.VALOR_UNITARIO,
-    valor_total: item.QTDE_SALDO * item.VALOR_UNITARIO
-  }));
+  // Garantir que o campo pedido seja armazenado corretamente para cada item
+  const separacaoItens = items.map(({ pedido, item }) => {
+    // Verificar se o pedido existe e armazenar o valor correto
+    const pedidoNumber = pedido || item.pedido || '';
+    
+    console.log(`Salvando item de separação: Item ${item.ITEM_CODIGO}, Pedido: ${pedidoNumber}`);
+    
+    return {
+      separacao_id: separacaoId,
+      pedido: pedidoNumber,
+      item_codigo: item.ITEM_CODIGO,
+      descricao: item.DESCRICAO,
+      quantidade_pedida: item.QTDE_SALDO,
+      valor_unitario: item.VALOR_UNITARIO,
+      valor_total: item.QTDE_SALDO * item.VALOR_UNITARIO
+    };
+  });
 
-  console.log(`Inserindo itens para separação ${separacaoId}`);
+  console.log(`Inserindo ${separacaoItens.length} itens para separação ${separacaoId}`);
   const { error: itensError } = await supabase
     .from('separacao_itens')
     .insert(separacaoItens);

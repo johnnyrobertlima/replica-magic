@@ -24,7 +24,7 @@ export const useSeparationOperations = (
         
         return {
           itemCodigo: item,
-          pedido: details.pedido || "",
+          pedido: details.pedido || "", // Garantir que o pedido seja enviado
           pesCodigo: details.clientCode || details.PES_CODIGO || 0,
           descricao: details.DESCRICAO || "",
           qtdeSaldo: details.qtde || 0,
@@ -84,7 +84,7 @@ export const useSeparationOperations = (
             if (item.ITEM_CODIGO === itemCode) {
               selectedItemsDetails[itemCode] = {
                 ...selectedItemsDetails[itemCode],
-                pedido: item.pedido,
+                pedido: item.pedido || selectedItemsDetails[itemCode].pedido,
                 DESCRICAO: item.DESCRICAO,
                 PES_CODIGO: item.PES_CODIGO
               };
@@ -100,7 +100,7 @@ export const useSeparationOperations = (
               selectedItemsDetails[itemCode] = {
                 qtde: item.QTDE_SALDO,
                 valor: item.QTDE_SALDO * item.VALOR_UNITARIO,
-                pedido: item.pedido,
+                pedido: item.pedido, // Importante capturar o pedido
                 DESCRICAO: item.DESCRICAO,
                 PES_CODIGO: item.PES_CODIGO
               };
