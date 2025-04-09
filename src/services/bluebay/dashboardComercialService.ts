@@ -62,7 +62,11 @@ export const fetchDashboardComercialData = async (
     }
 
     // Buscar dados das notas fiscais
+    // Extrair as notas para buscar os detalhes
     const notasKeys = faturamentoDataFromView?.map(item => item.NOTA).filter(Boolean) || [];
+    
+    console.log(`Buscando dados de ${notasKeys.length} notas fiscais`);
+    
     const { data: faturamentoData, error: faturamentoError } = await supabase
       .from('BLUEBAY_FATURAMENTO')
       .select('*')
@@ -71,6 +75,8 @@ export const fetchDashboardComercialData = async (
     if (faturamentoError) {
       console.error('Erro ao buscar dados das notas fiscais:', faturamentoError);
       // Não vamos interromper o fluxo, mas logar o erro
+    } else {
+      console.log(`Encontradas ${faturamentoData?.length || 0} linhas de faturamento nas notas solicitadas`);
     }
 
     // 3. Combinar os dados para criar o resultado final
@@ -81,11 +87,22 @@ export const fetchDashboardComercialData = async (
       pedidosMap.set(key, pedido);
     });
 
-    // Criar mapa de faturamento para rápido acesso
+    // Criar mapa de faturamento para rápido acesso agrupado por nota
     const faturamentoMap = new Map();
     faturamentoData?.forEach(fatura => {
-      faturamentoMap.set(fatura.NOTA, fatura);
+      if (!fatura.NOTA) return;
+      
+      // Se já existe uma entrada para esta nota, adiciona a este item
+      if (faturamentoMap.has(fatura.NOTA)) {
+        faturamentoMap.get(fatura.NOTA).push(fatura);
+      } else {
+        // Caso contrário, cria um novo array com este item
+        faturamentoMap.set(fatura.NOTA, [fatura]);
+      }
     });
+
+    console.log(`Processando ${faturamentoDataFromView?.length || 0} itens da view...`);
+    console.log(`Mapas: ${pedidosMap.size} pedidos e ${faturamentoMap.size} notas de faturamento`);
 
     // Combinar os dados da view com os dados detalhados
     const faturamentoItems: FaturamentoItem[] = faturamentoDataFromView?.map(viewItem => {
@@ -94,7 +111,24 @@ export const fetchDashboardComercialData = async (
       const pedidoDetalhe = pedidosMap.get(pedidoKey);
       
       // Buscar dados da nota fiscal correspondente
-      const faturaDetalhe = faturamentoMap.get(viewItem.NOTA);
+      const faturasDetalhe = viewItem.NOTA ? faturamentoMap.get(viewItem.NOTA) || [] : [];
+      
+      // Se tiver mais de uma linha de faturamento para esta nota, encontre a correspondente
+      // ao item atual usando outros campos como ITEM_CODIGO ou PED_NUMPEDIDO
+      let faturaDetalhe = null;
+      if (faturasDetalhe.length > 0) {
+        if (faturasDetalhe.length === 1) {
+          // Se só tem uma linha, usa ela
+          faturaDetalhe = faturasDetalhe[0];
+        } else {
+          // Tenta encontrar a linha específica para este item
+          faturaDetalhe = faturasDetalhe.find(f => 
+            f.ITEM_CODIGO === viewItem.ITEM_CODIGO &&
+            f.PED_NUMPEDIDO === viewItem.PED_NUMPEDIDO &&
+            f.PED_ANOBASE === viewItem.PED_ANOBASE
+          ) || faturasDetalhe[0]; // Se não encontrar, usa a primeira
+        }
+      }
 
       // Combinar dados
       return {
@@ -141,6 +175,10 @@ export const fetchDashboardComercialData = async (
     }) || [];
 
     console.log(`Total de registros recuperados com relacionamentos manuais: ${faturamentoItems.length}`);
+
+    // Log para debug - verificar quais itens possuem dados de faturamento
+    const itemsWithFaturamento = faturamentoItems.filter(item => item.faturamento).length;
+    console.log(`Itens com dados de faturamento: ${itemsWithFaturamento} (${(itemsWithFaturamento / faturamentoItems.length * 100).toFixed(2)}%)`);
 
     // Extrair dados de pedidos a partir dos dados do faturamento
     const pedidoItems = faturamentoItems
