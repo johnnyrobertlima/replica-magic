@@ -1,28 +1,50 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { BluebayAdmBanner } from "@/components/bluebay_adm/BluebayAdmBanner";
 import { BluebayAdmMenu } from "@/components/bluebay_adm/BluebayAdmMenu";
 import { DashboardComercialFilters } from "@/components/bluebay_adm/dashboard-comercial/DashboardComercialFilters";
 import { useDashboardComercial } from "@/hooks/bluebay_adm/dashboard/useDashboardComercial";
 import { DashboardContent } from "@/components/bluebay_adm/dashboard-comercial/DashboardContent";
+import { Loader2 } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 const BluebayAdmDashboardComercial = () => {
   const {
     dashboardData,
     isLoading,
+    error,
     startDate,
     endDate,
     setDateRange,
     refreshData
   } = useDashboardComercial();
   
-  // Estado para controlar o filtro de Centro de Custo
+  const { toast } = useToast();
   const [selectedCentroCusto, setSelectedCentroCusto] = useState<string | null>(null);
+  const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
 
   // Usar useCallback para evitar recriação da função a cada render
   const handleCentroCustoChange = useCallback((centroCusto: string | null) => {
     setSelectedCentroCusto(centroCusto);
   }, []);
+
+  // Effect para lidar com erros de carregamento
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Erro ao carregar dados",
+        description: "Ocorreu um erro ao carregar os dados do dashboard. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  }, [error, toast]);
+
+  // Effect para verificar quando terminou o carregamento inicial
+  useEffect(() => {
+    if (!isLoading && isInitialLoad) {
+      setIsInitialLoad(false);
+    }
+  }, [isLoading, isInitialLoad]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -42,14 +64,23 @@ const BluebayAdmDashboardComercial = () => {
           isLoading={isLoading}
         />
 
-        <DashboardContent
-          dashboardData={dashboardData}
-          selectedCentroCusto={selectedCentroCusto}
-          setSelectedCentroCusto={handleCentroCustoChange}
-          isLoading={isLoading}
-          startDate={startDate}
-          endDate={endDate}
-        />
+        {isLoading && isInitialLoad ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="flex flex-col items-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+              <p className="text-muted-foreground">Carregando dados do dashboard...</p>
+            </div>
+          </div>
+        ) : (
+          <DashboardContent
+            dashboardData={dashboardData}
+            selectedCentroCusto={selectedCentroCusto}
+            setSelectedCentroCusto={handleCentroCustoChange}
+            isLoading={isLoading}
+            startDate={startDate}
+            endDate={endDate}
+          />
+        )}
       </div>
     </div>
   );

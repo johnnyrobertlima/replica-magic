@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { FaturamentoItem, PedidoItem } from "@/services/bluebay/dashboardComercialTypes";
 import { encontrarPedidoCorrespondente } from "../utils/pedidoUtils";
 
@@ -26,90 +26,91 @@ export const useDataFiltering = (
   // Estado para armazenar as correspondências não encontradas para debug
   const [naoIdentificados, setNaoIdentificados] = useState<any[]>([]);
 
-  // Efeito para coletar diagnósticos quando os dados mudam
+  // Otimização: Usar useMemo para não recalcular a cada renderização
+  const filteredFaturamentoItems = useMemo(() => {
+    if (!dashboardData || isLoading) return [];
+    
+    if (!selectedCentroCusto) return dashboardData.faturamentoItems;
+    
+    return dashboardData.faturamentoItems.filter(item => {
+      // Se o Centro de Custo for "Não identificado"
+      if (selectedCentroCusto === "Não identificado") {
+        const pedidoCorrespondente = encontrarPedidoCorrespondente(item, dashboardData.pedidoItems);
+        return !pedidoCorrespondente;
+      } else {
+        const pedidoCorrespondente = encontrarPedidoCorrespondente(item, dashboardData.pedidoItems);
+        return pedidoCorrespondente?.CENTROCUSTO === selectedCentroCusto;
+      }
+    });
+  }, [dashboardData, selectedCentroCusto, isLoading]);
+
+  const filteredPedidoItems = useMemo(() => {
+    if (!dashboardData || isLoading) return [];
+    
+    if (!selectedCentroCusto) return dashboardData.pedidoItems;
+    
+    if (selectedCentroCusto === "Não identificado") return [];
+    
+    return dashboardData.pedidoItems.filter(item => 
+      item.CENTROCUSTO === selectedCentroCusto
+    );
+  }, [dashboardData, selectedCentroCusto, isLoading]);
+
+  // Calcular totais a partir dos itens filtrados
+  const calculatedTotals = useMemo(() => {
+    const totalFaturado = filteredFaturamentoItems.reduce(
+      (sum, item) => sum + (item.VALOR_NOTA || 0), 0
+    );
+    
+    const totalItens = filteredFaturamentoItems.reduce(
+      (sum, item) => sum + (item.QUANTIDADE || 0), 0
+    );
+    
+    const mediaValorItem = totalItens > 0 ? totalFaturado / totalItens : 0;
+    
+    return { totalFaturado, totalItens, mediaValorItem };
+  }, [filteredFaturamentoItems]);
+
+  // Diagnosticar problemas somente quando necessário e com limites para não sobrecarregar
   useEffect(() => {
     if (!dashboardData || isLoading) return;
-    
-    // Limitar o diagnóstico apenas quando realmente necessário
-    // Usar setTimeout para não bloquear a interface
-    const timer = setTimeout(() => {
-      // Coletar itens não identificados para diagnóstico
-      const diagnosticos: any[] = [];
-      const totalItens = dashboardData.faturamentoItems.length;
-      
-      // Considerar apenas alguns itens para diagnóstico para evitar sobrecarga
-      const itemsToProcess = Math.min(totalItens, 1000); // Limitar a 1000 itens para diagnóstico
-      
-      // Analisar apenas uma amostra dos dados para diagnóstico
-      const sampleItems = dashboardData.faturamentoItems.slice(0, itemsToProcess);
-      
-      sampleItems.forEach(item => {
-        if (!item.PED_NUMPEDIDO || !item.PED_ANOBASE) return;
+
+    // Usar um timeout para não bloquear a renderização
+    const diagnosisTimer = setTimeout(() => {
+      // Apenas diagnosticar se houver uma quantidade significativa de itens
+      if (dashboardData.faturamentoItems.length > 1000) {
+        // Selecionar uma amostra para diagnóstico (até 5%)
+        const sampleSize = Math.min(500, Math.ceil(dashboardData.faturamentoItems.length * 0.05));
+        const sampleItems = dashboardData.faturamentoItems.slice(0, sampleSize);
         
-        const pedido = encontrarPedidoCorrespondente(item, dashboardData.pedidoItems);
-        if (!pedido) {
-          diagnosticos.push({
+        const diagnosticoItems = sampleItems
+          .filter(item => item.PED_NUMPEDIDO && item.PED_ANOBASE)
+          .filter(item => {
+            const pedido = encontrarPedidoCorrespondente(item, dashboardData.pedidoItems);
+            return !pedido;
+          })
+          .map(item => ({
             faturamento: {
               NOTA: item.NOTA,
               PED_NUMPEDIDO: item.PED_NUMPEDIDO,
               PED_ANOBASE: item.PED_ANOBASE,
               MPED_NUMORDEM: item.MPED_NUMORDEM,
-              VALOR_NOTA: item.VALOR_NOTA,
               DATA_EMISSAO: item.DATA_EMISSAO
             }
-          });
-        }
-      });
-      
-      if (diagnosticos.length > 0) {
-        console.log(`Encontrados ${diagnosticos.length} itens de faturamento sem correspondência em amostra de ${itemsToProcess} itens`);
-        // Mostrar no máximo 10 itens para não sobrecarregar o console
-        const primeiros10 = diagnosticos.slice(0, 10);
-        console.log('Amostra de itens não identificados:', primeiros10);
+          }))
+          .slice(0, 10); // Limitar a 10 itens máximo no relatório
         
-        setNaoIdentificados(diagnosticos);
-      }
-    }, 500);
-    
-    return () => clearTimeout(timer);
-  }, [dashboardData, isLoading]);
-
-  // Filtrar dados com base no Centro de Custo selecionado usando a lógica aprimorada
-  const filteredFaturamentoItems = !dashboardData ? [] : selectedCentroCusto 
-    ? dashboardData.faturamentoItems.filter(item => {
-        // Se o Centro de Custo for "Não identificado"
-        if (selectedCentroCusto === "Não identificado") {
-          // Verificar se há um pedido correspondente
-          const pedidoCorrespondente = encontrarPedidoCorrespondente(item, dashboardData.pedidoItems);
-          
-          // Retornar true se não houver pedido correspondente (é "Não identificado")
-          return !pedidoCorrespondente;
+        if (diagnosticoItems.length > 0) {
+          console.log(`Diagnóstico: ${diagnosticoItems.length} itens de faturamento sem correspondência na amostra`);
+          setNaoIdentificados(diagnosticoItems);
         } else {
-          // Para outros centros de custo, buscar o pedido correspondente
-          const pedidoCorrespondente = encontrarPedidoCorrespondente(item, dashboardData.pedidoItems);
-          
-          // Verificar se o pedido tem o centro de custo selecionado
-          return pedidoCorrespondente?.CENTROCUSTO === selectedCentroCusto;
+          setNaoIdentificados([]);
         }
-      }) 
-    : dashboardData.faturamentoItems;
-  
-  const filteredPedidoItems = !dashboardData ? [] : selectedCentroCusto 
-    ? (selectedCentroCusto === "Não identificado" 
-        ? [] // Para "Não identificado", não há pedidos, apenas itens de faturamento sem pedido correspondente
-        : dashboardData.pedidoItems.filter(item => item.CENTROCUSTO === selectedCentroCusto))
-    : dashboardData.pedidoItems;
-
-  // Recalcular totais com base nos itens filtrados
-  const calculatedTotals = {
-    totalFaturado: filteredFaturamentoItems.reduce((sum, item) => sum + (item.VALOR_NOTA || 0), 0),
-    totalItens: filteredFaturamentoItems.reduce((sum, item) => sum + (item.QUANTIDADE || 0), 0),
-    mediaValorItem: 0
-  };
-  
-  calculatedTotals.mediaValorItem = calculatedTotals.totalItens > 0 
-    ? calculatedTotals.totalFaturado / calculatedTotals.totalItens 
-    : 0;
+      }
+    }, 1000);
+    
+    return () => clearTimeout(diagnosisTimer);
+  }, [dashboardData, isLoading]);
 
   const hasFilteredData = filteredFaturamentoItems.length > 0;
 

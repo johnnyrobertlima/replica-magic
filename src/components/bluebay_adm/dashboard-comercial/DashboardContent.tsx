@@ -6,6 +6,8 @@ import { FaturamentoTable } from "./FaturamentoTable";
 import { DashboardAlerts } from "./alerts/DashboardAlerts";
 import { useDataFiltering } from "./filters/useDataFiltering";
 import { FaturamentoItem, PedidoItem } from "@/services/bluebay/dashboardComercialTypes";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface DashboardContentProps {
   dashboardData: {
@@ -40,6 +42,37 @@ export const DashboardContent = ({
 
   // Verifica se há dados disponíveis
   const hasData = !isLoading && dashboardData && dashboardData.faturamentoItems.length > 0;
+  const noDataAfterFiltering = !isLoading && hasData && selectedCentroCusto && !hasFilteredData;
+
+  // Mostrar alerta quando não há dados após a filtragem
+  if (noDataAfterFiltering) {
+    return (
+      <>
+        <FaturamentoKpiCards
+          totalFaturado={0}
+          totalItens={0}
+          mediaValorItem={0}
+          isLoading={isLoading}
+        />
+        
+        <Alert className="my-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Nenhum dado encontrado</AlertTitle>
+          <AlertDescription>
+            Não foram encontrados dados para o Centro de Custo "{selectedCentroCusto}" no período selecionado.
+            <div className="mt-2">
+              <button
+                onClick={() => setSelectedCentroCusto(null)}
+                className="text-primary hover:underline"
+              >
+                Limpar filtro de Centro de Custo
+              </button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      </>
+    );
+  }
 
   return (
     <>

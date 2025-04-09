@@ -21,19 +21,24 @@ export const fetchDashboardComercialData = async (
 
     console.log(`Buscando dados de faturamento comercial de ${startDateStr} até ${endDateStr}`);
     
-    // Adaptar o tamanho do lote conforme a quantidade de dados
-    const batchSize = 2000; // Otimizado para melhor desempenho
+    // Adaptar o tamanho do lote para melhor equilíbrio entre performance e memória
+    const batchSize = 5000; // Otimizado para não sobrecarregar
     
     // Função para buscar dados de faturamento em lotes com query otimizada
     const fetchFaturamentoBatch = async (offset: number, limit: number) => {
       console.log(`Buscando lote de faturamento ${offset/limit + 1} (tamanho: ${limit})`);
+      
+      // Garantir que as datas estejam formatadas corretamente
+      const formattedStartDate = `${startDateStr}T00:00:00.000`;
+      const formattedEndDate = `${endDateStr}T23:59:59.999`;
+      
       const query = supabase
         .from('BLUEBAY_FATURAMENTO')
         .select('*', { count: 'exact', head: false })
         .eq('TIPO', 'S') // Somente dados de vendas
         .neq('STATUS', '4') // Excluir notas canceladas (STATUS = 4)
-        .gte('DATA_EMISSAO', `${startDateStr}T00:00:00.000`)
-        .lte('DATA_EMISSAO', `${endDateStr}T23:59:59.999`)
+        .gte('DATA_EMISSAO', formattedStartDate)
+        .lte('DATA_EMISSAO', formattedEndDate)
         .range(offset, offset + limit - 1);
       
       const result = await query;
@@ -45,12 +50,16 @@ export const fetchDashboardComercialData = async (
     const fetchPedidoBatch = async (offset: number, limit: number) => {
       console.log(`Buscando lote de pedidos ${offset/limit + 1} (tamanho: ${limit})`);
       
+      // Garantir que as datas estejam formatadas corretamente
+      const formattedStartDate = `${startDateStr}T00:00:00.000`;
+      const formattedEndDate = `${endDateStr}T23:59:59.999`;
+      
       const query = supabase
         .from('BLUEBAY_PEDIDO')
         .select('*', { count: 'exact', head: false })
-        // Agora busca todos os pedidos independente da marca (CENTROCUSTO)
-        .gte('DATA_PEDIDO', `${startDateStr}T00:00:00.000`)
-        .lte('DATA_PEDIDO', `${endDateStr}T23:59:59.999`)
+        // Busca pedidos dentro do intervalo de datas especificado
+        .gte('DATA_PEDIDO', formattedStartDate)
+        .lte('DATA_PEDIDO', formattedEndDate)
         .range(offset, offset + limit - 1);
       
       const result = await query;
@@ -58,10 +67,15 @@ export const fetchDashboardComercialData = async (
       return result;
     };
     
-    // Buscar todos os dados de faturamento e pedidos usando o utilitário de lotes
+    // Buscar dados com timeout para evitar bloqueios
+    const timeoutPromise = new Promise<any>((_, reject) => {
+      setTimeout(() => reject(new Error("Timeout: Busca de dados excedeu o tempo limite")), 30000);
+    });
+    
+    // Buscar faturamento e pedidos usando Promise.race para implementar timeout
     const [faturamentoData, pedidoData] = await Promise.all([
-      fetchInBatches<FaturamentoItem>(fetchFaturamentoBatch, batchSize),
-      fetchInBatches<PedidoItem>(fetchPedidoBatch, batchSize)
+      Promise.race([fetchInBatches<FaturamentoItem>(fetchFaturamentoBatch, batchSize), timeoutPromise]),
+      Promise.race([fetchInBatches<PedidoItem>(fetchPedidoBatch, batchSize), timeoutPromise])
     ]);
     
     const faturamentoTotal = faturamentoData?.length || 0;
@@ -70,44 +84,38 @@ export const fetchDashboardComercialData = async (
     console.log(`Total de registros de faturamento recuperados: ${faturamentoTotal}`);
     console.log(`Total de registros de pedidos recuperados: ${pedidoTotal}`);
 
-    // Diagnóstico das datas - log apenas se houver dados
-    if (faturamentoData.length > 0) {
-      try {
-        const minFaturamentoDate = new Date(Math.min(...faturamentoData
-          .filter(f => f.DATA_EMISSAO) // Filtrar itens sem DATA_EMISSAO
-          .map(f => new Date(f.DATA_EMISSAO || 0).getTime())));
-        const maxFaturamentoDate = new Date(Math.max(...faturamentoData
-          .filter(f => f.DATA_EMISSAO) // Filtrar itens sem DATA_EMISSAO
-          .map(f => new Date(f.DATA_EMISSAO || 0).getTime())));
-        
-        console.log(`Intervalo de datas no faturamento: ${format(minFaturamentoDate, 'yyyy-MM-dd')} até ${format(maxFaturamentoDate, 'yyyy-MM-dd')}`);
-        
-        // Verificar se há datas fora do intervalo solicitado - primeiro verificar se há problemas
-        const itensForaDoIntervalo = faturamentoData.filter(item => {
-          if (!item.DATA_EMISSAO) return false;
-          const dataEmissao = new Date(item.DATA_EMISSAO);
-          return dataEmissao < new Date(`${startDateStr}T00:00:00.000`) || 
-                 dataEmissao > new Date(`${endDateStr}T23:59:59.999`);
-        });
-        
-        // Só logar se houver problemas, para evitar logs desnecessários
-        if (itensForaDoIntervalo.length > 0) {
-          console.warn(`ATENÇÃO: ${itensForaDoIntervalo.length} registros de faturamento estão fora do intervalo de datas solicitado!`);
-          if (itensForaDoIntervalo.length > 0 && itensForaDoIntervalo.length <= 10) {
-            console.warn('Registros fora do intervalo:', itensForaDoIntervalo);
-          } else {
-            console.warn('Primeiros 5 registros fora do intervalo:', itensForaDoIntervalo.slice(0, 5).map(f => ({ 
-              NOTA: f.NOTA, 
-              DATA_EMISSAO: f.DATA_EMISSAO 
-            })));
-          }
-        }
-      } catch (e) {
-        console.error('Erro ao calcular intervalo de datas:', e);
+    // Validar se os dados estão dentro do período solicitado
+    const validarDadosFaturamento = (faturamentoData: FaturamentoItem[]) => {
+      if (faturamentoData.length === 0) return true;
+      
+      // Verificar alguns registros aleatórios para diagnóstico (máximo 20)
+      const sampleSize = Math.min(20, faturamentoData.length);
+      const amostra = Array(sampleSize).fill(0).map(() => 
+        faturamentoData[Math.floor(Math.random() * faturamentoData.length)]
+      );
+      
+      const foraDoIntervalo = amostra.filter(item => {
+        if (!item.DATA_EMISSAO) return false;
+        const dataEmissao = new Date(item.DATA_EMISSAO);
+        return dataEmissao < new Date(`${startDateStr}T00:00:00.000`) || 
+               dataEmissao > new Date(`${endDateStr}T23:59:59.999`);
+      });
+      
+      if (foraDoIntervalo.length > 0) {
+        console.warn(`ATENÇÃO: Encontrados ${foraDoIntervalo.length} de ${sampleSize} registros na amostra fora do intervalo de datas solicitado.`);
+        return false;
       }
+      
+      return true;
+    };
+    
+    // Verificar se temos dados fora do período
+    const dadosValidos = validarDadosFaturamento(faturamentoData);
+    if (!dadosValidos) {
+      console.warn("Os dados podem conter registros fora do período solicitado. Considere refinar a consulta.");
     }
 
-    // Processar os dados de faturamento usando o utilitário de processamento
+    // Processar os dados de faturamento 
     const {
       dailyFaturamento,
       monthlyFaturamento,
@@ -139,7 +147,6 @@ export const fetchDashboardComercialData = async (
       }
     };
 
-    console.log(`Processamento concluído: ${dailyFaturamento.length} dias, ${monthlyFaturamento.length} meses`);
     return returnData;
   } catch (error) {
     console.error('Erro ao buscar dados de dashboard comercial:', error);
