@@ -40,6 +40,26 @@ export interface FaturamentoItem {
     VALOR_UNITARIO?: number;
     REPRESENTANTE?: number;
   };
+  // Add the faturamento relation
+  faturamento?: {
+    NOTA?: string;
+    MATRIZ?: number;
+    FILIAL?: number;
+    ID_EF_DOCFISCAL?: number;
+    ID_EF_DOCFISCAL_ITEM?: number;
+    PED_NUMPEDIDO?: string;
+    PED_ANOBASE?: number;
+    MPED_NUMORDEM?: number;
+    ITEM_CODIGO?: string;
+    QUANTIDADE?: number;
+    VALOR_UNITARIO?: number;
+    VALOR_DESCONTO?: number;
+    VALOR_NOTA?: number;
+    STATUS?: string;
+    DATA_EMISSAO?: string | Date;
+    PES_CODIGO?: number;
+    TIPO?: string;
+  };
 }
 
 export interface PedidoItem {
