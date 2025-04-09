@@ -69,7 +69,7 @@ export const processSelectedItems = (
           
           // Priorizar o pedido armazenado nos detalhes do item (que vem da seleção original)
           // Em vez de usar o pedido do item atual
-          const pedidoOriginal = itemClient.pedido || item.PED_NUMPEDIDO || item.pedido || '';
+          const pedidoOriginal = itemClient.pedido || item.pedido || '';
           console.log('Pedido original para usar:', pedidoOriginal);
 
           allSelectedItems.push({
@@ -86,10 +86,10 @@ export const processSelectedItems = (
           
           console.log('PES_CODIGO original:', item.PES_CODIGO);
           console.log('PES_CODIGO processado:', pesCodigoNumerico);
-          console.log('Pedido do item:', item.PED_NUMPEDIDO || item.pedido || '');
+          console.log('Pedido do item:', item.pedido || '');
 
           allSelectedItems.push({
-            pedido: item.PED_NUMPEDIDO || item.pedido || '', // Usar o pedido do item como fallback
+            pedido: item.pedido || '', // Usar o pedido do item como fallback
             item: item,
             PES_CODIGO: pesCodigoNumerico,
             APELIDO: item.APELIDO,
