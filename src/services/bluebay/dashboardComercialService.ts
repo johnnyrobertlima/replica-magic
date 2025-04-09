@@ -6,6 +6,66 @@ import { processarDadosFaturamento } from "./utils/faturamentoDataUtils";
 import { DashboardComercialData, FaturamentoItem, PedidoItem } from "./dashboardComercialTypes";
 
 /**
+ * Normaliza valores antes da comparação, tratando nulos e indefinidos
+ * @param value Valor a ser normalizado
+ * @returns String normalizada
+ */
+const normalizeValue = (value: any): string => {
+  if (value === null || value === undefined) return '';
+  return String(value).trim();
+};
+
+/**
+ * Cria uma chave composta para identificar registros relacionados
+ * @param record Registro com as colunas necessárias para a chave
+ * @returns Uma string única que representa a chave composta
+ */
+const createCompositeKey = (record: any): string => {
+  const numPedido = normalizeValue(record.PED_NUMPEDIDO);
+  const anoBase = normalizeValue(record.PED_ANOBASE);
+  const numOrdem = normalizeValue(record.MPED_NUMORDEM);
+  const itemCodigo = normalizeValue(record.ITEM_CODIGO);
+  
+  // Retorna uma chave padronizada no formato pedido|ano|ordem|item
+  return `${numPedido}|${anoBase}|${numOrdem}|${itemCodigo}`;
+};
+
+/**
+ * Encontra um pedido correspondente a um item de faturamento
+ * usando uma estratégia em múltiplas etapas para melhorar a correspondência
+ */
+const encontrarPedidoCorrespondente = (faturamento: any, pedidos: PedidoItem[]): PedidoItem | null => {
+  if (!faturamento.PED_NUMPEDIDO || !faturamento.PED_ANOBASE) return null;
+
+  // Estratégia 1: Match completo com todas as chaves (mais preciso)
+  const pedidoCompleto = pedidos.find(p => 
+    normalizeValue(p.PED_NUMPEDIDO) === normalizeValue(faturamento.PED_NUMPEDIDO) &&
+    normalizeValue(p.PED_ANOBASE) === normalizeValue(faturamento.PED_ANOBASE) &&
+    normalizeValue(p.MPED_NUMORDEM) === normalizeValue(faturamento.MPED_NUMORDEM) &&
+    normalizeValue(p.ITEM_CODIGO) === normalizeValue(faturamento.ITEM_CODIGO)
+  );
+  
+  if (pedidoCompleto) return pedidoCompleto;
+
+  // Estratégia 2: Match sem considerar ITEM_CODIGO (casos onde o item pode ser diferente)
+  const pedidoSemItem = pedidos.find(p => 
+    normalizeValue(p.PED_NUMPEDIDO) === normalizeValue(faturamento.PED_NUMPEDIDO) &&
+    normalizeValue(p.PED_ANOBASE) === normalizeValue(faturamento.PED_ANOBASE) &&
+    normalizeValue(p.MPED_NUMORDEM) === normalizeValue(faturamento.MPED_NUMORDEM)
+  );
+  
+  if (pedidoSemItem) return pedidoSemItem;
+
+  // Estratégia 3: Match só com PED_NUMPEDIDO e PED_ANOBASE (fallback)
+  const pedidoSimplesMatch = pedidos.find(p => 
+    normalizeValue(p.PED_NUMPEDIDO) === normalizeValue(faturamento.PED_NUMPEDIDO) &&
+    normalizeValue(p.PED_ANOBASE) === normalizeValue(faturamento.PED_ANOBASE)
+  );
+
+  return pedidoSimplesMatch || null;
+};
+
+/**
  * Busca dados de faturamento para o dashboard comercial
  * Versão otimizada que consulta pedidos e faturamento de forma independente
  * exceto quando houver filtro de centro de custo
@@ -56,64 +116,85 @@ export const fetchDashboardComercialData = async (
       
       // 2. Extrair os números de pedido para buscar os faturamentos correspondentes
       if (pedidoItems.length > 0) {
-        // Criar conjuntos de chaves compostas para identificar os pedidos
-        // Precisamos agrupar pedidos em lotes para evitar consultas muito grandes
+        // Criar um Map de pedidos indexados por chave composta para busca rápida
+        const pedidosMap = new Map<string, PedidoItem>();
+        pedidoItems.forEach(pedido => {
+          // Criar múltiplas chaves para cada pedido para permitir diferentes estratégias de match
+          const chaveCompleta = createCompositeKey(pedido);
+          const chaveSemItem = `${normalizeValue(pedido.PED_NUMPEDIDO)}|${normalizeValue(pedido.PED_ANOBASE)}|${normalizeValue(pedido.MPED_NUMORDEM)}|`;
+          const chaveSimples = `${normalizeValue(pedido.PED_NUMPEDIDO)}|${normalizeValue(pedido.PED_ANOBASE)}||`;
+          
+          pedidosMap.set(chaveCompleta, pedido);
+          pedidosMap.set(chaveSemItem, pedido);
+          pedidosMap.set(chaveSimples, pedido);
+        });
         
-        // Buscar faturamentos relacionados ao lote de pedidos
-        // utilizando a função fetchInBatches para processar em lotes maiores
-        // e não ficar limitado a 1000 registros
-        
-        // Criar uma função para buscar faturamentos por lotes de pedidos
+        // Buscar faturamentos relacionados por lotes de critérios de pedidos
         const buscarFaturamentosPorLoteDePedidos = async () => {
           const resultado: FaturamentoItem[] = [];
-          // Processar em lotes de 100 pedidos para não sobrecarregar o filtro in()
-          const tamanhoBatch = 100;
+          // Processar em lotes de 50 pedidos para não sobrecarregar o filtro or()
+          const tamanhoBatch = 50;
           
           for (let i = 0; i < pedidoItems.length; i += tamanhoBatch) {
             const lotePedidos = pedidoItems.slice(i, i + tamanhoBatch);
-            const pedidosNumeros = lotePedidos.map(p => p.PED_NUMPEDIDO);
             
-            console.log(`Buscando faturamentos para lote de ${pedidosNumeros.length} pedidos (${i+1} até ${Math.min(i + tamanhoBatch, pedidoItems.length)} de ${pedidoItems.length})`);
+            console.log(`Buscando faturamentos para lote de ${lotePedidos.length} pedidos (${i+1} até ${Math.min(i + tamanhoBatch, pedidoItems.length)} de ${pedidoItems.length})`);
             
-            const { data: faturamentosLote, error } = await supabase
-              .from('BLUEBAY_FATURAMENTO')
-              .select('*')
-              .in('PED_NUMPEDIDO', pedidosNumeros)
-              .gte('DATA_EMISSAO', formattedStartDate)
-              .lte('DATA_EMISSAO', formattedEndDate);
+            // Construir condições OR para cada pedido do lote
+            const filterCriteria = lotePedidos.map(pedido => {
+              const conditions = supabase
+                .from('BLUEBAY_FATURAMENTO')
+                .select('*')
+                .eq('PED_NUMPEDIDO', pedido.PED_NUMPEDIDO)
+                .eq('PED_ANOBASE', pedido.PED_ANOBASE)
+                .eq('MPED_NUMORDEM', pedido.MPED_NUMORDEM);
               
-            if (error) {
-              console.error(`Erro ao buscar faturamentos do lote ${i/tamanhoBatch + 1}:`, error);
-              continue;
-            }
+              return conditions;
+            });
             
-            if (faturamentosLote && faturamentosLote.length > 0) {
-              // Para cada faturamento, encontrar o pedido correspondente e adicionar o CENTROCUSTO
-              const faturamentosProcessados = faturamentosLote.map(faturamento => {
-                // Encontrar o pedido correspondente para obter CENTROCUSTO e outras informações
-                const pedidoCorrespondente = pedidoItems.find(
-                  p => p.PED_NUMPEDIDO === faturamento.PED_NUMPEDIDO && 
-                       p.PED_ANOBASE === faturamento.PED_ANOBASE &&
-                       p.MPED_NUMORDEM === faturamento.MPED_NUMORDEM
-                );
-                
-                // Criar um objeto composto com os dados de faturamento e dados do pedido
-                const itemEnriquecido: FaturamentoItem = {
-                  ...faturamento,
-                  CENTROCUSTO: pedidoCorrespondente?.CENTROCUSTO || null,
-                  CENTRO_CUSTO: pedidoCorrespondente?.CENTRO_CUSTO || pedidoCorrespondente?.CENTROCUSTO || null,
-                  DATA_PEDIDO: pedidoCorrespondente?.DATA_PEDIDO || null,
-                  REPRESENTANTE: pedidoCorrespondente?.REPRESENTANTE || null,
-                  // Adicionar o pedido completo como uma propriedade para acesso fácil
-                  pedido: pedidoCorrespondente
-                };
-                
-                return itemEnriquecido;
-              });
+            // Executar consultas em paralelo para cada pedido no lote
+            const faturamentosPromises = lotePedidos.map(pedido => 
+              supabase
+                .from('BLUEBAY_FATURAMENTO')
+                .select('*')
+                .eq('PED_NUMPEDIDO', pedido.PED_NUMPEDIDO)
+                .eq('PED_ANOBASE', pedido.PED_ANOBASE)
+                .eq('MPED_NUMORDEM', pedido.MPED_NUMORDEM)
+                .gte('DATA_EMISSAO', formattedStartDate)
+                .lte('DATA_EMISSAO', formattedEndDate)
+            );
+            
+            const faturamentosResponses = await Promise.all(faturamentosPromises);
+            
+            // Processar os resultados e associar aos pedidos correspondentes
+            faturamentosResponses.forEach((response, index) => {
+              const pedido = lotePedidos[index];
               
-              resultado.push(...faturamentosProcessados);
-              console.log(`Adicionados ${faturamentosProcessados.length} faturamentos processados ao resultado. Total atual: ${resultado.length}`);
-            }
+              if (response.error) {
+                console.error(`Erro ao buscar faturamentos para pedido ${pedido.PED_NUMPEDIDO}:`, response.error);
+                return;
+              }
+              
+              if (response.data && response.data.length > 0) {
+                // Enriquece cada faturamento com os dados do pedido correspondente
+                const faturamentosEnriquecidos = response.data.map(faturamento => {
+                  const itemEnriquecido: FaturamentoItem = {
+                    ...faturamento,
+                    CENTROCUSTO: pedido.CENTROCUSTO || null,
+                    CENTRO_CUSTO: pedido.CENTRO_CUSTO || pedido.CENTROCUSTO || null,
+                    DATA_PEDIDO: pedido.DATA_PEDIDO || null,
+                    REPRESENTANTE: pedido.REPRESENTANTE || null,
+                    // Adicionar o pedido completo como uma propriedade para acesso fácil
+                    pedido: pedido
+                  };
+                  
+                  return itemEnriquecido;
+                });
+                
+                resultado.push(...faturamentosEnriquecidos);
+                console.log(`Adicionados ${faturamentosEnriquecidos.length} faturamentos para o pedido ${pedido.PED_NUMPEDIDO}`);
+              }
+            });
           }
           
           return resultado;
@@ -157,6 +238,69 @@ export const fetchDashboardComercialData = async (
       );
       
       console.log(`Encontrados ${pedidoItems.length} registros de pedidos`);
+      
+      // 3. Enriquecer os dados de faturamento com informações de pedidos
+      console.log("Enriquecendo os dados de faturamento com informações de pedidos...");
+      
+      // Criar um Map de pedidos indexados por chave composta para busca rápida
+      const pedidosMap = new Map<string, PedidoItem>();
+      pedidoItems.forEach(pedido => {
+        // Criar múltiplas chaves para cada pedido para permitir diferentes estratégias de match
+        if (pedido.PED_NUMPEDIDO && pedido.PED_ANOBASE) {
+          // Chave com todos os campos
+          const chaveCompleta = createCompositeKey(pedido);
+          pedidosMap.set(chaveCompleta, pedido);
+          
+          // Chave sem item_codigo
+          const chaveSemItem = `${normalizeValue(pedido.PED_NUMPEDIDO)}|${normalizeValue(pedido.PED_ANOBASE)}|${normalizeValue(pedido.MPED_NUMORDEM)}|`;
+          pedidosMap.set(chaveSemItem, pedido);
+          
+          // Chave simplificada apenas com número de pedido e ano
+          const chaveSimples = `${normalizeValue(pedido.PED_NUMPEDIDO)}|${normalizeValue(pedido.PED_ANOBASE)}||`;
+          pedidosMap.set(chaveSimples, pedido);
+        }
+      });
+      
+      // Processar cada faturamento em lotes para não sobrecarregar a memória
+      const BATCH_SIZE = 1000;
+      for (let i = 0; i < faturamentoItems.length; i += BATCH_SIZE) {
+        const batchEnd = Math.min(i + BATCH_SIZE, faturamentoItems.length);
+        console.log(`Processando lote de faturamentos ${i+1} a ${batchEnd} de ${faturamentoItems.length}`);
+        
+        for (let j = i; j < batchEnd; j++) {
+          const faturamento = faturamentoItems[j];
+          
+          // Tentar encontrar o pedido usando as diferentes chaves
+          if (faturamento.PED_NUMPEDIDO && faturamento.PED_ANOBASE) {
+            // Tenta com a chave completa primeiro
+            let pedidoCorrespondente: PedidoItem | undefined;
+            
+            const chaveCompleta = createCompositeKey(faturamento);
+            pedidoCorrespondente = pedidosMap.get(chaveCompleta);
+            
+            if (!pedidoCorrespondente) {
+              // Tenta com chave sem item_codigo
+              const chaveSemItem = `${normalizeValue(faturamento.PED_NUMPEDIDO)}|${normalizeValue(faturamento.PED_ANOBASE)}|${normalizeValue(faturamento.MPED_NUMORDEM)}|`;
+              pedidoCorrespondente = pedidosMap.get(chaveSemItem);
+            }
+            
+            if (!pedidoCorrespondente) {
+              // Último recurso: tenta só com número de pedido e ano
+              const chaveSimples = `${normalizeValue(faturamento.PED_NUMPEDIDO)}|${normalizeValue(faturamento.PED_ANOBASE)}||`;
+              pedidoCorrespondente = pedidosMap.get(chaveSimples);
+            }
+            
+            if (pedidoCorrespondente) {
+              // Adiciona as informações do pedido ao faturamento
+              faturamento.CENTROCUSTO = pedidoCorrespondente.CENTROCUSTO || null;
+              faturamento.CENTRO_CUSTO = pedidoCorrespondente.CENTRO_CUSTO || pedidoCorrespondente.CENTROCUSTO || null;
+              faturamento.DATA_PEDIDO = pedidoCorrespondente.DATA_PEDIDO || null;
+              faturamento.REPRESENTANTE = pedidoCorrespondente.REPRESENTANTE || null;
+              faturamento.pedido = pedidoCorrespondente;
+            }
+          }
+        }
+      }
     }
 
     console.log(`Total de registros recuperados: ${faturamentoItems.length} faturamentos e ${pedidoItems.length} pedidos`);
