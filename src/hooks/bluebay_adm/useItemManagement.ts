@@ -8,7 +8,7 @@ export const useItemManagement = () => {
   const [groups, setGroups] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [groupFilter, setGroupFilter] = useState("");
+  const [groupFilter, setGroupFilter] = useState("all");
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
@@ -25,7 +25,7 @@ export const useItemManagement = () => {
         query = query.or(`ITEM_CODIGO.ilike.%${searchTerm}%,DESCRICAO.ilike.%${searchTerm}%,CODIGOAUX.ilike.%${searchTerm}%`);
       }
 
-      if (groupFilter) {
+      if (groupFilter && groupFilter !== "all") {
         query = query.eq("GRU_CODIGO", groupFilter);
       }
 

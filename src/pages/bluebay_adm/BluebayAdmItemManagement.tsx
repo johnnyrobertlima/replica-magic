@@ -117,7 +117,7 @@ const BluebayAdmItemManagement = () => {
                     <SelectValue placeholder="Todos os grupos" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos os grupos</SelectItem>
+                    <SelectItem value="all">Todos os grupos</SelectItem>
                     {groups.map((group) => (
                       <SelectItem key={group.GRU_CODIGO} value={group.GRU_CODIGO}>
                         {group.GRU_DESCRICAO}
