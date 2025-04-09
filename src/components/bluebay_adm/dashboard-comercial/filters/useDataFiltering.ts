@@ -28,9 +28,11 @@ export const useDataFiltering = (
     if (!selectedCentroCusto) return true;
     
     // Check multiple possible field names for centro de custo
+    // Including data from related tables that might be nested
     return (
       (item.CENTROCUSTO && item.CENTROCUSTO === selectedCentroCusto) || 
-      (item.CENTRO_CUSTO && item.CENTRO_CUSTO === selectedCentroCusto)
+      (item.CENTRO_CUSTO && item.CENTRO_CUSTO === selectedCentroCusto) ||
+      (item.pedido?.CENTROCUSTO && item.pedido?.CENTROCUSTO === selectedCentroCusto)
     );
   }, [selectedCentroCusto]);
   
@@ -60,18 +62,22 @@ export const useDataFiltering = (
     let naoIdentificados: FaturamentoItem[] = [];
     if (!selectedCentroCusto) {
       naoIdentificados = dashboardData.faturamentoItems.filter(item => 
-        !item.CENTROCUSTO && !item.CENTRO_CUSTO
+        !item.CENTROCUSTO && 
+        !item.CENTRO_CUSTO && 
+        !(item.pedido?.CENTROCUSTO)
       );
     }
     
     // Calcular totais baseados nos itens filtrados
     const totalFaturado = filteredFaturamentoItems.reduce((acc, item) => {
-      const valor = (item.VALOR_UNITARIO || 0) * (item.QUANTIDADE || 0);
-      return acc + valor;
+      // Garantir que estamos usando valores numéricos
+      const quantidade = Number(item.QUANTIDADE) || 0;
+      const valorUnitario = Number(item.VALOR_UNITARIO) || 0;
+      return acc + (quantidade * valorUnitario);
     }, 0);
     
     const totalItens = filteredFaturamentoItems.reduce((acc, item) => {
-      return acc + (item.QUANTIDADE || 0);
+      return acc + (Number(item.QUANTIDADE) || 0);
     }, 0);
     
     const mediaValorItem = totalItens > 0 ? totalFaturado / totalItens : 0;

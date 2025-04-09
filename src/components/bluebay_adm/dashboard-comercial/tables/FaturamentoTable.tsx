@@ -50,16 +50,20 @@ export const FaturamentoTableContent: React.FC<FaturamentoTableProps> = ({ fatur
     // Verificar se já temos essa nota no grupo da data
     const notaExistente = groupedByDate[dateStr].notas.find(n => n && n.NOTA === item.NOTA);
     
+    // Garantir valores numéricos válidos
+    const quantidade = Number(item.QUANTIDADE) || 0;
+    const valorUnitario = Number(item.VALOR_UNITARIO) || 0;
+    
     if (notaExistente) {
-      notaExistente.TOTAL_QUANTIDADE += (item.QUANTIDADE || 0);
-      notaExistente.TOTAL_VALOR += (item.QUANTIDADE || 0) * (item.VALOR_UNITARIO || 0);
+      notaExistente.TOTAL_QUANTIDADE += quantidade;
+      notaExistente.TOTAL_VALOR += quantidade * valorUnitario;
       notaExistente.items.push(item);
     } else {
       groupedByDate[dateStr].notas.push({
         NOTA: item.NOTA,
         DATA_EMISSAO: item.DATA_EMISSAO,
-        TOTAL_QUANTIDADE: item.QUANTIDADE || 0,
-        TOTAL_VALOR: (item.QUANTIDADE || 0) * (item.VALOR_UNITARIO || 0),
+        TOTAL_QUANTIDADE: quantidade,
+        TOTAL_VALOR: quantidade * valorUnitario,
         items: [item]
       });
     }

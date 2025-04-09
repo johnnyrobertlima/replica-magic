@@ -7,7 +7,7 @@ import { DashboardComercialData, FaturamentoItem, PedidoItem } from "./dashboard
 
 /**
  * Busca dados de faturamento para o dashboard comercial
- * Versão otimizada utilizando view materializada para melhor performance
+ * Versão otimizada utilizando view materializada e relacionamentos com tabelas originais
  */
 export const fetchDashboardComercialData = async (
   startDate: Date | null,
@@ -20,36 +20,104 @@ export const fetchDashboardComercialData = async (
 
     console.log(`Buscando dados de faturamento comercial de ${startDateStr} até ${endDateStr}`);
     
-    // Usar a view materializada para buscar os dados
+    // Formatar datas para consulta
     const formattedStartDate = `${startDateStr}T00:00:00.000`;
     const formattedEndDate = `${endDateStr}T23:59:59.999`;
     
-    // Buscar dados da view materializada
+    // Buscar dados da view materializada com join nas tabelas relacionadas
     const { data: faturamentoData, error: faturamentoError } = await supabase
       .from('mv_faturamento_resumido')
-      .select('*')
+      .select(`
+        *,
+        pedido:BLUEBAY_PEDIDO!inner(
+          CENTROCUSTO,
+          MATRIZ,
+          FILIAL,
+          PED_NUMPEDIDO,
+          PED_ANOBASE,
+          MPED_NUMORDEM,
+          ITEM_CODIGO,
+          PES_CODIGO,
+          QTDE_PEDIDA,
+          QTDE_ENTREGUE,
+          QTDE_SALDO,
+          STATUS,
+          DATA_PEDIDO,
+          VALOR_UNITARIO,
+          REPRESENTANTE
+        ),
+        faturamento:BLUEBAY_FATURAMENTO(
+          NOTA,
+          MATRIZ,
+          FILIAL,
+          ID_EF_DOCFISCAL,
+          ID_EF_DOCFISCAL_ITEM,
+          PED_NUMPEDIDO,
+          PED_ANOBASE,
+          MPED_NUMORDEM,
+          ITEM_CODIGO,
+          QUANTIDADE,
+          VALOR_UNITARIO,
+          VALOR_DESCONTO,
+          VALOR_NOTA,
+          STATUS,
+          DATA_EMISSAO,
+          PES_CODIGO,
+          TIPO
+        )
+      `)
       .gte('DATA_EMISSAO', formattedStartDate)
       .lte('DATA_EMISSAO', formattedEndDate);
     
     if (faturamentoError) {
-      console.error('Erro ao buscar dados da view materializada:', faturamentoError);
+      console.error('Erro ao buscar dados da view com relacionamentos:', faturamentoError);
       throw faturamentoError;
     }
 
-    // Converter os dados da view para o formato esperado
-    const faturamentoItems = faturamentoData || [];
+    // Processar dados para o formato esperado
+    const faturamentoItems: FaturamentoItem[] = faturamentoData?.map((item: any) => {
+      // Combinar dados da view com os dados do faturamento
+      return {
+        // Campos da view materializada
+        ...item,
+        // Adicionar campos da tabela BLUEBAY_FATURAMENTO se disponíveis
+        MATRIZ: item.faturamento?.MATRIZ || item.MATRIZ || item.pedido?.MATRIZ,
+        FILIAL: item.faturamento?.FILIAL || item.FILIAL || item.pedido?.FILIAL,
+        ID_EF_DOCFISCAL: item.faturamento?.ID_EF_DOCFISCAL || item.ID_EF_DOCFISCAL,
+        ID_EF_DOCFISCAL_ITEM: item.faturamento?.ID_EF_DOCFISCAL_ITEM || item.ID_EF_DOCFISCAL_ITEM,
+        ITEM_CODIGO: item.faturamento?.ITEM_CODIGO || item.ITEM_CODIGO || item.pedido?.ITEM_CODIGO,
+        QUANTIDADE: item.faturamento?.QUANTIDADE || item.QUANTIDADE,
+        VALOR_UNITARIO: item.faturamento?.VALOR_UNITARIO || item.VALOR_UNITARIO || item.pedido?.VALOR_UNITARIO,
+        VALOR_DESCONTO: item.faturamento?.VALOR_DESCONTO || item.VALOR_DESCONTO,
+        VALOR_NOTA: item.faturamento?.VALOR_NOTA || item.VALOR_NOTA,
+        STATUS: item.faturamento?.STATUS || item.STATUS || item.pedido?.STATUS,
+        PES_CODIGO: item.faturamento?.PES_CODIGO || item.PES_CODIGO || item.pedido?.PES_CODIGO,
+        // Garantir que CENTROCUSTO está disponível
+        CENTROCUSTO: item.CENTROCUSTO || item.CENTRO_CUSTO || item.pedido?.CENTROCUSTO
+      };
+    }) || [];
 
-    console.log(`Total de registros recuperados da view materializada: ${faturamentoItems.length}`);
+    console.log(`Total de registros recuperados com relacionamentos: ${faturamentoItems.length}`);
 
-    // Para compatibilidade, simulamos pedidoItems com dados das vendas já faturadas
-    // Na view materializada já temos os dados consolidados
-    const pedidoItems = faturamentoItems.map((item: any) => ({
-      ...item,
-      QTDE_PEDIDA: item.QUANTIDADE || 0,
-      QTDE_ENTREGUE: item.QUANTIDADE || 0,
-      QTDE_SALDO: 0,
-      DATA_PEDIDO: item.DATA_EMISSAO
-    })) as PedidoItem[];
+    // Extrair dados de pedidos a partir dos dados do faturamento
+    const pedidoItems = faturamentoData?.map((item: any) => {
+      return {
+        MATRIZ: item.pedido?.MATRIZ || item.MATRIZ,
+        FILIAL: item.pedido?.FILIAL || item.FILIAL,
+        PED_NUMPEDIDO: item.pedido?.PED_NUMPEDIDO || item.PED_NUMPEDIDO,
+        PED_ANOBASE: item.pedido?.PED_ANOBASE || item.PED_ANOBASE,
+        MPED_NUMORDEM: item.pedido?.MPED_NUMORDEM || item.MPED_NUMORDEM,
+        ITEM_CODIGO: item.pedido?.ITEM_CODIGO || item.ITEM_CODIGO,
+        PES_CODIGO: item.pedido?.PES_CODIGO || item.PES_CODIGO,
+        QTDE_PEDIDA: item.pedido?.QTDE_PEDIDA || item.QTDE_PEDIDA || item.QUANTIDADE,
+        QTDE_ENTREGUE: item.pedido?.QTDE_ENTREGUE || item.QTDE_ENTREGUE,
+        QTDE_SALDO: item.pedido?.QTDE_SALDO || item.QTDE_SALDO || 0,
+        DATA_PEDIDO: item.pedido?.DATA_PEDIDO || item.DATA_PEDIDO || item.DATA_EMISSAO,
+        STATUS: item.pedido?.STATUS || item.STATUS,
+        VALOR_UNITARIO: item.pedido?.VALOR_UNITARIO || item.VALOR_UNITARIO,
+        CENTROCUSTO: item.pedido?.CENTROCUSTO || item.CENTROCUSTO || item.CENTRO_CUSTO
+      };
+    }) as PedidoItem[];
 
     // Processar os dados de faturamento para gerar os agregados
     const {
@@ -72,7 +140,7 @@ export const fetchDashboardComercialData = async (
       totalFaturado,
       totalItens,
       mediaValorItem,
-      faturamentoItems: faturamentoItems as FaturamentoItem[],
+      faturamentoItems,
       pedidoItems,
       dataRangeInfo: {
         startDateRequested: startDateStr,

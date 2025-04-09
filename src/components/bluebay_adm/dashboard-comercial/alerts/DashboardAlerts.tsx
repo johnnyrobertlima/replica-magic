@@ -22,9 +22,24 @@ export const DashboardAlerts = ({
   const totalNaoIdentificados = naoIdentificados?.length || 0;
   const showNaoIdentificadosAlert = totalNaoIdentificados > 0;
   
-  // Get a sample of the first non-identified item for the alert example (with null checks)
-  const exemploItem = naoIdentificados && naoIdentificados.length > 0 ? 
-    naoIdentificados.find(item => item && item.NOTA) : null;
+  // Safe find function with null checks to avoid "Cannot read properties of undefined" error
+  const findValidItemWithNota = (items: FaturamentoItem[] | undefined | null) => {
+    if (!items || !Array.isArray(items) || items.length === 0) return null;
+    
+    // First try to find an item with both ITEM_CODIGO and NOTA
+    let item = items.find(i => i && i.NOTA && i.ITEM_CODIGO);
+    
+    // If not found, just find any item with NOTA
+    if (!item) item = items.find(i => i && i.NOTA);
+    
+    // If still not found, return the first valid item
+    if (!item) item = items.find(i => i !== null && i !== undefined);
+    
+    return item || null;
+  };
+  
+  // Get a sample of the first non-identified item for the alert example with enhanced safety
+  const exemploItem = findValidItemWithNota(naoIdentificados);
   
   // Se não houver dados, exibir mensagem informativa
   if (!hasData) {
