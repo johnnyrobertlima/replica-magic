@@ -7,7 +7,7 @@ import { DashboardComercialData, FaturamentoItem, PedidoItem } from "./dashboard
 
 /**
  * Busca dados de faturamento para o dashboard comercial
- * Versão otimizada utilizando view materializada e relacionamentos com tabelas originais
+ * Versão otimizada para trabalhar com a view materializada sem depender de foreign keys
  */
 export const fetchDashboardComercialData = async (
   startDate: Date | null,
@@ -24,100 +24,145 @@ export const fetchDashboardComercialData = async (
     const formattedStartDate = `${startDateStr}T00:00:00.000`;
     const formattedEndDate = `${endDateStr}T23:59:59.999`;
     
-    // Buscar dados da view materializada com join nas tabelas relacionadas
-    const { data: faturamentoData, error: faturamentoError } = await supabase
+    // 1. Primeiro buscar dados da view materializada de forma simples (sem joins)
+    const { data: faturamentoDataFromView, error: faturamentoViewError } = await supabase
       .from('mv_faturamento_resumido')
-      .select(`
-        *,
-        pedido:BLUEBAY_PEDIDO!inner(
-          CENTROCUSTO,
-          MATRIZ,
-          FILIAL,
-          PED_NUMPEDIDO,
-          PED_ANOBASE,
-          MPED_NUMORDEM,
-          ITEM_CODIGO,
-          PES_CODIGO,
-          QTDE_PEDIDA,
-          QTDE_ENTREGUE,
-          QTDE_SALDO,
-          STATUS,
-          DATA_PEDIDO,
-          VALOR_UNITARIO,
-          REPRESENTANTE
-        ),
-        faturamento:BLUEBAY_FATURAMENTO(
-          NOTA,
-          MATRIZ,
-          FILIAL,
-          ID_EF_DOCFISCAL,
-          ID_EF_DOCFISCAL_ITEM,
-          PED_NUMPEDIDO,
-          PED_ANOBASE,
-          MPED_NUMORDEM,
-          ITEM_CODIGO,
-          QUANTIDADE,
-          VALOR_UNITARIO,
-          VALOR_DESCONTO,
-          VALOR_NOTA,
-          STATUS,
-          DATA_EMISSAO,
-          PES_CODIGO,
-          TIPO
-        )
-      `)
+      .select('*')
       .gte('DATA_EMISSAO', formattedStartDate)
       .lte('DATA_EMISSAO', formattedEndDate);
     
-    if (faturamentoError) {
-      console.error('Erro ao buscar dados da view com relacionamentos:', faturamentoError);
-      throw faturamentoError;
+    if (faturamentoViewError) {
+      console.error('Erro ao buscar dados da view materializada:', faturamentoViewError);
+      throw faturamentoViewError;
     }
 
-    // Processar dados para o formato esperado
-    const faturamentoItems: FaturamentoItem[] = faturamentoData?.map((item: any) => {
-      // Combinar dados da view com os dados do faturamento
+    // 2. Buscar dados adicionais das tabelas relacionadas
+    // Extrair os números de pedidos e anos base para buscar dados detalhados
+    const pedidosKeys = faturamentoDataFromView?.map(item => ({
+      PED_NUMPEDIDO: item.PED_NUMPEDIDO,
+      PED_ANOBASE: item.PED_ANOBASE,
+    })) || [];
+
+    // Remover duplicatas
+    const uniquePedidosKeys = pedidosKeys.filter((item, index, self) =>
+      index === self.findIndex(t => (
+        t.PED_NUMPEDIDO === item.PED_NUMPEDIDO && t.PED_ANOBASE === item.PED_ANOBASE
+      ))
+    );
+
+    // Buscar dados detalhados dos pedidos
+    const { data: pedidosData, error: pedidosError } = await supabase
+      .from('BLUEBAY_PEDIDO')
+      .select('*')
+      .in('PED_NUMPEDIDO', uniquePedidosKeys.map(k => k.PED_NUMPEDIDO).filter(Boolean));
+
+    if (pedidosError) {
+      console.error('Erro ao buscar dados detalhados dos pedidos:', pedidosError);
+      // Não vamos interromper o fluxo, mas logar o erro
+    }
+
+    // Buscar dados das notas fiscais
+    const notasKeys = faturamentoDataFromView?.map(item => item.NOTA).filter(Boolean) || [];
+    const { data: faturamentoData, error: faturamentoError } = await supabase
+      .from('BLUEBAY_FATURAMENTO')
+      .select('*')
+      .in('NOTA', notasKeys);
+
+    if (faturamentoError) {
+      console.error('Erro ao buscar dados das notas fiscais:', faturamentoError);
+      // Não vamos interromper o fluxo, mas logar o erro
+    }
+
+    // 3. Combinar os dados para criar o resultado final
+    // Criar mapa de pedidos para rápido acesso
+    const pedidosMap = new Map();
+    pedidosData?.forEach(pedido => {
+      const key = `${pedido.PED_NUMPEDIDO}-${pedido.PED_ANOBASE}`;
+      pedidosMap.set(key, pedido);
+    });
+
+    // Criar mapa de faturamento para rápido acesso
+    const faturamentoMap = new Map();
+    faturamentoData?.forEach(fatura => {
+      faturamentoMap.set(fatura.NOTA, fatura);
+    });
+
+    // Combinar os dados da view com os dados detalhados
+    const faturamentoItems: FaturamentoItem[] = faturamentoDataFromView?.map(viewItem => {
+      // Buscar dados do pedido correspondente
+      const pedidoKey = `${viewItem.PED_NUMPEDIDO}-${viewItem.PED_ANOBASE}`;
+      const pedidoDetalhe = pedidosMap.get(pedidoKey);
+      
+      // Buscar dados da nota fiscal correspondente
+      const faturaDetalhe = faturamentoMap.get(viewItem.NOTA);
+
+      // Combinar dados
       return {
-        // Campos da view materializada
-        ...item,
-        // Adicionar campos da tabela BLUEBAY_FATURAMENTO se disponíveis
-        MATRIZ: item.faturamento?.MATRIZ || item.MATRIZ || item.pedido?.MATRIZ,
-        FILIAL: item.faturamento?.FILIAL || item.FILIAL || item.pedido?.FILIAL,
-        ID_EF_DOCFISCAL: item.faturamento?.ID_EF_DOCFISCAL || item.ID_EF_DOCFISCAL,
-        ID_EF_DOCFISCAL_ITEM: item.faturamento?.ID_EF_DOCFISCAL_ITEM || item.ID_EF_DOCFISCAL_ITEM,
-        ITEM_CODIGO: item.faturamento?.ITEM_CODIGO || item.ITEM_CODIGO || item.pedido?.ITEM_CODIGO,
-        QUANTIDADE: item.faturamento?.QUANTIDADE || item.QUANTIDADE,
-        VALOR_UNITARIO: item.faturamento?.VALOR_UNITARIO || item.VALOR_UNITARIO || item.pedido?.VALOR_UNITARIO,
-        VALOR_DESCONTO: item.faturamento?.VALOR_DESCONTO || item.VALOR_DESCONTO,
-        VALOR_NOTA: item.faturamento?.VALOR_NOTA || item.VALOR_NOTA,
-        STATUS: item.faturamento?.STATUS || item.STATUS || item.pedido?.STATUS,
-        PES_CODIGO: item.faturamento?.PES_CODIGO || item.PES_CODIGO || item.pedido?.PES_CODIGO,
-        // Garantir que CENTROCUSTO está disponível
-        CENTROCUSTO: item.CENTROCUSTO || item.CENTRO_CUSTO || item.pedido?.CENTROCUSTO
+        ...viewItem,
+        // Adicionar campos do pedido
+        pedido: pedidoDetalhe ? {
+          CENTROCUSTO: pedidoDetalhe.CENTROCUSTO,
+          MATRIZ: pedidoDetalhe.MATRIZ,
+          FILIAL: pedidoDetalhe.FILIAL,
+          PED_NUMPEDIDO: pedidoDetalhe.PED_NUMPEDIDO,
+          PED_ANOBASE: pedidoDetalhe.PED_ANOBASE,
+          MPED_NUMORDEM: pedidoDetalhe.MPED_NUMORDEM,
+          ITEM_CODIGO: pedidoDetalhe.ITEM_CODIGO,
+          PES_CODIGO: pedidoDetalhe.PES_CODIGO,
+          QTDE_PEDIDA: pedidoDetalhe.QTDE_PEDIDA,
+          QTDE_ENTREGUE: pedidoDetalhe.QTDE_ENTREGUE,
+          QTDE_SALDO: pedidoDetalhe.QTDE_SALDO,
+          STATUS: pedidoDetalhe.STATUS,
+          DATA_PEDIDO: pedidoDetalhe.DATA_PEDIDO,
+          VALOR_UNITARIO: pedidoDetalhe.VALOR_UNITARIO,
+          REPRESENTANTE: pedidoDetalhe.REPRESENTANTE
+        } : undefined,
+        // Adicionar campos de faturamento
+        faturamento: faturaDetalhe ? {
+          NOTA: faturaDetalhe.NOTA,
+          MATRIZ: faturaDetalhe.MATRIZ,
+          FILIAL: faturaDetalhe.FILIAL,
+          ID_EF_DOCFISCAL: faturaDetalhe.ID_EF_DOCFISCAL,
+          ID_EF_DOCFISCAL_ITEM: faturaDetalhe.ID_EF_DOCFISCAL_ITEM,
+          PED_NUMPEDIDO: faturaDetalhe.PED_NUMPEDIDO,
+          PED_ANOBASE: faturaDetalhe.PED_ANOBASE,
+          MPED_NUMORDEM: faturaDetalhe.MPED_NUMORDEM,
+          ITEM_CODIGO: faturaDetalhe.ITEM_CODIGO,
+          QUANTIDADE: faturaDetalhe.QUANTIDADE,
+          VALOR_UNITARIO: faturaDetalhe.VALOR_UNITARIO,
+          VALOR_DESCONTO: faturaDetalhe.VALOR_DESCONTO,
+          VALOR_NOTA: faturaDetalhe.VALOR_NOTA,
+          STATUS: faturaDetalhe.STATUS,
+          DATA_EMISSAO: faturaDetalhe.DATA_EMISSAO,
+          PES_CODIGO: faturaDetalhe.PES_CODIGO,
+          TIPO: faturaDetalhe.TIPO
+        } : undefined
       };
     }) || [];
 
-    console.log(`Total de registros recuperados com relacionamentos: ${faturamentoItems.length}`);
+    console.log(`Total de registros recuperados com relacionamentos manuais: ${faturamentoItems.length}`);
 
     // Extrair dados de pedidos a partir dos dados do faturamento
-    const pedidoItems = faturamentoData?.map((item: any) => {
-      return {
-        MATRIZ: item.pedido?.MATRIZ || item.MATRIZ,
-        FILIAL: item.pedido?.FILIAL || item.FILIAL,
-        PED_NUMPEDIDO: item.pedido?.PED_NUMPEDIDO || item.PED_NUMPEDIDO,
-        PED_ANOBASE: item.pedido?.PED_ANOBASE || item.PED_ANOBASE,
-        MPED_NUMORDEM: item.pedido?.MPED_NUMORDEM || item.MPED_NUMORDEM,
-        ITEM_CODIGO: item.pedido?.ITEM_CODIGO || item.ITEM_CODIGO,
-        PES_CODIGO: item.pedido?.PES_CODIGO || item.PES_CODIGO,
-        QTDE_PEDIDA: item.pedido?.QTDE_PEDIDA || item.QTDE_PEDIDA || item.QUANTIDADE,
-        QTDE_ENTREGUE: item.pedido?.QTDE_ENTREGUE || item.QTDE_ENTREGUE,
-        QTDE_SALDO: item.pedido?.QTDE_SALDO || item.QTDE_SALDO || 0,
-        DATA_PEDIDO: item.pedido?.DATA_PEDIDO || item.DATA_PEDIDO || item.DATA_EMISSAO,
-        STATUS: item.pedido?.STATUS || item.STATUS,
-        VALOR_UNITARIO: item.pedido?.VALOR_UNITARIO || item.VALOR_UNITARIO,
-        CENTROCUSTO: item.pedido?.CENTROCUSTO || item.CENTROCUSTO || item.CENTRO_CUSTO
-      };
-    }) as PedidoItem[];
+    const pedidoItems = faturamentoItems
+      .filter(item => item.pedido) // Filtrar apenas itens que têm dados de pedido
+      .map((item) => {
+        return {
+          MATRIZ: item.pedido?.MATRIZ || item.MATRIZ,
+          FILIAL: item.pedido?.FILIAL || item.FILIAL,
+          PED_NUMPEDIDO: item.pedido?.PED_NUMPEDIDO || item.PED_NUMPEDIDO,
+          PED_ANOBASE: item.pedido?.PED_ANOBASE || item.PED_ANOBASE,
+          MPED_NUMORDEM: item.pedido?.MPED_NUMORDEM || item.MPED_NUMORDEM,
+          ITEM_CODIGO: item.pedido?.ITEM_CODIGO || item.ITEM_CODIGO,
+          PES_CODIGO: item.pedido?.PES_CODIGO || item.PES_CODIGO,
+          QTDE_PEDIDA: item.pedido?.QTDE_PEDIDA || item.QTDE_PEDIDA || item.QUANTIDADE,
+          QTDE_ENTREGUE: item.pedido?.QTDE_ENTREGUE || item.QTDE_ENTREGUE,
+          QTDE_SALDO: item.pedido?.QTDE_SALDO || item.QTDE_SALDO || 0,
+          DATA_PEDIDO: item.pedido?.DATA_PEDIDO || item.DATA_PEDIDO || item.DATA_EMISSAO,
+          STATUS: item.pedido?.STATUS || item.STATUS,
+          VALOR_UNITARIO: item.pedido?.VALOR_UNITARIO || item.VALOR_UNITARIO,
+          CENTROCUSTO: item.pedido?.CENTROCUSTO || item.CENTROCUSTO || item.CENTRO_CUSTO
+        };
+      }) as PedidoItem[];
 
     // Processar os dados de faturamento para gerar os agregados
     const {
