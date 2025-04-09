@@ -32,68 +32,79 @@ export const fetchDashboardComercialData = async (
     let faturamentoItems: FaturamentoItem[] = [];
     let pedidoItems: PedidoItem[] = [];
 
-    // Caso 1: Se houver filtro de centro de custo, fazemos o join entre as tabelas
+    // Caso 1: Se houver filtro de centro de custo, fazemos primeiramente a busca de pedidos
+    // e depois buscamos o faturamento correspondente
     if (centroCusto) {
-      console.log("Realizando consulta com JOIN entre FATURAMENTO e PEDIDO devido ao filtro de centro de custo");
+      console.log("Buscando pedidos filtrados por centro de custo:", centroCusto);
       
-      // Buscar dados de faturamento com join em pedido para filtrar por centro de custo
-      const { data: joinedData, error: joinError } = await supabase
-        .from('BLUEBAY_FATURAMENTO')
-        .select(`
-          *,
-          pedido:BLUEBAY_PEDIDO!inner(
-            MATRIZ,
-            FILIAL,
-            PED_NUMPEDIDO,
-            PED_ANOBASE,
-            MPED_NUMORDEM,
-            ITEM_CODIGO,
-            PES_CODIGO,
-            QTDE_PEDIDA,
-            QTDE_ENTREGUE,
-            QTDE_SALDO,
-            STATUS,
-            DATA_PEDIDO,
-            VALOR_UNITARIO,
-            CENTROCUSTO,
-            REPRESENTANTE
-          )
-        `)
-        .eq('pedido.CENTROCUSTO', centroCusto)
-        .gte('DATA_EMISSAO', formattedStartDate)
-        .lte('DATA_EMISSAO', formattedEndDate);
-
-      if (joinError) {
-        console.error('Erro na consulta com join:', joinError);
-        throw joinError;
+      // 1. Primeiro, buscar os pedidos do centro de custo específico
+      const { data: pedidosData, error: pedidosError } = await supabase
+        .from('BLUEBAY_PEDIDO')
+        .select('*')
+        .eq('CENTROCUSTO', centroCusto)
+        .gte('DATA_PEDIDO', formattedStartDate)
+        .lte('DATA_PEDIDO', formattedEndDate);
+        
+      if (pedidosError) {
+        console.error('Erro ao buscar dados de pedidos por centro de custo:', pedidosError);
+        throw pedidosError;
       }
-
-      // Transformar os dados do join no formato esperado
-      faturamentoItems = joinedData?.map(item => ({
-        ...item,
-        CENTROCUSTO: item.pedido?.CENTROCUSTO,
-        // Incluir outros campos necessários do pedido
-        DATA_PEDIDO: item.pedido?.DATA_PEDIDO,
-        REPRESENTANTE: item.pedido?.REPRESENTANTE
-      })) || [];
-
-      // Extrair os dados de pedidos a partir do join
-      pedidoItems = joinedData?.map(item => ({
-        MATRIZ: item.pedido.MATRIZ,
-        FILIAL: item.pedido.FILIAL,
-        PED_NUMPEDIDO: item.pedido.PED_NUMPEDIDO,
-        PED_ANOBASE: item.pedido.PED_ANOBASE,
-        MPED_NUMORDEM: item.pedido.MPED_NUMORDEM,
-        ITEM_CODIGO: item.pedido.ITEM_CODIGO,
-        PES_CODIGO: item.pedido.PES_CODIGO,
-        QTDE_PEDIDA: item.pedido.QTDE_PEDIDA,
-        QTDE_ENTREGUE: item.pedido.QTDE_ENTREGUE,
-        QTDE_SALDO: item.pedido.QTDE_SALDO,
-        DATA_PEDIDO: item.pedido.DATA_PEDIDO,
-        STATUS: item.pedido.STATUS,
-        VALOR_UNITARIO: item.pedido.VALOR_UNITARIO,
-        CENTROCUSTO: item.pedido.CENTROCUSTO
-      })) || [];
+      
+      pedidoItems = pedidosData || [];
+      console.log(`Encontrados ${pedidoItems.length} pedidos do centro de custo ${centroCusto}`);
+      
+      // 2. Extrair os números de pedido para buscar os faturamentos correspondentes
+      if (pedidoItems.length > 0) {
+        // Criar um conjunto de chaves compostas para identificar os pedidos
+        const pedidosKeys = pedidoItems.map(pedido => {
+          return {
+            PED_NUMPEDIDO: pedido.PED_NUMPEDIDO,
+            PED_ANOBASE: pedido.PED_ANOBASE,
+            MPED_NUMORDEM: pedido.MPED_NUMORDEM
+          };
+        });
+        
+        // Buscar faturamentos relacionados a esses pedidos
+        // Note: Precisamos fazer uma consulta para cada item devido a limitações do Supabase
+        // em consultas com múltiplas condições OR
+        const faturamentosPromises = pedidosKeys.map(key => {
+          return supabase
+            .from('BLUEBAY_FATURAMENTO')
+            .select('*')
+            .eq('PED_NUMPEDIDO', key.PED_NUMPEDIDO)
+            .eq('PED_ANOBASE', key.PED_ANOBASE)
+            .eq('MPED_NUMORDEM', key.MPED_NUMORDEM)
+            .gte('DATA_EMISSAO', formattedStartDate)
+            .lte('DATA_EMISSAO', formattedEndDate);
+        });
+        
+        // Executar todas as consultas em paralelo
+        const faturamentosResults = await Promise.all(faturamentosPromises);
+        
+        // Processar resultados e mesclar com as informações do centro de custo
+        faturamentoItems = faturamentosResults
+          .filter(result => !result.error && result.data && result.data.length > 0)
+          .flatMap(result => {
+            return result.data!.map(item => {
+              // Encontrar o pedido correspondente para obter CENTROCUSTO
+              const pedidoCorrespondente = pedidoItems.find(
+                p => p.PED_NUMPEDIDO === item.PED_NUMPEDIDO && 
+                     p.PED_ANOBASE === item.PED_ANOBASE &&
+                     p.MPED_NUMORDEM === item.MPED_NUMORDEM
+              );
+              
+              // Criar um objeto composto com os dados de faturamento e CENTROCUSTO do pedido
+              return {
+                ...item,
+                CENTROCUSTO: pedidoCorrespondente?.CENTROCUSTO || null,
+                DATA_PEDIDO: pedidoCorrespondente?.DATA_PEDIDO || null,
+                REPRESENTANTE: pedidoCorrespondente?.REPRESENTANTE || null
+              } as FaturamentoItem;
+            });
+          });
+          
+        console.log(`Encontrados ${faturamentoItems.length} itens de faturamento para pedidos do centro de custo ${centroCusto}`);
+      }
     } 
     // Caso 2: Sem filtro de centro de custo, consultamos as tabelas independentemente
     else {

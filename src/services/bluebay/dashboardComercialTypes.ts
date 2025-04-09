@@ -19,10 +19,10 @@ export interface FaturamentoItem {
   STATUS?: string;
   DATA_EMISSAO?: string | Date;
   // Additional fields from the materialized view
-  CENTROCUSTO?: string;
+  CENTROCUSTO?: string | null;
   CENTRO_CUSTO?: string;
-  DATA_PEDIDO?: string | Date;
-  REPRESENTANTE?: number;
+  DATA_PEDIDO?: string | Date | null;
+  REPRESENTANTE?: number | null;
   // Add the pedido relation
   pedido?: {
     CENTROCUSTO?: string;
