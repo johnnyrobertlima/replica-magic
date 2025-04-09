@@ -34,6 +34,7 @@ import { useItemManagement } from "@/hooks/bluebay_adm/useItemManagement";
 import { ItemForm } from "@/components/bluebay_adm/item-management/ItemForm";
 import { ItemsTable } from "@/components/bluebay_adm/item-management/ItemsTable";
 import { ItemsTableSkeleton } from "@/components/bluebay_adm/item-management/ItemsTableSkeleton";
+import { Pagination } from "@/components/bluebay_adm/item-management/Pagination";
 
 const BluebayAdmItemManagement = () => {
   const { 
@@ -49,7 +50,9 @@ const BluebayAdmItemManagement = () => {
     isDialogOpen,
     setIsDialogOpen,
     handleSaveItem,
-    handleDeleteItem
+    handleDeleteItem,
+    pagination,
+    totalCount
   } = useItemManagement();
 
   return (
@@ -133,14 +136,30 @@ const BluebayAdmItemManagement = () => {
         {isLoading ? (
           <ItemsTableSkeleton />
         ) : (
-          <ItemsTable 
-            items={items} 
-            onEdit={(item) => {
-              setSelectedItem(item);
-              setIsDialogOpen(true);
-            }}
-            onDelete={handleDeleteItem}
-          />
+          <>
+            <ItemsTable 
+              items={items} 
+              onEdit={(item) => {
+                setSelectedItem(item);
+                setIsDialogOpen(true);
+              }}
+              onDelete={handleDeleteItem}
+            />
+            
+            <div className="mt-4">
+              <Pagination 
+                currentPage={pagination.currentPage}
+                totalPages={Math.ceil(totalCount / pagination.pageSize)}
+                onPageChange={pagination.goToPage}
+                hasNextPage={pagination.hasNextPage}
+                hasPreviousPage={pagination.hasPreviousPage}
+                goToNextPage={pagination.goToNextPage}
+                goToPreviousPage={pagination.goToPreviousPage}
+                totalCount={totalCount}
+                pageSize={pagination.pageSize}
+              />
+            </div>
+          </>
         )}
       </div>
     </main>

@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { usePagination } from "@/hooks/bluebay/hooks/usePagination";
 
 export const useItemManagement = () => {
   const [items, setItems] = useState<any[]>([]);
@@ -11,15 +12,24 @@ export const useItemManagement = () => {
   const [groupFilter, setGroupFilter] = useState("all");
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
   const { toast } = useToast();
+  
+  // Use pagination hook to manage pagination state
+  const pagination = usePagination(100); // 100 items per page
 
   const fetchItems = useCallback(async () => {
     setIsLoading(true);
     try {
+      // Calculate range based on current page and page size
+      const from = (pagination.currentPage - 1) * pagination.pageSize;
+      const to = from + pagination.pageSize - 1;
+      
       let query = supabase
         .from("BLUEBAY_ITEM")
-        .select("*")
-        .order("DESCRICAO");
+        .select("*", { count: "exact" })
+        .order("DESCRICAO")
+        .range(from, to);
 
       if (searchTerm) {
         query = query.or(`ITEM_CODIGO.ilike.%${searchTerm}%,DESCRICAO.ilike.%${searchTerm}%,CODIGOAUX.ilike.%${searchTerm}%`);
@@ -29,10 +39,17 @@ export const useItemManagement = () => {
         query = query.eq("GRU_CODIGO", groupFilter);
       }
 
-      const { data, error } = await query;
+      const { data, error, count } = await query;
 
       if (error) throw error;
+      
       setItems(data || []);
+      
+      // Update total count and pagination
+      if (count !== null) {
+        setTotalCount(count);
+        pagination.updateTotalCount(count);
+      }
     } catch (error: any) {
       console.error("Error fetching items:", error);
       toast({
@@ -43,7 +60,7 @@ export const useItemManagement = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [searchTerm, groupFilter, toast]);
+  }, [searchTerm, groupFilter, pagination.currentPage, pagination.pageSize, toast, pagination.updateTotalCount]);
 
   const fetchGroups = useCallback(async () => {
     try {
@@ -171,11 +188,12 @@ export const useItemManagement = () => {
   // Add debounce for search term
   useEffect(() => {
     const timer = setTimeout(() => {
+      pagination.goToPage(1); // Reset to first page on search
       fetchItems();
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchTerm, groupFilter, fetchItems]);
+  }, [searchTerm, groupFilter, fetchItems, pagination]);
 
   return {
     items,
@@ -192,5 +210,7 @@ export const useItemManagement = () => {
     handleSaveItem,
     handleDeleteItem,
     fetchItems,
+    pagination,
+    totalCount,
   };
 };
