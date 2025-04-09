@@ -37,107 +37,125 @@ export const fetchDashboardComercialData = async (
     if (centroCusto) {
       console.log("Buscando pedidos filtrados por centro de custo:", centroCusto);
       
-      // 1. Primeiro, buscar os pedidos do centro de custo específico
-      const { data: pedidosData, error: pedidosError } = await supabase
-        .from('BLUEBAY_PEDIDO')
-        .select('*')
-        .eq('CENTROCUSTO', centroCusto)
-        .gte('DATA_PEDIDO', formattedStartDate)
-        .lte('DATA_PEDIDO', formattedEndDate);
-        
-      if (pedidosError) {
-        console.error('Erro ao buscar dados de pedidos por centro de custo:', pedidosError);
-        throw pedidosError;
-      }
+      // 1. Primeiro, buscar os pedidos do centro de custo específico usando fetchInBatches
+      // para evitar limitação de 1000 registros
+      pedidoItems = await fetchInBatches<PedidoItem>(
+        async (offset, limit) => {
+          return supabase
+            .from('BLUEBAY_PEDIDO')
+            .select('*')
+            .eq('CENTROCUSTO', centroCusto)
+            .gte('DATA_PEDIDO', formattedStartDate)
+            .lte('DATA_PEDIDO', formattedEndDate)
+            .range(offset, offset + limit - 1);
+        },
+        1000 // tamanho do lote, irá buscar em lotes de 1000
+      );
       
-      pedidoItems = pedidosData || [];
       console.log(`Encontrados ${pedidoItems.length} pedidos do centro de custo ${centroCusto}`);
       
       // 2. Extrair os números de pedido para buscar os faturamentos correspondentes
       if (pedidoItems.length > 0) {
-        // Criar um conjunto de chaves compostas para identificar os pedidos
-        const pedidosKeys = pedidoItems.map(pedido => {
-          return {
-            PED_NUMPEDIDO: pedido.PED_NUMPEDIDO,
-            PED_ANOBASE: pedido.PED_ANOBASE,
-            MPED_NUMORDEM: pedido.MPED_NUMORDEM
-          };
-        });
+        // Criar conjuntos de chaves compostas para identificar os pedidos
+        // Precisamos agrupar pedidos em lotes para evitar consultas muito grandes
         
-        // Buscar faturamentos relacionados a esses pedidos
-        // Note: Precisamos fazer uma consulta para cada item devido a limitações do Supabase
-        // em consultas com múltiplas condições OR
-        const faturamentosPromises = pedidosKeys.map(key => {
-          return supabase
-            .from('BLUEBAY_FATURAMENTO')
-            .select('*')
-            .eq('PED_NUMPEDIDO', key.PED_NUMPEDIDO)
-            .eq('PED_ANOBASE', key.PED_ANOBASE)
-            .eq('MPED_NUMORDEM', key.MPED_NUMORDEM)
-            .gte('DATA_EMISSAO', formattedStartDate)
-            .lte('DATA_EMISSAO', formattedEndDate);
-        });
+        // Buscar faturamentos relacionados ao lote de pedidos
+        // utilizando a função fetchInBatches para processar em lotes maiores
+        // e não ficar limitado a 1000 registros
         
-        // Executar todas as consultas em paralelo
-        const faturamentosResults = await Promise.all(faturamentosPromises);
-        
-        // Processar resultados e mesclar com as informações do centro de custo
-        faturamentoItems = faturamentosResults
-          .filter(result => !result.error && result.data && result.data.length > 0)
-          .flatMap(result => {
-            return result.data!.map(item => {
-              // Encontrar o pedido correspondente para obter CENTROCUSTO
-              const pedidoCorrespondente = pedidoItems.find(
-                p => p.PED_NUMPEDIDO === item.PED_NUMPEDIDO && 
-                     p.PED_ANOBASE === item.PED_ANOBASE &&
-                     p.MPED_NUMORDEM === item.MPED_NUMORDEM
-              );
-              
-              // Criar um objeto composto com os dados de faturamento e CENTROCUSTO do pedido
-              return {
-                ...item,
-                CENTROCUSTO: pedidoCorrespondente?.CENTROCUSTO || null,
-                DATA_PEDIDO: pedidoCorrespondente?.DATA_PEDIDO || null,
-                REPRESENTANTE: pedidoCorrespondente?.REPRESENTANTE || null
-              } as FaturamentoItem;
-            });
-          });
+        // Criar uma função para buscar faturamentos por lotes de pedidos
+        const buscarFaturamentosPorLoteDePedidos = async () => {
+          const resultado: FaturamentoItem[] = [];
+          // Processar em lotes de 100 pedidos para não sobrecarregar o filtro in()
+          const tamanhoBatch = 100;
           
-        console.log(`Encontrados ${faturamentoItems.length} itens de faturamento para pedidos do centro de custo ${centroCusto}`);
+          for (let i = 0; i < pedidoItems.length; i += tamanhoBatch) {
+            const lotePedidos = pedidoItems.slice(i, i + tamanhoBatch);
+            const pedidosNumeros = lotePedidos.map(p => p.PED_NUMPEDIDO);
+            
+            console.log(`Buscando faturamentos para lote de ${pedidosNumeros.length} pedidos (${i+1} até ${Math.min(i + tamanhoBatch, pedidoItems.length)} de ${pedidoItems.length})`);
+            
+            const { data: faturamentosLote, error } = await supabase
+              .from('BLUEBAY_FATURAMENTO')
+              .select('*')
+              .in('PED_NUMPEDIDO', pedidosNumeros)
+              .gte('DATA_EMISSAO', formattedStartDate)
+              .lte('DATA_EMISSAO', formattedEndDate);
+              
+            if (error) {
+              console.error(`Erro ao buscar faturamentos do lote ${i/tamanhoBatch + 1}:`, error);
+              continue;
+            }
+            
+            if (faturamentosLote && faturamentosLote.length > 0) {
+              // Para cada faturamento, encontrar o pedido correspondente e adicionar o CENTROCUSTO
+              const faturamentosProcessados = faturamentosLote.map(faturamento => {
+                // Encontrar o pedido correspondente para obter CENTROCUSTO e outras informações
+                const pedidoCorrespondente = pedidoItems.find(
+                  p => p.PED_NUMPEDIDO === faturamento.PED_NUMPEDIDO && 
+                       p.PED_ANOBASE === faturamento.PED_ANOBASE &&
+                       p.MPED_NUMORDEM === faturamento.MPED_NUMORDEM
+                );
+                
+                // Criar um objeto composto com os dados de faturamento e dados do pedido
+                const itemEnriquecido: FaturamentoItem = {
+                  ...faturamento,
+                  CENTROCUSTO: pedidoCorrespondente?.CENTROCUSTO || null,
+                  CENTRO_CUSTO: pedidoCorrespondente?.CENTRO_CUSTO || pedidoCorrespondente?.CENTROCUSTO || null,
+                  DATA_PEDIDO: pedidoCorrespondente?.DATA_PEDIDO || null,
+                  REPRESENTANTE: pedidoCorrespondente?.REPRESENTANTE || null,
+                  // Adicionar o pedido completo como uma propriedade para acesso fácil
+                  pedido: pedidoCorrespondente
+                };
+                
+                return itemEnriquecido;
+              });
+              
+              resultado.push(...faturamentosProcessados);
+              console.log(`Adicionados ${faturamentosProcessados.length} faturamentos processados ao resultado. Total atual: ${resultado.length}`);
+            }
+          }
+          
+          return resultado;
+        };
+        
+        // Executar a busca em lotes
+        faturamentoItems = await buscarFaturamentosPorLoteDePedidos();
+        console.log(`Total de ${faturamentoItems.length} itens de faturamento encontrados para pedidos do centro de custo ${centroCusto}`);
       }
     } 
     // Caso 2: Sem filtro de centro de custo, consultamos as tabelas independentemente
     else {
       console.log("Realizando consultas independentes para FATURAMENTO e PEDIDO");
       
-      // 1. Buscar dados de faturamento de forma independente
-      const { data: faturamentoData, error: faturamentoError } = await supabase
-        .from('BLUEBAY_FATURAMENTO')
-        .select('*')
-        .gte('DATA_EMISSAO', formattedStartDate)
-        .lte('DATA_EMISSAO', formattedEndDate);
+      // 1. Buscar dados de faturamento usando fetchInBatches para evitar limitação
+      faturamentoItems = await fetchInBatches<FaturamentoItem>(
+        async (offset, limit) => {
+          return supabase
+            .from('BLUEBAY_FATURAMENTO')
+            .select('*')
+            .gte('DATA_EMISSAO', formattedStartDate)
+            .lte('DATA_EMISSAO', formattedEndDate)
+            .range(offset, offset + limit - 1);
+        },
+        1000 // tamanho do lote, irá buscar em lotes de 1000
+      );
       
-      if (faturamentoError) {
-        console.error('Erro ao buscar dados de faturamento:', faturamentoError);
-        throw faturamentoError;
-      }
-
-      faturamentoItems = faturamentoData || [];
       console.log(`Encontrados ${faturamentoItems.length} registros de faturamento`);
 
-      // 2. Buscar dados de pedidos de forma independente
-      const { data: pedidosData, error: pedidosError } = await supabase
-        .from('BLUEBAY_PEDIDO')
-        .select('*')
-        .gte('DATA_PEDIDO', formattedStartDate)
-        .lte('DATA_PEDIDO', formattedEndDate);
+      // 2. Buscar dados de pedidos usando fetchInBatches
+      pedidoItems = await fetchInBatches<PedidoItem>(
+        async (offset, limit) => {
+          return supabase
+            .from('BLUEBAY_PEDIDO')
+            .select('*')
+            .gte('DATA_PEDIDO', formattedStartDate)
+            .lte('DATA_PEDIDO', formattedEndDate)
+            .range(offset, offset + limit - 1);
+        },
+        1000 // tamanho do lote
+      );
       
-      if (pedidosError) {
-        console.error('Erro ao buscar dados de pedidos:', pedidosError);
-        throw pedidosError;
-      }
-
-      pedidoItems = pedidosData || [];
       console.log(`Encontrados ${pedidoItems.length} registros de pedidos`);
     }
 
