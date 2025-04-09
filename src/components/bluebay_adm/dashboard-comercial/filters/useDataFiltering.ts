@@ -27,13 +27,11 @@ export const useDataFiltering = (
   const filterByCentroCusto = useCallback((item: any) => {
     if (!selectedCentroCusto) return true;
     
-    // Se o item tiver a propriedade CENTROCUSTO, usamos ela
-    if (item.CENTROCUSTO) {
-      return item.CENTROCUSTO === selectedCentroCusto;
-    }
-    
-    // Para compatibilidade com a nova view materializada, verificamos data relacionados ao centro de custo
-    return item.CENTRO_CUSTO === selectedCentroCusto;
+    // Check multiple possible field names for centro de custo
+    return (
+      (item.CENTROCUSTO && item.CENTROCUSTO === selectedCentroCusto) || 
+      (item.CENTRO_CUSTO && item.CENTRO_CUSTO === selectedCentroCusto)
+    );
   }, [selectedCentroCusto]);
   
   // Uso de useMemo para evitar recálculos desnecessários

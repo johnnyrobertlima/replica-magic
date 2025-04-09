@@ -1,9 +1,9 @@
 
 export interface FaturamentoItem {
-  MATRIZ: number;
-  FILIAL: number;
-  ID_EF_DOCFISCAL: number;
-  ID_EF_DOCFISCAL_ITEM: number;
+  MATRIZ?: number;
+  FILIAL?: number;
+  ID_EF_DOCFISCAL?: number;
+  ID_EF_DOCFISCAL_ITEM?: number;
   PED_NUMPEDIDO?: string;
   PED_ANOBASE?: number;
   MPED_NUMORDEM?: number;
@@ -18,6 +18,11 @@ export interface FaturamentoItem {
   VALOR_NOTA?: number;
   STATUS?: string;
   DATA_EMISSAO?: string | Date;
+  // Additional fields from the materialized view
+  CENTROCUSTO?: string;
+  CENTRO_CUSTO?: string;
+  DATA_PEDIDO?: string | Date;
+  REPRESENTANTE?: number;
 }
 
 export interface PedidoItem {
@@ -35,6 +40,7 @@ export interface PedidoItem {
   DATA_PEDIDO?: string | Date;
   VALOR_UNITARIO?: number;
   CENTROCUSTO?: string;
+  CENTRO_CUSTO?: string; // Added for compatibility with the materialized view
 }
 
 export interface DailyFaturamento {
