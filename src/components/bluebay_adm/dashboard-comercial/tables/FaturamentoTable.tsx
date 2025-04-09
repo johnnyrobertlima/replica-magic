@@ -28,9 +28,13 @@ export const FaturamentoTableContent: React.FC<FaturamentoTableProps> = ({ fatur
   // Agrupar faturamento por data e nota
   const groupedByDate: Record<string, GroupedFaturamento> = {};
   
-  faturamentoData.forEach(item => {
+  // Filter out null or invalid items first
+  const validItems = Array.isArray(faturamentoData) ? 
+    faturamentoData.filter(item => item && item.DATA_EMISSAO && item.NOTA) : [];
+  
+  validItems.forEach(item => {
     // Skip invalid items - ensure both DATA_EMISSAO and NOTA exist
-    if (!item?.DATA_EMISSAO || !item?.NOTA) return;
+    if (!item || !item.DATA_EMISSAO || !item.NOTA) return;
     
     const dateStr = typeof item.DATA_EMISSAO === 'string' 
       ? format(parseISO(item.DATA_EMISSAO), 'yyyy-MM-dd')
@@ -44,7 +48,7 @@ export const FaturamentoTableContent: React.FC<FaturamentoTableProps> = ({ fatur
     }
 
     // Verificar se já temos essa nota no grupo da data
-    const notaExistente = groupedByDate[dateStr].notas.find(n => n.NOTA === item.NOTA);
+    const notaExistente = groupedByDate[dateStr].notas.find(n => n && n.NOTA === item.NOTA);
     
     if (notaExistente) {
       notaExistente.TOTAL_QUANTIDADE += (item.QUANTIDADE || 0);
