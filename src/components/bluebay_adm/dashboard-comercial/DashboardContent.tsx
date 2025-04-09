@@ -41,7 +41,10 @@ export const DashboardContent = ({
   } = useDataFiltering(dashboardData, selectedCentroCusto, isLoading);
 
   // Verifica se há dados disponíveis
-  const hasData = !isLoading && dashboardData && Array.isArray(dashboardData.faturamentoItems) && dashboardData.faturamentoItems.length > 0;
+  const hasData = !isLoading && dashboardData && 
+    ((Array.isArray(dashboardData.faturamentoItems) && dashboardData.faturamentoItems.length > 0) || 
+     (Array.isArray(dashboardData.pedidoItems) && dashboardData.pedidoItems.length > 0));
+  
   const noDataAfterFiltering = !isLoading && hasData && selectedCentroCusto && !hasFilteredData;
 
   // Mostrar alerta quando não há dados após a filtragem

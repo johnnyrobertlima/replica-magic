@@ -7,203 +7,130 @@ import { DashboardComercialData, FaturamentoItem, PedidoItem } from "./dashboard
 
 /**
  * Busca dados de faturamento para o dashboard comercial
- * Versão otimizada para trabalhar com a view materializada sem depender de foreign keys
+ * Versão otimizada que consulta pedidos e faturamento de forma independente
+ * exceto quando houver filtro de centro de custo
  */
 export const fetchDashboardComercialData = async (
   startDate: Date | null,
-  endDate: Date | null
+  endDate: Date | null,
+  centroCusto?: string | null
 ): Promise<DashboardComercialData> => {
   try {
     // Converte as datas para strings no formato SQL
     const startDateStr = startDate ? format(startDate, 'yyyy-MM-dd') : '';
     const endDateStr = endDate ? format(endDate, 'yyyy-MM-dd') : '';
 
-    console.log(`Buscando dados de faturamento comercial de ${startDateStr} até ${endDateStr}`);
+    console.log(`Buscando dados de dashboard comercial de ${startDateStr} até ${endDateStr}`);
+    if (centroCusto) {
+      console.log(`Filtrando por centro de custo: ${centroCusto}`);
+    }
     
     // Formatar datas para consulta
     const formattedStartDate = `${startDateStr}T00:00:00.000`;
     const formattedEndDate = `${endDateStr}T23:59:59.999`;
     
-    // 1. Primeiro buscar dados da view materializada de forma simples (sem joins)
-    const { data: faturamentoDataFromView, error: faturamentoViewError } = await supabase
-      .from('mv_faturamento_resumido')
-      .select('*')
-      .gte('DATA_EMISSAO', formattedStartDate)
-      .lte('DATA_EMISSAO', formattedEndDate);
-    
-    if (faturamentoViewError) {
-      console.error('Erro ao buscar dados da view materializada:', faturamentoViewError);
-      throw faturamentoViewError;
-    }
+    let faturamentoItems: FaturamentoItem[] = [];
+    let pedidoItems: PedidoItem[] = [];
 
-    // 2. Buscar dados adicionais das tabelas relacionadas
-    // Extrair os números de pedidos e anos base para buscar dados detalhados
-    const pedidosKeys = faturamentoDataFromView?.map(item => ({
-      PED_NUMPEDIDO: item.PED_NUMPEDIDO,
-      PED_ANOBASE: item.PED_ANOBASE,
-    })) || [];
-
-    // Remover duplicatas
-    const uniquePedidosKeys = pedidosKeys.filter((item, index, self) =>
-      index === self.findIndex(t => (
-        t.PED_NUMPEDIDO === item.PED_NUMPEDIDO && t.PED_ANOBASE === item.PED_ANOBASE
-      ))
-    );
-
-    // Buscar dados detalhados dos pedidos
-    const { data: pedidosData, error: pedidosError } = await supabase
-      .from('BLUEBAY_PEDIDO')
-      .select('*')
-      .in('PED_NUMPEDIDO', uniquePedidosKeys.map(k => k.PED_NUMPEDIDO).filter(Boolean));
-
-    if (pedidosError) {
-      console.error('Erro ao buscar dados detalhados dos pedidos:', pedidosError);
-      // Não vamos interromper o fluxo, mas logar o erro
-    }
-
-    // Buscar dados das notas fiscais
-    // Extrair as notas para buscar os detalhes
-    const notasKeys = faturamentoDataFromView?.map(item => item.NOTA).filter(Boolean) || [];
-    
-    console.log(`Buscando dados de ${notasKeys.length} notas fiscais`);
-    
-    const { data: faturamentoData, error: faturamentoError } = await supabase
-      .from('BLUEBAY_FATURAMENTO')
-      .select('*')
-      .in('NOTA', notasKeys);
-
-    if (faturamentoError) {
-      console.error('Erro ao buscar dados das notas fiscais:', faturamentoError);
-      // Não vamos interromper o fluxo, mas logar o erro
-    } else {
-      console.log(`Encontradas ${faturamentoData?.length || 0} linhas de faturamento nas notas solicitadas`);
-    }
-
-    // 3. Combinar os dados para criar o resultado final
-    // Criar mapa de pedidos para rápido acesso
-    const pedidosMap = new Map();
-    pedidosData?.forEach(pedido => {
-      const key = `${pedido.PED_NUMPEDIDO}-${pedido.PED_ANOBASE}`;
-      pedidosMap.set(key, pedido);
-    });
-
-    // Criar mapa de faturamento para rápido acesso agrupado por nota
-    const faturamentoMap = new Map();
-    faturamentoData?.forEach(fatura => {
-      if (!fatura.NOTA) return;
+    // Caso 1: Se houver filtro de centro de custo, fazemos o join entre as tabelas
+    if (centroCusto) {
+      console.log("Realizando consulta com JOIN entre FATURAMENTO e PEDIDO devido ao filtro de centro de custo");
       
-      // Se já existe uma entrada para esta nota, adiciona a este item
-      if (faturamentoMap.has(fatura.NOTA)) {
-        faturamentoMap.get(fatura.NOTA).push(fatura);
-      } else {
-        // Caso contrário, cria um novo array com este item
-        faturamentoMap.set(fatura.NOTA, [fatura]);
-      }
-    });
+      // Buscar dados de faturamento com join em pedido para filtrar por centro de custo
+      const { data: joinedData, error: joinError } = await supabase
+        .from('BLUEBAY_FATURAMENTO')
+        .select(`
+          *,
+          pedido:BLUEBAY_PEDIDO!inner(
+            MATRIZ,
+            FILIAL,
+            PED_NUMPEDIDO,
+            PED_ANOBASE,
+            MPED_NUMORDEM,
+            ITEM_CODIGO,
+            PES_CODIGO,
+            QTDE_PEDIDA,
+            QTDE_ENTREGUE,
+            QTDE_SALDO,
+            STATUS,
+            DATA_PEDIDO,
+            VALOR_UNITARIO,
+            CENTROCUSTO,
+            REPRESENTANTE
+          )
+        `)
+        .eq('pedido.CENTROCUSTO', centroCusto)
+        .gte('DATA_EMISSAO', formattedStartDate)
+        .lte('DATA_EMISSAO', formattedEndDate);
 
-    console.log(`Processando ${faturamentoDataFromView?.length || 0} itens da view...`);
-    console.log(`Mapas: ${pedidosMap.size} pedidos e ${faturamentoMap.size} notas de faturamento`);
-
-    // Combinar os dados da view com os dados detalhados
-    const faturamentoItems: FaturamentoItem[] = faturamentoDataFromView?.map(viewItem => {
-      // Buscar dados do pedido correspondente
-      const pedidoKey = `${viewItem.PED_NUMPEDIDO}-${viewItem.PED_ANOBASE}`;
-      const pedidoDetalhe = pedidosMap.get(pedidoKey);
-      
-      // Buscar dados da nota fiscal correspondente
-      const faturasDetalhe = viewItem.NOTA ? faturamentoMap.get(viewItem.NOTA) || [] : [];
-      
-      // Se tiver mais de uma linha de faturamento para esta nota, encontre a correspondente
-      // ao item atual usando outros campos como ITEM_CODIGO ou PED_NUMPEDIDO
-      let faturaDetalhe = null;
-      if (faturasDetalhe.length > 0) {
-        if (faturasDetalhe.length === 1) {
-          // Se só tem uma linha, usa ela
-          faturaDetalhe = faturasDetalhe[0];
-        } else {
-          // Tenta encontrar a linha específica para este item usando os campos disponíveis
-          // Verificamos se temos os campos necessários para o matching
-          const hasItemCodigo = 'ITEM_CODIGO' in viewItem;
-          
-          faturaDetalhe = faturasDetalhe.find(f => 
-            (hasItemCodigo && viewItem.ITEM_CODIGO && f.ITEM_CODIGO === viewItem.ITEM_CODIGO) || 
-            (f.PED_NUMPEDIDO === viewItem.PED_NUMPEDIDO &&
-            f.PED_ANOBASE === viewItem.PED_ANOBASE)
-          ) || faturasDetalhe[0]; // Se não encontrar, usa a primeira
-        }
+      if (joinError) {
+        console.error('Erro na consulta com join:', joinError);
+        throw joinError;
       }
 
-      // Combinar dados
-      return {
-        ...viewItem,
-        // Adicionar campos do pedido
-        pedido: pedidoDetalhe ? {
-          CENTROCUSTO: pedidoDetalhe.CENTROCUSTO,
-          MATRIZ: pedidoDetalhe.MATRIZ,
-          FILIAL: pedidoDetalhe.FILIAL,
-          PED_NUMPEDIDO: pedidoDetalhe.PED_NUMPEDIDO,
-          PED_ANOBASE: pedidoDetalhe.PED_ANOBASE,
-          MPED_NUMORDEM: pedidoDetalhe.MPED_NUMORDEM,
-          ITEM_CODIGO: pedidoDetalhe.ITEM_CODIGO,
-          PES_CODIGO: pedidoDetalhe.PES_CODIGO,
-          QTDE_PEDIDA: pedidoDetalhe.QTDE_PEDIDA,
-          QTDE_ENTREGUE: pedidoDetalhe.QTDE_ENTREGUE,
-          QTDE_SALDO: pedidoDetalhe.QTDE_SALDO,
-          STATUS: pedidoDetalhe.STATUS,
-          DATA_PEDIDO: pedidoDetalhe.DATA_PEDIDO,
-          VALOR_UNITARIO: pedidoDetalhe.VALOR_UNITARIO,
-          REPRESENTANTE: pedidoDetalhe.REPRESENTANTE
-        } : undefined,
-        // Adicionar campos de faturamento
-        faturamento: faturaDetalhe ? {
-          NOTA: faturaDetalhe.NOTA,
-          MATRIZ: faturaDetalhe.MATRIZ,
-          FILIAL: faturaDetalhe.FILIAL,
-          ID_EF_DOCFISCAL: faturaDetalhe.ID_EF_DOCFISCAL,
-          ID_EF_DOCFISCAL_ITEM: faturaDetalhe.ID_EF_DOCFISCAL_ITEM,
-          PED_NUMPEDIDO: faturaDetalhe.PED_NUMPEDIDO,
-          PED_ANOBASE: faturaDetalhe.PED_ANOBASE,
-          MPED_NUMORDEM: faturaDetalhe.MPED_NUMORDEM,
-          ITEM_CODIGO: faturaDetalhe.ITEM_CODIGO,
-          QUANTIDADE: faturaDetalhe.QUANTIDADE,
-          VALOR_UNITARIO: faturaDetalhe.VALOR_UNITARIO,
-          VALOR_DESCONTO: faturaDetalhe.VALOR_DESCONTO,
-          VALOR_NOTA: faturaDetalhe.VALOR_NOTA,
-          STATUS: faturaDetalhe.STATUS,
-          DATA_EMISSAO: faturaDetalhe.DATA_EMISSAO,
-          PES_CODIGO: faturaDetalhe.PES_CODIGO,
-          TIPO: faturaDetalhe.TIPO
-        } : undefined
-      };
-    }) || [];
+      // Transformar os dados do join no formato esperado
+      faturamentoItems = joinedData?.map(item => ({
+        ...item,
+        CENTROCUSTO: item.pedido?.CENTROCUSTO,
+        // Incluir outros campos necessários do pedido
+        DATA_PEDIDO: item.pedido?.DATA_PEDIDO,
+        REPRESENTANTE: item.pedido?.REPRESENTANTE
+      })) || [];
 
-    console.log(`Total de registros recuperados com relacionamentos manuais: ${faturamentoItems.length}`);
+      // Extrair os dados de pedidos a partir do join
+      pedidoItems = joinedData?.map(item => ({
+        MATRIZ: item.pedido.MATRIZ,
+        FILIAL: item.pedido.FILIAL,
+        PED_NUMPEDIDO: item.pedido.PED_NUMPEDIDO,
+        PED_ANOBASE: item.pedido.PED_ANOBASE,
+        MPED_NUMORDEM: item.pedido.MPED_NUMORDEM,
+        ITEM_CODIGO: item.pedido.ITEM_CODIGO,
+        PES_CODIGO: item.pedido.PES_CODIGO,
+        QTDE_PEDIDA: item.pedido.QTDE_PEDIDA,
+        QTDE_ENTREGUE: item.pedido.QTDE_ENTREGUE,
+        QTDE_SALDO: item.pedido.QTDE_SALDO,
+        DATA_PEDIDO: item.pedido.DATA_PEDIDO,
+        STATUS: item.pedido.STATUS,
+        VALOR_UNITARIO: item.pedido.VALOR_UNITARIO,
+        CENTROCUSTO: item.pedido.CENTROCUSTO
+      })) || [];
+    } 
+    // Caso 2: Sem filtro de centro de custo, consultamos as tabelas independentemente
+    else {
+      console.log("Realizando consultas independentes para FATURAMENTO e PEDIDO");
+      
+      // 1. Buscar dados de faturamento de forma independente
+      const { data: faturamentoData, error: faturamentoError } = await supabase
+        .from('BLUEBAY_FATURAMENTO')
+        .select('*')
+        .gte('DATA_EMISSAO', formattedStartDate)
+        .lte('DATA_EMISSAO', formattedEndDate);
+      
+      if (faturamentoError) {
+        console.error('Erro ao buscar dados de faturamento:', faturamentoError);
+        throw faturamentoError;
+      }
 
-    // Log para debug - verificar quais itens possuem dados de faturamento
-    const itemsWithFaturamento = faturamentoItems.filter(item => item.faturamento).length;
-    console.log(`Itens com dados de faturamento: ${itemsWithFaturamento} (${(itemsWithFaturamento / faturamentoItems.length * 100).toFixed(2)}%)`);
+      faturamentoItems = faturamentoData || [];
+      console.log(`Encontrados ${faturamentoItems.length} registros de faturamento`);
 
-    // Extrair dados de pedidos a partir dos dados do faturamento
-    const pedidoItems = faturamentoItems
-      .filter(item => item.pedido) // Filtrar apenas itens que têm dados de pedido
-      .map((item) => {
-        return {
-          MATRIZ: item.pedido?.MATRIZ || item.MATRIZ,
-          FILIAL: item.pedido?.FILIAL || item.FILIAL,
-          PED_NUMPEDIDO: item.pedido?.PED_NUMPEDIDO || item.PED_NUMPEDIDO,
-          PED_ANOBASE: item.pedido?.PED_ANOBASE || item.PED_ANOBASE,
-          MPED_NUMORDEM: item.pedido?.MPED_NUMORDEM || item.MPED_NUMORDEM,
-          ITEM_CODIGO: item.pedido?.ITEM_CODIGO || item.ITEM_CODIGO,
-          PES_CODIGO: item.pedido?.PES_CODIGO || item.PES_CODIGO,
-          QTDE_PEDIDA: item.pedido?.QTDE_PEDIDA || item.QUANTIDADE,
-          QTDE_ENTREGUE: item.pedido?.QTDE_ENTREGUE || item.QUANTIDADE,
-          QTDE_SALDO: item.pedido?.QTDE_SALDO || 0,
-          DATA_PEDIDO: item.pedido?.DATA_PEDIDO || item.DATA_PEDIDO || item.DATA_EMISSAO,
-          STATUS: item.pedido?.STATUS || item.STATUS,
-          VALOR_UNITARIO: item.pedido?.VALOR_UNITARIO || item.VALOR_UNITARIO,
-          CENTROCUSTO: item.pedido?.CENTROCUSTO || item.CENTROCUSTO || item.CENTRO_CUSTO
-        };
-      }) as PedidoItem[];
+      // 2. Buscar dados de pedidos de forma independente
+      const { data: pedidosData, error: pedidosError } = await supabase
+        .from('BLUEBAY_PEDIDO')
+        .select('*')
+        .gte('DATA_PEDIDO', formattedStartDate)
+        .lte('DATA_PEDIDO', formattedEndDate);
+      
+      if (pedidosError) {
+        console.error('Erro ao buscar dados de pedidos:', pedidosError);
+        throw pedidosError;
+      }
+
+      pedidoItems = pedidosData || [];
+      console.log(`Encontrados ${pedidoItems.length} registros de pedidos`);
+    }
+
+    console.log(`Total de registros recuperados: ${faturamentoItems.length} faturamentos e ${pedidoItems.length} pedidos`);
 
     // Processar os dados de faturamento para gerar os agregados
     const {
@@ -217,7 +144,7 @@ export const fetchDashboardComercialData = async (
     } = processarDadosFaturamento(faturamentoItems, pedidoItems);
 
     // Considerar dados completos se houver pelo menos algum dado
-    const hasCompleteData = faturamentoItems.length > 0;
+    const hasCompleteData = faturamentoItems.length > 0 || pedidoItems.length > 0;
 
     // Retornar os dados processados
     const returnData: DashboardComercialData = {

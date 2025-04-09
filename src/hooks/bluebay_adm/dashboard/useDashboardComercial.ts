@@ -15,6 +15,8 @@ interface UseDashboardComercialReturn {
   endDate: Date;
   setDateRange: (startDate: Date, endDate: Date) => void;
   refreshData: () => Promise<void>;
+  selectedCentroCusto: string | null;
+  setSelectedCentroCusto: (centroCusto: string | null) => void;
 }
 
 const defaultData: DashboardComercialData = {
@@ -38,6 +40,7 @@ export const useDashboardComercial = (): UseDashboardComercialReturn => {
   // Usar período inicial menor para melhorar performance
   const [startDate, setStartDate] = useState<Date>(subDays(new Date(), 30));
   const [endDate, setEndDate] = useState<Date>(new Date());
+  const [selectedCentroCusto, setSelectedCentroCusto] = useState<string | null>(null);
   
   const [dashboardData, setDashboardData] = useState<DashboardComercialData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -61,7 +64,7 @@ export const useDashboardComercial = (): UseDashboardComercialReturn => {
       toast({
         title: "Intervalo de datas muito grande",
         description: "Para melhor performance, o período foi limitado a 90 dias.",
-        variant: "destructive",  // Changed from "warning" to "destructive"
+        variant: "destructive",
       });
       
       setStartDate(subDays(endDate, 90));
@@ -73,7 +76,7 @@ export const useDashboardComercial = (): UseDashboardComercialReturn => {
       toast({
         title: "Data muito antiga",
         description: "A data inicial foi ajustada para um período mais recente.",
-        variant: "destructive",  // Changed from "warning" to "destructive"
+        variant: "destructive",
       });
       
       setStartDate(oneYearAgo);
@@ -116,9 +119,12 @@ export const useDashboardComercial = (): UseDashboardComercialReturn => {
     
     try {
       console.log(`Iniciando busca de dados: ${startDate.toISOString()} até ${endDate.toISOString()}`);
+      if (selectedCentroCusto) {
+        console.log(`Filtrando por centro de custo: ${selectedCentroCusto}`);
+      }
       
       // Adicionar um timeout para evitar travamentos em caso de resposta lenta
-      const fetchPromise = fetchDashboardComercialData(startDate, endDate);
+      const fetchPromise = fetchDashboardComercialData(startDate, endDate, selectedCentroCusto);
       const timeoutPromise = new Promise<DashboardComercialData | null>((_, reject) => {
         setTimeout(() => reject(new Error('Timeout: A busca demorou muito tempo')), 30000);
       });
@@ -132,9 +138,9 @@ export const useDashboardComercial = (): UseDashboardComercialReturn => {
       // Tratar os dados recebidos
       if (data) {
         setDashboardData(data);
-        console.log(`Dados carregados com sucesso: ${data.faturamentoItems.length} registros`);
+        console.log(`Dados carregados com sucesso: ${data.faturamentoItems.length} registros de faturamento, ${data.pedidoItems.length} registros de pedidos`);
       
-        if (data.faturamentoItems.length === 0) {
+        if (data.faturamentoItems.length === 0 && data.pedidoItems.length === 0) {
           toast({
             title: "Sem dados disponíveis",
             description: "Não foram encontrados dados para o período selecionado.",
@@ -144,7 +150,7 @@ export const useDashboardComercial = (): UseDashboardComercialReturn => {
         else {
           toast({
             title: "Dados carregados com sucesso",
-            description: `Foram encontrados ${data.faturamentoItems.length} registros para o período.`,
+            description: `Foram encontrados ${data.faturamentoItems.length} registros de faturamento e ${data.pedidoItems.length} registros de pedidos para o período.`,
             variant: "default",
           });
         }
@@ -177,7 +183,7 @@ export const useDashboardComercial = (): UseDashboardComercialReturn => {
       requestInProgressRef.current = false;
       activeRequestRef.current = null;
     }
-  }, [startDate, endDate, toast, validateDateRange]);
+  }, [startDate, endDate, toast, validateDateRange, selectedCentroCusto]);
 
   const refreshData = useCallback(async () => {
     if (isLoading) return;
@@ -190,9 +196,9 @@ export const useDashboardComercial = (): UseDashboardComercialReturn => {
     setRequestId(prev => prev + 1);
   }, [isLoading, toast]);
 
-  // Effect para carregar dados quando mudar o requestId
+  // Effect para carregar dados quando mudar o requestId ou o centro de custo
   useEffect(() => {
-    console.log(`Efeito chamado para busca de dados: requestId=${requestId}`);
+    console.log(`Efeito chamado para busca de dados: requestId=${requestId}, centroCusto=${selectedCentroCusto || 'none'}`);
     fetchData();
     
     // Função de cleanup para lidar com desmontagem
@@ -201,7 +207,7 @@ export const useDashboardComercial = (): UseDashboardComercialReturn => {
         activeRequestRef.current.abort();
       }
     };
-  }, [fetchData, requestId]);
+  }, [fetchData, requestId, selectedCentroCusto]);
 
   // Effect para definir o status de montagem
   useEffect(() => {
@@ -219,6 +225,8 @@ export const useDashboardComercial = (): UseDashboardComercialReturn => {
     startDate,
     endDate,
     setDateRange,
-    refreshData
+    refreshData,
+    selectedCentroCusto,
+    setSelectedCentroCusto
   };
 };

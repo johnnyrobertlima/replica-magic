@@ -18,17 +18,13 @@ const BluebayAdmDashboardComercial = () => {
     startDate,
     endDate,
     setDateRange,
-    refreshData
+    refreshData,
+    selectedCentroCusto,
+    setSelectedCentroCusto
   } = useDashboardComercial();
   
   const { toast } = useToast();
-  const [selectedCentroCusto, setSelectedCentroCusto] = useState<string | null>(null);
   const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
-
-  // Usar useCallback para evitar recriação da função a cada render
-  const handleCentroCustoChange = useCallback((centroCusto: string | null) => {
-    setSelectedCentroCusto(centroCusto);
-  }, []);
 
   // Effect para lidar com erros de carregamento
   useEffect(() => {
@@ -108,7 +104,7 @@ const BluebayAdmDashboardComercial = () => {
           <DashboardContent
             dashboardData={dashboardData}
             selectedCentroCusto={selectedCentroCusto}
-            setSelectedCentroCusto={handleCentroCustoChange}
+            setSelectedCentroCusto={setSelectedCentroCusto}
             isLoading={isLoading}
             startDate={startDate}
             endDate={endDate}
