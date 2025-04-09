@@ -1,3 +1,4 @@
+
 import { FaturamentoItem, PedidoItem } from '@/services/bluebay/dashboardComercialTypes';
 
 /**
@@ -13,46 +14,42 @@ export const normalizeValue = (value: any): string => {
  * usando uma estratégia em três etapas para melhorar a correspondência
  */
 export const encontrarPedidoCorrespondente = (item: any, pedidos: any[]) => {
-  if (!item.PED_NUMPEDIDO && !item.PED_ANOBASE) return null;
+  if (!item.PED_NUMPEDIDO || !item.PED_ANOBASE) return null;
 
   const itemNumPedido = normalizeValue(item.PED_NUMPEDIDO);
   const itemAnoBase = normalizeValue(item.PED_ANOBASE);
   
-  // Primeiro, tentamos com o MPED_NUMORDEM (correspondência completa)
+  // Primeiro, tentamos com correspondência completa (PED_NUMPEDIDO, PED_ANOBASE e MPED_NUMORDEM)
   if (item.MPED_NUMORDEM !== null && item.MPED_NUMORDEM !== undefined) {
     const itemNumOrdem = normalizeValue(item.MPED_NUMORDEM);
     
-    const pedido = pedidos.find(p => 
+    const pedidoCompleto = pedidos.find(p => 
       normalizeValue(p.PED_NUMPEDIDO) === itemNumPedido &&
-      normalizeValue(p.PED_ANOBASE) === itemNumPedido &&
+      normalizeValue(p.PED_ANOBASE) === itemAnoBase &&
       normalizeValue(p.MPED_NUMORDEM) === itemNumOrdem
     );
     
-    if (pedido) return pedido;
+    if (pedidoCompleto) return pedidoCompleto;
   }
 
-  // Corrigido: Segunda tentativa - comparar PED_NUMPEDIDO, PED_ANOBASE e MPED_NUMORDEM
-  // com validação mais precisa dos tipos de dados
-  const pedidoComNumOrdem = pedidos.find(p => {
-    const pNumPedido = normalizeValue(p.PED_NUMPEDIDO);
-    const pAnoBase = normalizeValue(p.PED_ANOBASE);
-    const pNumOrdem = normalizeValue(p.MPED_NUMORDEM);
-    const itemNumOrdem = normalizeValue(item.MPED_NUMORDEM);
-    
-    return pNumPedido === itemNumPedido && 
-           pAnoBase === itemAnoBase && 
-           pNumOrdem === itemNumOrdem;
-  });
-  
-  if (pedidoComNumOrdem) return pedidoComNumOrdem;
-
-  // Terceira tentativa - comparação flexível apenas com PED_NUMPEDIDO e PED_ANOBASE
+  // Segunda tentativa - PED_NUMPEDIDO e PED_ANOBASE (sem MPED_NUMORDEM)
+  // CORREÇÃO: Garantir que o valor de PED_ANOBASE seja comparado de forma consistente
   const pedidoSemNumOrdem = pedidos.find(p => 
     normalizeValue(p.PED_NUMPEDIDO) === itemNumPedido &&
     normalizeValue(p.PED_ANOBASE) === itemAnoBase
   );
 
-  return pedidoSemNumOrdem;
+  if (pedidoSemNumOrdem) return pedidoSemNumOrdem;
+
+  // Última tentativa - flexibilizar um pouco para casos potenciais de inconsistência de tipos
+  const pedidoFallback = pedidos.find(p => {
+    const pNumPedido = normalizeValue(p.PED_NUMPEDIDO);
+    const pAnoBase = normalizeValue(p.PED_ANOBASE);
+    
+    return pNumPedido === itemNumPedido && pAnoBase === itemAnoBase;
+  });
+
+  return pedidoFallback;
 };
 
 /**
@@ -73,11 +70,12 @@ export const processarIndicadoresCentroCusto = (
 ): CentroCustoData[] => {
   const centroCustoMap = new Map<string, CentroCustoData>();
   
-  // Criar mapa de faturamento por número de pedido
+  // Criar mapa de faturamento usando chave composta de PED_NUMPEDIDO e PED_ANOBASE
   const faturamentoPorPedido = new Map<string, FaturamentoItem[]>();
   faturamentoItems.forEach(item => {
     if (!item.PED_NUMPEDIDO || !item.PED_ANOBASE) return;
     
+    // CORREÇÃO: Usar chave composta que inclui PED_ANOBASE
     const pedidoKey = `${normalizeValue(item.PED_NUMPEDIDO)}-${normalizeValue(item.PED_ANOBASE)}-${normalizeValue(item.MPED_NUMORDEM || '')}`;
     if (!faturamentoPorPedido.has(pedidoKey)) {
       faturamentoPorPedido.set(pedidoKey, []);
@@ -107,17 +105,14 @@ export const processarIndicadoresCentroCusto = (
     data.totalPedidos += valorPedido;
     data.totalItensPedidos += item.QTDE_PEDIDA || 0;
     
-    // Verificar se há faturamento para este pedido usando a nova função de busca
-    const pedidoKey1 = `${normalizeValue(item.PED_NUMPEDIDO)}-${normalizeValue(item.PED_ANOBASE)}-${normalizeValue(item.MPED_NUMORDEM)}`;
-    const pedidoKey2 = `${normalizeValue(item.PED_NUMPEDIDO)}-${normalizeValue(item.PED_ANOBASE)}-`;
+    // CORREÇÃO: Usar chave composta para buscar faturamento relacionado
+    const pedidoKey = `${normalizeValue(item.PED_NUMPEDIDO)}-${normalizeValue(item.PED_ANOBASE)}-${normalizeValue(item.MPED_NUMORDEM || '')}`;
+    const simplePedidoKey = `${normalizeValue(item.PED_NUMPEDIDO)}-${normalizeValue(item.PED_ANOBASE)}-`;
     
-    // Procura com a chave completa ou com a chave parcial (sem MPED_NUMORDEM)
-    const faturamentoItems1 = faturamentoPorPedido.get(pedidoKey1) || [];
-    const faturamentoItems2 = faturamentoPorPedido.get(pedidoKey2) || [];
-    const todosItens = [...faturamentoItems1, ...faturamentoItems2];
+    const faturamentos = faturamentoPorPedido.get(pedidoKey) || faturamentoPorPedido.get(simplePedidoKey) || [];
     
     // Acumular valores de faturamento relacionados a este pedido
-    todosItens.forEach(fatItem => {
+    faturamentos.forEach(fatItem => {
       data.totalFaturado += fatItem.VALOR_NOTA || 0;
       data.totalItensFaturados += fatItem.QUANTIDADE || 0;
     });
@@ -126,16 +121,16 @@ export const processarIndicadoresCentroCusto = (
   // Processar notas fiscais sem pedidos associados (não identificado)
   const pedidosProcessados = new Set<string>();
   
-  // Marcar todos os pedidos já processados
+  // Marcar todos os pedidos já processados usando chave composta
   pedidoItems.forEach(item => {
     if (!item.PED_NUMPEDIDO || !item.PED_ANOBASE) return;
     
-    // Gerar ambas as chaves possíveis (com e sem MPED_NUMORDEM)
-    const pedidoKey1 = `${normalizeValue(item.PED_NUMPEDIDO)}-${normalizeValue(item.PED_ANOBASE)}-${normalizeValue(item.MPED_NUMORDEM)}`;
-    const pedidoKey2 = `${normalizeValue(item.PED_NUMPEDIDO)}-${normalizeValue(item.PED_ANOBASE)}-`;
+    // CORREÇÃO: Usar chaves compostas para rastrear pedidos processados
+    const pedidoKeyFull = `${normalizeValue(item.PED_NUMPEDIDO)}-${normalizeValue(item.PED_ANOBASE)}-${normalizeValue(item.MPED_NUMORDEM || '')}`;
+    const pedidoKeySimple = `${normalizeValue(item.PED_NUMPEDIDO)}-${normalizeValue(item.PED_ANOBASE)}-`;
     
-    pedidosProcessados.add(pedidoKey1);
-    pedidosProcessados.add(pedidoKey2);
+    pedidosProcessados.add(pedidoKeyFull);
+    pedidosProcessados.add(pedidoKeySimple);
   });
   
   // Verificar notas fiscais sem pedidos associados e atribuir ao "Não identificado"
@@ -161,7 +156,7 @@ export const processarIndicadoresCentroCusto = (
       return;
     }
     
-    // Verificar se este item de faturamento já foi processado através de um pedido
+    // CORREÇÃO: Usar a função encontrarPedidoCorrespondente que agora usa ambos os campos
     const pedidoCorrespondente = encontrarPedidoCorrespondente(item, pedidoItems);
     
     if (!pedidoCorrespondente) {

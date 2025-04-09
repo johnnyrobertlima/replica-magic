@@ -54,6 +54,27 @@ export const useDataFiltering = (
       });
     }
     
+    // Procurar especificamente a nota 252566 que apresenta problemas
+    const nota252566 = dashboardData.faturamentoItems.find(item => item.NOTA === '252566');
+    if (nota252566) {
+      const pedidoCorrespondente = encontrarPedidoCorrespondente(nota252566, dashboardData.pedidoItems);
+      console.log('Análise específica da nota 252566:', {
+        notaData: {
+          PED_NUMPEDIDO: nota252566.PED_NUMPEDIDO,
+          PED_ANOBASE: nota252566.PED_ANOBASE,
+          MPED_NUMORDEM: nota252566.MPED_NUMORDEM,
+          VALOR_NOTA: nota252566.VALOR_NOTA,
+          DATA_EMISSAO: nota252566.DATA_EMISSAO
+        },
+        pedidoEncontrado: pedidoCorrespondente ? {
+          PED_NUMPEDIDO: pedidoCorrespondente.PED_NUMPEDIDO,
+          PED_ANOBASE: pedidoCorrespondente.PED_ANOBASE,
+          MPED_NUMORDEM: pedidoCorrespondente.MPED_NUMORDEM,
+          CENTROCUSTO: pedidoCorrespondente.CENTROCUSTO
+        } : 'Pedido não encontrado'
+      });
+    }
+    
     // Coleta diagnóstico para todos os itens sem correspondência
     dashboardData.faturamentoItems.forEach(item => {
       if (!item.PED_NUMPEDIDO || !item.PED_ANOBASE) return;

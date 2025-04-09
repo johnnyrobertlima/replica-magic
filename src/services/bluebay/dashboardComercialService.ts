@@ -61,6 +61,39 @@ export const fetchDashboardComercialData = async (
     console.log(`Total de registros de faturamento recuperados: ${faturamentoData?.length || 0}`);
     console.log(`Total de registros de pedidos recuperados: ${pedidoData?.length || 0}`);
 
+    // Diagnóstico específico para a nota 252566 que apresenta problemas
+    const nota252566 = faturamentoData.find(item => item.NOTA === '252566');
+    if (nota252566) {
+      console.log('Nota 252566 encontrada no faturamento:', nota252566);
+      
+      // Procurar pedidos correspondentes usando a chave composta
+      const pedidosCorrespondentes = pedidoData.filter(p => 
+        p.PED_NUMPEDIDO === nota252566.PED_NUMPEDIDO && 
+        p.PED_ANOBASE === nota252566.PED_ANOBASE
+      );
+      
+      if (pedidosCorrespondentes.length > 0) {
+        console.log('Pedidos correspondentes encontrados para nota 252566:', pedidosCorrespondentes);
+      } else {
+        console.log('Nenhum pedido correspondente encontrado para a nota 252566');
+        
+        // Verificar pedidos com o mesmo número (ignorando ano base)
+        const pedidosComMesmoNumero = pedidoData.filter(p => 
+          p.PED_NUMPEDIDO === nota252566.PED_NUMPEDIDO
+        );
+        
+        if (pedidosComMesmoNumero.length > 0) {
+          console.log('Pedidos com o mesmo PED_NUMPEDIDO, mas ano base diferente:', 
+            pedidosComMesmoNumero.map(p => ({
+              PED_NUMPEDIDO: p.PED_NUMPEDIDO,
+              PED_ANOBASE: p.PED_ANOBASE,
+              CENTROCUSTO: p.CENTROCUSTO
+            }))
+          );
+        }
+      }
+    }
+
     // Processar os dados de faturamento usando o utilitário de processamento
     const {
       dailyFaturamento,
