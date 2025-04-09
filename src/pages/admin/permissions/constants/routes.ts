@@ -1,5 +1,5 @@
 
-// Add this if the file doesn't exist yet, or update it if it does
+// Resource paths that can be used in permissions
 export const RESOURCE_PATHS = [
   "/client-area",
   "/client-area/bluebay",
@@ -14,7 +14,7 @@ export const RESOURCE_PATHS = [
   "/client-area/bluebay_adm/estoque",
   "/client-area/bluebay_adm/annalisedecompra",
   "/client-area/bluebay_adm/pedidos",
-  "/client-area/bluebay_adm/item-management", // Add the new resource path
+  "/client-area/bluebay_adm/item-management", 
   "/client-area/bluebay_adm/financeiromanager",
   "/client-area/bluebay_adm/requests",
   "/client-area/bk",
@@ -49,3 +49,6 @@ export const RESOURCE_PATHS = [
   "/admin/social",
   "/post-management"
 ];
+
+// Alias for RESOURCE_PATHS to maintain backward compatibility
+export const KNOWN_ROUTES = RESOURCE_PATHS;

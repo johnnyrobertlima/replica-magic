@@ -6,7 +6,7 @@ import { usePermissionMutations } from "./usePermissionMutations";
 import { ResourcePathSelector } from "./components/ResourcePathSelector";
 import { PermissionTypeSelector } from "./components/PermissionTypeSelector";
 import { SubmitButton } from "./components/SubmitButton";
-import { KNOWN_ROUTES } from "./constants/routes";
+import { RESOURCE_PATHS } from "./constants/routes";
 
 interface PermissionFormProps {
   selectedGroupId: string;
@@ -23,7 +23,7 @@ export const PermissionForm = ({ selectedGroupId, existingPaths, onSuccess }: Pe
   const { createMutation } = usePermissionMutations(selectedGroupId);
 
   // Combinar rotas conhecidas com caminhos existentes e remover duplicatas
-  const allPaths = Array.from(new Set([...KNOWN_ROUTES, ...(existingPaths || [])])).sort();
+  const allPaths = Array.from(new Set([...RESOURCE_PATHS, ...(existingPaths || [])])).sort();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
