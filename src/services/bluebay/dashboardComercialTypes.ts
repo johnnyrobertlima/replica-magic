@@ -79,6 +79,7 @@ export interface PedidoItem {
   VALOR_UNITARIO?: number;
   CENTROCUSTO?: string;
   CENTRO_CUSTO?: string; // Added for compatibility with the materialized view
+  REPRESENTANTE?: number; // Added the missing REPRESENTANTE property
 }
 
 export interface DailyFaturamento {
