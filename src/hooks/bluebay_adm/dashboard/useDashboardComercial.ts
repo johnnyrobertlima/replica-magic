@@ -61,7 +61,7 @@ export const useDashboardComercial = (): UseDashboardComercialReturn => {
       toast({
         title: "Intervalo de datas muito grande",
         description: "Para melhor performance, o período foi limitado a 90 dias.",
-        variant: "warning",
+        variant: "destructive",  // Changed from "warning" to "destructive"
       });
       
       setStartDate(subDays(endDate, 90));
@@ -73,7 +73,7 @@ export const useDashboardComercial = (): UseDashboardComercialReturn => {
       toast({
         title: "Data muito antiga",
         description: "A data inicial foi ajustada para um período mais recente.",
-        variant: "warning",
+        variant: "destructive",  // Changed from "warning" to "destructive"
       });
       
       setStartDate(oneYearAgo);
