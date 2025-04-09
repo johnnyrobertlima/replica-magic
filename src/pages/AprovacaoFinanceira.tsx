@@ -8,7 +8,7 @@ import { AprovacaoFinanceiraHeader } from "@/components/jab-orders/AprovacaoFina
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { X } from "lucide-react";
+import { X, Check } from "lucide-react";
 
 const AprovacaoFinanceira = () => {
   const {
@@ -26,13 +26,22 @@ const AprovacaoFinanceira = () => {
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="flex items-center justify-between mb-6">
           <AprovacaoFinanceiraHeader />
-          <Link to="/client-area/bluebay/rejected-separations">
-            <Button variant="outline" size="sm" className="bg-white hover:bg-gray-50">
-              <X className="h-4 w-4 text-red-500 mr-2" />
-              <span>Ver Separações Reprovadas</span>
-              <Badge variant="destructive" className="ml-2 bg-red-500">Reprovados</Badge>
-            </Button>
-          </Link>
+          <div className="flex space-x-3">
+            <Link to="/client-area/bluebay/acompanhamento-faturamento">
+              <Button variant="outline" size="sm" className="bg-white hover:bg-gray-50">
+                <Check className="h-4 w-4 text-green-500 mr-2" />
+                <span>Ver Pedidos Aprovados</span>
+                <Badge variant="default" className="ml-2 bg-green-500">Aprovados</Badge>
+              </Button>
+            </Link>
+            <Link to="/client-area/bluebay/rejected-separations">
+              <Button variant="outline" size="sm" className="bg-white hover:bg-gray-50">
+                <X className="h-4 w-4 text-red-500 mr-2" />
+                <span>Ver Separações Reprovadas</span>
+                <Badge variant="destructive" className="ml-2 bg-red-500">Reprovados</Badge>
+              </Button>
+            </Link>
+          </div>
         </div>
         
         {isLoading ? (
