@@ -45,7 +45,13 @@ export const DashboardContent = ({
     ((Array.isArray(dashboardData.faturamentoItems) && dashboardData.faturamentoItems.length > 0) || 
      (Array.isArray(dashboardData.pedidoItems) && dashboardData.pedidoItems.length > 0));
   
-  const noDataAfterFiltering = !isLoading && hasData && selectedCentroCusto && !hasFilteredData;
+  // Para o caso "Não identificado", verificamos apenas os faturamentoItems, pois é onde esses dados aparecem
+  const hasNaoIdentificadoData = selectedCentroCusto === "Não identificado" && 
+    filteredFaturamentoItems.length > 0;
+    
+  // Agora verificamos corretamente se não há dados após a filtragem, considerando o caso especial "Não identificado"
+  const noDataAfterFiltering = !isLoading && hasData && selectedCentroCusto && 
+    !hasFilteredData && !hasNaoIdentificadoData;
 
   // Mostrar alerta quando não há dados após a filtragem
   if (noDataAfterFiltering) {
