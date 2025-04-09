@@ -1,52 +1,49 @@
 
-import { PostgrestError, PostgrestResponse } from '@supabase/supabase-js';
+import { PostgrestResponse } from '@supabase/supabase-js';
 
 /**
- * Busca dados em lotes para otimizar consultas grandes
+ * Utility to fetch data in batches to avoid the 1000 record limit
+ * @param fetchFunction Function that performs the actual fetch with pagination
+ * @param batchSize Size of each batch
+ * @returns Combined results from all batches
  */
 export async function fetchInBatches<T>(
-  fetchBatchFunction: (offset: number, limit: number) => Promise<PostgrestResponse<T>>,
+  fetchFunction: (offset: number, limit: number) => Promise<PostgrestResponse<T>>,
   batchSize: number = 1000
 ): Promise<T[]> {
-  let allData: T[] = [];
-  let offset = 0;
+  let allResults: T[] = [];
   let hasMore = true;
+  let offset = 0;
   let batchCount = 0;
-  let error: PostgrestError | null = null;
 
-  try {
-    while (hasMore) {
-      batchCount++;
-      console.log(`Buscando lote ${batchCount} (offset: ${offset}, tamanho: ${batchSize})`);
-      
-      const response = await fetchBatchFunction(offset, batchSize);
-      
-      if (response.error) {
-        error = response.error;
-        console.error(`Erro ao buscar lote ${batchCount}:`, response.error);
-        break;
-      }
-      
-      const batchData = response.data || [];
-      
-      if (batchData.length === 0) {
-        console.log(`Nenhum dado encontrado no lote ${batchCount}`);
-        hasMore = false;
-        break;
-      }
-      
-      allData = [...allData, ...batchData];
-      console.log(`Processado lote ${batchCount}: ${batchData.length} registros. Total acumulado: ${allData.length}`);
-      
-      // Verifica se há mais dados para buscar
-      hasMore = batchData.length === batchSize;
-      offset += batchSize;
+  while (hasMore) {
+    const { data, error, count } = await fetchFunction(offset, batchSize);
+    
+    if (error) {
+      console.error('Erro ao buscar lote de dados:', error);
+      break;
     }
     
-    console.log(`Total de ${allData.length} registros carregados em ${batchCount} lotes`);
-    return allData;
-  } catch (err) {
-    console.error("Erro durante a busca em lote:", err);
-    throw err;
+    if (!data || data.length === 0) {
+      hasMore = false;
+      break;
+    }
+    
+    allResults = [...allResults, ...data];
+    offset += data.length;
+    batchCount++;
+    
+    // Log progress every 5 batches
+    if (batchCount % 5 === 0) {
+      console.log(`Progresso: ${allResults.length} registros carregados em ${batchCount} lotes`);
+    }
+    
+    // Check if we got fewer records than requested, meaning we're at the end
+    if (data.length < batchSize) {
+      hasMore = false;
+    }
   }
+  
+  console.log(`Total de ${allResults.length} registros carregados em ${batchCount} lotes`);
+  return allResults;
 }

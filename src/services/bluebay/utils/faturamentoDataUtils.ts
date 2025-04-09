@@ -1,142 +1,92 @@
 
-import { format, parseISO } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { DailyFaturamento, FaturamentoItem, MonthlyFaturamento, PedidoItem } from '../dashboardComercialTypes';
+import { format } from 'date-fns';
+import { 
+  DailyFaturamento, 
+  MonthlyFaturamento, 
+  FaturamentoItem, 
+  PedidoItem 
+} from "../dashboardComercialTypes";
 
 /**
- * Processa dados de faturamento para gerar resumos diários e mensais
+ * Processa dados de faturamento para gerar agregados diários, mensais e totais
+ * @param faturamentoItems Itens de faturamento a serem processados
+ * @param pedidoItems Itens de pedido para referência
+ * @returns Objeto com os dados processados
  */
-export const processarDadosFaturamento = (faturamentoData: FaturamentoItem[], pedidoData: PedidoItem[] = []) => {
-  // Mapas para acumular valores por dia e mês
-  const dailyMap = new Map<string, { faturado: number, pedido: number }>();
-  const monthlyMap = new Map<string, { faturado: number, pedido: number }>();
-  
-  // Valores totais
+export function processarDadosFaturamento(
+  faturamentoItems: FaturamentoItem[],
+  pedidoItems: PedidoItem[]
+) {
+  const dailyData: Record<string, DailyFaturamento> = {};
+  const monthlyData: Record<string, MonthlyFaturamento> = {};
   let totalFaturado = 0;
   let totalItens = 0;
-
-  // Datas para verificar o intervalo real dos dados
   let minDate: Date | null = null;
   let maxDate: Date | null = null;
 
-  // Processar os dados de faturamento
-  faturamentoData.forEach(item => {
-    if (!item.DATA_EMISSAO || !item.QUANTIDADE || !item.VALOR_UNITARIO) return;
+  // Process each faturamento item
+  faturamentoItems.forEach(item => {
+    // Skip if no value or emission date
+    if (!item.VALOR_NOTA || !item.DATA_EMISSAO) return;
     
-    const itemDate = typeof item.DATA_EMISSAO === 'string' 
-      ? parseISO(item.DATA_EMISSAO) 
-      : new Date(item.DATA_EMISSAO);
+    const valor = Number(item.VALOR_NOTA) || 0;
+    const quantidade = Number(item.QUANTIDADE) || 0;
+    const emissionDate = new Date(item.DATA_EMISSAO);
     
-    // Atualiza as datas min/max para informar ao usuário o intervalo real de dados
-    if (!minDate || itemDate < minDate) {
-      minDate = itemDate;
-    }
-    if (!maxDate || itemDate > maxDate) {
-      maxDate = itemDate;
-    }
-    
-    // Formato yyyy-MM-dd para agrupamento diário
-    const dayKey = format(itemDate, 'yyyy-MM-dd');
-    // Formato yyyy-MM para agrupamento mensal
-    const monthKey = format(itemDate, 'yyyy-MM');
-    
-    // Calcular valor faturado para este item
-    const quantidade = Number(item.QUANTIDADE);
-    const valorUnitario = Number(item.VALOR_UNITARIO);
-    const valorFaturadoItem = quantidade * valorUnitario;
-    
-    // Inicializar se não existe
-    if (!dailyMap.has(dayKey)) {
-      dailyMap.set(dayKey, { faturado: 0, pedido: 0 });
-    }
-    if (!monthlyMap.has(monthKey)) {
-      monthlyMap.set(monthKey, { faturado: 0, pedido: 0 });
-    }
-    
-    // Acumular para dados diários
-    const dailyValues = dailyMap.get(dayKey)!;
-    dailyMap.set(dayKey, { 
-      faturado: dailyValues.faturado + valorFaturadoItem,
-      pedido: dailyValues.pedido
-    });
-    
-    // Acumular para dados mensais
-    const monthlyValues = monthlyMap.get(monthKey)!;
-    monthlyMap.set(monthKey, {
-      faturado: monthlyValues.faturado + valorFaturadoItem,
-      pedido: monthlyValues.pedido
-    });
-    
-    // Acumular totais
-    totalFaturado += valorFaturadoItem;
+    // Update total values
+    totalFaturado += valor;
     totalItens += quantidade;
+    
+    // Update min/max dates
+    if (!minDate || emissionDate < minDate) minDate = emissionDate;
+    if (!maxDate || emissionDate > maxDate) maxDate = emissionDate;
+    
+    // Format date for daily aggregation
+    const dateStr = format(emissionDate, 'yyyy-MM-dd');
+    if (!dailyData[dateStr]) {
+      dailyData[dateStr] = {
+        date: dateStr,
+        total: 0,
+        pedidoTotal: 0,
+        formattedDate: format(emissionDate, 'dd/MM/yyyy')
+      };
+    }
+    dailyData[dateStr].total += valor;
+    
+    // Format month for monthly aggregation
+    const monthStr = format(emissionDate, 'yyyy-MM');
+    if (!monthlyData[monthStr]) {
+      monthlyData[monthStr] = {
+        month: monthStr,
+        total: 0,
+        pedidoTotal: 0,
+        formattedMonth: format(emissionDate, 'MMM/yyyy')
+      };
+    }
+    monthlyData[monthStr].total += valor;
   });
-  
-  // Processar os dados de pedido usando DATA_PEDIDO
-  pedidoData.forEach(item => {
+
+  // Process pedido items for pedidoTotal
+  pedidoItems.forEach(item => {
     if (!item.DATA_PEDIDO || !item.QTDE_PEDIDA || !item.VALOR_UNITARIO) return;
     
-    // Usando DATA_PEDIDO para o gráfico de pedidos
-    const itemDate = typeof item.DATA_PEDIDO === 'string' 
-      ? parseISO(item.DATA_PEDIDO) 
-      : new Date(item.DATA_PEDIDO);
+    const valor = Number(item.QTDE_PEDIDA) * Number(item.VALOR_UNITARIO);
+    const pedidoDate = new Date(item.DATA_PEDIDO);
     
-    // Formato yyyy-MM-dd para agrupamento diário
-    const dayKey = format(itemDate, 'yyyy-MM-dd');
-    // Formato yyyy-MM para agrupamento mensal
-    const monthKey = format(itemDate, 'yyyy-MM');
-    
-    // Calcular valor pedido para este item
-    const quantidade = Number(item.QTDE_PEDIDA);
-    const valorUnitario = Number(item.VALOR_UNITARIO);
-    const valorPedidoItem = quantidade * valorUnitario;
-    
-    // Inicializar se não existe
-    if (!dailyMap.has(dayKey)) {
-      dailyMap.set(dayKey, { faturado: 0, pedido: 0 });
-    }
-    if (!monthlyMap.has(monthKey)) {
-      monthlyMap.set(monthKey, { faturado: 0, pedido: 0 });
+    const dateStr = format(pedidoDate, 'yyyy-MM-dd');
+    if (dailyData[dateStr]) {
+      dailyData[dateStr].pedidoTotal += valor;
     }
     
-    // Acumular para dados diários
-    const dailyValues = dailyMap.get(dayKey)!;
-    dailyMap.set(dayKey, { 
-      faturado: dailyValues.faturado,
-      pedido: dailyValues.pedido + valorPedidoItem
-    });
-    
-    // Acumular para dados mensais
-    const monthlyValues = monthlyMap.get(monthKey)!;
-    monthlyMap.set(monthKey, {
-      faturado: monthlyValues.faturado,
-      pedido: monthlyValues.pedido + valorPedidoItem
-    });
+    const monthStr = format(pedidoDate, 'yyyy-MM');
+    if (monthlyData[monthStr]) {
+      monthlyData[monthStr].pedidoTotal += valor;
+    }
   });
 
-  // Converter mapas para arrays e formatar para visualização
-  const dailyFaturamento: DailyFaturamento[] = Array.from(dailyMap).map(([date, values]) => {
-    const parsedDate = parseISO(date);
-    return {
-      date,
-      total: values.faturado,
-      pedidoTotal: values.pedido,
-      formattedDate: format(parsedDate, 'dd/MM/yyyy')
-    };
-  }).sort((a, b) => a.date.localeCompare(b.date));
-
-  const monthlyFaturamento: MonthlyFaturamento[] = Array.from(monthlyMap).map(([month, values]) => {
-    // Formato yyyy-MM para o primeiro dia do mês
-    const parsedDate = parseISO(`${month}-01`);
-    return {
-      month,
-      total: values.faturado,
-      pedidoTotal: values.pedido,
-      formattedMonth: format(parsedDate, 'MMMM yyyy', { locale: ptBR })
-    };
-  }).sort((a, b) => a.month.localeCompare(b.month));
-
-  // Calcular média por item
+  // Convert to arrays and calculate average
+  const dailyFaturamento = Object.values(dailyData);
+  const monthlyFaturamento = Object.values(monthlyData);
   const mediaValorItem = totalItens > 0 ? totalFaturado / totalItens : 0;
 
   return {
@@ -148,4 +98,4 @@ export const processarDadosFaturamento = (faturamentoData: FaturamentoItem[], pe
     minDate,
     maxDate
   };
-};
+}

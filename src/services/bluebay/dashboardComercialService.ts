@@ -3,32 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from 'date-fns';
 import { fetchInBatches } from "./utils/batchFetchUtils";
 import { processarDadosFaturamento } from "./utils/faturamentoDataUtils";
+import { normalizeValue, createCompositeKey } from "./utils/matchingUtils";
 import { DashboardComercialData, FaturamentoItem, PedidoItem } from "./dashboardComercialTypes";
-
-/**
- * Normaliza valores antes da comparação, tratando nulos e indefinidos
- * @param value Valor a ser normalizado
- * @returns String normalizada
- */
-const normalizeValue = (value: any): string => {
-  if (value === null || value === undefined) return '';
-  return String(value).trim();
-};
-
-/**
- * Cria uma chave composta para identificar registros relacionados
- * @param record Registro com as colunas necessárias para a chave
- * @returns Uma string única que representa a chave composta
- */
-const createCompositeKey = (record: any): string => {
-  const numPedido = normalizeValue(record.PED_NUMPEDIDO);
-  const anoBase = normalizeValue(record.PED_ANOBASE);
-  const numOrdem = normalizeValue(record.MPED_NUMORDEM);
-  const itemCodigo = normalizeValue(record.ITEM_CODIGO);
-  
-  // Retorna uma chave padronizada no formato pedido|ano|ordem|item
-  return `${numPedido}|${anoBase}|${numOrdem}|${itemCodigo}`;
-};
 
 /**
  * Encontra um pedido correspondente a um item de faturamento
