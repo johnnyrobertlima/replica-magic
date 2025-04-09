@@ -61,6 +61,29 @@ export const fetchDashboardComercialData = async (
     console.log(`Total de registros de faturamento recuperados: ${faturamentoData?.length || 0}`);
     console.log(`Total de registros de pedidos recuperados: ${pedidoData?.length || 0}`);
 
+    // Diagnóstico das datas
+    if (faturamentoData.length > 0) {
+      const minFaturamentoDate = new Date(Math.min(...faturamentoData.map(f => new Date(f.DATA_EMISSAO || 0).getTime())));
+      const maxFaturamentoDate = new Date(Math.max(...faturamentoData.map(f => new Date(f.DATA_EMISSAO || 0).getTime())));
+      
+      console.log(`Intervalo de datas no faturamento: ${format(minFaturamentoDate, 'yyyy-MM-dd')} até ${format(maxFaturamentoDate, 'yyyy-MM-dd')}`);
+      
+      // Verificar se há datas fora do intervalo solicitado
+      const foraDoIntervalo = faturamentoData.filter(item => {
+        if (!item.DATA_EMISSAO) return false;
+        const dataEmissao = new Date(item.DATA_EMISSAO);
+        return dataEmissao < new Date(startDateStr) || dataEmissao > new Date(`${endDateStr}T23:59:59.999`);
+      });
+      
+      if (foraDoIntervalo.length > 0) {
+        console.warn(`ATENÇÃO: ${foraDoIntervalo.length} registros de faturamento estão fora do intervalo de datas solicitado!`);
+        console.warn(`Primeiros 5 registros fora do intervalo:`, foraDoIntervalo.slice(0, 5).map(f => ({ 
+          NOTA: f.NOTA, 
+          DATA_EMISSAO: f.DATA_EMISSAO 
+        })));
+      }
+    }
+
     // Diagnóstico específico para a nota 252566 que apresenta problemas
     const nota252566 = faturamentoData.find(item => item.NOTA === '252566');
     if (nota252566) {

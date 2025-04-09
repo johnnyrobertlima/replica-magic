@@ -46,6 +46,7 @@ export const useDashboardComercial = (): UseDashboardComercialReturn => {
   const { toast } = useToast();
 
   const setDateRange = useCallback((start: Date, end: Date) => {
+    console.log(`Definindo novo intervalo de datas: ${start.toISOString()} até ${end.toISOString()}`);
     setStartDate(start);
     setEndDate(end);
     setRequestId(prev => prev + 1);
@@ -56,9 +57,39 @@ export const useDashboardComercial = (): UseDashboardComercialReturn => {
     setError(null);
     
     try {
+      console.log(`Iniciando busca de dados: ${startDate.toISOString()} até ${endDate.toISOString()}`);
       const data = await fetchDashboardComercialData(startDate, endDate);
       setDashboardData(data);
       console.log('Dados carregados com sucesso:', data);
+      
+      // Verificar se há dados fora do intervalo
+      if (data.faturamentoItems.length > 0) {
+        const datasEmissao = data.faturamentoItems
+          .filter(item => item.DATA_EMISSAO)
+          .map(item => new Date(item.DATA_EMISSAO!));
+        
+        if (datasEmissao.length > 0) {
+          const minData = new Date(Math.min(...datasEmissao.map(d => d.getTime())));
+          const maxData = new Date(Math.max(...datasEmissao.map(d => d.getTime())));
+          
+          console.log(`Intervalo real de datas no faturamento: ${minData.toISOString()} até ${maxData.toISOString()}`);
+          
+          // Verificar se há datas fora do intervalo
+          const startDateStr = startDate.toISOString().split('T')[0];
+          const endDateStr = endDate.toISOString().split('T')[0];
+          
+          const foraDoIntervalo = data.faturamentoItems.filter(item => {
+            if (!item.DATA_EMISSAO) return false;
+            const dataEmissao = new Date(item.DATA_EMISSAO);
+            const dataEmissaoStr = dataEmissao.toISOString().split('T')[0];
+            return dataEmissaoStr < startDateStr || dataEmissaoStr > endDateStr;
+          });
+          
+          if (foraDoIntervalo.length > 0) {
+            console.warn(`ATENÇÃO: ${foraDoIntervalo.length} de ${data.faturamentoItems.length} registros estão fora do intervalo de datas solicitado.`);
+          }
+        }
+      }
       
       // Diagnóstico específico para a nota 252770
       const nota252770 = data.faturamentoItems.find(item => item.NOTA === '252770');
@@ -86,7 +117,7 @@ export const useDashboardComercial = (): UseDashboardComercialReturn => {
       else {
         toast({
           title: "Dados carregados com sucesso",
-          description: `Foram encontrados ${data.faturamentoItems.length} registros de faturamento.`,
+          description: `Foram encontrados ${data.faturamentoItems.length} registros de faturamento para o período.`,
           variant: "default",
         });
       }
@@ -116,6 +147,7 @@ export const useDashboardComercial = (): UseDashboardComercialReturn => {
   }, [isLoading, toast]);
 
   useEffect(() => {
+    console.log(`Efeito chamado para busca de dados: requestId=${requestId}`);
     fetchData();
   }, [fetchData, requestId]);
 
