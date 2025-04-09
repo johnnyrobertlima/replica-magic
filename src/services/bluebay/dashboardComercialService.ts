@@ -24,6 +24,56 @@ export const fetchDashboardComercialData = async (
     const formattedStartDate = `${startDateStr}T00:00:00.000`;
     const formattedEndDate = `${endDateStr}T23:59:59.999`;
     
+    // Tentativa inicial de buscar dados relacionando diretamente (usando foreign keys)
+    try {
+      const { data: faturamentoDataFromView, error: faturamentoViewError } = await supabase
+        .from('mv_faturamento_resumido')
+        .select(`
+          *,
+          pedido:BLUEBAY_PEDIDO!inner(
+            CENTROCUSTO,MATRIZ,FILIAL,PED_NUMPEDIDO,PED_ANOBASE,MPED_NUMORDEM,
+            ITEM_CODIGO,PES_CODIGO,QTDE_PEDIDA,QTDE_ENTREGUE,QTDE_SALDO,STATUS,
+            DATA_PEDIDO,VALOR_UNITARIO,REPRESENTANTE
+          ),
+          faturamento:BLUEBAY_FATURAMENTO(
+            NOTA,MATRIZ,FILIAL,ID_EF_DOCFISCAL,ID_EF_DOCFISCAL_ITEM,
+            PED_NUMPEDIDO,PED_ANOBASE,MPED_NUMORDEM,ITEM_CODIGO,QUANTIDADE,
+            VALOR_UNITARIO,VALOR_DESCONTO,VALOR_NOTA,STATUS,DATA_EMISSAO,PES_CODIGO,TIPO
+          )
+        `)
+        .gte('DATA_EMISSAO', formattedStartDate)
+        .lte('DATA_EMISSAO', formattedEndDate);
+      
+      if (!faturamentoViewError && faturamentoDataFromView) {
+        // Se bem-sucedido, processe os dados e retorne
+        const { dailyFaturamento, monthlyFaturamento, totalFaturado, totalItens, mediaValorItem, minDate, maxDate } = 
+          processarDadosFaturamento(faturamentoDataFromView);
+          
+        return {
+          faturamentoItems: faturamentoDataFromView,
+          pedidoItems: [],
+          dailyFaturamento,
+          monthlyFaturamento,
+          totalFaturado,
+          totalItens,
+          mediaValorItem,
+          dataRangeInfo: {
+            startDateRequested: startDateStr,
+            endDateRequested: endDateStr,
+            startDateActual: minDate ? format(minDate, 'yyyy-MM-dd') : null,
+            endDateActual: maxDate ? format(maxDate, 'yyyy-MM-dd') : null,
+            hasCompleteData: faturamentoDataFromView.length > 0
+          }
+        };
+      } else {
+        console.error('Erro ao buscar dados da view com relacionamentos:', faturamentoViewError);
+        // Continuar para a abordagem alternativa
+      }
+    } catch (error) {
+      console.error('Exceção ao buscar dados relacionados:', error);
+      // Continuar para a abordagem alternativa
+    }
+    
     // 1. Primeiro buscar dados da view materializada de forma simples (sem joins)
     const { data: faturamentoDataFromView, error: faturamentoViewError } = await supabase
       .from('mv_faturamento_resumido')
@@ -154,9 +204,9 @@ export const fetchDashboardComercialData = async (
           MPED_NUMORDEM: item.pedido?.MPED_NUMORDEM || item.MPED_NUMORDEM,
           ITEM_CODIGO: item.pedido?.ITEM_CODIGO || item.ITEM_CODIGO,
           PES_CODIGO: item.pedido?.PES_CODIGO || item.PES_CODIGO,
-          QTDE_PEDIDA: item.pedido?.QTDE_PEDIDA || item.QTDE_PEDIDA || item.QUANTIDADE,
-          QTDE_ENTREGUE: item.pedido?.QTDE_ENTREGUE || item.QTDE_ENTREGUE,
-          QTDE_SALDO: item.pedido?.QTDE_SALDO || item.QTDE_SALDO || 0,
+          QTDE_PEDIDA: item.pedido?.QTDE_PEDIDA || item.QUANTIDADE,  // Corrigido para item.pedido?.QTDE_PEDIDA
+          QTDE_ENTREGUE: item.pedido?.QTDE_ENTREGUE || item.QUANTIDADE,  // Corrigido para item.pedido?.QTDE_ENTREGUE
+          QTDE_SALDO: item.pedido?.QTDE_SALDO || 0,  // Corrigido para item.pedido?.QTDE_SALDO
           DATA_PEDIDO: item.pedido?.DATA_PEDIDO || item.DATA_PEDIDO || item.DATA_EMISSAO,
           STATUS: item.pedido?.STATUS || item.STATUS,
           VALOR_UNITARIO: item.pedido?.VALOR_UNITARIO || item.VALOR_UNITARIO,
@@ -202,3 +252,4 @@ export const fetchDashboardComercialData = async (
     throw error;
   }
 };
+
