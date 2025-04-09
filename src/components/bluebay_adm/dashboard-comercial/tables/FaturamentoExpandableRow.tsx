@@ -39,10 +39,17 @@ export const FaturamentoExpandableRow: React.FC<FaturamentoExpandableRowProps> =
   const totalValor = dateGroup.notas.reduce((sum, nota) => sum + nota.TOTAL_VALOR, 0);
   
   const formatDate = (dateValue: string | Date) => {
-    if (typeof dateValue === 'string') {
-      return format(parseISO(dateValue), 'dd/MM/yyyy', { locale: ptBR });
+    if (!dateValue) return '-';
+    
+    try {
+      if (typeof dateValue === 'string') {
+        return format(parseISO(dateValue), 'dd/MM/yyyy', { locale: ptBR });
+      }
+      return format(dateValue, 'dd/MM/yyyy', { locale: ptBR });
+    } catch (error) {
+      console.error("Error formatting date:", dateValue, error);
+      return '-';
     }
-    return format(dateValue, 'dd/MM/yyyy', { locale: ptBR });
   };
   
   return (
@@ -80,6 +87,9 @@ export const FaturamentoExpandableRow: React.FC<FaturamentoExpandableRowProps> =
                 </TableHead>
                 <TableBody>
                   {dateGroup.notas.map((nota) => {
+                    // Skip invalid items
+                    if (!nota?.NOTA) return null;
+                    
                     const notaKey = nota.NOTA;
                     
                     return (
@@ -115,8 +125,8 @@ export const FaturamentoExpandableRow: React.FC<FaturamentoExpandableRowProps> =
                                     </TableRow>
                                   </TableHead>
                                   <TableBody>
-                                    {nota.items.map((item, idx) => (
-                                      <TableRow key={`${nota.NOTA}-${item.ITEM_CODIGO}-${idx}`}>
+                                    {nota.items.filter(item => item != null).map((item, idx) => (
+                                      <TableRow key={`${nota.NOTA}-${item.ITEM_CODIGO || 'unknown'}-${idx}`}>
                                         <TableCell>{item.ITEM_CODIGO || '-'}</TableCell>
                                         <TableCell className="text-right">{item.QUANTIDADE?.toLocaleString('pt-BR') || '-'}</TableCell>
                                         <TableCell className="text-right">{formatCurrency(item.VALOR_UNITARIO || 0)}</TableCell>

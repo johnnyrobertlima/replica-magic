@@ -29,7 +29,8 @@ export const FaturamentoTableContent: React.FC<FaturamentoTableProps> = ({ fatur
   const groupedByDate: Record<string, GroupedFaturamento> = {};
   
   faturamentoData.forEach(item => {
-    if (!item.DATA_EMISSAO || !item.NOTA) return;
+    // Skip invalid items - ensure both DATA_EMISSAO and NOTA exist
+    if (!item?.DATA_EMISSAO || !item?.NOTA) return;
     
     const dateStr = typeof item.DATA_EMISSAO === 'string' 
       ? format(parseISO(item.DATA_EMISSAO), 'yyyy-MM-dd')
