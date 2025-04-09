@@ -2,7 +2,7 @@
 import { BluebayAdmMenu } from "@/components/bluebay_adm/BluebayAdmMenu";
 import { BluebayAdmBanner } from "@/components/bluebay_adm/BluebayAdmBanner";
 import { ServiceCard } from "@/components/bluebay_adm/ServiceCard";
-import { FileText, BarChart2, Users, Wallet, ClipboardCheck, ShoppingBag, Receipt, Package, ShoppingCart, TrendingUp } from "lucide-react";
+import { FileText, BarChart2, Users, Wallet, ClipboardCheck, ShoppingBag, Receipt, Package, ShoppingCart, TrendingUp, PackageCheck } from "lucide-react";
 
 const BluebayAdmHome = () => {
   const services = [
@@ -75,6 +75,13 @@ const BluebayAdmHome = () => {
       icon: ClipboardCheck,
       iconColor: "bg-red-100 text-red-600",
       path: "/client-area/bluebay_adm/requests"
+    },
+    {
+      title: "Gerenciar Itens",
+      description: "Cadastre e edite informações de itens",
+      icon: PackageCheck,
+      iconColor: "bg-purple-100 text-purple-600",
+      path: "/client-area/bluebay_adm/item-management"
     },
   ];
 

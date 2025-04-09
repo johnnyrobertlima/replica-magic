@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { Menu, X, Users, Receipt, BarChart2, FileText, ClipboardCheck, LogOut, FileSpreadsheet, Package, ShoppingBag, ShoppingCart } from "lucide-react";
+import { Menu, X, Users, Receipt, BarChart2, FileText, ClipboardCheck, LogOut, FileSpreadsheet, Package, ShoppingBag, ShoppingCart, PackageCheck } from "lucide-react";
 import {
   NavigationMenu,
   NavigationMenuList,
@@ -27,6 +27,7 @@ export const BluebayAdmMenu = () => {
     { name: "Análise de Compra", path: "/client-area/bluebay_adm/annalisedecompra", icon: <ShoppingCart className="h-4 w-4 mr-2" /> },
     { name: "Pedidos", path: "/client-area/bluebay_adm/pedidos", icon: <ShoppingBag className="h-4 w-4 mr-2" /> },
     { name: "Relatório de Itens", path: "/client-area/bluebay_adm/reports", icon: <FileText className="h-4 w-4 mr-2" /> },
+    { name: "Gerenciar Itens", path: "/client-area/bluebay_adm/item-management", icon: <PackageCheck className="h-4 w-4 mr-2" /> },
     { name: "Solicitações", path: "/client-area/bluebay_adm/requests", icon: <ClipboardCheck className="h-4 w-4 mr-2" /> },
   ];
 
