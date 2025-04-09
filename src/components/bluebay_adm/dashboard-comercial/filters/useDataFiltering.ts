@@ -1,7 +1,6 @@
 
-import { useState, useEffect, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { FaturamentoItem, PedidoItem } from "@/services/bluebay/dashboardComercialTypes";
-import { encontrarPedidoCorrespondente } from "../utils/pedidoUtils";
 
 interface FilteredData {
   filteredFaturamentoItems: FaturamentoItem[];
@@ -11,114 +10,89 @@ interface FilteredData {
     totalItens: number;
     mediaValorItem: number;
   };
-  naoIdentificados: any[];
+  naoIdentificados: FaturamentoItem[];
   hasFilteredData: boolean;
 }
 
 export const useDataFiltering = (
   dashboardData: { 
-    faturamentoItems: FaturamentoItem[];
+    faturamentoItems: FaturamentoItem[]; 
     pedidoItems: PedidoItem[];
   } | null,
   selectedCentroCusto: string | null,
   isLoading: boolean
 ): FilteredData => {
-  // Estado para armazenar as correspondências não encontradas para debug
-  const [naoIdentificados, setNaoIdentificados] = useState<any[]>([]);
+  
+  // Função para filtrar por Centro de Custo
+  const filterByCentroCusto = useCallback((item: any) => {
+    if (!selectedCentroCusto) return true;
+    
+    // Se o item tiver a propriedade CENTROCUSTO, usamos ela
+    if (item.CENTROCUSTO) {
+      return item.CENTROCUSTO === selectedCentroCusto;
+    }
+    
+    // Para compatibilidade com a nova view materializada, verificamos data relacionados ao centro de custo
+    return item.CENTRO_CUSTO === selectedCentroCusto;
+  }, [selectedCentroCusto]);
+  
+  // Uso de useMemo para evitar recálculos desnecessários
+  const filteredData = useMemo(() => {
+    if (!dashboardData || isLoading) {
+      return {
+        filteredFaturamentoItems: [],
+        filteredPedidoItems: [],
+        calculatedTotals: {
+          totalFaturado: 0,
+          totalItens: 0,
+          mediaValorItem: 0
+        },
+        naoIdentificados: [],
+        hasFilteredData: false
+      };
+    }
 
-  // Otimização: Usar useMemo para não recalcular a cada renderização
-  const filteredFaturamentoItems = useMemo(() => {
-    if (!dashboardData || isLoading) return [];
+    // Filtrar itens de faturamento conforme seleção de Centro de Custo
+    const filteredFaturamentoItems = dashboardData.faturamentoItems.filter(filterByCentroCusto);
     
-    if (!selectedCentroCusto) return dashboardData.faturamentoItems;
+    // Filtrar itens de pedido conforme seleção de Centro de Custo
+    const filteredPedidoItems = dashboardData.pedidoItems.filter(filterByCentroCusto);
     
-    return dashboardData.faturamentoItems.filter(item => {
-      // Se o Centro de Custo for "Não identificado"
-      if (selectedCentroCusto === "Não identificado") {
-        const pedidoCorrespondente = encontrarPedidoCorrespondente(item, dashboardData.pedidoItems);
-        return !pedidoCorrespondente;
-      } else {
-        const pedidoCorrespondente = encontrarPedidoCorrespondente(item, dashboardData.pedidoItems);
-        return pedidoCorrespondente?.CENTROCUSTO === selectedCentroCusto;
-      }
-    });
-  }, [dashboardData, selectedCentroCusto, isLoading]);
-
-  const filteredPedidoItems = useMemo(() => {
-    if (!dashboardData || isLoading) return [];
+    // Identificar itens sem Centro de Custo definido
+    let naoIdentificados: FaturamentoItem[] = [];
+    if (!selectedCentroCusto) {
+      naoIdentificados = dashboardData.faturamentoItems.filter(item => 
+        !item.CENTROCUSTO && !item.CENTRO_CUSTO
+      );
+    }
     
-    if (!selectedCentroCusto) return dashboardData.pedidoItems;
+    // Calcular totais baseados nos itens filtrados
+    const totalFaturado = filteredFaturamentoItems.reduce((acc, item) => {
+      const valor = (item.VALOR_UNITARIO || 0) * (item.QUANTIDADE || 0);
+      return acc + valor;
+    }, 0);
     
-    if (selectedCentroCusto === "Não identificado") return [];
-    
-    return dashboardData.pedidoItems.filter(item => 
-      item.CENTROCUSTO === selectedCentroCusto
-    );
-  }, [dashboardData, selectedCentroCusto, isLoading]);
-
-  // Calcular totais a partir dos itens filtrados
-  const calculatedTotals = useMemo(() => {
-    const totalFaturado = filteredFaturamentoItems.reduce(
-      (sum, item) => sum + (item.VALOR_NOTA || 0), 0
-    );
-    
-    const totalItens = filteredFaturamentoItems.reduce(
-      (sum, item) => sum + (item.QUANTIDADE || 0), 0
-    );
+    const totalItens = filteredFaturamentoItems.reduce((acc, item) => {
+      return acc + (item.QUANTIDADE || 0);
+    }, 0);
     
     const mediaValorItem = totalItens > 0 ? totalFaturado / totalItens : 0;
     
-    return { totalFaturado, totalItens, mediaValorItem };
-  }, [filteredFaturamentoItems]);
-
-  // Diagnosticar problemas somente quando necessário e com limites para não sobrecarregar
-  useEffect(() => {
-    if (!dashboardData || isLoading) return;
-
-    // Usar um timeout para não bloquear a renderização
-    const diagnosisTimer = setTimeout(() => {
-      // Apenas diagnosticar se houver uma quantidade significativa de itens
-      if (dashboardData.faturamentoItems.length > 1000) {
-        // Selecionar uma amostra para diagnóstico (até 5%)
-        const sampleSize = Math.min(500, Math.ceil(dashboardData.faturamentoItems.length * 0.05));
-        const sampleItems = dashboardData.faturamentoItems.slice(0, sampleSize);
-        
-        const diagnosticoItems = sampleItems
-          .filter(item => item.PED_NUMPEDIDO && item.PED_ANOBASE)
-          .filter(item => {
-            const pedido = encontrarPedidoCorrespondente(item, dashboardData.pedidoItems);
-            return !pedido;
-          })
-          .map(item => ({
-            faturamento: {
-              NOTA: item.NOTA,
-              PED_NUMPEDIDO: item.PED_NUMPEDIDO,
-              PED_ANOBASE: item.PED_ANOBASE,
-              MPED_NUMORDEM: item.MPED_NUMORDEM,
-              DATA_EMISSAO: item.DATA_EMISSAO
-            }
-          }))
-          .slice(0, 10); // Limitar a 10 itens máximo no relatório
-        
-        if (diagnosticoItems.length > 0) {
-          console.log(`Diagnóstico: ${diagnosticoItems.length} itens de faturamento sem correspondência na amostra`);
-          setNaoIdentificados(diagnosticoItems);
-        } else {
-          setNaoIdentificados([]);
-        }
-      }
-    }, 1000);
+    // Verificar se há dados após a filtragem
+    const hasFilteredData = filteredFaturamentoItems.length > 0 || filteredPedidoItems.length > 0;
     
-    return () => clearTimeout(diagnosisTimer);
-  }, [dashboardData, isLoading]);
+    return {
+      filteredFaturamentoItems,
+      filteredPedidoItems,
+      calculatedTotals: {
+        totalFaturado,
+        totalItens,
+        mediaValorItem
+      },
+      naoIdentificados,
+      hasFilteredData
+    };
+  }, [dashboardData, selectedCentroCusto, isLoading, filterByCentroCusto]);
 
-  const hasFilteredData = filteredFaturamentoItems.length > 0;
-
-  return {
-    filteredFaturamentoItems,
-    filteredPedidoItems,
-    calculatedTotals,
-    naoIdentificados,
-    hasFilteredData
-  };
+  return filteredData;
 };

@@ -7,6 +7,8 @@ import { useDashboardComercial } from "@/hooks/bluebay_adm/dashboard/useDashboar
 import { DashboardContent } from "@/components/bluebay_adm/dashboard-comercial/DashboardContent";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 const BluebayAdmDashboardComercial = () => {
   const {
@@ -45,6 +47,37 @@ const BluebayAdmDashboardComercial = () => {
       setIsInitialLoad(false);
     }
   }, [isLoading, isInitialLoad]);
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <BluebayAdmBanner />
+        <div className="container mx-auto px-4 py-8">
+          <div className="mb-8">
+            <BluebayAdmMenu />
+          </div>
+          
+          <h1 className="text-3xl font-bold mb-6">Dashboard Comercial</h1>
+          
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Erro ao carregar dados</AlertTitle>
+            <AlertDescription>
+              {error.message || "Não foi possível carregar os dados do dashboard. Tente novamente mais tarde."}
+              <div className="mt-4">
+                <button 
+                  onClick={() => refreshData()}
+                  className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/80"
+                >
+                  Tentar novamente
+                </button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

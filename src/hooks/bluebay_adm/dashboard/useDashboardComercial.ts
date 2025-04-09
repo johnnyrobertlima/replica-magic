@@ -132,19 +132,19 @@ export const useDashboardComercial = (): UseDashboardComercialReturn => {
       // Tratar os dados recebidos
       if (data) {
         setDashboardData(data);
-        console.log(`Dados carregados com sucesso: ${data.faturamentoItems.length} faturas, ${data.pedidoItems.length} pedidos`);
+        console.log(`Dados carregados com sucesso: ${data.faturamentoItems.length} registros`);
       
         if (data.faturamentoItems.length === 0) {
           toast({
             title: "Sem dados disponíveis",
-            description: "Não foram encontrados dados de faturamento para o período selecionado.",
+            description: "Não foram encontrados dados para o período selecionado.",
             variant: "destructive",
           });
         } 
         else {
           toast({
             title: "Dados carregados com sucesso",
-            description: `Foram encontrados ${data.faturamentoItems.length} registros de faturamento para o período.`,
+            description: `Foram encontrados ${data.faturamentoItems.length} registros para o período.`,
             variant: "default",
           });
         }
