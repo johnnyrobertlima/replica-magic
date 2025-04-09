@@ -67,3 +67,49 @@ export const createSeparationItems = async (
     throw new Error(`Erro ao inserir itens para separação ${separacaoId}`);
   }
 };
+
+/**
+ * Fetches all rejected separation items
+ */
+export const fetchRejectedSeparationItems = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('separacoes')
+      .select(`
+        id,
+        cliente_nome,
+        status,
+        created_at,
+        updated_at,
+        separacao_itens(*)
+      `)
+      .eq('status', 'reprovado');
+
+    if (error) {
+      console.error('Erro ao buscar itens reprovados:', error);
+      return [];
+    }
+
+    // Extrair todos os itens das separações reprovadas
+    const rejectedItems: any[] = [];
+    data.forEach(separacao => {
+      if (separacao.separacao_itens && separacao.separacao_itens.length > 0) {
+        separacao.separacao_itens.forEach((item: any) => {
+          rejectedItems.push({
+            ...item,
+            cliente_nome: separacao.cliente_nome,
+            separacao_status: separacao.status,
+            separacao_id: separacao.id,
+            separacao_data: separacao.created_at
+          });
+        });
+      }
+    });
+
+    return rejectedItems;
+  } catch (error) {
+    console.error('Erro ao buscar itens reprovados:', error);
+    return [];
+  }
+};
+
