@@ -11,7 +11,21 @@ export const useExportToExcel = () => {
       console.log("Iniciando exportação para Excel do pedido:", orderId);
       console.log("Total de pedidos disponíveis:", approvedOrders.length);
       
-      const orderToExport = approvedOrders.find(order => order.separacaoId === orderId);
+      // Log available order IDs for debugging
+      console.log("IDs disponíveis:", approvedOrders.map(order => ({
+        separacaoId: order.separacao_id,
+        id: order.id,
+        cliente: order.cliente_data?.APELIDO
+      })));
+      
+      // Try to find the order by separacao_id first (which is the correct approach)
+      let orderToExport = approvedOrders.find(order => order.separacao_id === orderId);
+      
+      // If not found, try by 'id' as a fallback
+      if (!orderToExport) {
+        console.log("Tentando encontrar pedido pelo id em vez do separacao_id...");
+        orderToExport = approvedOrders.find(order => order.id === orderId);
+      }
       
       if (!orderToExport) {
         console.error("Pedido não encontrado para exportação:", orderId);
@@ -24,12 +38,13 @@ export const useExportToExcel = () => {
       }
       
       console.log("Dados do pedido para exportação:", {
-        separacaoId: orderToExport.separacaoId,
-        clienteNome: orderToExport.clienteData?.APELIDO || 'Cliente sem nome'
+        id: orderToExport.id,
+        separacaoId: orderToExport.separacao_id,
+        clienteNome: orderToExport.cliente_data?.APELIDO || 'Cliente sem nome'
       });
       
       // Verificar se os dados do cliente estão disponíveis
-      if (!orderToExport.clienteData) {
+      if (!orderToExport.cliente_data) {
         console.error("Dados do cliente não disponíveis para exportação");
         toast({
           title: "Erro ao exportar",
@@ -40,9 +55,9 @@ export const useExportToExcel = () => {
       }
       
       // Verificar se as separações existem
-      if (!orderToExport.clienteData.separacoes || 
-          !Array.isArray(orderToExport.clienteData.separacoes) || 
-          orderToExport.clienteData.separacoes.length === 0) {
+      if (!orderToExport.cliente_data.separacoes || 
+          !Array.isArray(orderToExport.cliente_data.separacoes) || 
+          orderToExport.cliente_data.separacoes.length === 0) {
         console.error("Não há separações disponíveis para exportação");
         toast({
           title: "Erro ao exportar",
@@ -52,15 +67,23 @@ export const useExportToExcel = () => {
         return;
       }
       
-      console.log("Buscando separação aprovada com ID:", orderToExport.separacaoId);
+      // Determinar qual ID usar para buscar a separação
+      const separationIdToUse = orderToExport.separacao_id;
+      console.log("Buscando separação aprovada com ID:", separationIdToUse);
       
       // Encontrar a separação aprovada
-      const approvedSeparacao = orderToExport.clienteData.separacoes.find(
-        (sep: any) => sep && sep.id === orderToExport.separacaoId
+      const approvedSeparacao = orderToExport.cliente_data.separacoes.find(
+        (sep: any) => sep && sep.id === separationIdToUse
       );
       
       if (!approvedSeparacao) {
-        console.error("Separação aprovada não encontrada com ID:", orderToExport.separacaoId);
+        console.error("Separação aprovada não encontrada com ID:", separationIdToUse);
+        
+        // Log all available separation IDs to help debug
+        console.log("IDs de separação disponíveis:", 
+          orderToExport.cliente_data.separacoes.map((sep: any) => sep?.id || "ID não definido")
+        );
+        
         toast({
           title: "Erro ao exportar",
           description: "Separação aprovada não encontrada",
@@ -93,9 +116,9 @@ export const useExportToExcel = () => {
       // Prepare header data
       const headerData = [
         {
-          Cliente: orderToExport.clienteData.APELIDO || 'Cliente sem nome',
-          'Data de Aprovação': orderToExport.approvedAt ? new Date(orderToExport.approvedAt).toLocaleString('pt-BR') : 'Não informado',
-          'Aprovado por': orderToExport.userEmail || 'Não informado',
+          Cliente: orderToExport.cliente_data.APELIDO || 'Cliente sem nome',
+          'Data de Aprovação': orderToExport.approved_at ? new Date(orderToExport.approved_at).toLocaleString('pt-BR') : 'Não informado',
+          'Aprovado por': orderToExport.user_email || 'Não informado',
           Status: 'Aprovado',
           'Valor Total': approvedSeparacao.valor_total || 0,
           'Quantidade de Itens': approvedSeparacao.quantidade_itens || 0
@@ -125,7 +148,7 @@ export const useExportToExcel = () => {
       console.log("Número de itens processados para exportação:", itemsData.length);
       
       // Sanitize client name and generate file name
-      const clientName = (orderToExport.clienteData.APELIDO || 'cliente')
+      const clientName = (orderToExport.cliente_data.APELIDO || 'cliente')
         .replace(/[\/\\?%*:|"<>]/g, '-')
         .substring(0, 30);
       

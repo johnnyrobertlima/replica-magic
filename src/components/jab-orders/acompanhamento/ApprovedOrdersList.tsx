@@ -18,12 +18,11 @@ export const ApprovedOrdersList = ({ approvedOrders }: ApprovedOrdersListProps) 
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {approvedOrders.map((order) => (
         <ApprovedOrderCard 
-          key={order.separacaoId}
+          key={order.separacao_id || order.id}
           order={order}
-          onExport={(orderId) => handleExportToExcel(orderId, approvedOrders)}
+          onExport={(orderId) => handleExportToExcel(order.separacao_id || order.id, approvedOrders)}
         />
       ))}
     </div>
   );
 };
-
