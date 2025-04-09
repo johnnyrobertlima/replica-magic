@@ -46,15 +46,15 @@ export const processSelectedItems = (
         clientsForItems[itemCode] = {
           clientName: details.clientName,
           PES_CODIGO: details.clientCode,
-          pedido: details.pedido // Capturar o número do pedido dos detalhes
+          pedido: details.pedido // Capturar o número do pedido original dos detalhes
         };
-        console.log(`Item ${itemCode} associado ao cliente ${details.clientName} e pedido ${details.pedido || 'Não informado'}`);
+        console.log(`Item ${itemCode} associado ao cliente ${details.clientName} e pedido original ${details.pedido || 'Não informado'}`);
       }
     });
   }
 
   // Agora coleta apenas os itens correspondentes ao cliente apropriado
-  // incluindo explicitamente o número do pedido
+  // incluindo explicitamente o número do pedido original
   Object.entries(groupedOrders).forEach(([clientName, group]) => {
     group.allItems.forEach(item => {
       if (selectedItems.includes(item.ITEM_CODIGO)) {
@@ -66,14 +66,14 @@ export const processSelectedItems = (
           
           console.log('PES_CODIGO original:', item.PES_CODIGO);
           console.log('PES_CODIGO processado:', pesCodigoNumerico);
-          console.log('Pedido do item:', item.pedido);
-          console.log('Pedido das informações do cliente:', itemClient.pedido);
-
-          // Usar o pedido do item se disponível, ou o pedido das informações do cliente como fallback
-          const pedidoFinal = item.pedido || itemClient.pedido || '';
+          
+          // Priorizar o pedido armazenado nos detalhes do item (que vem da seleção original)
+          // Em vez de usar o pedido do item atual
+          const pedidoOriginal = itemClient.pedido || item.PED_NUMPEDIDO || item.pedido || '';
+          console.log('Pedido original para usar:', pedidoOriginal);
 
           allSelectedItems.push({
-            pedido: pedidoFinal,
+            pedido: pedidoOriginal, // Usar o pedido original capturado na seleção
             item: item,
             PES_CODIGO: pesCodigoNumerico,
             APELIDO: item.APELIDO,
@@ -86,9 +86,10 @@ export const processSelectedItems = (
           
           console.log('PES_CODIGO original:', item.PES_CODIGO);
           console.log('PES_CODIGO processado:', pesCodigoNumerico);
+          console.log('Pedido do item:', item.PED_NUMPEDIDO || item.pedido || '');
 
           allSelectedItems.push({
-            pedido: item.pedido || '',
+            pedido: item.PED_NUMPEDIDO || item.pedido || '', // Usar o pedido do item como fallback
             item: item,
             PES_CODIGO: pesCodigoNumerico,
             APELIDO: item.APELIDO,
@@ -145,9 +146,9 @@ export const createSeparationsForClients = async (
     const clientName = clientItem.APELIDO || "Cliente Sem Nome";
 
     console.log(`Processando cliente: ${clientName} (código: ${clienteCode})`);
-    console.log(`Itens para separação:`, items.map(i => ({
+    console.log(`Itens para separação com pedidos originais:`, items.map(i => ({
       item_codigo: i.item.ITEM_CODIGO,
-      pedido: i.pedido,
+      pedido: i.pedido, // Pedido original preservado
       descricao: i.item.DESCRICAO
     })));
     

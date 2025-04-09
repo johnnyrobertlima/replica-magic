@@ -24,7 +24,7 @@ export const useSeparationOperations = (
         
         return {
           itemCodigo: item,
-          pedido: details.pedido || "", // Garantir que o pedido seja enviado
+          pedido: details.pedido || "", // Garantir que o pedido original seja enviado
           pesCodigo: details.clientCode || details.PES_CODIGO || 0,
           descricao: details.DESCRICAO || "",
           qtdeSaldo: details.qtde || 0,
@@ -78,13 +78,18 @@ export const useSeparationOperations = (
           ...state.selectedItemsDetails[itemCode]
         };
         
+        // Log the original pedido number
+        console.log(`Item ${itemCode} tem o pedido original: ${state.selectedItemsDetails[itemCode].pedido}`);
+        
         // Find additional details from groups if needed
         for (const group of Object.values(groups)) {
           for (const item of group.allItems || []) {
             if (item.ITEM_CODIGO === itemCode) {
+              // Manter o pedido original do estado, não sobrescrever
+              const originalPedido = state.selectedItemsDetails[itemCode].pedido;
               selectedItemsDetails[itemCode] = {
                 ...selectedItemsDetails[itemCode],
-                pedido: item.pedido || selectedItemsDetails[itemCode].pedido,
+                pedido: originalPedido, // Usar o pedido original armazenado no estado
                 DESCRICAO: item.DESCRICAO,
                 PES_CODIGO: item.PES_CODIGO
               };
@@ -97,10 +102,13 @@ export const useSeparationOperations = (
         for (const group of Object.values(groups)) {
           for (const item of group.allItems || []) {
             if (item.ITEM_CODIGO === itemCode) {
+              const originalPedido = item.PED_NUMPEDIDO || item.pedido || '';
+              console.log(`Item ${itemCode} encontrado nos grupos com pedido: ${originalPedido}`);
+              
               selectedItemsDetails[itemCode] = {
                 qtde: item.QTDE_SALDO,
                 valor: item.QTDE_SALDO * item.VALOR_UNITARIO,
-                pedido: item.pedido, // Importante capturar o pedido
+                pedido: originalPedido, // Usar o pedido original do item
                 DESCRICAO: item.DESCRICAO,
                 PES_CODIGO: item.PES_CODIGO
               };
@@ -111,7 +119,7 @@ export const useSeparationOperations = (
       }
     });
 
-    console.log("Selected items details:", selectedItemsDetails);
+    console.log("Selected items details with original pedidos:", selectedItemsDetails);
 
     sendToSeparationMutation.mutate({
       selectedItems: state.selectedItems,

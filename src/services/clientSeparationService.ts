@@ -35,10 +35,13 @@ export async function sendToSeparation({ items }: SeparationRequest) {
       if (!itemsByCliente[clienteKey]) {
         itemsByCliente[clienteKey] = [];
       }
+      
+      // Garantir que o pedido original seja mantido
+      console.log(`Adicionando item ${item.itemCodigo} ao cliente ${clienteKey} com pedido original: ${item.pedido}`);
       itemsByCliente[clienteKey].push(item);
     });
 
-    console.log("Items grouped by client:", itemsByCliente);
+    console.log("Items grouped by client with original pedidos:", itemsByCliente);
 
     // Create a separation for each cliente
     const separations = [];
@@ -55,7 +58,6 @@ export async function sendToSeparation({ items }: SeparationRequest) {
       
       const valorTotal = clienteItems.reduce((sum, item) => sum + (item.qtdeSaldo * item.valorUnitario), 0);
       
-      // Remover user_email do insert pois não existe no esquema
       const { data, error } = await supabase
         .from('separacoes')
         .insert({
@@ -75,10 +77,10 @@ export async function sendToSeparation({ items }: SeparationRequest) {
 
       console.log("Separation created:", data);
 
-      // Add separation items
+      // Add separation items with original pedido numbers
       const separationItems = clienteItems.map(item => ({
         separacao_id: data.id,
-        pedido: item.pedido,  // Garantir que o pedido seja incluído
+        pedido: item.pedido,  // Manter o pedido original
         item_codigo: item.itemCodigo,
         descricao: item.descricao,
         quantidade_pedida: item.qtdeSaldo,
@@ -86,7 +88,7 @@ export async function sendToSeparation({ items }: SeparationRequest) {
         valor_total: item.qtdeSaldo * item.valorUnitario
       }));
 
-      console.log("Inserting separation items:", separationItems);
+      console.log("Inserting separation items with original pedidos:", separationItems);
 
       const { error: itemsError } = await supabase
         .from('separacao_itens')
@@ -100,7 +102,7 @@ export async function sendToSeparation({ items }: SeparationRequest) {
       separations.push(data);
     }
 
-    console.log("Separation process completed successfully");
+    console.log("Separation process completed successfully with original pedidos");
     return { success: true, separations };
   } catch (error: any) {
     console.error('Erro no processo de separação:', error);

@@ -43,18 +43,20 @@ export const useItemSelection = (
         const clientName = item.APELIDO || '';
         const clientCode = item.PES_CODIGO;
         
-        // Importante: capturar e armazenar o número do pedido
+        // Importante: capturar e armazenar o número do pedido original exatamente como aparece na tela
+        const originalPedido = item.PED_NUMPEDIDO || item.pedido || '';
+        
+        console.log(`Item ${itemCode} selecionado do pedido original: ${originalPedido}`);
+        
         newSelectedItemsDetails[itemCode] = { 
           qtde, 
           valor,
           clientName,
           clientCode,
-          pedido: item.pedido, // Armazenar o número do pedido explicitamente
+          pedido: originalPedido, // Armazenar o número do pedido original
           DESCRICAO: item.DESCRICAO,
           PES_CODIGO: item.PES_CODIGO
         };
-        
-        console.log(`Item ${itemCode} selecionado do pedido ${item.pedido}`);
       }
       
       console.log("Updated selection state:", {
@@ -88,7 +90,7 @@ export const useItemSelection = (
         if (state.selectedItems.includes(item.ITEM_CODIGO)) {
           selectedItemsData.push({
             Cliente: clientName,
-            Pedido: item.pedido,
+            Pedido: item.PED_NUMPEDIDO || item.pedido || '-',
             SKU: item.ITEM_CODIGO,
             Descrição: item.DESCRICAO || '-',
             Solicitado: item.QTDE_PEDIDA,
