@@ -1,4 +1,3 @@
-
 export interface FaturamentoItem {
   MATRIZ?: number;
   FILIAL?: number;
@@ -23,6 +22,24 @@ export interface FaturamentoItem {
   CENTRO_CUSTO?: string;
   DATA_PEDIDO?: string | Date;
   REPRESENTANTE?: number;
+  // Add the pedido relation
+  pedido?: {
+    CENTROCUSTO?: string;
+    MATRIZ?: number;
+    FILIAL?: number;
+    PED_NUMPEDIDO?: string;
+    PED_ANOBASE?: number;
+    MPED_NUMORDEM?: number;
+    ITEM_CODIGO?: string;
+    PES_CODIGO?: number;
+    QTDE_PEDIDA?: number;
+    QTDE_ENTREGUE?: number;
+    QTDE_SALDO?: number;
+    STATUS?: string;
+    DATA_PEDIDO?: string | Date;
+    VALOR_UNITARIO?: number;
+    REPRESENTANTE?: number;
+  };
 }
 
 export interface PedidoItem {
