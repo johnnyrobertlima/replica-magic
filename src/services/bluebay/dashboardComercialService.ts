@@ -122,9 +122,11 @@ export const fetchDashboardComercialData = async (
           faturaDetalhe = faturasDetalhe[0];
         } else {
           // Tenta encontrar a linha específica para este item usando os campos disponíveis
-          // Verificamos se viewItem tem ITEM_CODIGO ou usamos outras propriedades para matching
+          // Verificamos se temos os campos necessários para o matching
+          const hasItemCodigo = 'ITEM_CODIGO' in viewItem;
+          
           faturaDetalhe = faturasDetalhe.find(f => 
-            (viewItem.ITEM_CODIGO && f.ITEM_CODIGO === viewItem.ITEM_CODIGO) || 
+            (hasItemCodigo && viewItem.ITEM_CODIGO && f.ITEM_CODIGO === viewItem.ITEM_CODIGO) || 
             (f.PED_NUMPEDIDO === viewItem.PED_NUMPEDIDO &&
             f.PED_ANOBASE === viewItem.PED_ANOBASE)
           ) || faturasDetalhe[0]; // Se não encontrar, usa a primeira
