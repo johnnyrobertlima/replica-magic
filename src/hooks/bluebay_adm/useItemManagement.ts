@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -25,12 +24,14 @@ export const useItemManagement = () => {
       const from = (pagination.currentPage - 1) * pagination.pageSize;
       const to = from + pagination.pageSize - 1;
       
+      // Build our query
       let query = supabase
         .from("BLUEBAY_ITEM")
         .select("*", { count: "exact" })
         .order("DESCRICAO")
         .range(from, to);
 
+      // Apply filters
       if (searchTerm) {
         query = query.or(`ITEM_CODIGO.ilike.%${searchTerm}%,DESCRICAO.ilike.%${searchTerm}%,CODIGOAUX.ilike.%${searchTerm}%`);
       }
@@ -43,7 +44,12 @@ export const useItemManagement = () => {
 
       if (error) throw error;
       
-      setItems(data || []);
+      // Filter out any duplicate items by ITEM_CODIGO
+      const uniqueItems = data?.filter((item, index, self) => 
+        index === self.findIndex(i => i.ITEM_CODIGO === item.ITEM_CODIGO)
+      ) || [];
+      
+      setItems(uniqueItems);
       
       // Update total count and pagination
       if (count !== null) {
