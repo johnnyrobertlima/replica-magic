@@ -18,6 +18,9 @@ export const exportToExcel = (data: any[], fileName: string) => {
   }
 
   try {
+    // Sanitize filename to avoid issues
+    const safeFileName = sanitizeFileName(fileName);
+    
     // Create worksheet from JSON data
     const worksheet = XLSX.utils.json_to_sheet(data);
     
@@ -26,7 +29,7 @@ export const exportToExcel = (data: any[], fileName: string) => {
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Data');
     
     // Generate Excel file and trigger download
-    XLSX.writeFile(workbook, `${fileName}.xlsx`);
+    XLSX.writeFile(workbook, `${safeFileName}.xlsx`);
     
     return data.length; // Return the number of exported items
   } catch (error) {
@@ -53,11 +56,20 @@ export const exportToExcelWithSections = (
   }
 
   try {
+    // Sanitize filename to avoid issues
+    const safeFileName = sanitizeFileName(fileName);
+    
     // Create workbook
     const workbook = XLSX.utils.book_new();
     
     // If we have both header and items data, we combine them with empty rows in between
     if (headerData.length > 0 && itemsData.length > 0) {
+      // Log the data structure to help with debugging
+      console.log('Exportando dados com cabeçalho e itens', {
+        headerCount: headerData.length,
+        itemsCount: itemsData.length
+      });
+      
       // First convert all data to worksheets
       const headerWorksheet = XLSX.utils.json_to_sheet(headerData);
       const itemsWorksheet = XLSX.utils.json_to_sheet(itemsData);
@@ -103,24 +115,24 @@ export const exportToExcelWithSections = (
       }
       
       // Add the worksheet to the workbook
-      XLSX.utils.book_append_sheet(workbook, combinedWorksheet, 'Data');
+      XLSX.utils.book_append_sheet(workbook, combinedWorksheet, 'Pedido');
     } else if (headerData.length > 0) {
       // Only header data
       const worksheet = XLSX.utils.json_to_sheet(headerData);
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Data');
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Dados');
     } else {
       // Only items data
       const worksheet = XLSX.utils.json_to_sheet(itemsData);
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Data');
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Itens');
     }
     
     // Generate Excel file and trigger download
-    XLSX.writeFile(workbook, `${fileName}.xlsx`);
+    XLSX.writeFile(workbook, `${safeFileName}.xlsx`);
     
     return headerData.length + itemsData.length;
   } catch (error) {
-    console.error('Error exporting data to Excel:', error);
-    return 0;
+    console.error('Error exporting data to Excel with sections:', error);
+    throw error; // Re-throw to allow proper error handling by the caller
   }
 };
 
@@ -135,6 +147,9 @@ export const exportGroupedDataToExcel = (
   fileName: string
 ) => {
   try {
+    // Sanitize filename to avoid issues
+    const safeFileName = sanitizeFileName(fileName);
+    
     // Create workbook
     const workbook = XLSX.utils.book_new();
     
@@ -177,11 +192,25 @@ export const exportGroupedDataToExcel = (
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Grupos');
     
     // Generate Excel file
-    XLSX.writeFile(workbook, `${fileName}.xlsx`);
+    XLSX.writeFile(workbook, `${safeFileName}.xlsx`);
     
     return rowIndex; // Return the number of rows created
   } catch (error) {
     console.error('Error exporting grouped data to Excel:', error);
     return 0;
   }
+};
+
+/**
+ * Sanitize a filename to ensure it's valid for most file systems
+ * Removes illegal characters and limits length
+ */
+const sanitizeFileName = (fileName: string): string => {
+  // Remove characters that are illegal in filenames
+  let safeName = fileName.replace(/[\/\\?%*:|"<>]/g, '-');
+  
+  // Limit the length to a reasonable size (adjust if needed)
+  safeName = safeName.substring(0, 100);
+  
+  return safeName;
 };
