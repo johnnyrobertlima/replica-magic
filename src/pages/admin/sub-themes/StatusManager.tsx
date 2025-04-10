@@ -16,7 +16,7 @@ export function StatusManager() {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
-        .from("oni_agencia_status")
+        .from("oni_agencia_status" as any)
         .select("*")
         .order("name");
       
@@ -57,7 +57,7 @@ export function StatusManager() {
     
     try {
       const { error } = await supabase
-        .from("oni_agencia_status")
+        .from("oni_agencia_status" as any)
         .delete()
         .eq("id", id);
       

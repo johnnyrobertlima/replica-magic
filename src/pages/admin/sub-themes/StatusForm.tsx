@@ -76,7 +76,7 @@ export function StatusForm({
       if (selectedStatus) {
         // Atualizar status existente
         const { error } = await supabase
-          .from(tableName)
+          .from(tableName as any)
           .update({
             name: values.name,
             color: values.color,
@@ -94,7 +94,7 @@ export function StatusForm({
       } else {
         // Criar novo status
         const { error } = await supabase
-          .from(tableName)
+          .from(tableName as any)
           .insert({
             name: values.name,
             color: values.color,
