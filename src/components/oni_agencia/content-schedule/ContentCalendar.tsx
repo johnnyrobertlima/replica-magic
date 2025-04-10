@@ -111,13 +111,19 @@ export function ContentCalendar({ events, clientId, month, year, onMonthChange }
           className="rounded-md border-none"
           locale={ptBR}
           components={{
-            Day: ({ date, ...props }) => {
+            Day: ({ date, ...dayProps }) => {
+              // This ensures we correctly check if this date is selected
+              const isSelected = selectedDate && 
+                selectedDate.getDate() === date.getDate() && 
+                selectedDate.getMonth() === date.getMonth() && 
+                selectedDate.getFullYear() === date.getFullYear();
+              
               return (
                 <div className="h-24 w-full">
                   <button 
-                    {...props} 
+                    {...dayProps} 
                     className={`h-8 w-8 p-0 font-normal flex items-center justify-center rounded-full ${
-                      props.className?.includes('selected') ? 'bg-primary text-primary-foreground' : ''
+                      isSelected ? 'bg-primary text-primary-foreground' : ''
                     }`}
                   >
                     {format(date, 'd')}
