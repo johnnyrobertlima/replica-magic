@@ -5,6 +5,7 @@ import { useServiceCounts } from "./hooks/useServiceCounts";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { useClientScopesByClient } from "@/hooks/useOniAgenciaClientScopes";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useServices } from "@/hooks/useOniAgenciaContentSchedules";
 
 interface ServiceCountBadgesProps {
   events: CalendarEvent[];
@@ -16,7 +17,15 @@ interface ServiceCountBadgesProps {
 export function ServiceCountBadges({ events, clientId, month, year }: ServiceCountBadgesProps) {
   const serviceCounts = useServiceCounts(events);
   const { data: clientScopes = [] } = useClientScopesByClient(clientId || null);
+  const { data: allServices = [] } = useServices();
   const [scopeCountMap, setScopeCountMap] = useState<Record<string, number>>({});
+  const [allServiceItems, setAllServiceItems] = useState<Array<{
+    id: string;
+    count: number;
+    name: string;
+    color: string;
+    contracted: number;
+  }>>([]);
   
   useEffect(() => {
     // Build a map of service ID to contracted quantity from client scopes
@@ -29,17 +38,68 @@ export function ServiceCountBadges({ events, clientId, month, year }: ServiceCou
     }
     
     setScopeCountMap(scopeMap);
-  }, [clientScopes]);
+    
+    // Combine scheduled services with contracted but unscheduled services
+    const serviceMap: Record<string, {
+      id: string;
+      count: number;
+      name: string;
+      color: string;
+      contracted: number;
+    }> = {};
+    
+    // First, add all scheduled services
+    serviceCounts.forEach((service) => {
+      serviceMap[service.id] = {
+        ...service,
+        contracted: scopeMap[service.id] || 0
+      };
+    });
+    
+    // Then, add all contracted services that aren't scheduled yet
+    if (clientScopes && clientScopes.length > 0 && allServices && allServices.length > 0) {
+      clientScopes.forEach((scope) => {
+        if (!serviceMap[scope.service_id]) {
+          // Find the service details from allServices
+          const serviceDetails = allServices.find(service => service.id === scope.service_id);
+          if (serviceDetails) {
+            serviceMap[scope.service_id] = {
+              id: scope.service_id,
+              count: 0, // Not scheduled yet
+              name: serviceDetails.name,
+              color: serviceDetails.color,
+              contracted: scope.quantity
+            };
+          }
+        }
+      });
+    }
+    
+    // Sort by name for consistency
+    const sortedServices = Object.values(serviceMap).sort((a, b) => {
+      // First sort by whether they have any contracted amounts (those with contracts come first)
+      if (a.contracted > 0 && b.contracted === 0) return -1;
+      if (a.contracted === 0 && b.contracted > 0) return 1;
+      
+      // Then sort by count (highest first)
+      if (a.count !== b.count) return b.count - a.count;
+      
+      // Finally sort alphabetically
+      return a.name.localeCompare(b.name);
+    });
+    
+    setAllServiceItems(sortedServices);
+  }, [clientScopes, serviceCounts, allServices]);
   
-  if (serviceCounts.length === 0) {
+  if (allServiceItems.length === 0) {
     return null;
   }
 
   return (
     <div className="flex flex-wrap gap-2 items-center ml-4">
       <TooltipProvider>
-        {serviceCounts.map((service) => {
-          const contractedAmount = scopeCountMap[service.id] || 0;
+        {allServiceItems.map((service) => {
+          const contractedAmount = service.contracted;
           const scheduledAmount = service.count;
           const remaining = Math.max(0, contractedAmount - scheduledAmount);
           
