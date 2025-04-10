@@ -4,11 +4,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { EntityForm } from "./EntityForm";
 import { EntityTable } from "./EntityTable";
-
-interface EditorialLine {
-  id: string;
-  name: string;
-}
+import { EditorialLine } from "./types";
 
 export function EditorialLineManager() {
   const [editorialLines, setEditorialLines] = useState<EditorialLine[]>([]);
@@ -19,13 +15,13 @@ export function EditorialLineManager() {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
-        .from("editorial_lines")
+        .from("editorial_lines" as any)
         .select("*")
         .order("name");
       
       if (error) throw error;
       
-      setEditorialLines(data || []);
+      setEditorialLines(data as EditorialLine[] || []);
     } catch (error: any) {
       toast({
         title: "Erro",
@@ -46,7 +42,7 @@ export function EditorialLineManager() {
     
     try {
       const { error } = await supabase
-        .from("editorial_lines")
+        .from("editorial_lines" as any)
         .delete()
         .eq("id", id);
       

@@ -4,11 +4,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { EntityForm } from "./EntityForm";
 import { EntityTable } from "./EntityTable";
-
-interface Theme {
-  id: string;
-  name: string;
-}
+import { Theme } from "./types";
 
 export function ThemeManager() {
   const [themes, setThemes] = useState<Theme[]>([]);
@@ -19,13 +15,13 @@ export function ThemeManager() {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
-        .from("themes")
+        .from("themes" as any)
         .select("*")
         .order("name");
       
       if (error) throw error;
       
-      setThemes(data || []);
+      setThemes(data as Theme[] || []);
     } catch (error: any) {
       toast({
         title: "Erro",
@@ -46,7 +42,7 @@ export function ThemeManager() {
     
     try {
       const { error } = await supabase
-        .from("themes")
+        .from("themes" as any)
         .delete()
         .eq("id", id);
       

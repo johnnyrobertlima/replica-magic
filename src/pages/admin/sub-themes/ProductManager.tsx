@@ -4,11 +4,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { EntityForm } from "./EntityForm";
 import { EntityTable } from "./EntityTable";
-
-interface Product {
-  id: string;
-  name: string;
-}
+import { Product } from "./types";
 
 export function ProductManager() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -19,13 +15,13 @@ export function ProductManager() {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
-        .from("products")
+        .from("products" as any)
         .select("*")
         .order("name");
       
       if (error) throw error;
       
-      setProducts(data || []);
+      setProducts(data as Product[] || []);
     } catch (error: any) {
       toast({
         title: "Erro",
@@ -46,7 +42,7 @@ export function ProductManager() {
     
     try {
       const { error } = await supabase
-        .from("products")
+        .from("products" as any)
         .delete()
         .eq("id", id);
       
