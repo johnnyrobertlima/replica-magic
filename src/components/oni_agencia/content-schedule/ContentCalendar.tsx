@@ -9,6 +9,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ScheduleEventDialog } from "./ScheduleEventDialog";
 import { useAllContentSchedules } from "@/hooks/useOniAgenciaContentSchedules";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface ContentCalendarProps {
   events: CalendarEvent[];
@@ -74,62 +75,83 @@ export function ContentCalendar({ events, clientId, month, year, onMonthChange }
     }
   };
 
-  const renderEventsDot = (date: Date) => {
+  // New function to render events in a single-line compact format
+  const renderCompactEvents = (date: Date) => {
     const dateString = format(date, 'yyyy-MM-dd');
-    console.log("Checking events for day:", dateString);
-    
     const dayEvents = events.filter(event => event.scheduled_date === dateString);
-    console.log("Events found for this day:", dayEvents.length);
     
-    return dayEvents.length > 0 ? (
+    if (dayEvents.length === 0) return null;
+    
+    return (
       <div className="flex flex-col gap-1 mt-1 overflow-y-auto max-h-20">
-        {dayEvents.map((event, index) => (
+        {dayEvents.map((event) => (
           <div
             key={event.id}
-            className="w-full p-1 text-xs truncate rounded flex flex-col"
-            style={{ backgroundColor: event.service.color, color: '#fff' }}
-            title={event.title}
+            className="w-full h-6 flex items-center text-xs rounded overflow-hidden cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelectedDate(new Date(event.scheduled_date));
+              setIsDialogOpen(true);
+            }}
           >
-            <div className="font-semibold">{event.title}</div>
-            <div className="flex flex-wrap gap-1 mt-1">
-              {event.status && (
-                <Badge 
-                  className="text-[10px] h-4 px-1" 
-                  style={{ 
-                    backgroundColor: event.status.color || '#6E59A5',
-                    color: '#fff' 
-                  }}
-                >
-                  {event.status.name}
-                </Badge>
+            {/* Service color - first part */}
+            <div 
+              className="h-full w-6 flex-shrink-0" 
+              style={{ backgroundColor: event.service.color }}
+              title={event.service.name}
+            />
+            
+            {/* Editorial line - second part */}
+            {event.editorial_line ? (
+              <div 
+                className="h-full w-6 flex-shrink-0 flex items-center justify-center"
+                style={{ backgroundColor: event.editorial_line.color || '#E5DEFF' }}
+                title={event.editorial_line.name}
+              >
+                {event.editorial_line.symbol && (
+                  <span className="text-white text-[8px] font-bold">
+                    {event.editorial_line.symbol}
+                  </span>
+                )}
+              </div>
+            ) : (
+              <div className="h-full w-6 flex-shrink-0 bg-gray-100" />
+            )}
+            
+            {/* Collaborator photo - third part */}
+            <div className="h-full w-6 flex-shrink-0 flex items-center justify-center bg-gray-50">
+              {event.collaborator ? (
+                <Avatar className="h-5 w-5">
+                  <AvatarImage src={event.collaborator.photo_url || ''} alt={event.collaborator.name} />
+                  <AvatarFallback className="text-[8px]">
+                    {event.collaborator.name.substring(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              ) : (
+                <div className="h-5 w-5 rounded-full bg-gray-200" />
               )}
-              {event.editorial_line && (
-                <Badge 
-                  className="text-[10px] h-4 px-1" 
-                  style={{ 
-                    backgroundColor: event.editorial_line.color || '#4B5563',
-                    color: '#fff' 
-                  }}
-                >
-                  {event.editorial_line.name}
-                </Badge>
-              )}
-              {event.product && (
-                <Badge 
-                  className="text-[10px] h-4 px-1" 
-                  style={{ 
-                    backgroundColor: event.product.color || '#4B5563',
-                    color: '#fff' 
-                  }}
-                >
-                  {event.product.name}
-                </Badge>
-              )}
+            </div>
+            
+            {/* Status color, Product and Title - fourth part (70%) */}
+            <div 
+              className="h-full flex-grow flex items-center overflow-hidden"
+              style={{ 
+                backgroundColor: event.status?.color || '#F1F0FB',
+                color: event.status?.color ? '#fff' : '#000'
+              }}
+            >
+              <div className="px-1 truncate">
+                {event.product ? (
+                  <span className="font-semibold">{event.product.name}:</span>
+                ) : null}
+                {' '}
+                <span className="truncate">{event.title}</span>
+              </div>
             </div>
           </div>
         ))}
       </div>
-    ) : null;
+    );
   };
 
   const weekDays = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
@@ -194,7 +216,7 @@ export function ContentCalendar({ events, clientId, month, year, onMonthChange }
                   >
                     {format(date, 'd')}
                   </button>
-                  {renderEventsDot(date)}
+                  {renderCompactEvents(date)}
                 </div>
               );
             },
