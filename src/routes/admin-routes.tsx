@@ -16,6 +16,7 @@ import { AdminPermissions } from "@/pages/admin/permissions";
 import { AdminLogin } from "@/pages/admin/login";
 import { UserGroupManagement } from "@/pages/admin/users/UserGroupManagement";
 import AdminRequests from "@/pages/admin/requests";
+import AdminSubThemes from "@/pages/admin/sub-themes";
 
 export const adminRoutes = (
   <>
@@ -50,6 +51,11 @@ export const adminRoutes = (
       <Route path="requests" element={
         <PermissionGuard resourcePath="/admin/requests">
           <AdminRequests />
+        </PermissionGuard>
+      } />
+      <Route path="sub-themes" element={
+        <PermissionGuard resourcePath="/admin/sub-themes">
+          <AdminSubThemes />
         </PermissionGuard>
       } />
       <Route path="logos" element={

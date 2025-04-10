@@ -49,6 +49,7 @@ export const RESOURCE_PATHS = [
   "/admin/permissions",
   "/admin/users",
   "/admin/requests",
+  "/admin/sub-themes",
   "/admin/logos",
   "/admin/messages",
   "/admin/seo",

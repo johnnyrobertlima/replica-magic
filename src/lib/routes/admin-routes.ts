@@ -2,6 +2,7 @@
 import UserGroupManagement from "@/pages/admin/users/UserGroupManagement";
 import { AdminBanners } from "@/pages/admin/banners";
 import AdminRequests from "@/pages/admin/requests";
+import AdminSubThemes from "@/pages/admin/sub-themes";
 
 export const adminRoutes = [
   {
@@ -15,5 +16,9 @@ export const adminRoutes = [
   {
     path: "/admin/requests",
     element: AdminRequests,
+  },
+  {
+    path: "/admin/sub-themes",
+    element: AdminSubThemes,
   },
 ] as const;
