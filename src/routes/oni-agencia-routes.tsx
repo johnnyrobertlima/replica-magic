@@ -3,11 +3,13 @@ import { Route } from "react-router-dom";
 import { Fragment } from "react";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
 import OniAgenciaHome from "@/pages/OniAgenciaHome";
-import OniAgenciaControlePauta from "@/pages/oni_agencia/OniAgenciaControlePauta";
-import OniAgenciaClientes from "@/pages/oni_agencia/OniAgenciaClientes";
-import OniAgenciaServicos from "@/pages/oni_agencia/OniAgenciaServicos";
-import OniAgenciaColaboradores from "@/pages/oni_agencia/OniAgenciaColaboradores";
-import OniAgenciaRelatorios from "@/pages/oni_agencia/OniAgenciaRelatorios";
+import {
+  OniAgenciaControlePauta,
+  OniAgenciaClientes,
+  OniAgenciaServicos,
+  OniAgenciaColaboradores,
+  OniAgenciaRelatorios
+} from "@/pages/oni_agencia";
 
 export const oniAgenciaRoutes = (
   <>

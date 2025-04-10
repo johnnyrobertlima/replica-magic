@@ -130,7 +130,7 @@ const ClientArea = () => {
           </CardContent>
         </Card>
 
-        {/* New Oni Agência Card */}
+        {/* Oni Agência Card */}
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
