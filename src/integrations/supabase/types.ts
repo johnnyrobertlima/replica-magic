@@ -1170,6 +1170,36 @@ export type Database = {
         }
         Relationships: []
       }
+      oni_agencia_services: {
+        Row: {
+          category: string
+          color: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          color: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          color?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       Seguidores_Clientes: {
         Row: {
           cliente: string
