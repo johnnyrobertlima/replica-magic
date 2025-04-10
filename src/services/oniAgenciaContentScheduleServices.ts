@@ -88,7 +88,7 @@ export async function createContentSchedule(schedule: ContentScheduleFormData): 
     }
 
     console.log('Created content schedule:', data);
-    return data;
+    return data as OniAgenciaContentSchedule;
   } catch (error) {
     console.error('Error creating content schedule:', error);
     throw error;
@@ -109,7 +109,7 @@ export async function updateContentSchedule(id: string, schedule: Partial<Conten
       throw error;
     }
 
-    return data;
+    return data as OniAgenciaContentSchedule;
   } catch (error) {
     console.error('Error updating content schedule:', error);
     throw error;
