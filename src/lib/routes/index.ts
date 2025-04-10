@@ -1,3 +1,4 @@
 
 // Re-export the routes from the main routes file
-export { routes } from "../routes";
+import { routes } from "../../routes";
+export { routes };

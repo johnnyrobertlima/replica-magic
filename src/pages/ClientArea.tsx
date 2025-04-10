@@ -131,9 +131,9 @@ const ClientArea = () => {
         </Card>
 
         {/* Oni Agência Card */}
-        <Card className="hover:shadow-lg transition-shadow">
+        <Card className="hover:shadow-lg transition-shadow bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-blue-700">
               <FileEdit className="h-6 w-6" />
               Oni Agência
             </CardTitle>
@@ -143,7 +143,7 @@ const ClientArea = () => {
           </CardHeader>
           <CardContent>
             <Link to="/client-area/oniagencia">
-              <Button className="w-full">
+              <Button className="w-full bg-blue-600 hover:bg-blue-700">
                 Acessar Portal
               </Button>
             </Link>
