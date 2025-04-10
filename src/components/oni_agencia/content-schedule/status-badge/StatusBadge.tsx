@@ -9,7 +9,7 @@ interface StatusBadgeProps {
 export function StatusBadge({ name, color }: StatusBadgeProps) {
   return (
     <Badge 
-      className="font-normal text-xs whitespace-nowrap"
+      className="font-normal text-[9px] py-0 px-1.5 whitespace-nowrap h-4"
       style={{ 
         backgroundColor: color || '#888',
         color: '#fff'
