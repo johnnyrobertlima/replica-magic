@@ -192,7 +192,7 @@ export function StatusForm({
                   <FormLabel>Status Anterior</FormLabel>
                   <Select 
                     onValueChange={field.onChange} 
-                    value={field.value || ""}
+                    value={field.value || "null"}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -200,7 +200,7 @@ export function StatusForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">Nenhum</SelectItem>
+                      <SelectItem value="null">Nenhum</SelectItem>
                       {statuses
                         .filter(s => 
                           s.id !== selectedStatus?.id && 
@@ -227,7 +227,7 @@ export function StatusForm({
                   <FormLabel>Próximo Status</FormLabel>
                   <Select 
                     onValueChange={field.onChange} 
-                    value={field.value || ""}
+                    value={field.value || "null"}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -235,7 +235,7 @@ export function StatusForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">Nenhum</SelectItem>
+                      <SelectItem value="null">Nenhum</SelectItem>
                       {statuses
                         .filter(s => 
                           s.id !== selectedStatus?.id && 
