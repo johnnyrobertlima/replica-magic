@@ -73,6 +73,8 @@ export function ThemeManager() {
         entityName="Tema"
         tableName="themes"
         onSuccess={fetchThemes}
+        includeSymbol={true}
+        includeColor={true}
       />
       
       <EntityTable
@@ -80,6 +82,8 @@ export function ThemeManager() {
         entities={themes}
         isLoading={isLoading}
         onDelete={handleDelete}
+        showSymbols={true}
+        showColors={true}
       />
     </div>
   );

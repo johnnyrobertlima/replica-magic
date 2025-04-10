@@ -74,6 +74,7 @@ export function EditorialLineManager() {
         tableName="editorial_lines"
         onSuccess={fetchEditorialLines}
         includeSymbol={true}
+        includeColor={true}
       />
       
       <EntityTable
@@ -82,6 +83,7 @@ export function EditorialLineManager() {
         isLoading={isLoading}
         onDelete={handleDelete}
         showSymbols={true}
+        showColors={true}
       />
     </div>
   );

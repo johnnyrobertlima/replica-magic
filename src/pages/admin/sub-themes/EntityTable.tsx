@@ -9,6 +9,7 @@ interface Entity {
   id: string;
   name: string;
   symbol?: string;
+  color?: string;
 }
 
 interface EntityTableProps {
@@ -17,9 +18,17 @@ interface EntityTableProps {
   isLoading: boolean;
   onDelete: (id: string) => void;
   showSymbols?: boolean;
+  showColors?: boolean;
 }
 
-export function EntityTable({ entityName, entities, isLoading, onDelete, showSymbols = false }: EntityTableProps) {
+export function EntityTable({ 
+  entityName, 
+  entities, 
+  isLoading, 
+  onDelete, 
+  showSymbols = false,
+  showColors = false
+}: EntityTableProps) {
   if (isLoading) {
     return (
       <div className="space-y-2">
@@ -44,6 +53,7 @@ export function EntityTable({ entityName, entities, isLoading, onDelete, showSym
         <TableHeader>
           <TableRow>
             {showSymbols && <TableHead className="w-[60px]">Símbolo</TableHead>}
+            {showColors && <TableHead className="w-[60px]">Cor</TableHead>}
             <TableHead>Nome</TableHead>
             <TableHead className="w-[100px]">Ações</TableHead>
           </TableRow>
@@ -60,6 +70,16 @@ export function EntityTable({ entityName, entities, isLoading, onDelete, showSym
                 {showSymbols && (
                   <TableCell>
                     {EntityIcon && <EntityIcon className="h-5 w-5" />}
+                  </TableCell>
+                )}
+                {showColors && (
+                  <TableCell>
+                    {entity.color && (
+                      <div 
+                        className="h-5 w-5 rounded-full" 
+                        style={{ backgroundColor: entity.color }} 
+                      />
+                    )}
                   </TableCell>
                 )}
                 <TableCell>{entity.name}</TableCell>

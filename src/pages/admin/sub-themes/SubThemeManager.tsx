@@ -73,6 +73,8 @@ export function SubThemeManager() {
         entityName="Sub Tema"
         tableName="sub_themes"
         onSuccess={fetchSubThemes}
+        includeSymbol={true}
+        includeColor={true}
       />
       
       <EntityTable
@@ -80,6 +82,8 @@ export function SubThemeManager() {
         entities={subThemes}
         isLoading={isLoading}
         onDelete={handleDelete}
+        showSymbols={true}
+        showColors={true}
       />
     </div>
   );

@@ -5,17 +5,26 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { SymbolSelector } from "./SymbolSelector";
+import { ColorPicker } from "./ColorPicker";
 
 interface EntityFormProps {
   entityName: string;
   tableName: string;
   onSuccess: () => void;
   includeSymbol?: boolean;
+  includeColor?: boolean;
 }
 
-export function EntityForm({ entityName, tableName, onSuccess, includeSymbol = false }: EntityFormProps) {
+export function EntityForm({ 
+  entityName, 
+  tableName, 
+  onSuccess, 
+  includeSymbol = false,
+  includeColor = false
+}: EntityFormProps) {
   const [name, setName] = useState("");
   const [symbol, setSymbol] = useState("");
+  const [color, setColor] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
@@ -34,7 +43,15 @@ export function EntityForm({ entityName, tableName, onSuccess, includeSymbol = f
     setIsSubmitting(true);
     
     try {
-      let dataToInsert = includeSymbol ? { name, symbol } : { name };
+      let dataToInsert: Record<string, any> = { name };
+      
+      if (includeSymbol) {
+        dataToInsert.symbol = symbol;
+      }
+      
+      if (includeColor) {
+        dataToInsert.color = color;
+      }
       
       const { error } = await supabase
         .from(tableName as any)
@@ -49,6 +66,7 @@ export function EntityForm({ entityName, tableName, onSuccess, includeSymbol = f
       
       setName("");
       if (includeSymbol) setSymbol("");
+      if (includeColor) setColor("");
       onSuccess();
     } catch (error: any) {
       toast({
@@ -77,6 +95,15 @@ export function EntityForm({ entityName, tableName, onSuccess, includeSymbol = f
             Escolha um símbolo
           </label>
           <SymbolSelector value={symbol} onChange={setSymbol} />
+        </div>
+      )}
+      
+      {includeColor && (
+        <div className="mt-4">
+          <label className="text-sm text-muted-foreground mb-2 block">
+            Escolha uma cor
+          </label>
+          <ColorPicker value={color} onChange={setColor} />
         </div>
       )}
       

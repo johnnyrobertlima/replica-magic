@@ -73,6 +73,8 @@ export function ProductManager() {
         entityName="Produto"
         tableName="products"
         onSuccess={fetchProducts}
+        includeSymbol={true}
+        includeColor={true}
       />
       
       <EntityTable
@@ -80,6 +82,8 @@ export function ProductManager() {
         entities={products}
         isLoading={isLoading}
         onDelete={handleDelete}
+        showSymbols={true}
+        showColors={true}
       />
     </div>
   );
