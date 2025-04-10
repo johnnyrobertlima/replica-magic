@@ -1,6 +1,5 @@
 
-import { useState } from "react";
-import { Search, Filter, Save, Edit, Trash2, Plus, PackageCheck } from "lucide-react";
+import { PackageCheck, Plus, Search } from "lucide-react";
 import { BluebayAdmMenu } from "@/components/bluebay_adm/BluebayAdmMenu";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -16,20 +15,10 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { useToast } from "@/hooks/use-toast";
 import { useItemManagement } from "@/hooks/bluebay_adm/useItemManagement";
 import { ItemForm } from "@/components/bluebay_adm/item-management/ItemForm";
 import { ItemsTable } from "@/components/bluebay_adm/item-management/ItemsTable";
@@ -46,13 +35,14 @@ const BluebayAdmItemManagement = () => {
     setGroupFilter, 
     groups,
     selectedItem,
-    setSelectedItem,
     isDialogOpen,
     setIsDialogOpen,
     handleSaveItem,
     handleDeleteItem,
     pagination,
-    totalCount
+    totalCount,
+    openEditItemDialog,
+    openNewItemDialog
   } = useItemManagement();
 
   return (
@@ -67,7 +57,7 @@ const BluebayAdmItemManagement = () => {
           
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="flex gap-2 items-center">
+              <Button className="flex gap-2 items-center" onClick={openNewItemDialog}>
                 <Plus className="h-4 w-4" />
                 Novo Item
               </Button>
@@ -139,10 +129,7 @@ const BluebayAdmItemManagement = () => {
           <>
             <ItemsTable 
               items={items} 
-              onEdit={(item) => {
-                setSelectedItem(item);
-                setIsDialogOpen(true);
-              }}
+              onEdit={openEditItemDialog}
               onDelete={handleDeleteItem}
             />
             
