@@ -26,13 +26,13 @@ export function EventItem({ event, onClick }: EventItemProps) {
     >
       {/* Service color block */}
       <div 
-        className="h-full w-5 flex-shrink-0" 
+        className="h-full w-4 flex-shrink-0" 
         style={{ backgroundColor: service.color || '#ccc' }}
       />
       
       {/* Editorial line with symbol or color */}
       {editorial_line && (
-        <div className="flex-shrink-0 w-5">
+        <div className="flex-shrink-0 w-4">
           {editorial_line.symbol ? (
             <span title={editorial_line.name}>{editorial_line.symbol}</span>
           ) : (
@@ -68,7 +68,7 @@ export function EventItem({ event, onClick }: EventItemProps) {
       <div 
         className="flex-grow overflow-hidden whitespace-nowrap pl-1" 
         style={{ 
-          borderLeft: status?.color ? `3px solid ${status.color}` : 'none'
+          borderLeft: status?.color ? `2px solid ${status.color}` : 'none'
         }}
       >
         <span className="font-medium truncate">

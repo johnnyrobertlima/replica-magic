@@ -24,7 +24,7 @@ export function CalendarDayCell({
   // Handle click on the empty space of the cell
   const handleCellClick = (e: React.MouseEvent) => {
     // Only trigger if clicking directly on the cell, not on an event
-    if ((e.target as HTMLElement).closest('.calendar-day-cell') === e.currentTarget) {
+    if ((e.target as HTMLElement).closest('.event-item') === null) {
       onSelect(date);
     }
   };
@@ -47,14 +47,15 @@ export function CalendarDayCell({
       {dayEvents.length > 0 ? (
         <div className="flex flex-col gap-1 overflow-y-auto max-h-24">
           {dayEvents.map((event) => (
-            <EventItem 
-              key={event.id} 
-              event={event}
-              onClick={(e) => {
-                e.stopPropagation();
-                onEventClick(event, date);
-              }}
-            />
+            <div key={event.id} className="event-item">
+              <EventItem 
+                event={event}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEventClick(event, date);
+                }}
+              />
+            </div>
           ))}
         </div>
       ) : (
