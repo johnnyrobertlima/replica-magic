@@ -10,7 +10,8 @@ import {
   CheckSquare, 
   LogOut, 
   UserPlus, 
-  CalendarDays 
+  CalendarDays,
+  BookText
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -29,6 +30,7 @@ export const OniAgenciaMenu = () => {
     { name: "Serviços", path: "/client-area/oniagencia/servicos", icon: <FileSpreadsheet className="h-4 w-4 mr-2" /> },
     { name: "Colaboradores", path: "/client-area/oniagencia/colaboradores", icon: <UserPlus className="h-4 w-4 mr-2" /> },
     { name: "Relatórios", path: "/client-area/oniagencia/relatorios", icon: <CheckSquare className="h-4 w-4 mr-2" /> },
+    { name: "Gerenciar Conteúdo", path: "/admin/sub-themes", icon: <BookText className="h-4 w-4 mr-2" /> },
   ];
 
   const handleLogout = async () => {

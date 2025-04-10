@@ -5,7 +5,8 @@ import {
   FileSpreadsheet, 
   CheckSquare, 
   UserPlus,
-  CalendarDays
+  CalendarDays,
+  BookText
 } from "lucide-react";
 import { OniAgenciaMenu } from "@/components/oni_agencia/OniAgenciaMenu";
 import { ServiceCard } from "@/components/oni_agencia/ServiceCard";
@@ -61,6 +62,14 @@ const OniAgenciaHome = () => {
             icon={CheckSquare}
             iconColor="bg-red-100 text-red-600"
             path="/client-area/oniagencia/relatorios"
+          />
+          
+          <ServiceCard
+            title="Gerenciamento de Conteúdo"
+            description="Administre temas, sub-temas, linhas editoriais e produtos."
+            icon={BookText}
+            iconColor="bg-indigo-100 text-indigo-600"
+            path="/admin/sub-themes"
           />
         </div>
       </div>
