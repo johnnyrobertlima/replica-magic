@@ -1,7 +1,7 @@
 
 import { format, isSameDay } from "date-fns";
 import { CalendarEvent } from "@/types/oni-agencia";
-import { EventItem } from "./EventItem";
+import { EventItem } from "../EventItem";
 import { useState } from "react";
 import { 
   Tooltip,
@@ -72,12 +72,12 @@ export function CalendarDayCell({
       </div>
       
       {dayEvents.length > 0 ? (
-        <div className="flex flex-col gap-0 overflow-y-auto max-h-[120px]">
+        <div className="flex flex-col gap-[2px] overflow-y-auto max-h-[120px]">
           {visibleEvents.map((event) => (
             <TooltipProvider key={event.id}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="event-item mb-[1px]">
+                  <div className="event-item">
                     <EventItem 
                       event={event}
                       onClick={(e) => {

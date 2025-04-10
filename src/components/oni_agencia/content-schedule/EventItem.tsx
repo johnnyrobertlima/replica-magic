@@ -1,6 +1,5 @@
 
 import { CalendarEvent } from "@/types/oni-agencia";
-import { Avatar } from "@/components/ui/avatar";
 
 interface EventItemProps {
   event: CalendarEvent;
@@ -17,9 +16,8 @@ export function EventItem({ event, onClick }: EventItemProps) {
   const displayText = product ? `${productName} - ${truncatedTitle}` : truncatedTitle;
   
   // Calculate text color based on background color brightness
-  // This is a simple implementation - a more robust solution would consider proper color contrast
   const calculateTextColor = (bgColor: string | null | undefined): string => {
-    if (!bgColor) return "text-black";
+    if (!bgColor) return "#fff";
     
     // Convert hex to RGB
     const hex = bgColor.replace("#", "");
@@ -27,15 +25,14 @@ export function EventItem({ event, onClick }: EventItemProps) {
     const g = parseInt(hex.substr(2, 2), 16);
     const b = parseInt(hex.substr(4, 2), 16);
     
-    // Calculate perceived brightness using the formula
-    // (0.299*R + 0.587*G + 0.114*B)
+    // Calculate perceived brightness
     const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
     
     // If brightness is greater than 0.5, use black text, otherwise use white
-    return brightness > 0.5 ? "text-black" : "text-white";
+    return brightness > 0.5 ? "#000" : "#fff";
   };
   
-  const textColorClass = calculateTextColor(status?.color);
+  const textColor = calculateTextColor(status?.color);
   
   return (
     <div
@@ -62,7 +59,7 @@ export function EventItem({ event, onClick }: EventItemProps) {
       </div>
       
       {/* Collaborator photo or icon */}
-      <Avatar className="h-5 w-5 flex-shrink-0 border border-gray-200">
+      <div className="h-5 w-5 flex-shrink-0 border border-gray-200 rounded-full overflow-hidden">
         {collaborator?.photo_url ? (
           <img 
             src={collaborator.photo_url} 
@@ -78,12 +75,15 @@ export function EventItem({ event, onClick }: EventItemProps) {
             {collaborator?.name?.charAt(0) || "?"}
           </div>
         )}
-      </Avatar>
+      </div>
       
       {/* Main content: Status color, Product + Title */}
       <div 
-        className={`flex-grow overflow-hidden whitespace-nowrap pl-1 h-full flex items-center ${textColorClass}`} 
-        style={{ backgroundColor: status?.color || '#FEF7CD' }}
+        className="flex-grow overflow-hidden whitespace-nowrap pl-1 h-full flex items-center" 
+        style={{ 
+          backgroundColor: status?.color || '#FEF7CD',
+          color: textColor
+        }}
       >
         <span className="font-medium truncate text-[9px]">
           {displayText}

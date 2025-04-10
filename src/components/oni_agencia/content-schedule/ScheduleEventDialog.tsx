@@ -178,7 +178,7 @@ export function ScheduleEventDialog({
       onClose={onClose}
       title={dialogTitle}
     >
-      {!selectedEvent && ( // Only show event list if not coming from direct click
+      {!selectedEvent && events.length > 1 && ( // Only show event list if not coming from direct click and there are multiple events
         <EventList 
           events={events} 
           onSelectEvent={(event) => {
