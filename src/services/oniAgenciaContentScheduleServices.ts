@@ -36,7 +36,7 @@ export async function getContentSchedules(clientId: string, year: number, month:
     }
 
     console.log('Fetched content schedules:', data);
-    return data || [];
+    return data as CalendarEvent[];
   } catch (error) {
     console.error('Error in getContentSchedules:', error);
     throw error;
@@ -65,7 +65,7 @@ export async function getAllContentSchedules(clientId: string): Promise<Calendar
     }
 
     console.log('Fetched all content schedules:', data);
-    return data || [];
+    return data as CalendarEvent[];
   } catch (error) {
     console.error('Error in getAllContentSchedules:', error);
     throw error;
