@@ -12,6 +12,7 @@ const OniAgenciaControlePauta = () => {
   const [selectedClient, setSelectedClient] = useState<string>("");
   const [selectedMonth, setSelectedMonth] = useState<number>(currentDate.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
+  const [selectedCollaborator, setSelectedCollaborator] = useState<string | null>(null);
   
   const { data: clients = [], isLoading: isLoadingClients } = useClients();
   
@@ -34,10 +35,11 @@ const OniAgenciaControlePauta = () => {
       selectedClient,
       selectedMonth,
       selectedYear,
+      selectedCollaborator,
       schedulesLoaded: schedules.length,
       schedules
     });
-  }, [selectedClient, selectedMonth, selectedYear, schedules]);
+  }, [selectedClient, selectedMonth, selectedYear, selectedCollaborator, schedules]);
   
   // Refetch when month/year/client changes
   useEffect(() => {
@@ -66,9 +68,11 @@ const OniAgenciaControlePauta = () => {
           selectedClient={selectedClient}
           selectedMonth={selectedMonth}
           selectedYear={selectedYear}
+          selectedCollaborator={selectedCollaborator}
           onClientChange={setSelectedClient}
           onMonthChange={setSelectedMonth}
           onYearChange={setSelectedYear}
+          onCollaboratorChange={setSelectedCollaborator}
         />
         
         {selectedClient ? (
@@ -79,6 +83,7 @@ const OniAgenciaControlePauta = () => {
               month={selectedMonth}
               year={selectedYear}
               onMonthChange={handleMonthYearChange}
+              selectedCollaborator={selectedCollaborator}
             />
           </div>
         ) : (

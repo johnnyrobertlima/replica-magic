@@ -1,8 +1,8 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarEvent } from "@/types/oni-agencia";
-import { format, isSameDay } from "date-fns";
+import { format, isSameDay, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ScheduleEventDialog } from "./ScheduleEventDialog";
 import { useAllContentSchedules } from "@/hooks/useOniAgenciaContentSchedules";
@@ -17,10 +17,19 @@ interface ContentCalendarProps {
   month: number;
   year: number;
   onMonthChange: (month: number, year: number) => void;
+  selectedCollaborator?: string | null;
 }
 
-export function ContentCalendar({ events, clientId, month, year, onMonthChange }: ContentCalendarProps) {
+export function ContentCalendar({ 
+  events, 
+  clientId, 
+  month, 
+  year, 
+  onMonthChange,
+  selectedCollaborator
+}: ContentCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | undefined>(undefined);
   
   // Use this query to get ALL events regardless of month - this helps when switching months
   const { data: allEvents = [] } = useAllContentSchedules(clientId);
@@ -37,6 +46,7 @@ export function ContentCalendar({ events, clientId, month, year, onMonthChange }
   
   const handleDateSelect = (date: Date | undefined) => {
     setSelectedDate(date);
+    setSelectedEvent(undefined); // Clear event selection when selecting a date
     if (date) {
       openDialog();
     }
@@ -60,6 +70,7 @@ export function ContentCalendar({ events, clientId, month, year, onMonthChange }
 
   const handleEventClick = (event: CalendarEvent, date: Date) => {
     setSelectedDate(date);
+    setSelectedEvent(event);
     setIsDialogOpen(true);
   };
 
@@ -87,14 +98,18 @@ export function ContentCalendar({ events, clientId, month, year, onMonthChange }
             Day: ({ date, ...dayProps }) => {
               // Check if this date is selected
               const isSelected = selectedDate && isSameDay(selectedDate, date);
+              // Check if this is the current day
+              const isCurrentDay = isToday(date);
               
               return (
                 <CalendarDayCell 
                   date={date}
                   events={events}
                   isSelected={isSelected}
+                  isCurrentDay={isCurrentDay}
                   onSelect={() => handleDateSelect(date)}
                   onEventClick={(event) => handleEventClick(event, date)}
+                  selectedCollaborator={selectedCollaborator}
                 />
               );
             },
@@ -111,6 +126,7 @@ export function ContentCalendar({ events, clientId, month, year, onMonthChange }
           selectedDate={selectedDate}
           events={currentEvents}
           onClose={() => setSelectedDate(undefined)}
+          selectedEvent={selectedEvent} // Pass the selected event to open directly
         />
       )}
     </div>

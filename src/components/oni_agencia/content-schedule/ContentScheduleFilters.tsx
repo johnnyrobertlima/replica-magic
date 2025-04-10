@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useClients } from "@/hooks/useOniAgenciaClients";
+import { useCollaborators } from "@/hooks/useOniAgenciaContentSchedules";
 import { OniAgenciaClient } from "@/types/oni-agencia";
 import { Loader2 } from "lucide-react";
 
@@ -18,20 +19,25 @@ interface ContentScheduleFiltersProps {
   selectedClient: string;
   selectedMonth: number;
   selectedYear: number;
+  selectedCollaborator?: string | null;
   onClientChange: (clientId: string) => void;
   onMonthChange: (month: number) => void;
   onYearChange: (year: number) => void;
+  onCollaboratorChange?: (collaboratorId: string | null) => void;
 }
 
 export function ContentScheduleFilters({
   selectedClient,
   selectedMonth,
   selectedYear,
+  selectedCollaborator,
   onClientChange,
   onMonthChange,
-  onYearChange
+  onYearChange,
+  onCollaboratorChange
 }: ContentScheduleFiltersProps) {
   const { data: clients = [], isLoading: isLoadingClients } = useClients();
+  const { data: collaborators = [], isLoading: isLoadingCollaborators } = useCollaborators();
   
   const getMonthOptions = () => {
     const months = [];
@@ -59,8 +65,14 @@ export function ContentScheduleFilters({
     return years;
   };
   
+  const handleCollaboratorChange = (value: string) => {
+    if (onCollaboratorChange) {
+      onCollaboratorChange(value === "all" ? null : value);
+    }
+  };
+  
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-white rounded-md border shadow-sm">
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 bg-white rounded-md border shadow-sm">
       <div className="space-y-2">
         <Label htmlFor="client-select">Cliente</Label>
         <Select
@@ -80,6 +92,33 @@ export function ContentScheduleFilters({
               clients.map((client) => (
                 <SelectItem key={client.id} value={client.id}>
                   {client.name}
+                </SelectItem>
+              ))
+            )}
+          </SelectContent>
+        </Select>
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="collaborator-select">Colaborador</Label>
+        <Select
+          value={selectedCollaborator || "all"}
+          onValueChange={handleCollaboratorChange}
+        >
+          <SelectTrigger id="collaborator-select" className="w-full">
+            <SelectValue placeholder="Todos os colaboradores" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os colaboradores</SelectItem>
+            {isLoadingCollaborators ? (
+              <div className="flex items-center justify-center p-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="ml-2">Carregando colaboradores...</span>
+              </div>
+            ) : (
+              collaborators.map((collaborator) => (
+                <SelectItem key={collaborator.id} value={collaborator.id}>
+                  {collaborator.name}
                 </SelectItem>
               ))
             )}

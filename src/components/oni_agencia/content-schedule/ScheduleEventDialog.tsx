@@ -24,6 +24,7 @@ interface ScheduleEventDialogProps {
   selectedDate: Date;
   events: CalendarEvent[];
   onClose: () => void;
+  selectedEvent?: CalendarEvent; // Added to allow opening a specific event directly
 }
 
 export function ScheduleEventDialog({
@@ -32,9 +33,10 @@ export function ScheduleEventDialog({
   clientId,
   selectedDate,
   events,
-  onClose
+  onClose,
+  selectedEvent
 }: ScheduleEventDialogProps) {
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [currentSelectedEvent, setCurrentSelectedEvent] = useState<CalendarEvent | null>(selectedEvent || null);
   const [formData, setFormData] = useState<ContentScheduleFormData>({
     client_id: clientId,
     service_id: "",
@@ -61,17 +63,19 @@ export function ScheduleEventDialog({
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
   const isDeleting = deleteMutation.isPending;
 
-  // Se houver apenas um evento no dia, seleciona-o automaticamente
+  // Set the selectedEvent when it comes from props
   useEffect(() => {
-    if (events.length === 1) {
+    if (selectedEvent) {
+      handleSelectEvent(selectedEvent);
+    } else if (events.length === 1) {
       handleSelectEvent(events[0]);
     } else {
       resetForm();
     }
-  }, [events]);
+  }, [selectedEvent, events]);
 
   const resetForm = () => {
-    setSelectedEvent(null);
+    setCurrentSelectedEvent(null);
     setFormData({
       client_id: clientId,
       service_id: "",
@@ -87,7 +91,7 @@ export function ScheduleEventDialog({
   };
 
   const handleSelectEvent = (event: CalendarEvent) => {
-    setSelectedEvent(event);
+    setCurrentSelectedEvent(event);
     setFormData({
       client_id: event.client_id,
       service_id: event.service_id,
@@ -114,9 +118,9 @@ export function ScheduleEventDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (selectedEvent) {
+    if (currentSelectedEvent) {
       await updateMutation.mutateAsync({
-        id: selectedEvent.id,
+        id: currentSelectedEvent.id,
         schedule: formData
       });
     } else {
@@ -130,7 +134,7 @@ export function ScheduleEventDialog({
   const handleStatusUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedEvent) return;
+    if (!currentSelectedEvent) return;
     
     // Atualiza apenas o status e o colaborador
     const updateData = {
@@ -140,7 +144,7 @@ export function ScheduleEventDialog({
     };
     
     await updateMutation.mutateAsync({
-      id: selectedEvent.id,
+      id: currentSelectedEvent.id,
       schedule: updateData
     });
     
@@ -149,11 +153,11 @@ export function ScheduleEventDialog({
   };
 
   const handleDelete = async () => {
-    if (!selectedEvent) return;
+    if (!currentSelectedEvent) return;
     
     if (confirm("Tem certeza que deseja excluir este agendamento?")) {
       await deleteMutation.mutateAsync({
-        id: selectedEvent.id,
+        id: currentSelectedEvent.id,
         clientId,
         year: selectedDate.getFullYear(),
         month: selectedDate.getMonth() + 1
@@ -164,7 +168,7 @@ export function ScheduleEventDialog({
     }
   };
 
-  const dialogTitle = selectedEvent ? "Editar Agendamento" : "Novo Agendamento";
+  const dialogTitle = currentSelectedEvent ? "Editar Agendamento" : "Novo Agendamento";
 
   return (
     <DialogContainer 
@@ -174,17 +178,19 @@ export function ScheduleEventDialog({
       onClose={onClose}
       title={dialogTitle}
     >
-      <EventList 
-        events={events} 
-        onSelectEvent={(event) => {
-          handleSelectEvent(event);
-        }}
-        onCreateNew={resetForm}
-      />
+      {!selectedEvent && ( // Only show event list if not coming from direct click
+        <EventList 
+          events={events} 
+          onSelectEvent={(event) => {
+            handleSelectEvent(event);
+          }}
+          onCreateNew={resetForm}
+        />
+      )}
 
-      {selectedEvent ? (
+      {currentSelectedEvent ? (
         <EventEditor
-          event={selectedEvent}
+          event={currentSelectedEvent}
           clientId={clientId}
           selectedDate={selectedDate}
           services={services}
