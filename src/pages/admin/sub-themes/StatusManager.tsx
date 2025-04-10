@@ -22,8 +22,13 @@ export function StatusManager() {
       
       if (error) throw error;
       
-      // Make sure to safely cast the data to the Status type
-      const safeData = (data || []) as unknown as Status[];
+      // Garantir que valores nulos são tratados corretamente
+      const safeData = (data || []).map(status => ({
+        ...status,
+        previous_status_id: status.previous_status_id || null,
+        next_status_id: status.next_status_id || null
+      })) as Status[];
+      
       setStatuses(safeData);
     } catch (error: any) {
       toast({

@@ -41,7 +41,7 @@ export function StatusTable({ entityName, statuses, isLoading, onDelete }: Statu
 
   // Função para encontrar o status pelo ID
   const findStatusName = (statusId: string | null | undefined) => {
-    if (!statusId) return "Nenhum";
+    if (!statusId || statusId === "null") return "Nenhum";
     const status = statuses.find(s => s.id === statusId);
     return status ? status.name : "Não encontrado";
   };
