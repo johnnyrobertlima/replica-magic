@@ -13,6 +13,9 @@ import {
 import { 
   useServices,
   useCollaborators,
+  useEditorialLines,
+  useProducts,
+  useStatuses,
   useCreateContentSchedule,
   useUpdateContentSchedule,
   useDeleteContentSchedule
@@ -46,11 +49,17 @@ export function ScheduleEventDialog({
     title: "",
     description: null,
     scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
-    execution_phase: null
+    execution_phase: null,
+    editorial_line_id: null,
+    product_id: null,
+    status_id: null
   });
 
   const { data: services = [], isLoading: isLoadingServices } = useServices();
   const { data: collaborators = [], isLoading: isLoadingCollaborators } = useCollaborators();
+  const { data: editorialLines = [], isLoading: isLoadingEditorialLines } = useEditorialLines();
+  const { data: products = [], isLoading: isLoadingProducts } = useProducts();
+  const { data: statuses = [], isLoading: isLoadingStatuses } = useStatuses();
   
   const createMutation = useCreateContentSchedule();
   const updateMutation = useUpdateContentSchedule();
@@ -77,7 +86,10 @@ export function ScheduleEventDialog({
       title: "",
       description: null,
       scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
-      execution_phase: null
+      execution_phase: null,
+      editorial_line_id: null,
+      product_id: null,
+      status_id: null
     });
   };
 
@@ -90,7 +102,10 @@ export function ScheduleEventDialog({
       title: event.title,
       description: event.description,
       scheduled_date: event.scheduled_date,
-      execution_phase: event.execution_phase
+      execution_phase: event.execution_phase,
+      editorial_line_id: event.editorial_line_id,
+      product_id: event.product_id,
+      status_id: event.status_id
     });
   };
 
@@ -100,7 +115,7 @@ export function ScheduleEventDialog({
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value || null }));
+    setFormData(prev => ({ ...prev, [name]: value === "null" ? null : value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -161,8 +176,14 @@ export function ScheduleEventDialog({
             formData={formData}
             services={services}
             collaborators={collaborators}
+            editorialLines={editorialLines}
+            products={products}
+            statuses={statuses}
             isLoadingServices={isLoadingServices}
             isLoadingCollaborators={isLoadingCollaborators}
+            isLoadingEditorialLines={isLoadingEditorialLines}
+            isLoadingProducts={isLoadingProducts}
+            isLoadingStatuses={isLoadingStatuses}
             onInputChange={handleInputChange}
             onSelectChange={handleSelectChange}
           />

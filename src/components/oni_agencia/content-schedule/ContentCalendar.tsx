@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ScheduleEventDialog } from "./ScheduleEventDialog";
 import { useAllContentSchedules } from "@/hooks/useOniAgenciaContentSchedules";
+import { Badge } from "@/components/ui/badge";
 
 interface ContentCalendarProps {
   events: CalendarEvent[];
@@ -81,15 +82,50 @@ export function ContentCalendar({ events, clientId, month, year, onMonthChange }
     console.log("Events found for this day:", dayEvents.length);
     
     return dayEvents.length > 0 ? (
-      <div className="flex flex-wrap gap-1 mt-1 overflow-y-auto max-h-20">
+      <div className="flex flex-col gap-1 mt-1 overflow-y-auto max-h-20">
         {dayEvents.map((event, index) => (
           <div
             key={event.id}
-            className="w-full p-1 text-xs truncate rounded"
+            className="w-full p-1 text-xs truncate rounded flex flex-col"
             style={{ backgroundColor: event.service.color, color: '#fff' }}
             title={event.title}
           >
-            {event.title}
+            <div className="font-semibold">{event.title}</div>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {event.status && (
+                <Badge 
+                  className="text-[10px] h-4 px-1" 
+                  style={{ 
+                    backgroundColor: event.status.color || '#6E59A5',
+                    color: '#fff' 
+                  }}
+                >
+                  {event.status.name}
+                </Badge>
+              )}
+              {event.editorial_line && (
+                <Badge 
+                  className="text-[10px] h-4 px-1" 
+                  style={{ 
+                    backgroundColor: event.editorial_line.color || '#4B5563',
+                    color: '#fff' 
+                  }}
+                >
+                  {event.editorial_line.name}
+                </Badge>
+              )}
+              {event.product && (
+                <Badge 
+                  className="text-[10px] h-4 px-1" 
+                  style={{ 
+                    backgroundColor: event.product.color || '#4B5563',
+                    color: '#fff' 
+                  }}
+                >
+                  {event.product.name}
+                </Badge>
+              )}
+            </div>
           </div>
         ))}
       </div>

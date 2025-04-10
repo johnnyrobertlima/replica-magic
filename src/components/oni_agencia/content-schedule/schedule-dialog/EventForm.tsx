@@ -4,15 +4,24 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ServiceSelect } from "./ServiceSelect";
 import { CollaboratorSelect } from "./CollaboratorSelect";
-import { ExecutionPhaseSelect } from "./ExecutionPhaseSelect";
+import { EditorialLineSelect } from "./EditorialLineSelect";
+import { ProductSelect } from "./ProductSelect";
+import { StatusSelect } from "./StatusSelect";
 import { ContentScheduleFormData, OniAgenciaService, OniAgenciaCollaborator } from "@/types/oni-agencia";
+import { EditorialLine, Product, Status } from "@/pages/admin/sub-themes/types";
 
 interface EventFormProps {
   formData: ContentScheduleFormData;
   services: OniAgenciaService[];
   collaborators: OniAgenciaCollaborator[];
+  editorialLines: EditorialLine[];
+  products: Product[];
+  statuses: Status[];
   isLoadingServices: boolean;
   isLoadingCollaborators: boolean;
+  isLoadingEditorialLines: boolean;
+  isLoadingProducts: boolean;
+  isLoadingStatuses: boolean;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onSelectChange: (name: string, value: string) => void;
 }
@@ -21,8 +30,14 @@ export function EventForm({
   formData,
   services,
   collaborators,
+  editorialLines,
+  products,
+  statuses,
   isLoadingServices,
   isLoadingCollaborators,
+  isLoadingEditorialLines,
+  isLoadingProducts,
+  isLoadingStatuses,
   onInputChange,
   onSelectChange
 }: EventFormProps) {
@@ -64,9 +79,25 @@ export function EventForm({
         onValueChange={(value) => onSelectChange("collaborator_id", value)}
       />
       
-      <ExecutionPhaseSelect
-        value={formData.execution_phase}
-        onValueChange={(value) => onSelectChange("execution_phase", value)}
+      <EditorialLineSelect
+        editorialLines={editorialLines}
+        isLoading={isLoadingEditorialLines}
+        value={formData.editorial_line_id}
+        onValueChange={(value) => onSelectChange("editorial_line_id", value)}
+      />
+      
+      <ProductSelect
+        products={products}
+        isLoading={isLoadingProducts}
+        value={formData.product_id}
+        onValueChange={(value) => onSelectChange("product_id", value)}
+      />
+      
+      <StatusSelect
+        statuses={statuses}
+        isLoading={isLoadingStatuses}
+        value={formData.status_id}
+        onValueChange={(value) => onSelectChange("status_id", value)}
       />
     </div>
   );

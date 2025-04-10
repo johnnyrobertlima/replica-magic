@@ -1,3 +1,4 @@
+
 export interface OniAgenciaService {
   id: string;
   name: string;
@@ -47,6 +48,9 @@ export interface OniAgenciaContentSchedule {
   description: string | null;
   scheduled_date: string;
   execution_phase: string | null;
+  editorial_line_id: string | null;
+  product_id: string | null;
+  status_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -68,5 +72,22 @@ export interface CalendarEvent extends OniAgenciaContentSchedule {
     name: string;
     email?: string | null;
     photo_url?: string | null;
+  };
+  editorial_line?: {
+    id: string;
+    name: string;
+    symbol?: string | null;
+    color?: string | null;
+  };
+  product?: {
+    id: string;
+    name: string;
+    symbol?: string | null;
+    color?: string | null;
+  };
+  status?: {
+    id: string;
+    name: string;
+    color?: string | null;
   };
 }

@@ -21,7 +21,10 @@ export async function getContentSchedules(clientId: string, year: number, month:
       .select(`
         *,
         service:service_id(id, name, category, color),
-        collaborator:collaborator_id(id, name, email, photo_url)
+        collaborator:collaborator_id(id, name, email, photo_url),
+        editorial_line:editorial_line_id(id, name, symbol, color),
+        product:product_id(id, name, symbol, color),
+        status:status_id(id, name, color)
       `)
       .eq('client_id', clientId)
       .gte('scheduled_date', startDate.toISOString().split('T')[0])
@@ -49,7 +52,10 @@ export async function getAllContentSchedules(clientId: string): Promise<Calendar
       .select(`
         *,
         service:service_id(id, name, category, color),
-        collaborator:collaborator_id(id, name, email, photo_url)
+        collaborator:collaborator_id(id, name, email, photo_url),
+        editorial_line:editorial_line_id(id, name, symbol, color),
+        product:product_id(id, name, symbol, color),
+        status:status_id(id, name, color)
       `)
       .eq('client_id', clientId);
 

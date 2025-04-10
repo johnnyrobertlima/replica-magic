@@ -10,6 +10,7 @@ import { ContentScheduleFormData } from "@/types/oni-agencia";
 import { useToast } from "@/hooks/use-toast";
 import { getServices } from "@/services/oniAgenciaServices";
 import { getCollaborators } from "@/services/oniAgenciaCollaboratorServices";
+import { useEditorialLines, useProducts, useStatuses } from "./useOniAgenciaThemes";
 
 export function useContentSchedules(clientId: string, year: number, month: number) {
   const { toast } = useToast();
@@ -42,6 +43,8 @@ export function useCollaborators() {
     queryFn: getCollaborators,
   });
 }
+
+export { useEditorialLines, useProducts, useStatuses };
 
 export function useCreateContentSchedule() {
   const queryClient = useQueryClient();
