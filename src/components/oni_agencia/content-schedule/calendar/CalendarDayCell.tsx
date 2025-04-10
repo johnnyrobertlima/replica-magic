@@ -31,7 +31,7 @@ export function CalendarDayCell({
   
   return (
     <div 
-      className="h-28 w-full border-r border-b cursor-pointer hover:bg-gray-50 calendar-day-cell p-1" 
+      className="h-32 w-full border-r border-b cursor-pointer hover:bg-gray-50 calendar-day-cell p-1" 
       onClick={handleCellClick}
     >
       <div className="flex justify-between items-center mb-1">
@@ -45,7 +45,7 @@ export function CalendarDayCell({
       </div>
       
       {dayEvents.length > 0 ? (
-        <div className="flex flex-col gap-0 overflow-y-auto max-h-[88px]">
+        <div className="flex flex-col gap-0 overflow-y-auto max-h-[104px]">
           {dayEvents.map((event) => (
             <div key={event.id} className="event-item">
               <EventItem 
