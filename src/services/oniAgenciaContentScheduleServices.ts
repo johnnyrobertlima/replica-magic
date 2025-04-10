@@ -36,7 +36,7 @@ export async function getContentSchedules(clientId: string, year: number, month:
     }
 
     console.log('Fetched content schedules:', data);
-    return data as CalendarEvent[];
+    return data as unknown as CalendarEvent[];
   } catch (error) {
     console.error('Error in getContentSchedules:', error);
     throw error;
@@ -65,7 +65,7 @@ export async function getAllContentSchedules(clientId: string): Promise<Calendar
     }
 
     console.log('Fetched all content schedules:', data);
-    return data as CalendarEvent[];
+    return data as unknown as CalendarEvent[];
   } catch (error) {
     console.error('Error in getAllContentSchedules:', error);
     throw error;
@@ -88,7 +88,7 @@ export async function createContentSchedule(schedule: ContentScheduleFormData): 
     }
 
     console.log('Created content schedule:', data);
-    return data as OniAgenciaContentSchedule;
+    return data as unknown as OniAgenciaContentSchedule;
   } catch (error) {
     console.error('Error creating content schedule:', error);
     throw error;
@@ -109,7 +109,7 @@ export async function updateContentSchedule(id: string, schedule: Partial<Conten
       throw error;
     }
 
-    return data as OniAgenciaContentSchedule;
+    return data as unknown as OniAgenciaContentSchedule;
   } catch (error) {
     console.error('Error updating content schedule:', error);
     throw error;
