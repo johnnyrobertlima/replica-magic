@@ -1197,6 +1197,48 @@ export type Database = {
         }
         Relationships: []
       }
+      oni_agencia_client_scopes: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          quantity: number
+          service_id: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          quantity?: number
+          service_id: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          quantity?: number
+          service_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oni_agencia_client_scopes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "oni_agencia_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oni_agencia_client_scopes_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "oni_agencia_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       oni_agencia_clients: {
         Row: {
           address: string | null

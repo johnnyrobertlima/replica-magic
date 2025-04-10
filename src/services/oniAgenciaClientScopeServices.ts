@@ -2,11 +2,9 @@
 import { supabase } from "@/integrations/supabase/client";
 import { ClientScope, ClientScopeFormData } from "@/types/oni-agencia";
 
-const ONI_AGENCIA_CLIENT_SCOPES_TABLE = 'oni_agencia_client_scopes';
-
 export async function getClientScopes(): Promise<ClientScope[]> {
   const { data, error } = await supabase
-    .from(ONI_AGENCIA_CLIENT_SCOPES_TABLE)
+    .from('oni_agencia_client_scopes')
     .select('*')
     .order('created_at');
 
@@ -20,7 +18,7 @@ export async function getClientScopes(): Promise<ClientScope[]> {
 
 export async function getClientScopesByClient(clientId: string): Promise<ClientScope[]> {
   const { data, error } = await supabase
-    .from(ONI_AGENCIA_CLIENT_SCOPES_TABLE)
+    .from('oni_agencia_client_scopes')
     .select('*')
     .eq('client_id', clientId)
     .order('created_at');
@@ -36,7 +34,7 @@ export async function getClientScopesByClient(clientId: string): Promise<ClientS
 export async function createClientScope(scope: ClientScopeFormData): Promise<ClientScope> {
   try {
     const { data, error } = await supabase
-      .from(ONI_AGENCIA_CLIENT_SCOPES_TABLE)
+      .from('oni_agencia_client_scopes')
       .insert(scope)
       .select()
       .single();
@@ -56,7 +54,7 @@ export async function createClientScope(scope: ClientScopeFormData): Promise<Cli
 export async function updateClientScope(id: string, scope: Partial<ClientScopeFormData>): Promise<ClientScope> {
   try {
     const { data, error } = await supabase
-      .from(ONI_AGENCIA_CLIENT_SCOPES_TABLE)
+      .from('oni_agencia_client_scopes')
       .update(scope)
       .eq('id', id)
       .select()
@@ -77,7 +75,7 @@ export async function updateClientScope(id: string, scope: Partial<ClientScopeFo
 export async function deleteClientScope(id: string): Promise<void> {
   try {
     const { error } = await supabase
-      .from(ONI_AGENCIA_CLIENT_SCOPES_TABLE)
+      .from('oni_agencia_client_scopes')
       .delete()
       .eq('id', id);
 
