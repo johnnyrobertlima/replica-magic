@@ -117,7 +117,7 @@ export function ContentCalendar({ events, clientId, month, year, onMonthChange }
                   <button 
                     {...props} 
                     className={`h-8 w-8 p-0 font-normal flex items-center justify-center rounded-full ${
-                      props.className?.includes('selected') ? 'bg-primary text-primary-foreground' : ''
+                      props.selected ? 'bg-primary text-primary-foreground' : ''
                     }`}
                   >
                     {format(date, 'd')}

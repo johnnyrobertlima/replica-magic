@@ -1,4 +1,3 @@
-
 export interface OniAgenciaService {
   id: string;
   name: string;
@@ -55,6 +54,19 @@ export interface OniAgenciaContentSchedule {
 export type ContentScheduleFormData = Omit<OniAgenciaContentSchedule, 'id' | 'created_at' | 'updated_at'>;
 
 export interface CalendarEvent extends OniAgenciaContentSchedule {
-  service: OniAgenciaService;
-  collaborator?: OniAgenciaCollaborator;
+  service: {
+    id: string;
+    name: string;
+    category: string;
+    color: string;
+    description?: string | null;
+    created_at?: string;
+    updated_at?: string;
+  };
+  collaborator?: {
+    id: string;
+    name: string;
+    email?: string | null;
+    photo_url?: string | null;
+  };
 }
