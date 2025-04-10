@@ -6,16 +6,11 @@ import { OniAgenciaService, ServiceFormData } from "@/types/oni-agencia";
 const ONI_AGENCIA_SERVICES_TABLE = 'oni_agencia_services';
 
 export async function getServices(): Promise<OniAgenciaService[]> {
-  // Using a stored procedure or a direct query approach
+  // Using a direct query approach since we don't have a stored procedure for this
   const { data, error } = await supabase
-    .rpc('get_oni_agencia_services') // Attempt to use an RPC function if available
-    .catch(async () => {
-      // Fallback to direct query if RPC isn't available
-      return await supabase
-        .from(ONI_AGENCIA_SERVICES_TABLE)
-        .select('*')
-        .order('name');
-    });
+    .from(ONI_AGENCIA_SERVICES_TABLE)
+    .select('*')
+    .order('name');
 
   if (error) {
     console.error('Error fetching services:', error);
