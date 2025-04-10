@@ -51,7 +51,7 @@ export const useItemOperations = (refreshItems: () => void) => {
 
       // Refresh the item list
       refreshItems();
-      return true;
+      // Return void instead of boolean
     } catch (error: any) {
       console.error("Error saving item:", error);
       toast({
@@ -59,7 +59,6 @@ export const useItemOperations = (refreshItems: () => void) => {
         title: "Erro ao salvar item",
         description: error.message,
       });
-      return false;
     }
   }, [toast, refreshItems]);
 
@@ -79,7 +78,7 @@ export const useItemOperations = (refreshItems: () => void) => {
 
       // Refresh the item list
       refreshItems();
-      return true;
+      // Return void instead of boolean
     } catch (error: any) {
       console.error("Error deleting item:", error);
       toast({
@@ -87,7 +86,6 @@ export const useItemOperations = (refreshItems: () => void) => {
         title: "Erro ao excluir item",
         description: error.message,
       });
-      return false;
     }
   }, [toast, refreshItems]);
 

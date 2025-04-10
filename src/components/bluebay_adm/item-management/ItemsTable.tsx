@@ -31,7 +31,7 @@ import { format } from "date-fns";
 interface ItemsTableProps {
   items: any[];
   onEdit: (item: any) => void;
-  onDelete: (item: any) => Promise<void>;
+  onDelete: (item: any) => Promise<void>; // Make sure this expects Promise<void>
 }
 
 export const ItemsTable = ({ items, onEdit, onDelete }: ItemsTableProps) => {

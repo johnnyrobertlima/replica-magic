@@ -43,10 +43,8 @@ export const useItemManagement = () => {
   // Wrapper for the save operation that handles dialog state
   const handleSaveItemWrapper = async (itemData: any) => {
     const isUpdate = !!selectedItem;
-    const success = await handleSaveItem(itemData, isUpdate);
-    if (success) {
-      closeDialog();
-    }
+    await handleSaveItem(itemData, isUpdate);
+    closeDialog();
   };
 
   return {
