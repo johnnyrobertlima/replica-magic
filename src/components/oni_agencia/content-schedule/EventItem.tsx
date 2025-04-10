@@ -1,5 +1,6 @@
 
 import { CalendarEvent } from "@/types/oni-agencia";
+import { FileText } from "lucide-react";
 
 interface EventItemProps {
   event: CalendarEvent;
@@ -34,6 +35,21 @@ export function EventItem({ event, onClick }: EventItemProps) {
   
   const textColor = calculateTextColor(status?.color);
   
+  // Get the Lucide icon if a symbol is specified that matches a Lucide icon name
+  const renderEditorialLineSymbol = () => {
+    if (editorial_line?.symbol) {
+      // Just render the symbol itself if it exists
+      return (
+        <span className="text-[9px] font-bold" title={editorial_line.name}>
+          {editorial_line.symbol}
+        </span>
+      );
+    }
+    
+    // Default icon if no symbol is provided
+    return <FileText className="h-3 w-3" />;
+  };
+  
   return (
     <div
       onClick={onClick}
@@ -46,16 +62,12 @@ export function EventItem({ event, onClick }: EventItemProps) {
         style={{ backgroundColor: service.color || '#ccc' }}
       />
       
-      {/* Editorial line with color and optional symbol - no text */}
+      {/* Editorial line with color and optional symbol */}
       <div 
         className="flex-shrink-0 w-6 h-full flex items-center justify-center"
         style={{ backgroundColor: editorial_line?.color || '#fff' }}
       >
-        {editorial_line?.symbol && (
-          <span className="text-[9px] font-bold" title={editorial_line.name}>
-            {editorial_line.symbol}
-          </span>
-        )}
+        {renderEditorialLineSymbol()}
       </div>
       
       {/* Collaborator photo or icon */}
