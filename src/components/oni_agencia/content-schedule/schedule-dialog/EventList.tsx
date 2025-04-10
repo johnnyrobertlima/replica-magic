@@ -9,7 +9,7 @@ interface EventListProps {
 }
 
 export function EventList({ events, onSelectEvent, onCreateNew }: EventListProps) {
-  if (events.length <= 1) {
+  if (events.length === 0) {
     return null;
   }
   

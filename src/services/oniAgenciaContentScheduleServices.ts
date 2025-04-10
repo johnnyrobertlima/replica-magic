@@ -5,31 +5,71 @@ import { OniAgenciaContentSchedule, ContentScheduleFormData, CalendarEvent } fro
 const ONI_AGENCIA_CONTENT_SCHEDULES_TABLE = 'oni_agencia_content_schedules';
 
 export async function getContentSchedules(clientId: string, year: number, month: number): Promise<CalendarEvent[]> {
-  // Calculate the start and end dates for the given month
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0); // Last day of the month
+  try {
+    // Calculate the start and end dates for the given month
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0); // Last day of the month
 
-  const { data, error } = await supabase
-    .from(ONI_AGENCIA_CONTENT_SCHEDULES_TABLE)
-    .select(`
-      *,
-      service:service_id(id, name, category, color),
-      collaborator:collaborator_id(id, name, email, photo_url)
-    `)
-    .eq('client_id', clientId)
-    .gte('scheduled_date', startDate.toISOString().split('T')[0])
-    .lte('scheduled_date', endDate.toISOString().split('T')[0]);
+    console.log('Fetching events for date range:', {
+      clientId,
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0],
+    });
 
-  if (error) {
-    console.error('Error fetching content schedules:', error);
+    const { data, error } = await supabase
+      .from(ONI_AGENCIA_CONTENT_SCHEDULES_TABLE)
+      .select(`
+        *,
+        service:service_id(id, name, category, color),
+        collaborator:collaborator_id(id, name, email, photo_url)
+      `)
+      .eq('client_id', clientId)
+      .gte('scheduled_date', startDate.toISOString().split('T')[0])
+      .lte('scheduled_date', endDate.toISOString().split('T')[0]);
+
+    if (error) {
+      console.error('Error fetching content schedules:', error);
+      throw error;
+    }
+
+    console.log('Fetched content schedules:', data);
+    return data || [];
+  } catch (error) {
+    console.error('Error in getContentSchedules:', error);
     throw error;
   }
+}
 
-  return data || [];
+export async function getAllContentSchedules(clientId: string): Promise<CalendarEvent[]> {
+  try {
+    console.log('Fetching all events for client:', clientId);
+
+    const { data, error } = await supabase
+      .from(ONI_AGENCIA_CONTENT_SCHEDULES_TABLE)
+      .select(`
+        *,
+        service:service_id(id, name, category, color),
+        collaborator:collaborator_id(id, name, email, photo_url)
+      `)
+      .eq('client_id', clientId);
+
+    if (error) {
+      console.error('Error fetching all content schedules:', error);
+      throw error;
+    }
+
+    console.log('Fetched all content schedules:', data);
+    return data || [];
+  } catch (error) {
+    console.error('Error in getAllContentSchedules:', error);
+    throw error;
+  }
 }
 
 export async function createContentSchedule(schedule: ContentScheduleFormData): Promise<OniAgenciaContentSchedule> {
   try {
+    console.log('Creating content schedule:', schedule);
+    
     const { data, error } = await supabase
       .from(ONI_AGENCIA_CONTENT_SCHEDULES_TABLE)
       .insert(schedule)
@@ -41,6 +81,7 @@ export async function createContentSchedule(schedule: ContentScheduleFormData): 
       throw error;
     }
 
+    console.log('Created content schedule:', data);
     return data;
   } catch (error) {
     console.error('Error creating content schedule:', error);

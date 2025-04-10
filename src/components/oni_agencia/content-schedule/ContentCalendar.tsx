@@ -2,11 +2,12 @@
 import { useState, useEffect } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarEvent } from "@/types/oni-agencia";
-import { format, parse, startOfMonth, getDay, addDays, eachDayOfInterval, endOfMonth } from "date-fns";
+import { format, parse, startOfMonth, getDay, addDays, eachDayOfInterval, endOfMonth, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ScheduleEventDialog } from "./ScheduleEventDialog";
+import { useAllContentSchedules } from "@/hooks/useOniAgenciaContentSchedules";
 
 interface ContentCalendarProps {
   events: CalendarEvent[];
@@ -21,12 +22,28 @@ export function ContentCalendar({ events, clientId, month, year, onMonthChange }
   const [currentEvents, setCurrentEvents] = useState<CalendarEvent[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
+  // Use this query to get ALL events regardless of month - this helps when switching months
+  const { data: allEvents = [] } = useAllContentSchedules(clientId);
+  
   const currentDate = new Date(year, month - 1, 1);
+  
+  useEffect(() => {
+    console.log("All events from database:", allEvents);
+    console.log("Events for current month:", events);
+  }, [allEvents, events]);
   
   useEffect(() => {
     if (selectedDate) {
       const dateString = format(selectedDate, 'yyyy-MM-dd');
-      const eventsOnDay = events.filter(event => event.scheduled_date === dateString);
+      console.log("Looking for events on:", dateString);
+      console.log("Available events:", events);
+      
+      const eventsOnDay = events.filter(event => {
+        const eventDate = event.scheduled_date;
+        return eventDate === dateString;
+      });
+      
+      console.log("Events found for selected day:", eventsOnDay);
       setCurrentEvents(eventsOnDay);
     } else {
       setCurrentEvents([]);
@@ -58,7 +75,10 @@ export function ContentCalendar({ events, clientId, month, year, onMonthChange }
 
   const renderEventsDot = (date: Date) => {
     const dateString = format(date, 'yyyy-MM-dd');
+    console.log("Checking events for day:", dateString);
+    
     const dayEvents = events.filter(event => event.scheduled_date === dateString);
+    console.log("Events found for this day:", dayEvents.length);
     
     return dayEvents.length > 0 ? (
       <div className="flex flex-wrap gap-1 mt-1 overflow-y-auto max-h-20">
@@ -79,7 +99,7 @@ export function ContentCalendar({ events, clientId, month, year, onMonthChange }
   const weekDays = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
   return (
-    <div className="bg-white rounded-md border shadow-sm">
+    <div className="bg-white rounded-md border shadow-sm w-full h-full">
       <div className="flex justify-between items-center p-4 border-b">
         <h2 className="text-lg font-medium">
           {format(currentDate, 'MMMM yyyy', { locale: ptBR })}
@@ -125,11 +145,8 @@ export function ContentCalendar({ events, clientId, month, year, onMonthChange }
           locale={ptBR}
           components={{
             Day: ({ date, ...dayProps }) => {
-              // This ensures we correctly check if this date is selected
-              const isSelected = selectedDate && 
-                selectedDate.getDate() === date.getDate() && 
-                selectedDate.getMonth() === date.getMonth() && 
-                selectedDate.getFullYear() === date.getFullYear();
+              // Check if this date is selected
+              const isSelected = selectedDate && isSameDay(selectedDate, date);
               
               return (
                 <div className="h-32 w-full border-r border-b cursor-pointer hover:bg-gray-50" onClick={() => handleDateSelect(date)}>

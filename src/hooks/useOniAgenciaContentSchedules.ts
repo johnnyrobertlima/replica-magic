@@ -1,7 +1,7 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   getContentSchedules, 
+  getAllContentSchedules,
   createContentSchedule, 
   updateContentSchedule, 
   deleteContentSchedule 
@@ -18,6 +18,14 @@ export function useContentSchedules(clientId: string, year: number, month: numbe
     queryKey: ['oniAgenciaContentSchedules', clientId, year, month],
     queryFn: () => getContentSchedules(clientId, year, month),
     enabled: !!clientId && !!year && !!month,
+  });
+}
+
+export function useAllContentSchedules(clientId: string) {
+  return useQuery({
+    queryKey: ['allOniAgenciaContentSchedules', clientId],
+    queryFn: () => getAllContentSchedules(clientId),
+    enabled: !!clientId,
   });
 }
 

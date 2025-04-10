@@ -24,10 +24,31 @@ const OniAgenciaControlePauta = () => {
   
   const { 
     data: schedules = [], 
-    isLoading: isLoadingSchedules 
+    isLoading: isLoadingSchedules,
+    refetch: refetchSchedules
   } = useContentSchedules(selectedClient, selectedYear, selectedMonth);
   
+  // Log the current state to debug
+  useEffect(() => {
+    console.log("Current state:", {
+      selectedClient,
+      selectedMonth,
+      selectedYear,
+      schedulesLoaded: schedules.length,
+      schedules
+    });
+  }, [selectedClient, selectedMonth, selectedYear, schedules]);
+  
+  // Refetch when month/year/client changes
+  useEffect(() => {
+    if (selectedClient) {
+      console.log('Refetching schedules due to state change');
+      refetchSchedules();
+    }
+  }, [selectedClient, selectedMonth, selectedYear, refetchSchedules]);
+  
   const handleMonthYearChange = (month: number, year: number) => {
+    console.log('Changing month/year to:', { month, year });
     setSelectedMonth(month);
     setSelectedYear(year);
   };
@@ -51,7 +72,7 @@ const OniAgenciaControlePauta = () => {
         />
         
         {selectedClient ? (
-          <div className="w-full overflow-x-auto">
+          <div className="w-full overflow-x-auto h-[calc(100vh-250px)]">
             <ContentCalendar
               events={schedules}
               clientId={selectedClient}
