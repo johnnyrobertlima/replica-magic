@@ -33,7 +33,7 @@ const OniAgenciaControlePauta = () => {
   
   // Log the current state to debug
   useEffect(() => {
-    console.log("Current state:", {
+    console.log("OniAgenciaControlePauta state:", {
       selectedClient,
       selectedMonth,
       selectedYear,

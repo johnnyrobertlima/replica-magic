@@ -53,12 +53,19 @@ export function CalendarDayCell({
   
   // Handle click on the empty space of the cell to create a new event
   const handleCellClick = (e: React.MouseEvent) => {
-    console.log("Cell clicked");
+    console.log("Cell clicked for date:", format(date, 'yyyy-MM-dd'));
     // Check if we're clicking directly on the cell or one of its child elements that doesn't have event-item class
     if (!(e.target as HTMLElement).closest('.event-item')) {
       console.log("Creating new event for date:", date);
       onSelect(date);
     }
+  };
+
+  // Handle event click with extra logging
+  const handleEventClick = (e: React.MouseEvent, event: CalendarEvent) => {
+    e.stopPropagation();
+    console.log("Event clicked:", event.id, event.title);
+    onEventClick(event, date);
   };
   
   return (
@@ -90,11 +97,7 @@ export function CalendarDayCell({
                   <div className="event-item">
                     <DraggableEventItem 
                       event={event}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        console.log("Event clicked:", event.title);
-                        onEventClick(event, date);
-                      }}
+                      onClick={(e) => handleEventClick(e, event)}
                     />
                   </div>
                 </TooltipTrigger>
@@ -117,6 +120,7 @@ export function CalendarDayCell({
               className="text-xs text-primary font-medium px-1 py-0.5 cursor-pointer hover:underline"
               onClick={(e) => {
                 e.stopPropagation();
+                console.log("Showing all events for date:", date);
                 onSelect(date);
               }}
             >

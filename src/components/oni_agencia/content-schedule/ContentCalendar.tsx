@@ -67,6 +67,23 @@ export function ContentCalendar({
 
   const weekDays = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
+  console.log("ContentCalendar render state:", { 
+    selectedDate, 
+    isDialogOpen, 
+    eventsCount: events.length,
+    currentEventsCount: currentEvents.length
+  });
+
+  const handleCellSelect = (date: Date) => {
+    console.log("Cell selected in ContentCalendar:", format(date, 'yyyy-MM-dd'));
+    handleDateSelect(date);
+  };
+
+  const handleCellEventClick = (event: CalendarEvent, date: Date) => {
+    console.log("Event clicked in ContentCalendar:", event.id, event.title);
+    handleEventClick(event, date);
+  };
+
   return (
     <DndContext 
       sensors={sensors} 
@@ -86,7 +103,7 @@ export function ContentCalendar({
           <Calendar
             mode="single"
             selected={selectedDate}
-            onSelect={handleDateSelect}
+            onSelect={handleCellSelect}
             month={currentDate}
             className="w-full rounded-md border-none"
             locale={ptBR}
@@ -103,14 +120,8 @@ export function ContentCalendar({
                     events={events}
                     isSelected={isSelected}
                     isCurrentDay={isCurrentDay}
-                    onSelect={(date) => {
-                      console.log("CalendarDayCell onSelect called");
-                      handleDateSelect(date);
-                    }}
-                    onEventClick={(event, date) => {
-                      console.log("CalendarDayCell onEventClick called");
-                      handleEventClick(event, date);
-                    }}
+                    onSelect={handleCellSelect}
+                    onEventClick={handleCellEventClick}
                     selectedCollaborator={selectedCollaborator}
                   />
                 );
@@ -128,6 +139,7 @@ export function ContentCalendar({
             selectedDate={selectedDate}
             events={currentEvents}
             onClose={() => {
+              console.log("ScheduleEventDialog closed");
               setSelectedDate(undefined);
               setIsDialogOpen(false);
             }}

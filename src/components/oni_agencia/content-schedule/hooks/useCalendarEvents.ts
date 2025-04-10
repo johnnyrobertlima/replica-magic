@@ -1,5 +1,5 @@
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { format, isSameDay } from "date-fns";
 
@@ -13,16 +13,19 @@ export function useCalendarEvents(events: CalendarEvent[], selectedDate?: Date, 
   }, [events, selectedDate]);
 
   // Function to open the dialog programmatically
-  const openDialog = () => {
+  const openDialog = useCallback(() => {
+    console.log("Attempting to open dialog, current state:", { isDialogOpen, hasSetIsDialogOpen: !!setIsDialogOpen });
     if (setIsDialogOpen) {
       setIsDialogOpen(true);
     }
-  };
+  }, [isDialogOpen, setIsDialogOpen]);
 
   return {
     currentEvents,
     isDialogOpen: isDialogOpen || false,
-    setIsDialogOpen: setIsDialogOpen || (() => {}),
+    setIsDialogOpen: setIsDialogOpen || (() => {
+      console.log("Warning: setIsDialogOpen not provided to useCalendarEvents");
+    }),
     openDialog
   };
 }
