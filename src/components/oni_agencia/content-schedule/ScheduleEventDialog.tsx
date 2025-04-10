@@ -23,6 +23,8 @@ import {
 import { EventList } from "./schedule-dialog/EventList";
 import { EventForm } from "./schedule-dialog/EventForm";
 import { DialogActions } from "./schedule-dialog/DialogActions";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { StatusUpdateForm } from "./schedule-dialog/StatusUpdateForm";
 
 interface ScheduleEventDialogProps {
   isOpen: boolean;
@@ -42,6 +44,8 @@ export function ScheduleEventDialog({
   onClose
 }: ScheduleEventDialogProps) {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [activeTab, setActiveTab] = useState<"details" | "status">("details");
+  const [note, setNote] = useState<string>("");
   const [formData, setFormData] = useState<ContentScheduleFormData>({
     client_id: clientId,
     service_id: "",
@@ -68,7 +72,7 @@ export function ScheduleEventDialog({
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
   const isDeleting = deleteMutation.isPending;
 
-  // If there's just one event on this day, auto-select it for editing
+  // Se houver apenas um evento no dia, seleciona-o automaticamente
   useEffect(() => {
     if (events.length === 1) {
       handleSelectEvent(events[0]);
@@ -79,6 +83,8 @@ export function ScheduleEventDialog({
 
   const resetForm = () => {
     setSelectedEvent(null);
+    setActiveTab("details");
+    setNote("");
     setFormData({
       client_id: clientId,
       service_id: "",
@@ -134,6 +140,27 @@ export function ScheduleEventDialog({
     onClose();
   };
 
+  const handleStatusUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!selectedEvent) return;
+    
+    // Atualiza apenas o status e o colaborador
+    const updateData = {
+      status_id: formData.status_id,
+      collaborator_id: formData.collaborator_id,
+      description: note ? `${selectedEvent.description || ''}\n\nAtualização (${new Date().toLocaleString()}):\n${note}` : selectedEvent.description
+    };
+    
+    await updateMutation.mutateAsync({
+      id: selectedEvent.id,
+      schedule: updateData
+    });
+    
+    onOpenChange(false);
+    onClose();
+  };
+
   const handleDelete = async () => {
     if (!selectedEvent) return;
     
@@ -167,40 +194,117 @@ export function ScheduleEventDialog({
 
         <EventList 
           events={events} 
-          onSelectEvent={handleSelectEvent}
+          onSelectEvent={(event) => {
+            handleSelectEvent(event);
+            setActiveTab("details");
+          }}
           onCreateNew={resetForm}
         />
 
-        <form onSubmit={handleSubmit}>
-          <EventForm
-            formData={formData}
-            services={services}
-            collaborators={collaborators}
-            editorialLines={editorialLines}
-            products={products}
-            statuses={statuses}
-            isLoadingServices={isLoadingServices}
-            isLoadingCollaborators={isLoadingCollaborators}
-            isLoadingEditorialLines={isLoadingEditorialLines}
-            isLoadingProducts={isLoadingProducts}
-            isLoadingStatuses={isLoadingStatuses}
-            onInputChange={handleInputChange}
-            onSelectChange={handleSelectChange}
-          />
-          
-          <DialogFooter>
-            <DialogActions
-              isSubmitting={isSubmitting}
-              isDeleting={isDeleting}
-              onCancel={() => {
-                onOpenChange(false);
-                onClose();
-              }}
-              onDelete={handleDelete}
-              isEditing={!!selectedEvent}
+        {selectedEvent ? (
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "details" | "status")}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="details">Detalhes</TabsTrigger>
+              <TabsTrigger value="status">Atualizar Status</TabsTrigger>
+            </TabsList>
+            <TabsContent value="details">
+              <form onSubmit={handleSubmit}>
+                <EventForm
+                  formData={formData}
+                  services={services}
+                  collaborators={collaborators}
+                  editorialLines={editorialLines}
+                  products={products}
+                  statuses={statuses}
+                  isLoadingServices={isLoadingServices}
+                  isLoadingCollaborators={isLoadingCollaborators}
+                  isLoadingEditorialLines={isLoadingEditorialLines}
+                  isLoadingProducts={isLoadingProducts}
+                  isLoadingStatuses={isLoadingStatuses}
+                  onInputChange={handleInputChange}
+                  onSelectChange={handleSelectChange}
+                />
+                
+                <DialogFooter>
+                  <DialogActions
+                    isSubmitting={isSubmitting}
+                    isDeleting={isDeleting}
+                    onCancel={() => {
+                      onOpenChange(false);
+                      onClose();
+                    }}
+                    onDelete={handleDelete}
+                    isEditing={true}
+                  />
+                </DialogFooter>
+              </form>
+            </TabsContent>
+            <TabsContent value="status">
+              <form onSubmit={handleStatusUpdate}>
+                <StatusUpdateForm
+                  event={selectedEvent}
+                  statuses={statuses}
+                  collaborators={collaborators}
+                  isLoadingStatuses={isLoadingStatuses}
+                  isLoadingCollaborators={isLoadingCollaborators}
+                  selectedStatus={formData.status_id}
+                  selectedCollaborator={formData.collaborator_id}
+                  note={note}
+                  onStatusChange={(value) => handleSelectChange("status_id", value)}
+                  onCollaboratorChange={(value) => handleSelectChange("collaborator_id", value)}
+                  onNoteChange={setNote}
+                />
+                
+                <DialogFooter>
+                  <div className="flex items-center justify-end space-x-2 pt-2">
+                    <DialogActions
+                      isSubmitting={isSubmitting}
+                      isDeleting={false}
+                      onCancel={() => {
+                        onOpenChange(false);
+                        onClose();
+                      }}
+                      onDelete={undefined}
+                      isEditing={true}
+                      saveLabel="Atualizar Status"
+                    />
+                  </div>
+                </DialogFooter>
+              </form>
+            </TabsContent>
+          </Tabs>
+        ) : (
+          <form onSubmit={handleSubmit}>
+            <EventForm
+              formData={formData}
+              services={services}
+              collaborators={collaborators}
+              editorialLines={editorialLines}
+              products={products}
+              statuses={statuses}
+              isLoadingServices={isLoadingServices}
+              isLoadingCollaborators={isLoadingCollaborators}
+              isLoadingEditorialLines={isLoadingEditorialLines}
+              isLoadingProducts={isLoadingProducts}
+              isLoadingStatuses={isLoadingStatuses}
+              onInputChange={handleInputChange}
+              onSelectChange={handleSelectChange}
             />
-          </DialogFooter>
-        </form>
+            
+            <DialogFooter>
+              <DialogActions
+                isSubmitting={isSubmitting}
+                isDeleting={isDeleting}
+                onCancel={() => {
+                  onOpenChange(false);
+                  onClose();
+                }}
+                onDelete={undefined}
+                isEditing={false}
+              />
+            </DialogFooter>
+          </form>
+        )}
       </DialogContent>
     </Dialog>
   );

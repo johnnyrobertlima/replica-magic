@@ -35,7 +35,7 @@ export function CalendarDayCell({
       </button>
       
       {dayEvents.length > 0 && (
-        <div className="flex flex-col gap-1 mt-1 overflow-y-auto max-h-20">
+        <div className="flex flex-col gap-1 mt-1 overflow-y-auto max-h-24 px-1">
           {dayEvents.map((event) => (
             <EventItem 
               key={event.id} 

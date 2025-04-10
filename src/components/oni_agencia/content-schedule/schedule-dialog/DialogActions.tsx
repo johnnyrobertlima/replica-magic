@@ -8,6 +8,7 @@ interface DialogActionsProps {
   onCancel: () => void;
   onDelete?: () => void;
   isEditing: boolean;
+  saveLabel?: string;
 }
 
 export function DialogActions({ 
@@ -15,7 +16,8 @@ export function DialogActions({
   isDeleting, 
   onCancel, 
   onDelete,
-  isEditing 
+  isEditing,
+  saveLabel
 }: DialogActionsProps) {
   return (
     <div className="flex items-center justify-between pt-2">
@@ -50,7 +52,7 @@ export function DialogActions({
               Salvando...
             </>
           ) : (
-            isEditing ? "Atualizar" : "Criar"
+            saveLabel || (isEditing ? "Atualizar" : "Criar")
           )}
         </Button>
       </div>
