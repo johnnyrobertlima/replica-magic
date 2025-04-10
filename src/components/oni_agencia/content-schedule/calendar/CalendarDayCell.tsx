@@ -53,8 +53,10 @@ export function CalendarDayCell({
   
   // Handle click on the empty space of the cell to create a new event
   const handleCellClick = (e: React.MouseEvent) => {
-    // Only trigger if clicking directly on the cell, not on an event
-    if ((e.target as HTMLElement).closest('.event-item') === null) {
+    console.log("Cell clicked");
+    // Check if we're clicking directly on the cell or one of its child elements that doesn't have event-item class
+    if (!(e.target as HTMLElement).closest('.event-item')) {
+      console.log("Creating new event for date:", date);
       onSelect(date);
     }
   };
@@ -90,6 +92,7 @@ export function CalendarDayCell({
                       event={event}
                       onClick={(e) => {
                         e.stopPropagation();
+                        console.log("Event clicked:", event.title);
                         onEventClick(event, date);
                       }}
                     />

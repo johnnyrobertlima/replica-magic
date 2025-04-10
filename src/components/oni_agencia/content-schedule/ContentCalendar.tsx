@@ -8,12 +8,12 @@ import { useAllContentSchedules } from "@/hooks/useOniAgenciaContentSchedules";
 import { CalendarHeader } from "./calendar/CalendarHeader";
 import { WeekDaysHeader } from "./calendar/WeekDaysHeader";
 import { CalendarDayCell } from "./calendar/CalendarDayCell";
-import { useCalendarEvents } from "./hooks/useCalendarEvents";
 import { DndContext, useSensor, useSensors, PointerSensor } from "@dnd-kit/core";
 import { useDragAndDrop } from "./hooks/useDragAndDrop";
 import { useCurrentUser } from "./hooks/useCurrentUser";
 import { useDateSelection } from "./hooks/useDateSelection";
 import { useMonthNavigation } from "./hooks/useMonthNavigation";
+import { useCalendarEvents } from "./hooks/useCalendarEvents";
 
 interface ContentCalendarProps {
   events: CalendarEvent[];
@@ -37,6 +37,8 @@ export function ContentCalendar({
   const { 
     selectedDate, 
     selectedEvent, 
+    isDialogOpen,
+    setIsDialogOpen,
     handleDateSelect, 
     handleEventClick,
     setSelectedDate
@@ -51,11 +53,8 @@ export function ContentCalendar({
   
   // Use the custom hook to manage calendar events
   const { 
-    currentEvents, 
-    isDialogOpen, 
-    setIsDialogOpen, 
-    openDialog 
-  } = useCalendarEvents(events, selectedDate);
+    currentEvents
+  } = useCalendarEvents(events, selectedDate, isDialogOpen, setIsDialogOpen);
   
   // Configure sensors for drag and drop
   const sensors = useSensors(
@@ -104,8 +103,14 @@ export function ContentCalendar({
                     events={events}
                     isSelected={isSelected}
                     isCurrentDay={isCurrentDay}
-                    onSelect={() => handleDateSelect(date)}
-                    onEventClick={(event) => handleEventClick(event, date)}
+                    onSelect={(date) => {
+                      console.log("CalendarDayCell onSelect called");
+                      handleDateSelect(date);
+                    }}
+                    onEventClick={(event, date) => {
+                      console.log("CalendarDayCell onEventClick called");
+                      handleEventClick(event, date);
+                    }}
                     selectedCollaborator={selectedCollaborator}
                   />
                 );
@@ -122,7 +127,10 @@ export function ContentCalendar({
             clientId={clientId}
             selectedDate={selectedDate}
             events={currentEvents}
-            onClose={() => setSelectedDate(undefined)}
+            onClose={() => {
+              setSelectedDate(undefined);
+              setIsDialogOpen(false);
+            }}
             selectedEvent={selectedEvent} // Pass the selected event to open directly
           />
         )}
