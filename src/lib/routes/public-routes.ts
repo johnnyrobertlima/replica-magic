@@ -6,14 +6,14 @@ import ResetPassword from "@/pages/ResetPassword";
 export const publicRoutes = [
   {
     path: "/",
-    element: <Index />,
+    element: Index,
   },
   {
     path: "/login",
-    element: <ClientLogin />,
+    element: ClientLogin,
   },
   {
     path: "/reset-password",
-    element: <ResetPassword />,
+    element: ResetPassword,
   },
 ] as const;

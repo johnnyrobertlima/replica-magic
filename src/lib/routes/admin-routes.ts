@@ -6,14 +6,14 @@ import AdminRequests from "@/pages/admin/requests";
 export const adminRoutes = [
   {
     path: "/admin/users",
-    element: <UserGroupManagement />,
+    element: UserGroupManagement,
   },
   {
     path: "/admin/banners",
-    element: <AdminBanners />,
+    element: AdminBanners,
   },
   {
     path: "/admin/requests",
-    element: <AdminRequests />,
+    element: AdminRequests,
   },
 ] as const;

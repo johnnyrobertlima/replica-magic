@@ -9,26 +9,26 @@ import AcompanhamentoFaturamento from "@/pages/AcompanhamentoFaturamento";
 export const bluebayRoutes = [
   {
     path: "/client-area/bluebay",
-    element: <BluebayHome />,
+    element: BluebayHome,
   },
   {
     path: "/client-area/bluebay/jab-orders",
-    element: <JabOrders />,
+    element: JabOrders,
   },
   {
     path: "/client-area/bluebay/jab-orders-by-client",
-    element: <JabOrdersByClient />,
+    element: JabOrdersByClient,
   },
   {
     path: "/client-area/bluebay/jab-orders-by-representante",
-    element: <JabOrdersByRepresentante />,
+    element: JabOrdersByRepresentante,
   },
   {
     path: "/client-area/bluebay/aprovacao-financeira",
-    element: <AprovacaoFinanceira />,
+    element: AprovacaoFinanceira,
   },
   {
     path: "/client-area/bluebay/acompanhamento-faturamento",
-    element: <AcompanhamentoFaturamento />,
+    element: AcompanhamentoFaturamento,
   },
 ] as const;

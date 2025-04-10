@@ -11,34 +11,34 @@ import Representantes from "@/pages/Representantes";
 export const clientAreaRoutes = [
   {
     path: "/client-area",
-    element: <ClientArea />,
+    element: ClientArea,
   },
   {
     path: "/post-management",
-    element: <PostManagement />,
+    element: PostManagement,
   },
   {
     path: "/client-area/content-management",
-    element: <ContentManagement />,
+    element: ContentManagement,
   },
   {
     path: "/client-area/mailing-registration",
-    element: <MailingRegistration />,
+    element: MailingRegistration,
   },
   {
     path: "/client-area/tokens",
-    element: <TokenManagement />,
+    element: TokenManagement,
   },
   {
     path: "/client-area/whatsapp-registration",
-    element: <WhatsAppClientRegistration />,
+    element: WhatsAppClientRegistration,
   },
   {
     path: "/client-area/whatsapp",
-    element: <WhatsAppService />,
+    element: WhatsAppService,
   },
   {
     path: "/client-area/representantes",
-    element: <Representantes />,
+    element: Representantes,
   },
 ] as const;

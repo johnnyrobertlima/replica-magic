@@ -17,50 +17,50 @@ import {
 export const bkRoutes = [
   {
     path: "/client-area/bk",
-    element: <BkHome />,
+    element: BkHome,
   },
   {
     path: "/client-area/bk/clients",
-    element: <BkClients />,
+    element: BkClients,
   },
   {
     path: "/client-area/bk/financial",
-    element: <BkFinancial />,
+    element: BkFinancial,
   },
   {
     path: "/client-area/bk/gestaotitulos",
-    element: <BkGestaoTitulos />,
+    element: BkGestaoTitulos,
   },
   {
     path: "/client-area/bk/financeiromanager",
-    element: <BkFinanceiroManager />,
+    element: BkFinanceiroManager,
   },
   {
     path: "/client-area/bk/clientefinancial",
-    element: <BkClientFinancialSummary />,
+    element: BkClientFinancialSummary,
   },
   {
     path: "/client-area/bk/reports",
-    element: <BkReports />,
+    element: BkReports,
   },
   {
     path: "/client-area/bk/dashboard",
-    element: <BkDashboard />,
+    element: BkDashboard,
   },
   {
     path: "/client-area/bk/estoque",
-    element: <BkEstoque />,
+    element: BkEstoque,
   },
   {
     path: "/client-area/bk/requests",
-    element: <BkRequests />,
+    element: BkRequests,
   },
   {
     path: "/client-area/bk/invoice-control",
-    element: <BkInvoiceControl />,
+    element: BkInvoiceControl,
   },
   {
     path: "/client-area/bk/pedidos",
-    element: <BkPedidos />,
+    element: BkPedidos,
   },
 ] as const;

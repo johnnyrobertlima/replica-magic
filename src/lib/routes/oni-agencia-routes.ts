@@ -11,26 +11,26 @@ import {
 export const oniAgenciaRoutes = [
   {
     path: "/client-area/oniagencia",
-    element: <OniAgenciaHome />,
+    element: OniAgenciaHome,
   },
   {
     path: "/client-area/oniagencia/controle-pauta",
-    element: <OniAgenciaControlePauta />,
+    element: OniAgenciaControlePauta,
   },
   {
     path: "/client-area/oniagencia/clientes",
-    element: <OniAgenciaClientes />,
+    element: OniAgenciaClientes,
   },
   {
     path: "/client-area/oniagencia/servicos",
-    element: <OniAgenciaServicos />,
+    element: OniAgenciaServicos,
   },
   {
     path: "/client-area/oniagencia/colaboradores",
-    element: <OniAgenciaColaboradores />,
+    element: OniAgenciaColaboradores,
   },
   {
     path: "/client-area/oniagencia/relatorios",
-    element: <OniAgenciaRelatorios />,
+    element: OniAgenciaRelatorios,
   },
 ] as const;

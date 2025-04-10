@@ -15,42 +15,42 @@ import {
 export const bluebayAdmRoutes = [
   {
     path: "/client-area/bluebay_adm",
-    element: <BluebayAdmHome />,
+    element: BluebayAdmHome,
   },
   {
     path: "/client-area/bluebay_adm/reports",
-    element: <BluebayAdmReports />,
+    element: BluebayAdmReports,
   },
   {
     path: "/client-area/bluebay_adm/dashboard",
-    element: <BluebayAdmDashboard />,
+    element: BluebayAdmDashboard,
   },
   {
     path: "/client-area/bluebay_adm/clients",
-    element: <BluebayAdmClients />,
+    element: BluebayAdmClients,
   },
   {
     path: "/client-area/bluebay_adm/financial",
-    element: <BluebayAdmFinancial />,
+    element: BluebayAdmFinancial,
   },
   {
     path: "/client-area/bluebay_adm/estoque",
-    element: <BluebayAdmEstoque />,
+    element: BluebayAdmEstoque,
   },
   {
     path: "/client-area/bluebay_adm/annalisedecompra",
-    element: <BluebayAdmAnaliseDeCompra />,
+    element: BluebayAdmAnaliseDeCompra,
   },
   {
     path: "/client-area/bluebay_adm/pedidos",
-    element: <BluebayAdmPedidos />,
+    element: BluebayAdmPedidos,
   },
   {
     path: "/client-area/bluebay_adm/financeiromanager",
-    element: <BluebayAdmFinanceiroManager />,
+    element: BluebayAdmFinanceiroManager,
   },
   {
     path: "/client-area/bluebay_adm/requests",
-    element: <BluebayAdmRequests />,
+    element: BluebayAdmRequests,
   },
 ] as const;
