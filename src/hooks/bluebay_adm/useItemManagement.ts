@@ -1,51 +1,205 @@
-
-import { useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { usePagination } from "@/hooks/bluebay/hooks/usePagination";
-import { useItemData } from "./item-management/useItemData";
-import { useItemGroups } from "./item-management/useItemGroups";
-import { useItemOperations } from "./item-management/useItemOperations";
-import { useItemFilters } from "./item-management/useItemFilters";
-import { useItemDialog } from "./item-management/useItemDialog";
 
 export const useItemManagement = () => {
+  const [items, setItems] = useState<any[]>([]);
+  const [groups, setGroups] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [groupFilter, setGroupFilter] = useState("all");
+  const [selectedItem, setSelectedItem] = useState<any | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
+  const { toast } = useToast();
+  
   // Use pagination hook to manage pagination state
   const pagination = usePagination(100); // 100 items per page
 
-  // Use the refactored hooks
-  const { items, isLoading, totalCount, fetchItems } = useItemData(pagination);
-  const { groups, fetchGroups } = useItemGroups();
-  const { selectedItem, isDialogOpen, openNewItemDialog, openEditItemDialog, closeDialog, setIsDialogOpen } = useItemDialog();
+  const fetchItems = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      // Calculate range based on current page and page size
+      const from = (pagination.currentPage - 1) * pagination.pageSize;
+      const to = from + pagination.pageSize - 1;
+      
+      // Build our query
+      let query = supabase
+        .from("BLUEBAY_ITEM")
+        .select("*", { count: "exact" })
+        .order("DESCRICAO")
+        .range(from, to);
 
-  // Function to refresh items with current filters
-  const refreshItemsList = useCallback((search: string, group: string) => {
-    pagination.goToPage(1); // Reset to first page on search/filter change
-    fetchItems(search, group);
-  }, [pagination, fetchItems]);
+      // Apply filters
+      if (searchTerm) {
+        query = query.or(`ITEM_CODIGO.ilike.%${searchTerm}%,DESCRICAO.ilike.%${searchTerm}%,CODIGOAUX.ilike.%${searchTerm}%`);
+      }
 
-  // Item operations (save/delete)
-  const { handleSaveItem, handleDeleteItem } = useItemOperations(() => {
-    refreshItemsList(searchTerm, groupFilter);
-  });
+      if (groupFilter && groupFilter !== "all") {
+        query = query.eq("GRU_CODIGO", groupFilter);
+      }
 
-  // Search and filter functionality
-  const { searchTerm, setSearchTerm, groupFilter, setGroupFilter } = useItemFilters(refreshItemsList);
+      const { data, error, count } = await query;
 
-  // Load groups on initial render
+      if (error) throw error;
+      
+      // Filter out any duplicate items by ITEM_CODIGO
+      const uniqueItems = data?.filter((item, index, self) => 
+        index === self.findIndex(i => i.ITEM_CODIGO === item.ITEM_CODIGO)
+      ) || [];
+      
+      setItems(uniqueItems);
+      
+      // Update total count and pagination
+      if (count !== null) {
+        setTotalCount(count);
+        pagination.updateTotalCount(count);
+      }
+    } catch (error: any) {
+      console.error("Error fetching items:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao buscar itens",
+        description: error.message,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [searchTerm, groupFilter, pagination.currentPage, pagination.pageSize, toast, pagination.updateTotalCount]);
+
+  const fetchGroups = useCallback(async () => {
+    try {
+      // Get unique groups from items
+      const { data, error } = await supabase
+        .from("BLUEBAY_ITEM")
+        .select("GRU_CODIGO, GRU_DESCRICAO")
+        .not("GRU_CODIGO", "is", null)
+        .order("GRU_DESCRICAO");
+
+      if (error) throw error;
+
+      // Remove duplicates
+      const uniqueGroups = data?.reduce((acc: any[], curr) => {
+        if (!acc.some(group => group.GRU_CODIGO === curr.GRU_CODIGO) && curr.GRU_CODIGO) {
+          acc.push(curr);
+        }
+        return acc;
+      }, []);
+
+      setGroups(uniqueGroups || []);
+    } catch (error: any) {
+      console.error("Error fetching groups:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao buscar grupos",
+        description: error.message,
+      });
+    }
+  }, [toast]);
+
+  const handleSaveItem = async (itemData: any) => {
+    try {
+      // Check if it's an update or insert
+      const isUpdate = !!selectedItem;
+
+      // For updates, we need the primary key (ITEM_CODIGO)
+      if (isUpdate) {
+        const { error } = await supabase
+          .from("BLUEBAY_ITEM")
+          .update({
+            DESCRICAO: itemData.DESCRICAO,
+            GRU_CODIGO: itemData.GRU_CODIGO,
+            GRU_DESCRICAO: itemData.GRU_DESCRICAO,
+            CODIGOAUX: itemData.CODIGOAUX,
+          })
+          .eq("ITEM_CODIGO", itemData.ITEM_CODIGO);
+
+        if (error) throw error;
+
+        toast({
+          title: "Item atualizado",
+          description: "O item foi atualizado com sucesso.",
+        });
+      } else {
+        // For new items, include current date
+        const { error } = await supabase
+          .from("BLUEBAY_ITEM")
+          .insert({
+            ITEM_CODIGO: itemData.ITEM_CODIGO,
+            DESCRICAO: itemData.DESCRICAO,
+            GRU_CODIGO: itemData.GRU_CODIGO,
+            GRU_DESCRICAO: itemData.GRU_DESCRICAO,
+            CODIGOAUX: itemData.CODIGOAUX,
+            DATACADASTRO: new Date().toISOString(),
+            MATRIZ: 1, // Default values
+            FILIAL: 1, // Default values
+          });
+
+        if (error) throw error;
+
+        toast({
+          title: "Item cadastrado",
+          description: "O item foi cadastrado com sucesso.",
+        });
+      }
+
+      // Reset form and refresh list
+      setSelectedItem(null);
+      setIsDialogOpen(false);
+      fetchItems();
+    } catch (error: any) {
+      console.error("Error saving item:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao salvar item",
+        description: error.message,
+      });
+    }
+  };
+
+  const handleDeleteItem = async (item: any) => {
+    try {
+      const { error } = await supabase
+        .from("BLUEBAY_ITEM")
+        .delete()
+        .eq("ITEM_CODIGO", item.ITEM_CODIGO);
+
+      if (error) throw error;
+
+      toast({
+        title: "Item excluído",
+        description: "O item foi excluído com sucesso.",
+      });
+
+      fetchItems();
+    } catch (error: any) {
+      console.error("Error deleting item:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao excluir item",
+        description: error.message,
+      });
+    }
+  };
+
   useEffect(() => {
     fetchGroups();
   }, [fetchGroups]);
 
-  // Initial data load
   useEffect(() => {
-    fetchItems(searchTerm, groupFilter);
-  }, [fetchItems, searchTerm, groupFilter]);
+    fetchItems();
+  }, [fetchItems]);
 
-  // Wrapper for the save operation that handles dialog state
-  const handleSaveItemWrapper = async (itemData: any) => {
-    const isUpdate = !!selectedItem;
-    await handleSaveItem(itemData, isUpdate);
-    closeDialog();
-  };
+  // Add debounce for search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      pagination.goToPage(1); // Reset to first page on search
+      fetchItems();
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm, groupFilter, fetchItems, pagination]);
 
   return {
     items,
@@ -56,13 +210,13 @@ export const useItemManagement = () => {
     setGroupFilter,
     groups,
     selectedItem,
+    setSelectedItem,
     isDialogOpen,
     setIsDialogOpen,
-    handleSaveItem: handleSaveItemWrapper,
+    handleSaveItem,
     handleDeleteItem,
+    fetchItems,
     pagination,
     totalCount,
-    openNewItemDialog,
-    openEditItemDialog,
   };
 };
