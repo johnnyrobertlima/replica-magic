@@ -6,7 +6,8 @@ import {
   CheckSquare, 
   UserPlus,
   CalendarDays,
-  BookText
+  BookText,
+  Briefcase
 } from "lucide-react";
 import { OniAgenciaMenu } from "@/components/oni_agencia/OniAgenciaMenu";
 import { ServiceCard } from "@/components/oni_agencia/ServiceCard";
@@ -54,6 +55,14 @@ const OniAgenciaHome = () => {
             icon={UserPlus}
             iconColor="bg-amber-100 text-amber-600"
             path="/client-area/oniagencia/colaboradores"
+          />
+          
+          <ServiceCard
+            title="Escopo por Cliente"
+            description="Cadastre e gerencie escopos de serviços por cliente."
+            icon={Briefcase}
+            iconColor="bg-cyan-100 text-cyan-600"
+            path="/client-area/oniagencia/escopos"
           />
           
           <ServiceCard

@@ -5,7 +5,8 @@ import {
   OniAgenciaClientes, 
   OniAgenciaServicos, 
   OniAgenciaColaboradores,
-  OniAgenciaRelatorios
+  OniAgenciaRelatorios,
+  OniAgenciaClientScopes
 } from "@/pages/oni_agencia";
 
 export const oniAgenciaRoutes = [
@@ -32,5 +33,9 @@ export const oniAgenciaRoutes = [
   {
     path: "/client-area/oniagencia/relatorios",
     element: OniAgenciaRelatorios,
+  },
+  {
+    path: "/client-area/oniagencia/escopos",
+    element: OniAgenciaClientScopes,
   },
 ] as const;

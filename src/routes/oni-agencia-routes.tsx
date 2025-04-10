@@ -8,7 +8,8 @@ import {
   OniAgenciaClientes,
   OniAgenciaServicos,
   OniAgenciaColaboradores,
-  OniAgenciaRelatorios
+  OniAgenciaRelatorios,
+  OniAgenciaClientScopes
 } from "@/pages/oni_agencia";
 
 export const oniAgenciaRoutes = (
@@ -41,6 +42,11 @@ export const oniAgenciaRoutes = (
     <Route path="/client-area/oniagencia/relatorios" element={
       <PermissionGuard resourcePath="/client-area/oniagencia/relatorios">
         <OniAgenciaRelatorios />
+      </PermissionGuard>
+    } />
+    <Route path="/client-area/oniagencia/escopos" element={
+      <PermissionGuard resourcePath="/client-area/oniagencia/escopos">
+        <OniAgenciaClientScopes />
       </PermissionGuard>
     } />
   </>

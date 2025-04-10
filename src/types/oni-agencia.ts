@@ -1,4 +1,3 @@
-
 export interface OniAgenciaService {
   id: string;
   name: string;
@@ -91,3 +90,14 @@ export interface CalendarEvent extends OniAgenciaContentSchedule {
     color?: string | null;
   };
 }
+
+export interface ClientScope {
+  id: string;
+  client_id: string;
+  service_id: string;
+  quantity: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export type ClientScopeFormData = Omit<ClientScope, 'id' | 'created_at' | 'updated_at'>;
