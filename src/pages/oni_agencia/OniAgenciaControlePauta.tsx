@@ -65,7 +65,12 @@ const OniAgenciaControlePauta = () => {
         <div className="flex items-center gap-2 mb-6">
           <CalendarDays className="h-6 w-6 text-primary" />
           <h1 className="text-2xl font-semibold tracking-tight">Controle de Pauta</h1>
-          <ServiceCountBadges events={schedules} />
+          <ServiceCountBadges 
+            events={schedules} 
+            clientId={selectedClient}
+            month={selectedMonth}
+            year={selectedYear}
+          />
         </div>
         
         <ContentScheduleFilters
