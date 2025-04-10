@@ -35,7 +35,7 @@ const OniAgenciaControlePauta = () => {
   return (
     <main className="container-fluid p-0 max-w-full">
       <OniAgenciaMenu />
-      <div className="container mx-auto p-6 max-w-7xl">
+      <div className="container mx-auto p-4 max-w-full">
         <div className="flex items-center gap-2 mb-6">
           <CalendarDays className="h-6 w-6 text-primary" />
           <h1 className="text-2xl font-semibold tracking-tight">Controle de Pauta</h1>
@@ -51,13 +51,15 @@ const OniAgenciaControlePauta = () => {
         />
         
         {selectedClient ? (
-          <ContentCalendar
-            events={schedules}
-            clientId={selectedClient}
-            month={selectedMonth}
-            year={selectedYear}
-            onMonthChange={handleMonthYearChange}
-          />
+          <div className="w-full overflow-x-auto">
+            <ContentCalendar
+              events={schedules}
+              clientId={selectedClient}
+              month={selectedMonth}
+              year={selectedYear}
+              onMonthChange={handleMonthYearChange}
+            />
+          </div>
         ) : (
           <div className="bg-white rounded-md border shadow-sm p-8 text-center">
             <p className="text-muted-foreground">

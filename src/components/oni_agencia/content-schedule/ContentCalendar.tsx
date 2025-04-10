@@ -61,7 +61,7 @@ export function ContentCalendar({ events, clientId, month, year, onMonthChange }
     const dayEvents = events.filter(event => event.scheduled_date === dateString);
     
     return dayEvents.length > 0 ? (
-      <div className="flex flex-wrap gap-1 mt-1">
+      <div className="flex flex-wrap gap-1 mt-1 overflow-y-auto max-h-20">
         {dayEvents.map((event, index) => (
           <div
             key={event.id}
@@ -75,6 +75,8 @@ export function ContentCalendar({ events, clientId, month, year, onMonthChange }
       </div>
     ) : null;
   };
+
+  const weekDays = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
   return (
     <div className="bg-white rounded-md border shadow-sm">
@@ -102,13 +104,24 @@ export function ContentCalendar({ events, clientId, month, year, onMonthChange }
         </div>
       </div>
       
-      <div className="p-4">
+      <div className="grid grid-cols-7 w-full border-b">
+        {weekDays.map((day, index) => (
+          <div 
+            key={index} 
+            className="text-center py-2 font-medium text-sm border-r last:border-r-0 bg-gray-100"
+          >
+            {day}
+          </div>
+        ))}
+      </div>
+      
+      <div className="w-full p-0">
         <Calendar
           mode="single"
           selected={selectedDate}
           onSelect={handleDateSelect}
           month={currentDate}
-          className="rounded-md border-none"
+          className="w-full rounded-md border-none"
           locale={ptBR}
           components={{
             Day: ({ date, ...dayProps }) => {
@@ -119,7 +132,7 @@ export function ContentCalendar({ events, clientId, month, year, onMonthChange }
                 selectedDate.getFullYear() === date.getFullYear();
               
               return (
-                <div className="h-24 w-full">
+                <div className="h-32 w-full border-r border-b cursor-pointer hover:bg-gray-50" onClick={() => handleDateSelect(date)}>
                   <button 
                     {...dayProps} 
                     className={`h-8 w-8 p-0 font-normal flex items-center justify-center rounded-full ${
@@ -131,7 +144,8 @@ export function ContentCalendar({ events, clientId, month, year, onMonthChange }
                   {renderEventsDot(date)}
                 </div>
               );
-            }
+            },
+            Caption: () => null, // Hide the default caption since we have a custom header
           }}
         />
       </div>
