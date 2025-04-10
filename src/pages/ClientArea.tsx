@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare, Key, UserPlus, Mail, Database, Package2, CreditCard } from "lucide-react";
+import { MessageSquare, Key, UserPlus, Mail, Database, Package2, CreditCard, FileEdit } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const ClientArea = () => {
@@ -127,6 +127,26 @@ const ClientArea = () => {
                 </Button>
               </Link>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* New Oni Agência Card */}
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileEdit className="h-6 w-6" />
+              Oni Agência
+            </CardTitle>
+            <CardDescription>
+              Portal de gestão para a Oni Agência
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link to="/client-area/oniagencia">
+              <Button className="w-full">
+                Acessar Portal
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       </div>
