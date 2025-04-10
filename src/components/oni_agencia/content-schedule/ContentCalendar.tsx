@@ -2,14 +2,17 @@
 import { useState, useEffect } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarEvent } from "@/types/oni-agencia";
-import { format, isSameDay, isToday } from "date-fns";
+import { format, isSameDay, isToday, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ScheduleEventDialog } from "./ScheduleEventDialog";
-import { useAllContentSchedules } from "@/hooks/useOniAgenciaContentSchedules";
+import { useAllContentSchedules, useUpdateContentSchedule } from "@/hooks/useOniAgenciaContentSchedules";
 import { CalendarHeader } from "./calendar/CalendarHeader";
 import { WeekDaysHeader } from "./calendar/WeekDaysHeader";
 import { CalendarDayCell } from "./calendar/CalendarDayCell";
 import { useCalendarEvents } from "./hooks/useCalendarEvents";
+import { DndContext, DragEndEvent, useSensor, useSensors, PointerSensor } from "@dnd-kit/core";
+import { useToast } from "@/hooks/use-toast";
+import { useAuthentication } from "@/hooks/auth/useAuthentication";
 
 interface ContentCalendarProps {
   events: CalendarEvent[];
@@ -30,6 +33,10 @@ export function ContentCalendar({
 }: ContentCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | undefined>(undefined);
+  const [isDragging, setIsDragging] = useState(false);
+  const { toast } = useToast();
+  const { user } = useAuthentication();
+  const updateMutation = useUpdateContentSchedule();
   
   // Use this query to get ALL events regardless of month - this helps when switching months
   const { data: allEvents = [] } = useAllContentSchedules(clientId);
@@ -44,6 +51,15 @@ export function ContentCalendar({
     openDialog 
   } = useCalendarEvents(events, selectedDate);
   
+  // Configure sensors for drag and drop
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Min drag distance before activation
+      },
+    })
+  );
+
   const handleDateSelect = (date: Date | undefined) => {
     setSelectedDate(date);
     setSelectedEvent(undefined); // Clear event selection when selecting a date
@@ -73,62 +89,121 @@ export function ContentCalendar({
     setSelectedEvent(event);
     setIsDialogOpen(true);
   };
+  
+  const handleDragEnd = (event: DragEndEvent) => {
+    setIsDragging(false);
+    
+    const { active, over } = event;
+    
+    // If not dropped on a valid day cell
+    if (!over) return;
+    
+    const eventId = active.id as string;
+    const targetDate = over.id as string;
+    
+    // Find the event being dragged
+    const draggedEvent = events.find(event => event.id === eventId);
+    if (!draggedEvent) return;
+    
+    // Verify target is a valid date
+    if (!targetDate.match(/^\d{4}-\d{2}-\d{2}$/)) return;
+    
+    // Skip if date is the same
+    if (draggedEvent.scheduled_date === targetDate) return;
+    
+    // User info for the action log
+    const userName = user?.email || "Usuário";
+    const currentDateFormatted = format(new Date(), "dd/MM/yyyy HH:mm");
+    
+    // Prepare description with action log
+    let updatedDescription = draggedEvent.description || '';
+    const actionLog = `\n\nMovido por ${userName} em ${currentDateFormatted} de ${draggedEvent.scheduled_date} para ${targetDate}`;
+    updatedDescription += actionLog;
+    
+    // Update the event with new date and description
+    updateMutation.mutateAsync({
+      id: draggedEvent.id,
+      schedule: {
+        scheduled_date: targetDate,
+        description: updatedDescription
+      }
+    }).then(() => {
+      toast({
+        title: "Agendamento movido",
+        description: `O agendamento foi movido para ${format(parseISO(targetDate), "dd/MM/yyyy")}.`,
+      });
+    }).catch(error => {
+      toast({
+        title: "Erro ao mover agendamento",
+        description: "Ocorreu um erro ao mover o agendamento.",
+        variant: "destructive",
+      });
+    });
+  };
 
   const weekDays = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
   return (
-    <div className="bg-white rounded-md border shadow-sm w-full h-full">
-      <CalendarHeader 
-        currentDate={currentDate}
-        onPrevMonth={handlePrevMonth}
-        onNextMonth={handleNextMonth}
-      />
-      
-      <WeekDaysHeader weekDays={weekDays} />
-      
-      <div className="w-full p-0">
-        <Calendar
-          mode="single"
-          selected={selectedDate}
-          onSelect={handleDateSelect}
-          month={currentDate}
-          className="w-full rounded-md border-none"
-          locale={ptBR}
-          components={{
-            Day: ({ date, ...dayProps }) => {
-              // Check if this date is selected
-              const isSelected = selectedDate && isSameDay(selectedDate, date);
-              // Check if this is the current day
-              const isCurrentDay = isToday(date);
-              
-              return (
-                <CalendarDayCell 
-                  date={date}
-                  events={events}
-                  isSelected={isSelected}
-                  isCurrentDay={isCurrentDay}
-                  onSelect={() => handleDateSelect(date)}
-                  onEventClick={(event) => handleEventClick(event, date)}
-                  selectedCollaborator={selectedCollaborator}
-                />
-              );
-            },
-            Caption: () => null, // Hide the default caption since we have a custom header
-          }}
+    <DndContext 
+      sensors={sensors} 
+      onDragStart={() => setIsDragging(true)}
+      onDragEnd={handleDragEnd}
+    >
+      <div className="bg-white rounded-md border shadow-sm w-full h-full">
+        <CalendarHeader 
+          currentDate={currentDate}
+          onPrevMonth={handlePrevMonth}
+          onNextMonth={handleNextMonth}
         />
+        
+        <WeekDaysHeader weekDays={weekDays} />
+        
+        <div className="w-full p-0">
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={handleDateSelect}
+            month={currentDate}
+            className="w-full rounded-md border-none"
+            locale={ptBR}
+            components={{
+              Day: ({ date, ...dayProps }) => {
+                // Check if this date is selected
+                const isSelected = selectedDate && isSameDay(selectedDate, date);
+                // Check if this is the current day
+                const isCurrentDay = isToday(date);
+                // Format date string for event filtering
+                const dateString = format(date, 'yyyy-MM-dd');
+                
+                return (
+                  <CalendarDayCell 
+                    date={date}
+                    events={events}
+                    isSelected={isSelected}
+                    isCurrentDay={isCurrentDay}
+                    onSelect={() => handleDateSelect(date)}
+                    onEventClick={(event) => handleEventClick(event, date)}
+                    selectedCollaborator={selectedCollaborator}
+                  />
+                );
+              },
+              Caption: () => null, // Hide the default caption since we have a custom header
+            }}
+          />
+        </div>
+        
+        {selectedDate && (
+          <ScheduleEventDialog
+            isOpen={isDialogOpen}
+            onOpenChange={setIsDialogOpen}
+            clientId={clientId}
+            selectedDate={selectedDate}
+            events={currentEvents}
+            onClose={() => setSelectedDate(undefined)}
+            selectedEvent={selectedEvent} // Pass the selected event to open directly
+          />
+        )}
       </div>
-      
-      {selectedDate && (
-        <ScheduleEventDialog
-          isOpen={isDialogOpen}
-          onOpenChange={setIsDialogOpen}
-          clientId={clientId}
-          selectedDate={selectedDate}
-          events={currentEvents}
-          onClose={() => setSelectedDate(undefined)}
-          selectedEvent={selectedEvent} // Pass the selected event to open directly
-        />
-      )}
-    </div>
+    </DndContext>
   );
 }

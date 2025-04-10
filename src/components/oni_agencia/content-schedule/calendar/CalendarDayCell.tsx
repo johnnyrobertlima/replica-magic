@@ -2,6 +2,7 @@
 import { format, isSameDay } from "date-fns";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { EventItem } from "../EventItem";
+import { DraggableEventItem } from "../DraggableEventItem";
 import { useState } from "react";
 import { 
   Tooltip,
@@ -9,6 +10,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useDroppable } from "@dnd-kit/core";
 
 interface CalendarDayCellProps {
   date: Date;
@@ -32,6 +34,11 @@ export function CalendarDayCell({
   const [isHovering, setIsHovering] = useState(false);
   const dateString = format(date, 'yyyy-MM-dd');
   
+  // Configure droppable for drag and drop
+  const { setNodeRef, isOver } = useDroppable({
+    id: dateString,
+  });
+  
   // Filter events by date and collaborator if selected
   let dayEvents = events.filter(event => event.scheduled_date === dateString);
   
@@ -54,9 +61,10 @@ export function CalendarDayCell({
   
   return (
     <div 
+      ref={setNodeRef}
       className={`h-36 w-full border-r border-b cursor-pointer hover:bg-gray-50 calendar-day-cell p-1 relative ${
         isCurrentDay ? 'bg-blue-50' : ''
-      }`}
+      } ${isOver ? 'bg-blue-100' : ''}`}
       onClick={handleCellClick}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
@@ -78,7 +86,7 @@ export function CalendarDayCell({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="event-item">
-                    <EventItem 
+                    <DraggableEventItem 
                       event={event}
                       onClick={(e) => {
                         e.stopPropagation();
