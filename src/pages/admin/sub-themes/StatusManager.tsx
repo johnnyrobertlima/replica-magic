@@ -23,7 +23,7 @@ export function StatusManager() {
       if (error) throw error;
       
       // Garantir que valores nulos são tratados corretamente
-      const safeData = (data || []).map(status => ({
+      const safeData = (data || []).map((status: any) => ({
         ...status,
         previous_status_id: status.previous_status_id || null,
         next_status_id: status.next_status_id || null
