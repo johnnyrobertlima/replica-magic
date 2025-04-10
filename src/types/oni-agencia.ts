@@ -38,3 +38,23 @@ export interface OniAgenciaClient {
 }
 
 export type ClientFormData = Omit<OniAgenciaClient, 'id' | 'created_at' | 'updated_at'>;
+
+export interface OniAgenciaContentSchedule {
+  id: string;
+  client_id: string;
+  service_id: string;
+  collaborator_id: string | null;
+  title: string;
+  description: string | null;
+  scheduled_date: string;
+  execution_phase: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type ContentScheduleFormData = Omit<OniAgenciaContentSchedule, 'id' | 'created_at' | 'updated_at'>;
+
+export interface CalendarEvent extends OniAgenciaContentSchedule {
+  service: OniAgenciaService;
+  collaborator?: OniAgenciaCollaborator;
+}

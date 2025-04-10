@@ -1242,6 +1242,67 @@ export type Database = {
         }
         Relationships: []
       }
+      oni_agencia_content_schedules: {
+        Row: {
+          client_id: string
+          collaborator_id: string | null
+          created_at: string
+          description: string | null
+          execution_phase: string | null
+          id: string
+          scheduled_date: string
+          service_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          collaborator_id?: string | null
+          created_at?: string
+          description?: string | null
+          execution_phase?: string | null
+          id?: string
+          scheduled_date: string
+          service_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          collaborator_id?: string | null
+          created_at?: string
+          description?: string | null
+          execution_phase?: string | null
+          id?: string
+          scheduled_date?: string
+          service_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oni_agencia_content_schedules_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "oni_agencia_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oni_agencia_content_schedules_collaborator_id_fkey"
+            columns: ["collaborator_id"]
+            isOneToOne: false
+            referencedRelation: "oni_agencia_collaborators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oni_agencia_content_schedules_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "oni_agencia_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       oni_agencia_services: {
         Row: {
           category: string
