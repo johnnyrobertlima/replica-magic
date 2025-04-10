@@ -32,8 +32,9 @@ export function EntityForm({ entityName, tableName, onSuccess }: EntityFormProps
     setIsSubmitting(true);
     
     try {
+      // Use a type assertion to handle the dynamic table name
       const { error } = await supabase
-        .from(tableName)
+        .from(tableName as any)
         .insert({ name });
       
       if (error) throw error;
