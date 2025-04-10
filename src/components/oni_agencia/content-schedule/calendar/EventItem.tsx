@@ -36,11 +36,12 @@ export function EventItem({ event, onClick }: EventItemProps) {
           {editorial_line.symbol ? (
             <span title={editorial_line.name}>{editorial_line.symbol}</span>
           ) : (
-            <Flag 
-              size={14} 
-              color={editorial_line.color || '#666'} 
-              title={editorial_line.name}
-            />
+            <div title={editorial_line.name}>
+              <Flag 
+                size={14} 
+                color={editorial_line.color || '#666'} 
+              />
+            </div>
           )}
         </div>
       )}
