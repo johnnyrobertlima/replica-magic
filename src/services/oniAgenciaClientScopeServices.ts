@@ -6,7 +6,7 @@ export async function getClientScopes(): Promise<ClientScope[]> {
   const { data, error } = await supabase
     .from('oni_agencia_client_scopes')
     .select('*')
-    .order('created_at');
+    .order('created_at') as { data: ClientScope[] | null; error: any };
 
   if (error) {
     console.error('Error fetching client scopes:', error);
@@ -21,7 +21,7 @@ export async function getClientScopesByClient(clientId: string): Promise<ClientS
     .from('oni_agencia_client_scopes')
     .select('*')
     .eq('client_id', clientId)
-    .order('created_at');
+    .order('created_at') as { data: ClientScope[] | null; error: any };
 
   if (error) {
     console.error('Error fetching client scopes by client:', error);
@@ -35,16 +35,16 @@ export async function createClientScope(scope: ClientScopeFormData): Promise<Cli
   try {
     const { data, error } = await supabase
       .from('oni_agencia_client_scopes')
-      .insert(scope)
+      .insert(scope as any)
       .select()
-      .single();
+      .single() as { data: ClientScope | null; error: any };
 
     if (error) {
       console.error('Error creating client scope:', error);
       throw error;
     }
 
-    return data;
+    return data as ClientScope;
   } catch (error) {
     console.error('Error creating client scope:', error);
     throw error;
@@ -55,17 +55,17 @@ export async function updateClientScope(id: string, scope: Partial<ClientScopeFo
   try {
     const { data, error } = await supabase
       .from('oni_agencia_client_scopes')
-      .update(scope)
+      .update(scope as any)
       .eq('id', id)
       .select()
-      .single();
+      .single() as { data: ClientScope | null; error: any };
 
     if (error) {
       console.error('Error updating client scope:', error);
       throw error;
     }
 
-    return data;
+    return data as ClientScope;
   } catch (error) {
     console.error('Error updating client scope:', error);
     throw error;
@@ -77,7 +77,7 @@ export async function deleteClientScope(id: string): Promise<void> {
     const { error } = await supabase
       .from('oni_agencia_client_scopes')
       .delete()
-      .eq('id', id);
+      .eq('id', id) as { error: any };
 
     if (error) {
       console.error('Error deleting client scope:', error);
