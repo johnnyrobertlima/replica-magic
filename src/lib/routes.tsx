@@ -21,11 +21,13 @@ import BluebayHome from "@/pages/BluebayHome";
 import BluebayAdmHome from "@/pages/BluebayAdmHome";
 import BkHome from "@/pages/BkHome";
 import OniAgenciaHome from "@/pages/OniAgenciaHome";
-import OniAgenciaControlePauta from "@/pages/oni_agencia/OniAgenciaControlePauta";
-import OniAgenciaClientes from "@/pages/oni_agencia/OniAgenciaClientes";
-import OniAgenciaServicos from "@/pages/oni_agencia/OniAgenciaServicos";
-import OniAgenciaColaboradores from "@/pages/oni_agencia/OniAgenciaColaboradores";
-import OniAgenciaRelatorios from "@/pages/oni_agencia/OniAgenciaRelatorios";
+import { 
+  OniAgenciaControlePauta, 
+  OniAgenciaClientes, 
+  OniAgenciaServicos, 
+  OniAgenciaColaboradores,
+  OniAgenciaRelatorios
+} from "@/pages/oni_agencia";
 import { BkClients, BkFinancial, BkReports, BkDashboard, BkGestaoTitulos, BkFinanceiroManager, BkClientFinancialSummary, BkEstoque, BkRequests, BkInvoiceControl, BkPedidos } from "@/pages/bk";
 import { BluebayAdmReports, BluebayAdmDashboard, BluebayAdmClients, BluebayAdmFinancial, BluebayAdmEstoque, BluebayAdmPedidos, BluebayAdmFinanceiroManager, BluebayAdmRequests, BluebayAdmAnaliseDeCompra } from "@/pages/bluebay_adm";
 import AdminRequests from "@/pages/admin/requests";
