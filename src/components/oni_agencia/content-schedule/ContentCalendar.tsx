@@ -13,6 +13,7 @@ import { useCalendarEvents } from "./hooks/useCalendarEvents";
 import { DndContext, DragEndEvent, useSensor, useSensors, PointerSensor } from "@dnd-kit/core";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthentication } from "@/hooks/auth/useAuthentication";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ContentCalendarProps {
   events: CalendarEvent[];
@@ -34,8 +35,9 @@ export function ContentCalendar({
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | undefined>(undefined);
   const [isDragging, setIsDragging] = useState(false);
+  const [userName, setUserName] = useState<string>("Usuário");
   const { toast } = useToast();
-  const { user } = useAuthentication();
+  const { loading } = useAuthentication();
   const updateMutation = useUpdateContentSchedule();
   
   // Use this query to get ALL events regardless of month - this helps when switching months
@@ -50,6 +52,18 @@ export function ContentCalendar({
     setIsDialogOpen, 
     openDialog 
   } = useCalendarEvents(events, selectedDate);
+  
+  // Get current user info
+  useEffect(() => {
+    const getUserInfo = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserName(user.email || "Usuário");
+      }
+    };
+    
+    getUserInfo();
+  }, []);
   
   // Configure sensors for drag and drop
   const sensors = useSensors(
@@ -112,7 +126,6 @@ export function ContentCalendar({
     if (draggedEvent.scheduled_date === targetDate) return;
     
     // User info for the action log
-    const userName = user?.email || "Usuário";
     const currentDateFormatted = format(new Date(), "dd/MM/yyyy HH:mm");
     
     // Prepare description with action log
