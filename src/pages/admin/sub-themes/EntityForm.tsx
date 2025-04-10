@@ -2,17 +2,20 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { SymbolSelector } from "./SymbolSelector";
 
 interface EntityFormProps {
   entityName: string;
   tableName: string;
   onSuccess: () => void;
+  includeSymbol?: boolean;
 }
 
-export function EntityForm({ entityName, tableName, onSuccess }: EntityFormProps) {
+export function EntityForm({ entityName, tableName, onSuccess, includeSymbol = false }: EntityFormProps) {
   const [name, setName] = useState("");
+  const [symbol, setSymbol] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
@@ -31,9 +34,11 @@ export function EntityForm({ entityName, tableName, onSuccess }: EntityFormProps
     setIsSubmitting(true);
     
     try {
+      let dataToInsert = includeSymbol ? { name, symbol } : { name };
+      
       const { error } = await supabase
         .from(tableName as any)
-        .insert([{ name }]);
+        .insert([dataToInsert]);
       
       if (error) throw error;
       
@@ -43,6 +48,7 @@ export function EntityForm({ entityName, tableName, onSuccess }: EntityFormProps
       });
       
       setName("");
+      if (includeSymbol) setSymbol("");
       onSuccess();
     } catch (error: any) {
       toast({
@@ -64,6 +70,15 @@ export function EntityForm({ entityName, tableName, onSuccess }: EntityFormProps
           onChange={(e) => setName(e.target.value)}
         />
       </div>
+      
+      {includeSymbol && (
+        <div className="mt-4">
+          <label className="text-sm text-muted-foreground mb-2 block">
+            Escolha um símbolo
+          </label>
+          <SymbolSelector value={symbol} onChange={setSymbol} />
+        </div>
+      )}
       
       <Button type="submit" disabled={isSubmitting}>
         {isSubmitting ? "Salvando..." : `Adicionar ${entityName}`}

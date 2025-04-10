@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { EntityForm } from "./EntityForm";
 import { EntityTable } from "./EntityTable";
@@ -73,6 +73,7 @@ export function EditorialLineManager() {
         entityName="Linha Editorial"
         tableName="editorial_lines"
         onSuccess={fetchEditorialLines}
+        includeSymbol={true}
       />
       
       <EntityTable
@@ -80,6 +81,7 @@ export function EditorialLineManager() {
         entities={editorialLines}
         isLoading={isLoading}
         onDelete={handleDelete}
+        showSymbols={true}
       />
     </div>
   );
