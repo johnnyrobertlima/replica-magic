@@ -1,14 +1,8 @@
 
-import { Loader2, Trash2 } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Entity {
   id: string;
@@ -17,14 +11,32 @@ interface Entity {
 
 interface EntityTableProps {
   entityName: string;
-  entities?: Entity[];
+  entities: Entity[];
   isLoading: boolean;
   onDelete: (id: string) => void;
 }
 
 export function EntityTable({ entityName, entities, isLoading, onDelete }: EntityTableProps) {
+  if (isLoading) {
+    return (
+      <div className="space-y-2">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+      </div>
+    );
+  }
+
+  if (entities.length === 0) {
+    return (
+      <div className="text-center py-6">
+        <p className="text-muted-foreground">Nenhum {entityName} encontrado</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-white rounded-lg border shadow-sm mt-6">
+    <div className="border rounded-md">
       <Table>
         <TableHeader>
           <TableRow>
@@ -33,35 +45,20 @@ export function EntityTable({ entityName, entities, isLoading, onDelete }: Entit
           </TableRow>
         </TableHeader>
         <TableBody>
-          {isLoading ? (
-            <TableRow>
-              <TableCell colSpan={2} className="text-center">
-                <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+          {entities.map((entity) => (
+            <TableRow key={entity.id}>
+              <TableCell>{entity.name}</TableCell>
+              <TableCell>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={() => onDelete(entity.id)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </TableCell>
             </TableRow>
-          ) : entities?.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={2} className="text-center text-muted-foreground">
-                {`Nenhum ${entityName} encontrado`}
-              </TableCell>
-            </TableRow>
-          ) : (
-            entities?.map((entity) => (
-              <TableRow key={entity.id}>
-                <TableCell>{entity.name}</TableCell>
-                <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onDelete(entity.id)}
-                    title="Excluir"
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))
-          )}
+          ))}
         </TableBody>
       </Table>
     </div>

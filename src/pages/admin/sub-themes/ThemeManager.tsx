@@ -21,7 +21,9 @@ export function ThemeManager() {
       
       if (error) throw error;
       
-      setThemes(data as Theme[] || []);
+      // Make sure to safely cast the data to the Theme type
+      const safeData = (data || []) as unknown as Theme[];
+      setThemes(safeData);
     } catch (error: any) {
       toast({
         title: "Erro",

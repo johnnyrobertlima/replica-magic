@@ -21,7 +21,9 @@ export function ProductManager() {
       
       if (error) throw error;
       
-      setProducts(data as Product[] || []);
+      // Make sure to safely cast the data to the Product type
+      const safeData = (data || []) as unknown as Product[];
+      setProducts(safeData);
     } catch (error: any) {
       toast({
         title: "Erro",

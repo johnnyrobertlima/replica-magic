@@ -1,9 +1,8 @@
 
 import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 interface EntityFormProps {
@@ -23,7 +22,7 @@ export function EntityForm({ entityName, tableName, onSuccess }: EntityFormProps
     if (!name.trim()) {
       toast({
         title: "Erro",
-        description: `Nome do ${entityName} é obrigatório`,
+        description: `Nome do ${entityName.toLowerCase()} é obrigatório`,
         variant: "destructive",
       });
       return;
@@ -32,10 +31,9 @@ export function EntityForm({ entityName, tableName, onSuccess }: EntityFormProps
     setIsSubmitting(true);
     
     try {
-      // Use a type assertion to handle the dynamic table name
       const { error } = await supabase
         .from(tableName as any)
-        .insert({ name });
+        .insert([{ name }]);
       
       if (error) throw error;
       
@@ -49,29 +47,26 @@ export function EntityForm({ entityName, tableName, onSuccess }: EntityFormProps
     } catch (error: any) {
       toast({
         title: "Erro",
-        description: error.message || `Erro ao criar ${entityName}`,
+        description: error.message || `Erro ao criar ${entityName.toLowerCase()}`,
         variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
     }
   };
-  
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-4 bg-white rounded-lg border shadow-sm">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <Label htmlFor="name">{`Nome do ${entityName}`}</Label>
         <Input
-          id="name"
+          placeholder={`Nome do ${entityName.toLowerCase()}`}
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder={`Digite o nome do ${entityName}`}
-          className="mt-1"
         />
       </div>
       
       <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Salvando..." : `Salvar ${entityName}`}
+        {isSubmitting ? "Salvando..." : `Adicionar ${entityName}`}
       </Button>
     </form>
   );

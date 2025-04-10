@@ -21,7 +21,9 @@ export function EditorialLineManager() {
       
       if (error) throw error;
       
-      setEditorialLines(data as EditorialLine[] || []);
+      // Make sure to safely cast the data to the EditorialLine type
+      const safeData = (data || []) as unknown as EditorialLine[];
+      setEditorialLines(safeData);
     } catch (error: any) {
       toast({
         title: "Erro",

@@ -21,7 +21,9 @@ export function SubThemeManager() {
       
       if (error) throw error;
       
-      setSubThemes(data as SubTheme[] || []);
+      // Make sure to safely cast the data to the SubTheme type
+      const safeData = (data || []) as unknown as SubTheme[];
+      setSubThemes(safeData);
     } catch (error: any) {
       toast({
         title: "Erro",
