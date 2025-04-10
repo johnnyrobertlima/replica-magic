@@ -830,21 +830,27 @@ export type Database = {
       }
       editorial_lines: {
         Row: {
+          color: string | null
           created_at: string
           id: string
           name: string
+          symbol: string | null
           updated_at: string
         }
         Insert: {
+          color?: string | null
           created_at?: string
           id?: string
           name: string
+          symbol?: string | null
           updated_at?: string
         }
         Update: {
+          color?: string | null
           created_at?: string
           id?: string
           name?: string
+          symbol?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -1354,23 +1360,74 @@ export type Database = {
         }
         Relationships: []
       }
-      products: {
+      oni_agencia_status: {
         Row: {
+          color: string | null
           created_at: string
           id: string
           name: string
+          next_status_id: string | null
+          previous_status_id: string | null
           updated_at: string
         }
         Insert: {
+          color?: string | null
           created_at?: string
           id?: string
           name: string
+          next_status_id?: string | null
+          previous_status_id?: string | null
           updated_at?: string
         }
         Update: {
+          color?: string | null
           created_at?: string
           id?: string
           name?: string
+          next_status_id?: string | null
+          previous_status_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oni_agencia_status_next_status_id_fkey"
+            columns: ["next_status_id"]
+            isOneToOne: false
+            referencedRelation: "oni_agencia_status"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oni_agencia_status_previous_status_id_fkey"
+            columns: ["previous_status_id"]
+            isOneToOne: false
+            referencedRelation: "oni_agencia_status"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          name: string
+          symbol: string | null
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          symbol?: string | null
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          symbol?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -1577,42 +1634,54 @@ export type Database = {
       }
       sub_themes: {
         Row: {
+          color: string | null
           created_at: string
           id: string
           name: string
+          symbol: string | null
           updated_at: string
         }
         Insert: {
+          color?: string | null
           created_at?: string
           id?: string
           name: string
+          symbol?: string | null
           updated_at?: string
         }
         Update: {
+          color?: string | null
           created_at?: string
           id?: string
           name?: string
+          symbol?: string | null
           updated_at?: string
         }
         Relationships: []
       }
       themes: {
         Row: {
+          color: string | null
           created_at: string
           id: string
           name: string
+          symbol: string | null
           updated_at: string
         }
         Insert: {
+          color?: string | null
           created_at?: string
           id?: string
           name: string
+          symbol?: string | null
           updated_at?: string
         }
         Update: {
+          color?: string | null
           created_at?: string
           id?: string
           name?: string
+          symbol?: string | null
           updated_at?: string
         }
         Relationships: []

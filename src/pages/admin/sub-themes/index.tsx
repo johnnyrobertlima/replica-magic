@@ -1,40 +1,43 @@
 
-import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ThemeManager } from "./ThemeManager";
 import { SubThemeManager } from "./SubThemeManager";
+import { ThemeManager } from "./ThemeManager";
 import { EditorialLineManager } from "./EditorialLineManager";
 import { ProductManager } from "./ProductManager";
+import { StatusManager } from "./StatusManager";
 
-export default function AdminSubThemes() {
-  const [activeTab, setActiveTab] = useState("themes");
-
+export default function SubThemesPage() {
   return (
-    <div className="container mx-auto py-6 max-w-5xl">
+    <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">Gerenciamento de Conteúdo</h1>
       
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-4 mb-6">
+      <Tabs defaultValue="sub-themes">
+        <TabsList className="mb-4">
+          <TabsTrigger value="sub-themes">Sub Temas</TabsTrigger>
           <TabsTrigger value="themes">Temas</TabsTrigger>
-          <TabsTrigger value="subThemes">Sub Temas</TabsTrigger>
-          <TabsTrigger value="editorialLines">Linhas Editoriais</TabsTrigger>
+          <TabsTrigger value="editorial-lines">Linhas Editoriais</TabsTrigger>
           <TabsTrigger value="products">Produtos</TabsTrigger>
+          <TabsTrigger value="status">Status</TabsTrigger>
         </TabsList>
+        
+        <TabsContent value="sub-themes">
+          <SubThemeManager />
+        </TabsContent>
         
         <TabsContent value="themes">
           <ThemeManager />
         </TabsContent>
         
-        <TabsContent value="subThemes">
-          <SubThemeManager />
-        </TabsContent>
-        
-        <TabsContent value="editorialLines">
+        <TabsContent value="editorial-lines">
           <EditorialLineManager />
         </TabsContent>
         
         <TabsContent value="products">
           <ProductManager />
+        </TabsContent>
+        
+        <TabsContent value="status">
+          <StatusManager />
         </TabsContent>
       </Tabs>
     </div>
