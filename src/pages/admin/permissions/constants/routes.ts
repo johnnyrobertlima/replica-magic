@@ -29,6 +29,13 @@ export const RESOURCE_PATHS = [
   "/client-area/bk/requests",
   "/client-area/bk/invoice-control",
   "/client-area/bk/pedidos",
+  // Oni Agência routes
+  "/client-area/oniagencia",
+  "/client-area/oniagencia/controle-pauta",
+  "/client-area/oniagencia/clientes",
+  "/client-area/oniagencia/servicos",
+  "/client-area/oniagencia/colaboradores",
+  "/client-area/oniagencia/relatorios",
   "/client-area/content-management",
   "/client-area/mailing-registration",
   "/client-area/tokens",
