@@ -111,18 +111,18 @@ export function ContentCalendar({ events, clientId, month, year, onMonthChange }
           className="rounded-md border-none"
           locale={ptBR}
           components={{
-            Day: ({ day, ...props }) => {
+            Day: ({ date, ...props }) => {
               return (
                 <div className="h-24 w-full">
                   <button 
                     {...props} 
                     className={`h-8 w-8 p-0 font-normal flex items-center justify-center rounded-full ${
-                      props.selected ? 'bg-primary text-primary-foreground' : ''
+                      props.className?.includes('selected') ? 'bg-primary text-primary-foreground' : ''
                     }`}
                   >
-                    {format(day, 'd')}
+                    {format(date, 'd')}
                   </button>
-                  {renderEventsDot(day)}
+                  {renderEventsDot(date)}
                 </div>
               );
             }
