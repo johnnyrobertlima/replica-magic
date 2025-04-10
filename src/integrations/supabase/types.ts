@@ -1275,10 +1275,13 @@ export type Database = {
           collaborator_id: string | null
           created_at: string
           description: string | null
+          editorial_line_id: string | null
           execution_phase: string | null
           id: string
+          product_id: string | null
           scheduled_date: string
           service_id: string
+          status_id: string | null
           title: string
           updated_at: string
         }
@@ -1287,10 +1290,13 @@ export type Database = {
           collaborator_id?: string | null
           created_at?: string
           description?: string | null
+          editorial_line_id?: string | null
           execution_phase?: string | null
           id?: string
+          product_id?: string | null
           scheduled_date: string
           service_id: string
+          status_id?: string | null
           title: string
           updated_at?: string
         }
@@ -1299,10 +1305,13 @@ export type Database = {
           collaborator_id?: string | null
           created_at?: string
           description?: string | null
+          editorial_line_id?: string | null
           execution_phase?: string | null
           id?: string
+          product_id?: string | null
           scheduled_date?: string
           service_id?: string
+          status_id?: string | null
           title?: string
           updated_at?: string
         }
@@ -1322,10 +1331,31 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "oni_agencia_content_schedules_editorial_line_id_fkey"
+            columns: ["editorial_line_id"]
+            isOneToOne: false
+            referencedRelation: "editorial_lines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oni_agencia_content_schedules_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "oni_agencia_content_schedules_service_id_fkey"
             columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "oni_agencia_services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oni_agencia_content_schedules_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "oni_agencia_status"
             referencedColumns: ["id"]
           },
         ]
