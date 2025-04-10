@@ -6,6 +6,7 @@ import { ContentCalendar } from "@/components/oni_agencia/content-schedule/Conte
 import { ContentScheduleFilters } from "@/components/oni_agencia/content-schedule/ContentScheduleFilters";
 import { useContentSchedules } from "@/hooks/useOniAgenciaContentSchedules";
 import { useClients } from "@/hooks/useOniAgenciaClients";
+import { useCollapsible } from "@/components/oni_agencia/content-schedule/hooks/useCollapsible";
 
 const OniAgenciaControlePauta = () => {
   const currentDate = new Date();
@@ -13,6 +14,7 @@ const OniAgenciaControlePauta = () => {
   const [selectedMonth, setSelectedMonth] = useState<number>(currentDate.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
   const [selectedCollaborator, setSelectedCollaborator] = useState<string | null>(null);
+  const { isCollapsed, toggle: toggleFilters } = useCollapsible(false);
   
   const { data: clients = [], isLoading: isLoadingClients } = useClients();
   
@@ -73,10 +75,12 @@ const OniAgenciaControlePauta = () => {
           onMonthChange={setSelectedMonth}
           onYearChange={setSelectedYear}
           onCollaboratorChange={setSelectedCollaborator}
+          isCollapsed={isCollapsed}
+          onToggleCollapse={toggleFilters}
         />
         
         {selectedClient ? (
-          <div className="w-full overflow-x-auto h-[calc(100vh-250px)]">
+          <div className={`w-full overflow-x-auto ${isCollapsed ? 'h-[calc(100vh-150px)]' : 'h-[calc(100vh-250px)]'} transition-all duration-300`}>
             <ContentCalendar
               events={schedules}
               clientId={selectedClient}
