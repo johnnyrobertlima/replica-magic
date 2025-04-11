@@ -9,25 +9,23 @@ import {
   ChevronUp
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { usePautaStatus } from "./hooks/usePautaStatus";
 
 interface PautaStatusIndicatorProps {
   events: CalendarEvent[];
-  clientScopes: {
-    service_id: string;
-    service_name: string;
-    quantity: number;
-  }[];
+  clientId: string;
   month: number;
   year: number;
 }
 
 export function PautaStatusIndicator({ 
   events, 
-  clientScopes,
+  clientId,
   month,
   year
 }: PautaStatusIndicatorProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const { clientScopes } = usePautaStatus(clientId, month, year, events);
 
   // Get the service counts from the events for the current month/year
   const serviceCounts: Record<string, number> = {};
