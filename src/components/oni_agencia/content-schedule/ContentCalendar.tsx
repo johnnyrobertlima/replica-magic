@@ -49,7 +49,6 @@ export function ContentCalendar({
   } = useDateSelection();
   const { handlePrevMonth, handleNextMonth } = useMonthNavigation(month, year, onMonthChange);
   const { isDragging, handleDragStart, handleDragEnd } = useDragAndDrop(events, userName);
-  const { clientScopes } = usePautaStatus(clientId, month, year, events);
   
   // Use this query to get ALL events regardless of month - this helps when switching months
   const { data: allEvents = [] } = useAllContentSchedules(clientId);
@@ -117,7 +116,7 @@ export function ContentCalendar({
         <div className="px-4 pt-4">
           <PautaStatusIndicator 
             events={events} 
-            clientScopes={clientScopes} 
+            clientId={clientId} 
             month={month} 
             year={year} 
           />
