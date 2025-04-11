@@ -97,6 +97,9 @@ export async function createContentSchedule(schedule: ContentScheduleFormData): 
 
 export async function updateContentSchedule(id: string, schedule: Partial<ContentScheduleFormData>): Promise<OniAgenciaContentSchedule> {
   try {
+    console.log('Updating content schedule:', id, schedule);
+    
+    // Only update the fields that are actually provided
     const { data, error } = await supabase
       .from(ONI_AGENCIA_CONTENT_SCHEDULES_TABLE)
       .update(schedule)
@@ -109,6 +112,7 @@ export async function updateContentSchedule(id: string, schedule: Partial<Conten
       throw error;
     }
 
+    console.log('Updated content schedule:', data);
     return data as unknown as OniAgenciaContentSchedule;
   } catch (error) {
     console.error('Error updating content schedule:', error);
