@@ -53,7 +53,7 @@ export function CalendarDayCell({
   
   // Handle click on the cell background to create a new event, regardless of existing events
   const handleCellClick = (e: React.MouseEvent) => {
-    // Only proceed if the click was directly on the cell element itself or on the cell's empty area,
+    // Check if the click was on the cell itself or on the empty area,
     // but not on an event or "+ more" link
     if (e.currentTarget === e.target || 
         (e.target as HTMLElement).classList.contains('cell-background') ||
@@ -96,7 +96,7 @@ export function CalendarDayCell({
             <TooltipProvider key={event.id}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="event-item">
+                  <div className="event-item z-10">
                     <DraggableEventItem 
                       event={event}
                       onClick={(e) => handleEventClick(e, event)}
@@ -119,7 +119,7 @@ export function CalendarDayCell({
           
           {hiddenEventsCount > 0 && (
             <div 
-              className="text-xs text-primary font-medium px-1 py-0.5 cursor-pointer hover:underline event-item"
+              className="text-xs text-primary font-medium px-1 py-0.5 cursor-pointer hover:underline event-item z-10"
               onClick={(e) => {
                 e.stopPropagation();
                 console.log("Showing all events for date:", date);
