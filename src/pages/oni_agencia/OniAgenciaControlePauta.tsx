@@ -1,13 +1,14 @@
 
 import { useState, useEffect } from "react";
 import { OniAgenciaMenu } from "@/components/oni_agencia/OniAgenciaMenu";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, RefreshCw } from "lucide-react";
 import { ContentCalendar } from "@/components/oni_agencia/content-schedule/ContentCalendar";
 import { ContentScheduleFilters } from "@/components/oni_agencia/content-schedule/ContentScheduleFilters";
 import { ServiceCountBadges } from "@/components/oni_agencia/content-schedule/ServiceCountBadges";
 import { useContentSchedules } from "@/hooks/useOniAgenciaContentSchedules";
 import { useClients } from "@/hooks/useOniAgenciaClients";
 import { useCollapsible } from "@/components/oni_agencia/content-schedule/hooks/useCollapsible";
+import { Button } from "@/components/ui/button";
 
 const OniAgenciaControlePauta = () => {
   const currentDate = new Date();
@@ -29,7 +30,8 @@ const OniAgenciaControlePauta = () => {
   const { 
     data: schedules = [], 
     isLoading: isLoadingSchedules,
-    refetch: refetchSchedules
+    refetch: refetchSchedules,
+    isRefetching
   } = useContentSchedules(selectedClient, selectedYear, selectedMonth);
   
   // Log the current state to debug
@@ -57,6 +59,11 @@ const OniAgenciaControlePauta = () => {
     setSelectedMonth(month);
     setSelectedYear(year);
   };
+
+  const handleManualRefetch = () => {
+    console.log('Manually refreshing schedules');
+    refetchSchedules();
+  };
   
   return (
     <main className="container-fluid p-0 max-w-full">
@@ -71,6 +78,18 @@ const OniAgenciaControlePauta = () => {
             month={selectedMonth}
             year={selectedYear}
           />
+          <div className="ml-auto">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleManualRefetch}
+              disabled={isRefetching || isLoadingSchedules}
+              title="Atualizar agendamentos"
+            >
+              <RefreshCw className={`h-4 w-4 ${isRefetching ? 'animate-spin' : ''}`} />
+              <span className="ml-2">Atualizar</span>
+            </Button>
+          </div>
         </div>
         
         <ContentScheduleFilters

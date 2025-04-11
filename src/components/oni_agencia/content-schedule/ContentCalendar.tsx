@@ -14,6 +14,7 @@ import { useCurrentUser } from "./hooks/useCurrentUser";
 import { useDateSelection } from "./hooks/useDateSelection";
 import { useMonthNavigation } from "./hooks/useMonthNavigation";
 import { useCalendarEvents } from "./hooks/useCalendarEvents";
+import { useEffect } from "react";
 
 interface ContentCalendarProps {
   events: CalendarEvent[];
@@ -41,7 +42,8 @@ export function ContentCalendar({
     setIsDialogOpen,
     handleDateSelect, 
     handleEventClick,
-    setSelectedDate
+    setSelectedDate,
+    setSelectedEvent
   } = useDateSelection();
   const { handlePrevMonth, handleNextMonth } = useMonthNavigation(month, year, onMonthChange);
   const { isDragging, handleDragStart, handleDragEnd } = useDragAndDrop(events, userName);
@@ -65,6 +67,17 @@ export function ContentCalendar({
     })
   );
 
+  // Reset selection when events change
+  useEffect(() => {
+    if (!isDialogOpen && selectedEvent) {
+      // Find if the selected event still exists or has been updated
+      const updatedEvent = events.find(e => e.id === selectedEvent.id);
+      if (updatedEvent) {
+        setSelectedEvent(updatedEvent);
+      }
+    }
+  }, [events, isDialogOpen, selectedEvent, setSelectedEvent]);
+
   const weekDays = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
   console.log("ContentCalendar render state:", { 
@@ -82,6 +95,13 @@ export function ContentCalendar({
   const handleCellEventClick = (event: CalendarEvent, date: Date) => {
     console.log("Event clicked in ContentCalendar:", event.id, event.title);
     handleEventClick(event, date);
+  };
+
+  const handleDialogClose = () => {
+    console.log("ScheduleEventDialog closed");
+    setSelectedDate(undefined);
+    setSelectedEvent(undefined);
+    setIsDialogOpen(false);
   };
 
   return (
@@ -138,11 +158,7 @@ export function ContentCalendar({
             clientId={clientId}
             selectedDate={selectedDate}
             events={currentEvents}
-            onClose={() => {
-              console.log("ScheduleEventDialog closed");
-              setSelectedDate(undefined);
-              setIsDialogOpen(false);
-            }}
+            onClose={handleDialogClose}
             selectedEvent={selectedEvent} // Pass the selected event to open directly
           />
         )}

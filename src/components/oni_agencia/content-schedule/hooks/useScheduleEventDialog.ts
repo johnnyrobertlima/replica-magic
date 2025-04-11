@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
 import { useCreateContentSchedule, useUpdateContentSchedule, useDeleteContentSchedule } from "@/hooks/useOniAgenciaContentSchedules";
+import { useToast } from "@/hooks/use-toast";
 
 export function useScheduleEventDialog({
   clientId,
@@ -17,6 +18,7 @@ export function useScheduleEventDialog({
   selectedEvent?: CalendarEvent;
   onClose: () => void;
 }) {
+  const { toast } = useToast();
   const [currentSelectedEvent, setCurrentSelectedEvent] = useState<CalendarEvent | null>(selectedEvent || null);
   const [formData, setFormData] = useState<ContentScheduleFormData>({
     client_id: clientId,
@@ -40,6 +42,7 @@ export function useScheduleEventDialog({
 
   // Set the selectedEvent when it comes from props
   useEffect(() => {
+    console.log("useScheduleEventDialog selectedEvent effect:", selectedEvent?.id);
     if (selectedEvent) {
       handleSelectEvent(selectedEvent);
     } else if (events.length === 1) {
@@ -50,6 +53,7 @@ export function useScheduleEventDialog({
   }, [selectedEvent, events]);
 
   const resetForm = () => {
+    console.log("resetting form in useScheduleEventDialog");
     setCurrentSelectedEvent(null);
     setFormData({
       client_id: clientId,
@@ -66,6 +70,7 @@ export function useScheduleEventDialog({
   };
 
   const handleSelectEvent = (event: CalendarEvent) => {
+    console.log("selecting event in useScheduleEventDialog:", event.id);
     setCurrentSelectedEvent(event);
     setFormData({
       client_id: event.client_id,
@@ -93,16 +98,35 @@ export function useScheduleEventDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (currentSelectedEvent) {
-      await updateMutation.mutateAsync({
-        id: currentSelectedEvent.id,
-        schedule: formData
+    try {
+      if (currentSelectedEvent) {
+        console.log("Updating event:", currentSelectedEvent.id, formData);
+        await updateMutation.mutateAsync({
+          id: currentSelectedEvent.id,
+          schedule: formData
+        });
+        toast({
+          title: "Agendamento atualizado",
+          description: "Agendamento atualizado com sucesso."
+        });
+      } else {
+        console.log("Creating new event:", formData);
+        await createMutation.mutateAsync(formData);
+        toast({
+          title: "Agendamento criado",
+          description: "Novo agendamento criado com sucesso."
+        });
+      }
+      
+      onClose();
+    } catch (error) {
+      console.error("Error in handleSubmit:", error);
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao salvar o agendamento.",
+        variant: "destructive"
       });
-    } else {
-      await createMutation.mutateAsync(formData);
     }
-    
-    onClose();
   };
 
   const handleStatusUpdate = async (e: React.FormEvent) => {
@@ -110,33 +134,64 @@ export function useScheduleEventDialog({
     
     if (!currentSelectedEvent) return;
     
-    // Atualiza apenas o status e o colaborador
-    const updateData = {
-      status_id: formData.status_id,
-      collaborator_id: formData.collaborator_id,
-      description: formData.description
-    };
-    
-    await updateMutation.mutateAsync({
-      id: currentSelectedEvent.id,
-      schedule: updateData
-    });
-    
-    onClose();
+    try {
+      // Atualiza apenas o status e o colaborador
+      const updateData = {
+        status_id: formData.status_id,
+        collaborator_id: formData.collaborator_id,
+        description: formData.description
+      };
+      
+      console.log("Updating event status:", currentSelectedEvent.id, updateData);
+      await updateMutation.mutateAsync({
+        id: currentSelectedEvent.id,
+        schedule: updateData
+      });
+      
+      toast({
+        title: "Status atualizado",
+        description: "Status do agendamento atualizado com sucesso.",
+        variant: "success"
+      });
+      
+      onClose();
+    } catch (error) {
+      console.error("Error in handleStatusUpdate:", error);
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao atualizar o status.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleDelete = async () => {
     if (!currentSelectedEvent) return;
     
-    if (confirm("Tem certeza que deseja excluir este agendamento?")) {
-      await deleteMutation.mutateAsync({
-        id: currentSelectedEvent.id,
-        clientId,
-        year: selectedDate.getFullYear(),
-        month: selectedDate.getMonth() + 1
+    try {
+      if (confirm("Tem certeza que deseja excluir este agendamento?")) {
+        console.log("Deleting event:", currentSelectedEvent.id);
+        await deleteMutation.mutateAsync({
+          id: currentSelectedEvent.id,
+          clientId,
+          year: selectedDate.getFullYear(),
+          month: selectedDate.getMonth() + 1
+        });
+        
+        toast({
+          title: "Agendamento excluído",
+          description: "Agendamento excluído com sucesso."
+        });
+        
+        onClose();
+      }
+    } catch (error) {
+      console.error("Error in handleDelete:", error);
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao excluir o agendamento.",
+        variant: "destructive"
       });
-      
-      onClose();
     }
   };
 

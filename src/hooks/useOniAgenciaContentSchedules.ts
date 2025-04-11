@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   getContentSchedules, 
@@ -19,6 +20,8 @@ export function useContentSchedules(clientId: string, year: number, month: numbe
     queryKey: ['oniAgenciaContentSchedules', clientId, year, month],
     queryFn: () => getContentSchedules(clientId, year, month),
     enabled: !!clientId && !!year && !!month,
+    staleTime: 30000, // Consider data fresh for 30 seconds
+    refetchOnWindowFocus: true, // Refetch when window gets focus
   });
 }
 
@@ -27,6 +30,7 @@ export function useAllContentSchedules(clientId: string) {
     queryKey: ['allOniAgenciaContentSchedules', clientId],
     queryFn: () => getAllContentSchedules(clientId),
     enabled: !!clientId,
+    staleTime: 30000, // Consider data fresh for 30 seconds
   });
 }
 
@@ -58,16 +62,17 @@ export function useCreateContentSchedule() {
       const year = date.getFullYear();
       const month = date.getMonth() + 1;
       
+      // Invalidate both specific month query and all schedules
       queryClient.invalidateQueries({ 
         queryKey: ['oniAgenciaContentSchedules', client_id, year, month] 
       });
       
-      toast({
-        title: "Agendamento criado",
-        description: "O agendamento de conteúdo foi criado com sucesso.",
+      queryClient.invalidateQueries({
+        queryKey: ['allOniAgenciaContentSchedules', client_id]
       });
     },
     onError: (error) => {
+      console.error('Error creating content schedule:', error);
       toast({
         title: "Erro ao criar agendamento",
         description: "Ocorreu um erro ao criar o agendamento de conteúdo.",
@@ -84,30 +89,32 @@ export function useUpdateContentSchedule() {
   return useMutation({
     mutationFn: ({ id, schedule }: { id: string; schedule: Partial<ContentScheduleFormData> }) => 
       updateContentSchedule(id, schedule),
-    onSuccess: (_, variables) => {
+    onSuccess: (data, variables) => {
       const { schedule } = variables;
-      const { client_id, scheduled_date } = schedule;
+      const { client_id } = schedule;
       
-      if (client_id && scheduled_date) {
-        const date = new Date(scheduled_date);
-        const year = date.getFullYear();
-        const month = date.getMonth() + 1;
-        
+      if (client_id) {
+        // Invalidate all relevant queries
         queryClient.invalidateQueries({ 
-          queryKey: ['oniAgenciaContentSchedules', client_id, year, month] 
+          queryKey: ['oniAgenciaContentSchedules', client_id] 
+        });
+        
+        queryClient.invalidateQueries({
+          queryKey: ['allOniAgenciaContentSchedules', client_id]
         });
       } else {
+        // If client_id is not available, invalidate all schedules
         queryClient.invalidateQueries({ 
           queryKey: ['oniAgenciaContentSchedules'] 
         });
+        
+        queryClient.invalidateQueries({
+          queryKey: ['allOniAgenciaContentSchedules']
+        });
       }
-      
-      toast({
-        title: "Agendamento atualizado",
-        description: "O agendamento de conteúdo foi atualizado com sucesso.",
-      });
     },
     onError: (error) => {
+      console.error('Error updating content schedule:', error);
       toast({
         title: "Erro ao atualizar agendamento",
         description: "Ocorreu um erro ao atualizar o agendamento de conteúdo.",
@@ -126,16 +133,17 @@ export function useDeleteContentSchedule() {
       return deleteContentSchedule(id).then(() => ({ clientId, year, month }));
     },
     onSuccess: ({ clientId, year, month }) => {
+      // Invalidate both specific month query and all schedules
       queryClient.invalidateQueries({ 
         queryKey: ['oniAgenciaContentSchedules', clientId, year, month] 
       });
       
-      toast({
-        title: "Agendamento excluído",
-        description: "O agendamento de conteúdo foi excluído com sucesso.",
+      queryClient.invalidateQueries({
+        queryKey: ['allOniAgenciaContentSchedules', clientId]
       });
     },
     onError: (error) => {
+      console.error('Error deleting content schedule:', error);
       toast({
         title: "Erro ao excluir agendamento",
         description: "Ocorreu um erro ao excluir o agendamento de conteúdo.",
