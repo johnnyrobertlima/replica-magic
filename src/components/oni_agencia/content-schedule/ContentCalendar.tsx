@@ -14,6 +14,8 @@ import { useCurrentUser } from "./hooks/useCurrentUser";
 import { useDateSelection } from "./hooks/useDateSelection";
 import { useMonthNavigation } from "./hooks/useMonthNavigation";
 import { useCalendarEvents } from "./hooks/useCalendarEvents";
+import { usePautaStatus } from "./hooks/usePautaStatus";
+import { PautaStatusIndicator } from "./PautaStatusIndicator";
 import { useEffect } from "react";
 
 interface ContentCalendarProps {
@@ -47,6 +49,7 @@ export function ContentCalendar({
   } = useDateSelection();
   const { handlePrevMonth, handleNextMonth } = useMonthNavigation(month, year, onMonthChange);
   const { isDragging, handleDragStart, handleDragEnd } = useDragAndDrop(events, userName);
+  const { clientScopes } = usePautaStatus(clientId, month, year, events);
   
   // Use this query to get ALL events regardless of month - this helps when switching months
   const { data: allEvents = [] } = useAllContentSchedules(clientId);
@@ -111,6 +114,15 @@ export function ContentCalendar({
       onDragEnd={handleDragEnd}
     >
       <div className="bg-white rounded-md border shadow-sm w-full h-full">
+        <div className="px-4 pt-4">
+          <PautaStatusIndicator 
+            events={events} 
+            clientScopes={clientScopes} 
+            month={month} 
+            year={year} 
+          />
+        </div>
+        
         <CalendarHeader 
           currentDate={currentDate}
           onPrevMonth={handlePrevMonth}

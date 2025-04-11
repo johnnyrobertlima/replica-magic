@@ -51,12 +51,11 @@ export function CalendarDayCell({
   const visibleEvents = dayEvents.slice(0, MAX_VISIBLE_EVENTS);
   const hiddenEventsCount = dayEvents.length - MAX_VISIBLE_EVENTS;
   
-  // Handle click on the empty space of the cell to create a new event
+  // Handle click on the cell itself to create a new event, even if there are existing events
   const handleCellClick = (e: React.MouseEvent) => {
-    console.log("Cell clicked for date:", format(date, 'yyyy-MM-dd'));
-    // Check if we're clicking directly on the cell or one of its child elements that doesn't have event-item class
-    if (!(e.target as HTMLElement).closest('.event-item')) {
-      console.log("Creating new event for date:", date);
+    // Only proceed if the click was directly on the cell element itself, not on a child
+    if (e.currentTarget === e.target) {
+      console.log("Cell background clicked for date:", format(date, 'yyyy-MM-dd'));
       onSelect(date);
     }
   };

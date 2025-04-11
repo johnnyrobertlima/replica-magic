@@ -9,7 +9,7 @@ export function WeekDaysHeader({ weekDays }: WeekDaysHeaderProps) {
       {weekDays.map((day, index) => (
         <div 
           key={index} 
-          className="text-center py-2 font-medium text-sm border-r last:border-r-0 bg-gray-50 hover:bg-gray-100 transition-colors"
+          className="text-center py-3 font-medium text-sm border-r last:border-r-0 bg-gray-50 hover:bg-gray-100 transition-colors"
         >
           {day}
         </div>

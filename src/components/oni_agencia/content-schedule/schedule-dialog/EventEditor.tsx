@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EventForm } from "./EventForm";
 import { DialogActions } from "./DialogActions";
 import { StatusUpdateForm } from "./StatusUpdateForm";
+import { ArrowDown } from "lucide-react";
 
 interface EventEditorProps {
   event: CalendarEvent;
@@ -57,7 +58,8 @@ export function EventEditor({
   onInputChange,
   onSelectChange
 }: EventEditorProps) {
-  const [activeTab, setActiveTab] = useState<"details" | "status">("details");
+  // Start with "status" tab active by default for better UX
+  const [activeTab, setActiveTab] = useState<"details" | "status">("status");
   const [note, setNote] = useState<string>(formData.description || "");
   
   // Sync note with formData description
@@ -70,7 +72,15 @@ export function EventEditor({
     <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "details" | "status")}>
       <TabsList className="grid w-full grid-cols-2">
         <TabsTrigger value="details">Detalhes</TabsTrigger>
-        <TabsTrigger value="status">Atualizar Status</TabsTrigger>
+        <TabsTrigger 
+          value="status" 
+          className={`relative ${activeTab === "status" ? "bg-purple-100 hover:bg-purple-200 text-purple-800" : ""}`}
+        >
+          {activeTab === "status" && (
+            <ArrowDown className="h-4 w-4 absolute -top-3 left-1/2 transform -translate-x-1/2 text-purple-500" />
+          )}
+          Atualizar Status
+        </TabsTrigger>
       </TabsList>
       <TabsContent value="details">
         <form onSubmit={onSubmit}>
