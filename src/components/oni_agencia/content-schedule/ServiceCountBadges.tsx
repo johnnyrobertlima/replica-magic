@@ -6,6 +6,7 @@ import { CalendarEvent } from "@/types/oni-agencia";
 import { useClientScopesByClient } from "@/hooks/useOniAgenciaClientScopes";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useServices } from "@/hooks/useOniAgenciaContentSchedules";
+import { Bell, CheckCircle, AlertTriangle } from "lucide-react";
 
 interface ServiceCountBadgesProps {
   events: CalendarEvent[];
@@ -103,18 +104,24 @@ export function ServiceCountBadges({ events, clientId, month, year }: ServiceCou
           const scheduledAmount = service.count;
           const remaining = Math.max(0, contractedAmount - scheduledAmount);
           
+          // Determine status emoji
+          let statusEmoji = "";
+          
           // Determine the badge color based on scheduled vs contracted
           let badgeClass = "bg-gray-100 text-gray-800 hover:bg-gray-200";
           
           if (contractedAmount > 0) {
             if (scheduledAmount > contractedAmount) {
-              // Exceeded contracted amount
+              // Exceeded contracted amount - show check mark
+              statusEmoji = "👍 ";
               badgeClass = "bg-amber-100 text-amber-800 hover:bg-amber-200";
             } else if (scheduledAmount === contractedAmount) {
-              // Exactly at contracted amount
+              // Exactly at contracted amount - show check mark
+              statusEmoji = "👍 ";
               badgeClass = "bg-green-100 text-green-800 hover:bg-green-200";
             } else {
-              // Still has remaining
+              // Still has remaining - show warning
+              statusEmoji = "🚨 ";
               badgeClass = "bg-blue-100 text-blue-800 hover:bg-blue-200";
             }
           }
@@ -126,7 +133,7 @@ export function ServiceCountBadges({ events, clientId, month, year }: ServiceCou
                   className={`${badgeClass} cursor-help py-1 px-2 font-medium text-xs`}
                   style={{ backgroundColor: service.color, color: '#fff' }}
                 >
-                  {service.name}: {contractedAmount > 0 ? 
+                  {statusEmoji}{service.name}: {contractedAmount > 0 ? 
                     `${scheduledAmount}/${contractedAmount} (${remaining} restantes)` : 
                     scheduledAmount}
                 </Badge>
