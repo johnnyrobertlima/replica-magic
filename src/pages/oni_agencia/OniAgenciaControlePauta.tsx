@@ -4,7 +4,6 @@ import { OniAgenciaMenu } from "@/components/oni_agencia/OniAgenciaMenu";
 import { CalendarDays, RefreshCw } from "lucide-react";
 import { ContentCalendar } from "@/components/oni_agencia/content-schedule/ContentCalendar";
 import { ContentScheduleFilters } from "@/components/oni_agencia/content-schedule/ContentScheduleFilters";
-import { ServiceCountBadges } from "@/components/oni_agencia/content-schedule/ServiceCountBadges";
 import { useContentSchedules } from "@/hooks/useOniAgenciaContentSchedules";
 import { useClients } from "@/hooks/useOniAgenciaClients";
 import { useCollapsible } from "@/components/oni_agencia/content-schedule/hooks/useCollapsible";
@@ -72,12 +71,6 @@ const OniAgenciaControlePauta = () => {
         <div className="flex items-center gap-2 mb-6">
           <CalendarDays className="h-6 w-6 text-primary" />
           <h1 className="text-2xl font-semibold tracking-tight">Controle de Pauta</h1>
-          <ServiceCountBadges 
-            events={schedules} 
-            clientId={selectedClient}
-            month={selectedMonth}
-            year={selectedYear}
-          />
           <div className="ml-auto">
             <Button 
               variant="outline" 
