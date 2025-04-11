@@ -37,12 +37,14 @@ export function useDragAndDrop(events: CalendarEvent[], userName: string) {
       if (newDate !== oldDate) {
         console.log(`Moving event from ${oldDate} to ${newDate}`);
         
+        // Only send the required fields for the update - primarily just the scheduled_date
         updateMutation.mutate(
           {
             id: draggedEvent.id,
             schedule: {
-              ...draggedEvent,
-              scheduled_date: newDate
+              scheduled_date: newDate,
+              // Include only the client_id for proper cache invalidation
+              client_id: draggedEvent.client_id
             }
           },
           {
