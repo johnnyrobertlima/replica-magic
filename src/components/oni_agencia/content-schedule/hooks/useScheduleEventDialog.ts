@@ -1,0 +1,156 @@
+
+import { useState, useEffect } from "react";
+import { format } from "date-fns";
+import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
+import { useCreateContentSchedule, useUpdateContentSchedule, useDeleteContentSchedule } from "@/hooks/useOniAgenciaContentSchedules";
+
+export function useScheduleEventDialog({
+  clientId,
+  selectedDate,
+  events,
+  selectedEvent,
+  onClose
+}: {
+  clientId: string;
+  selectedDate: Date;
+  events: CalendarEvent[];
+  selectedEvent?: CalendarEvent;
+  onClose: () => void;
+}) {
+  const [currentSelectedEvent, setCurrentSelectedEvent] = useState<CalendarEvent | null>(selectedEvent || null);
+  const [formData, setFormData] = useState<ContentScheduleFormData>({
+    client_id: clientId,
+    service_id: "",
+    collaborator_id: null,
+    title: "",
+    description: null,
+    scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
+    execution_phase: null,
+    editorial_line_id: null,
+    product_id: null,
+    status_id: null
+  });
+
+  const createMutation = useCreateContentSchedule();
+  const updateMutation = useUpdateContentSchedule();
+  const deleteMutation = useDeleteContentSchedule();
+
+  const isSubmitting = createMutation.isPending || updateMutation.isPending;
+  const isDeleting = deleteMutation.isPending;
+
+  // Set the selectedEvent when it comes from props
+  useEffect(() => {
+    if (selectedEvent) {
+      handleSelectEvent(selectedEvent);
+    } else if (events.length === 1) {
+      handleSelectEvent(events[0]);
+    } else {
+      resetForm();
+    }
+  }, [selectedEvent, events]);
+
+  const resetForm = () => {
+    setCurrentSelectedEvent(null);
+    setFormData({
+      client_id: clientId,
+      service_id: "",
+      collaborator_id: null,
+      title: "",
+      description: null,
+      scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
+      execution_phase: null,
+      editorial_line_id: null,
+      product_id: null,
+      status_id: null
+    });
+  };
+
+  const handleSelectEvent = (event: CalendarEvent) => {
+    setCurrentSelectedEvent(event);
+    setFormData({
+      client_id: event.client_id,
+      service_id: event.service_id,
+      collaborator_id: event.collaborator_id,
+      title: event.title,
+      description: event.description,
+      scheduled_date: event.scheduled_date,
+      execution_phase: event.execution_phase,
+      editorial_line_id: event.editorial_line_id,
+      product_id: event.product_id,
+      status_id: event.status_id
+    });
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value === "null" ? null : value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (currentSelectedEvent) {
+      await updateMutation.mutateAsync({
+        id: currentSelectedEvent.id,
+        schedule: formData
+      });
+    } else {
+      await createMutation.mutateAsync(formData);
+    }
+    
+    onClose();
+  };
+
+  const handleStatusUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!currentSelectedEvent) return;
+    
+    // Atualiza apenas o status e o colaborador
+    const updateData = {
+      status_id: formData.status_id,
+      collaborator_id: formData.collaborator_id,
+      description: formData.description
+    };
+    
+    await updateMutation.mutateAsync({
+      id: currentSelectedEvent.id,
+      schedule: updateData
+    });
+    
+    onClose();
+  };
+
+  const handleDelete = async () => {
+    if (!currentSelectedEvent) return;
+    
+    if (confirm("Tem certeza que deseja excluir este agendamento?")) {
+      await deleteMutation.mutateAsync({
+        id: currentSelectedEvent.id,
+        clientId,
+        year: selectedDate.getFullYear(),
+        month: selectedDate.getMonth() + 1
+      });
+      
+      onClose();
+    }
+  };
+
+  return {
+    currentSelectedEvent,
+    formData,
+    isSubmitting,
+    isDeleting,
+    handleInputChange,
+    handleSelectChange,
+    handleSubmit,
+    handleStatusUpdate,
+    handleDelete,
+    handleSelectEvent,
+    resetForm
+  };
+}
