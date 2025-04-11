@@ -54,7 +54,6 @@ export function DialogActions({
         variant={isStatusUpdate ? "success" : "default"}
         size="sm"
         disabled={isSubmitting || isDeleting}
-        className={isStatusUpdate ? "bg-green-600 hover:bg-green-700 text-white" : ""}
       >
         {isSubmitting ? (
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
