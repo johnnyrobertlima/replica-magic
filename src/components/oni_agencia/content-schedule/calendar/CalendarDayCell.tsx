@@ -53,11 +53,14 @@ export function CalendarDayCell({
   
   // Handle click on the cell background to create a new event, regardless of existing events
   const handleCellClick = (e: React.MouseEvent) => {
-    // Check if the click was on the cell itself or on the empty area,
-    // but not on an event or "+ more" link
-    if (e.currentTarget === e.target || 
-        (e.target as HTMLElement).classList.contains('cell-background') ||
-        (e.target as HTMLElement).classList.contains('empty-cell-area')) {
+    // We need to verify this is actually a click on the cell background, not on an event
+    const target = e.target as HTMLElement;
+    const isEventClick = 
+      target.closest('.event-item') || 
+      target.classList.contains('event-item') ||
+      target.closest('.event-item-wrapper');
+    
+    if (!isEventClick) {
       console.log("Cell background clicked for date:", format(date, 'yyyy-MM-dd'));
       onSelect(date);
     }
@@ -96,7 +99,7 @@ export function CalendarDayCell({
             <TooltipProvider key={event.id}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="event-item z-10">
+                  <div className="event-item-wrapper">
                     <DraggableEventItem 
                       event={event}
                       onClick={(e) => handleEventClick(e, event)}
@@ -119,7 +122,7 @@ export function CalendarDayCell({
           
           {hiddenEventsCount > 0 && (
             <div 
-              className="text-xs text-primary font-medium px-1 py-0.5 cursor-pointer hover:underline event-item z-10"
+              className="text-xs text-primary font-medium px-1 py-0.5 cursor-pointer hover:underline event-item-wrapper"
               onClick={(e) => {
                 e.stopPropagation();
                 console.log("Showing all events for date:", date);
@@ -134,9 +137,6 @@ export function CalendarDayCell({
         // Empty state with a clickable background that spans the whole cell area
         <div className="h-[calc(100%-20px)] w-full empty-cell-area" />
       )}
-      
-      {/* Invisible background layer to ensure clicks on empty areas create new events */}
-      <div className="absolute inset-0 pointer-events-auto cell-background" style={{ zIndex: -1 }}></div>
     </div>
   );
 }

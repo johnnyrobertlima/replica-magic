@@ -10,14 +10,14 @@ export function useDateSelection() {
   const handleDateSelect = useCallback((date: Date | undefined) => {
     console.log("Date selected in useDateSelection:", date);
     setSelectedDate(date);
-    setSelectedEvent(undefined); // Clear event selection when selecting a date
+    setSelectedEvent(undefined); // Always clear event selection when selecting a date directly
     setIsDialogOpen(true); // Open dialog when a date is selected
   }, []);
   
   const handleEventClick = useCallback((event: CalendarEvent, date: Date) => {
     console.log("Event clicked in useDateSelection:", event.id, event.title);
     setSelectedDate(date);
-    setSelectedEvent(event);
+    setSelectedEvent(event); // Set the selected event when an event is clicked
     setIsDialogOpen(true); // Open dialog when an event is clicked
   }, []);
   
