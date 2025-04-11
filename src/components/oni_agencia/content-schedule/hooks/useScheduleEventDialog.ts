@@ -150,8 +150,8 @@ export function useScheduleEventDialog({
       
       toast({
         title: "Status atualizado",
-        description: "Status do agendamento atualizado com sucesso.",
-        variant: "success"
+        description: "Status do agendamento atualizado com sucesso."
+        // Removed the variant: "success" that was causing the error
       });
       
       onClose();
