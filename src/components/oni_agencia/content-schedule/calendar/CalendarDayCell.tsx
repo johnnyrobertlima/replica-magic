@@ -51,10 +51,13 @@ export function CalendarDayCell({
   const visibleEvents = dayEvents.slice(0, MAX_VISIBLE_EVENTS);
   const hiddenEventsCount = dayEvents.length - MAX_VISIBLE_EVENTS;
   
-  // Handle click on the cell itself to create a new event, even if there are existing events
+  // Handle click on the cell background to create a new event, regardless of existing events
   const handleCellClick = (e: React.MouseEvent) => {
-    // Only proceed if the click was directly on the cell element itself, not on a child
-    if (e.currentTarget === e.target) {
+    // Only proceed if the click was directly on the cell element itself or on the cell's empty area,
+    // but not on an event or "+ more" link
+    if (e.currentTarget === e.target || 
+        (e.target as HTMLElement).classList.contains('cell-background') ||
+        (e.target as HTMLElement).classList.contains('empty-cell-area')) {
       console.log("Cell background clicked for date:", format(date, 'yyyy-MM-dd'));
       onSelect(date);
     }
@@ -128,9 +131,12 @@ export function CalendarDayCell({
           )}
         </div>
       ) : (
-        // Empty state to make sure the entire cell is clickable for creating new events
-        <div className="h-[calc(100%-20px)] w-full" />
+        // Empty state with a clickable background that spans the whole cell area
+        <div className="h-[calc(100%-20px)] w-full empty-cell-area" />
       )}
+      
+      {/* Invisible background layer to ensure clicks on empty areas create new events */}
+      <div className="absolute inset-0 pointer-events-auto cell-background" style={{ zIndex: -1 }}></div>
     </div>
   );
 }

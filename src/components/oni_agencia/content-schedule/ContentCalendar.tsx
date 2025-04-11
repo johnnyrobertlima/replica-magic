@@ -91,11 +91,14 @@ export function ContentCalendar({
 
   const handleCellSelect = (date: Date) => {
     console.log("Cell selected in ContentCalendar:", format(date, 'yyyy-MM-dd'));
+    // When a cell is clicked (not an event), we want to create a new event
     handleDateSelect(date);
+    setSelectedEvent(undefined); // Clear any previously selected event
   };
 
   const handleCellEventClick = (event: CalendarEvent, date: Date) => {
     console.log("Event clicked in ContentCalendar:", event.id, event.title);
+    // When an event is clicked, we want to edit that specific event
     handleEventClick(event, date);
   };
 
