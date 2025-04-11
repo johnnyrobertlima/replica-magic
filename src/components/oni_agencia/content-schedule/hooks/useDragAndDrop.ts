@@ -4,6 +4,8 @@ import { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { useUpdateContentSchedule } from "@/hooks/useOniAgenciaContentSchedules";
 import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export function useDragAndDrop(events: CalendarEvent[], userName: string) {
   const [isDragging, setIsDragging] = useState(false);
@@ -37,11 +39,24 @@ export function useDragAndDrop(events: CalendarEvent[], userName: string) {
       if (newDate !== oldDate) {
         console.log(`Moving event from ${oldDate} to ${newDate}`);
         
+        // Format dates for the message
+        const oldDateFormatted = format(new Date(oldDate), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+        const newDateFormatted = format(new Date(newDate), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+        
+        // Create movement record message
+        const movementRecord = `[${new Date().toLocaleString()}] Movido de ${oldDateFormatted} para ${newDateFormatted} por ${userName}.`;
+        
+        // Append to existing description or create new
+        const updatedDescription = draggedEvent.description 
+          ? `${draggedEvent.description}\n\n${movementRecord}` 
+          : movementRecord;
+        
         // Create a minimal update object with only the necessary fields
         const updateData = {
           id: draggedEvent.id,
           schedule: {
             scheduled_date: newDate,
+            description: updatedDescription,
             client_id: draggedEvent.client_id
           }
         };
@@ -52,7 +67,7 @@ export function useDragAndDrop(events: CalendarEvent[], userName: string) {
             onSuccess: () => {
               toast({
                 title: "Agendamento movido",
-                description: `O agendamento foi movido para ${newDate}.`
+                description: `O agendamento foi movido para ${newDateFormatted}.`
               });
             },
             onError: (error) => {
@@ -68,7 +83,7 @@ export function useDragAndDrop(events: CalendarEvent[], userName: string) {
     }
     
     setDraggedEvent(null);
-  }, [draggedEvent, updateMutation, toast]);
+  }, [draggedEvent, updateMutation, toast, userName]);
   
   return {
     isDragging,
