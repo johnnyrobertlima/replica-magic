@@ -33,7 +33,10 @@ export function EventList({ events, onSelectEvent, onCreateNew }: EventListProps
         ))}
       </div>
       <div className="flex justify-center mt-4">
-        <Button variant="outline" onClick={onCreateNew}>Criar Novo</Button>
+        <Button variant="outline" onClick={() => {
+          console.log("Criar Novo button clicked");
+          onCreateNew();
+        }}>Criar Novo</Button>
       </div>
     </div>
   );

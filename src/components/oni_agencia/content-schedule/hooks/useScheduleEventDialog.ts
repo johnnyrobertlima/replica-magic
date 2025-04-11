@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { useScheduleFormState } from "./useScheduleFormState";
 import { useScheduleMutations } from "./useScheduleMutations";
@@ -53,6 +53,12 @@ export function useScheduleEventDialog({
   const submitForm = (e: React.FormEvent) => handleSubmit(e, currentSelectedEvent, formData);
   const updateStatus = (e: React.FormEvent) => handleStatusUpdate(e, currentSelectedEvent, formData);
   const deleteEvent = () => handleDelete(currentSelectedEvent);
+  
+  // Enhanced reset form function
+  const handleResetForm = () => {
+    console.log("Enhanced reset form called");
+    resetForm();
+  };
 
   return {
     currentSelectedEvent,
@@ -65,6 +71,6 @@ export function useScheduleEventDialog({
     handleStatusUpdate: updateStatus,
     handleDelete: deleteEvent,
     handleSelectEvent,
-    resetForm
+    resetForm: handleResetForm
   };
 }
