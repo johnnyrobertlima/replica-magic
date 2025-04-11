@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { 
   Form, 
@@ -38,6 +38,28 @@ export function CollaboratorForm({
     }
   });
 
+  // Reset form when collaborator changes
+  useEffect(() => {
+    console.log("CollaboratorForm received collaborator:", collaborator);
+    if (collaborator) {
+      form.reset({
+        name: collaborator.name || "",
+        email: collaborator.email || "",
+        phone: collaborator.phone || "",
+        photo_url: collaborator.photo_url || null,
+      });
+      setPhotoUrl(collaborator.photo_url);
+    } else {
+      form.reset({
+        name: "",
+        email: "",
+        phone: "",
+        photo_url: null,
+      });
+      setPhotoUrl(null);
+    }
+  }, [collaborator, form]);
+
   const handleSubmit = async (data: CollaboratorFormData) => {
     // If there's a new photo file, we'd need to upload it first
     // This is just a placeholder for that logic
@@ -50,16 +72,8 @@ export function CollaboratorForm({
       data.photo_url = photoUrl;
     }
     
+    console.log("Submitting form data:", data);
     await onSubmit(data);
-    if (!collaborator) {
-      form.reset({
-        name: "",
-        email: "",
-        phone: "",
-        photo_url: null,
-      });
-      setPhotoUrl(null);
-    }
   };
 
   const handlePhotoChange = (file: File | null) => {

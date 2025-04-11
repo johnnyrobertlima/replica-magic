@@ -36,6 +36,11 @@ export function CollaboratorList({
     setDeletingId(null);
   };
 
+  const handleEdit = (collaborator: OniAgenciaCollaborator) => {
+    console.log("Edit button clicked for collaborator:", collaborator);
+    onEdit(collaborator);
+  };
+
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -89,7 +94,7 @@ export function CollaboratorList({
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      onClick={() => onEdit(collaborator)}
+                      onClick={() => handleEdit(collaborator)}
                     >
                       <Edit className="h-4 w-4 mr-1" />
                       Editar

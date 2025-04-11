@@ -27,6 +27,7 @@ export function useCreateCollaborator() {
       });
     },
     onError: (error) => {
+      console.error("Error creating collaborator:", error);
       toast({
         title: "Erro ao criar colaborador",
         description: "Ocorreu um erro ao criar o colaborador.",
@@ -41,8 +42,10 @@ export function useUpdateCollaborator() {
   const { toast } = useToast();
   
   return useMutation({
-    mutationFn: ({ id, collaborator }: { id: string; collaborator: CollaboratorFormData }) => 
-      updateCollaborator(id, collaborator),
+    mutationFn: ({ id, collaborator }: { id: string; collaborator: CollaboratorFormData }) => {
+      console.log("Updating collaborator with ID:", id, "Data:", collaborator);
+      return updateCollaborator(id, collaborator);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['oniAgenciaCollaborators'] });
       toast({
@@ -51,6 +54,7 @@ export function useUpdateCollaborator() {
       });
     },
     onError: (error) => {
+      console.error("Error updating collaborator:", error);
       toast({
         title: "Erro ao atualizar colaborador",
         description: "Ocorreu um erro ao atualizar o colaborador.",
@@ -74,6 +78,7 @@ export function useDeleteCollaborator() {
       });
     },
     onError: (error) => {
+      console.error("Error deleting collaborator:", error);
       toast({
         title: "Erro ao excluir colaborador",
         description: "Ocorreu um erro ao excluir o colaborador.",

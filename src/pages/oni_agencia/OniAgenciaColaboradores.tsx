@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { OniAgenciaMenu } from "@/components/oni_agencia/OniAgenciaMenu";
 import { UserPlus } from "lucide-react";
 import { OniAgenciaCollaborator, CollaboratorFormData } from "@/types/oni-agencia";
@@ -11,9 +11,11 @@ import {
   useUpdateCollaborator, 
   useDeleteCollaborator 
 } from "@/hooks/useOniAgenciaCollaborators";
+import { useToast } from "@/hooks/use-toast";
 
 const OniAgenciaColaboradores = () => {
   const [editingCollaborator, setEditingCollaborator] = useState<OniAgenciaCollaborator | null>(null);
+  const { toast } = useToast();
   
   const { data: collaborators = [], isLoading } = useCollaborators();
   const createMutation = useCreateCollaborator();
@@ -21,30 +23,68 @@ const OniAgenciaColaboradores = () => {
   const deleteMutation = useDeleteCollaborator();
 
   const handleSubmit = async (data: CollaboratorFormData) => {
-    if (editingCollaborator) {
-      await updateMutation.mutateAsync({ id: editingCollaborator.id, collaborator: data });
-      setEditingCollaborator(null);
-    } else {
-      await createMutation.mutateAsync(data);
+    try {
+      if (editingCollaborator) {
+        console.log("Updating collaborator:", editingCollaborator.id, data);
+        await updateMutation.mutateAsync({ id: editingCollaborator.id, collaborator: data });
+        setEditingCollaborator(null);
+        toast({
+          title: "Colaborador atualizado",
+          description: "O colaborador foi atualizado com sucesso.",
+        });
+      } else {
+        console.log("Creating new collaborator:", data);
+        await createMutation.mutateAsync(data);
+        toast({
+          title: "Colaborador criado",
+          description: "O colaborador foi criado com sucesso.",
+        });
+      }
+    } catch (error) {
+      console.error("Error submitting collaborator:", error);
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao salvar o colaborador.",
+        variant: "destructive",
+      });
     }
   };
 
   const handleEdit = (collaborator: OniAgenciaCollaborator) => {
+    console.log("Editing collaborator:", collaborator);
     setEditingCollaborator(collaborator);
     // Scroll to form
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDelete = async (id: string) => {
-    // If deleting the collaborator that's being edited, clear the form
-    if (editingCollaborator?.id === id) {
-      setEditingCollaborator(null);
+    try {
+      // If deleting the collaborator that's being edited, clear the form
+      if (editingCollaborator?.id === id) {
+        setEditingCollaborator(null);
+      }
+      await deleteMutation.mutateAsync(id);
+      toast({
+        title: "Colaborador excluído",
+        description: "O colaborador foi excluído com sucesso.",
+      });
+    } catch (error) {
+      console.error("Error deleting collaborator:", error);
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao excluir o colaborador.",
+        variant: "destructive",
+      });
     }
-    await deleteMutation.mutateAsync(id);
   };
 
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
   const isDeleting = deleteMutation.isPending;
+
+  // Debugging output
+  useEffect(() => {
+    console.log("Current editing collaborator:", editingCollaborator);
+  }, [editingCollaborator]);
 
   return (
     <main className="container-fluid p-0 max-w-full">
@@ -59,7 +99,7 @@ const OniAgenciaColaboradores = () => {
           {/* Form Section */}
           <div>
             <h2 className="text-lg font-medium mb-4">
-              {editingCollaborator ? "Editar Colaborador" : "Novo Colaborador"}
+              {editingCollaborator ? `Editar Colaborador: ${editingCollaborator.name}` : "Novo Colaborador"}
             </h2>
             <CollaboratorForm 
               onSubmit={handleSubmit} 
