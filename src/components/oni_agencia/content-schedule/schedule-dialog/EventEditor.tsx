@@ -58,7 +58,13 @@ export function EventEditor({
   onSelectChange
 }: EventEditorProps) {
   const [activeTab, setActiveTab] = useState<"details" | "status">("details");
-  const [note, setNote] = useState<string>("");
+  const [note, setNote] = useState<string>(formData.description || "");
+  
+  // Sync note with formData description
+  const handleNoteChange = (value: string) => {
+    setNote(value);
+    onSelectChange("description", value);
+  };
 
   return (
     <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "details" | "status")}>
@@ -108,20 +114,17 @@ export function EventEditor({
             note={note}
             onStatusChange={(value) => onSelectChange("status_id", value)}
             onCollaboratorChange={(value) => onSelectChange("collaborator_id", value)}
-            onNoteChange={setNote}
+            onNoteChange={handleNoteChange}
           />
           
           <DialogFooter>
-            <div className="flex items-center justify-end space-x-2 pt-2">
-              <DialogActions
-                isSubmitting={isSubmitting}
-                isDeleting={false}
-                onCancel={onCancel}
-                onDelete={undefined}
-                isEditing={true}
-                saveLabel="Atualizar Status"
-              />
-            </div>
+            <DialogActions
+              isSubmitting={isSubmitting}
+              isDeleting={false}
+              onCancel={onCancel}
+              isEditing={true}
+              saveLabel="Atualizar Status"
+            />
           </DialogFooter>
         </form>
       </TabsContent>

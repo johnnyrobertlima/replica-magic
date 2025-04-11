@@ -117,7 +117,7 @@ export function CalendarDayCell({
           
           {hiddenEventsCount > 0 && (
             <div 
-              className="text-xs text-primary font-medium px-1 py-0.5 cursor-pointer hover:underline"
+              className="text-xs text-primary font-medium px-1 py-0.5 cursor-pointer hover:underline event-item"
               onClick={(e) => {
                 e.stopPropagation();
                 console.log("Showing all events for date:", date);
