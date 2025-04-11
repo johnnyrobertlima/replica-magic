@@ -1,27 +1,22 @@
 
-import { useState } from "react";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Loader2 } from "lucide-react";
 import { CalendarEvent } from "@/types/oni-agencia";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { StatusSelect } from "./StatusSelect";
 import { CollaboratorSelect } from "./CollaboratorSelect";
-import { OniAgenciaCollaborator } from "@/types/oni-agencia";
-import { Status } from "@/pages/admin/sub-themes/types";
 
 interface StatusUpdateFormProps {
   event: CalendarEvent;
-  statuses: Status[];
-  collaborators: OniAgenciaCollaborator[];
+  statuses: any[];
+  collaborators: any[];
   isLoadingStatuses: boolean;
   isLoadingCollaborators: boolean;
+  selectedStatus: string | null;
+  selectedCollaborator: string | null;
+  note: string;
   onStatusChange: (value: string) => void;
   onCollaboratorChange: (value: string) => void;
   onNoteChange: (value: string) => void;
-  note: string;
-  selectedStatus: string | null;
-  selectedCollaborator: string | null;
 }
 
 export function StatusUpdateForm({
@@ -30,41 +25,48 @@ export function StatusUpdateForm({
   collaborators,
   isLoadingStatuses,
   isLoadingCollaborators,
+  selectedStatus,
+  selectedCollaborator,
+  note,
   onStatusChange,
   onCollaboratorChange,
-  onNoteChange,
-  note,
-  selectedStatus,
-  selectedCollaborator
+  onNoteChange
 }: StatusUpdateFormProps) {
   return (
-    <div className="space-y-4 py-2">
-      <div className="grid grid-cols-1 gap-4">
-        <StatusSelect
-          statuses={statuses}
-          isLoading={isLoadingStatuses}
-          value={selectedStatus}
-          onValueChange={onStatusChange}
+    <div className="grid gap-4 py-4">
+      <div className="mb-2">
+        <h3 className="text-lg font-medium">Atualizar status do agendamento</h3>
+        <p className="text-sm text-muted-foreground">
+          Título: <span className="font-medium">{event.title}</span>
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Serviço: <span className="font-medium">{event.service.name}</span>
+        </p>
+      </div>
+      
+      <StatusSelect
+        statuses={statuses}
+        isLoading={isLoadingStatuses}
+        value={selectedStatus}
+        onValueChange={onStatusChange}
+      />
+      
+      <CollaboratorSelect
+        collaborators={collaborators}
+        isLoading={isLoadingCollaborators}
+        value={selectedCollaborator}
+        onValueChange={onCollaboratorChange}
+      />
+      
+      <div className="grid gap-2">
+        <Label htmlFor="note">Observação</Label>
+        <Textarea
+          id="note"
+          placeholder="Adicione uma observação sobre esta atualização de status"
+          value={note}
+          onChange={(e) => onNoteChange(e.target.value)}
+          rows={3}
         />
-        
-        <CollaboratorSelect
-          collaborators={collaborators}
-          isLoading={isLoadingCollaborators}
-          value={selectedCollaborator}
-          onValueChange={onCollaboratorChange}
-        />
-        
-        <div className="grid gap-2">
-          <Label htmlFor="note">Anotação</Label>
-          <Textarea
-            id="note"
-            placeholder="Adicione uma anotação (opcional)"
-            value={note}
-            onChange={(e) => onNoteChange(e.target.value)}
-            className="resize-none"
-            rows={3}
-          />
-        </div>
       </div>
     </div>
   );

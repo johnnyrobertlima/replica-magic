@@ -1,24 +1,34 @@
 
+import { useCallback } from "react";
+
 export function useMonthNavigation(
-  month: number, 
-  year: number, 
+  month: number,
+  year: number,
   onMonthChange: (month: number, year: number) => void
 ) {
-  const handlePrevMonth = () => {
-    if (month === 1) {
-      onMonthChange(12, year - 1);
-    } else {
-      onMonthChange(month - 1, year);
+  const handlePrevMonth = useCallback(() => {
+    let newMonth = month - 1;
+    let newYear = year;
+    
+    if (newMonth < 1) {
+      newMonth = 12;
+      newYear--;
     }
-  };
-
-  const handleNextMonth = () => {
-    if (month === 12) {
-      onMonthChange(1, year + 1);
-    } else {
-      onMonthChange(month + 1, year);
+    
+    onMonthChange(newMonth, newYear);
+  }, [month, year, onMonthChange]);
+  
+  const handleNextMonth = useCallback(() => {
+    let newMonth = month + 1;
+    let newYear = year;
+    
+    if (newMonth > 12) {
+      newMonth = 1;
+      newYear++;
     }
-  };
+    
+    onMonthChange(newMonth, newYear);
+  }, [month, year, onMonthChange]);
   
   return {
     handlePrevMonth,

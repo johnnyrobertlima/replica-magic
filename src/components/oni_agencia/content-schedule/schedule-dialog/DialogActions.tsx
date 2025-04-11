@@ -1,61 +1,66 @@
 
 import { Button } from "@/components/ui/button";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Trash } from "lucide-react";
 
 interface DialogActionsProps {
   isSubmitting: boolean;
   isDeleting: boolean;
   onCancel: () => void;
-  onDelete?: () => void;
+  onDelete?: () => Promise<void>;
   isEditing: boolean;
   saveLabel?: string;
 }
 
-export function DialogActions({ 
-  isSubmitting, 
-  isDeleting, 
-  onCancel, 
+export function DialogActions({
+  isSubmitting,
+  isDeleting,
+  onCancel,
   onDelete,
   isEditing,
-  saveLabel
+  saveLabel = "Salvar"
 }: DialogActionsProps) {
+  const isStatusUpdate = saveLabel === "Atualizar Status";
+  
   return (
-    <div className="flex items-center justify-between pt-2">
+    <div className="flex items-center justify-end space-x-2 pt-2">
       {isEditing && onDelete && (
         <Button
           type="button"
           variant="destructive"
-          size="icon"
+          size="sm"
           onClick={onDelete}
-          disabled={isDeleting || isSubmitting}
-          className="mr-auto"
+          disabled={isSubmitting || isDeleting}
         >
           {isDeleting ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (
-            <Trash2 className="h-4 w-4" />
+            <Trash className="mr-2 h-4 w-4" />
           )}
+          Excluir
         </Button>
       )}
-      <div className="flex space-x-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-        >
-          Cancelar
-        </Button>
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Salvando...
-            </>
-          ) : (
-            saveLabel || (isEditing ? "Atualizar" : "Criar")
-          )}
-        </Button>
-      </div>
+      <div className="flex-1" />
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={onCancel}
+        disabled={isSubmitting || isDeleting}
+      >
+        Cancelar
+      </Button>
+      <Button
+        type="submit"
+        variant={isStatusUpdate ? "success" : "default"}
+        size="sm"
+        disabled={isSubmitting || isDeleting}
+        className={isStatusUpdate ? "bg-green-600 hover:bg-green-700 text-white" : ""}
+      >
+        {isSubmitting ? (
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        ) : null}
+        {saveLabel}
+      </Button>
     </div>
   );
 }

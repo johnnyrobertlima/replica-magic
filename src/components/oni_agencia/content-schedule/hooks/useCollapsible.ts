@@ -6,8 +6,5 @@ export function useCollapsible(initialState: boolean = false) {
   
   const toggle = () => setIsCollapsed(prev => !prev);
   
-  return {
-    isCollapsed,
-    toggle
-  };
+  return { isCollapsed, toggle };
 }

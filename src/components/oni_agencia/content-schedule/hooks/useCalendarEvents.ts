@@ -1,31 +1,31 @@
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { CalendarEvent } from "@/types/oni-agencia";
-import { format, isSameDay } from "date-fns";
 
-export function useCalendarEvents(events: CalendarEvent[], selectedDate?: Date, isDialogOpen: boolean = false, setIsDialogOpen?: (open: boolean) => void) {
-  // Use the filtered events for the selected date
-  const currentEvents = useMemo(() => {
-    if (!selectedDate) return [];
-    
-    const dateString = format(selectedDate, 'yyyy-MM-dd');
-    return events.filter((event) => event.scheduled_date === dateString);
-  }, [events, selectedDate]);
+export function useCalendarEvents(
+  events: CalendarEvent[],
+  selectedDate: Date | undefined,
+  isDialogOpen: boolean,
+  setIsDialogOpen: (open: boolean) => void
+) {
+  const [currentEvents, setCurrentEvents] = useState<CalendarEvent[]>([]);
 
-  // Function to open the dialog programmatically
-  const openDialog = useCallback(() => {
-    console.log("Attempting to open dialog, current state:", { isDialogOpen, hasSetIsDialogOpen: !!setIsDialogOpen });
-    if (setIsDialogOpen) {
-      setIsDialogOpen(true);
+  // Update the current events whenever the selected date or events change
+  useEffect(() => {
+    if (!selectedDate) {
+      setCurrentEvents([]);
+      return;
     }
-  }, [isDialogOpen, setIsDialogOpen]);
+
+    const dateString = selectedDate.toISOString().split('T')[0];
+    const filteredEvents = events.filter(
+      (event) => event.scheduled_date === dateString
+    );
+
+    setCurrentEvents(filteredEvents);
+  }, [selectedDate, events]);
 
   return {
-    currentEvents,
-    isDialogOpen: isDialogOpen || false,
-    setIsDialogOpen: setIsDialogOpen || (() => {
-      console.log("Warning: setIsDialogOpen not provided to useCalendarEvents");
-    }),
-    openDialog
+    currentEvents
   };
 }

@@ -1,72 +1,71 @@
 
-import { useState } from "react";
-import { format } from "date-fns";
+import { useState, useCallback } from "react";
+import { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import { CalendarEvent } from "@/types/oni-agencia";
-import { DragEndEvent } from "@dnd-kit/core";
-import { useToast } from "@/hooks/use-toast";
 import { useUpdateContentSchedule } from "@/hooks/useOniAgenciaContentSchedules";
+import { useToast } from "@/hooks/use-toast";
 
-export function useDragAndDrop(
-  events: CalendarEvent[],
-  userName: string
-) {
+export function useDragAndDrop(events: CalendarEvent[], userName: string) {
   const [isDragging, setIsDragging] = useState(false);
-  const { toast } = useToast();
+  const [draggedEvent, setDraggedEvent] = useState<CalendarEvent | null>(null);
+  
   const updateMutation = useUpdateContentSchedule();
+  const { toast } = useToast();
   
-  const handleDragStart = () => {
-    setIsDragging(true);
-  };
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    const eventId = event.active.id as string;
+    const draggedEvent = events.find(e => e.id === eventId);
+    
+    if (draggedEvent) {
+      setDraggedEvent(draggedEvent);
+      setIsDragging(true);
+      console.log("Started dragging event:", eventId);
+    }
+  }, [events]);
   
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
     setIsDragging(false);
+    
+    if (!draggedEvent) return;
     
     const { active, over } = event;
     
-    // If not dropped on a valid day cell
-    if (!over) return;
-    
-    const eventId = active.id as string;
-    const targetDate = over.id as string;
-    
-    // Find the event being dragged
-    const draggedEvent = events.find(event => event.id === eventId);
-    if (!draggedEvent) return;
-    
-    // Verify target is a valid date
-    if (!targetDate.match(/^\d{4}-\d{2}-\d{2}$/)) return;
-    
-    // Skip if date is the same
-    if (draggedEvent.scheduled_date === targetDate) return;
-    
-    // User info for the action log
-    const currentDateFormatted = format(new Date(), "dd/MM/yyyy HH:mm");
-    
-    // Prepare description with action log
-    let updatedDescription = draggedEvent.description || '';
-    const actionLog = `\n\nMovido por ${userName} em ${currentDateFormatted} de ${draggedEvent.scheduled_date} para ${targetDate}`;
-    updatedDescription += actionLog;
-    
-    // Update the event with new date and description
-    updateMutation.mutateAsync({
-      id: draggedEvent.id,
-      schedule: {
-        scheduled_date: targetDate,
-        description: updatedDescription
+    if (over) {
+      const newDate = over.id as string; // The date string in format YYYY-MM-DD
+      const oldDate = draggedEvent.scheduled_date;
+      
+      if (newDate !== oldDate) {
+        console.log(`Moving event from ${oldDate} to ${newDate}`);
+        
+        updateMutation.mutate(
+          {
+            id: draggedEvent.id,
+            schedule: {
+              ...draggedEvent,
+              scheduled_date: newDate
+            }
+          },
+          {
+            onSuccess: () => {
+              toast({
+                title: "Agendamento movido",
+                description: `O agendamento foi movido para ${newDate}.`
+              });
+            },
+            onError: (error) => {
+              toast({
+                title: "Erro ao mover agendamento",
+                description: "Ocorreu um erro ao mover o agendamento.",
+                variant: "destructive",
+              });
+            }
+          }
+        );
       }
-    }).then(() => {
-      toast({
-        title: "Agendamento movido",
-        description: `O agendamento foi movido para ${format(new Date(targetDate), "dd/MM/yyyy")}.`,
-      });
-    }).catch(error => {
-      toast({
-        title: "Erro ao mover agendamento",
-        description: "Ocorreu um erro ao mover o agendamento.",
-        variant: "destructive",
-      });
-    });
-  };
+    }
+    
+    setDraggedEvent(null);
+  }, [draggedEvent, updateMutation, toast]);
   
   return {
     isDragging,
