@@ -58,7 +58,8 @@ export function CalendarDayCell({
     const isEventClick = 
       target.closest('.event-item') || 
       target.classList.contains('event-item') ||
-      target.closest('.event-item-wrapper');
+      target.closest('.event-item-wrapper') ||
+      target.classList.contains('event-item-wrapper');
     
     if (!isEventClick) {
       console.log("Cell background clicked for date:", format(date, 'yyyy-MM-dd'));

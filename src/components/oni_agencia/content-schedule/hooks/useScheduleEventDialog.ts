@@ -42,12 +42,19 @@ export function useScheduleEventDialog({
     selectedDate
   });
 
-  // Handle case when there's only one event and no specific selection
+  // Only auto-select the event if there's only one event AND a specific event wasn't already selected
+  // This ensures empty areas work as expected for creating new events
   useEffect(() => {
     if (!selectedEvent && events.length === 1 && !currentSelectedEvent) {
-      handleSelectEvent(events[0]);
+      // Only auto-select if events are for this specific date
+      const eventDate = events[0].scheduled_date;
+      const currentDateStr = selectedDate.toISOString().split('T')[0];
+      
+      if (eventDate === currentDateStr) {
+        handleSelectEvent(events[0]);
+      }
     }
-  }, [events, selectedEvent, currentSelectedEvent]);
+  }, [events, selectedEvent, currentSelectedEvent, selectedDate, handleSelectEvent]);
 
   // Create wrapper functions to pass the current state
   const submitForm = (e: React.FormEvent) => handleSubmit(e, currentSelectedEvent, formData);

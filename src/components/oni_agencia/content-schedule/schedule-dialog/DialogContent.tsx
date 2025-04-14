@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
 import { EventList } from "./EventList";
 import { EventEditor } from "./EventEditor";
@@ -65,6 +65,16 @@ export function DialogContent({
   // Local state to track if we're in "create new" mode
   const [showNewForm, setShowNewForm] = useState(false);
   
+  // Reset state when dialog opens with no selected event
+  useEffect(() => {
+    if (!selectedEvent && !currentSelectedEvent) {
+      // If no event is selected, we should show the new form
+      setShowNewForm(true);
+    } else {
+      setShowNewForm(false);
+    }
+  }, [selectedEvent, currentSelectedEvent]);
+  
   // Handler for the "Criar Novo" button
   const handleCreateNew = () => {
     console.log("handleCreateNew called, resetting form and showing new form");
@@ -72,7 +82,7 @@ export function DialogContent({
     setShowNewForm(true);
   };
   
-  // Show the event list if there are multiple events, no specific event was selected, and not in "create new" mode
+  // Show the event list if there are multiple events and not in "create new" mode
   if (!selectedEvent && events.length > 1 && !currentSelectedEvent && !showNewForm) {
     return (
       <EventList 
@@ -113,7 +123,7 @@ export function DialogContent({
     );
   }
 
-  // Show new event form if in "create new" mode or if no event was selected or there's only one event
+  // Show new event form if in "create new" mode or if no event was selected
   return (
     <NewEventForm
       formData={formData}
