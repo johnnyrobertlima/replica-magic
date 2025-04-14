@@ -1,4 +1,3 @@
-
 import { format, isSameDay } from "date-fns";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { EventItem } from "../EventItem";
@@ -34,26 +33,21 @@ export function CalendarDayCell({
   const [isHovering, setIsHovering] = useState(false);
   const dateString = format(date, 'yyyy-MM-dd');
   
-  // Configure droppable for drag and drop
   const { setNodeRef, isOver } = useDroppable({
     id: dateString,
   });
   
-  // Filter events by date and collaborator if selected
   let dayEvents = events.filter(event => event.scheduled_date === dateString);
   
   if (selectedCollaborator) {
     dayEvents = dayEvents.filter(event => event.collaborator_id === selectedCollaborator);
   }
   
-  // Maximum number of events to display before showing "+X more"
   const MAX_VISIBLE_EVENTS = 4;
   const visibleEvents = dayEvents.slice(0, MAX_VISIBLE_EVENTS);
   const hiddenEventsCount = dayEvents.length - MAX_VISIBLE_EVENTS;
   
-  // Handle click on the cell background to create a new event
   const handleCellClick = (e: React.MouseEvent) => {
-    // Only proceed if this is a click on the cell background, not on an event
     const target = e.target as HTMLElement;
     const isEventClick = 
       target.closest('.event-item') || 
@@ -67,7 +61,6 @@ export function CalendarDayCell({
     }
   };
 
-  // Handle event click with extra logging
   const handleEventClick = (e: React.MouseEvent, event: CalendarEvent) => {
     e.stopPropagation();
     console.log("Event clicked:", event.id, event.title);
@@ -116,7 +109,14 @@ export function CalendarDayCell({
                     {event.status && <p><strong>Status:</strong> {event.status.name}</p>}
                     {event.editorial_line && <p><strong>Linha Editorial:</strong> {event.editorial_line.name}</p>}
                     {event.execution_phase && <p><strong>Fase de Execução:</strong> {event.execution_phase}</p>}
-                    {event.description && <p><strong>Descrição:</strong> {event.description}</p>}
+                    {event.description && (
+                      <div>
+                        <strong>Descrição:</strong>
+                        <p className="mt-1 text-gray-600 italic max-h-[100px] overflow-y-auto">
+                          {event.description}
+                        </p>
+                      </div>
+                    )}
                     <p><strong>Data:</strong> {format(new Date(event.scheduled_date), 'dd/MM/yyyy')}</p>
                   </div>
                 </TooltipContent>
@@ -138,7 +138,6 @@ export function CalendarDayCell({
           )}
         </div>
       ) : (
-        // Empty state with a clickable background that spans the whole cell area
         <div className="h-[calc(100%-20px)] w-full empty-cell-area" />
       )}
     </div>
