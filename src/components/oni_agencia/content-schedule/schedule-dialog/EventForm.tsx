@@ -44,13 +44,12 @@ export function EventForm({
   return (
     <div className="grid gap-4 py-4">
       <div className="grid gap-2">
-        <Label htmlFor="title">Título</Label>
+        <Label htmlFor="title">Título (Opcional)</Label>
         <Input
           id="title"
           name="title"
-          value={formData.title}
+          value={formData.title || ""}
           onChange={onInputChange}
-          required
         />
       </div>
       
