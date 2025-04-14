@@ -78,10 +78,16 @@ export function ContentScheduleList({
   const handleExportToPdf = () => {
     try {
       const clientName = "Agenda";
+      const filteredEvents = selectedCollaborator 
+        ? events.filter(event => event.collaborator_id === selectedCollaborator)
+        : events;
+        
+      // Exportar PDF somente com os dados dos agendamentos
       exportToPdf({
         filename: `${clientName}_cronograma_conteudo.pdf`,
-        content: document.getElementById('content-schedule-list'),
+        content: null,
         orientation: 'landscape',
+        data: filteredEvents,
       });
       
       toast({
