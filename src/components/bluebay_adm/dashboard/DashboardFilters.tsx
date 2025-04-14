@@ -58,12 +58,17 @@ export const DashboardFilters = ({ onFilterChange }: DashboardFiltersProps) => {
     });
     
     setTimeout(() => {
-      // Pass batch size and other metadata to exportToExcel
-      exportToExcel({
-        batchSize: 10000,
-        totalBatches: 'Múltiplos',
-        totalRecords: 'Todos disponíveis'
-      });
+      // Create sample data to export instead of passing an object with batchSize
+      const dataToExport = [
+        { 
+          totalBatches: 'Múltiplos',
+          totalRecords: 'Todos disponíveis',
+          exportDate: new Date().toISOString()
+        }
+      ];
+      
+      // Pass the array to exportToExcel
+      exportToExcel(dataToExport, "dashboard_export");
       
       toast({
         title: "Exportação concluída",

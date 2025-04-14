@@ -1,3 +1,4 @@
+
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarEvent } from "@/types/oni-agencia";
@@ -15,7 +16,7 @@ import { useDateSelection } from "./hooks/useDateSelection";
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { File, Pdf } from "lucide-react";
+import { File } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { exportToPdf } from "@/utils/exportUtils";
 
