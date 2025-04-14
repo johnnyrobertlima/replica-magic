@@ -1,31 +1,7 @@
 
-import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-
-export const exportToExcel = (data: any[], fileName: string = 'exported_data') => {
-  if (!data || data.length === 0) {
-    console.error('No data to export');
-    return 0;
-  }
-
-  try {
-    // Create worksheet from JSON data
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    
-    // Create workbook and add the worksheet
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Data');
-    
-    // Generate Excel file and trigger download
-    XLSX.writeFile(workbook, `${fileName}.xlsx`);
-    
-    return data.length; // Return the number of exported items
-  } catch (error) {
-    console.error('Error exporting data to Excel:', error);
-    return 0;
-  }
-};
+import * as XLSX from 'xlsx';
 
 export interface ExportToPdfOptions {
   filename: string;
@@ -48,10 +24,10 @@ export const exportToPdf = (options: ExportToPdfOptions) => {
       tempDiv.style.width = '100%';
       document.body.appendChild(tempDiv);
       
-      // Adicionar estilos básicos
+      // Adicionar estilos básicos com fonte menor
       tempDiv.innerHTML = `
-        <div style="font-family: Arial, sans-serif; padding: 20px;">
-          <h1 style="text-align: center; color: #333; margin-bottom: 20px;">Agenda de Conteúdo</h1>
+        <div style="font-family: Arial, sans-serif; padding: 20px; font-size: 12px;">
+          <h1 style="text-align: center; color: #333; margin-bottom: 20px; font-size: 14px;">Agenda de Conteúdo</h1>
           <div id="pdf-content"></div>
         </div>
       `;
@@ -79,10 +55,10 @@ export const exportToPdf = (options: ExportToPdfOptions) => {
           const dateSection = document.createElement('div');
           dateSection.style.marginBottom = '20px';
           dateSection.innerHTML = `
-            <h2 style="color: #4f46e5; font-size: 18px; margin-bottom: 10px; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px;">
+            <h2 style="color: #4f46e5; font-size: 13px; margin-bottom: 10px; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px;">
               ${formattedDate}
             </h2>
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 12px;">
               <thead>
                 <tr style="background-color: #f3f4f6;">
                   <th style="text-align: left; padding: 8px; border-bottom: 1px solid #e5e7eb;">Serviço</th>
