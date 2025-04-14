@@ -1,4 +1,3 @@
-
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { format, isSameDay, isToday, parseISO } from "date-fns";
@@ -93,7 +92,9 @@ export function ContentCalendar({
     console.log("Cell selected in ContentCalendar:", format(date, 'yyyy-MM-dd'));
     // When a cell is clicked (not an event), we want to create a new event
     handleDateSelect(date);
-    setSelectedEvent(undefined); // Clear any previously selected event
+    
+    // Explicitly make sure we don't have any selected event
+    setSelectedEvent(undefined);
   };
 
   const handleCellEventClick = (event: CalendarEvent, date: Date) => {

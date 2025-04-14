@@ -67,13 +67,21 @@ export function DialogContent({
   
   // Reset state when dialog opens with no selected event
   useEffect(() => {
+    // Log the current state to help debug
+    console.log("DialogContent state:", { 
+      hasSelectedEvent: !!selectedEvent, 
+      hasCurrentSelectedEvent: !!currentSelectedEvent,
+      eventsLength: events.length 
+    });
+    
     if (!selectedEvent && !currentSelectedEvent) {
-      // If no event is selected, we should show the new form
+      // If no event is selected, we should always show the new form
+      console.log("No event selected, showing new form");
       setShowNewForm(true);
     } else {
       setShowNewForm(false);
     }
-  }, [selectedEvent, currentSelectedEvent]);
+  }, [selectedEvent, currentSelectedEvent, events.length]);
   
   // Handler for the "Criar Novo" button
   const handleCreateNew = () => {
@@ -83,7 +91,7 @@ export function DialogContent({
   };
   
   // Show the event list if there are multiple events and not in "create new" mode
-  if (!selectedEvent && events.length > 1 && !currentSelectedEvent && !showNewForm) {
+  if (!selectedEvent && !currentSelectedEvent && events.length > 1 && !showNewForm) {
     return (
       <EventList 
         events={events} 
@@ -123,7 +131,9 @@ export function DialogContent({
     );
   }
 
-  // Show new event form if in "create new" mode or if no event was selected
+  // Show new event form by default when no explicit selection
+  // This is the fallback case that should handle all situations where we need a new form
+  console.log("Showing new event form by default");
   return (
     <NewEventForm
       formData={formData}

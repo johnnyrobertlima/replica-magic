@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { CalendarEvent } from "@/types/oni-agencia";
+import { format } from "date-fns";
 
 export function useCalendarEvents(
   events: CalendarEvent[],
@@ -9,22 +10,20 @@ export function useCalendarEvents(
   setIsDialogOpen: (open: boolean) => void
 ) {
   const [currentEvents, setCurrentEvents] = useState<CalendarEvent[]>([]);
-
-  // Update the current events whenever the selected date or events change
+  
+  // Update events for the selected date when date changes or dialog opens
   useEffect(() => {
-    if (!selectedDate) {
+    if (selectedDate) {
+      const dateString = format(selectedDate, 'yyyy-MM-dd');
+      const eventsForDate = events.filter(event => event.scheduled_date === dateString);
+      
+      console.log(`Found ${eventsForDate.length} events for date ${dateString}`);
+      setCurrentEvents(eventsForDate);
+    } else {
       setCurrentEvents([]);
-      return;
     }
-
-    const dateString = selectedDate.toISOString().split('T')[0];
-    const filteredEvents = events.filter(
-      (event) => event.scheduled_date === dateString
-    );
-
-    setCurrentEvents(filteredEvents);
-  }, [selectedDate, events]);
-
+  }, [selectedDate, events, isDialogOpen]);
+  
   return {
     currentEvents
   };
