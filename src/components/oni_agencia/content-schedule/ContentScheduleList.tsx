@@ -14,6 +14,7 @@ import { StatusBadge } from "./status-badge/StatusBadge";
 import { ScheduleEventDialog } from "./ScheduleEventDialog";
 import { useDateSelection } from "./hooks/useDateSelection";
 import { useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface ContentScheduleListProps {
   events: CalendarEvent[];
@@ -96,12 +97,12 @@ export function ContentScheduleList({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Serviço</TableHead>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead>Linha Editorial</TableHead>
-                  <TableHead>Colaborador</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead className="w-[10%]">Serviço</TableHead>
+                  <TableHead className="w-[15%]">Linha Editorial</TableHead>
+                  <TableHead className="w-[15%]">Nome</TableHead>
+                  <TableHead className="w-[45%]">Descrição</TableHead>
+                  <TableHead className="w-[10%]">Colaborador</TableHead>
+                  <TableHead className="w-[5%]">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -121,21 +122,6 @@ export function ContentScheduleList({
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className="font-medium">
-                        {event.title}
-                        {event.product && 
-                          <span className="ml-1 text-muted-foreground">
-                            - {event.product.name}
-                          </span>
-                        }
-                      </span>
-                    </TableCell>
-                    <TableCell className="max-w-xs">
-                      <p className="truncate">
-                        {event.description || "—"}
-                      </p>
-                    </TableCell>
-                    <TableCell>
                       {event.editorial_line ? (
                         <div className="flex items-center">
                           <div 
@@ -146,7 +132,37 @@ export function ContentScheduleList({
                         </div>
                       ) : "—"}
                     </TableCell>
-                    <TableCell>{event.collaborator?.name || "—"}</TableCell>
+                    <TableCell>
+                      <span className="font-medium">
+                        {event.title}
+                        {event.product && 
+                          <span className="ml-1 text-muted-foreground">
+                            - {event.product.name}
+                          </span>
+                        }
+                      </span>
+                    </TableCell>
+                    <TableCell className="max-w-xs">
+                      <p className="whitespace-pre-line">
+                        {event.description || "—"}
+                      </p>
+                    </TableCell>
+                    <TableCell>
+                      {event.collaborator ? (
+                        <div className="flex items-center space-x-2">
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage 
+                              src={event.collaborator.photo_url || ''} 
+                              alt={event.collaborator.name} 
+                            />
+                            <AvatarFallback>
+                              {event.collaborator.name.substring(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-xs">{event.collaborator.name}</span>
+                        </div>
+                      ) : "—"}
+                    </TableCell>
                     <TableCell>
                       {event.status ? (
                         <StatusBadge color={event.status.color || "#9CA3AF"}>
