@@ -39,7 +39,7 @@ export function EditorialLinePopover({ events }: EditorialLinePopoverProps) {
           <span>Linha Editorial</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80">
+      <PopoverContent className="w-80 bg-white border shadow-md">
         <div className="space-y-2">
           <h3 className="font-medium text-sm">Contagem por Linha Editorial</h3>
           <div className="max-h-[300px] overflow-y-auto">

@@ -39,7 +39,7 @@ export function ProductsPopover({ events }: ProductsPopoverProps) {
           <span>Produtos</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80">
+      <PopoverContent className="w-80 bg-white border shadow-md">
         <div className="space-y-2">
           <h3 className="font-medium text-sm">Contagem por Produto</h3>
           <div className="max-h-[300px] overflow-y-auto">
