@@ -107,14 +107,17 @@ export function CalendarDayCell({
                     />
                   </div>
                 </TooltipTrigger>
-                <TooltipContent side="right" className="max-w-[300px]">
+                <TooltipContent side="right" className="max-w-[300px] bg-white border shadow-md">
                   <div className="text-xs space-y-1">
                     <p className="font-bold">{event.title}</p>
                     <p><strong>Serviço:</strong> {event.service.name}</p>
                     {event.product && <p><strong>Produto:</strong> {event.product.name}</p>}
                     {event.collaborator && <p><strong>Responsável:</strong> {event.collaborator.name}</p>}
                     {event.status && <p><strong>Status:</strong> {event.status.name}</p>}
+                    {event.editorial_line && <p><strong>Linha Editorial:</strong> {event.editorial_line.name}</p>}
+                    {event.execution_phase && <p><strong>Fase de Execução:</strong> {event.execution_phase}</p>}
                     {event.description && <p><strong>Descrição:</strong> {event.description}</p>}
+                    <p><strong>Data:</strong> {format(new Date(event.scheduled_date), 'dd/MM/yyyy')}</p>
                   </div>
                 </TooltipContent>
               </Tooltip>
