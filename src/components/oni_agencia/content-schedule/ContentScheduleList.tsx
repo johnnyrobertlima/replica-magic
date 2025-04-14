@@ -97,7 +97,9 @@ export function ContentScheduleList({
               <TableHeader>
                 <TableRow>
                   <TableHead>Serviço</TableHead>
-                  <TableHead>Título</TableHead>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead>Linha Editorial</TableHead>
                   <TableHead>Colaborador</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
@@ -118,7 +120,32 @@ export function ContentScheduleList({
                         {event.service.name}
                       </div>
                     </TableCell>
-                    <TableCell>{event.title}</TableCell>
+                    <TableCell>
+                      <span className="font-medium">
+                        {event.title}
+                        {event.product && 
+                          <span className="ml-1 text-muted-foreground">
+                            - {event.product.name}
+                          </span>
+                        }
+                      </span>
+                    </TableCell>
+                    <TableCell className="max-w-xs">
+                      <p className="truncate">
+                        {event.description || "—"}
+                      </p>
+                    </TableCell>
+                    <TableCell>
+                      {event.editorial_line ? (
+                        <div className="flex items-center">
+                          <div 
+                            className="h-3 w-3 rounded-full mr-2" 
+                            style={{ backgroundColor: event.editorial_line.color || '#ccc' }}
+                          />
+                          {event.editorial_line.name}
+                        </div>
+                      ) : "—"}
+                    </TableCell>
                     <TableCell>{event.collaborator?.name || "—"}</TableCell>
                     <TableCell>
                       {event.status ? (
