@@ -15,7 +15,7 @@ import { useDateSelection } from "./hooks/useDateSelection";
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { FilePdf } from "lucide-react";
+import { File, Pdf } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { exportToPdf } from "@/utils/exportUtils";
 
@@ -42,9 +42,7 @@ export function ContentScheduleList({
     setSelectedEvent
   } = useDateSelection();
 
-  // Group events by date
   const groupedEvents = events.reduce<Record<string, CalendarEvent[]>>((acc, event) => {
-    // Filter by collaborator if needed
     if (selectedCollaborator && event.collaborator_id !== selectedCollaborator) {
       return acc;
     }
@@ -58,7 +56,6 @@ export function ContentScheduleList({
     return acc;
   }, {});
   
-  // Sort dates
   const sortedDates = Object.keys(groupedEvents).sort();
   
   const handleEventItemClick = (event: CalendarEvent) => {
@@ -72,19 +69,14 @@ export function ContentScheduleList({
     setIsDialogOpen(false);
   };
   
-  // Function to display formatted date header
   const formatDateHeader = (dateString: string) => {
     const date = parseISO(dateString);
     return format(date, "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR });
   };
 
-  // Function to handle PDF export
   const handleExportToPdf = () => {
     try {
-      // Get client name for the filename
-      const clientName = "Agenda"; // This could be enhanced by passing the client name as a prop
-      
-      // Export to PDF using the utility function
+      const clientName = "Agenda";
       exportToPdf({
         filename: `${clientName}_cronograma_conteudo.pdf`,
         content: document.getElementById('content-schedule-list'),
@@ -105,7 +97,6 @@ export function ContentScheduleList({
     }
   };
 
-  // Early return if no events match filters
   if (sortedDates.length === 0) {
     return (
       <div className="bg-white rounded-md border shadow-sm p-8 text-center">
@@ -126,7 +117,7 @@ export function ContentScheduleList({
             onClick={handleExportToPdf}
             className="flex items-center gap-2"
           >
-            <FilePdf className="h-4 w-4" />
+            <File className="h-4 w-4" />
             <span>Exportar PDF</span>
           </Button>
         </div>
