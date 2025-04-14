@@ -10,6 +10,8 @@ import { useClients } from "@/hooks/useOniAgenciaClients";
 import { useCollapsible } from "@/components/oni_agencia/content-schedule/hooks/useCollapsible";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { EditorialLinePopover } from "@/components/oni_agencia/content-schedule/EditorialLinePopover";
+import { ProductsPopover } from "@/components/oni_agencia/content-schedule/ProductsPopover";
 
 const OniAgenciaControlePauta = () => {
   const currentDate = new Date();
@@ -90,6 +92,8 @@ const OniAgenciaControlePauta = () => {
                 <List className="h-4 w-4" />
               </ToggleGroupItem>
             </ToggleGroup>
+            <EditorialLinePopover events={schedules} />
+            <ProductsPopover events={schedules} />
             <Button 
               variant="outline" 
               size="sm" 
