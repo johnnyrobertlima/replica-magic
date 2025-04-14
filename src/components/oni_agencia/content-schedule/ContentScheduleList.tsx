@@ -15,6 +15,10 @@ import { ScheduleEventDialog } from "./ScheduleEventDialog";
 import { useDateSelection } from "./hooks/useDateSelection";
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { FilePdf } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { exportToPdf } from "@/utils/exportUtils";
 
 interface ContentScheduleListProps {
   events: CalendarEvent[];
@@ -27,6 +31,7 @@ export function ContentScheduleList({
   clientId,
   selectedCollaborator 
 }: ContentScheduleListProps) {
+  const { toast } = useToast();
   const { 
     selectedDate, 
     selectedEvent, 
@@ -74,6 +79,33 @@ export function ContentScheduleList({
     return format(date, "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR });
   };
 
+  // Function to handle PDF export
+  const handleExportToPdf = () => {
+    try {
+      // Get client name for the filename
+      const clientName = "Agenda"; // This could be enhanced by passing the client name as a prop
+      
+      // Export to PDF using the utility function
+      exportToPdf({
+        filename: `${clientName}_cronograma_conteudo.pdf`,
+        content: document.getElementById('content-schedule-list'),
+        orientation: 'landscape',
+      });
+      
+      toast({
+        title: "Exportação iniciada",
+        description: "O PDF está sendo gerado e será baixado em breve.",
+      });
+    } catch (error) {
+      console.error('Error exporting to PDF:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro na exportação",
+        description: "Não foi possível exportar a agenda para PDF.",
+      });
+    }
+  };
+
   // Early return if no events match filters
   if (sortedDates.length === 0) {
     return (
@@ -88,98 +120,112 @@ export function ContentScheduleList({
   return (
     <div className="bg-white rounded-md border shadow-sm w-full overflow-auto">
       <div className="p-4">
-        {sortedDates.map((dateString) => (
-          <div key={dateString} className="mb-6">
-            <h3 className="text-lg font-semibold text-primary mb-2 capitalize">
-              {formatDateHeader(dateString)}
-            </h3>
-            
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[10%]">Serviço</TableHead>
-                  <TableHead className="w-[15%]">Linha Editorial</TableHead>
-                  <TableHead className="w-[15%]">Nome</TableHead>
-                  <TableHead className="w-[45%]">Descrição</TableHead>
-                  <TableHead className="w-[10%]">Colaborador</TableHead>
-                  <TableHead className="w-[5%]">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {groupedEvents[dateString].map((event) => (
-                  <TableRow 
-                    key={event.id} 
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => handleEventItemClick(event)}
-                  >
-                    <TableCell>
-                      <div className="flex items-center">
-                        <div 
-                          className="h-3 w-3 rounded-full mr-2" 
-                          style={{ backgroundColor: event.service.color }}
-                        />
-                        {event.service.name}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {event.editorial_line ? (
+        <div className="flex justify-end mb-4">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleExportToPdf}
+            className="flex items-center gap-2"
+          >
+            <FilePdf className="h-4 w-4" />
+            <span>Exportar PDF</span>
+          </Button>
+        </div>
+        
+        <div id="content-schedule-list">
+          {sortedDates.map((dateString) => (
+            <div key={dateString} className="mb-6">
+              <h3 className="text-lg font-semibold text-primary mb-2 capitalize">
+                {formatDateHeader(dateString)}
+              </h3>
+              
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[10%]">Serviço</TableHead>
+                    <TableHead className="w-[15%]">Linha Editorial</TableHead>
+                    <TableHead className="w-[15%]">Nome</TableHead>
+                    <TableHead className="w-[45%]">Descrição</TableHead>
+                    <TableHead className="w-[10%]">Colaborador</TableHead>
+                    <TableHead className="w-[5%]">Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {groupedEvents[dateString].map((event) => (
+                    <TableRow 
+                      key={event.id} 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleEventItemClick(event)}
+                    >
+                      <TableCell>
                         <div className="flex items-center">
                           <div 
                             className="h-3 w-3 rounded-full mr-2" 
-                            style={{ backgroundColor: event.editorial_line.color || '#ccc' }}
+                            style={{ backgroundColor: event.service.color }}
                           />
-                          {event.editorial_line.name}
+                          {event.service.name}
                         </div>
-                      ) : "—"}
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-medium">
-                        {event.title}
-                        {event.product && 
-                          <span className="ml-1 text-muted-foreground">
-                            - {event.product.name}
-                          </span>
-                        }
-                      </span>
-                    </TableCell>
-                    <TableCell className="max-w-xs">
-                      <p className="whitespace-pre-line">
-                        {event.description || "—"}
-                      </p>
-                    </TableCell>
-                    <TableCell>
-                      {event.collaborator ? (
-                        <div className="flex items-center space-x-2">
-                          <Avatar className="h-6 w-6">
-                            <AvatarImage 
-                              src={event.collaborator.photo_url || ''} 
-                              alt={event.collaborator.name} 
+                      </TableCell>
+                      <TableCell>
+                        {event.editorial_line ? (
+                          <div className="flex items-center">
+                            <div 
+                              className="h-3 w-3 rounded-full mr-2" 
+                              style={{ backgroundColor: event.editorial_line.color || '#ccc' }}
                             />
-                            <AvatarFallback>
-                              {event.collaborator.name.substring(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="text-xs">{event.collaborator.name}</span>
-                        </div>
-                      ) : "—"}
-                    </TableCell>
-                    <TableCell>
-                      {event.status ? (
-                        <StatusBadge color={event.status.color || "#9CA3AF"}>
-                          {event.status.name}
-                        </StatusBadge>
-                      ) : (
-                        <StatusBadge color="#9CA3AF">
-                          Pendente
-                        </StatusBadge>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        ))}
+                            {event.editorial_line.name}
+                          </div>
+                        ) : "—"}
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-medium">
+                          {event.title}
+                          {event.product && 
+                            <span className="ml-1 text-muted-foreground">
+                              - {event.product.name}
+                            </span>
+                          }
+                        </span>
+                      </TableCell>
+                      <TableCell className="max-w-xs">
+                        <p className="whitespace-pre-line">
+                          {event.description || "—"}
+                        </p>
+                      </TableCell>
+                      <TableCell>
+                        {event.collaborator ? (
+                          <div className="flex items-center space-x-2">
+                            <Avatar className="h-6 w-6">
+                              <AvatarImage 
+                                src={event.collaborator.photo_url || ''} 
+                                alt={event.collaborator.name} 
+                              />
+                              <AvatarFallback>
+                                {event.collaborator.name.substring(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-xs">{event.collaborator.name}</span>
+                          </div>
+                        ) : "—"}
+                      </TableCell>
+                      <TableCell>
+                        {event.status ? (
+                          <StatusBadge color={event.status.color || "#9CA3AF"}>
+                            {event.status.name}
+                          </StatusBadge>
+                        ) : (
+                          <StatusBadge color="#9CA3AF">
+                            Pendente
+                          </StatusBadge>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ))}
+        </div>
       </div>
       
       {selectedDate && (
