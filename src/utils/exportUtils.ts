@@ -48,10 +48,10 @@ export const exportToPdf = (options: ExportToPdfOptions) => {
       tempDiv.style.width = '100%';
       document.body.appendChild(tempDiv);
       
-      // Adicionar estilos básicos com fonte menor
+      // Adicionar estilos básicos com fonte menor (agora em tamanho 10)
       tempDiv.innerHTML = `
-        <div style="font-family: Arial, sans-serif; padding: 20px; font-size: 12px;">
-          <h1 style="text-align: center; color: #333; margin-bottom: 20px; font-size: 14px;">Agenda de Conteúdo</h1>
+        <div style="font-family: Arial, sans-serif; padding: 20px; font-size: 10px;">
+          <h1 style="text-align: center; color: #333; margin-bottom: 20px; font-size: 12px;">Agenda de Conteúdo</h1>
           <div id="pdf-content"></div>
         </div>
       `;
@@ -79,10 +79,10 @@ export const exportToPdf = (options: ExportToPdfOptions) => {
           const dateSection = document.createElement('div');
           dateSection.style.marginBottom = '20px';
           dateSection.innerHTML = `
-            <h2 style="color: #4f46e5; font-size: 13px; margin-bottom: 10px; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px;">
+            <h2 style="color: #4f46e5; font-size: 11px; margin-bottom: 10px; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px;">
               ${formattedDate}
             </h2>
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 12px;">
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 10px;">
               <thead>
                 <tr style="background-color: #f3f4f6;">
                   <th style="text-align: left; padding: 8px; border-bottom: 1px solid #e5e7eb;">Serviço</th>
@@ -132,7 +132,7 @@ export const exportToPdf = (options: ExportToPdfOptions) => {
                 </td>
                 <td style="padding: 8px;">
                   <span style="background-color: ${event.status ? event.status.color || '#9CA3AF' : '#9CA3AF'}; 
-                        color: white; padding: 2px 6px; border-radius: 4px; font-size: 12px;">
+                        color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px;">
                     ${event.status ? event.status.name : "Pendente"}
                   </span>
                 </td>
