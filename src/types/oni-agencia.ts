@@ -55,9 +55,13 @@ export interface CalendarEvent extends OniAgenciaContentSchedule {
 export interface OniAgenciaClient {
   id: string;
   name: string;
-  email: string;
-  phone: string;
-  contact_person: string;
+  email: string | null;
+  phone: string | null;
+  logo_url: string | null;
+  cnpj: string | null;
+  address: string | null;
+  city: string | null;
+  cep: string | null;
   created_at: string;
   updated_at: string;
 }
