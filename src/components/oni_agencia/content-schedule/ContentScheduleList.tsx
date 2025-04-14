@@ -126,7 +126,9 @@ export function ContentScheduleList({
                           {event.status.name}
                         </StatusBadge>
                       ) : (
-                        <StatusBadge color="#9CA3AF">Pendente</StatusBadge>
+                        <StatusBadge color="#9CA3AF">
+                          Pendente
+                        </StatusBadge>
                       )}
                     </TableCell>
                   </TableRow>

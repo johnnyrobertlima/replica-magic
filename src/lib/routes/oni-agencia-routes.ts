@@ -1,13 +1,11 @@
 
 import OniAgenciaHome from "@/pages/OniAgenciaHome";
-import { 
-  OniAgenciaControlePauta, 
-  OniAgenciaClientes, 
-  OniAgenciaServicos, 
-  OniAgenciaColaboradores,
-  OniAgenciaRelatorios,
-  OniAgenciaClientScopes
-} from "@/pages/oni_agencia";
+import OniAgenciaControlePauta from "@/pages/oni_agencia/OniAgenciaControlePauta";
+import OniAgenciaClientes from "@/pages/oni_agencia/OniAgenciaClientes";
+import OniAgenciaServicos from "@/pages/oni_agencia/OniAgenciaServicos";
+import OniAgenciaColaboradores from "@/pages/oni_agencia/OniAgenciaColaboradores";
+import OniAgenciaRelatorios from "@/pages/oni_agencia/OniAgenciaRelatorios";
+import OniAgenciaClientScopes from "@/pages/oni_agencia/OniAgenciaClientScopes";
 
 export const oniAgenciaRoutes = [
   {

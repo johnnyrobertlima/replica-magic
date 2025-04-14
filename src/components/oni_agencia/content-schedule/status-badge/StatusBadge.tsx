@@ -1,40 +1,22 @@
 
-import { Badge } from "@/components/ui/badge";
+import React from 'react';
 
-interface StatusBadgeProps {
-  name: string;
-  color?: string | null;
+export interface StatusBadgeProps {
+  color: string;
+  children: React.ReactNode;
 }
 
-export function StatusBadge({ name, color }: StatusBadgeProps) {
-  // Calculate text color based on background color brightness
-  const calculateTextColor = (bgColor: string | null | undefined): string => {
-    if (!bgColor) return "#fff";
-    
-    // Convert hex to RGB
-    const hex = bgColor.replace("#", "");
-    const r = parseInt(hex.substr(0, 2), 16);
-    const g = parseInt(hex.substr(2, 2), 16);
-    const b = parseInt(hex.substr(4, 2), 16);
-    
-    // Calculate perceived brightness
-    const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    
-    // If brightness is greater than 0.5, use black text, otherwise use white
-    return brightness > 0.5 ? "#000" : "#fff";
-  };
-  
-  const textColor = calculateTextColor(color);
-  
+export function StatusBadge({ color, children }: StatusBadgeProps) {
   return (
-    <Badge 
-      className="font-normal text-[9px] py-0 px-1.5 whitespace-nowrap h-4"
+    <span 
+      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" 
       style={{ 
-        backgroundColor: color || '#888',
-        color: textColor
+        backgroundColor: `${color}20`,
+        color: color,
+        border: `1px solid ${color}40`
       }}
     >
-      {name}
-    </Badge>
+      {children}
+    </span>
   );
 }
