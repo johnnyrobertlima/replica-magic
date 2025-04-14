@@ -51,9 +51,9 @@ export function CalendarDayCell({
   const visibleEvents = dayEvents.slice(0, MAX_VISIBLE_EVENTS);
   const hiddenEventsCount = dayEvents.length - MAX_VISIBLE_EVENTS;
   
-  // Handle click on the cell background to create a new event, regardless of existing events
+  // Handle click on the cell background to create a new event
   const handleCellClick = (e: React.MouseEvent) => {
-    // We need to verify this is actually a click on the cell background, not on an event
+    // Only proceed if this is a click on the cell background, not on an event
     const target = e.target as HTMLElement;
     const isEventClick = 
       target.closest('.event-item') || 
