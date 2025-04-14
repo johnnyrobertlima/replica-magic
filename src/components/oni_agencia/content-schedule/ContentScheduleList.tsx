@@ -82,11 +82,11 @@ export function ContentScheduleList({
         ? events.filter(event => event.collaborator_id === selectedCollaborator)
         : events;
         
-      // Exportar PDF somente com os dados dos agendamentos
+      // Exportar PDF somente com os dados dos agendamentos em paisagem
       exportToPdf({
         filename: `${clientName}_cronograma_conteudo.pdf`,
         content: null,
-        orientation: 'landscape',
+        orientation: 'landscape', // Explicitly set to landscape
         data: filteredEvents,
       });
       
