@@ -2,20 +2,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Grid, Check, Info } from "lucide-react";
+import { Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { verifyItemExists } from "@/services/bluebay_adm/itemManagementService";
+import { ColorSelectionPanel } from "./variation-grid/ColorSelectionPanel";
+import { SizeSelectionPanel } from "./variation-grid/SizeSelectionPanel";
+import { VariationSummary } from "./variation-grid/VariationSummary";
+import { EmptyStateDisplay } from "./variation-grid/EmptyStateDisplay";
 
 interface ItemVariationsGridProps {
   itemCode: string;
@@ -270,60 +264,17 @@ export const ItemVariationsGrid = ({ itemCode }: ItemVariationsGridProps) => {
     }
   };
 
-  // Sort sizes by order
-  const sortedSizes = [...sizes].sort((a, b) => {
-    return (a.ordem || 0) - (b.ordem || 0);
-  });
-
+  // Determine what to render based on current state
   if (!itemCode) {
-    return (
-      <Card className="mt-4">
-        <CardHeader>
-          <CardTitle className="text-sm font-medium">Grade de Variações</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center p-4 text-muted-foreground">
-            <p>Salve o produto primeiro para poder criar variações</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return <EmptyStateDisplay type="no-item" />;
   }
 
   if (!itemExists) {
-    return (
-      <Card className="mt-4">
-        <CardHeader>
-          <CardTitle className="text-sm font-medium">Grade de Variações</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Alert variant="destructive">
-            <Info className="h-4 w-4" />
-            <AlertTitle>Atenção</AlertTitle>
-            <AlertDescription>
-              Este item ainda não foi salvo na base de dados. Salve o item primeiro para poder criar variações.
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
-    );
+    return <EmptyStateDisplay type="item-not-saved" />;
   }
 
   if (!colors.length || !sizes.length) {
-    return (
-      <Card className="mt-4">
-        <CardHeader>
-          <CardTitle className="text-sm font-medium">Grade de Variações</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center p-4 text-muted-foreground">
-            <Grid className="mx-auto h-8 w-8 text-muted-foreground/50 mb-2" />
-            <p>Não há cores ou tamanhos cadastrados</p>
-            <p className="text-xs mt-1">Cadastre pelo menos uma cor e um tamanho para montar a grade</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return <EmptyStateDisplay type="no-data" />;
   }
 
   return (
@@ -342,116 +293,33 @@ export const ItemVariationsGrid = ({ itemCode }: ItemVariationsGridProps) => {
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Colors selection */}
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <Label className="text-base font-semibold">Cores</Label>
-              <div className="space-x-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleSelectAllColors}
-                >
-                  Selecionar Todos
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleClearAllColors}
-                >
-                  Limpar Todos
-                </Button>
-              </div>
-            </div>
-            <div className="border rounded-md p-4 grid grid-cols-2 gap-3 max-h-[300px] overflow-y-auto">
-              {colors.map(color => (
-                <div 
-                  key={color.id} 
-                  className="flex items-center space-x-2 hover:bg-muted p-2 rounded"
-                >
-                  <Checkbox 
-                    id={`color-${color.id}`}
-                    checked={selectedColors.includes(color.id)}
-                    onCheckedChange={() => handleToggleColor(color.id)}
-                  />
-                  <div className="flex items-center gap-2">
-                    {color.codigo_hex && (
-                      <div 
-                        className="w-4 h-4 rounded-full border"
-                        style={{ backgroundColor: color.codigo_hex }}
-                      />
-                    )}
-                    <Label 
-                      htmlFor={`color-${color.id}`} 
-                      className="cursor-pointer font-normal flex-1"
-                    >
-                      {color.nome}
-                    </Label>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <ColorSelectionPanel 
+            colors={colors}
+            selectedColors={selectedColors}
+            onToggleColor={handleToggleColor}
+            onSelectAll={handleSelectAllColors}
+            onClearAll={handleClearAllColors}
+          />
 
           {/* Sizes selection */}
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <Label className="text-base font-semibold">Tamanhos</Label>
-              <div className="space-x-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleSelectAllSizes}
-                >
-                  Selecionar Todos
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleClearAllSizes}
-                >
-                  Limpar Todos
-                </Button>
-              </div>
-            </div>
-            <div className="border rounded-md p-4 grid grid-cols-2 gap-3 max-h-[300px] overflow-y-auto">
-              {sortedSizes.map(size => (
-                <div 
-                  key={size.id} 
-                  className="flex items-center space-x-2 hover:bg-muted p-2 rounded"
-                >
-                  <Checkbox 
-                    id={`size-${size.id}`}
-                    checked={selectedSizes.includes(size.id)}
-                    onCheckedChange={() => handleToggleSize(size.id)}
-                  />
-                  <Label 
-                    htmlFor={`size-${size.id}`} 
-                    className="cursor-pointer font-normal"
-                  >
-                    {size.nome}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </div>
+          <SizeSelectionPanel 
+            sizes={sizes}
+            selectedSizes={selectedSizes}
+            onToggleSize={handleToggleSize}
+            onSelectAll={handleSelectAllSizes}
+            onClearAll={handleClearAllSizes}
+          />
         </div>
         
-        <div className="mt-6 pt-4 border-t">
-          <div className="flex justify-between items-center">
-            <div>
-              <p className="text-sm font-medium">Combinações a serem geradas: {selectedColors.length * selectedSizes.length}</p>
-              <p className="text-xs text-muted-foreground">Variações existentes: {existingVariations.length}</p>
-            </div>
-            <Button 
-              size="sm" 
-              onClick={handleSaveGrid} 
-              disabled={isLoading || (selectedColors.length === 0 || selectedSizes.length === 0)}
-            >
-              <Save className="h-4 w-4 mr-2" />
-              Gerar Grade
-            </Button>
-          </div>
-        </div>
+        <VariationSummary 
+          selectedColorsCount={selectedColors.length}
+          selectedSizesCount={selectedSizes.length}
+          combinationsCount={selectedColors.length * selectedSizes.length}
+          existingVariationsCount={existingVariations.length}
+          onSave={handleSaveGrid}
+          isLoading={isLoading}
+          isValid={selectedColors.length > 0 && selectedSizes.length > 0}
+        />
       </CardContent>
     </Card>
   );
