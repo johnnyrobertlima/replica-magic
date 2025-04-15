@@ -74,11 +74,17 @@ export async function getAllContentSchedules(clientId: string): Promise<Calendar
 
 export async function createContentSchedule(schedule: ContentScheduleFormData): Promise<OniAgenciaContentSchedule> {
   try {
-    console.log('Creating content schedule:', schedule);
+    // Ensure the title is never null before submitting to the database
+    const processedSchedule = {
+      ...schedule,
+      title: schedule.title || " " // Use a space character to satisfy NOT NULL constraint
+    };
+    
+    console.log('Creating content schedule:', processedSchedule);
     
     const { data, error } = await supabase
       .from(ONI_AGENCIA_CONTENT_SCHEDULES_TABLE)
-      .insert(schedule)
+      .insert(processedSchedule)
       .select()
       .single();
 
@@ -97,12 +103,20 @@ export async function createContentSchedule(schedule: ContentScheduleFormData): 
 
 export async function updateContentSchedule(id: string, schedule: Partial<ContentScheduleFormData>): Promise<OniAgenciaContentSchedule> {
   try {
-    console.log('Updating content schedule:', id, schedule);
+    // Process the schedule data to handle title
+    const processedSchedule = { ...schedule };
+    
+    // If title is included in the update, ensure it's not null
+    if ('title' in processedSchedule && (processedSchedule.title === null || processedSchedule.title === "")) {
+      processedSchedule.title = " "; // Use a space character to satisfy NOT NULL constraint
+    }
+    
+    console.log('Updating content schedule:', id, processedSchedule);
     
     // Only update the fields that are actually provided
     const { data, error } = await supabase
       .from(ONI_AGENCIA_CONTENT_SCHEDULES_TABLE)
-      .update(schedule)
+      .update(processedSchedule)
       .eq('id', id)
       .select()
       .single();

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
 import { useCreateContentSchedule, useUpdateContentSchedule, useDeleteContentSchedule } from "@/hooks/useOniAgenciaContentSchedules";
@@ -25,9 +26,10 @@ export function useScheduleMutations({
   const sanitizeFormData = (data: ContentScheduleFormData): ContentScheduleFormData => {
     const sanitized = { ...data };
     
-    // If title is an empty string, set it to null
-    if (sanitized.title === "") {
-      sanitized.title = null;
+    // If title is null or an empty string, set it to a default value
+    // This is a workaround until the database constraint is fixed
+    if (sanitized.title === null || sanitized.title === "") {
+      sanitized.title = " "; // Use a space to satisfy non-null constraint
     }
     
     return sanitized;
