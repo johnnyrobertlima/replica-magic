@@ -222,30 +222,59 @@ export const fetchAllItems = async (
 export const fetchGroups = async () => {
   // Verificamos se temos os grupos em cache
   if (groupsCache !== null) {
+    console.log("Usando grupos em cache:", groupsCache.length);
     return groupsCache;
   }
 
-  // Get unique groups from items
-  const { data, error } = await supabase
-    .from("BLUEBAY_ITEM")
-    .select("GRU_CODIGO, GRU_DESCRICAO")
-    .not("GRU_CODIGO", "is", null)
-    .order("GRU_DESCRICAO");
-
-  if (error) throw error;
-
-  // Remove duplicates
-  const uniqueGroups = data?.reduce((acc: any[], curr) => {
-    if (!acc.some(group => group.GRU_CODIGO === curr.GRU_CODIGO) && curr.GRU_CODIGO) {
-      acc.push(curr);
-    }
-    return acc;
-  }, []);
-
-  // Salvar em cache
-  groupsCache = uniqueGroups || [];
+  console.log("Buscando todos os grupos...");
   
-  return groupsCache;
+  try {
+    // Buscar todos os grupos distintos sem aplicar filtros iniciais
+    const { data, error, count } = await supabase
+      .from("BLUEBAY_ITEM")
+      .select("GRU_CODIGO, GRU_DESCRICAO", { count: "exact", head: false })
+      .not("GRU_CODIGO", "is", null)
+      .order("GRU_DESCRICAO");
+
+    if (error) {
+      console.error("Erro ao buscar grupos:", error);
+      throw error;
+    }
+
+    console.log(`Total de grupos com dados (potencialmente duplicados): ${data?.length}, count: ${count}`);
+
+    // Remove duplicados usando Map para melhor performance com grandes conjuntos de dados
+    const uniqueGroupsMap = new Map();
+    
+    if (data) {
+      data.forEach(group => {
+        if (group.GRU_CODIGO && !uniqueGroupsMap.has(group.GRU_CODIGO)) {
+          uniqueGroupsMap.set(group.GRU_CODIGO, {
+            GRU_CODIGO: group.GRU_CODIGO,
+            GRU_DESCRICAO: group.GRU_DESCRICAO || group.GRU_CODIGO // Fallback para o código se a descrição estiver vazia
+          });
+        }
+      });
+    }
+    
+    // Converter Map para array
+    const uniqueGroups = Array.from(uniqueGroupsMap.values());
+    
+    console.log(`Total de grupos únicos após processamento: ${uniqueGroups.length}`);
+    
+    // Ordenar por GRU_DESCRICAO
+    uniqueGroups.sort((a, b) => {
+      return (a.GRU_DESCRICAO || "").localeCompare(b.GRU_DESCRICAO || "");
+    });
+
+    // Salvar em cache
+    groupsCache = uniqueGroups;
+    
+    return groupsCache;
+  } catch (error) {
+    console.error("Erro ao buscar grupos:", error);
+    return []; // Retornar array vazio em caso de erro
+  }
 };
 
 export const saveItem = async (itemData: any, isUpdate: boolean) => {
