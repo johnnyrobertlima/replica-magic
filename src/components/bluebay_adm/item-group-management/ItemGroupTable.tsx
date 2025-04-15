@@ -22,6 +22,8 @@ export const ItemGroupTable = ({
   isLoading,
   onEdit
 }: ItemGroupTableProps) => {
+  console.log("Rendering ItemGroupTable with", groups.length, "groups");
+  
   if (isLoading) {
     return <ItemGroupTableSkeleton />;
   }

@@ -65,21 +65,37 @@ const mockGroups = [
 export const fetchGroups = async (): Promise<any[]> => {
   console.info("Buscando todos os grupos...");
   
-  // Simulate API call delay - reduced for better performance
-  await new Promise(resolve => setTimeout(resolve, 200));
+  // Simulate API call delay with a very short delay for better responsiveness
+  await new Promise(resolve => setTimeout(resolve, 100));
   
   console.info(`Total de grupos: ${mockGroups.length}`);
   
-  return mockGroups;
+  // Return a copy of the array to avoid reference issues
+  return [...mockGroups];
 };
 
 export const saveGroup = async (groupData: any): Promise<void> => {
   console.info("Salvando grupo:", groupData);
   
-  // Simulate API call delay - reduced for better performance
-  await new Promise(resolve => setTimeout(resolve, 300));
+  // Simulate API call delay with a short delay
+  await new Promise(resolve => setTimeout(resolve, 100));
   
-  // In a real application, this would send the data to an API
+  // If it's an update, find and update the item in mockGroups
+  if (groupData.GRU_CODIGO) {
+    const index = mockGroups.findIndex(g => g.GRU_CODIGO === groupData.GRU_CODIGO);
+    if (index >= 0) {
+      mockGroups[index] = { ...groupData };
+    }
+  } else {
+    // For a new group, generate a new ID and add to mockGroups
+    const newId = String(parseInt(mockGroups[mockGroups.length - 1].GRU_CODIGO) + 1).padStart(3, '0');
+    const newGroup = {
+      ...groupData,
+      GRU_CODIGO: newId
+    };
+    mockGroups.push(newGroup);
+  }
+  
   console.info("Grupo salvo com sucesso:", groupData);
   
   return;

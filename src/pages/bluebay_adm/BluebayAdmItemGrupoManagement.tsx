@@ -1,5 +1,5 @@
 
-import { useState, memo } from "react";
+import { useState, memo, useEffect } from "react";
 import { BluebayAdmMenu } from "@/components/bluebay_adm/BluebayAdmMenu";
 import { ItemGroupManagementHeader } from "@/components/bluebay_adm/item-group-management/ItemGroupManagementHeader";
 import { ItemGroupTable } from "@/components/bluebay_adm/item-group-management/ItemGroupTable";
@@ -23,6 +23,11 @@ const BluebayAdmItemGrupoManagement = () => {
     empresas,
     refreshData 
   } = useItemGroupManagement();
+
+  // Debug to check if groups are available
+  useEffect(() => {
+    console.log(`Component received ${groups.length} groups`);
+  }, [groups]);
 
   const handleNewGroup = () => {
     setSelectedGroup(null);

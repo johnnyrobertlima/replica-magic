@@ -13,10 +13,15 @@ export const useItemGroupManagement = () => {
   const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
+      console.log("Loading data for item group management...");
+      
+      // Load data concurrently
       const [fetchedGroups, fetchedEmpresas] = await Promise.all([
         fetchGroups(),
         fetchEmpresas()
       ]);
+      
+      console.log(`Loaded ${fetchedGroups.length} groups`);
       setGroups(fetchedGroups);
       setEmpresas(fetchedEmpresas);
     } catch (error: any) {
@@ -40,24 +45,35 @@ export const useItemGroupManagement = () => {
       setIsLoading(true);
       await saveGroup(groupData);
       
-      // Update the list immediately with optimistic update
+      // Optimistic UI update for better responsiveness
       if (groupData.GRU_CODIGO) {
-        // If updating existing group
+        // Updating existing group
         setGroups(prevGroups => 
           prevGroups.map(g => 
             g.GRU_CODIGO === groupData.GRU_CODIGO ? groupData : g
           )
         );
+        
+        toast({
+          title: "Sucesso",
+          description: "Grupo atualizado com sucesso!",
+        });
       } else {
-        // For new groups, we would append, but in this case we'll reload
-        // since we don't have a proper ID generation mechanism in the mock
+        // For new groups, append with a temporary ID until refresh
+        const tempNewGroup = {
+          ...groupData,
+          GRU_CODIGO: groupData.GRU_CODIGO || `temp-${Date.now()}`
+        };
+        setGroups(prev => [...prev, tempNewGroup]);
+        
+        toast({
+          title: "Sucesso",
+          description: "Novo grupo criado com sucesso!",
+        });
+        
+        // Refresh data to get the server-generated ID and ensure consistency
         await loadData();
       }
-      
-      toast({
-        title: "Sucesso",
-        description: "Grupo salvo com sucesso!",
-      });
       
       return true;
     } catch (error: any) {
