@@ -162,23 +162,22 @@ export const deleteItem = async (itemCode: string) => {
   }
 };
 
-// New function to verify if an item exists before creating variations
+// Updated function to verify if an item exists before creating variations
 export const verifyItemExists = async (itemCode: string): Promise<boolean> => {
   try {
-    const { data, error } = await supabase
+    if (!itemCode) return false;
+    
+    const { data, error, count } = await supabase
       .from("BLUEBAY_ITEM")
-      .select("ITEM_CODIGO")
-      .eq("ITEM_CODIGO", itemCode)
-      .eq("MATRIZ", 1)
-      .eq("FILIAL", 1)
-      .single();
+      .select("ITEM_CODIGO", { count: "exact" })
+      .eq("ITEM_CODIGO", itemCode);
 
     if (error) {
       console.error("Error verifying item existence:", error);
       return false;
     }
 
-    return !!data;
+    return Array.isArray(data) && data.length > 0;
   } catch (error) {
     console.error("Error checking item existence:", error);
     return false;

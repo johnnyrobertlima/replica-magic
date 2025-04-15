@@ -77,7 +77,7 @@ export const ItemForm = ({
         ncm: item.ncm || "",
       });
       
-      if (activeTab === "basic" && !!item.ITEM_CODIGO) {
+      if (activeTab === "basic" && !item.ITEM_CODIGO) {
         setActiveTab("variations");
       }
     } else {
@@ -99,7 +99,7 @@ export const ItemForm = ({
       
       setActiveTab("basic");
     }
-  }, [item]);
+  }, [item, activeTab]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -205,7 +205,7 @@ export const ItemForm = ({
           <TabsTrigger value="basic">Informações Básicas</TabsTrigger>
           <TabsTrigger value="additional">Detalhes Adicionais</TabsTrigger>
           <TabsTrigger value="variations" disabled={!formData.ITEM_CODIGO}>
-            Grade de Variações
+            Grade de Varia��ões
           </TabsTrigger>
         </TabsList>
         

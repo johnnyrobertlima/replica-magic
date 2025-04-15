@@ -102,21 +102,35 @@ export const ItemVariationsGrid = ({ itemCode }: ItemVariationsGridProps) => {
     if (!itemCode) return;
     
     try {
+      setIsLoading(true);
       const exists = await verifyItemExists(itemCode);
       setItemExists(exists);
     } catch (error) {
       console.error("Error checking if item exists:", error);
       setItemExists(false);
+    } finally {
+      setIsLoading(false);
     }
   }, [itemCode]);
 
   // Initialize data
   useEffect(() => {
     if (itemCode) {
-      fetchColors();
-      fetchSizes();
-      fetchExistingVariations();
-      checkItemExists();
+      const initializeData = async () => {
+        setIsLoading(true);
+        try {
+          await checkItemExists();
+          await Promise.all([
+            fetchColors(),
+            fetchSizes(),
+            fetchExistingVariations()
+          ]);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      
+      initializeData();
     }
   }, [itemCode, fetchColors, fetchSizes, fetchExistingVariations, checkItemExists]);
 
@@ -271,6 +285,21 @@ export const ItemVariationsGrid = ({ itemCode }: ItemVariationsGridProps) => {
 
   if (!itemExists) {
     return <EmptyStateDisplay type="item-not-saved" />;
+  }
+
+  if (isLoading && (!colors.length || !sizes.length)) {
+    return (
+      <Card className="mt-4">
+        <CardContent className="pt-6">
+          <div className="flex justify-center items-center h-40">
+            <div className="text-center">
+              <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Carregando dados...</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   if (!colors.length || !sizes.length) {
