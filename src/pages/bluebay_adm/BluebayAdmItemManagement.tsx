@@ -9,6 +9,7 @@ import { ItemDialog } from "@/components/bluebay_adm/item-management/ItemDialog"
 import { ItemsContent } from "@/components/bluebay_adm/item-management/ItemsContent";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProductVariationsManager } from "@/components/bluebay_adm/item-management/ProductVariationsManager";
+import { useSearchParams } from "react-router-dom";
 
 // Memoized components to avoid unnecessary re-renders
 const MemoizedItemManagementHeader = memo(ItemManagementHeader);
@@ -19,7 +20,11 @@ const MemoizedProductVariationsManager = memo(ProductVariationsManager);
 
 const BluebayAdmItemManagement = () => {
   const [isMounted, setIsMounted] = useState(false);
-  const [activeTab, setActiveTab] = useState("items");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab") || "items";
+  const productParam = searchParams.get("product");
+  
+  const [activeTab, setActiveTab] = useState(tabParam);
   
   const { 
     items, 
@@ -48,6 +53,18 @@ const BluebayAdmItemManagement = () => {
     setIsMounted(true);
   }, []);
 
+  // Handle URL parameters
+  useEffect(() => {
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    setSearchParams({ tab: value });
+  };
+
   const handleNewItem = useCallback(() => {
     setSelectedItem(null);
     setIsDialogOpen(true);
@@ -66,7 +83,7 @@ const BluebayAdmItemManagement = () => {
     <main className="container-fluid p-0 max-w-full">
       <BluebayAdmMenu />
       <div className="container mx-auto p-6 max-w-7xl">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
           <div className="flex justify-between items-start">
             <MemoizedItemManagementHeader 
               onNewItem={handleNewItem} 
@@ -99,7 +116,7 @@ const BluebayAdmItemManagement = () => {
           </TabsContent>
           
           <TabsContent value="variations" className="space-y-6">
-            <MemoizedProductVariationsManager />
+            <MemoizedProductVariationsManager initialSelectedProduct={productParam} />
           </TabsContent>
         </Tabs>
 

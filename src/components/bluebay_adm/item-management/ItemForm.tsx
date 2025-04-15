@@ -13,8 +13,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Grid } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 interface ItemFormProps {
   item: any | null;
@@ -36,6 +37,7 @@ export const ItemForm = ({
   addBrand
 }: ItemFormProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     ITEM_CODIGO: "",
     DESCRICAO: "",
@@ -133,6 +135,20 @@ export const ItemForm = ({
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleGoToVariationsTab = () => {
+    if (!formData.ITEM_CODIGO) {
+      toast({
+        variant: "destructive",
+        title: "Código necessário",
+        description: "Salve o produto primeiro para poder criar variações"
+      });
+      return;
+    }
+    
+    // Navigate to the variations tab with the product code selected
+    navigate("/client-area/bluebay_adm/item-management?tab=variations&product=" + formData.ITEM_CODIGO);
   };
 
   const handleAddNewBrand = async () => {
@@ -463,7 +479,17 @@ export const ItemForm = ({
         </TabsContent>
       </Tabs>
       
-      <DialogFooter className="mt-6">
+      <DialogFooter className="mt-6 flex justify-between items-center">
+        <Button 
+          type="button" 
+          variant="outline"
+          onClick={handleGoToVariationsTab}
+          className="flex items-center gap-2"
+          disabled={!formData.ITEM_CODIGO}
+        >
+          <Grid className="h-4 w-4" />
+          Montar Grade de Variações
+        </Button>
         <Button type="submit" disabled={isLoading}>
           {isLoading ? "Salvando..." : "Salvar"}
         </Button>

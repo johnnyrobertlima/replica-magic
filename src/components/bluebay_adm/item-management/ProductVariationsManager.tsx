@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,9 +13,11 @@ import { Package, Plus, Search, Save, Tag, X, Edit, Trash } from "lucide-react";
 import { ProductSizeGrid } from "./ProductSizeGrid";
 import { supabase } from "@/integrations/supabase/client";
 
-interface ProductVariationsManagerProps {}
+interface ProductVariationsManagerProps {
+  initialSelectedProduct?: string | null;
+}
 
-export const ProductVariationsManager = ({}: ProductVariationsManagerProps) => {
+export const ProductVariationsManager = ({ initialSelectedProduct }: ProductVariationsManagerProps) => {
   const [activeTab, setActiveTab] = useState<string>("cores");
   const [colors, setColors] = useState<any[]>([]);
   const [sizes, setSizes] = useState<any[]>([]);
@@ -24,7 +25,7 @@ export const ProductVariationsManager = ({}: ProductVariationsManagerProps) => {
   const [newSize, setNewSize] = useState({ nome: "", ordem: 0 });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<string | null>(null);
+  const [selectedItem, setSelectedItem] = useState<string | null>(initialSelectedProduct || null);
   const [itemsToSelect, setItemsToSelect] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -33,12 +34,19 @@ export const ProductVariationsManager = ({}: ProductVariationsManagerProps) => {
   const [editItem, setEditItem] = useState<any>(null);
   const { toast } = useToast();
 
-  // Fetch colors and sizes on component mount
   useEffect(() => {
     fetchColors();
     fetchSizes();
     fetchItemsToSelect();
   }, []);
+
+  useEffect(() => {
+    if (initialSelectedProduct) {
+      setSelectedItem(initialSelectedProduct);
+      setActiveTab("grade");
+      fetchExistingVariations(initialSelectedProduct);
+    }
+  }, [initialSelectedProduct]);
 
   const fetchColors = async () => {
     try {
@@ -78,8 +86,7 @@ export const ProductVariationsManager = ({}: ProductVariationsManagerProps) => {
     try {
       const { data, error } = await supabase
         .from("BLUEBAY_ITEM")
-        .select("codigo, descricao")
-        .order("descricao");
+        .select("codigo, descricao");
 
       if (error) throw error;
       setItemsToSelect(data || []);
@@ -200,7 +207,6 @@ export const ProductVariationsManager = ({}: ProductVariationsManagerProps) => {
 
       if (error) throw error;
 
-      // Update the local state
       setColors(colors.map(c => c.id === editItem.id ? { ...c, nome: newColor.nome, codigo_hex: newColor.codigo_hex } : c));
       setNewColor({ nome: "", codigo_hex: "#ffffff" });
       setEditItem(null);
@@ -240,7 +246,6 @@ export const ProductVariationsManager = ({}: ProductVariationsManagerProps) => {
 
       if (error) throw error;
 
-      // Update the local state
       setSizes(sizes.map(s => s.id === editItem.id ? { ...s, nome: newSize.nome, ordem: newSize.ordem } : s));
       setNewSize({ nome: "", ordem: 0 });
       setEditItem(null);
@@ -280,7 +285,6 @@ export const ProductVariationsManager = ({}: ProductVariationsManagerProps) => {
 
       if (error) throw error;
 
-      // Update the local state
       if (itemToDelete.type === 'color') {
         setColors(colors.filter(c => c.id !== itemToDelete.id));
       } else {
@@ -318,8 +322,8 @@ export const ProductVariationsManager = ({}: ProductVariationsManagerProps) => {
   };
 
   const filteredItems = itemsToSelect.filter(item => 
-    item.descricao.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.codigo.toLowerCase().includes(searchTerm.toLowerCase())
+    item.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.codigo?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleCreateVariations = async (variations: any[]) => {
@@ -328,7 +332,6 @@ export const ProductVariationsManager = ({}: ProductVariationsManagerProps) => {
     try {
       setIsLoading(true);
       
-      // Check if any of the variations already exist
       const newVariations = variations.filter(v => 
         !existingVariations.some(
           ev => ev.id_cor === v.id_cor && ev.id_tamanho === v.id_tamanho
@@ -350,7 +353,6 @@ export const ProductVariationsManager = ({}: ProductVariationsManagerProps) => {
 
       if (error) throw error;
       
-      // Refresh the existing variations
       fetchExistingVariations(String(selectedItem));
       
       toast({
