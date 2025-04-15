@@ -33,14 +33,14 @@ export const ItemGroupDialog = ({
       setFormData({
         GRU_CODIGO: selectedGroup.GRU_CODIGO || "",
         GRU_DESCRICAO: selectedGroup.GRU_DESCRICAO || "",
-        empresa: selectedGroup.empresa || "",
+        empresa: selectedGroup.empresa || "nao_definida",
         ativo: selectedGroup.ativo !== undefined ? selectedGroup.ativo : true
       });
     } else {
       setFormData({
         GRU_CODIGO: "",
         GRU_DESCRICAO: "",
-        empresa: "",
+        empresa: "nao_definida",
         ativo: true
       });
     }

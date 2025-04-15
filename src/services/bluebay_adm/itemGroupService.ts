@@ -5,20 +5,41 @@ export const fetchGroups = async (): Promise<any[]> => {
   console.info("Buscando todos os grupos...");
   
   try {
-    const { data, error, count } = await supabase
+    // First, get the total count to understand how many records we need to fetch
+    const { count, error: countError } = await supabase
       .from("BLUEBAY_ITEM")
-      .select("GRU_CODIGO, GRU_DESCRICAO, empresa, ativo", { count: "exact", head: false });
+      .select("GRU_CODIGO", { count: "exact", head: true });
     
-    if (error) {
-      throw new Error(error.message || "Erro ao buscar grupos");
+    if (countError) {
+      throw new Error(countError.message || "Erro ao contar grupos");
     }
     
-    console.info(`Total de grupos com dados (potencialmente duplicados): ${data?.length}, count: ${count}`);
+    const pageSize = 1000;
+    const totalPages = Math.ceil((count || 1) / pageSize);
+    let allData: any[] = [];
+    
+    // Fetch data in pages
+    for (let page = 0; page < totalPages; page++) {
+      const { data, error } = await supabase
+        .from("BLUEBAY_ITEM")
+        .select("GRU_CODIGO, GRU_DESCRICAO, empresa, ativo")
+        .range(page * pageSize, (page + 1) * pageSize - 1);
+      
+      if (error) {
+        throw new Error(error.message || "Erro ao buscar grupos");
+      }
+      
+      if (data) {
+        allData = [...allData, ...data];
+      }
+    }
+    
+    console.info(`Total de grupos com dados (potencialmente duplicados): ${allData.length}, count: ${count}`);
     
     // Use Map to efficiently handle duplicates and keep track of active status
     const groupsMap = new Map();
     
-    data?.forEach(item => {
+    allData.forEach(item => {
       if (!item.GRU_CODIGO || !item.GRU_DESCRICAO) return;
       
       // If this group code is already in the map, don't override existing data
@@ -57,21 +78,43 @@ export const fetchEmpresas = async (): Promise<string[]> => {
   console.info("Buscando todas as empresas...");
   
   try {
-    const { data, error } = await supabase
+    // First, get the total count to understand how many records we need to fetch
+    const { count, error: countError } = await supabase
       .from("BLUEBAY_ITEM")
-      .select("empresa", { count: "exact", head: false })
+      .select("empresa", { count: "exact", head: true })
       .not("empresa", "is", null);
     
-    if (error) {
-      throw new Error(error.message || "Erro ao buscar empresas");
+    if (countError) {
+      throw new Error(countError.message || "Erro ao contar empresas");
     }
     
-    console.info(`Total de registros com dados de empresa: ${data?.length}`);
+    const pageSize = 1000;
+    const totalPages = Math.ceil((count || 1) / pageSize);
+    let allData: any[] = [];
+    
+    // Fetch data in pages
+    for (let page = 0; page < totalPages; page++) {
+      const { data, error } = await supabase
+        .from("BLUEBAY_ITEM")
+        .select("empresa")
+        .not("empresa", "is", null)
+        .range(page * pageSize, (page + 1) * pageSize - 1);
+      
+      if (error) {
+        throw new Error(error.message || "Erro ao buscar empresas");
+      }
+      
+      if (data) {
+        allData = [...allData, ...data];
+      }
+    }
+    
+    console.info(`Total de registros com dados de empresa: ${allData.length}`);
     
     // Extract unique empresa values
     const empresasSet = new Set<string>();
     
-    data?.forEach(item => {
+    allData.forEach(item => {
       if (item.empresa) {
         empresasSet.add(item.empresa);
       }
@@ -114,7 +157,7 @@ export const saveGroup = async (groupData: any): Promise<void> => {
         .from("BLUEBAY_ITEM")
         .update({
           GRU_DESCRICAO: groupData.GRU_DESCRICAO,
-          empresa: groupData.empresa,
+          empresa: groupData.empresa === "nao_definida" ? null : groupData.empresa,
           ativo: groupData.ativo
         })
         .eq("GRU_CODIGO", groupData.GRU_CODIGO);
@@ -129,7 +172,7 @@ export const saveGroup = async (groupData: any): Promise<void> => {
         .insert({
           GRU_CODIGO: groupData.GRU_CODIGO,
           GRU_DESCRICAO: groupData.GRU_DESCRICAO,
-          empresa: groupData.empresa,
+          empresa: groupData.empresa === "nao_definida" ? null : groupData.empresa,
           ativo: groupData.ativo,
           ITEM_CODIGO: `GROUP_${groupData.GRU_CODIGO}`,
           FILIAL: 1,
