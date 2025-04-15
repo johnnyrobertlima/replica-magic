@@ -18,6 +18,11 @@ export const useItemManagement = () => {
   const pagination = usePagination(100); // 100 items per page
 
   const fetchItems = useCallback(async () => {
+    if (!document.hasFocus()) {
+      // Skip fetching if the document is not in focus to avoid SecurityError
+      return;
+    }
+    
     setIsLoading(true);
     try {
       // Calculate range based on current page and page size
@@ -44,11 +49,15 @@ export const useItemManagement = () => {
 
       if (error) throw error;
       
-      // Filter out any duplicate items by ITEM_CODIGO
-      const uniqueItems = data?.filter((item, index, self) => 
-        index === self.findIndex(i => i.ITEM_CODIGO === item.ITEM_CODIGO)
-      ) || [];
+      // Get unique items (no duplicates)
+      const uniqueItemsMap = new Map();
+      data?.forEach(item => {
+        if (!uniqueItemsMap.has(item.ITEM_CODIGO)) {
+          uniqueItemsMap.set(item.ITEM_CODIGO, item);
+        }
+      });
       
+      const uniqueItems = Array.from(uniqueItemsMap.values());
       setItems(uniqueItems);
       
       // Update total count and pagination
@@ -188,18 +197,21 @@ export const useItemManagement = () => {
   }, [fetchGroups]);
 
   useEffect(() => {
-    fetchItems();
-  }, [fetchItems]);
-
-  // Add debounce for search term
-  useEffect(() => {
+    // Add a delay to prevent flickering with rapid changes
     const timer = setTimeout(() => {
-      pagination.goToPage(1); // Reset to first page on search
       fetchItems();
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchTerm, groupFilter, fetchItems, pagination]);
+  }, [fetchItems]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      pagination.goToPage(1); // Reset to first page on search
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm, groupFilter, pagination]);
 
   return {
     items,

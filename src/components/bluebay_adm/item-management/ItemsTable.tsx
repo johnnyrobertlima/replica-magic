@@ -58,8 +58,8 @@ export const ItemsTable = ({ items, onEdit, onDelete }: ItemsTableProps) => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {items.map((item, index) => (
-              <TableRow key={`${item.ITEM_CODIGO}-${index}`}>
+            {items.map((item) => (
+              <TableRow key={item.ITEM_CODIGO}>
                 <TableCell className="font-medium">{item.ITEM_CODIGO}</TableCell>
                 <TableCell>{item.CODIGOAUX || "-"}</TableCell>
                 <TableCell>{item.DESCRICAO}</TableCell>

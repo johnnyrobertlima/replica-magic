@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { Search, Filter, Save, Edit, Trash2, Plus, PackageCheck } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Filter, PackageCheck } from "lucide-react";
 import { BluebayAdmMenu } from "@/components/bluebay_adm/BluebayAdmMenu";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,14 +21,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { useItemManagement } from "@/hooks/bluebay_adm/useItemManagement";
 import { ItemForm } from "@/components/bluebay_adm/item-management/ItemForm";
@@ -37,6 +29,7 @@ import { ItemsTableSkeleton } from "@/components/bluebay_adm/item-management/Ite
 import { Pagination } from "@/components/bluebay_adm/item-management/Pagination";
 
 const BluebayAdmItemManagement = () => {
+  const [isMounted, setIsMounted] = useState(false);
   const { 
     items, 
     isLoading, 
@@ -55,6 +48,15 @@ const BluebayAdmItemManagement = () => {
     totalCount
   } = useItemManagement();
 
+  // Only render after component is mounted to avoid hydration issues
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return null;
+  }
+
   return (
     <main className="container-fluid p-0 max-w-full">
       <BluebayAdmMenu />
@@ -68,7 +70,7 @@ const BluebayAdmItemManagement = () => {
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button className="flex gap-2 items-center">
-                <Plus className="h-4 w-4" />
+                <span className="plus-icon">+</span>
                 Novo Item
               </Button>
             </DialogTrigger>
