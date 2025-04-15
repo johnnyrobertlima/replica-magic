@@ -40,28 +40,27 @@ export const fetchGroups = async (): Promise<any[]> => {
   console.info("Buscando todos os grupos...");
   
   try {
-    // Fetch all distinct group codes and descriptions without any limit
-    const { data, error, count } = await supabase
+    // Fetch all group descriptions, as requested in the instructions
+    const { data, error } = await supabase
       .from('BLUEBAY_ITEM')
-      .select('GRU_CODIGO, GRU_DESCRICAO, empresa', { count: 'exact' })
-      .not('GRU_CODIGO', 'is', null)
-      .not('GRU_DESCRICAO', 'is', null)
-      .order('GRU_DESCRICAO');
+      .select('GRU_CODIGO, GRU_DESCRICAO')
+      .not('GRU_DESCRICAO', 'is', null);
     
     if (error) throw error;
     
-    console.info(`Total de grupos com dados (potencialmente duplicados): ${data.length}, count: ${count}`);
+    console.info(`Total de registros com grupo: ${data.length}`);
     
-    // Process the data to get unique groups with their properties
+    // Create a map to store unique groups with their code and description
     const groupMap = new Map();
     
+    // Process the data to get unique groups by description
     data.forEach(item => {
-      if (!groupMap.has(item.GRU_CODIGO)) {
-        groupMap.set(item.GRU_CODIGO, {
-          GRU_CODIGO: item.GRU_CODIGO,
+      if (item.GRU_DESCRICAO && !groupMap.has(item.GRU_DESCRICAO)) {
+        groupMap.set(item.GRU_DESCRICAO, {
+          GRU_CODIGO: item.GRU_CODIGO || '',
           GRU_DESCRICAO: item.GRU_DESCRICAO,
-          empresa: item.empresa || 'nao_definida',
-          ativo: true // Default to active
+          empresa: 'nao_definida', // Default value since we're not filtering by empresa
+          ativo: true // Default to active for all groups
         });
       }
     });

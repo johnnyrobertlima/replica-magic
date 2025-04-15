@@ -50,7 +50,7 @@ export const ItemGroupTable = ({
               </TableRow>
             ) : (
               groups.map((group) => (
-                <TableRow key={group.GRU_CODIGO}>
+                <TableRow key={group.GRU_DESCRICAO}>
                   <TableCell className="font-medium">{group.GRU_CODIGO}</TableCell>
                   <TableCell>{group.GRU_DESCRICAO}</TableCell>
                   <TableCell>{group.empresa || "Não definida"}</TableCell>
