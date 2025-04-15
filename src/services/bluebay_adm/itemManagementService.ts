@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 // Cache para grupos (não muda com frequência)
@@ -160,5 +159,28 @@ export const deleteItem = async (itemCode: string) => {
     // Limpar o cache de grupos quando excluirmos um item
     // pois pode ser que tenhamos removido um grupo
     groupsCache = null;
+  }
+};
+
+// New function to verify if an item exists before creating variations
+export const verifyItemExists = async (itemCode: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase
+      .from("BLUEBAY_ITEM")
+      .select("ITEM_CODIGO")
+      .eq("ITEM_CODIGO", itemCode)
+      .eq("MATRIZ", 1)
+      .eq("FILIAL", 1)
+      .single();
+
+    if (error) {
+      console.error("Error verifying item existence:", error);
+      return false;
+    }
+
+    return !!data;
+  } catch (error) {
+    console.error("Error checking item existence:", error);
+    return false;
   }
 };

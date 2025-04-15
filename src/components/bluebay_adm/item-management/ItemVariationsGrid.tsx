@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Grid, Check } from "lucide-react";
+import { Save, Grid, Check, Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Select,
@@ -14,6 +14,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { verifyItemExists } from "@/services/bluebay_adm/itemManagementService";
 
 interface ItemVariationsGridProps {
   itemCode: string;
@@ -26,6 +28,7 @@ export const ItemVariationsGrid = ({ itemCode }: ItemVariationsGridProps) => {
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [existingVariations, setExistingVariations] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [itemExists, setItemExists] = useState(true);
   const { toast } = useToast();
 
   const fetchColors = useCallback(async () => {
@@ -100,14 +103,28 @@ export const ItemVariationsGrid = ({ itemCode }: ItemVariationsGridProps) => {
     }
   }, [itemCode]);
 
+  // Check if the item exists
+  const checkItemExists = useCallback(async () => {
+    if (!itemCode) return;
+    
+    try {
+      const exists = await verifyItemExists(itemCode);
+      setItemExists(exists);
+    } catch (error) {
+      console.error("Error checking if item exists:", error);
+      setItemExists(false);
+    }
+  }, [itemCode]);
+
   // Initialize data
   useEffect(() => {
     if (itemCode) {
       fetchColors();
       fetchSizes();
       fetchExistingVariations();
+      checkItemExists();
     }
-  }, [itemCode, fetchColors, fetchSizes, fetchExistingVariations]);
+  }, [itemCode, fetchColors, fetchSizes, fetchExistingVariations, checkItemExists]);
 
   const handleToggleColor = (colorId: string) => {
     setSelectedColors(prev => {
@@ -151,6 +168,15 @@ export const ItemVariationsGrid = ({ itemCode }: ItemVariationsGridProps) => {
         variant: "destructive",
         title: "Erro",
         description: "Código do item não encontrado",
+      });
+      return;
+    }
+
+    if (!itemExists) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Este item não existe na base de dados. Salve o item primeiro.",
       });
       return;
     }
@@ -259,6 +285,25 @@ export const ItemVariationsGrid = ({ itemCode }: ItemVariationsGridProps) => {
           <div className="text-center p-4 text-muted-foreground">
             <p>Salve o produto primeiro para poder criar variações</p>
           </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!itemExists) {
+    return (
+      <Card className="mt-4">
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">Grade de Variações</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Alert variant="destructive">
+            <Info className="h-4 w-4" />
+            <AlertTitle>Atenção</AlertTitle>
+            <AlertDescription>
+              Este item ainda não foi salvo na base de dados. Salve o item primeiro para poder criar variações.
+            </AlertDescription>
+          </Alert>
         </CardContent>
       </Card>
     );

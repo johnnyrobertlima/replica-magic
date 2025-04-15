@@ -136,6 +136,10 @@ export const ItemForm = ({
     setIsLoading(true);
     try {
       await onSave(formData);
+      
+      if (activeTab === "basic" && !item) {
+        setActiveTab("variations");
+      }
     } finally {
       setIsLoading(false);
     }
