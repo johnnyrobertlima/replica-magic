@@ -7,7 +7,7 @@ import { SizeSelectionPanel } from "./variation-grid/SizeSelectionPanel";
 import { VariationSummary } from "./variation-grid/VariationSummary";
 import { EmptyStateDisplay } from "./variation-grid/EmptyStateDisplay";
 import { VariationLoading } from "./variation-grid/VariationLoading";
-import { useVariationGrid } from "./variation-grid/useVariationGrid";
+import { useVariationGrid } from "@/hooks/bluebay_adm/variation-grid/useVariationGrid";
 
 interface ItemVariationsGridProps {
   itemCode: string;
