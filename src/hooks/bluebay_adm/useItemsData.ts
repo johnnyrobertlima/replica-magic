@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { fetchItems, fetchGroups, fetchAllItems } from "@/services/bluebay_adm/itemManagementService";
@@ -19,7 +18,6 @@ export const useItemsData = (
   const previousGroupFilter = useRef(groupFilter);
   const previousPage = useRef(pagination.currentPage);
 
-  // Função para carregar os grupos (executada apenas uma vez)
   const loadGroups = useCallback(async () => {
     try {
       const fetchedGroups = await fetchGroups();
@@ -34,7 +32,6 @@ export const useItemsData = (
     }
   }, [toast]);
 
-  // Função para carregar os itens com paginação
   const loadItems = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -50,7 +47,6 @@ export const useItemsData = (
       setTotalCount(count);
       pagination.updateTotalCount(count);
       
-      // Registramos apenas uma vez por carregamento bem-sucedido
       console.info(`Loaded ${fetchedItems.length} items (page ${pagination.currentPage} of ${Math.ceil(count/pagination.pageSize)})`);
     } catch (error: any) {
       console.error("Error fetching items:", error);
@@ -65,13 +61,13 @@ export const useItemsData = (
     }
   }, [searchTerm, groupFilter, pagination, toast]);
 
-  // Nova função para carregar todos os itens (sem paginação)
   const loadAllItems = useCallback(async () => {
     try {
       setIsLoadingAll(true);
       toast({
         title: "Carregando todos os itens",
         description: "Esta operação pode levar alguns minutos para grandes volumes de dados.",
+        variant: "default"
       });
       
       const allItems = await fetchAllItems(searchTerm, groupFilter);
@@ -83,7 +79,7 @@ export const useItemsData = (
       toast({
         title: "Carregamento completo",
         description: `Foram carregados ${allItems.length} itens no total.`,
-        variant: "success"
+        variant: "default"
       });
       
       console.info(`Loaded all ${allItems.length} items without pagination`);
@@ -99,39 +95,32 @@ export const useItemsData = (
     }
   }, [searchTerm, groupFilter, pagination, toast]);
 
-  // Carregamento inicial dos grupos (apenas uma vez)
   useEffect(() => {
     loadGroups();
   }, [loadGroups]);
 
-  // Efeito para carregar itens apenas quando necessário
   useEffect(() => {
-    // Verificamos se é a primeira renderização
     if (isFirstRender.current) {
       isFirstRender.current = false;
       loadItems();
       return;
     }
     
-    // Verificamos se os filtros ou a página mudaram
     const filtersChanged = 
       previousSearchTerm.current !== searchTerm || 
       previousGroupFilter.current !== groupFilter;
     
     const pageChanged = previousPage.current !== pagination.currentPage;
     
-    // Atualizamos os valores anteriores
     previousSearchTerm.current = searchTerm;
     previousGroupFilter.current = groupFilter;
     previousPage.current = pagination.currentPage;
     
-    // Se os filtros mudaram, resetamos para a primeira página
     if (filtersChanged) {
       pagination.goToPage(1);
-      return; // O efeito de mudança de página irá carregar os itens
+      return;
     }
     
-    // Se a página mudou, carregamos os novos itens
     if (pageChanged) {
       loadItems();
     }
