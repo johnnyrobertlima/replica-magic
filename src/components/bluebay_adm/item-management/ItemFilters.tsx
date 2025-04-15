@@ -97,7 +97,7 @@ export const ItemFilters = ({
 
       <div className="flex flex-wrap gap-2 items-center justify-between">
         <LoadAllItemsButton 
-          onClick={onLoadAllItems} 
+          onLoadAll={onLoadAllItems} 
           isLoading={isLoadingAll} 
         />
         

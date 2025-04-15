@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Database } from "lucide-react";
 
 interface LoadAllItemsButtonProps {
-  onLoadAll: () => Promise<void>;
+  onLoadAll: () => void;
   isLoading: boolean;
 }
 
