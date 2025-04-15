@@ -10,7 +10,8 @@ import {
   BluebayAdmFinanceiroManager, 
   BluebayAdmRequests, 
   BluebayAdmAnaliseDeCompra,
-  BluebayAdmItemManagement
+  BluebayAdmItemManagement,
+  BluebayAdmItemGrupoManagement
 } from "@/pages/bluebay_adm";
 
 export const bluebayAdmRoutes = [
@@ -57,5 +58,9 @@ export const bluebayAdmRoutes = [
   {
     path: "/client-area/bluebay_adm/item-management",
     element: BluebayAdmItemManagement,
+  },
+  {
+    path: "/client-area/bluebay_adm/item-grupo-management",
+    element: BluebayAdmItemGrupoManagement,
   },
 ] as const;

@@ -10,6 +10,7 @@ import BluebayAdmRequests from './BluebayAdmRequests';
 import BluebayAdmAnaliseDeCompra from './BluebayAdmAnaliseDeCompra';
 import BluebayAdmDashboardComercial from './BluebayAdmDashboardComercial';
 import BluebayAdmItemManagement from './BluebayAdmItemManagement';
+import BluebayAdmItemGrupoManagement from './BluebayAdmItemGrupoManagement';
 
 export {
   BluebayAdmReports,
@@ -22,5 +23,6 @@ export {
   BluebayAdmRequests,
   BluebayAdmAnaliseDeCompra,
   BluebayAdmDashboardComercial,
-  BluebayAdmItemManagement
+  BluebayAdmItemManagement,
+  BluebayAdmItemGrupoManagement
 };
