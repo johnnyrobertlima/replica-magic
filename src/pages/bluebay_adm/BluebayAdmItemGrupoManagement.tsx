@@ -1,7 +1,6 @@
 
-import { useState, useEffect, memo } from "react";
+import { useState, memo } from "react";
 import { BluebayAdmMenu } from "@/components/bluebay_adm/BluebayAdmMenu";
-import { useToast } from "@/hooks/use-toast";
 import { ItemGroupManagementHeader } from "@/components/bluebay_adm/item-group-management/ItemGroupManagementHeader";
 import { ItemGroupTable } from "@/components/bluebay_adm/item-group-management/ItemGroupTable";
 import { ItemGroupDialog } from "@/components/bluebay_adm/item-group-management/ItemGroupDialog";
@@ -27,6 +26,13 @@ const BluebayAdmItemGrupoManagement = () => {
     setIsDialogOpen(true);
   };
 
+  const onSaveGroup = async (groupData: any) => {
+    const success = await handleSaveGroup(groupData);
+    if (success) {
+      setIsDialogOpen(false);
+    }
+  };
+
   return (
     <main className="container-fluid p-0 max-w-full">
       <BluebayAdmMenu />
@@ -46,7 +52,7 @@ const BluebayAdmItemGrupoManagement = () => {
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <MemoizedItemGroupDialog
             selectedGroup={selectedGroup}
-            onSave={handleSaveGroup}
+            onSave={onSaveGroup}
             empresas={empresas}
             isOpen={isDialogOpen}
           />

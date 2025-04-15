@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 // Fetch all groups with their active status and company
@@ -11,7 +12,7 @@ export const fetchGroups = async (): Promise<any[]> => {
       .throwOnError();
     
     if (error) {
-      throw new Error(error.message);
+      throw new Error(error.message || "Erro ao buscar grupos");
     }
     
     console.info(`Total de grupos com dados (potencialmente duplicados): ${data?.length}, count: ${count}`);
@@ -42,9 +43,14 @@ export const fetchGroups = async (): Promise<any[]> => {
     return uniqueGroups.sort((a, b) => 
       a.GRU_DESCRICAO.localeCompare(b.GRU_DESCRICAO)
     );
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error fetching groups:", error);
-    throw new Error(`Falha ao buscar grupos: ${error.message}`);
+    // Ensure we're throwing an Error object with a message property
+    if (error instanceof Error) {
+      throw error;
+    } else {
+      throw new Error(`Falha ao buscar grupos: ${String(error)}`);
+    }
   }
 };
 
@@ -60,7 +66,7 @@ export const fetchEmpresas = async (): Promise<string[]> => {
       .throwOnError();
     
     if (error) {
-      throw new Error(error.message);
+      throw new Error(error.message || "Erro ao buscar empresas");
     }
     
     console.info(`Total de registros com dados de empresa: ${data?.length}`);
@@ -80,9 +86,14 @@ export const fetchEmpresas = async (): Promise<string[]> => {
     console.info(`Total de empresas únicas após processamento: ${uniqueEmpresas.length}`);
     
     return uniqueEmpresas;
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error fetching empresas:", error);
-    throw new Error(`Falha ao buscar empresas: ${error.message}`);
+    // Ensure we're throwing an Error object with a message property
+    if (error instanceof Error) {
+      throw error;
+    } else {
+      throw new Error(`Falha ao buscar empresas: ${String(error)}`);
+    }
   }
 };
 
@@ -98,7 +109,7 @@ export const saveGroup = async (groupData: any): Promise<void> => {
       .throwOnError();
     
     if (checkError) {
-      throw new Error(checkError.message);
+      throw new Error(checkError.message || "Erro ao verificar grupo existente");
     }
     
     if (existingGroup && existingGroup.length > 0) {
@@ -114,7 +125,7 @@ export const saveGroup = async (groupData: any): Promise<void> => {
         .throwOnError();
       
       if (updateError) {
-        throw new Error(updateError.message);
+        throw new Error(updateError.message || "Erro ao atualizar grupo");
       }
     } else {
       // Create a new placeholder item with this group
@@ -132,11 +143,16 @@ export const saveGroup = async (groupData: any): Promise<void> => {
         .throwOnError();
       
       if (insertError) {
-        throw new Error(insertError.message);
+        throw new Error(insertError.message || "Erro ao inserir grupo");
       }
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error saving group:", error);
-    throw new Error(`Falha ao salvar grupo: ${error.message}`);
+    // Ensure we're throwing an Error object with a message property
+    if (error instanceof Error) {
+      throw error;
+    } else {
+      throw new Error(`Falha ao salvar grupo: ${String(error)}`);
+    }
   }
 };

@@ -24,7 +24,7 @@ export const useItemGroupManagement = () => {
       toast({
         variant: "destructive",
         title: "Erro ao carregar dados",
-        description: error.message,
+        description: error.message || "Ocorreu um erro desconhecido",
       });
     } finally {
       setIsLoading(false);
@@ -49,7 +49,7 @@ export const useItemGroupManagement = () => {
       toast({
         variant: "destructive",
         title: "Erro ao salvar grupo",
-        description: error.message,
+        description: error.message || "Ocorreu um erro desconhecido",
       });
       return false;
     }
