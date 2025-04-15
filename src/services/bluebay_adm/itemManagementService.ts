@@ -69,40 +69,41 @@ export const fetchAllItems = async (
     if (searchTerm) {
       // Como não podemos usar .or() diretamente, precisamos de uma abordagem diferente
       // para consultas em lotes. Vamos buscar com cada critério separadamente e combinar depois.
-      const itemCodigoCondition = { column: 'ITEM_CODIGO', operator: 'ilike', value: `%${searchTerm}%` };
-      const descricaoCondition = { column: 'DESCRICAO', operator: 'ilike', value: `%${searchTerm}%` };
-      const codigoauxCondition = { column: 'CODIGOAUX', operator: 'ilike', value: `%${searchTerm}%` };
-      
-      // Primeiro busca por ITEM_CODIGO
-      const itemsData1 = await fetchInBatches(
-        (offset, limit) => supabase
-          .from("BLUEBAY_ITEM")
-          .select("*")
-          .ilike("ITEM_CODIGO", `%${searchTerm}%`)
-          .order("DESCRICAO")
-          .range(offset, offset + limit - 1),
+      const itemsData1 = await fetchInBatches<any>(
+        async (offset, limit) => {
+          return await supabase
+            .from("BLUEBAY_ITEM")
+            .select("*")
+            .ilike("ITEM_CODIGO", `%${searchTerm}%`)
+            .order("DESCRICAO")
+            .range(offset, offset + limit - 1);
+        },
         5000
       );
       
       // Depois DESCRICAO
-      const itemsData2 = await fetchInBatches(
-        (offset, limit) => supabase
-          .from("BLUEBAY_ITEM")
-          .select("*")
-          .ilike("DESCRICAO", `%${searchTerm}%`)
-          .order("DESCRICAO")
-          .range(offset, offset + limit - 1),
+      const itemsData2 = await fetchInBatches<any>(
+        async (offset, limit) => {
+          return await supabase
+            .from("BLUEBAY_ITEM")
+            .select("*")
+            .ilike("DESCRICAO", `%${searchTerm}%`)
+            .order("DESCRICAO")
+            .range(offset, offset + limit - 1);
+        },
         5000
       );
       
       // Por fim CODIGOAUX
-      const itemsData3 = await fetchInBatches(
-        (offset, limit) => supabase
-          .from("BLUEBAY_ITEM")
-          .select("*")
-          .ilike("CODIGOAUX", `%${searchTerm}%`)
-          .order("DESCRICAO")
-          .range(offset, offset + limit - 1),
+      const itemsData3 = await fetchInBatches<any>(
+        async (offset, limit) => {
+          return await supabase
+            .from("BLUEBAY_ITEM")
+            .select("*")
+            .ilike("CODIGOAUX", `%${searchTerm}%`)
+            .order("DESCRICAO")
+            .range(offset, offset + limit - 1);
+        },
         5000
       );
       
@@ -111,7 +112,7 @@ export const fetchAllItems = async (
       const uniqueItemsMap = new Map();
       
       allItems.forEach(item => {
-        if (!uniqueItemsMap.has(item.ITEM_CODIGO)) {
+        if (item && item.ITEM_CODIGO && !uniqueItemsMap.has(item.ITEM_CODIGO)) {
           uniqueItemsMap.set(item.ITEM_CODIGO, item);
         }
       });
@@ -119,26 +120,27 @@ export const fetchAllItems = async (
       return Array.from(uniqueItemsMap.values());
     } else {
       // Se não há busca por texto, podemos usar fetchInBatches diretamente
-      let baseQuery = (offset: number, limit: number) => {
-        let query = supabase
-          .from("BLUEBAY_ITEM")
-          .select("*")
-          .order("DESCRICAO")
-          .range(offset, offset + limit - 1);
-        
-        if (groupFilter && groupFilter !== "all") {
-          query = query.eq("GRU_CODIGO", groupFilter);
-        }
-        
-        return query;
-      };
-      
-      const allItems = await fetchInBatches(baseQuery, 5000);
+      const allItems = await fetchInBatches<any>(
+        async (offset: number, limit: number) => {
+          let query = supabase
+            .from("BLUEBAY_ITEM")
+            .select("*")
+            .order("DESCRICAO")
+            .range(offset, offset + limit - 1);
+          
+          if (groupFilter && groupFilter !== "all") {
+            query = query.eq("GRU_CODIGO", groupFilter);
+          }
+          
+          return await query;
+        },
+        5000
+      );
       
       // Remover duplicatas pelo ITEM_CODIGO
       const uniqueItemsMap = new Map();
       allItems.forEach(item => {
-        if (!uniqueItemsMap.has(item.ITEM_CODIGO)) {
+        if (item && item.ITEM_CODIGO && !uniqueItemsMap.has(item.ITEM_CODIGO)) {
           uniqueItemsMap.set(item.ITEM_CODIGO, item);
         }
       });
