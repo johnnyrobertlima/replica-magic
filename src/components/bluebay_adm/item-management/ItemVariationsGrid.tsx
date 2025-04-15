@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,14 @@ export const ItemVariationsGrid = ({ itemCode }: ItemVariationsGridProps) => {
     refreshExistingVariations
   } = useVariationGrid(itemCode);
 
+  // Check if we should show the edit grid on initial load
+  useEffect(() => {
+    if (existingVariations.length > 0 && !showEditGrid && !isLoading && !isCheckingItem) {
+      // Only auto-show when there are variations and we haven't explicitly decided to hide it
+      setShowEditGrid(true);
+    }
+  }, [existingVariations, isLoading, isCheckingItem]);
+
   // Determine what to render based on current state
   if (isCheckingItem || (isLoading && (!colors.length || !sizes.length))) {
     return <VariationLoading />;
@@ -66,6 +74,11 @@ export const ItemVariationsGrid = ({ itemCode }: ItemVariationsGridProps) => {
   const saveGridAndShowEdit = async () => {
     const result = await handleSaveGrid();
     handleGridSaved(result);
+  };
+
+  // Function to view existing variations
+  const viewExistingVariations = () => {
+    setShowEditGrid(true);
   };
 
   // If we're showing the edit grid
@@ -120,6 +133,7 @@ export const ItemVariationsGrid = ({ itemCode }: ItemVariationsGridProps) => {
           combinationsCount={selectedColors.length * selectedSizes.length}
           existingVariationsCount={existingVariations.length}
           onSave={saveGridAndShowEdit}
+          onViewExisting={viewExistingVariations}
           isLoading={isLoading}
           isValid={selectedColors.length > 0 && selectedSizes.length > 0}
         />
