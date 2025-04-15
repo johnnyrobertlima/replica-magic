@@ -15,17 +15,19 @@ interface CollaboratorSelectProps {
   isLoading: boolean;
   value: string | null;
   onValueChange: (value: string) => void;
+  label?: string; // Make label optional with a default value
 }
 
 export function CollaboratorSelect({ 
   collaborators, 
   isLoading, 
   value, 
-  onValueChange 
+  onValueChange,
+  label = "Colaborador Responsável" // Default value
 }: CollaboratorSelectProps) {
   return (
     <div className="grid gap-2">
-      <Label htmlFor="collaborator_id">Colaborador Responsável</Label>
+      <Label htmlFor="collaborator_id">{label}</Label>
       <Select
         value={value || ""}
         onValueChange={onValueChange}
