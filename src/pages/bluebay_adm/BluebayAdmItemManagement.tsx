@@ -45,7 +45,9 @@ const BluebayAdmItemManagement = () => {
     subcategories,
     brands,
     addSubcategory,
-    addBrand
+    addBrand,
+    isLoadingAll,
+    loadAllItems
   } = useItemManagement();
 
   // Only render after component is mounted to avoid hydration issues
@@ -103,11 +105,13 @@ const BluebayAdmItemManagement = () => {
               groupFilter={groupFilter}
               onGroupFilterChange={setGroupFilter}
               groups={groups}
+              onLoadAllItems={loadAllItems}
+              isLoadingAll={isLoadingAll}
             />
 
             <MemoizedItemsContent
               items={items}
-              isLoading={isLoading}
+              isLoading={isLoading || isLoadingAll}
               onEdit={handleEditItem}
               onDelete={handleDeleteItem}
               pagination={pagination}

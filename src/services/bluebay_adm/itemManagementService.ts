@@ -1,5 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { v4 as uuidv4 } from "uuid";
+import { fetchInBatches } from "@/services/bluebay/utils/batchFetchUtils";
 
 // Cache para grupos (não muda com frequência)
 let groupsCache: any[] | null = null;
@@ -17,9 +19,7 @@ export const fetchItems = async (
   // Build our query
   let query = supabase
     .from("BLUEBAY_ITEM")
-    .select("*", { count: "exact" })
-    .order("DESCRICAO")
-    .range(from, to);
+    .select("*", { count: "exact" });
 
   // Apply filters
   if (searchTerm) {
@@ -29,6 +29,9 @@ export const fetchItems = async (
   if (groupFilter && groupFilter !== "all") {
     query = query.eq("GRU_CODIGO", groupFilter);
   }
+
+  // Apply pagination and ordering after filters
+  query = query.order("DESCRICAO").range(from, to);
 
   const { data, error, count } = await query;
 
@@ -50,6 +53,102 @@ export const fetchItems = async (
     items: uniqueItems, 
     count: count || 0 
   };
+};
+
+// Função para buscar todos os itens sem limitação (usando batches)
+export const fetchAllItems = async (
+  searchTerm?: string,
+  groupFilter?: string
+): Promise<any[]> => {
+  try {
+    console.log("Iniciando busca de todos os itens em lotes");
+    
+    // Construir condições para a consulta em lotes
+    const conditions = [];
+    
+    if (searchTerm) {
+      // Como não podemos usar .or() diretamente, precisamos de uma abordagem diferente
+      // para consultas em lotes. Vamos buscar com cada critério separadamente e combinar depois.
+      const itemCodigoCondition = { column: 'ITEM_CODIGO', operator: 'ilike', value: `%${searchTerm}%` };
+      const descricaoCondition = { column: 'DESCRICAO', operator: 'ilike', value: `%${searchTerm}%` };
+      const codigoauxCondition = { column: 'CODIGOAUX', operator: 'ilike', value: `%${searchTerm}%` };
+      
+      // Primeiro busca por ITEM_CODIGO
+      const itemsData1 = await fetchInBatches(
+        (offset, limit) => supabase
+          .from("BLUEBAY_ITEM")
+          .select("*")
+          .ilike("ITEM_CODIGO", `%${searchTerm}%`)
+          .order("DESCRICAO")
+          .range(offset, offset + limit - 1),
+        5000
+      );
+      
+      // Depois DESCRICAO
+      const itemsData2 = await fetchInBatches(
+        (offset, limit) => supabase
+          .from("BLUEBAY_ITEM")
+          .select("*")
+          .ilike("DESCRICAO", `%${searchTerm}%`)
+          .order("DESCRICAO")
+          .range(offset, offset + limit - 1),
+        5000
+      );
+      
+      // Por fim CODIGOAUX
+      const itemsData3 = await fetchInBatches(
+        (offset, limit) => supabase
+          .from("BLUEBAY_ITEM")
+          .select("*")
+          .ilike("CODIGOAUX", `%${searchTerm}%`)
+          .order("DESCRICAO")
+          .range(offset, offset + limit - 1),
+        5000
+      );
+      
+      // Combina todos os resultados e remove duplicatas pelo ITEM_CODIGO
+      const allItems = [...itemsData1, ...itemsData2, ...itemsData3];
+      const uniqueItemsMap = new Map();
+      
+      allItems.forEach(item => {
+        if (!uniqueItemsMap.has(item.ITEM_CODIGO)) {
+          uniqueItemsMap.set(item.ITEM_CODIGO, item);
+        }
+      });
+      
+      return Array.from(uniqueItemsMap.values());
+    } else {
+      // Se não há busca por texto, podemos usar fetchInBatches diretamente
+      let baseQuery = (offset: number, limit: number) => {
+        let query = supabase
+          .from("BLUEBAY_ITEM")
+          .select("*")
+          .order("DESCRICAO")
+          .range(offset, offset + limit - 1);
+        
+        if (groupFilter && groupFilter !== "all") {
+          query = query.eq("GRU_CODIGO", groupFilter);
+        }
+        
+        return query;
+      };
+      
+      const allItems = await fetchInBatches(baseQuery, 5000);
+      
+      // Remover duplicatas pelo ITEM_CODIGO
+      const uniqueItemsMap = new Map();
+      allItems.forEach(item => {
+        if (!uniqueItemsMap.has(item.ITEM_CODIGO)) {
+          uniqueItemsMap.set(item.ITEM_CODIGO, item);
+        }
+      });
+      
+      return Array.from(uniqueItemsMap.values());
+    }
+  } catch (error) {
+    console.error("Erro ao buscar todos os itens:", error);
+    throw error;
+  }
 };
 
 export const fetchGroups = async () => {

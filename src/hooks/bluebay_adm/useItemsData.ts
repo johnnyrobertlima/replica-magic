@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { fetchItems, fetchGroups } from "@/services/bluebay_adm/itemManagementService";
+import { fetchItems, fetchGroups, fetchAllItems } from "@/services/bluebay_adm/itemManagementService";
 
 export const useItemsData = (
   searchTerm: string,
@@ -12,6 +12,7 @@ export const useItemsData = (
   const [groups, setGroups] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
+  const [isLoadingAll, setIsLoadingAll] = useState(false);
   const { toast } = useToast();
   const isFirstRender = useRef(true);
   const previousSearchTerm = useRef(searchTerm);
@@ -33,7 +34,7 @@ export const useItemsData = (
     }
   }, [toast]);
 
-  // Função para carregar os itens com debounce
+  // Função para carregar os itens com paginação
   const loadItems = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -50,7 +51,7 @@ export const useItemsData = (
       pagination.updateTotalCount(count);
       
       // Registramos apenas uma vez por carregamento bem-sucedido
-      console.info(`Loaded ${fetchedItems.length} items`);
+      console.info(`Loaded ${fetchedItems.length} items (page ${pagination.currentPage} of ${Math.ceil(count/pagination.pageSize)})`);
     } catch (error: any) {
       console.error("Error fetching items:", error);
       toast({
@@ -61,6 +62,39 @@ export const useItemsData = (
       setItems([]);
     } finally {
       setIsLoading(false);
+    }
+  }, [searchTerm, groupFilter, pagination, toast]);
+
+  // Nova função para carregar todos os itens (sem paginação)
+  const loadAllItems = useCallback(async () => {
+    try {
+      setIsLoadingAll(true);
+      toast({
+        title: "Carregando todos os itens",
+        description: "Esta operação pode levar alguns minutos para grandes volumes de dados.",
+      });
+      
+      const allItems = await fetchAllItems(searchTerm, groupFilter);
+      
+      setItems(allItems);
+      setTotalCount(allItems.length);
+      pagination.updateTotalCount(allItems.length);
+      
+      toast({
+        title: "Carregamento completo",
+        description: `Foram carregados ${allItems.length} itens no total.`,
+      });
+      
+      console.info(`Loaded all ${allItems.length} items without pagination`);
+    } catch (error: any) {
+      console.error("Error fetching all items:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao carregar todos os itens",
+        description: error.message,
+      });
+    } finally {
+      setIsLoadingAll(false);
     }
   }, [searchTerm, groupFilter, pagination, toast]);
 
@@ -106,7 +140,9 @@ export const useItemsData = (
     items,
     groups,
     isLoading,
+    isLoadingAll,
     totalCount,
-    refreshItems: loadItems
+    refreshItems: loadItems,
+    loadAllItems
   };
 };

@@ -1,8 +1,6 @@
 
-import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -10,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { LoadAllItemsButton } from "./LoadAllItemsButton";
 
 interface ItemFiltersProps {
   searchTerm: string;
@@ -17,6 +16,8 @@ interface ItemFiltersProps {
   groupFilter: string;
   onGroupFilterChange: (value: string) => void;
   groups: any[];
+  onLoadAllItems?: () => Promise<void>;
+  isLoadingAll?: boolean;
 }
 
 export const ItemFilters = ({
@@ -24,49 +25,47 @@ export const ItemFilters = ({
   onSearchChange,
   groupFilter,
   onGroupFilterChange,
-  groups
+  groups,
+  onLoadAllItems,
+  isLoadingAll = false,
 }: ItemFiltersProps) => {
   return (
-    <Card className="mb-6">
-      <CardContent className="p-4">
-        <div className="flex flex-col md:flex-row gap-4 items-end">
-          <div className="flex-1">
-            <label className="text-sm font-medium mb-1 block">Buscar</label>
-            <div className="flex w-full items-center space-x-2">
-              <Input
-                type="text"
-                placeholder="Buscar por código ou descrição..."
-                value={searchTerm}
-                onChange={(e) => onSearchChange(e.target.value)}
-                className="flex-1"
-              />
-              <Button variant="outline" size="icon">
-                <Search className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-          
-          <div className="w-full md:w-[250px]">
-            <label className="text-sm font-medium mb-1 block">Grupo</label>
-            <Select 
-              value={groupFilter} 
-              onValueChange={onGroupFilterChange}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Todos os grupos" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os grupos</SelectItem>
-                {groups.map((group) => (
-                  <SelectItem key={group.GRU_CODIGO} value={group.GRU_CODIGO}>
-                    {group.GRU_DESCRICAO}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+    <div className="flex flex-col md:flex-row gap-4 md:items-end">
+      <div className="flex-1">
+        <Label htmlFor="search">Buscar</Label>
+        <Input
+          id="search"
+          placeholder="Buscar por código ou descrição"
+          value={searchTerm}
+          onChange={(e) => onSearchChange(e.target.value)}
+        />
+      </div>
+
+      <div className="w-full md:w-48">
+        <Label htmlFor="group-filter">Grupo</Label>
+        <Select value={groupFilter} onValueChange={onGroupFilterChange}>
+          <SelectTrigger id="group-filter">
+            <SelectValue placeholder="Todos os grupos" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os grupos</SelectItem>
+            {groups.map((group) => (
+              <SelectItem key={group.GRU_CODIGO} value={group.GRU_CODIGO}>
+                {group.GRU_DESCRICAO}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {onLoadAllItems && (
+        <div className="w-full md:w-auto">
+          <LoadAllItemsButton 
+            onLoadAll={onLoadAllItems} 
+            isLoading={isLoadingAll} 
+          />
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 };

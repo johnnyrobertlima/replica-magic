@@ -19,8 +19,10 @@ export const useItemManagement = () => {
     items, 
     groups, 
     isLoading, 
+    isLoadingAll,
     totalCount,
-    refreshItems
+    refreshItems,
+    loadAllItems
   } = useItemsData(searchTerm, groupFilter, pagination);
   
   // Use item mutations hook
@@ -64,6 +66,7 @@ export const useItemManagement = () => {
   return {
     items,
     isLoading: isLoading || isProductDataLoading,
+    isLoadingAll,
     searchTerm,
     setSearchTerm: handleSearchChange,
     groupFilter,
@@ -80,6 +83,7 @@ export const useItemManagement = () => {
     subcategories,
     brands,
     addSubcategory,
-    addBrand
+    addBrand,
+    loadAllItems
   };
 };
