@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { verifyItemExists } from "@/services/bluebay_adm/itemManagementService";
+import { getItemWithMatrizFilial } from "@/services/bluebay_adm/itemManagementService";
 
 /**
  * Hook for fetching variation-related data (colors, sizes, existing variations)
@@ -79,7 +79,7 @@ export const useVariationData = (itemCode: string) => {
     }
   }, [itemCode]);
 
-  // Check if the item exists
+  // Check if the item exists with complete data
   const checkItemExists = useCallback(async () => {
     if (!itemCode) {
       setItemExists(false);
@@ -90,7 +90,8 @@ export const useVariationData = (itemCode: string) => {
     try {
       console.log(`Checking if item ${itemCode} exists in database...`);
       setIsCheckingItem(true);
-      const exists = await verifyItemExists(itemCode);
+      const itemData = await getItemWithMatrizFilial(itemCode);
+      const exists = !!itemData;
       console.log(`Item ${itemCode} exists: ${exists}`);
       setItemExists(exists);
     } catch (error) {
@@ -119,8 +120,8 @@ export const useVariationData = (itemCode: string) => {
         ]);
         
         // Only fetch variations if the item exists
-        const exists = await verifyItemExists(itemCode);
-        if (exists) {
+        const itemData = await getItemWithMatrizFilial(itemCode);
+        if (itemData) {
           await fetchExistingVariations();
         }
       } finally {

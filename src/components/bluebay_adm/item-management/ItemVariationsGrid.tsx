@@ -42,7 +42,7 @@ export const ItemVariationsGrid = ({ itemCode }: ItemVariationsGridProps) => {
   }
 
   if (!itemExists) {
-    return <EmptyStateDisplay type="item-not-saved" />;
+    return <EmptyStateDisplay type="item-not-found" />;
   }
 
   if (!colors.length || !sizes.length) {

@@ -196,3 +196,34 @@ export const verifyItemExists = async (itemCode: string): Promise<boolean> => {
     return false;
   }
 };
+
+// Função para obter um item completo, incluindo matriz e filial
+export const getItemWithMatrizFilial = async (itemCode: string): Promise<{
+  ITEM_CODIGO: string;
+  MATRIZ: number;
+  FILIAL: number;
+} | null> => {
+  if (!itemCode) return null;
+  
+  try {
+    const { data, error } = await supabase
+      .from("BLUEBAY_ITEM")
+      .select("ITEM_CODIGO, MATRIZ, FILIAL")
+      .eq("ITEM_CODIGO", itemCode)
+      .limit(1);
+
+    if (error) {
+      console.error("Error fetching item details:", error);
+      return null;
+    }
+
+    if (Array.isArray(data) && data.length > 0) {
+      return data[0];
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("Exception fetching item details:", error);
+    return null;
+  }
+};

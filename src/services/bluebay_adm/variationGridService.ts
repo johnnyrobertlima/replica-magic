@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { verifyItemExists } from "./itemManagementService";
+import { getItemWithMatrizFilial } from "./itemManagementService";
 
 /**
  * Save grid variations to the database
@@ -11,16 +11,18 @@ export const saveVariationGrid = async (
   selectedSizes: string[],
   existingVariations: any[]
 ) => {
-  // Verify item existence
-  const exists = await verifyItemExists(itemCode);
-  if (!exists) {
-    throw new Error("Este item não existe na base de dados. Salve o item primeiro.");
-  }
-
   if (selectedColors.length === 0 || selectedSizes.length === 0) {
     throw new Error("Selecione pelo menos uma cor e um tamanho");
   }
 
+  // Get the complete item data with MATRIZ and FILIAL
+  const itemData = await getItemWithMatrizFilial(itemCode);
+  if (!itemData) {
+    throw new Error("Este item não existe na base de dados. Salve o item primeiro.");
+  }
+
+  const { MATRIZ, FILIAL } = itemData;
+  
   // Prepare variations to add and remove
   const variationsToAdd: any[] = [];
   const variationsToRemove: any[] = [];
@@ -46,8 +48,8 @@ export const saveVariationGrid = async (
           id_tamanho: sizeId,
           quantidade: 0,
           ean: "",
-          matriz: 1,
-          filial: 1
+          matriz: MATRIZ,
+          filial: FILIAL
         });
       }
       
