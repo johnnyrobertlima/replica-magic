@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { fetchInBatches } from "@/services/bluebay/utils/batchFetchUtils";
 
 export const fetchEmpresas = async (): Promise<string[]> => {
   console.info("Buscando todas as empresas...");
@@ -40,21 +41,24 @@ export const fetchGroups = async (): Promise<any[]> => {
   console.info("Buscando todos os grupos...");
   
   try {
-    // Fetch all group descriptions, as requested in the instructions
-    const { data, error } = await supabase
-      .from('BLUEBAY_ITEM')
-      .select('GRU_CODIGO, GRU_DESCRICAO')
-      .not('GRU_DESCRICAO', 'is', null);
+    // Use the fetchInBatches utility to handle large datasets
+    const fetchGroupBatch = (offset: number, limit: number) => {
+      return supabase
+        .from('BLUEBAY_ITEM')
+        .select('GRU_CODIGO, GRU_DESCRICAO')
+        .not('GRU_DESCRICAO', 'is', null)
+        .range(offset, offset + limit - 1);
+    };
     
-    if (error) throw error;
+    // Fetch all groups in batches
+    const batchedData = await fetchInBatches(fetchGroupBatch);
+    console.info(`Total de registros com grupo carregados: ${batchedData.length}`);
     
-    console.info(`Total de registros com grupo: ${data.length}`);
-    
-    // Create a map to store unique groups with their code and description
+    // Create a map to store unique groups by description
     const groupMap = new Map();
     
     // Process the data to get unique groups by description
-    data.forEach(item => {
+    batchedData.forEach(item => {
       if (item.GRU_DESCRICAO && !groupMap.has(item.GRU_DESCRICAO)) {
         groupMap.set(item.GRU_DESCRICAO, {
           GRU_CODIGO: item.GRU_CODIGO || '',
