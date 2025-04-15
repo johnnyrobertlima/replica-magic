@@ -22,6 +22,19 @@ export function useScheduleMutations({
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
   const isDeleting = deleteMutation.isPending;
 
+  // Helper function to ensure title is never null before submission
+  const sanitizeFormData = (data: ContentScheduleFormData): ContentScheduleFormData => {
+    const sanitized = { ...data };
+    
+    // If title is null or empty, set a default title based on service or date
+    if (!sanitized.title || sanitized.title.trim() === "") {
+      const serviceBased = sanitized.service_id ? "Novo agendamento" : "Agendamento sem título";
+      sanitized.title = serviceBased;
+    }
+    
+    return sanitized;
+  };
+
   const handleSubmit = async (
     e: React.FormEvent, 
     currentSelectedEvent: CalendarEvent | null,
@@ -30,19 +43,21 @@ export function useScheduleMutations({
     e.preventDefault();
     
     try {
+      const sanitizedData = sanitizeFormData(formData);
+      
       if (currentSelectedEvent) {
-        console.log("Updating event:", currentSelectedEvent.id, formData);
+        console.log("Updating event:", currentSelectedEvent.id, sanitizedData);
         await updateMutation.mutateAsync({
           id: currentSelectedEvent.id,
-          schedule: formData
+          schedule: sanitizedData
         });
         toast({
           title: "Agendamento atualizado",
           description: "Agendamento atualizado com sucesso."
         });
       } else {
-        console.log("Creating new event:", formData);
-        await createMutation.mutateAsync(formData);
+        console.log("Creating new event:", sanitizedData);
+        await createMutation.mutateAsync(sanitizedData);
         toast({
           title: "Agendamento criado",
           description: "Novo agendamento criado com sucesso."

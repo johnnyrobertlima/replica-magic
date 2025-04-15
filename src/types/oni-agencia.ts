@@ -5,7 +5,7 @@ export interface OniAgenciaContentSchedule {
   client_id: string;
   service_id: string;
   collaborator_id: string | null;
-  title: string | null; 
+  title: string; // Changed from string | null to just string
   description: string | null;
   scheduled_date: string;
   execution_phase: string | null;

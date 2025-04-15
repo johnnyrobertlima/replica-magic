@@ -44,14 +44,19 @@ export function EventForm({
   return (
     <div className="grid gap-4 py-4">
       <div className="grid gap-2">
-        <Label htmlFor="title">Título (Opcional)</Label>
+        <Label htmlFor="title" className="flex items-center">
+          Título <span className="text-red-500 ml-1">*</span>
+        </Label>
         <Input
           id="title"
           name="title"
           value={formData.title || ""}
           onChange={onInputChange}
           placeholder="Título do agendamento"
+          className="border-input"
+          required
         />
+        <p className="text-xs text-muted-foreground">O título é obrigatório</p>
       </div>
       
       <div className="grid gap-2">
