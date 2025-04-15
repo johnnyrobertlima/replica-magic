@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 // Fetch all groups with their active status and company
@@ -8,8 +7,7 @@ export const fetchGroups = async (): Promise<any[]> => {
   try {
     const { data, error, count } = await supabase
       .from("BLUEBAY_ITEM")
-      .select("GRU_CODIGO, GRU_DESCRICAO, empresa, ativo", { count: "exact", head: false })
-      .throwOnError();
+      .select("GRU_CODIGO, GRU_DESCRICAO, empresa, ativo", { count: "exact", head: false });
     
     if (error) {
       throw new Error(error.message || "Erro ao buscar grupos");
@@ -62,8 +60,7 @@ export const fetchEmpresas = async (): Promise<string[]> => {
     const { data, error } = await supabase
       .from("BLUEBAY_ITEM")
       .select("empresa", { count: "exact", head: false })
-      .not("empresa", "is", null)
-      .throwOnError();
+      .not("empresa", "is", null);
     
     if (error) {
       throw new Error(error.message || "Erro ao buscar empresas");
@@ -105,8 +102,7 @@ export const saveGroup = async (groupData: any): Promise<void> => {
       .from("BLUEBAY_ITEM")
       .select("GRU_CODIGO")
       .eq("GRU_CODIGO", groupData.GRU_CODIGO)
-      .limit(1)
-      .throwOnError();
+      .limit(1);
     
     if (checkError) {
       throw new Error(checkError.message || "Erro ao verificar grupo existente");
@@ -121,8 +117,7 @@ export const saveGroup = async (groupData: any): Promise<void> => {
           empresa: groupData.empresa,
           ativo: groupData.ativo
         })
-        .eq("GRU_CODIGO", groupData.GRU_CODIGO)
-        .throwOnError();
+        .eq("GRU_CODIGO", groupData.GRU_CODIGO);
       
       if (updateError) {
         throw new Error(updateError.message || "Erro ao atualizar grupo");
@@ -139,8 +134,7 @@ export const saveGroup = async (groupData: any): Promise<void> => {
           ITEM_CODIGO: `GROUP_${groupData.GRU_CODIGO}`,
           FILIAL: 1,
           MATRIZ: 1
-        })
-        .throwOnError();
+        });
       
       if (insertError) {
         throw new Error(insertError.message || "Erro ao inserir grupo");
