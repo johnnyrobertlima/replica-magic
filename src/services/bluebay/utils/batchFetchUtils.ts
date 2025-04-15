@@ -17,7 +17,7 @@ export async function fetchInBatches<T>(
   let batchCount = 0;
 
   while (hasMore) {
-    const { data, error, count } = await fetchFunction(offset, batchSize);
+    const { data, error } = await fetchFunction(offset, batchSize);
     
     if (error) {
       console.error('Erro ao buscar lote de dados:', error);

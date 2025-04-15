@@ -83,6 +83,7 @@ export const useItemsData = (
       toast({
         title: "Carregamento completo",
         description: `Foram carregados ${allItems.length} itens no total.`,
+        variant: "success"
       });
       
       console.info(`Loaded all ${allItems.length} items without pagination`);
