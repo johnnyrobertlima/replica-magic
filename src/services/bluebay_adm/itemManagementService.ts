@@ -4,10 +4,13 @@ import { fetchInBatches } from "@/services/bluebay/utils/batchFetchUtils";
 
 // Cache para grupos (não muda com frequência)
 let groupsCache: any[] | null = null;
+// Cache para empresas (não muda com frequência)
+let empresasCache: string[] | null = null;
 
 export const fetchItems = async (
   searchTerm: string,
   groupFilter: string,
+  empresaFilter: string,
   page: number,
   pageSize: number
 ) => {
@@ -27,6 +30,11 @@ export const fetchItems = async (
 
   if (groupFilter && groupFilter !== "all") {
     query = query.eq("GRU_CODIGO", groupFilter);
+  }
+
+  // Aplicar filtro de empresa se selecionado
+  if (empresaFilter && empresaFilter !== "all") {
+    query = query.eq("empresa", empresaFilter);
   }
 
   // Apply pagination and ordering after filters
@@ -57,13 +65,14 @@ export const fetchItems = async (
 // Função para buscar todos os itens sem limitação (usando batches)
 export const fetchAllItems = async (
   searchTerm?: string,
-  groupFilter?: string
+  groupFilter?: string,
+  empresaFilter?: string
 ): Promise<any[]> => {
   try {
     console.log("Iniciando busca de todos os itens em lotes");
     
     // Usar um tamanho de lote apropriado
-    const batchSize = 1000; // Usar 1000 que é o limite padrão do Supabase
+    const batchSize = 5000; // Usar um valor maior que o limite do Supabase para maximizar a eficiência
     
     if (searchTerm) {
       // Para buscas com termo, usamos uma abordagem diferentes para garantir resultados completos
@@ -98,6 +107,10 @@ export const fetchAllItems = async (
               query.eq("GRU_CODIGO", groupFilter);
             }
             
+            if (empresaFilter && empresaFilter !== "all") {
+              query.eq("empresa", empresaFilter);
+            }
+            
             return await query;
           },
           batchSize
@@ -128,10 +141,12 @@ export const fetchAllItems = async (
       // Primeiro buscamos todos os códigos dos itens do estoque com LOCAL = 1
       console.log(`Buscando todos os códigos de itens do estoque...`);
       
-      const { data: itemCodes, error: itemCodesError, count: totalItemsCount } = await supabase
+      let estoqueQuery = supabase
         .from("BLUEBAY_ESTOQUE")
         .select("ITEM_CODIGO", { count: "exact", head: false })
         .eq("LOCAL", 1);
+        
+      const { data: itemCodes, error: itemCodesError, count: totalItemsCount } = await estoqueQuery;
 
       if (itemCodesError) {
         console.error("Erro ao buscar códigos de itens:", itemCodesError);
@@ -166,14 +181,18 @@ export const fetchAllItems = async (
         console.log(`Processando lote ${batchIndex + 1}/${totalBatches} com ${codeBatch.length} códigos`);
         
         // Buscar detalhes dos itens no lote atual
-        const query = supabase
+        let query = supabase
           .from("BLUEBAY_ITEM")
           .select("*", { count: "exact", head: false })
           .in("ITEM_CODIGO", codeBatch)
           .throwOnError();
         
         if (groupFilter && groupFilter !== "all") {
-          query.eq("GRU_CODIGO", groupFilter);
+          query = query.eq("GRU_CODIGO", groupFilter);
+        }
+        
+        if (empresaFilter && empresaFilter !== "all") {
+          query = query.eq("empresa", empresaFilter);
         }
         
         const { data: batchItems, error: batchError, count: batchCount } = await query;
@@ -273,6 +292,61 @@ export const fetchGroups = async () => {
     return groupsCache;
   } catch (error) {
     console.error("Erro ao buscar grupos:", error);
+    return []; // Retornar array vazio em caso de erro
+  }
+};
+
+/**
+ * Busca todas as empresas distintas da tabela BLUEBAY_ITEM
+ */
+export const fetchEmpresas = async () => {
+  // Verificamos se temos as empresas em cache
+  if (empresasCache !== null) {
+    console.log("Usando empresas em cache:", empresasCache.length);
+    return empresasCache;
+  }
+
+  console.log("Buscando todas as empresas...");
+  
+  try {
+    // Buscar todas as empresas distintas
+    const { data, error } = await supabase
+      .from("BLUEBAY_ITEM")
+      .select("empresa", { count: "exact", head: false })
+      .not("empresa", "is", null);
+
+    if (error) {
+      console.error("Erro ao buscar empresas:", error);
+      throw error;
+    }
+
+    console.log(`Total de registros com dados de empresa: ${data?.length}`);
+
+    // Extrair valores únicos de empresa
+    const empresasSet = new Set<string>();
+    
+    if (data) {
+      data.forEach(item => {
+        if (item.empresa) {
+          empresasSet.add(item.empresa.trim());
+        }
+      });
+    }
+    
+    // Converter Set para array
+    const uniqueEmpresas = Array.from(empresasSet);
+    
+    console.log(`Total de empresas únicas após processamento: ${uniqueEmpresas.length}`);
+    
+    // Ordenar por nome de empresa
+    uniqueEmpresas.sort((a, b) => a.localeCompare(b));
+
+    // Salvar em cache
+    empresasCache = uniqueEmpresas;
+    
+    return empresasCache;
+  } catch (error) {
+    console.error("Erro ao buscar empresas:", error);
     return []; // Retornar array vazio em caso de erro
   }
 };

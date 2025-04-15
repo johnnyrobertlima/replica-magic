@@ -8,6 +8,7 @@ import { useProductData } from "./useProductData";
 export const useItemManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [groupFilter, setGroupFilter] = useState("all");
+  const [empresaFilter, setEmpresaFilter] = useState("all");
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
@@ -18,12 +19,13 @@ export const useItemManagement = () => {
   const { 
     items, 
     groups, 
+    empresas,
     isLoading, 
     isLoadingAll,
     totalCount,
     refreshItems,
     loadAllItems
-  } = useItemsData(searchTerm, groupFilter, pagination);
+  } = useItemsData(searchTerm, groupFilter, empresaFilter, pagination);
   
   // Use item mutations hook
   const { 
@@ -50,6 +52,11 @@ export const useItemManagement = () => {
     setGroupFilter(value);
   }, []);
   
+  // Handler for empresa filter change
+  const handleEmpresaFilterChange = useCallback((value: string) => {
+    setEmpresaFilter(value);
+  }, []);
+  
   // Handler for saving an item (new or update)
   const handleSaveItem = useCallback(async (itemData: any) => {
     const isUpdate = !!selectedItem;
@@ -71,7 +78,10 @@ export const useItemManagement = () => {
     setSearchTerm: handleSearchChange,
     groupFilter,
     setGroupFilter: handleGroupFilterChange,
+    empresaFilter,
+    setEmpresaFilter: handleEmpresaFilterChange,
     groups,
+    empresas,
     selectedItem,
     setSelectedItem,
     isDialogOpen,

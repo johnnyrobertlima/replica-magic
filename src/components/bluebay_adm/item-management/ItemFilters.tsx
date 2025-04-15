@@ -15,7 +15,10 @@ interface ItemFiltersProps {
   onSearchChange: (value: string) => void;
   groupFilter: string;
   onGroupFilterChange: (value: string) => void;
+  empresaFilter: string;
+  onEmpresaFilterChange: (value: string) => void;
   groups: any[];
+  empresas: string[];
   onLoadAllItems?: () => Promise<void>;
   isLoadingAll?: boolean;
 }
@@ -25,7 +28,10 @@ export const ItemFilters = ({
   onSearchChange,
   groupFilter,
   onGroupFilterChange,
+  empresaFilter,
+  onEmpresaFilterChange,
   groups,
+  empresas,
   onLoadAllItems,
   isLoadingAll = false,
 }: ItemFiltersProps) => {
@@ -52,6 +58,23 @@ export const ItemFilters = ({
             {groups.map((group) => (
               <SelectItem key={group.GRU_CODIGO} value={group.GRU_CODIGO}>
                 {group.GRU_DESCRICAO}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="w-full md:w-48">
+        <Label htmlFor="empresa-filter">Empresa</Label>
+        <Select value={empresaFilter} onValueChange={onEmpresaFilterChange}>
+          <SelectTrigger id="empresa-filter">
+            <SelectValue placeholder="Todas as empresas" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas as empresas</SelectItem>
+            {empresas.map((empresa) => (
+              <SelectItem key={empresa} value={empresa}>
+                {empresa}
               </SelectItem>
             ))}
           </SelectContent>

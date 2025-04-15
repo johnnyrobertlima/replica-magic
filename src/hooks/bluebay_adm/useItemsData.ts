@@ -1,15 +1,17 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { fetchItems, fetchGroups, fetchAllItems } from "@/services/bluebay_adm/itemManagementService";
+import { fetchItems, fetchGroups, fetchAllItems, fetchEmpresas } from "@/services/bluebay_adm/itemManagementService";
 
 export const useItemsData = (
   searchTerm: string,
   groupFilter: string,
+  empresaFilter: string,
   pagination: any
 ) => {
   const [items, setItems] = useState<any[]>([]);
   const [groups, setGroups] = useState<any[]>([]);
+  const [empresas, setEmpresas] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
   const [isLoadingAll, setIsLoadingAll] = useState(false);
@@ -17,6 +19,7 @@ export const useItemsData = (
   const isFirstRender = useRef(true);
   const previousSearchTerm = useRef(searchTerm);
   const previousGroupFilter = useRef(groupFilter);
+  const previousEmpresaFilter = useRef(empresaFilter);
   const previousPage = useRef(pagination.currentPage);
 
   const loadGroups = useCallback(async () => {
@@ -33,6 +36,20 @@ export const useItemsData = (
     }
   }, [toast]);
 
+  const loadEmpresas = useCallback(async () => {
+    try {
+      const fetchedEmpresas = await fetchEmpresas();
+      setEmpresas(fetchedEmpresas);
+    } catch (error: any) {
+      console.error("Error fetching empresas:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao buscar empresas",
+        description: error.message,
+      });
+    }
+  }, [toast]);
+
   const loadItems = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -40,6 +57,7 @@ export const useItemsData = (
       const { items: fetchedItems, count } = await fetchItems(
         searchTerm,
         groupFilter,
+        empresaFilter,
         pagination.currentPage,
         pagination.pageSize
       );
@@ -60,7 +78,7 @@ export const useItemsData = (
     } finally {
       setIsLoading(false);
     }
-  }, [searchTerm, groupFilter, pagination, toast]);
+  }, [searchTerm, groupFilter, empresaFilter, pagination, toast]);
 
   const loadAllItems = useCallback(async () => {
     try {
@@ -76,7 +94,7 @@ export const useItemsData = (
       console.log("Iniciando carregamento de todos os itens...");
       
       // Usamos await para garantir que todos os itens sejam carregados antes de atualizar o estado
-      const allItems = await fetchAllItems(searchTerm, groupFilter);
+      const allItems = await fetchAllItems(searchTerm, groupFilter, empresaFilter);
       console.log(`Total final de itens carregados: ${allItems.length}`);
       
       // Atualiza o estado com todos os itens carregados
@@ -101,11 +119,12 @@ export const useItemsData = (
     } finally {
       setIsLoadingAll(false);
     }
-  }, [searchTerm, groupFilter, pagination, toast]);
+  }, [searchTerm, groupFilter, empresaFilter, pagination, toast]);
 
   useEffect(() => {
     loadGroups();
-  }, [loadGroups]);
+    loadEmpresas();
+  }, [loadGroups, loadEmpresas]);
 
   useEffect(() => {
     if (isFirstRender.current) {
@@ -116,12 +135,14 @@ export const useItemsData = (
     
     const filtersChanged = 
       previousSearchTerm.current !== searchTerm || 
-      previousGroupFilter.current !== groupFilter;
+      previousGroupFilter.current !== groupFilter ||
+      previousEmpresaFilter.current !== empresaFilter;
     
     const pageChanged = previousPage.current !== pagination.currentPage;
     
     previousSearchTerm.current = searchTerm;
     previousGroupFilter.current = groupFilter;
+    previousEmpresaFilter.current = empresaFilter;
     previousPage.current = pagination.currentPage;
     
     if (filtersChanged) {
@@ -132,11 +153,12 @@ export const useItemsData = (
     if (pageChanged) {
       loadItems();
     }
-  }, [searchTerm, groupFilter, pagination.currentPage, loadItems, pagination]);
+  }, [searchTerm, groupFilter, empresaFilter, pagination.currentPage, loadItems, pagination]);
 
   return {
     items,
     groups,
+    empresas,
     isLoading,
     isLoadingAll,
     totalCount,

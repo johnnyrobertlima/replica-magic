@@ -32,8 +32,11 @@ const BluebayAdmItemManagement = () => {
     searchTerm, 
     setSearchTerm, 
     groupFilter, 
-    setGroupFilter, 
+    setGroupFilter,
+    empresaFilter,
+    setEmpresaFilter, 
     groups,
+    empresas,
     selectedItem,
     setSelectedItem,
     isDialogOpen,
@@ -104,7 +107,10 @@ const BluebayAdmItemManagement = () => {
               onSearchChange={setSearchTerm}
               groupFilter={groupFilter}
               onGroupFilterChange={setGroupFilter}
+              empresaFilter={empresaFilter}
+              onEmpresaFilterChange={setEmpresaFilter}
               groups={groups}
+              empresas={empresas}
               onLoadAllItems={loadAllItems}
               isLoadingAll={isLoadingAll}
             />
