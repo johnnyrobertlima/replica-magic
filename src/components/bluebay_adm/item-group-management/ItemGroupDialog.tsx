@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -23,7 +22,7 @@ export const ItemGroupDialog = ({
   const [formData, setFormData] = useState<any>({
     GRU_CODIGO: "",
     GRU_DESCRICAO: "",
-    empresa: "",
+    empresa: "nao_definida",
     ativo: true
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -91,11 +90,9 @@ export const ItemGroupDialog = ({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="nao_definida">Não definida</SelectItem>
-                {empresas.map((empresa) => (
-                  <SelectItem key={empresa} value={empresa}>
-                    {empresa}
-                  </SelectItem>
-                ))}
+                <SelectItem value="Bluebay">Bluebay</SelectItem>
+                <SelectItem value="BK">BK</SelectItem>
+                <SelectItem value="JAB">JAB</SelectItem>
               </SelectContent>
             </Select>
           </div>
