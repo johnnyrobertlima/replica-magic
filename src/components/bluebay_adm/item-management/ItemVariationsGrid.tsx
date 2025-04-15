@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,7 @@ import { SizeSelectionPanel } from "./variation-grid/SizeSelectionPanel";
 import { VariationSummary } from "./variation-grid/VariationSummary";
 import { EmptyStateDisplay } from "./variation-grid/EmptyStateDisplay";
 import { VariationLoading } from "./variation-grid/VariationLoading";
+import { VariationEditGrid } from "./variation-grid/VariationEditGrid";
 import { useVariationGrid } from "@/hooks/bluebay_adm/variation-grid/useVariationGrid";
 
 interface ItemVariationsGridProps {
@@ -14,6 +16,8 @@ interface ItemVariationsGridProps {
 }
 
 export const ItemVariationsGrid = ({ itemCode }: ItemVariationsGridProps) => {
+  const [showEditGrid, setShowEditGrid] = useState(false);
+  
   const {
     colors,
     sizes,
@@ -29,7 +33,8 @@ export const ItemVariationsGrid = ({ itemCode }: ItemVariationsGridProps) => {
     handleClearAllColors,
     handleSelectAllSizes,
     handleClearAllSizes,
-    handleSaveGrid
+    handleSaveGrid,
+    refreshExistingVariations
   } = useVariationGrid(itemCode);
 
   // Determine what to render based on current state
@@ -49,13 +54,39 @@ export const ItemVariationsGrid = ({ itemCode }: ItemVariationsGridProps) => {
     return <EmptyStateDisplay type="no-data" />;
   }
 
+  // Handle successful save of the grid
+  const handleGridSaved = async (result: any) => {
+    if (result && (result.added > 0 || result.removed > 0)) {
+      await refreshExistingVariations();
+      setShowEditGrid(true);
+    }
+  };
+
+  // Custom save grid handler that shows edit grid on success
+  const saveGridAndShowEdit = async () => {
+    const result = await handleSaveGrid();
+    handleGridSaved(result);
+  };
+
+  // If we're showing the edit grid
+  if (showEditGrid && existingVariations.length > 0) {
+    return (
+      <VariationEditGrid 
+        itemCode={itemCode}
+        variations={existingVariations}
+        onBack={() => setShowEditGrid(false)}
+        onSaved={refreshExistingVariations}
+      />
+    );
+  }
+
   return (
     <Card className="mt-4">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-medium">Grade de Variações</CardTitle>
         <Button 
           size="sm" 
-          onClick={handleSaveGrid} 
+          onClick={saveGridAndShowEdit} 
           disabled={isLoading}
         >
           <Save className="h-4 w-4 mr-2" />
@@ -88,7 +119,7 @@ export const ItemVariationsGrid = ({ itemCode }: ItemVariationsGridProps) => {
           selectedSizesCount={selectedSizes.length}
           combinationsCount={selectedColors.length * selectedSizes.length}
           existingVariationsCount={existingVariations.length}
-          onSave={handleSaveGrid}
+          onSave={saveGridAndShowEdit}
           isLoading={isLoading}
           isValid={selectedColors.length > 0 && selectedSizes.length > 0}
         />

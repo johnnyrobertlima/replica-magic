@@ -42,7 +42,7 @@ export const useVariationGrid = (itemCode: string) => {
         title: "Erro",
         description: "Código do item não encontrado",
       });
-      return;
+      return null;
     }
 
     setIsLoading(true);
@@ -61,6 +61,8 @@ export const useVariationGrid = (itemCode: string) => {
         title: "Grade atualizada",
         description: `Adicionadas: ${result.added}, Removidas: ${result.removed}`,
       });
+      
+      return result;
     } catch (error: any) {
       console.error("Error saving grid:", error);
       toast({
@@ -68,6 +70,7 @@ export const useVariationGrid = (itemCode: string) => {
         title: "Erro ao salvar grade",
         description: error.message,
       });
+      return null;
     } finally {
       setIsLoading(false);
     }
@@ -88,6 +91,7 @@ export const useVariationGrid = (itemCode: string) => {
     handleClearAllColors,
     handleSelectAllSizes,
     handleClearAllSizes,
-    handleSaveGrid
+    handleSaveGrid,
+    refreshExistingVariations
   };
 };
