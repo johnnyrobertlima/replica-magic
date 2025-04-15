@@ -27,6 +27,7 @@ export const ItemVariationsGrid = ({ itemCode }: ItemVariationsGridProps) => {
     isLoading,
     isCheckingItem,
     itemExists,
+    itemDetails,
     handleToggleColor,
     handleToggleSize,
     handleSelectAllColors,
@@ -43,7 +44,7 @@ export const ItemVariationsGrid = ({ itemCode }: ItemVariationsGridProps) => {
       // Only auto-show when there are variations and we haven't explicitly decided to hide it
       setShowEditGrid(true);
     }
-  }, [existingVariations, isLoading, isCheckingItem]);
+  }, [existingVariations, isLoading, isCheckingItem, showEditGrid]);
 
   // Determine what to render based on current state
   if (isCheckingItem || (isLoading && (!colors.length || !sizes.length))) {
@@ -55,7 +56,7 @@ export const ItemVariationsGrid = ({ itemCode }: ItemVariationsGridProps) => {
   }
 
   if (!itemExists) {
-    return <EmptyStateDisplay type="item-not-found" />;
+    return <EmptyStateDisplay type="item-not-found" details={`Item código: ${itemCode}`} />;
   }
 
   if (!colors.length || !sizes.length) {
@@ -89,6 +90,7 @@ export const ItemVariationsGrid = ({ itemCode }: ItemVariationsGridProps) => {
         variations={existingVariations}
         onBack={() => setShowEditGrid(false)}
         onSaved={refreshExistingVariations}
+        itemDetails={itemDetails}
       />
     );
   }

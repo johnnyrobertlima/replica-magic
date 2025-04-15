@@ -19,6 +19,7 @@ export const useVariationGrid = (itemCode: string) => {
     existingVariations,
     isCheckingItem,
     itemExists,
+    itemDetails,
     refreshExistingVariations
   } = useVariationData(itemCode);
   
@@ -41,6 +42,15 @@ export const useVariationGrid = (itemCode: string) => {
         variant: "destructive",
         title: "Erro",
         description: "Código do item não encontrado",
+      });
+      return null;
+    }
+
+    if (!itemDetails) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Detalhes do item não encontrados (matriz/filial)",
       });
       return null;
     }
@@ -85,6 +95,7 @@ export const useVariationGrid = (itemCode: string) => {
     isLoading,
     isCheckingItem,
     itemExists,
+    itemDetails,
     handleToggleColor,
     handleToggleSize,
     handleSelectAllColors,
