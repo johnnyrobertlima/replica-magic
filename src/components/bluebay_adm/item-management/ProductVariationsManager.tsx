@@ -1,11 +1,11 @@
 
-import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect, useCallback } from "react";
+import { Search, Plus, Edit, Save, Trash2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -21,7 +21,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Plus, Edit, Trash2, Package } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { debounce } from "lodash";
+
+interface ItemData {
+  ITEM_CODIGO: string;
+  DESCRICAO: string;
+  MATRIZ: number;
+  FILIAL: number;
+}
 
 interface Color {
   id: string;
@@ -32,7 +48,7 @@ interface Color {
 interface Size {
   id: string;
   nome: string;
-  ordem: number;
+  ordem?: number;
 }
 
 interface Variation {
@@ -42,14 +58,13 @@ interface Variation {
   id_tamanho: string;
   ean: string;
   quantidade: number;
-  cor?: Color;
-  tamanho?: Size;
-  item?: any;
+  cor_nome?: string;
+  tamanho_nome?: string;
 }
 
 export const ProductVariationsManager = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<ItemData[]>([]);
   const [colors, setColors] = useState<Color[]>([]);
   const [sizes, setSizes] = useState<Size[]>([]);
   const [variations, setVariations] = useState<Variation[]>([]);
@@ -57,70 +72,77 @@ export const ProductVariationsManager = () => {
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string>("");
   const [selectedSize, setSelectedSize] = useState<string>("");
+  const [editingVariation, setEditingVariation] = useState<string | null>(null);
+  const [editEan, setEditEan] = useState("");
+  const [editQuantity, setEditQuantity] = useState(0);
   const { toast } = useToast();
 
   // Fetch items that match the search term
-  useEffect(() => {
-    const fetchItems = async () => {
-      if (!searchTerm || searchTerm.length < 3) return;
-      
-      try {
-        setIsLoading(true);
-        const { data, error } = await supabase
-          .from("BLUEBAY_ITEM")
-          .select("*")
-          .or(`ITEM_CODIGO.ilike.%${searchTerm}%,DESCRICAO.ilike.%${searchTerm}%`)
-          .order("DESCRICAO")
-          .limit(10);
+  const searchItems = useCallback(async (search: string) => {
+    setIsLoading(true);
+    try {
+      let query = supabase
+        .from("BLUEBAY_ITEM")
+        .select("ITEM_CODIGO, DESCRICAO, MATRIZ, FILIAL")
+        .order("DESCRICAO");
 
-        if (error) throw error;
-        setItems(data || []);
-      } catch (error: any) {
-        console.error("Error fetching items:", error);
-        toast({
-          variant: "destructive",
-          title: "Erro ao buscar produtos",
-          description: error.message,
-        });
-      } finally {
-        setIsLoading(false);
+      if (search) {
+        query = query.or(`ITEM_CODIGO.ilike.%${search}%,DESCRICAO.ilike.%${search}%`);
       }
-    };
 
-    const timer = setTimeout(() => {
-      fetchItems();
-    }, 300);
+      query = query.limit(30);
 
-    return () => clearTimeout(timer);
-  }, [searchTerm, toast]);
+      const { data, error } = await query;
 
-  // Fetch colors and sizes
+      if (error) throw error;
+      
+      setItems(data || []);
+    } catch (error: any) {
+      console.error("Error searching items:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao buscar itens",
+        description: error.message,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
+
+  const debouncedSearch = useCallback(
+    debounce((value: string) => {
+      searchItems(value);
+    }, 500),
+    [searchItems]
+  );
+
+  // Fetch colors and sizes on component mount
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchColorsAndSizes = async () => {
       setIsLoading(true);
       try {
         // Fetch colors
-        const { data: colorsData, error: colorsError } = await supabase
+        const { data: colorData, error: colorError } = await supabase
           .from("Cor")
           .select("*")
           .order("nome");
 
-        if (colorsError) throw colorsError;
-        setColors(colorsData || []);
+        if (colorError) throw colorError;
+        setColors(colorData || []);
 
         // Fetch sizes
-        const { data: sizesData, error: sizesError } = await supabase
+        const { data: sizeData, error: sizeError } = await supabase
           .from("Tamanho")
           .select("*")
-          .order("ordem");
+          .order("ordem", { ascending: true });
 
-        if (sizesError) throw sizesError;
-        setSizes(sizesData || []);
+        if (sizeError) throw sizeError;
+        setSizes(sizeData || []);
       } catch (error: any) {
-        console.error("Error fetching variation data:", error);
+        console.error("Error fetching colors and sizes:", error);
         toast({
           variant: "destructive",
-          title: "Erro ao carregar dados",
+          title: "Erro ao buscar cores e tamanhos",
           description: error.message,
         });
       } finally {
@@ -128,8 +150,9 @@ export const ProductVariationsManager = () => {
       }
     };
 
-    fetchData();
-  }, [toast]);
+    fetchColorsAndSizes();
+    searchItems("");
+  }, [searchItems, toast]);
 
   // Fetch variations for selected item
   useEffect(() => {
@@ -138,20 +161,38 @@ export const ProductVariationsManager = () => {
         setVariations([]);
         return;
       }
-      
+
       setIsLoading(true);
       try {
         const { data, error } = await supabase
           .from("BLUEBAY_ITEM_VARIACAO")
           .select(`
-            *,
-            cor:id_cor(id, nome, codigo_hex),
-            tamanho:id_tamanho(id, nome, ordem)
+            id,
+            item_codigo,
+            id_cor,
+            id_tamanho,
+            ean,
+            quantidade,
+            Cor (nome),
+            Tamanho (nome)
           `)
           .eq("item_codigo", selectedItem);
 
         if (error) throw error;
-        setVariations(data || []);
+
+        // Transform data to include color and size names
+        const transformedData = data?.map(item => ({
+          id: item.id,
+          item_codigo: item.item_codigo,
+          id_cor: item.id_cor,
+          id_tamanho: item.id_tamanho,
+          ean: item.ean || "",
+          quantidade: item.quantidade || 0,
+          cor_nome: item.Cor ? item.Cor.nome : "",
+          tamanho_nome: item.Tamanho ? item.Tamanho.nome : ""
+        }));
+
+        setVariations(transformedData || []);
       } catch (error: any) {
         console.error("Error fetching variations:", error);
         toast({
@@ -167,7 +208,7 @@ export const ProductVariationsManager = () => {
     fetchVariations();
   }, [selectedItem, toast]);
 
-  const handleItemSelect = (item: any) => {
+  const handleSelectItem = (item: ItemData) => {
     setSelectedItem(item.ITEM_CODIGO);
   };
 
@@ -176,7 +217,7 @@ export const ProductVariationsManager = () => {
       toast({
         variant: "destructive",
         title: "Dados incompletos",
-        description: "Selecione um produto, cor e tamanho.",
+        description: "Selecione um item, cor e tamanho para adicionar uma variação",
       });
       return;
     }
@@ -190,23 +231,27 @@ export const ProductVariationsManager = () => {
       toast({
         variant: "destructive",
         title: "Variação já existe",
-        description: "Esta combinação de cor e tamanho já existe para este produto.",
+        description: "Esta combinação de cor e tamanho já existe para este item",
       });
       return;
     }
 
-    try {
-      setIsLoading(true);
-      
-      // Get the selected item to get matriz and filial
-      const { data: itemData, error: itemError } = await supabase
-        .from("BLUEBAY_ITEM")
-        .select("MATRIZ, FILIAL")
-        .eq("ITEM_CODIGO", selectedItem)
-        .single();
-      
-      if (itemError) throw itemError;
+    setIsLoading(true);
+    
+    // Get item data to get matriz and filial
+    const itemData = items.find(i => i.ITEM_CODIGO === selectedItem);
+    
+    if (!itemData) {
+      toast({
+        variant: "destructive",
+        title: "Item não encontrado",
+        description: "Não foi possível encontrar os dados do item selecionado",
+      });
+      setIsLoading(false);
+      return;
+    }
 
+    try {
       const { data, error } = await supabase
         .from("BLUEBAY_ITEM_VARIACAO")
         .insert([{
@@ -219,19 +264,38 @@ export const ProductVariationsManager = () => {
           quantidade: 0
         }])
         .select(`
-          *,
-          cor:id_cor(id, nome, codigo_hex),
-          tamanho:id_tamanho(id, nome, ordem)
+          id,
+          item_codigo,
+          id_cor,
+          id_tamanho,
+          ean,
+          quantidade,
+          Cor (nome),
+          Tamanho (nome)
         `);
 
       if (error) throw error;
-      
-      toast({
-        title: "Variação adicionada",
-        description: "Variação adicionada com sucesso."
-      });
 
-      setVariations([...variations, ...data]);
+      if (data && data[0]) {
+        // Transform data to include color and size names
+        const newVariation = {
+          id: data[0].id,
+          item_codigo: data[0].item_codigo,
+          id_cor: data[0].id_cor,
+          id_tamanho: data[0].id_tamanho,
+          ean: data[0].ean || "",
+          quantidade: data[0].quantidade || 0,
+          cor_nome: data[0].Cor ? data[0].Cor.nome : "",
+          tamanho_nome: data[0].Tamanho ? data[0].Tamanho.nome : ""
+        };
+
+        setVariations([...variations, newVariation]);
+        
+        toast({
+          title: "Variação adicionada",
+          description: "A variação foi adicionada com sucesso",
+        });
+      }
     } catch (error: any) {
       console.error("Error adding variation:", error);
       toast({
@@ -244,28 +308,46 @@ export const ProductVariationsManager = () => {
     }
   };
 
-  const handleDeleteVariation = async (variationId: string) => {
+  const handleEditStart = (variation: Variation) => {
+    setEditingVariation(variation.id);
+    setEditEan(variation.ean);
+    setEditQuantity(variation.quantidade);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingVariation) return;
+
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      
       const { error } = await supabase
         .from("BLUEBAY_ITEM_VARIACAO")
-        .delete()
-        .eq("id", variationId);
+        .update({
+          ean: editEan,
+          quantidade: editQuantity
+        })
+        .eq("id", editingVariation);
 
       if (error) throw error;
-      
-      toast({
-        title: "Variação removida",
-        description: "Variação removida com sucesso."
-      });
 
-      setVariations(variations.filter(v => v.id !== variationId));
+      // Update local state
+      setVariations(
+        variations.map(v => 
+          v.id === editingVariation 
+            ? { ...v, ean: editEan, quantidade: editQuantity } 
+            : v
+        )
+      );
+
+      setEditingVariation(null);
+      toast({
+        title: "Alterações salvas",
+        description: "As alterações foram salvas com sucesso",
+      });
     } catch (error: any) {
-      console.error("Error deleting variation:", error);
+      console.error("Error saving variation:", error);
       toast({
         variant: "destructive",
-        title: "Erro ao remover variação",
+        title: "Erro ao salvar alterações",
         description: error.message,
       });
     } finally {
@@ -273,30 +355,34 @@ export const ProductVariationsManager = () => {
     }
   };
 
-  const handleUpdateEAN = async (variationId: string, ean: string) => {
+  const handleCancelEdit = () => {
+    setEditingVariation(null);
+  };
+
+  const handleDeleteVariation = async (variationId: string) => {
+    if (!variationId) return;
+
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      
       const { error } = await supabase
         .from("BLUEBAY_ITEM_VARIACAO")
-        .update({ ean })
+        .delete()
         .eq("id", variationId);
 
       if (error) throw error;
+
+      // Update local state
+      setVariations(variations.filter(v => v.id !== variationId));
       
       toast({
-        title: "EAN atualizado",
-        description: "Código EAN atualizado com sucesso."
+        title: "Variação excluída",
+        description: "A variação foi excluída com sucesso",
       });
-
-      setVariations(variations.map(v => 
-        v.id === variationId ? { ...v, ean } : v
-      ));
     } catch (error: any) {
-      console.error("Error updating EAN:", error);
+      console.error("Error deleting variation:", error);
       toast({
         variant: "destructive",
-        title: "Erro ao atualizar EAN",
+        title: "Erro ao excluir variação",
         description: error.message,
       });
     } finally {
@@ -308,195 +394,256 @@ export const ProductVariationsManager = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5" />
-            Gerenciamento de Variações de Produtos
-          </CardTitle>
+          <CardTitle>Gerenciamento de Variações</CardTitle>
+          <CardDescription>
+            Adicione e gerencie variações de cores e tamanhos para seus produtos
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-end gap-4 mb-6">
-            <div className="flex-1">
-              <Label htmlFor="product-search">Buscar Produto</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <div className="grid gap-6">
+            {/* Search section */}
+            <div>
+              <Label htmlFor="search-item">Buscar Item</Label>
+              <div className="flex items-center mt-1.5">
                 <Input
-                  id="product-search"
-                  placeholder="Digite o código ou nome do produto..."
+                  id="search-item"
+                  placeholder="Digite o código ou descrição do item"
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9"
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    debouncedSearch(e.target.value);
+                  }}
+                  className="flex-1"
                 />
+                <Button 
+                  variant="default" 
+                  className="ml-2"
+                  onClick={() => searchItems(searchTerm)}
+                >
+                  <Search className="h-4 w-4 mr-2" />
+                  Buscar
+                </Button>
               </div>
             </div>
-          </div>
-
-          {searchTerm && searchTerm.length >= 3 && (
-            <div className="border rounded-md overflow-hidden mb-6">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Código</TableHead>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead className="w-[100px]">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {items.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={3} className="text-center py-4">
-                        {isLoading ? "Carregando..." : "Nenhum produto encontrado"}
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    items.map((item) => (
-                      <TableRow 
-                        key={item.ITEM_CODIGO}
-                        className={selectedItem === item.ITEM_CODIGO ? "bg-primary/10" : ""}
-                      >
-                        <TableCell className="font-medium">{item.ITEM_CODIGO}</TableCell>
-                        <TableCell>{item.DESCRICAO}</TableCell>
-                        <TableCell>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => handleItemSelect(item)}
-                          >
-                            Selecionar
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-
-          {selectedItem && (
-            <>
-              <h3 className="text-lg font-medium mb-4">
-                Gerenciar Variações do Produto: {items.find(i => i.ITEM_CODIGO === selectedItem)?.DESCRICAO}
-              </h3>
-              
-              <div className="grid grid-cols-3 gap-4 mb-6">
-                <div>
-                  <Label htmlFor="color-select">Cor</Label>
-                  <Select value={selectedColor} onValueChange={setSelectedColor}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione uma cor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {colors.map((color) => (
-                        <SelectItem key={color.id} value={color.id}>
-                          <div className="flex items-center gap-2">
-                            {color.codigo_hex && (
-                              <div 
-                                className="w-4 h-4 rounded-full border" 
-                                style={{ backgroundColor: color.codigo_hex }}
-                              />
-                            )}
-                            {color.nome}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+            
+            {/* Search results */}
+            <div>
+              <h3 className="text-sm font-medium mb-2">Resultados da busca</h3>
+              {isLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
                 </div>
-                
-                <div>
-                  <Label htmlFor="size-select">Tamanho</Label>
-                  <Select value={selectedSize} onValueChange={setSelectedSize}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um tamanho" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {sizes.map((size) => (
-                        <SelectItem key={size.id} value={size.id}>
-                          {size.nome}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="flex items-end">
-                  <Button 
-                    className="w-full"
-                    onClick={handleAddVariation}
-                    disabled={isLoading}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Adicionar Variação
-                  </Button>
-                </div>
-              </div>
-              
-              <div className="border rounded-md overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Cor</TableHead>
-                      <TableHead>Tamanho</TableHead>
-                      <TableHead>EAN</TableHead>
-                      <TableHead>Quantidade</TableHead>
-                      <TableHead className="w-[100px]">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {variations.length === 0 ? (
+              ) : items.length > 0 ? (
+                <div className="max-h-[200px] overflow-y-auto border rounded-md">
+                  <Table>
+                    <TableHeader>
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-4">
-                          {isLoading 
-                            ? "Carregando..." 
-                            : "Nenhuma variação encontrada para este produto"}
-                        </TableCell>
+                        <TableHead>Código</TableHead>
+                        <TableHead>Descrição</TableHead>
+                        <TableHead className="w-[100px]"></TableHead>
                       </TableRow>
-                    ) : (
-                      variations.map((variation) => (
-                        <TableRow key={variation.id}>
+                    </TableHeader>
+                    <TableBody>
+                      {items.map((item) => (
+                        <TableRow key={item.ITEM_CODIGO}>
+                          <TableCell className="font-medium">{item.ITEM_CODIGO}</TableCell>
+                          <TableCell>{item.DESCRICAO}</TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-2">
-                              {variation.cor?.codigo_hex && (
-                                <div 
-                                  className="w-4 h-4 rounded-full border" 
-                                  style={{ backgroundColor: variation.cor.codigo_hex }}
-                                />
-                              )}
-                              {variation.cor?.nome || "N/A"}
-                            </div>
-                          </TableCell>
-                          <TableCell>{variation.tamanho?.nome || "N/A"}</TableCell>
-                          <TableCell>
-                            <Input 
-                              value={variation.ean || ""}
-                              onChange={(e) => {
-                                setVariations(variations.map(v => 
-                                  v.id === variation.id ? { ...v, ean: e.target.value } : v
-                                ));
-                              }}
-                              onBlur={(e) => handleUpdateEAN(variation.id, e.target.value)}
-                              placeholder="Código EAN"
-                            />
-                          </TableCell>
-                          <TableCell>{variation.quantidade}</TableCell>
-                          <TableCell>
-                            <Button
-                              variant="destructive"
-                              size="icon"
-                              onClick={() => handleDeleteVariation(variation.id)}
-                              disabled={isLoading}
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleSelectItem(item)}
                             >
-                              <Trash2 className="h-4 w-4" />
+                              Selecionar
                             </Button>
                           </TableCell>
                         </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <div className="border rounded-md p-4 text-center text-muted-foreground">
+                  Nenhum item encontrado.
+                </div>
+              )}
+            </div>
+            
+            {/* Selected item */}
+            {selectedItem && (
+              <div>
+                <h3 className="text-sm font-medium mb-2">Item selecionado</h3>
+                <div className="border rounded-md p-4">
+                  <Badge className="mb-2">Código: {selectedItem}</Badge>
+                  <p className="text-lg font-medium">
+                    {items.find(i => i.ITEM_CODIGO === selectedItem)?.DESCRICAO}
+                  </p>
+                </div>
               </div>
-            </>
-          )}
+            )}
+            
+            {/* Add variation */}
+            {selectedItem && (
+              <div>
+                <h3 className="text-sm font-medium mb-2">Adicionar variação</h3>
+                <div className="grid grid-cols-3 gap-4 mb-6">
+                  <div>
+                    <Label htmlFor="color-select">Cor</Label>
+                    <Select value={selectedColor} onValueChange={setSelectedColor}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione uma cor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {colors.map((color) => (
+                          <SelectItem key={color.id} value={color.id}>
+                            <div className="flex items-center">
+                              {color.codigo_hex && (
+                                <div 
+                                  className="w-4 h-4 mr-2 rounded-full border"
+                                  style={{ backgroundColor: color.codigo_hex }}
+                                />
+                              )}
+                              {color.nome}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="size-select">Tamanho</Label>
+                    <Select value={selectedSize} onValueChange={setSelectedSize}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um tamanho" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sizes.map((size) => (
+                          <SelectItem key={size.id} value={size.id}>
+                            {size.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex items-end">
+                    <Button 
+                      className="w-full"
+                      onClick={handleAddVariation}
+                      disabled={isLoading}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Adicionar Variação
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Variations list */}
+            {selectedItem && (
+              <div>
+                <h3 className="text-sm font-medium mb-2">Variações do Item</h3>
+                {isLoading ? (
+                  <div className="space-y-2">
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                  </div>
+                ) : variations.length > 0 ? (
+                  <div className="border rounded-md overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Cor</TableHead>
+                          <TableHead>Tamanho</TableHead>
+                          <TableHead>EAN</TableHead>
+                          <TableHead>Quantidade</TableHead>
+                          <TableHead className="w-[120px] text-right">Ações</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {variations.map((variation) => (
+                          <TableRow key={variation.id}>
+                            <TableCell>{variation.cor_nome}</TableCell>
+                            <TableCell>{variation.tamanho_nome}</TableCell>
+                            <TableCell>
+                              {editingVariation === variation.id ? (
+                                <Input
+                                  value={editEan}
+                                  onChange={(e) => setEditEan(e.target.value)}
+                                  placeholder="Código EAN"
+                                />
+                              ) : (
+                                variation.ean || "-"
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {editingVariation === variation.id ? (
+                                <Input
+                                  type="number"
+                                  value={editQuantity}
+                                  onChange={(e) => setEditQuantity(Number(e.target.value))}
+                                  placeholder="Quantidade"
+                                />
+                              ) : (
+                                variation.quantidade
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {editingVariation === variation.id ? (
+                                <div className="flex justify-end space-x-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={handleSaveEdit}
+                                  >
+                                    <Save className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={handleCancelEdit}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <div className="flex justify-end space-x-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleEditStart(variation)}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-destructive hover:text-destructive"
+                                    onClick={() => handleDeleteVariation(variation.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="border rounded-md p-4 text-center text-muted-foreground">
+                    Nenhuma variação encontrada para este item.
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>

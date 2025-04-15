@@ -13,6 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PlusCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface ItemFormProps {
   item: any | null;
@@ -20,6 +22,8 @@ interface ItemFormProps {
   groups: any[];
   subcategories: any[];
   brands: any[];
+  addSubcategory?: (name: string) => Promise<any>;
+  addBrand?: (name: string) => Promise<any>;
 }
 
 export const ItemForm = ({ 
@@ -27,8 +31,11 @@ export const ItemForm = ({
   onSave, 
   groups, 
   subcategories = [],
-  brands = []
+  brands = [],
+  addSubcategory,
+  addBrand
 }: ItemFormProps) => {
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     ITEM_CODIGO: "",
     DESCRICAO: "",
@@ -47,6 +54,10 @@ export const ItemForm = ({
   
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("basic");
+  const [newBrandName, setNewBrandName] = useState("");
+  const [newSubcategoryName, setNewSubcategoryName] = useState("");
+  const [showNewBrand, setShowNewBrand] = useState(false);
+  const [showNewSubcategory, setShowNewSubcategory] = useState(false);
 
   useEffect(() => {
     if (item) {
@@ -124,6 +135,54 @@ export const ItemForm = ({
     }
   };
 
+  const handleAddNewBrand = async () => {
+    if (!newBrandName.trim() || !addBrand) {
+      toast({
+        variant: "destructive",
+        title: "Nome inválido",
+        description: "Digite um nome válido para a marca"
+      });
+      return;
+    }
+
+    try {
+      const brand = await addBrand(newBrandName);
+      setFormData(prev => ({ ...prev, id_marca: brand.id }));
+      setNewBrandName("");
+      setShowNewBrand(false);
+      toast({
+        title: "Marca adicionada",
+        description: "Nova marca cadastrada com sucesso"
+      });
+    } catch (error) {
+      console.error("Erro ao adicionar marca:", error);
+    }
+  };
+
+  const handleAddNewSubcategory = async () => {
+    if (!newSubcategoryName.trim() || !addSubcategory) {
+      toast({
+        variant: "destructive",
+        title: "Nome inválido",
+        description: "Digite um nome válido para a subcategoria"
+      });
+      return;
+    }
+
+    try {
+      const subcategory = await addSubcategory(newSubcategoryName);
+      setFormData(prev => ({ ...prev, id_subcategoria: subcategory.id }));
+      setNewSubcategoryName("");
+      setShowNewSubcategory(false);
+      toast({
+        title: "Subcategoria adicionada",
+        description: "Nova subcategoria cadastrada com sucesso"
+      });
+    } catch (error) {
+      console.error("Erro ao adicionar subcategoria:", error);
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit}>
       <Tabs 
@@ -197,53 +256,127 @@ export const ItemForm = ({
             
             <div className="flex flex-col space-y-1.5">
               <Label htmlFor="id_subcategoria">Subcategoria</Label>
-              <Select 
-                value={formData.id_subcategoria} 
-                onValueChange={(value) => handleSelectChange("id_subcategoria", value)}
-              >
-                <SelectTrigger id="id_subcategoria">
-                  <SelectValue placeholder="Selecione uma subcategoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  {subcategories.map((subcat) => (
-                    <SelectItem key={subcat.id} value={subcat.id}>
-                      {subcat.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {!showNewSubcategory ? (
+                <div className="flex gap-2">
+                  <Select 
+                    value={formData.id_subcategoria} 
+                    onValueChange={(value) => handleSelectChange("id_subcategoria", value)}
+                  >
+                    <SelectTrigger id="id_subcategoria">
+                      <SelectValue placeholder="Selecione uma subcategoria" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {subcategories.map((subcat) => (
+                        <SelectItem key={subcat.id} value={subcat.id}>
+                          {subcat.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="icon"
+                    onClick={() => setShowNewSubcategory(true)}
+                  >
+                    <PlusCircle className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Input
+                    value={newSubcategoryName}
+                    onChange={(e) => setNewSubcategoryName(e.target.value)}
+                    placeholder="Nome da nova subcategoria"
+                  />
+                  <Button 
+                    type="button" 
+                    variant="default"
+                    onClick={handleAddNewSubcategory}
+                  >
+                    Adicionar
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => setShowNewSubcategory(false)}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
           
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col space-y-1.5">
               <Label htmlFor="id_marca">Marca</Label>
-              <Select 
-                value={formData.id_marca} 
-                onValueChange={(value) => handleSelectChange("id_marca", value)}
-              >
-                <SelectTrigger id="id_marca">
-                  <SelectValue placeholder="Selecione uma marca" />
-                </SelectTrigger>
-                <SelectContent>
-                  {brands.map((brand) => (
-                    <SelectItem key={brand.id} value={brand.id}>
-                      {brand.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {!showNewBrand ? (
+                <div className="flex gap-2">
+                  <Select 
+                    value={formData.id_marca} 
+                    onValueChange={(value) => handleSelectChange("id_marca", value)}
+                  >
+                    <SelectTrigger id="id_marca">
+                      <SelectValue placeholder="Selecione uma marca" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {brands.map((brand) => (
+                        <SelectItem key={brand.id} value={brand.id}>
+                          {brand.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="icon"
+                    onClick={() => setShowNewBrand(true)}
+                  >
+                    <PlusCircle className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Input
+                    value={newBrandName}
+                    onChange={(e) => setNewBrandName(e.target.value)}
+                    placeholder="Nome da nova marca"
+                  />
+                  <Button 
+                    type="button" 
+                    variant="default"
+                    onClick={handleAddNewBrand}
+                  >
+                    Adicionar
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => setShowNewBrand(false)}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              )}
             </div>
             
             <div className="flex flex-col space-y-1.5">
               <Label htmlFor="empresa">Empresa</Label>
-              <Input
-                id="empresa"
-                name="empresa"
-                value={formData.empresa}
-                onChange={handleChange}
-                placeholder="Empresa"
-              />
+              <Select 
+                value={formData.empresa} 
+                onValueChange={(value) => handleSelectChange("empresa", value)}
+              >
+                <SelectTrigger id="empresa">
+                  <SelectValue placeholder="Selecione a empresa" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Bluebay">Bluebay</SelectItem>
+                  <SelectItem value="JAB">JAB</SelectItem>
+                  <SelectItem value="BK">BK</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </TabsContent>
@@ -298,10 +431,8 @@ export const ItemForm = ({
                   <SelectValue placeholder="Selecione a estação" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Verão">Verão</SelectItem>
-                  <SelectItem value="Inverno">Inverno</SelectItem>
-                  <SelectItem value="Outono">Outono</SelectItem>
-                  <SelectItem value="Primavera">Primavera</SelectItem>
+                  <SelectItem value="Primavera / Verão">Primavera / Verão</SelectItem>
+                  <SelectItem value="Outono / Inverno">Outono / Inverno</SelectItem>
                   <SelectItem value="Todas">Todas</SelectItem>
                 </SelectContent>
               </Select>

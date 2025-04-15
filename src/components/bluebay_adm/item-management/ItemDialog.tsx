@@ -13,6 +13,8 @@ interface ItemDialogProps {
   groups: any[];
   subcategories: any[];
   brands: any[];
+  addSubcategory?: (name: string) => Promise<any>;
+  addBrand?: (name: string) => Promise<any>;
 }
 
 export const ItemDialog = ({ 
@@ -20,7 +22,9 @@ export const ItemDialog = ({
   onSave, 
   groups,
   subcategories,
-  brands 
+  brands,
+  addSubcategory,
+  addBrand
 }: ItemDialogProps) => {
   return (
     <DialogContent className="sm:max-w-[650px]">
@@ -39,6 +43,8 @@ export const ItemDialog = ({
         groups={groups}
         subcategories={subcategories}
         brands={brands}
+        addSubcategory={addSubcategory}
+        addBrand={addBrand}
       />
     </DialogContent>
   );

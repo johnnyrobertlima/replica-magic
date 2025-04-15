@@ -38,7 +38,9 @@ const BluebayAdmItemManagement = () => {
     pagination,
     totalCount,
     subcategories,
-    brands
+    brands,
+    addSubcategory,
+    addBrand
   } = useItemManagement();
 
   // Only render after component is mounted to avoid hydration issues
@@ -108,6 +110,8 @@ const BluebayAdmItemManagement = () => {
             groups={groups}
             subcategories={subcategories}
             brands={brands}
+            addSubcategory={addSubcategory}
+            addBrand={addBrand}
           />
         </Dialog>
       </div>
