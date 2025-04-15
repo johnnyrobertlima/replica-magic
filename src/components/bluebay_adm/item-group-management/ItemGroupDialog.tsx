@@ -91,9 +91,12 @@ export const ItemGroupDialog = ({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="nao_definida">Não definida</SelectItem>
-                {empresas.filter(emp => emp !== "nao_definida").map((empresa) => (
-                  <SelectItem key={empresa} value={empresa}>{empresa}</SelectItem>
-                ))}
+                {empresas
+                  .filter(emp => emp !== "nao_definida")
+                  .map((empresa) => (
+                    <SelectItem key={empresa} value={empresa}>{empresa}</SelectItem>
+                  ))
+                }
               </SelectContent>
             </Select>
           </div>

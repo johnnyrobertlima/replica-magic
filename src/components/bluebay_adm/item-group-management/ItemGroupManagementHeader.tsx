@@ -1,13 +1,15 @@
 
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, RefreshCw } from "lucide-react";
 
 interface ItemGroupManagementHeaderProps {
   onNewGroup: () => void;
+  onRefresh?: () => void;
 }
 
 export const ItemGroupManagementHeader = ({
-  onNewGroup
+  onNewGroup,
+  onRefresh
 }: ItemGroupManagementHeaderProps) => {
   return (
     <div className="flex justify-between items-center">
@@ -17,10 +19,17 @@ export const ItemGroupManagementHeader = ({
           Gerencie os grupos de itens e suas configurações.
         </p>
       </div>
-      <Button onClick={onNewGroup} className="flex items-center gap-2">
-        <Plus className="h-4 w-4" />
-        Novo Grupo
-      </Button>
+      <div className="flex gap-2">
+        {onRefresh && (
+          <Button variant="outline" onClick={onRefresh} title="Atualizar lista">
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+        )}
+        <Button onClick={onNewGroup} className="flex items-center gap-2">
+          <Plus className="h-4 w-4" />
+          Novo Grupo
+        </Button>
+      </div>
     </div>
   );
 };

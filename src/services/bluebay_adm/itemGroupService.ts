@@ -35,17 +35,40 @@ const mockGroups = [
     GRU_DESCRICAO: "Calçados Infantis", 
     empresa: "Bluebay", 
     ativo: false 
+  },
+  { 
+    GRU_CODIGO: "005", 
+    GRU_DESCRICAO: "Meias", 
+    empresa: "Bluebay", 
+    ativo: true 
+  },
+  { 
+    GRU_CODIGO: "006", 
+    GRU_DESCRICAO: "Bolsas", 
+    empresa: "BK", 
+    ativo: true 
+  },
+  { 
+    GRU_CODIGO: "007", 
+    GRU_DESCRICAO: "Cintos", 
+    empresa: "JAB", 
+    ativo: true 
+  },
+  { 
+    GRU_CODIGO: "008", 
+    GRU_DESCRICAO: "Chapéus", 
+    empresa: "Bluebay", 
+    ativo: true 
   }
 ];
 
 export const fetchGroups = async (): Promise<any[]> => {
   console.info("Buscando todos os grupos...");
   
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 500));
+  // Simulate API call delay - reduced for better performance
+  await new Promise(resolve => setTimeout(resolve, 200));
   
-  console.info(`Total de grupos com dados (potencialmente duplicados): ${mockGroups.length}`);
-  console.info(`Total de grupos únicos após processamento: ${mockGroups.length}`);
+  console.info(`Total de grupos: ${mockGroups.length}`);
   
   return mockGroups;
 };
@@ -53,8 +76,8 @@ export const fetchGroups = async (): Promise<any[]> => {
 export const saveGroup = async (groupData: any): Promise<void> => {
   console.info("Salvando grupo:", groupData);
   
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 700));
+  // Simulate API call delay - reduced for better performance
+  await new Promise(resolve => setTimeout(resolve, 300));
   
   // In a real application, this would send the data to an API
   console.info("Grupo salvo com sucesso:", groupData);

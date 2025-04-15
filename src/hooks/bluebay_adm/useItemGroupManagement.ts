@@ -37,12 +37,28 @@ export const useItemGroupManagement = () => {
 
   const handleSaveGroup = useCallback(async (groupData: any) => {
     try {
+      setIsLoading(true);
       await saveGroup(groupData);
+      
+      // Update the list immediately with optimistic update
+      if (groupData.GRU_CODIGO) {
+        // If updating existing group
+        setGroups(prevGroups => 
+          prevGroups.map(g => 
+            g.GRU_CODIGO === groupData.GRU_CODIGO ? groupData : g
+          )
+        );
+      } else {
+        // For new groups, we would append, but in this case we'll reload
+        // since we don't have a proper ID generation mechanism in the mock
+        await loadData();
+      }
+      
       toast({
         title: "Sucesso",
         description: "Grupo salvo com sucesso!",
       });
-      loadData();
+      
       return true;
     } catch (error: any) {
       console.error("Error saving group:", error);
@@ -52,6 +68,8 @@ export const useItemGroupManagement = () => {
         description: error.message || "Ocorreu um erro desconhecido",
       });
       return false;
+    } finally {
+      setIsLoading(false);
     }
   }, [loadData, toast]);
 
@@ -62,5 +80,6 @@ export const useItemGroupManagement = () => {
     selectedGroup,
     setSelectedGroup,
     handleSaveGroup,
+    refreshData: loadData
   };
 };

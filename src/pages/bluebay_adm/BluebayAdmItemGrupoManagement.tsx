@@ -14,7 +14,15 @@ const MemoizedItemGroupDialog = memo(ItemGroupDialog);
 
 const BluebayAdmItemGrupoManagement = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { groups, isLoading, selectedGroup, setSelectedGroup, handleSaveGroup, empresas } = useItemGroupManagement();
+  const { 
+    groups, 
+    isLoading, 
+    selectedGroup, 
+    setSelectedGroup, 
+    handleSaveGroup, 
+    empresas,
+    refreshData 
+  } = useItemGroupManagement();
 
   const handleNewGroup = () => {
     setSelectedGroup(null);
@@ -40,6 +48,7 @@ const BluebayAdmItemGrupoManagement = () => {
         <div className="space-y-6">
           <MemoizedItemGroupManagementHeader 
             onNewGroup={handleNewGroup}
+            onRefresh={refreshData}
           />
 
           <MemoizedItemGroupTable
