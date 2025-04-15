@@ -347,9 +347,15 @@ export const ProductVariationsManager = ({ initialSelectedProduct }: ProductVari
         return;
       }
       
+      const completeVariations = newVariations.map(v => ({
+        ...v,
+        matriz: 1,
+        filial: 1,
+      }));
+      
       const { error } = await supabase
         .from("BLUEBAY_ITEM_VARIACAO")
-        .insert(newVariations);
+        .insert(completeVariations);
 
       if (error) throw error;
       

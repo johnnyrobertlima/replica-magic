@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -13,9 +12,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PlusCircle, Grid } from "lucide-react";
+import { PlusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { ItemVariationsGrid } from "./ItemVariationsGrid";
 
 interface ItemFormProps {
   item: any | null;
@@ -37,7 +36,6 @@ export const ItemForm = ({
   addBrand
 }: ItemFormProps) => {
   const { toast } = useToast();
-  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     ITEM_CODIGO: "",
     DESCRICAO: "",
@@ -78,6 +76,11 @@ export const ItemForm = ({
         ativo: item.ativo !== false, // default to true if undefined
         ncm: item.ncm || "",
       });
+      
+      // If an item is available (editing), show the variations tab
+      if (activeTab === "basic" && !!item.ITEM_CODIGO) {
+        setActiveTab("variations");
+      }
     } else {
       setFormData({
         ITEM_CODIGO: "",
@@ -94,6 +97,9 @@ export const ItemForm = ({
         ativo: true,
         ncm: "",
       });
+      
+      // If creating a new item, always show basic tab first
+      setActiveTab("basic");
     }
   }, [item]);
 
@@ -135,20 +141,6 @@ export const ItemForm = ({
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleGoToVariationsTab = () => {
-    if (!formData.ITEM_CODIGO) {
-      toast({
-        variant: "destructive",
-        title: "Código necessário",
-        description: "Salve o produto primeiro para poder criar variações"
-      });
-      return;
-    }
-    
-    // Navigate to the variations tab with the product code selected
-    navigate("/client-area/bluebay_adm/item-management?tab=variations&product=" + formData.ITEM_CODIGO);
   };
 
   const handleAddNewBrand = async () => {
@@ -207,9 +199,12 @@ export const ItemForm = ({
         value={activeTab} 
         onValueChange={setActiveTab}
       >
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="basic">Informações Básicas</TabsTrigger>
           <TabsTrigger value="additional">Detalhes Adicionais</TabsTrigger>
+          <TabsTrigger value="variations" disabled={!formData.ITEM_CODIGO}>
+            Grade de Variações
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="basic" className="space-y-4 mt-4">
@@ -477,19 +472,19 @@ export const ItemForm = ({
             <Label htmlFor="ativo" className="cursor-pointer">Item ativo</Label>
           </div>
         </TabsContent>
+        
+        <TabsContent value="variations" className="space-y-4 mt-4">
+          {formData.ITEM_CODIGO ? (
+            <ItemVariationsGrid itemCode={formData.ITEM_CODIGO} />
+          ) : (
+            <div className="text-center p-6 text-muted-foreground">
+              <p>Salve o produto primeiro para gerenciar variações</p>
+            </div>
+          )}
+        </TabsContent>
       </Tabs>
       
-      <DialogFooter className="mt-6 flex justify-between items-center">
-        <Button 
-          type="button" 
-          variant="outline"
-          onClick={handleGoToVariationsTab}
-          className="flex items-center gap-2"
-          disabled={!formData.ITEM_CODIGO}
-        >
-          <Grid className="h-4 w-4" />
-          Montar Grade de Variações
-        </Button>
+      <DialogFooter className="mt-6">
         <Button type="submit" disabled={isLoading}>
           {isLoading ? "Salvando..." : "Salvar"}
         </Button>
