@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -90,9 +91,9 @@ export const ItemGroupDialog = ({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="nao_definida">Não definida</SelectItem>
-                <SelectItem value="Bluebay">Bluebay</SelectItem>
-                <SelectItem value="BK">BK</SelectItem>
-                <SelectItem value="JAB">JAB</SelectItem>
+                {empresas.filter(emp => emp !== "nao_definida").map((empresa) => (
+                  <SelectItem key={empresa} value={empresa}>{empresa}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
