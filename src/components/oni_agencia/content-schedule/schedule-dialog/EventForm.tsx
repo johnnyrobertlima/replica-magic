@@ -50,6 +50,7 @@ export function EventForm({
           name="title"
           value={formData.title || ""}
           onChange={onInputChange}
+          placeholder="Título do agendamento"
         />
       </div>
       
@@ -61,6 +62,7 @@ export function EventForm({
           value={formData.description || ""}
           onChange={onInputChange}
           rows={3}
+          placeholder="Descrição detalhada do agendamento"
         />
       </div>
       

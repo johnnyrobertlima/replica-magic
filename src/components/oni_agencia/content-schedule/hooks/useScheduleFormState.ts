@@ -58,7 +58,7 @@ export function useScheduleFormState({
       client_id: event.client_id,
       service_id: event.service_id,
       collaborator_id: event.collaborator_id,
-      title: event.title,
+      title: event.title || "",
       description: event.description,
       scheduled_date: event.scheduled_date,
       execution_phase: event.execution_phase,
