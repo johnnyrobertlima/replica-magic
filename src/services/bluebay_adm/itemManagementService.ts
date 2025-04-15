@@ -83,24 +83,31 @@ export const fetchGroups = async () => {
 
 export const saveItem = async (itemData: any, isUpdate: boolean) => {
   try {
+    // Clean up UUID fields to prevent the "invalid input syntax for type uuid" error
+    const cleanedItemData = {
+      ...itemData,
+      id_subcategoria: itemData.id_subcategoria || null,
+      id_marca: itemData.id_marca || null
+    };
+
     if (isUpdate) {
       const { error } = await supabase
         .from("BLUEBAY_ITEM")
         .update({
-          DESCRICAO: itemData.DESCRICAO,
-          GRU_CODIGO: itemData.GRU_CODIGO,
-          GRU_DESCRICAO: itemData.GRU_DESCRICAO,
-          CODIGOAUX: itemData.CODIGOAUX,
-          id_subcategoria: itemData.id_subcategoria,
-          id_marca: itemData.id_marca,
-          empresa: itemData.empresa,
-          estacao: itemData.estacao,
-          genero: itemData.genero,
-          faixa_etaria: itemData.faixa_etaria,
-          ativo: itemData.ativo,
-          ncm: itemData.ncm
+          DESCRICAO: cleanedItemData.DESCRICAO,
+          GRU_CODIGO: cleanedItemData.GRU_CODIGO,
+          GRU_DESCRICAO: cleanedItemData.GRU_DESCRICAO,
+          CODIGOAUX: cleanedItemData.CODIGOAUX,
+          id_subcategoria: cleanedItemData.id_subcategoria,
+          id_marca: cleanedItemData.id_marca,
+          empresa: cleanedItemData.empresa,
+          estacao: cleanedItemData.estacao,
+          genero: cleanedItemData.genero,
+          faixa_etaria: cleanedItemData.faixa_etaria,
+          ativo: cleanedItemData.ativo,
+          ncm: cleanedItemData.ncm
         })
-        .eq("ITEM_CODIGO", itemData.ITEM_CODIGO);
+        .eq("ITEM_CODIGO", cleanedItemData.ITEM_CODIGO);
 
       if (error) throw error;
       
@@ -110,19 +117,19 @@ export const saveItem = async (itemData: any, isUpdate: boolean) => {
       const { error } = await supabase
         .from("BLUEBAY_ITEM")
         .insert({
-          ITEM_CODIGO: itemData.ITEM_CODIGO,
-          DESCRICAO: itemData.DESCRICAO,
-          GRU_CODIGO: itemData.GRU_CODIGO,
-          GRU_DESCRICAO: itemData.GRU_DESCRICAO,
-          CODIGOAUX: itemData.CODIGOAUX,
-          id_subcategoria: itemData.id_subcategoria,
-          id_marca: itemData.id_marca,
-          empresa: itemData.empresa,
-          estacao: itemData.estacao,
-          genero: itemData.genero,
-          faixa_etaria: itemData.faixa_etaria,
-          ativo: itemData.ativo,
-          ncm: itemData.ncm,
+          ITEM_CODIGO: cleanedItemData.ITEM_CODIGO,
+          DESCRICAO: cleanedItemData.DESCRICAO,
+          GRU_CODIGO: cleanedItemData.GRU_CODIGO,
+          GRU_DESCRICAO: cleanedItemData.GRU_DESCRICAO,
+          CODIGOAUX: cleanedItemData.CODIGOAUX,
+          id_subcategoria: cleanedItemData.id_subcategoria,
+          id_marca: cleanedItemData.id_marca,
+          empresa: cleanedItemData.empresa,
+          estacao: cleanedItemData.estacao,
+          genero: cleanedItemData.genero,
+          faixa_etaria: cleanedItemData.faixa_etaria,
+          ativo: cleanedItemData.ativo,
+          ncm: cleanedItemData.ncm,
           DATACADASTRO: new Date().toISOString(),
           MATRIZ: 1, // Required for foreign key constraint
           FILIAL: 1  // Required for foreign key constraint
@@ -163,7 +170,7 @@ export const deleteItem = async (itemCode: string) => {
   }
 };
 
-// Updated function to verify if an item exists before creating variations
+// Function to verify if an item exists before creating variations
 export const verifyItemExists = async (itemCode: string): Promise<boolean> => {
   if (!itemCode) return false;
   
@@ -172,7 +179,7 @@ export const verifyItemExists = async (itemCode: string): Promise<boolean> => {
     
     const { data, error } = await supabase
       .from("BLUEBAY_ITEM")
-      .select("ITEM_CODIGO")
+      .select("ITEM_CODIGO, MATRIZ, FILIAL")
       .eq("ITEM_CODIGO", itemCode)
       .limit(1);
 

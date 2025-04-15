@@ -10,7 +10,15 @@ export const useItemMutations = (onSuccess: () => void) => {
   const handleSaveItem = async (itemData: any, isUpdate: boolean = false) => {
     try {
       setIsLoading(true);
-      const result = await saveItem(itemData, isUpdate);
+      
+      // Clean up empty string UUID values
+      const cleanedItemData = {
+        ...itemData,
+        id_subcategoria: itemData.id_subcategoria || null,
+        id_marca: itemData.id_marca || null
+      };
+      
+      const result = await saveItem(cleanedItemData, isUpdate);
       
       toast({
         title: isUpdate ? "Item atualizado" : "Item cadastrado",

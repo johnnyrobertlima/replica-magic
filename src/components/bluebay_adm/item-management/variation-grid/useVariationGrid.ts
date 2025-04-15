@@ -111,27 +111,32 @@ export const useVariationGrid = (itemCode: string) => {
 
   // Initialize data
   useEffect(() => {
-    if (itemCode) {
-      const initializeData = async () => {
-        setIsLoading(true);
-        try {
-          await checkItemExists();
-          await Promise.all([
-            fetchColors(),
-            fetchSizes()
-          ]);
-          // Only fetch variations if the item exists
-          const exists = await verifyItemExists(itemCode);
-          if (exists) {
-            await fetchExistingVariations();
-          }
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      
-      initializeData();
+    if (!itemCode) {
+      setIsCheckingItem(false);
+      setItemExists(false);
+      return;
     }
+    
+    const initializeData = async () => {
+      setIsLoading(true);
+      try {
+        await Promise.all([
+          fetchColors(),
+          fetchSizes(),
+          checkItemExists()
+        ]);
+        
+        // Only fetch variations if the item exists
+        const exists = await verifyItemExists(itemCode);
+        if (exists) {
+          await fetchExistingVariations();
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    initializeData();
   }, [itemCode, fetchColors, fetchSizes, fetchExistingVariations, checkItemExists]);
 
   const handleToggleColor = (colorId: string) => {
@@ -180,7 +185,7 @@ export const useVariationGrid = (itemCode: string) => {
       return;
     }
 
-    // Double-check item existence before proceeding
+    // Verify item existence
     const exists = await verifyItemExists(itemCode);
     if (!exists) {
       toast({
@@ -228,8 +233,8 @@ export const useVariationGrid = (itemCode: string) => {
               id_tamanho: sizeId,
               quantidade: 0,
               ean: "",
-              matriz: 1, // Default value
-              filial: 1  // Default value
+              matriz: 1,
+              filial: 1
             });
           }
           
@@ -267,7 +272,7 @@ export const useVariationGrid = (itemCode: string) => {
       }
       
       // Refresh variations
-      fetchExistingVariations();
+      await fetchExistingVariations();
       
       toast({
         title: "Grade atualizada",
