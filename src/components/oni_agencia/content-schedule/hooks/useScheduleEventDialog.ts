@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { useScheduleFormState } from "./useScheduleFormState";
 import { useScheduleMutations } from "./useScheduleMutations";
@@ -17,6 +17,9 @@ export function useScheduleEventDialog({
   selectedEvent?: CalendarEvent;
   onClose: () => void;
 }) {
+  // Add a ref to prevent multiple selections
+  const hasSelectedEventRef = useRef(false);
+  
   const {
     currentSelectedEvent,
     formData,
@@ -42,11 +45,12 @@ export function useScheduleEventDialog({
     selectedDate
   });
 
-  // Only set the selectedEvent when it comes from props
+  // Only set the selectedEvent when it comes from props and not already selected
   useEffect(() => {
-    if (selectedEvent) {
+    if (selectedEvent && !hasSelectedEventRef.current) {
       console.log('Setting explicitly selected event:', selectedEvent.id);
       handleSelectEvent(selectedEvent);
+      hasSelectedEventRef.current = true;
     }
   }, [selectedEvent, handleSelectEvent]);
 
@@ -71,6 +75,7 @@ export function useScheduleEventDialog({
   // Enhanced reset form function
   const handleResetForm = () => {
     console.log("Enhanced reset form called");
+    hasSelectedEventRef.current = false;
     resetForm();
   };
 

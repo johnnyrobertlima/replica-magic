@@ -1,7 +1,7 @@
 
-import { CalendarEvent } from "@/types/oni-agencia";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { CalendarEvent } from "@/types/oni-agencia";
 import { StatusSelect } from "./StatusSelect";
 import { CollaboratorSelect } from "./CollaboratorSelect";
 
@@ -32,16 +32,15 @@ export function StatusUpdateForm({
   onCollaboratorChange,
   onNoteChange
 }: StatusUpdateFormProps) {
+  const handleNoteChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    onNoteChange(e.target.value);
+  };
+
   return (
     <div className="grid gap-4 py-4">
-      <div className="mb-2">
-        <h3 className="text-lg font-medium">Atualizar status do agendamento</h3>
-        <p className="text-sm text-muted-foreground">
-          Título: <span className="font-medium">{event.title}</span>
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Serviço: <span className="font-medium">{event.service.name}</span>
-        </p>
+      <div className="bg-muted/20 p-4 rounded-md mb-2">
+        <h3 className="font-semibold text-md mb-1">{event.title || "Agendamento sem título"}</h3>
+        <p className="text-sm text-muted-foreground">{event.service?.name}</p>
       </div>
       
       <StatusSelect
@@ -56,16 +55,17 @@ export function StatusUpdateForm({
         isLoading={isLoadingCollaborators}
         value={selectedCollaborator}
         onValueChange={onCollaboratorChange}
+        label="Responsável"
       />
       
       <div className="grid gap-2">
-        <Label htmlFor="note">Observação</Label>
+        <Label htmlFor="note">Observações</Label>
         <Textarea
           id="note"
-          placeholder="Adicione uma observação sobre esta atualização de status"
-          value={note}
-          onChange={(e) => onNoteChange(e.target.value)}
-          rows={3}
+          value={note || ""}
+          onChange={handleNoteChange}
+          rows={4}
+          placeholder="Adicione observações sobre a mudança de status"
         />
       </div>
     </div>
