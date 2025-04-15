@@ -94,6 +94,7 @@ export const useItemManagement = () => {
     brands,
     addSubcategory,
     addBrand,
-    loadAllItems
+    loadAllItems,
+    refreshItems
   };
 };

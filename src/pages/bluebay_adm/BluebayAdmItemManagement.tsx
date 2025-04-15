@@ -10,6 +10,8 @@ import { ItemsContent } from "@/components/bluebay_adm/item-management/ItemsCont
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProductVariationsManager } from "@/components/bluebay_adm/item-management/ProductVariationsManager";
 import { useSearchParams } from "react-router-dom";
+import { exportItemsToExcel, importItemsFromExcel } from "@/services/bluebay_adm/itemExportService";
+import { useToast } from "@/hooks/use-toast";
 
 // Memoized components to avoid unnecessary re-renders
 const MemoizedItemManagementHeader = memo(ItemManagementHeader);
@@ -25,6 +27,9 @@ const BluebayAdmItemManagement = () => {
   const productParam = searchParams.get("product");
   
   const [activeTab, setActiveTab] = useState(tabParam);
+  const { toast } = useToast();
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   
   const { 
     items, 
@@ -50,7 +55,8 @@ const BluebayAdmItemManagement = () => {
     addSubcategory,
     addBrand,
     isLoadingAll,
-    loadAllItems
+    loadAllItems,
+    refreshItems
   } = useItemManagement();
 
   // Only render after component is mounted to avoid hydration issues
@@ -79,6 +85,74 @@ const BluebayAdmItemManagement = () => {
     setSelectedItem(item);
     setIsDialogOpen(true);
   }, [setSelectedItem, setIsDialogOpen]);
+
+  const handleExportItems = useCallback(async () => {
+    try {
+      setIsExporting(true);
+      const exportedCount = await exportItemsToExcel(searchTerm, groupFilter, empresaFilter);
+      
+      if (exportedCount > 0) {
+        toast({
+          title: "Exportação concluída",
+          description: `${exportedCount} itens foram exportados com sucesso.`,
+        });
+      } else {
+        toast({
+          title: "Exportação vazia",
+          description: "Nenhum item encontrado para exportação.",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      console.error("Erro ao exportar itens:", error);
+      toast({
+        title: "Erro na exportação",
+        description: error.message || "Ocorreu um erro durante a exportação dos itens.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  }, [searchTerm, groupFilter, empresaFilter, toast]);
+
+  const handleImportItems = useCallback(async (file: File) => {
+    try {
+      setIsImporting(true);
+      toast({
+        title: "Processando importação",
+        description: "Aguarde enquanto os itens são atualizados...",
+      });
+      
+      const result = await importItemsFromExcel(file);
+      
+      if (result.success) {
+        toast({
+          title: "Importação concluída",
+          description: `${result.updated} de ${result.totalProcessed} itens foram atualizados com sucesso.${
+            result.errors.length > 0 ? ` Houve ${result.errors.length} erros.` : ''
+          }`,
+        });
+        
+        // Refresh the items list to show updated data
+        refreshItems();
+      } else {
+        toast({
+          title: "Erro na importação",
+          description: result.errors.join('; '),
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      console.error("Erro ao importar itens:", error);
+      toast({
+        title: "Erro na importação",
+        description: error.message || "Ocorreu um erro durante a importação dos itens.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsImporting(false);
+    }
+  }, [toast, refreshItems]);
 
   if (!isMounted) {
     return null;
@@ -113,11 +187,13 @@ const BluebayAdmItemManagement = () => {
               empresas={empresas}
               onLoadAllItems={loadAllItems}
               isLoadingAll={isLoadingAll}
+              onExportItems={handleExportItems}
+              onImportItems={handleImportItems}
             />
 
             <MemoizedItemsContent
               items={items}
-              isLoading={isLoading || isLoadingAll}
+              isLoading={isLoading || isLoadingAll || isExporting || isImporting}
               onEdit={handleEditItem}
               onDelete={handleDeleteItem}
               pagination={pagination}
