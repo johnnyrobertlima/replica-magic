@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 // Cache para grupos (não muda com frequência)
@@ -164,22 +165,27 @@ export const deleteItem = async (itemCode: string) => {
 
 // Updated function to verify if an item exists before creating variations
 export const verifyItemExists = async (itemCode: string): Promise<boolean> => {
+  if (!itemCode) return false;
+  
   try {
-    if (!itemCode) return false;
+    console.log(`Checking if item exists: ${itemCode}`);
     
-    const { data, error, count } = await supabase
+    const { data, error } = await supabase
       .from("BLUEBAY_ITEM")
-      .select("ITEM_CODIGO", { count: "exact" })
-      .eq("ITEM_CODIGO", itemCode);
+      .select("ITEM_CODIGO")
+      .eq("ITEM_CODIGO", itemCode)
+      .limit(1);
 
     if (error) {
       console.error("Error verifying item existence:", error);
       return false;
     }
 
-    return Array.isArray(data) && data.length > 0;
+    const exists = Array.isArray(data) && data.length > 0;
+    console.log(`Item ${itemCode} exists: ${exists}`);
+    return exists;
   } catch (error) {
-    console.error("Error checking item existence:", error);
+    console.error("Exception checking item existence:", error);
     return false;
   }
 };

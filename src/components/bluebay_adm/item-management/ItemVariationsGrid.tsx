@@ -22,7 +22,8 @@ export const ItemVariationsGrid = ({ itemCode }: ItemVariationsGridProps) => {
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [existingVariations, setExistingVariations] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [itemExists, setItemExists] = useState(true);
+  const [itemExists, setItemExists] = useState(false);
+  const [isCheckingItem, setIsCheckingItem] = useState(true);
   const { toast } = useToast();
 
   const fetchColors = useCallback(async () => {
@@ -99,17 +100,23 @@ export const ItemVariationsGrid = ({ itemCode }: ItemVariationsGridProps) => {
 
   // Check if the item exists
   const checkItemExists = useCallback(async () => {
-    if (!itemCode) return;
+    if (!itemCode) {
+      setItemExists(false);
+      setIsCheckingItem(false);
+      return;
+    }
     
     try {
-      setIsLoading(true);
+      console.log(`Checking if item ${itemCode} exists in database...`);
+      setIsCheckingItem(true);
       const exists = await verifyItemExists(itemCode);
+      console.log(`Item ${itemCode} exists: ${exists}`);
       setItemExists(exists);
     } catch (error) {
       console.error("Error checking if item exists:", error);
       setItemExists(false);
     } finally {
-      setIsLoading(false);
+      setIsCheckingItem(false);
     }
   }, [itemCode]);
 
@@ -122,9 +129,13 @@ export const ItemVariationsGrid = ({ itemCode }: ItemVariationsGridProps) => {
           await checkItemExists();
           await Promise.all([
             fetchColors(),
-            fetchSizes(),
-            fetchExistingVariations()
+            fetchSizes()
           ]);
+          // Only fetch variations if the item exists
+          const exists = await verifyItemExists(itemCode);
+          if (exists) {
+            await fetchExistingVariations();
+          }
         } finally {
           setIsLoading(false);
         }
@@ -180,12 +191,15 @@ export const ItemVariationsGrid = ({ itemCode }: ItemVariationsGridProps) => {
       return;
     }
 
-    if (!itemExists) {
+    // Double-check item existence before proceeding
+    const exists = await verifyItemExists(itemCode);
+    if (!exists) {
       toast({
         variant: "destructive",
         title: "Erro",
         description: "Este item não existe na base de dados. Salve o item primeiro.",
       });
+      setItemExists(false);
       return;
     }
 
@@ -242,11 +256,15 @@ export const ItemVariationsGrid = ({ itemCode }: ItemVariationsGridProps) => {
       
       // Process additions
       if (variationsToAdd.length > 0) {
+        console.log("Adding variations:", variationsToAdd);
         const { error: addError } = await supabase
           .from("BLUEBAY_ITEM_VARIACAO")
           .insert(variationsToAdd);
         
-        if (addError) throw addError;
+        if (addError) {
+          console.error("Error adding variations:", addError);
+          throw addError;
+        }
       }
       
       // Process removals
@@ -279,27 +297,27 @@ export const ItemVariationsGrid = ({ itemCode }: ItemVariationsGridProps) => {
   };
 
   // Determine what to render based on current state
-  if (!itemCode) {
-    return <EmptyStateDisplay type="no-item" />;
-  }
-
-  if (!itemExists) {
-    return <EmptyStateDisplay type="item-not-saved" />;
-  }
-
-  if (isLoading && (!colors.length || !sizes.length)) {
+  if (isCheckingItem || (isLoading && (!colors.length || !sizes.length))) {
     return (
       <Card className="mt-4">
         <CardContent className="pt-6">
           <div className="flex justify-center items-center h-40">
             <div className="text-center">
               <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Carregando dados...</p>
+              <p className="text-muted-foreground">Verificando item e carregando dados...</p>
             </div>
           </div>
         </CardContent>
       </Card>
     );
+  }
+
+  if (!itemCode) {
+    return <EmptyStateDisplay type="no-item" />;
+  }
+
+  if (!itemExists) {
+    return <EmptyStateDisplay type="item-not-saved" />;
   }
 
   if (!colors.length || !sizes.length) {
