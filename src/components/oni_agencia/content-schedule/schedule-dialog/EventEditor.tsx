@@ -58,8 +58,8 @@ export function EventEditor({
   onInputChange,
   onSelectChange
 }: EventEditorProps) {
-  // Start with "status" tab active by default for better UX
-  const [activeTab, setActiveTab] = useState<"details" | "status">("status");
+  // Start with "details" tab active by default for better UX
+  const [activeTab, setActiveTab] = useState<"details" | "status">("details");
   const [note, setNote] = useState<string>(formData.description || "");
   
   // Sync note with formData description

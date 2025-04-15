@@ -42,9 +42,6 @@ export function useScheduleEventDialog({
     selectedDate
   });
 
-  // We're completely removing the auto-selection logic
-  // Only explicitly selected events should be handled
-
   // Only set the selectedEvent when it comes from props
   useEffect(() => {
     if (selectedEvent) {
@@ -54,9 +51,22 @@ export function useScheduleEventDialog({
   }, [selectedEvent, handleSelectEvent]);
 
   // Create wrapper functions to pass the current state
-  const submitForm = (e: React.FormEvent) => handleSubmit(e, currentSelectedEvent, formData);
-  const updateStatus = (e: React.FormEvent) => handleStatusUpdate(e, currentSelectedEvent, formData);
-  const deleteEvent = () => handleDelete(currentSelectedEvent);
+  const submitForm = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Submitting form:", formData);
+    return handleSubmit(e, currentSelectedEvent, formData);
+  };
+  
+  const updateStatus = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Updating status:", formData.status_id);
+    return handleStatusUpdate(e, currentSelectedEvent, formData);
+  };
+  
+  const deleteEvent = () => {
+    console.log("Deleting event:", currentSelectedEvent?.id);
+    return handleDelete(currentSelectedEvent);
+  };
   
   // Enhanced reset form function
   const handleResetForm = () => {

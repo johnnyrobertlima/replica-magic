@@ -17,7 +17,7 @@ export function useScheduleFormState({
     client_id: clientId,
     service_id: "",
     collaborator_id: null,
-    title: "",
+    title: null,
     description: null,
     scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
     execution_phase: null,
@@ -41,7 +41,7 @@ export function useScheduleFormState({
       client_id: clientId,
       service_id: "",
       collaborator_id: null,
-      title: "",
+      title: null,
       description: null,
       scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
       execution_phase: null,
@@ -70,10 +70,12 @@ export function useScheduleFormState({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    console.log("Input changed:", name, value);
+    setFormData(prev => ({ ...prev, [name]: value || null }));
   };
 
   const handleSelectChange = (name: string, value: string) => {
+    console.log("Select changed:", name, value);
     setFormData(prev => ({ ...prev, [name]: value === "null" ? null : value }));
   };
 
