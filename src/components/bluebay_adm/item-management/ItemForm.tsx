@@ -73,11 +73,10 @@ export const ItemForm = ({
         estacao: item.estacao || "",
         genero: item.genero || "",
         faixa_etaria: item.faixa_etaria || "",
-        ativo: item.ativo !== false, // default to true if undefined
+        ativo: item.ativo !== false,
         ncm: item.ncm || "",
       });
       
-      // If an item is available (editing), show the variations tab
       if (activeTab === "basic" && !!item.ITEM_CODIGO) {
         setActiveTab("variations");
       }
@@ -98,7 +97,6 @@ export const ItemForm = ({
         ncm: "",
       });
       
-      // If creating a new item, always show basic tab first
       setActiveTab("basic");
     }
   }, [item]);
@@ -218,7 +216,7 @@ export const ItemForm = ({
                 onChange={handleChange}
                 placeholder="Código do item"
                 required
-                readOnly={!!item} // Only allow editing code for new items
+                readOnly={!!item}
               />
             </div>
             <div className="flex flex-col space-y-1.5">

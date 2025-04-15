@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 // Cache para grupos (não muda com frequência)
@@ -91,6 +90,14 @@ export const saveItem = async (itemData: any, isUpdate: boolean) => {
           GRU_CODIGO: itemData.GRU_CODIGO,
           GRU_DESCRICAO: itemData.GRU_DESCRICAO,
           CODIGOAUX: itemData.CODIGOAUX,
+          id_subcategoria: itemData.id_subcategoria,
+          id_marca: itemData.id_marca,
+          empresa: itemData.empresa,
+          estacao: itemData.estacao,
+          genero: itemData.genero,
+          faixa_etaria: itemData.faixa_etaria,
+          ativo: itemData.ativo,
+          ncm: itemData.ncm
         })
         .eq("ITEM_CODIGO", itemData.ITEM_CODIGO);
 
@@ -98,7 +105,7 @@ export const saveItem = async (itemData: any, isUpdate: boolean) => {
       
       return { success: true, message: "O item foi atualizado com sucesso." };
     } else {
-      // For new items, include current date
+      // For new items, include current date and default values for MATRIZ and FILIAL
       const { error } = await supabase
         .from("BLUEBAY_ITEM")
         .insert({
@@ -107,9 +114,17 @@ export const saveItem = async (itemData: any, isUpdate: boolean) => {
           GRU_CODIGO: itemData.GRU_CODIGO,
           GRU_DESCRICAO: itemData.GRU_DESCRICAO,
           CODIGOAUX: itemData.CODIGOAUX,
+          id_subcategoria: itemData.id_subcategoria,
+          id_marca: itemData.id_marca,
+          empresa: itemData.empresa,
+          estacao: itemData.estacao,
+          genero: itemData.genero,
+          faixa_etaria: itemData.faixa_etaria,
+          ativo: itemData.ativo,
+          ncm: itemData.ncm,
           DATACADASTRO: new Date().toISOString(),
-          MATRIZ: 1, // Default values
-          FILIAL: 1, // Default values
+          MATRIZ: 1, // Required for foreign key constraint
+          FILIAL: 1  // Required for foreign key constraint
         });
 
       if (error) throw error;
@@ -125,6 +140,13 @@ export const saveItem = async (itemData: any, isUpdate: boolean) => {
 
 export const deleteItem = async (itemCode: string) => {
   try {
+    // First delete any variations that might exist for this item
+    await supabase
+      .from("BLUEBAY_ITEM_VARIACAO")
+      .delete()
+      .eq("item_codigo", itemCode);
+      
+    // Then delete the item itself
     const { error } = await supabase
       .from("BLUEBAY_ITEM")
       .delete()
