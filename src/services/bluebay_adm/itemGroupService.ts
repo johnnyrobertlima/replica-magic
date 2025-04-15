@@ -38,7 +38,7 @@ export const fetchGroups = async (): Promise<any[]> => {
   console.info("Buscando todos os grupos...");
   
   try {
-    // Fetch distinct groups from BLUEBAY_ITEM
+    // Fetch all groups from BLUEBAY_ITEM with their GRU_CODIGO and GRU_DESCRICAO
     const { data, error } = await supabase
       .from('BLUEBAY_ITEM')
       .select('GRU_CODIGO, GRU_DESCRICAO, empresa')
@@ -89,7 +89,6 @@ export const saveGroup = async (groupData: any): Promise<void> => {
       if (error) throw error;
     } else {
       // For new groups, we'd need a different strategy as we don't have a dedicated groups table
-      // This is a simplified implementation assuming there's a way to create a new group
       console.warn("Criação de novos grupos não implementada no backend");
     }
     

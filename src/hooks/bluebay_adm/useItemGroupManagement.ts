@@ -15,7 +15,7 @@ export const useItemGroupManagement = () => {
       setIsLoading(true);
       console.log("Loading data for item group management...");
       
-      // Load data concurrently
+      // Load data concurrently for better performance
       const [fetchedGroups, fetchedEmpresas] = await Promise.all([
         fetchGroups(),
         fetchEmpresas()
@@ -59,7 +59,7 @@ export const useItemGroupManagement = () => {
           description: "Grupo atualizado com sucesso!",
         });
       } else {
-        // For new groups, we'll reload the data
+        // For new groups, we'll reload the data to get the server-generated info
         toast({
           title: "Sucesso",
           description: "Novo grupo criado com sucesso!",
