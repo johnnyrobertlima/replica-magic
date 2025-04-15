@@ -59,13 +59,7 @@ export const useItemGroupManagement = () => {
           description: "Grupo atualizado com sucesso!",
         });
       } else {
-        // For new groups, append with a temporary ID until refresh
-        const tempNewGroup = {
-          ...groupData,
-          GRU_CODIGO: groupData.GRU_CODIGO || `temp-${Date.now()}`
-        };
-        setGroups(prev => [...prev, tempNewGroup]);
-        
+        // For new groups, we'll reload the data
         toast({
           title: "Sucesso",
           description: "Novo grupo criado com sucesso!",

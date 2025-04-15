@@ -1,102 +1,102 @@
 
+import { supabase } from "@/integrations/supabase/client";
+
 export const fetchEmpresas = async (): Promise<string[]> => {
   console.info("Buscando todas as empresas...");
   
-  // Return the hardcoded list of companies
-  const empresas = ["Bluebay", "BK", "JAB", "nao_definida"];
-  
-  console.info(`Total de empresas: ${empresas.length}`);
-  
-  return empresas.sort();
-};
-
-// Mock data for groups - this would be replaced with actual API calls in production
-const mockGroups = [
-  { 
-    GRU_CODIGO: "001", 
-    GRU_DESCRICAO: "Calçados", 
-    empresa: "Bluebay", 
-    ativo: true 
-  },
-  { 
-    GRU_CODIGO: "002", 
-    GRU_DESCRICAO: "Roupas", 
-    empresa: "BK", 
-    ativo: true 
-  },
-  { 
-    GRU_CODIGO: "003", 
-    GRU_DESCRICAO: "Acessórios", 
-    empresa: "JAB", 
-    ativo: true 
-  },
-  { 
-    GRU_CODIGO: "004", 
-    GRU_DESCRICAO: "Calçados Infantis", 
-    empresa: "Bluebay", 
-    ativo: false 
-  },
-  { 
-    GRU_CODIGO: "005", 
-    GRU_DESCRICAO: "Meias", 
-    empresa: "Bluebay", 
-    ativo: true 
-  },
-  { 
-    GRU_CODIGO: "006", 
-    GRU_DESCRICAO: "Bolsas", 
-    empresa: "BK", 
-    ativo: true 
-  },
-  { 
-    GRU_CODIGO: "007", 
-    GRU_DESCRICAO: "Cintos", 
-    empresa: "JAB", 
-    ativo: true 
-  },
-  { 
-    GRU_CODIGO: "008", 
-    GRU_DESCRICAO: "Chapéus", 
-    empresa: "Bluebay", 
-    ativo: true 
+  try {
+    // Try to fetch distinct empresa values from BLUEBAY_ITEM
+    const { data, error } = await supabase
+      .from('BLUEBAY_ITEM')
+      .select('empresa')
+      .not('empresa', 'is', null)
+      .order('empresa');
+    
+    if (error) throw error;
+    
+    // Extract unique empresa values
+    const empresas = Array.from(new Set(data.map(item => item.empresa))).filter(Boolean);
+    
+    // Add 'nao_definida' as a default option if it doesn't exist
+    if (!empresas.includes('nao_definida')) {
+      empresas.push('nao_definida');
+    }
+    
+    console.info(`Total de empresas: ${empresas.length}`);
+    return empresas.sort();
+  } catch (error) {
+    console.error("Erro ao buscar empresas:", error);
+    
+    // Fallback to hardcoded list in case of error
+    const empresas = ["Bluebay", "BK", "JAB", "nao_definida"];
+    console.info(`Total de empresas (fallback): ${empresas.length}`);
+    return empresas.sort();
   }
-];
+};
 
 export const fetchGroups = async (): Promise<any[]> => {
   console.info("Buscando todos os grupos...");
   
-  // Simulate API call delay with a very short delay for better responsiveness
-  await new Promise(resolve => setTimeout(resolve, 100));
-  
-  console.info(`Total de grupos: ${mockGroups.length}`);
-  
-  // Return a copy of the array to avoid reference issues
-  return [...mockGroups];
+  try {
+    // Fetch distinct groups from BLUEBAY_ITEM
+    const { data, error } = await supabase
+      .from('BLUEBAY_ITEM')
+      .select('GRU_CODIGO, GRU_DESCRICAO, empresa')
+      .not('GRU_CODIGO', 'is', null)
+      .not('GRU_DESCRICAO', 'is', null)
+      .order('GRU_DESCRICAO');
+    
+    if (error) throw error;
+    
+    // Process the data to get unique groups with their properties
+    const groupMap = new Map();
+    
+    data.forEach(item => {
+      if (!groupMap.has(item.GRU_CODIGO)) {
+        groupMap.set(item.GRU_CODIGO, {
+          GRU_CODIGO: item.GRU_CODIGO,
+          GRU_DESCRICAO: item.GRU_DESCRICAO,
+          empresa: item.empresa || 'nao_definida',
+          ativo: true // Default to active
+        });
+      }
+    });
+    
+    const groups = Array.from(groupMap.values());
+    console.info(`Total de grupos: ${groups.length}`);
+    
+    return groups;
+  } catch (error) {
+    console.error("Erro ao buscar grupos:", error);
+    return []; // Return empty array in case of error
+  }
 };
 
 export const saveGroup = async (groupData: any): Promise<void> => {
   console.info("Salvando grupo:", groupData);
   
-  // Simulate API call delay with a short delay
-  await new Promise(resolve => setTimeout(resolve, 100));
-  
-  // If it's an update, find and update the item in mockGroups
-  if (groupData.GRU_CODIGO) {
-    const index = mockGroups.findIndex(g => g.GRU_CODIGO === groupData.GRU_CODIGO);
-    if (index >= 0) {
-      mockGroups[index] = { ...groupData };
+  try {
+    // For existing groups, update all items with that GRU_CODIGO
+    if (groupData.GRU_CODIGO) {
+      const { error } = await supabase
+        .from('BLUEBAY_ITEM')
+        .update({
+          GRU_DESCRICAO: groupData.GRU_DESCRICAO,
+          empresa: groupData.empresa === 'nao_definida' ? null : groupData.empresa
+        })
+        .eq('GRU_CODIGO', groupData.GRU_CODIGO);
+      
+      if (error) throw error;
+    } else {
+      // For new groups, we'd need a different strategy as we don't have a dedicated groups table
+      // This is a simplified implementation assuming there's a way to create a new group
+      console.warn("Criação de novos grupos não implementada no backend");
     }
-  } else {
-    // For a new group, generate a new ID and add to mockGroups
-    const newId = String(parseInt(mockGroups[mockGroups.length - 1].GRU_CODIGO) + 1).padStart(3, '0');
-    const newGroup = {
-      ...groupData,
-      GRU_CODIGO: newId
-    };
-    mockGroups.push(newGroup);
+    
+    console.info("Grupo salvo com sucesso");
+    return;
+  } catch (error) {
+    console.error("Erro ao salvar grupo:", error);
+    throw error;
   }
-  
-  console.info("Grupo salvo com sucesso:", groupData);
-  
-  return;
 };

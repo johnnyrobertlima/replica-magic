@@ -22,7 +22,8 @@ export const ItemGroupManagementHeader = ({
       <div className="flex gap-2">
         {onRefresh && (
           <Button variant="outline" onClick={onRefresh} title="Atualizar lista">
-            <RefreshCw className="h-4 w-4" />
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Atualizar
           </Button>
         )}
         <Button onClick={onNewGroup} className="flex items-center gap-2">
