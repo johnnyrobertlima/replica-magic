@@ -18,3 +18,91 @@ export interface OniAgenciaContentSchedule {
 
 // Update ContentScheduleFormData accordingly
 export type ContentScheduleFormData = Omit<OniAgenciaContentSchedule, 'id' | 'created_at' | 'updated_at'>
+
+// Add missing types for OniAgenciaClient
+export interface OniAgenciaClient {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  logo_url: string | null;
+  cnpj: string | null;
+  address: string | null;
+  city: string | null;
+  cep: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type ClientFormData = Omit<OniAgenciaClient, 'id' | 'created_at' | 'updated_at'>
+
+// Add missing types for OniAgenciaCollaborator
+export interface OniAgenciaCollaborator {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  photo_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type CollaboratorFormData = Omit<OniAgenciaCollaborator, 'id' | 'created_at' | 'updated_at'>
+
+// Add missing types for OniAgenciaService
+export interface OniAgenciaService {
+  id: string;
+  name: string;
+  description: string | null;
+  category: string | null;
+  color: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type ServiceFormData = Omit<OniAgenciaService, 'id' | 'created_at' | 'updated_at'>
+
+// Add missing types for ClientScope
+export interface ClientScope {
+  id: string;
+  client_id: string;
+  service_id: string;
+  quantity: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export type ClientScopeFormData = Omit<ClientScope, 'id' | 'created_at' | 'updated_at'>
+
+// Add CalendarEvent type for the content schedule calendar
+export interface CalendarEvent extends OniAgenciaContentSchedule {
+  service?: {
+    id: string;
+    name: string;
+    category: string | null;
+    color: string | null;
+  } | null;
+  collaborator?: {
+    id: string;
+    name: string;
+    email: string | null;
+    photo_url: string | null;
+  } | null;
+  editorial_line?: {
+    id: string;
+    name: string;
+    symbol: string | null;
+    color: string | null;
+  } | null;
+  product?: {
+    id: string;
+    name: string;
+    symbol: string | null;
+    color: string | null;
+  } | null;
+  status?: {
+    id: string;
+    name: string;
+    color: string | null;
+  } | null;
+}
