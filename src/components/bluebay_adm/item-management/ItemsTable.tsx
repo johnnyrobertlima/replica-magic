@@ -35,7 +35,7 @@ interface ItemsTableProps {
 }
 
 export const ItemsTable = ({ items, onEdit, onDelete }: ItemsTableProps) => {
-  if (items.length === 0) {
+  if (!items || items.length === 0) {
     return (
       <div className="bg-white rounded-md border shadow-sm p-8 text-center">
         <p className="text-muted-foreground">Nenhum item encontrado.</p>

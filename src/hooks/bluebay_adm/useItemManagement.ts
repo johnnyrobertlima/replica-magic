@@ -18,13 +18,9 @@ export const useItemManagement = () => {
   const pagination = usePagination(100); // 100 items per page
 
   const fetchItems = useCallback(async () => {
-    if (!document.hasFocus()) {
-      // Skip fetching if the document is not in focus to avoid SecurityError
-      return;
-    }
-    
-    setIsLoading(true);
     try {
+      setIsLoading(true);
+      
       // Calculate range based on current page and page size
       const from = (pagination.currentPage - 1) * pagination.pageSize;
       const to = from + pagination.pageSize - 1;
@@ -49,9 +45,16 @@ export const useItemManagement = () => {
 
       if (error) throw error;
       
+      if (!data) {
+        setItems([]);
+        setTotalCount(0);
+        setIsLoading(false);
+        return;
+      }
+      
       // Get unique items (no duplicates)
       const uniqueItemsMap = new Map();
-      data?.forEach(item => {
+      data.forEach(item => {
         if (!uniqueItemsMap.has(item.ITEM_CODIGO)) {
           uniqueItemsMap.set(item.ITEM_CODIGO, item);
         }
@@ -59,6 +62,7 @@ export const useItemManagement = () => {
       
       const uniqueItems = Array.from(uniqueItemsMap.values());
       setItems(uniqueItems);
+      console.log(`Loaded ${uniqueItems.length} items`);
       
       // Update total count and pagination
       if (count !== null) {
@@ -72,6 +76,7 @@ export const useItemManagement = () => {
         title: "Erro ao buscar itens",
         description: error.message,
       });
+      setItems([]);
     } finally {
       setIsLoading(false);
     }
@@ -197,7 +202,6 @@ export const useItemManagement = () => {
   }, [fetchGroups]);
 
   useEffect(() => {
-    // Add a delay to prevent flickering with rapid changes
     const timer = setTimeout(() => {
       fetchItems();
     }, 300);
@@ -207,7 +211,7 @@ export const useItemManagement = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      pagination.goToPage(1); // Reset to first page on search
+      pagination.goToPage(1);
     }, 300);
 
     return () => clearTimeout(timer);
