@@ -16,6 +16,8 @@ export const fetchEmpresas = async (): Promise<string[]> => {
     
     // Extract unique empresa values
     const empresas = Array.from(new Set(data.map(item => item.empresa))).filter(Boolean);
+    console.info(`Total de registros com dados de empresa: ${data.length}`);
+    console.info(`Total de empresas únicas após processamento: ${empresas.length}`);
     
     // Add 'nao_definida' as a default option if it doesn't exist
     if (!empresas.includes('nao_definida')) {
@@ -38,15 +40,17 @@ export const fetchGroups = async (): Promise<any[]> => {
   console.info("Buscando todos os grupos...");
   
   try {
-    // Fetch all groups from BLUEBAY_ITEM with their GRU_CODIGO and GRU_DESCRICAO
-    const { data, error } = await supabase
+    // Fetch all distinct group codes and descriptions without any limit
+    const { data, error, count } = await supabase
       .from('BLUEBAY_ITEM')
-      .select('GRU_CODIGO, GRU_DESCRICAO, empresa')
+      .select('GRU_CODIGO, GRU_DESCRICAO, empresa', { count: 'exact' })
       .not('GRU_CODIGO', 'is', null)
       .not('GRU_DESCRICAO', 'is', null)
       .order('GRU_DESCRICAO');
     
     if (error) throw error;
+    
+    console.info(`Total de grupos com dados (potencialmente duplicados): ${data.length}, count: ${count}`);
     
     // Process the data to get unique groups with their properties
     const groupMap = new Map();
@@ -63,7 +67,7 @@ export const fetchGroups = async (): Promise<any[]> => {
     });
     
     const groups = Array.from(groupMap.values());
-    console.info(`Total de grupos: ${groups.length}`);
+    console.info(`Total de grupos únicos após processamento: ${groups.length}`);
     
     return groups;
   } catch (error) {
