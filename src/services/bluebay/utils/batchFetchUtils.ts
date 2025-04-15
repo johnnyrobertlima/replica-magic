@@ -20,12 +20,14 @@ export async function fetchInBatches<T>(
   while (hasMore) {
     console.log(`Buscando lote ${batchCount + 1} (offset: ${offset}, limit: ${batchSize})...`);
     
-    const { data, error, count } = await fetchFunction(offset, batchSize);
+    const response = await fetchFunction(offset, batchSize);
     
-    if (error) {
-      console.error(`Erro ao buscar lote ${batchCount + 1}:`, error);
-      throw error;
+    if (response.error) {
+      console.error(`Erro ao buscar lote ${batchCount + 1}:`, response.error);
+      throw response.error;
     }
+    
+    const data = response.data;
     
     if (!data || data.length === 0) {
       console.log(`Lote ${batchCount + 1} não retornou dados. Finalizando.`);
@@ -35,16 +37,14 @@ export async function fetchInBatches<T>(
     
     lastBatchSize = data.length;
     allResults = [...allResults, ...data];
-    offset += lastBatchSize;
+    offset += batchSize; // Always increment by batchSize, not by lastBatchSize
     batchCount++;
     
     console.log(`Lote ${batchCount}: Recebidos ${lastBatchSize} registros. Total acumulado: ${allResults.length}`);
     
-    // Se recebemos menos registros que o tamanho do batch, provavelmente chegamos ao fim
-    if (lastBatchSize < batchSize) {
-      console.log(`Lote ${batchCount} retornou menos que ${batchSize} registros (${lastBatchSize}). Finalizando.`);
-      hasMore = false;
-    }
+    // Continue fetching if we received exactly batchSize records (which means there might be more)
+    // This logic handles Supabase's 1000 record limit correctly
+    hasMore = lastBatchSize === batchSize;
   }
   
   console.log(`Processo de lotes concluído: ${allResults.length} registros carregados em ${batchCount} lotes.`);
