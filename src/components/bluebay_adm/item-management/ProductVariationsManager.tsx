@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Package, Plus, Search, Save, Tag, X, Edit, Trash } from "lucide-react";
 import { ProductSizeGrid } from "./ProductSizeGrid";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProductVariationsManagerProps {}
 
@@ -42,7 +43,7 @@ export const ProductVariationsManager = ({}: ProductVariationsManagerProps) => {
   const fetchColors = async () => {
     try {
       setIsLoading(true);
-      const { data, error } = await window.supabase
+      const { data, error } = await supabase
         .from("BLUEBAY_CORES")
         .select("*")
         .order("nome");
@@ -59,7 +60,7 @@ export const ProductVariationsManager = ({}: ProductVariationsManagerProps) => {
   const fetchSizes = async () => {
     try {
       setIsLoading(true);
-      const { data, error } = await window.supabase
+      const { data, error } = await supabase
         .from("BLUEBAY_TAMANHOS")
         .select("*")
         .order("ordem");
@@ -75,7 +76,7 @@ export const ProductVariationsManager = ({}: ProductVariationsManagerProps) => {
 
   const fetchItemsToSelect = async () => {
     try {
-      const { data, error } = await window.supabase
+      const { data, error } = await supabase
         .from("BLUEBAY_ITEM")
         .select("codigo, descricao")
         .order("descricao");
@@ -90,7 +91,7 @@ export const ProductVariationsManager = ({}: ProductVariationsManagerProps) => {
   const fetchExistingVariations = async (itemCode: string) => {
     try {
       setIsLoading(true);
-      const { data, error } = await window.supabase
+      const { data, error } = await supabase
         .from("BLUEBAY_ITEM_VARIACOES")
         .select("*")
         .eq("item_codigo", itemCode);
@@ -116,7 +117,7 @@ export const ProductVariationsManager = ({}: ProductVariationsManagerProps) => {
 
     try {
       setIsLoading(true);
-      const { data, error } = await window.supabase
+      const { data, error } = await supabase
         .from("BLUEBAY_CORES")
         .insert([newColor])
         .select();
@@ -154,7 +155,7 @@ export const ProductVariationsManager = ({}: ProductVariationsManagerProps) => {
 
     try {
       setIsLoading(true);
-      const { data, error } = await window.supabase
+      const { data, error } = await supabase
         .from("BLUEBAY_TAMANHOS")
         .insert([newSize])
         .select();
@@ -192,7 +193,7 @@ export const ProductVariationsManager = ({}: ProductVariationsManagerProps) => {
 
     try {
       setIsLoading(true);
-      const { error } = await window.supabase
+      const { error } = await supabase
         .from("BLUEBAY_CORES")
         .update({ nome: newColor.nome, codigo_hex: newColor.codigo_hex })
         .eq("id", editItem.id);
@@ -232,7 +233,7 @@ export const ProductVariationsManager = ({}: ProductVariationsManagerProps) => {
 
     try {
       setIsLoading(true);
-      const { error } = await window.supabase
+      const { error } = await supabase
         .from("BLUEBAY_TAMANHOS")
         .update({ nome: newSize.nome, ordem: newSize.ordem })
         .eq("id", editItem.id);
@@ -272,7 +273,7 @@ export const ProductVariationsManager = ({}: ProductVariationsManagerProps) => {
       setIsLoading(true);
       const table = itemToDelete.type === 'color' ? 'BLUEBAY_CORES' : 'BLUEBAY_TAMANHOS';
       
-      const { error } = await window.supabase
+      const { error } = await supabase
         .from(table)
         .delete()
         .eq("id", itemToDelete.id);
@@ -343,7 +344,7 @@ export const ProductVariationsManager = ({}: ProductVariationsManagerProps) => {
         return;
       }
       
-      const { error } = await window.supabase
+      const { error } = await supabase
         .from("BLUEBAY_ITEM_VARIACOES")
         .insert(newVariations);
 
