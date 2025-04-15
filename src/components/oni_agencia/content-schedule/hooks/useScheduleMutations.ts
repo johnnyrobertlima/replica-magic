@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
 import { useCreateContentSchedule, useUpdateContentSchedule, useDeleteContentSchedule } from "@/hooks/useOniAgenciaContentSchedules";
@@ -22,14 +21,13 @@ export function useScheduleMutations({
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
   const isDeleting = deleteMutation.isPending;
 
-  // Helper function to ensure title is never null before submission
+  // Helper function to ensure title is handled correctly
   const sanitizeFormData = (data: ContentScheduleFormData): ContentScheduleFormData => {
     const sanitized = { ...data };
     
-    // If title is null or empty, set a default title based on service or date
-    if (!sanitized.title || sanitized.title.trim() === "") {
-      const serviceBased = sanitized.service_id ? "Novo agendamento" : "Agendamento sem título";
-      sanitized.title = serviceBased;
+    // If title is an empty string, set it to null
+    if (sanitized.title === "") {
+      sanitized.title = null;
     }
     
     return sanitized;
