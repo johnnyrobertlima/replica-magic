@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { fetchItems, fetchGroups } from "@/services/bluebay_adm/itemManagementService";
 
@@ -13,34 +13,12 @@ export const useItemsData = (
   const [isLoading, setIsLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
   const { toast } = useToast();
+  const isFirstRender = useRef(true);
+  const previousSearchTerm = useRef(searchTerm);
+  const previousGroupFilter = useRef(groupFilter);
+  const previousPage = useRef(pagination.currentPage);
 
-  const loadItems = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      
-      const { items: fetchedItems, count } = await fetchItems(
-        searchTerm,
-        groupFilter,
-        pagination.currentPage,
-        pagination.pageSize
-      );
-      
-      setItems(fetchedItems);
-      setTotalCount(count);
-      pagination.updateTotalCount(count);
-    } catch (error: any) {
-      console.error("Error fetching items:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao buscar itens",
-        description: error.message,
-      });
-      setItems([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [searchTerm, groupFilter, pagination, toast]);
-
+  // Função para carregar os grupos (executada apenas uma vez)
   const loadGroups = useCallback(async () => {
     try {
       const fetchedGroups = await fetchGroups();
@@ -55,28 +33,74 @@ export const useItemsData = (
     }
   }, [toast]);
 
-  // Initial loading of groups
+  // Função para carregar os itens com debounce
+  const loadItems = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      
+      const { items: fetchedItems, count } = await fetchItems(
+        searchTerm,
+        groupFilter,
+        pagination.currentPage,
+        pagination.pageSize
+      );
+      
+      setItems(fetchedItems);
+      setTotalCount(count);
+      pagination.updateTotalCount(count);
+      
+      // Registramos apenas uma vez por carregamento bem-sucedido
+      console.info(`Loaded ${fetchedItems.length} items`);
+    } catch (error: any) {
+      console.error("Error fetching items:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao buscar itens",
+        description: error.message,
+      });
+      setItems([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [searchTerm, groupFilter, pagination, toast]);
+
+  // Carregamento inicial dos grupos (apenas uma vez)
   useEffect(() => {
     loadGroups();
   }, [loadGroups]);
 
-  // Fetch items with debounce
+  // Efeito para carregar itens apenas quando necessário
   useEffect(() => {
-    const timer = setTimeout(() => {
+    // Verificamos se é a primeira renderização
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
       loadItems();
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [loadItems]);
-
-  // Reset to first page when filters change
-  useEffect(() => {
-    const timer = setTimeout(() => {
+      return;
+    }
+    
+    // Verificamos se os filtros ou a página mudaram
+    const filtersChanged = 
+      previousSearchTerm.current !== searchTerm || 
+      previousGroupFilter.current !== groupFilter;
+    
+    const pageChanged = previousPage.current !== pagination.currentPage;
+    
+    // Atualizamos os valores anteriores
+    previousSearchTerm.current = searchTerm;
+    previousGroupFilter.current = groupFilter;
+    previousPage.current = pagination.currentPage;
+    
+    // Se os filtros mudaram, resetamos para a primeira página
+    if (filtersChanged) {
       pagination.goToPage(1);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [searchTerm, groupFilter, pagination]);
+      return; // O efeito de mudança de página irá carregar os itens
+    }
+    
+    // Se a página mudou, carregamos os novos itens
+    if (pageChanged) {
+      loadItems();
+    }
+  }, [searchTerm, groupFilter, pagination.currentPage, loadItems, pagination]);
 
   return {
     items,

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { usePagination } from "@/hooks/bluebay/hooks/usePagination";
 import { useItemsData } from "./useItemsData";
 import { useItemMutations } from "./useItemMutations";
@@ -10,8 +10,8 @@ export const useItemManagement = () => {
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
-  // Use pagination hook
-  const pagination = usePagination(100);
+  // Use pagination hook com tamanho de página menor para melhor performance
+  const pagination = usePagination(50);
   
   // Use item data fetching hook
   const { 
@@ -28,26 +28,36 @@ export const useItemManagement = () => {
     handleDeleteItem: deleteItemMutation 
   } = useItemMutations(refreshItems);
   
+  // Handler para busca com debounce
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchTerm(value);
+  }, []);
+  
+  // Handler para mudança de filtro de grupo
+  const handleGroupFilterChange = useCallback((value: string) => {
+    setGroupFilter(value);
+  }, []);
+  
   // Handler for saving an item (new or update)
-  const handleSaveItem = async (itemData: any) => {
+  const handleSaveItem = useCallback(async (itemData: any) => {
     const isUpdate = !!selectedItem;
     await saveItemMutation(itemData, isUpdate);
     setSelectedItem(null);
     setIsDialogOpen(false);
-  };
+  }, [selectedItem, saveItemMutation]);
   
   // Handler for deleting an item
-  const handleDeleteItem = async (item: any) => {
+  const handleDeleteItem = useCallback(async (item: any) => {
     await deleteItemMutation(item);
-  };
+  }, [deleteItemMutation]);
 
   return {
     items,
     isLoading,
     searchTerm,
-    setSearchTerm,
+    setSearchTerm: handleSearchChange,
     groupFilter,
-    setGroupFilter,
+    setGroupFilter: handleGroupFilterChange,
     groups,
     selectedItem,
     setSelectedItem,

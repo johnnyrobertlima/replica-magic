@@ -1,6 +1,9 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
+// Cache para grupos (não muda com frequência)
+let groupsCache: any[] | null = null;
+
 export const fetchItems = async (
   searchTerm: string,
   groupFilter: string,
@@ -42,7 +45,6 @@ export const fetchItems = async (
   }
   
   const uniqueItems = Array.from(uniqueItemsMap.values());
-  console.log(`Loaded ${uniqueItems.length} items`);
   
   return { 
     items: uniqueItems, 
@@ -51,6 +53,11 @@ export const fetchItems = async (
 };
 
 export const fetchGroups = async () => {
+  // Verificamos se temos os grupos em cache
+  if (groupsCache !== null) {
+    return groupsCache;
+  }
+
   // Get unique groups from items
   const { data, error } = await supabase
     .from("BLUEBAY_ITEM")
@@ -68,52 +75,67 @@ export const fetchGroups = async () => {
     return acc;
   }, []);
 
-  return uniqueGroups || [];
+  // Salvar em cache
+  groupsCache = uniqueGroups || [];
+  
+  return groupsCache;
 };
 
 export const saveItem = async (itemData: any, isUpdate: boolean) => {
-  if (isUpdate) {
-    const { error } = await supabase
-      .from("BLUEBAY_ITEM")
-      .update({
-        DESCRICAO: itemData.DESCRICAO,
-        GRU_CODIGO: itemData.GRU_CODIGO,
-        GRU_DESCRICAO: itemData.GRU_DESCRICAO,
-        CODIGOAUX: itemData.CODIGOAUX,
-      })
-      .eq("ITEM_CODIGO", itemData.ITEM_CODIGO);
+  try {
+    if (isUpdate) {
+      const { error } = await supabase
+        .from("BLUEBAY_ITEM")
+        .update({
+          DESCRICAO: itemData.DESCRICAO,
+          GRU_CODIGO: itemData.GRU_CODIGO,
+          GRU_DESCRICAO: itemData.GRU_DESCRICAO,
+          CODIGOAUX: itemData.CODIGOAUX,
+        })
+        .eq("ITEM_CODIGO", itemData.ITEM_CODIGO);
 
-    if (error) throw error;
-    
-    return { success: true, message: "O item foi atualizado com sucesso." };
-  } else {
-    // For new items, include current date
-    const { error } = await supabase
-      .from("BLUEBAY_ITEM")
-      .insert({
-        ITEM_CODIGO: itemData.ITEM_CODIGO,
-        DESCRICAO: itemData.DESCRICAO,
-        GRU_CODIGO: itemData.GRU_CODIGO,
-        GRU_DESCRICAO: itemData.GRU_DESCRICAO,
-        CODIGOAUX: itemData.CODIGOAUX,
-        DATACADASTRO: new Date().toISOString(),
-        MATRIZ: 1, // Default values
-        FILIAL: 1, // Default values
-      });
+      if (error) throw error;
+      
+      return { success: true, message: "O item foi atualizado com sucesso." };
+    } else {
+      // For new items, include current date
+      const { error } = await supabase
+        .from("BLUEBAY_ITEM")
+        .insert({
+          ITEM_CODIGO: itemData.ITEM_CODIGO,
+          DESCRICAO: itemData.DESCRICAO,
+          GRU_CODIGO: itemData.GRU_CODIGO,
+          GRU_DESCRICAO: itemData.GRU_DESCRICAO,
+          CODIGOAUX: itemData.CODIGOAUX,
+          DATACADASTRO: new Date().toISOString(),
+          MATRIZ: 1, // Default values
+          FILIAL: 1, // Default values
+        });
 
-    if (error) throw error;
-    
-    return { success: true, message: "O item foi cadastrado com sucesso." };
+      if (error) throw error;
+      
+      return { success: true, message: "O item foi cadastrado com sucesso." };
+    }
+  } finally {
+    // Limpar o cache de grupos quando salvarmos um item
+    // pois pode ter sido adicionado um novo grupo
+    groupsCache = null;
   }
 };
 
 export const deleteItem = async (itemCode: string) => {
-  const { error } = await supabase
-    .from("BLUEBAY_ITEM")
-    .delete()
-    .eq("ITEM_CODIGO", itemCode);
+  try {
+    const { error } = await supabase
+      .from("BLUEBAY_ITEM")
+      .delete()
+      .eq("ITEM_CODIGO", itemCode);
 
-  if (error) throw error;
-  
-  return { success: true, message: "O item foi excluído com sucesso." };
+    if (error) throw error;
+    
+    return { success: true, message: "O item foi excluído com sucesso." };
+  } finally {
+    // Limpar o cache de grupos quando excluirmos um item
+    // pois pode ser que tenhamos removido um grupo
+    groupsCache = null;
+  }
 };

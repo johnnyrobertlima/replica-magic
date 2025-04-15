@@ -43,6 +43,10 @@ export const usePagination = (initialPageSize: number = 1000): PaginationState =
 
   // Calculate totalPages
   const totalPages = useMemo(() => Math.ceil(totalCount / pageSize), [totalCount, pageSize]);
+  
+  // Calculate hasNextPage and hasPreviousPage
+  const hasNextPage = useMemo(() => currentPage * pageSize < totalCount, [currentPage, pageSize, totalCount]);
+  const hasPreviousPage = useMemo(() => currentPage > 1, [currentPage]);
 
   return {
     currentPage,
@@ -51,9 +55,9 @@ export const usePagination = (initialPageSize: number = 1000): PaginationState =
     goToNextPage,
     goToPreviousPage,
     goToPage,
-    hasNextPage: currentPage * pageSize < totalCount,
-    hasPreviousPage: currentPage > 1,
+    hasNextPage,
+    hasPreviousPage,
     updateTotalCount,
-    totalPages // Return the calculated totalPages
+    totalPages
   };
 };

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, memo } from "react";
 import { Dialog } from "@/components/ui/dialog";
 import { BluebayAdmMenu } from "@/components/bluebay_adm/BluebayAdmMenu";
 import { useItemManagement } from "@/hooks/bluebay_adm/useItemManagement";
@@ -7,6 +7,12 @@ import { ItemManagementHeader } from "@/components/bluebay_adm/item-management/I
 import { ItemFilters } from "@/components/bluebay_adm/item-management/ItemFilters";
 import { ItemDialog } from "@/components/bluebay_adm/item-management/ItemDialog";
 import { ItemsContent } from "@/components/bluebay_adm/item-management/ItemsContent";
+
+// Componentes memoizados para evitar re-renderizações desnecessárias
+const MemoizedItemManagementHeader = memo(ItemManagementHeader);
+const MemoizedItemFilters = memo(ItemFilters);
+const MemoizedItemsContent = memo(ItemsContent);
+const MemoizedItemDialog = memo(ItemDialog);
 
 const BluebayAdmItemManagement = () => {
   const [isMounted, setIsMounted] = useState(false);
@@ -33,15 +39,15 @@ const BluebayAdmItemManagement = () => {
     setIsMounted(true);
   }, []);
 
-  const handleNewItem = () => {
+  const handleNewItem = useCallback(() => {
     setSelectedItem(null);
     setIsDialogOpen(true);
-  };
+  }, [setSelectedItem, setIsDialogOpen]);
 
-  const handleEditItem = (item: any) => {
+  const handleEditItem = useCallback((item: any) => {
     setSelectedItem(item);
     setIsDialogOpen(true);
-  };
+  }, [setSelectedItem, setIsDialogOpen]);
 
   if (!isMounted) {
     return null;
@@ -51,12 +57,12 @@ const BluebayAdmItemManagement = () => {
     <main className="container-fluid p-0 max-w-full">
       <BluebayAdmMenu />
       <div className="container mx-auto p-6 max-w-7xl">
-        <ItemManagementHeader 
+        <MemoizedItemManagementHeader 
           onNewItem={handleNewItem} 
           isDialogOpen={isDialogOpen} 
         />
 
-        <ItemFilters
+        <MemoizedItemFilters
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
           groupFilter={groupFilter}
@@ -64,7 +70,7 @@ const BluebayAdmItemManagement = () => {
           groups={groups}
         />
 
-        <ItemsContent
+        <MemoizedItemsContent
           items={items}
           isLoading={isLoading}
           onEdit={handleEditItem}
@@ -74,7 +80,7 @@ const BluebayAdmItemManagement = () => {
         />
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <ItemDialog
+          <MemoizedItemDialog
             selectedItem={selectedItem}
             onSave={handleSaveItem}
             groups={groups}
