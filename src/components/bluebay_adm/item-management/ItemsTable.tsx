@@ -68,7 +68,7 @@ export const ItemsTable = ({ items, onEdit, onDelete }: ItemsTableProps) => {
                 <TableCell>{item.GRU_DESCRICAO || "-"}</TableCell>
                 <TableCell>
                   {item.ativo !== false ? (
-                    <Badge variant="success" className="bg-green-100 text-green-800 hover:bg-green-100">
+                    <Badge variant="default" className="bg-green-100 text-green-800 hover:bg-green-100">
                       Ativo
                     </Badge>
                   ) : (

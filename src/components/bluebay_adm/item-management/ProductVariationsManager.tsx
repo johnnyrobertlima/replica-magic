@@ -55,6 +55,8 @@ export const ProductVariationsManager = () => {
   const [variations, setVariations] = useState<Variation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string>("");
+  const [selectedSize, setSelectedSize] = useState<string>("");
   const { toast } = useToast();
 
   // Fetch items that match the search term
@@ -169,8 +171,8 @@ export const ProductVariationsManager = () => {
     setSelectedItem(item.ITEM_CODIGO);
   };
 
-  const handleAddVariation = async (colorId: string, sizeId: string) => {
-    if (!selectedItem || !colorId || !sizeId) {
+  const handleAddVariation = async () => {
+    if (!selectedItem || !selectedColor || !selectedSize) {
       toast({
         variant: "destructive",
         title: "Dados incompletos",
@@ -181,7 +183,7 @@ export const ProductVariationsManager = () => {
 
     // Check if variation already exists
     const exists = variations.some(
-      v => v.id_cor === colorId && v.id_tamanho === sizeId
+      v => v.id_cor === selectedColor && v.id_tamanho === selectedSize
     );
 
     if (exists) {
@@ -211,8 +213,8 @@ export const ProductVariationsManager = () => {
           item_codigo: selectedItem,
           matriz: itemData.MATRIZ,
           filial: itemData.FILIAL,
-          id_cor: colorId,
-          id_tamanho: sizeId,
+          id_cor: selectedColor,
+          id_tamanho: selectedSize,
           ean: "",
           quantidade: 0
         }])
@@ -379,7 +381,7 @@ export const ProductVariationsManager = () => {
               <div className="grid grid-cols-3 gap-4 mb-6">
                 <div>
                   <Label htmlFor="color-select">Cor</Label>
-                  <Select id="color-select">
+                  <Select value={selectedColor} onValueChange={setSelectedColor}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione uma cor" />
                     </SelectTrigger>
@@ -403,7 +405,7 @@ export const ProductVariationsManager = () => {
                 
                 <div>
                   <Label htmlFor="size-select">Tamanho</Label>
-                  <Select id="size-select">
+                  <Select value={selectedSize} onValueChange={setSelectedSize}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione um tamanho" />
                     </SelectTrigger>
@@ -420,11 +422,7 @@ export const ProductVariationsManager = () => {
                 <div className="flex items-end">
                   <Button 
                     className="w-full"
-                    onClick={() => {
-                      const colorId = (document.getElementById("color-select") as HTMLSelectElement)?.value;
-                      const sizeId = (document.getElementById("size-select") as HTMLSelectElement)?.value;
-                      handleAddVariation(colorId, sizeId);
-                    }}
+                    onClick={handleAddVariation}
                     disabled={isLoading}
                   >
                     <Plus className="h-4 w-4 mr-2" />
