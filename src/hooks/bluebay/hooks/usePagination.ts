@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 
 export interface PaginationState {
   currentPage: number;
@@ -11,6 +11,7 @@ export interface PaginationState {
   hasNextPage: boolean;
   hasPreviousPage: boolean;
   updateTotalCount: (count: number) => void;
+  totalPages: number; // Added property
 }
 
 export const usePagination = (initialPageSize: number = 1000): PaginationState => {
@@ -40,6 +41,9 @@ export const usePagination = (initialPageSize: number = 1000): PaginationState =
     setTotalCount(count);
   }, []);
 
+  // Calculate totalPages
+  const totalPages = useMemo(() => Math.ceil(totalCount / pageSize), [totalCount, pageSize]);
+
   return {
     currentPage,
     totalCount,
@@ -49,6 +53,7 @@ export const usePagination = (initialPageSize: number = 1000): PaginationState =
     goToPage,
     hasNextPage: currentPage * pageSize < totalCount,
     hasPreviousPage: currentPage > 1,
-    updateTotalCount
+    updateTotalCount,
+    totalPages // Return the calculated totalPages
   };
 };

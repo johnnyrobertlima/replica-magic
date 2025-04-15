@@ -44,7 +44,7 @@ export const ItemsContent = ({
           <div className="mt-4">
             <Pagination 
               currentPage={pagination.currentPage}
-              totalPages={Math.ceil(totalCount / pagination.pageSize)}
+              totalPages={pagination.totalPages}
               onPageChange={pagination.goToPage}
               hasNextPage={pagination.hasNextPage}
               hasPreviousPage={pagination.hasPreviousPage}
