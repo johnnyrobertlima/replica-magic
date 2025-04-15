@@ -9,41 +9,45 @@ import { PostgrestResponse } from '@supabase/supabase-js';
  */
 export async function fetchInBatches<T>(
   fetchFunction: (offset: number, limit: number) => Promise<PostgrestResponse<T>>,
-  batchSize: number = 1000
+  batchSize: number = 5000
 ): Promise<T[]> {
   let allResults: T[] = [];
   let hasMore = true;
   let offset = 0;
   let batchCount = 0;
+  let lastBatchSize = 0;
 
   while (hasMore) {
-    const { data, error } = await fetchFunction(offset, batchSize);
+    console.log(`Buscando lote ${batchCount + 1} (offset: ${offset}, limit: ${batchSize})...`);
+    
+    const { data, error, count } = await fetchFunction(offset, batchSize);
     
     if (error) {
-      console.error('Erro ao buscar lote de dados:', error);
-      break;
+      console.error(`Erro ao buscar lote ${batchCount + 1}:`, error);
+      throw error;
     }
     
     if (!data || data.length === 0) {
+      console.log(`Lote ${batchCount + 1} não retornou dados. Finalizando.`);
       hasMore = false;
       break;
     }
     
+    lastBatchSize = data.length;
     allResults = [...allResults, ...data];
-    offset += data.length;
+    offset += lastBatchSize;
     batchCount++;
     
-    // Log progress every 5 batches
-    if (batchCount % 5 === 0) {
-      console.log(`Progresso: ${allResults.length} registros carregados em ${batchCount} lotes`);
-    }
+    console.log(`Lote ${batchCount}: Recebidos ${lastBatchSize} registros. Total acumulado: ${allResults.length}`);
     
-    // Check if we got fewer records than requested, meaning we're at the end
-    if (data.length < batchSize) {
+    // Se recebemos menos registros que o tamanho do batch, provavelmente chegamos ao fim
+    if (lastBatchSize < batchSize) {
+      console.log(`Lote ${batchCount} retornou menos que ${batchSize} registros (${lastBatchSize}). Finalizando.`);
       hasMore = false;
     }
   }
   
-  console.log(`Total de ${allResults.length} registros carregados em ${batchCount} lotes`);
+  console.log(`Processo de lotes concluído: ${allResults.length} registros carregados em ${batchCount} lotes.`);
+  
   return allResults;
 }

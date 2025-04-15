@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 import { fetchInBatches } from "@/services/bluebay/utils/batchFetchUtils";
@@ -55,7 +54,7 @@ export const fetchItems = async (
   };
 };
 
-// Função para buscar todos os itens sem limitação (usando batches)
+// Função para buscar todos os itens sem limitação (usando batches de 5000)
 export const fetchAllItems = async (
   searchTerm?: string,
   groupFilter?: string
@@ -63,164 +62,163 @@ export const fetchAllItems = async (
   try {
     console.log("Iniciando busca de todos os itens em lotes");
     
+    // Tamanho do lote aumentado para 5000
+    const batchSize = 5000;
     let totalItems: any[] = [];
-    let batchCount = 0;
+    let processedBatchCount = 0;
+    let totalProcessedItems = 0;
     
     if (searchTerm) {
-      // Como não podemos usar .or() diretamente, precisamos de uma abordagem diferente
-      // para consultas em lotes. Vamos buscar com cada critério separadamente e combinar depois.
-      console.log("Buscando por texto:", searchTerm);
+      // Para buscas com termo, usamos uma abordagem diferente para garantir resultados completos
+      console.log(`Buscando por texto: "${searchTerm}" em todos os itens`);
       
-      // Primeiro busca por ITEM_CODIGO
-      console.log("Buscando itens por ITEM_CODIGO");
-      const itemsData1 = await fetchInBatches<any>(
-        async (offset, limit) => {
-          return await supabase
-            .from("BLUEBAY_ITEM")
-            .select("*")
-            .ilike("ITEM_CODIGO", `%${searchTerm}%`)
-            .order("DESCRICAO")
-            .range(offset, offset + limit - 1);
-        },
-        5000
-      );
-      console.log(`Encontrados ${itemsData1.length} itens por ITEM_CODIGO`);
+      // Array para guardar todas as consultas que faremos
+      const searchQueries = [
+        { field: "ITEM_CODIGO", term: searchTerm },
+        { field: "DESCRICAO", term: searchTerm },
+        { field: "CODIGOAUX", term: searchTerm }
+      ];
       
-      // Depois DESCRICAO
-      console.log("Buscando itens por DESCRICAO");
-      const itemsData2 = await fetchInBatches<any>(
-        async (offset, limit) => {
-          return await supabase
-            .from("BLUEBAY_ITEM")
-            .select("*")
-            .ilike("DESCRICAO", `%${searchTerm}%`)
-            .order("DESCRICAO")
-            .range(offset, offset + limit - 1);
-        },
-        5000
-      );
-      console.log(`Encontrados ${itemsData2.length} itens por DESCRICAO`);
+      // Conjunto para controlar itens já processados e evitar duplicatas
+      const processedItemCodes = new Set<string>();
       
-      // Por fim CODIGOAUX
-      console.log("Buscando itens por CODIGOAUX");
-      const itemsData3 = await fetchInBatches<any>(
-        async (offset, limit) => {
-          return await supabase
-            .from("BLUEBAY_ITEM")
-            .select("*")
-            .ilike("CODIGOAUX", `%${searchTerm}%`)
-            .order("DESCRICAO")
-            .range(offset, offset + limit - 1);
-        },
-        5000
-      );
-      console.log(`Encontrados ${itemsData3.length} itens por CODIGOAUX`);
-      
-      // Combina todos os resultados e remove duplicatas pelo ITEM_CODIGO
-      const allItems = [...itemsData1, ...itemsData2, ...itemsData3];
-      console.log(`Total bruto combinado: ${allItems.length} itens (pode conter duplicatas)`);
-      
-      const uniqueItemsMap = new Map();
-      
-      allItems.forEach(item => {
-        if (item && item.ITEM_CODIGO && !uniqueItemsMap.has(item.ITEM_CODIGO)) {
-          uniqueItemsMap.set(item.ITEM_CODIGO, item);
-        } else if (item && item.ITEM_CODIGO) {
-          console.log(`Skipping duplicate item: ${item.ITEM_CODIGO}`);
+      // Para cada campo de busca, executamos o carregamento em lotes
+      for (const { field, term } of searchQueries) {
+        console.log(`Buscando itens por ${field} contendo "${term}"`);
+        
+        const itemsData = await fetchInBatches<any>(
+          async (offset: number, limit: number) => {
+            const query = supabase
+              .from("BLUEBAY_ITEM")
+              .select("*")
+              .ilike(field, `%${term}%`)
+              .order("DESCRICAO")
+              .range(offset, offset + limit - 1);
+            
+            if (groupFilter && groupFilter !== "all") {
+              query.eq("GRU_CODIGO", groupFilter);
+            }
+            
+            return await query;
+          },
+          batchSize
+        );
+        
+        console.log(`Encontrados ${itemsData.length} itens por ${field}`);
+        
+        // Adiciona os novos itens que ainda não foram processados
+        let newItemsAdded = 0;
+        
+        for (const item of itemsData) {
+          if (item && item.ITEM_CODIGO && !processedItemCodes.has(item.ITEM_CODIGO)) {
+            totalItems.push(item);
+            processedItemCodes.add(item.ITEM_CODIGO);
+            newItemsAdded++;
+          }
         }
-      });
+        
+        console.log(`Adicionados ${newItemsAdded} novos itens únicos por ${field} (total acumulado: ${processedItemCodes.size})`);
+      }
       
-      totalItems = Array.from(uniqueItemsMap.values());
-      console.log(`Total de itens únicos (após remoção de duplicatas): ${totalItems.length}`);
+      console.log(`Total final após busca por texto: ${totalItems.length} itens únicos`);
     } else {
-      // Se não há busca por texto, buscamos diretamente do estoque para garantir que obtemos todos os itens
-      console.log("Buscando todos os itens do estoque sem filtro de texto");
+      // Para busca sem termo de pesquisa, carregamos diretamente do ESTOQUE
+      // para garantir que obtemos todos os itens
+      console.log("Carregando todos os itens de estoque sem filtro de texto");
       
-      // Busca todos os itens de estoque com LOCAL = 1
+      // Primeiro, buscamos todos os ITEM_CODIGO da tabela BLUEBAY_ESTOQUE com LOCAL = 1
+      // para garantir que temos a lista completa de códigos a buscar
+      console.log(`Buscando códigos de itens do ESTOQUE em lotes de ${batchSize}`);
+      
       const estoqueItems = await fetchInBatches<any>(
         async (offset: number, limit: number) => {
-          let query = supabase
+          return await supabase
             .from("BLUEBAY_ESTOQUE")
             .select("ITEM_CODIGO")
             .eq("LOCAL", 1)
             .range(offset, offset + limit - 1);
-          
-          return await query;
         },
-        5000
+        batchSize
       );
       
-      console.log(`Encontrados ${estoqueItems.length} itens de estoque (LOCAL = 1)`);
+      console.log(`Encontrados ${estoqueItems.length} itens no ESTOQUE (LOCAL = 1)`);
       
-      // Extrai os códigos dos itens
-      const itemCodigos = estoqueItems
-        .filter(item => item && item.ITEM_CODIGO)
-        .map(item => item.ITEM_CODIGO);
+      // Extrair códigos únicos dos itens
+      const uniqueItemCodesSet = new Set<string>();
       
-      console.log(`Códigos de itens extraídos: ${itemCodigos.length}`);
-      
-      // Busca todos os detalhes desses itens
-      if (itemCodigos.length > 0) {
-        // Divide em lotes menores para evitar problemas com o IN
-        const batchSize = 1000;
-        const batches = [];
-        
-        for (let i = 0; i < itemCodigos.length; i += batchSize) {
-          batches.push(itemCodigos.slice(i, i + batchSize));
-        }
-        
-        console.log(`Dividido em ${batches.length} lotes para busca de detalhes`);
-        
-        // Busca detalhes para cada lote
-        for (let i = 0; i < batches.length; i++) {
-          const batch = batches[i];
-          console.log(`Buscando detalhes para o lote ${i+1}/${batches.length} (${batch.length} itens)`);
-          
-          const batchItems = await fetchInBatches<any>(
-            async (offset: number, limit: number) => {
-              let query = supabase
-                .from("BLUEBAY_ITEM")
-                .select("*")
-                .in("ITEM_CODIGO", batch)
-                .order("DESCRICAO")
-                .range(offset, offset + limit - 1);
-              
-              if (groupFilter && groupFilter !== "all") {
-                query = query.eq("GRU_CODIGO", groupFilter);
-              }
-              
-              return await query;
-            },
-            5000
-          );
-          
-          console.log(`Encontrados ${batchItems.length} detalhes para o lote ${i+1}`);
-          totalItems = [...totalItems, ...batchItems];
-          console.log(`Total acumulado: ${totalItems.length} itens`);
-        }
-      }
-      
-      // Remover duplicatas pelo ITEM_CODIGO (caso ocorram na junção de lotes)
-      const uniqueItemsMap = new Map();
-      let duplicateCount = 0;
-      
-      totalItems.forEach(item => {
-        if (item && item.ITEM_CODIGO && !uniqueItemsMap.has(item.ITEM_CODIGO)) {
-          uniqueItemsMap.set(item.ITEM_CODIGO, item);
-        } else if (item && item.ITEM_CODIGO) {
-          duplicateCount++;
+      estoqueItems.forEach(item => {
+        if (item && item.ITEM_CODIGO) {
+          uniqueItemCodesSet.add(item.ITEM_CODIGO);
         }
       });
       
-      if (duplicateCount > 0) {
-        console.log(`Removidas ${duplicateCount} duplicatas na junção final`);
-      }
+      const uniqueItemCodes = Array.from(uniqueItemCodesSet);
+      console.log(`Total de ${uniqueItemCodes.length} códigos únicos de itens extraídos`);
       
-      totalItems = Array.from(uniqueItemsMap.values());
+      // Buscar detalhes para cada lote de códigos
+      const codeBatchSize = 1000; // Tamanho do lote para a cláusula IN
+      const totalCodeBatches = Math.ceil(uniqueItemCodes.length / codeBatchSize);
+      
+      console.log(`Dividindo códigos em ${totalCodeBatches} lotes para busca de detalhes`);
+      
+      for (let batchIndex = 0; batchIndex < totalCodeBatches; batchIndex++) {
+        const startIdx = batchIndex * codeBatchSize;
+        const endIdx = Math.min(startIdx + codeBatchSize, uniqueItemCodes.length);
+        const codeBatch = uniqueItemCodes.slice(startIdx, endIdx);
+        
+        console.log(`Processando lote ${batchIndex + 1}/${totalCodeBatches} com ${codeBatch.length} códigos`);
+        
+        // Buscar detalhes dos itens no lote atual
+        const batchItems = await fetchInBatches<any>(
+          async (offset: number, limit: number) => {
+            let query = supabase
+              .from("BLUEBAY_ITEM")
+              .select("*")
+              .in("ITEM_CODIGO", codeBatch)
+              .range(offset, offset + limit - 1);
+            
+            if (groupFilter && groupFilter !== "all") {
+              query = query.eq("GRU_CODIGO", groupFilter);
+            }
+            
+            return await query;
+          },
+          batchSize
+        );
+        
+        console.log(`Encontrados ${batchItems.length} detalhes para o lote ${batchIndex + 1}`);
+        totalItems = [...totalItems, ...batchItems];
+        processedBatchCount++;
+        totalProcessedItems += batchItems.length;
+        
+        console.log(`Progresso: ${totalItems.length}/${uniqueItemCodes.length} itens (${Math.round((totalItems.length / uniqueItemCodes.length) * 100)}%)`);
+      }
     }
     
-    console.log(`Total final: ${totalItems.length} itens carregados com sucesso`);
-    return totalItems;
+    // Remover possíveis duplicatas finais (segurança adicional)
+    console.log(`Verificando duplicatas no conjunto final de ${totalItems.length} itens`);
+    const uniqueItemsMap = new Map<string, any>();
+    let duplicateCount = 0;
+    
+    totalItems.forEach(item => {
+      if (item && item.ITEM_CODIGO) {
+        if (!uniqueItemsMap.has(item.ITEM_CODIGO)) {
+          uniqueItemsMap.set(item.ITEM_CODIGO, item);
+        } else {
+          duplicateCount++;
+          console.log(`Detectada duplicata: ${item.ITEM_CODIGO} - ${item.DESCRICAO || 'Sem descrição'}`);
+        }
+      }
+    });
+    
+    if (duplicateCount > 0) {
+      console.log(`Removidas ${duplicateCount} duplicatas na fase final de processamento`);
+    }
+    
+    const finalItems = Array.from(uniqueItemsMap.values());
+    console.log(`Total final: ${finalItems.length} itens únicos carregados com sucesso`);
+    
+    return finalItems;
   } catch (error) {
     console.error("Erro ao buscar todos os itens:", error);
     throw error;

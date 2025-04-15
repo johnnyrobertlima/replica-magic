@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { fetchItems, fetchGroups, fetchAllItems } from "@/services/bluebay_adm/itemManagementService";
@@ -64,14 +65,21 @@ export const useItemsData = (
   const loadAllItems = useCallback(async () => {
     try {
       setIsLoadingAll(true);
+      setItems([]); // Limpar itens atuais para evitar duplicação com os novos resultados
+      
       toast({
         title: "Carregando todos os itens",
         description: "Esta operação pode levar alguns minutos para grandes volumes de dados.",
         variant: "default"
       });
       
-      const allItems = await fetchAllItems(searchTerm, groupFilter);
+      console.log("Iniciando carregamento de todos os itens...");
       
+      // Usamos await para garantir que todos os itens sejam carregados antes de atualizar o estado
+      const allItems = await fetchAllItems(searchTerm, groupFilter);
+      console.log(`Total final de itens carregados: ${allItems.length}`);
+      
+      // Atualiza o estado com todos os itens carregados
       setItems(allItems);
       setTotalCount(allItems.length);
       pagination.updateTotalCount(allItems.length);
