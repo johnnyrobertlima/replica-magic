@@ -2,6 +2,7 @@
 import Index from "@/pages/Index";
 import ClientLogin from "@/pages/ClientLogin";
 import ResetPassword from "@/pages/ResetPassword";
+import SignupConfirmation from "@/pages/SignupConfirmation";
 
 export const publicRoutes = [
   {
@@ -15,5 +16,9 @@ export const publicRoutes = [
   {
     path: "/reset-password",
     element: ResetPassword,
+  },
+  {
+    path: "/signup-confirmation",
+    element: SignupConfirmation,
   },
 ] as const;
