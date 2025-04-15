@@ -90,7 +90,7 @@ export const ItemGroupDialog = ({
                 <SelectValue placeholder="Selecione a empresa" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Não definida</SelectItem>
+                <SelectItem value="nao_definida">Não definida</SelectItem>
                 {empresas.map((empresa) => (
                   <SelectItem key={empresa} value={empresa}>
                     {empresa}
