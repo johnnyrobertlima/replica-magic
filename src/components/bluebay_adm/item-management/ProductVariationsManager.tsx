@@ -44,7 +44,7 @@ export const ProductVariationsManager = ({}: ProductVariationsManagerProps) => {
     try {
       setIsLoading(true);
       const { data, error } = await supabase
-        .from("BLUEBAY_CORES")
+        .from("Cor")
         .select("*")
         .order("nome");
 
@@ -61,7 +61,7 @@ export const ProductVariationsManager = ({}: ProductVariationsManagerProps) => {
     try {
       setIsLoading(true);
       const { data, error } = await supabase
-        .from("BLUEBAY_TAMANHOS")
+        .from("Tamanho")
         .select("*")
         .order("ordem");
 
@@ -92,7 +92,7 @@ export const ProductVariationsManager = ({}: ProductVariationsManagerProps) => {
     try {
       setIsLoading(true);
       const { data, error } = await supabase
-        .from("BLUEBAY_ITEM_VARIACOES")
+        .from("BLUEBAY_ITEM_VARIACAO")
         .select("*")
         .eq("item_codigo", itemCode);
 
@@ -118,7 +118,7 @@ export const ProductVariationsManager = ({}: ProductVariationsManagerProps) => {
     try {
       setIsLoading(true);
       const { data, error } = await supabase
-        .from("BLUEBAY_CORES")
+        .from("Cor")
         .insert([newColor])
         .select();
 
@@ -156,7 +156,7 @@ export const ProductVariationsManager = ({}: ProductVariationsManagerProps) => {
     try {
       setIsLoading(true);
       const { data, error } = await supabase
-        .from("BLUEBAY_TAMANHOS")
+        .from("Tamanho")
         .insert([newSize])
         .select();
 
@@ -194,7 +194,7 @@ export const ProductVariationsManager = ({}: ProductVariationsManagerProps) => {
     try {
       setIsLoading(true);
       const { error } = await supabase
-        .from("BLUEBAY_CORES")
+        .from("Cor")
         .update({ nome: newColor.nome, codigo_hex: newColor.codigo_hex })
         .eq("id", editItem.id);
 
@@ -234,7 +234,7 @@ export const ProductVariationsManager = ({}: ProductVariationsManagerProps) => {
     try {
       setIsLoading(true);
       const { error } = await supabase
-        .from("BLUEBAY_TAMANHOS")
+        .from("Tamanho")
         .update({ nome: newSize.nome, ordem: newSize.ordem })
         .eq("id", editItem.id);
 
@@ -271,7 +271,7 @@ export const ProductVariationsManager = ({}: ProductVariationsManagerProps) => {
 
     try {
       setIsLoading(true);
-      const table = itemToDelete.type === 'color' ? 'BLUEBAY_CORES' : 'BLUEBAY_TAMANHOS';
+      const table = itemToDelete.type === 'color' ? 'Cor' : 'Tamanho';
       
       const { error } = await supabase
         .from(table)
@@ -345,7 +345,7 @@ export const ProductVariationsManager = ({}: ProductVariationsManagerProps) => {
       }
       
       const { error } = await supabase
-        .from("BLUEBAY_ITEM_VARIACOES")
+        .from("BLUEBAY_ITEM_VARIACAO")
         .insert(newVariations);
 
       if (error) throw error;
