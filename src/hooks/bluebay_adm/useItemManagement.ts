@@ -3,6 +3,7 @@ import { useState, useCallback } from "react";
 import { usePagination } from "@/hooks/bluebay/hooks/usePagination";
 import { useItemsData } from "./useItemsData";
 import { useItemMutations } from "./useItemMutations";
+import { useProductData } from "./useProductData";
 
 export const useItemManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -10,7 +11,7 @@ export const useItemManagement = () => {
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
-  // Use pagination hook com tamanho de página menor para melhor performance
+  // Use pagination hook with smaller page size for better performance
   const pagination = usePagination(50);
   
   // Use item data fetching hook
@@ -27,13 +28,22 @@ export const useItemManagement = () => {
     handleSaveItem: saveItemMutation, 
     handleDeleteItem: deleteItemMutation 
   } = useItemMutations(refreshItems);
+
+  // Use product data hook
+  const {
+    subcategories,
+    brands,
+    isLoading: isProductDataLoading,
+    addSubcategory,
+    addBrand
+  } = useProductData();
   
-  // Handler para busca com debounce
+  // Handler for search with debounce
   const handleSearchChange = useCallback((value: string) => {
     setSearchTerm(value);
   }, []);
   
-  // Handler para mudança de filtro de grupo
+  // Handler for group filter change
   const handleGroupFilterChange = useCallback((value: string) => {
     setGroupFilter(value);
   }, []);
@@ -53,7 +63,7 @@ export const useItemManagement = () => {
 
   return {
     items,
-    isLoading,
+    isLoading: isLoading || isProductDataLoading,
     searchTerm,
     setSearchTerm: handleSearchChange,
     groupFilter,
@@ -67,5 +77,9 @@ export const useItemManagement = () => {
     handleDeleteItem,
     pagination,
     totalCount,
+    subcategories,
+    brands,
+    addSubcategory,
+    addBrand
   };
 };

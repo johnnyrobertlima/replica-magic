@@ -9,6 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
@@ -53,6 +54,7 @@ export const ItemsTable = ({ items, onEdit, onDelete }: ItemsTableProps) => {
               <TableHead className="w-[100px]">Cód. Auxiliar</TableHead>
               <TableHead>Descrição</TableHead>
               <TableHead>Grupo</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead className="w-[150px]">Data Cadastro</TableHead>
               <TableHead className="text-right w-[100px]">Ações</TableHead>
             </TableRow>
@@ -64,6 +66,17 @@ export const ItemsTable = ({ items, onEdit, onDelete }: ItemsTableProps) => {
                 <TableCell>{item.CODIGOAUX || "-"}</TableCell>
                 <TableCell>{item.DESCRICAO}</TableCell>
                 <TableCell>{item.GRU_DESCRICAO || "-"}</TableCell>
+                <TableCell>
+                  {item.ativo !== false ? (
+                    <Badge variant="success" className="bg-green-100 text-green-800 hover:bg-green-100">
+                      Ativo
+                    </Badge>
+                  ) : (
+                    <Badge variant="destructive" className="bg-red-100 text-red-800 hover:bg-red-100">
+                      Inativo
+                    </Badge>
+                  )}
+                </TableCell>
                 <TableCell>
                   {item.DATACADASTRO 
                     ? format(new Date(item.DATACADASTRO), "dd/MM/yyyy")

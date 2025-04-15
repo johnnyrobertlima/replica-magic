@@ -11,15 +11,19 @@ interface ItemDialogProps {
   selectedItem: any | null;
   onSave: (item: any) => Promise<void>;
   groups: any[];
+  subcategories: any[];
+  brands: any[];
 }
 
 export const ItemDialog = ({ 
   selectedItem, 
   onSave, 
-  groups 
+  groups,
+  subcategories,
+  brands 
 }: ItemDialogProps) => {
   return (
-    <DialogContent className="sm:max-w-[550px]">
+    <DialogContent className="sm:max-w-[650px]">
       <DialogHeader>
         <DialogTitle>{selectedItem ? "Editar Item" : "Novo Item"}</DialogTitle>
         <DialogDescription>
@@ -33,6 +37,8 @@ export const ItemDialog = ({
         item={selectedItem} 
         onSave={onSave} 
         groups={groups}
+        subcategories={subcategories}
+        brands={brands}
       />
     </DialogContent>
   );

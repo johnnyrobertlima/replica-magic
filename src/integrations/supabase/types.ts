@@ -320,36 +320,136 @@ export type Database = {
       }
       BLUEBAY_ITEM: {
         Row: {
+          ativo: boolean | null
           CODIGOAUX: string | null
           DATACADASTRO: string | null
           DESCRICAO: string | null
+          empresa: string | null
+          estacao: string | null
+          faixa_etaria: string | null
           FILIAL: number
+          genero: string | null
           GRU_CODIGO: string | null
           GRU_DESCRICAO: string | null
+          id_marca: string | null
+          id_subcategoria: string | null
           ITEM_CODIGO: string
           MATRIZ: number
+          ncm: string | null
         }
         Insert: {
+          ativo?: boolean | null
           CODIGOAUX?: string | null
           DATACADASTRO?: string | null
           DESCRICAO?: string | null
+          empresa?: string | null
+          estacao?: string | null
+          faixa_etaria?: string | null
           FILIAL: number
+          genero?: string | null
           GRU_CODIGO?: string | null
           GRU_DESCRICAO?: string | null
+          id_marca?: string | null
+          id_subcategoria?: string | null
           ITEM_CODIGO: string
           MATRIZ: number
+          ncm?: string | null
         }
         Update: {
+          ativo?: boolean | null
           CODIGOAUX?: string | null
           DATACADASTRO?: string | null
           DESCRICAO?: string | null
+          empresa?: string | null
+          estacao?: string | null
+          faixa_etaria?: string | null
           FILIAL?: number
+          genero?: string | null
           GRU_CODIGO?: string | null
           GRU_DESCRICAO?: string | null
+          id_marca?: string | null
+          id_subcategoria?: string | null
           ITEM_CODIGO?: string
           MATRIZ?: number
+          ncm?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_marca"
+            columns: ["id_marca"]
+            isOneToOne: false
+            referencedRelation: "Marca"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_subcategoria"
+            columns: ["id_subcategoria"]
+            isOneToOne: false
+            referencedRelation: "SubCategoria"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      BLUEBAY_ITEM_VARIACAO: {
+        Row: {
+          created_at: string | null
+          ean: string | null
+          filial: number
+          id: string
+          id_cor: string | null
+          id_tamanho: string | null
+          item_codigo: string
+          matriz: number
+          quantidade: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          ean?: string | null
+          filial: number
+          id?: string
+          id_cor?: string | null
+          id_tamanho?: string | null
+          item_codigo: string
+          matriz: number
+          quantidade?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          ean?: string | null
+          filial?: number
+          id?: string
+          id_cor?: string | null
+          id_tamanho?: string | null
+          item_codigo?: string
+          matriz?: number
+          quantidade?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "BLUEBAY_ITEM_VARIACAO_id_cor_fkey"
+            columns: ["id_cor"]
+            isOneToOne: false
+            referencedRelation: "Cor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "BLUEBAY_ITEM_VARIACAO_id_tamanho_fkey"
+            columns: ["id_tamanho"]
+            isOneToOne: false
+            referencedRelation: "Tamanho"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "BLUEBAY_ITEM_VARIACAO_item_codigo_matriz_filial_fkey"
+            columns: ["item_codigo", "matriz", "filial"]
+            isOneToOne: false
+            referencedRelation: "BLUEBAY_ITEM"
+            referencedColumns: ["ITEM_CODIGO", "MATRIZ", "FILIAL"]
+          },
+        ]
       }
       BLUEBAY_PEDIDO: {
         Row: {
@@ -795,6 +895,30 @@ export type Database = {
         }
         Relationships: []
       }
+      Cor: {
+        Row: {
+          codigo_hex: string | null
+          created_at: string | null
+          id: string
+          nome: string
+          updated_at: string | null
+        }
+        Insert: {
+          codigo_hex?: string | null
+          created_at?: string | null
+          id?: string
+          nome: string
+          updated_at?: string | null
+        }
+        Update: {
+          codigo_hex?: string | null
+          created_at?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       Disparos: {
         Row: {
           cliente: string | null
@@ -1194,6 +1318,27 @@ export type Database = {
           atualizado_em?: string | null
           id?: number
           valor?: number
+        }
+        Relationships: []
+      }
+      Marca: {
+        Row: {
+          created_at: string | null
+          id: string
+          nome: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          nome: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -1728,6 +1873,51 @@ export type Database = {
           name?: string
           symbol?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      SubCategoria: {
+        Row: {
+          created_at: string | null
+          id: string
+          nome: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          nome: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      Tamanho: {
+        Row: {
+          created_at: string | null
+          id: string
+          nome: string
+          ordem: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          nome: string
+          ordem?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          nome?: string
+          ordem?: number | null
+          updated_at?: string | null
         }
         Relationships: []
       }

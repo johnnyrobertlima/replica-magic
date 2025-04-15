@@ -7,15 +7,20 @@ import { ItemManagementHeader } from "@/components/bluebay_adm/item-management/I
 import { ItemFilters } from "@/components/bluebay_adm/item-management/ItemFilters";
 import { ItemDialog } from "@/components/bluebay_adm/item-management/ItemDialog";
 import { ItemsContent } from "@/components/bluebay_adm/item-management/ItemsContent";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ProductVariationsManager } from "@/components/bluebay_adm/item-management/ProductVariationsManager";
 
-// Componentes memoizados para evitar re-renderizações desnecessárias
+// Memoized components to avoid unnecessary re-renders
 const MemoizedItemManagementHeader = memo(ItemManagementHeader);
 const MemoizedItemFilters = memo(ItemFilters);
 const MemoizedItemsContent = memo(ItemsContent);
 const MemoizedItemDialog = memo(ItemDialog);
+const MemoizedProductVariationsManager = memo(ProductVariationsManager);
 
 const BluebayAdmItemManagement = () => {
   const [isMounted, setIsMounted] = useState(false);
+  const [activeTab, setActiveTab] = useState("items");
+  
   const { 
     items, 
     isLoading, 
@@ -31,7 +36,9 @@ const BluebayAdmItemManagement = () => {
     handleSaveItem,
     handleDeleteItem,
     pagination,
-    totalCount
+    totalCount,
+    subcategories,
+    brands
   } = useItemManagement();
 
   // Only render after component is mounted to avoid hydration issues
@@ -57,33 +64,50 @@ const BluebayAdmItemManagement = () => {
     <main className="container-fluid p-0 max-w-full">
       <BluebayAdmMenu />
       <div className="container mx-auto p-6 max-w-7xl">
-        <MemoizedItemManagementHeader 
-          onNewItem={handleNewItem} 
-          isDialogOpen={isDialogOpen} 
-        />
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <div className="flex justify-between items-start">
+            <MemoizedItemManagementHeader 
+              onNewItem={handleNewItem} 
+              isDialogOpen={isDialogOpen} 
+            />
+            
+            <TabsList>
+              <TabsTrigger value="items">Produtos</TabsTrigger>
+              <TabsTrigger value="variations">Variações</TabsTrigger>
+            </TabsList>
+          </div>
 
-        <MemoizedItemFilters
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          groupFilter={groupFilter}
-          onGroupFilterChange={setGroupFilter}
-          groups={groups}
-        />
+          <TabsContent value="items" className="space-y-6">
+            <MemoizedItemFilters
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              groupFilter={groupFilter}
+              onGroupFilterChange={setGroupFilter}
+              groups={groups}
+            />
 
-        <MemoizedItemsContent
-          items={items}
-          isLoading={isLoading}
-          onEdit={handleEditItem}
-          onDelete={handleDeleteItem}
-          pagination={pagination}
-          totalCount={totalCount}
-        />
+            <MemoizedItemsContent
+              items={items}
+              isLoading={isLoading}
+              onEdit={handleEditItem}
+              onDelete={handleDeleteItem}
+              pagination={pagination}
+              totalCount={totalCount}
+            />
+          </TabsContent>
+          
+          <TabsContent value="variations" className="space-y-6">
+            <MemoizedProductVariationsManager />
+          </TabsContent>
+        </Tabs>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <MemoizedItemDialog
             selectedItem={selectedItem}
             onSave={handleSaveItem}
             groups={groups}
+            subcategories={subcategories}
+            brands={brands}
           />
         </Dialog>
       </div>
