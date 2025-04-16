@@ -45,7 +45,7 @@ export const fetchGroups = async () => {
     // Convert Map back to array
     const sanitizedData = Array.from(groupsMap.values());
 
-    console.log(`Found ${sanitizedData.length || 0} unique active groups`);
+    console.log(`Found ${sanitizedData.length || 0} unique active groups from ${data?.length || 0} total groups`);
     return sanitizedData;
   } catch (error) {
     console.error("Error fetching groups:", error);

@@ -25,7 +25,22 @@ export const useItemsData = (
   const loadGroups = useCallback(async () => {
     try {
       const fetchedGroups = await fetchGroups();
-      setGroups(fetchedGroups);
+      
+      // Create a Map to store unique groups based on gru_codigo
+      const uniqueGroupsMap = new Map();
+      
+      fetchedGroups.forEach(group => {
+        if (!uniqueGroupsMap.has(group.gru_codigo) && group.gru_codigo) {
+          uniqueGroupsMap.set(group.gru_codigo, group);
+        }
+      });
+      
+      // Convert the Map back to an array and sort by description
+      const uniqueGroups = Array.from(uniqueGroupsMap.values())
+        .sort((a, b) => (a.gru_descricao || '').localeCompare(b.gru_descricao || ''));
+      
+      setGroups(uniqueGroups);
+      console.log(`Loaded ${uniqueGroups.length} unique groups (filtered from ${fetchedGroups.length} total)`);
     } catch (error: any) {
       console.error("Error fetching groups:", error);
       toast({
