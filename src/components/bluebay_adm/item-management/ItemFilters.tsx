@@ -69,7 +69,10 @@ export const ItemFilters = ({
             <SelectContent>
               <SelectItem value="all">Todos os grupos</SelectItem>
               {groups.map((group) => (
-                <SelectItem key={group.gru_codigo} value={group.gru_codigo}>
+                <SelectItem 
+                  key={group.gru_codigo} 
+                  value={group.gru_codigo || `group-${group.id}`} // Ensure we never pass an empty string
+                >
                   {group.gru_descricao}
                 </SelectItem>
               ))}
@@ -85,7 +88,10 @@ export const ItemFilters = ({
             <SelectContent>
               <SelectItem value="all">Todas as empresas</SelectItem>
               {empresas.map((empresa) => (
-                <SelectItem key={empresa} value={empresa}>
+                <SelectItem 
+                  key={empresa} 
+                  value={empresa || `empresa-placeholder-${empresa.length}`} // Ensure we never pass an empty string
+                >
                   {empresa}
                 </SelectItem>
               ))}

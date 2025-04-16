@@ -25,8 +25,14 @@ export const fetchGroups = async () => {
       throw error;
     }
 
-    console.log(`Found ${data?.length || 0} active groups`);
-    return data || [];
+    // Make sure we sanitize the data to prevent empty string values
+    const sanitizedData = data?.map(group => ({
+      ...group,
+      gru_codigo: group.gru_codigo || `group-${group.id}`, // Fallback for empty string
+    })) || [];
+
+    console.log(`Found ${sanitizedData.length || 0} active groups`);
+    return sanitizedData;
   } catch (error) {
     console.error("Error fetching groups:", error);
     return []; // Return empty array in case of error
@@ -64,7 +70,7 @@ export const fetchEmpresas = async () => {
     
     if (data) {
       data.forEach(item => {
-        if (item.empresa) {
+        if (item.empresa && item.empresa.trim()) {
           empresasSet.add(item.empresa.trim());
         }
       });
