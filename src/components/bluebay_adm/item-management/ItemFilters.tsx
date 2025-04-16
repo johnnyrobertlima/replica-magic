@@ -87,18 +87,26 @@ export const ItemFilters = ({
   };
 
   const getSelectedGroupsLabel = () => {
-    if (!Array.isArray(groupFilter) || groupFilter.length === 0 || groupFilter === "all") {
+    if (groupFilter === "all" || (Array.isArray(groupFilter) && groupFilter.length === 0)) {
       return "Todos os grupos";
     }
     
-    if (groupFilter.length === 1) {
+    if (Array.isArray(groupFilter) && groupFilter.length === 1) {
       const selectedGroup = uniqueGroups.find(g => 
         (g.gru_codigo || `group-${g.id}`) === groupFilter[0]
       );
       return selectedGroup ? selectedGroup.gru_descricao : "Grupo selecionado";
     }
     
-    return `${groupFilter.length} grupos selecionados`;
+    if (Array.isArray(groupFilter)) {
+      return `${groupFilter.length} grupos selecionados`;
+    }
+    
+    // For a single string value that is not "all"
+    const selectedGroup = uniqueGroups.find(g => 
+      (g.gru_codigo || `group-${g.id}`) === groupFilter
+    );
+    return selectedGroup ? selectedGroup.gru_descricao : "Grupo selecionado";
   };
 
   return (
@@ -126,7 +134,7 @@ export const ItemFilters = ({
                   <Filter className="h-4 w-4 opacity-50 mr-2" />
                   <span className="truncate">{getSelectedGroupsLabel()}</span>
                 </div>
-                {Array.isArray(groupFilter) && groupFilter.length > 0 && groupFilter !== "all" && (
+                {Array.isArray(groupFilter) && groupFilter.length > 0 && (
                   <Button 
                     variant="ghost" 
                     size="sm" 
@@ -214,7 +222,7 @@ export const ItemFilters = ({
         </div>
       </div>
 
-      {Array.isArray(groupFilter) && groupFilter.length > 0 && groupFilter !== "all" && (
+      {Array.isArray(groupFilter) && groupFilter.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {groupFilter.map(groupCode => {
             const group = uniqueGroups.find(g => (g.gru_codigo || `group-${g.id}`) === groupCode);
