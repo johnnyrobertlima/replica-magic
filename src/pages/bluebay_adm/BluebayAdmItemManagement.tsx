@@ -10,8 +10,7 @@ import { ItemsContent } from "@/components/bluebay_adm/item-management/ItemsCont
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProductVariationsManager } from "@/components/bluebay_adm/item-management/ProductVariationsManager";
 import { useSearchParams } from "react-router-dom";
-import { exportItemsToExcel } from "@/services/bluebay_adm/itemExportService";
-import { importItemsFromExcel } from "@/services/bluebay_adm/itemImportService";
+import { exportItemsToExcel, importItemsFromExcel } from "@/services/bluebay_adm/itemExportService";
 import { useToast } from "@/hooks/use-toast";
 
 // Memoized components to avoid unnecessary re-renders
