@@ -2,31 +2,37 @@
 import { supabase } from "@/integrations/supabase/client";
 import { fetchInBatches } from "@/services/bluebay/utils/batchFetchUtils";
 
+// Define interfaces for better type safety
+interface Empresa {
+  id: string;
+  nome: string;
+}
+
+interface ItemGroup {
+  id: string;
+  gru_codigo: string;
+  gru_descricao: string;
+  ativo: boolean;
+  empresa_nome: string;
+  empresa_id: string;
+}
+
 export const fetchEmpresas = async (): Promise<string[]> => {
   console.info("Buscando todas as empresas...");
   
   try {
-    // Try to fetch distinct empresa values from BLUEBAY_ITEM
+    // Fetch all empresas from the new table
     const { data, error } = await supabase
-      .from('BLUEBAY_ITEM')
-      .select('empresa')
-      .not('empresa', 'is', null)
-      .order('empresa');
+      .from('bluebay_empresa')
+      .select('nome')
+      .order('nome');
     
     if (error) throw error;
     
-    // Extract unique empresa values
-    const empresas = Array.from(new Set(data.map(item => item.empresa))).filter(Boolean);
-    console.info(`Total de registros com dados de empresa: ${data.length}`);
-    console.info(`Total de empresas únicas após processamento: ${empresas.length}`);
-    
-    // Add 'nao_definida' as a default option if it doesn't exist
-    if (!empresas.includes('nao_definida')) {
-      empresas.push('nao_definida');
-    }
-    
+    const empresas = data.map(item => item.nome);
     console.info(`Total de empresas: ${empresas.length}`);
-    return empresas.sort();
+    
+    return empresas;
   } catch (error) {
     console.error("Erro ao buscar empresas:", error);
     
@@ -37,58 +43,32 @@ export const fetchEmpresas = async (): Promise<string[]> => {
   }
 };
 
-// Define an interface for the group data to fix typing issues
-interface GroupItem {
-  GRU_CODIGO: string;
-  GRU_DESCRICAO: string;
-}
-
-export const fetchGroups = async (): Promise<any[]> => {
+export const fetchGroups = async (): Promise<ItemGroup[]> => {
   console.info("Buscando todos os grupos...");
   
   try {
-    // First, let's try to get a count of all distinct GRU_DESCRICAO values to log the expectation
+    // Get count of groups for logging
     const { count, error: countError } = await supabase
-      .from('BLUEBAY_ITEM')
-      .select('GRU_DESCRICAO', { count: 'exact', head: true })
-      .not('GRU_DESCRICAO', 'is', null);
+      .from('bluebay_grupo_item_view')
+      .select('*', { count: 'exact', head: true });
     
     if (!countError) {
-      console.info(`Esperamos carregar aproximadamente ${count} grupos (antes da deduplicação)`);
+      console.info(`Esperamos carregar aproximadamente ${count} grupos`);
     }
     
-    // Use the fetchInBatches utility with a larger batch size for efficiency
+    // Function to fetch groups in batches
     const fetchGroupBatch = async (offset: number, limit: number) => {
       return await supabase
-        .from('BLUEBAY_ITEM')
-        .select('GRU_CODIGO, GRU_DESCRICAO')
-        .not('GRU_DESCRICAO', 'is', null)
+        .from('bluebay_grupo_item_view')
+        .select('id, gru_codigo, gru_descricao, ativo, empresa_id, empresa_nome')
         .range(offset, offset + limit - 1);
     };
     
-    // Fetch all groups in batches with a larger batch size (10,000 instead of 5,000)
-    const batchedData = await fetchInBatches<GroupItem>(fetchGroupBatch, 10000);
-    console.info(`Total de registros com grupo carregados: ${batchedData.length}`);
+    // Fetch all groups in batches with a larger batch size
+    const batchedData = await fetchInBatches<ItemGroup>(fetchGroupBatch, 10000);
+    console.info(`Total de grupos carregados: ${batchedData.length}`);
     
-    // Create a map to store unique groups by description
-    const groupMap = new Map();
-    
-    // Process the data to get unique groups by description
-    batchedData.forEach(item => {
-      if (item.GRU_DESCRICAO && !groupMap.has(item.GRU_DESCRICAO)) {
-        groupMap.set(item.GRU_DESCRICAO, {
-          GRU_CODIGO: item.GRU_CODIGO || '',
-          GRU_DESCRICAO: item.GRU_DESCRICAO,
-          empresa: 'nao_definida', // Default value since we're not filtering by empresa
-          ativo: true // Default to active for all groups
-        });
-      }
-    });
-    
-    const groups = Array.from(groupMap.values());
-    console.info(`Total de grupos únicos após processamento: ${groups.length}`);
-    
-    return groups;
+    return batchedData;
   } catch (error) {
     console.error("Erro ao buscar grupos:", error);
     return []; // Return empty array in case of error
@@ -99,20 +79,66 @@ export const saveGroup = async (groupData: any): Promise<void> => {
   console.info("Salvando grupo:", groupData);
   
   try {
-    // For existing groups, update all items with that GRU_CODIGO
-    if (groupData.GRU_CODIGO) {
-      const { error } = await supabase
-        .from('BLUEBAY_ITEM')
-        .update({
-          GRU_DESCRICAO: groupData.GRU_DESCRICAO,
-          empresa: groupData.empresa === 'nao_definida' ? null : groupData.empresa
-        })
-        .eq('GRU_CODIGO', groupData.GRU_CODIGO);
+    // Get empresa_id from nome
+    const { data: empresaData, error: empresaError } = await supabase
+      .from('bluebay_empresa')
+      .select('id')
+      .eq('nome', groupData.empresa)
+      .single();
+    
+    if (empresaError && empresaError.code !== 'PGRST116') { // Not found is OK
+      throw empresaError;
+    }
+    
+    let empresa_id = empresaData?.id;
+    
+    // If empresa doesn't exist and it's not "nao_definida", create it
+    if (!empresa_id && groupData.empresa !== 'nao_definida') {
+      const { data: newEmpresa, error: createError } = await supabase
+        .from('bluebay_empresa')
+        .insert({ nome: groupData.empresa })
+        .select('id')
+        .single();
       
-      if (error) throw error;
+      if (createError) throw createError;
+      empresa_id = newEmpresa.id;
+    }
+    
+    // If still no empresa_id, use the default "nao_definida"
+    if (!empresa_id) {
+      const { data: defaultEmpresa, error: defaultError } = await supabase
+        .from('bluebay_empresa')
+        .select('id')
+        .eq('nome', 'nao_definida')
+        .single();
+      
+      if (defaultError) throw defaultError;
+      empresa_id = defaultEmpresa.id;
+    }
+    
+    // Prepare group data for saving
+    const saveData = {
+      gru_codigo: groupData.GRU_CODIGO,
+      gru_descricao: groupData.GRU_DESCRICAO,
+      empresa_id,
+      ativo: groupData.ativo
+    };
+    
+    if (groupData.id) {
+      // Update existing group
+      const { error: updateError } = await supabase
+        .from('bluebay_grupo_item')
+        .update(saveData)
+        .eq('id', groupData.id);
+      
+      if (updateError) throw updateError;
     } else {
-      // For new groups, we'd need a different strategy as we don't have a dedicated groups table
-      console.warn("Criação de novos grupos não implementada no backend");
+      // Insert new group
+      const { error: insertError } = await supabase
+        .from('bluebay_grupo_item')
+        .insert(saveData);
+      
+      if (insertError) throw insertError;
     }
     
     console.info("Grupo salvo com sucesso");
@@ -120,5 +146,38 @@ export const saveGroup = async (groupData: any): Promise<void> => {
   } catch (error) {
     console.error("Erro ao salvar grupo:", error);
     throw error;
+  }
+};
+
+// Function to get a single group by ID
+export const fetchGroupById = async (id: string): Promise<ItemGroup | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('bluebay_grupo_item_view')
+      .select('id, gru_codigo, gru_descricao, ativo, empresa_id, empresa_nome')
+      .eq('id', id)
+      .single();
+    
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Erro ao buscar grupo por ID:", error);
+    return null;
+  }
+};
+
+// Function to delete a group
+export const deleteGroup = async (id: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('bluebay_grupo_item')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error("Erro ao excluir grupo:", error);
+    return false;
   }
 };

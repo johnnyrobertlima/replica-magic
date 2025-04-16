@@ -7,8 +7,16 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 
+interface ItemGroup {
+  id?: string;
+  gru_codigo: string;
+  gru_descricao: string;
+  ativo: boolean;
+  empresa_nome?: string;
+}
+
 interface ItemGroupDialogProps {
-  selectedGroup: any | null;
+  selectedGroup: ItemGroup | null;
   onSave: (groupData: any) => Promise<void>;
   empresas: string[];
   isOpen: boolean;
@@ -21,23 +29,27 @@ export const ItemGroupDialog = ({
   isOpen
 }: ItemGroupDialogProps) => {
   const [formData, setFormData] = useState<any>({
+    id: "",
     GRU_CODIGO: "",
     GRU_DESCRICAO: "",
     empresa: "nao_definida",
     ativo: true
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isEditing = !!selectedGroup?.id;
 
   useEffect(() => {
     if (selectedGroup) {
       setFormData({
-        GRU_CODIGO: selectedGroup.GRU_CODIGO || "",
-        GRU_DESCRICAO: selectedGroup.GRU_DESCRICAO || "",
-        empresa: selectedGroup.empresa || "nao_definida",
+        id: selectedGroup.id || "",
+        GRU_CODIGO: selectedGroup.gru_codigo || "",
+        GRU_DESCRICAO: selectedGroup.gru_descricao || "",
+        empresa: selectedGroup.empresa_nome || "nao_definida",
         ativo: selectedGroup.ativo !== undefined ? selectedGroup.ativo : true
       });
     } else {
       setFormData({
+        id: "",
         GRU_CODIGO: "",
         GRU_DESCRICAO: "",
         empresa: "nao_definida",
@@ -64,7 +76,7 @@ export const ItemGroupDialog = ({
     <DialogContent className="sm:max-w-[500px]">
       <DialogHeader>
         <DialogTitle>
-          {selectedGroup ? "Editar Grupo" : "Novo Grupo"}
+          {isEditing ? "Editar Grupo" : "Novo Grupo"}
         </DialogTitle>
       </DialogHeader>
       <form onSubmit={handleSubmit} className="space-y-4 py-4">
@@ -75,7 +87,7 @@ export const ItemGroupDialog = ({
               id="GRU_CODIGO"
               value={formData.GRU_CODIGO}
               onChange={(e) => handleChange("GRU_CODIGO", e.target.value)}
-              disabled={!!selectedGroup}
+              disabled={isEditing}
               required
             />
           </div>
@@ -90,13 +102,9 @@ export const ItemGroupDialog = ({
                 <SelectValue placeholder="Selecione a empresa" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="nao_definida">Não definida</SelectItem>
-                {empresas
-                  .filter(emp => emp !== "nao_definida")
-                  .map((empresa) => (
-                    <SelectItem key={empresa} value={empresa}>{empresa}</SelectItem>
-                  ))
-                }
+                {empresas.map((empresa) => (
+                  <SelectItem key={empresa} value={empresa}>{empresa}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

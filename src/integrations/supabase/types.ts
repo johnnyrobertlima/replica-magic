@@ -213,6 +213,27 @@ export type Database = {
         }
         Relationships: []
       }
+      bluebay_empresa: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       BLUEBAY_ESTOQUE: {
         Row: {
           COMPRADO: number | null
@@ -317,6 +338,51 @@ export type Database = {
           VALOR_UNITARIO?: number | null
         }
         Relationships: []
+      }
+      bluebay_grupo_item: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          empresa_id: string | null
+          gru_codigo: string
+          gru_descricao: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          empresa_id?: string | null
+          gru_codigo: string
+          gru_descricao: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          empresa_id?: string | null
+          gru_codigo?: string
+          gru_descricao?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bluebay_grupo_item_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "bluebay_empresa"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bluebay_grupo_item_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "bluebay_grupo_item_view"
+            referencedColumns: ["empresa_id"]
+          },
+        ]
       }
       BLUEBAY_ITEM: {
         Row: {
@@ -2054,6 +2120,19 @@ export type Database = {
       }
     }
     Views: {
+      bluebay_grupo_item_view: {
+        Row: {
+          ativo: boolean | null
+          created_at: string | null
+          empresa_id: string | null
+          empresa_nome: string | null
+          gru_codigo: string | null
+          gru_descricao: string | null
+          id: string | null
+          updated_at: string | null
+        }
+        Relationships: []
+      }
       bluebay_view_faturamento_resumo: {
         Row: {
           ITEM_CODIGO: string | null

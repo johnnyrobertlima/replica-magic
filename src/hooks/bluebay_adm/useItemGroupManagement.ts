@@ -1,13 +1,26 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { fetchGroups, fetchEmpresas, saveGroup } from "@/services/bluebay_adm/itemGroupService";
+import { 
+  fetchGroups, 
+  fetchEmpresas, 
+  saveGroup,
+  deleteGroup
+} from "@/services/bluebay_adm/itemGroupService";
+
+interface ItemGroup {
+  id: string;
+  gru_codigo: string;
+  gru_descricao: string;
+  ativo: boolean;
+  empresa_nome: string;
+}
 
 export const useItemGroupManagement = () => {
-  const [groups, setGroups] = useState<any[]>([]);
+  const [groups, setGroups] = useState<ItemGroup[]>([]);
   const [empresas, setEmpresas] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedGroup, setSelectedGroup] = useState<any | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<ItemGroup | null>(null);
   const { toast } = useToast();
 
   const loadData = useCallback(async () => {
@@ -45,36 +58,51 @@ export const useItemGroupManagement = () => {
       setIsLoading(true);
       await saveGroup(groupData);
       
-      // Optimistic UI update for better responsiveness
-      if (groupData.GRU_CODIGO) {
-        // Updating existing group
-        setGroups(prevGroups => 
-          prevGroups.map(g => 
-            g.GRU_CODIGO === groupData.GRU_CODIGO ? groupData : g
-          )
-        );
-        
-        toast({
-          title: "Sucesso",
-          description: "Grupo atualizado com sucesso!",
-        });
-      } else {
-        // For new groups, we'll reload the data to get the server-generated info
-        toast({
-          title: "Sucesso",
-          description: "Novo grupo criado com sucesso!",
-        });
-        
-        // Refresh data to get the server-generated ID and ensure consistency
-        await loadData();
-      }
+      toast({
+        title: "Sucesso",
+        description: groupData.id 
+          ? "Grupo atualizado com sucesso!" 
+          : "Novo grupo criado com sucesso!",
+      });
       
+      // Refresh data to ensure consistency
+      await loadData();
       return true;
     } catch (error: any) {
       console.error("Error saving group:", error);
       toast({
         variant: "destructive",
         title: "Erro ao salvar grupo",
+        description: error.message || "Ocorreu um erro desconhecido",
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [loadData, toast]);
+
+  const handleDeleteGroup = useCallback(async (id: string) => {
+    try {
+      setIsLoading(true);
+      const success = await deleteGroup(id);
+      
+      if (success) {
+        toast({
+          title: "Sucesso",
+          description: "Grupo excluído com sucesso!",
+        });
+        
+        // Refresh data to ensure consistency
+        await loadData();
+        return true;
+      } else {
+        throw new Error("Falha ao excluir grupo");
+      }
+    } catch (error: any) {
+      console.error("Error deleting group:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao excluir grupo",
         description: error.message || "Ocorreu um erro desconhecido",
       });
       return false;
@@ -90,6 +118,7 @@ export const useItemGroupManagement = () => {
     selectedGroup,
     setSelectedGroup,
     handleSaveGroup,
+    handleDeleteGroup,
     refreshData: loadData
   };
 };
