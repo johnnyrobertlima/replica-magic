@@ -4,7 +4,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { LoadAllItemsButton } from "@/components/bluebay_adm/item-management/LoadAllItemsButton";
 import { Button } from "@/components/ui/button";
 import { FileDown, FileUp } from "lucide-react";
-import { exportItemsToExcel } from "@/services/bluebay_adm/itemExportService";
 import { ChangeEvent, useRef } from "react";
 
 interface ItemFiltersProps {
@@ -70,8 +69,8 @@ export const ItemFilters = ({
             <SelectContent>
               <SelectItem value="all">Todos os grupos</SelectItem>
               {groups.map((group) => (
-                <SelectItem key={group.GRU_CODIGO} value={group.GRU_CODIGO}>
-                  {group.GRU_DESCRICAO}
+                <SelectItem key={group.gru_codigo} value={group.gru_codigo}>
+                  {group.gru_descricao}
                 </SelectItem>
               ))}
             </SelectContent>

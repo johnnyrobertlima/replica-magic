@@ -7,292 +7,29 @@ let groupsCache: any[] | null = null;
 // Cache para empresas (não muda com frequência)
 let empresasCache: string[] | null = null;
 
-export const fetchItems = async (
-  searchTerm: string,
-  groupFilter: string,
-  empresaFilter: string,
-  page: number,
-  pageSize: number
-) => {
-  // Calculate range based on current page and page size
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
-  
-  // Build our query
-  let query = supabase
-    .from("BLUEBAY_ITEM")
-    .select("*", { count: "exact" });
-
-  // Apply filters
-  if (searchTerm) {
-    query = query.or(`ITEM_CODIGO.ilike.%${searchTerm}%,DESCRICAO.ilike.%${searchTerm}%,CODIGOAUX.ilike.%${searchTerm}%`);
-  }
-
-  if (groupFilter && groupFilter !== "all") {
-    query = query.eq("GRU_CODIGO", groupFilter);
-  }
-
-  // Aplicar filtro de empresa se selecionado
-  if (empresaFilter && empresaFilter !== "all") {
-    query = query.eq("empresa", empresaFilter);
-  }
-
-  // Apply pagination and ordering after filters
-  query = query.order("DESCRICAO").range(from, to);
-
-  const { data, error, count } = await query;
-
-  if (error) throw error;
-  
-  // Get unique items (no duplicates)
-  const uniqueItemsMap = new Map();
-  if (data) {
-    data.forEach(item => {
-      if (!uniqueItemsMap.has(item.ITEM_CODIGO)) {
-        uniqueItemsMap.set(item.ITEM_CODIGO, item);
-      }
-    });
-  }
-  
-  const uniqueItems = Array.from(uniqueItemsMap.values());
-  
-  return { 
-    items: uniqueItems, 
-    count: count || 0 
-  };
-};
-
-// Função para buscar todos os itens sem limitação (usando batches)
-export const fetchAllItems = async (
-  searchTerm?: string,
-  groupFilter?: string,
-  empresaFilter?: string
-): Promise<any[]> => {
-  try {
-    console.log("Iniciando busca de todos os itens em lotes");
-    
-    // Usar um tamanho de lote apropriado
-    const batchSize = 5000; // Usar um valor maior que o limite do Supabase para maximizar a eficiência
-    
-    if (searchTerm) {
-      // Para buscas com termo, usamos uma abordagem diferentes para garantir resultados completos
-      console.log(`Buscando por texto: "${searchTerm}" em todos os itens`);
-      
-      // Array para guardar todas as consultas que faremos
-      const searchQueries = [
-        { field: "ITEM_CODIGO", term: searchTerm },
-        { field: "DESCRICAO", term: searchTerm },
-        { field: "CODIGOAUX", term: searchTerm }
-      ];
-      
-      // Conjunto para controlar itens já processados e evitar duplicatas
-      const processedItemCodes = new Set<string>();
-      let totalItems: any[] = [];
-      
-      // Para cada campo de busca, executamos o carregamento em lotes
-      for (const { field, term } of searchQueries) {
-        console.log(`Buscando itens por ${field} contendo "${term}"`);
-        
-        const itemsData = await fetchInBatches<any>(
-          async (offset: number, limit: number) => {
-            const query = supabase
-              .from("BLUEBAY_ITEM")
-              .select("*", { count: "exact", head: false })
-              .ilike(field, `%${term}%`)
-              .order("DESCRICAO")
-              .range(offset, offset + limit - 1)
-              .throwOnError();
-            
-            if (groupFilter && groupFilter !== "all") {
-              query.eq("GRU_CODIGO", groupFilter);
-            }
-            
-            if (empresaFilter && empresaFilter !== "all") {
-              query.eq("empresa", empresaFilter);
-            }
-            
-            return await query;
-          },
-          batchSize
-        );
-        
-        console.log(`Encontrados ${itemsData.length} itens por ${field}`);
-        
-        // Adiciona os novos itens que ainda não foram processados
-        let newItemsAdded = 0;
-        
-        for (const item of itemsData) {
-          if (item && item.ITEM_CODIGO && !processedItemCodes.has(item.ITEM_CODIGO)) {
-            totalItems.push(item);
-            processedItemCodes.add(item.ITEM_CODIGO);
-            newItemsAdded++;
-          }
-        }
-        
-        console.log(`Adicionados ${newItemsAdded} novos itens únicos por ${field} (total acumulado: ${processedItemCodes.size})`);
-      }
-      
-      console.log(`Total final após busca por texto: ${totalItems.length} itens únicos`);
-      return totalItems;
-    } else {
-      // Abordagem 1: Buscar itens diretamente do estoque
-      console.log("Buscando todos os itens diretamente do ESTOQUE com LOCAL = 1");
-      
-      // Primeiro buscamos todos os códigos dos itens do estoque com LOCAL = 1
-      console.log(`Buscando todos os códigos de itens do estoque...`);
-      
-      let estoqueQuery = supabase
-        .from("BLUEBAY_ESTOQUE")
-        .select("ITEM_CODIGO", { count: "exact", head: false })
-        .eq("LOCAL", 1);
-        
-      const { data: itemCodes, error: itemCodesError, count: totalItemsCount } = await estoqueQuery;
-
-      if (itemCodesError) {
-        console.error("Erro ao buscar códigos de itens:", itemCodesError);
-        throw itemCodesError;
-      }
-
-      console.log(`Total de ${totalItemsCount || itemCodes.length} códigos de itens encontrados no estoque`);
-      
-      // Extrair códigos únicos
-      const uniqueItemCodesSet = new Set<string>();
-      itemCodes.forEach(item => {
-        if (item && item.ITEM_CODIGO) {
-          uniqueItemCodesSet.add(item.ITEM_CODIGO);
-        }
-      });
-      
-      const uniqueItemCodes = Array.from(uniqueItemCodesSet);
-      console.log(`Total de ${uniqueItemCodes.length} códigos únicos de itens extraídos`);
-      
-      // Buscar todos os itens em lotes
-      let allItems: any[] = [];
-      const codeBatchSize = 500; // Tamanho do lote para consultas IN
-      const totalBatches = Math.ceil(uniqueItemCodes.length / codeBatchSize);
-      
-      console.log(`Dividindo ${uniqueItemCodes.length} códigos em ${totalBatches} lotes para busca de detalhes`);
-      
-      for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
-        const startIdx = batchIndex * codeBatchSize;
-        const endIdx = Math.min(startIdx + codeBatchSize, uniqueItemCodes.length);
-        const codeBatch = uniqueItemCodes.slice(startIdx, endIdx);
-        
-        console.log(`Processando lote ${batchIndex + 1}/${totalBatches} com ${codeBatch.length} códigos`);
-        
-        // Buscar detalhes dos itens no lote atual
-        let query = supabase
-          .from("BLUEBAY_ITEM")
-          .select("*", { count: "exact", head: false })
-          .in("ITEM_CODIGO", codeBatch)
-          .throwOnError();
-        
-        if (groupFilter && groupFilter !== "all") {
-          query = query.eq("GRU_CODIGO", groupFilter);
-        }
-        
-        if (empresaFilter && empresaFilter !== "all") {
-          query = query.eq("empresa", empresaFilter);
-        }
-        
-        const { data: batchItems, error: batchError, count: batchCount } = await query;
-        
-        if (batchError) {
-          console.error(`Erro ao buscar lote ${batchIndex + 1}:`, batchError);
-          continue; // Continue para o próximo lote em caso de erro
-        }
-        
-        console.log(`Lote ${batchIndex + 1}: Encontrados ${batchItems.length} de ${batchCount} itens possíveis`);
-        allItems = [...allItems, ...batchItems];
-        
-        console.log(`Progresso: ${allItems.length}/${uniqueItemCodes.length} itens (${Math.round((allItems.length / uniqueItemCodes.length) * 100)}%)`);
-      }
-      
-      // Verificar itens duplicados
-      console.log(`Verificando duplicatas no conjunto final de ${allItems.length} itens`);
-      const uniqueItemsMap = new Map<string, any>();
-      let duplicateCount = 0;
-      
-      allItems.forEach(item => {
-        if (item && item.ITEM_CODIGO) {
-          if (!uniqueItemsMap.has(item.ITEM_CODIGO)) {
-            uniqueItemsMap.set(item.ITEM_CODIGO, item);
-          } else {
-            duplicateCount++;
-          }
-        }
-      });
-      
-      if (duplicateCount > 0) {
-        console.log(`Removidas ${duplicateCount} duplicatas na fase final`);
-      }
-      
-      const finalItems = Array.from(uniqueItemsMap.values());
-      console.log(`Total final: ${finalItems.length} itens únicos carregados com sucesso`);
-      
-      return finalItems;
-    }
-  } catch (error) {
-    console.error("Erro ao buscar todos os itens:", error);
-    throw error;
-  }
-};
-
+/**
+ * Fetches active groups from the bluebay_grupo_item_view
+ */
 export const fetchGroups = async () => {
-  // Verificamos se temos os grupos em cache
-  if (groupsCache !== null) {
-    console.log("Usando grupos em cache:", groupsCache.length);
-    return groupsCache;
-  }
-
-  console.log("Buscando todos os grupos...");
+  console.log("Fetching active groups from bluebay_grupo_item_view...");
   
   try {
-    // Buscar todos os grupos distintos sem aplicar filtros iniciais
-    const { data, error, count } = await supabase
-      .from("BLUEBAY_ITEM")
-      .select("GRU_CODIGO, GRU_DESCRICAO", { count: "exact", head: false })
-      .not("GRU_CODIGO", "is", null)
-      .order("GRU_DESCRICAO");
+    const { data, error } = await supabase
+      .from("bluebay_grupo_item_view")
+      .select("id, gru_codigo, gru_descricao, empresa_nome, empresa_id")
+      .eq("ativo", true)
+      .order("gru_descricao");
 
     if (error) {
-      console.error("Erro ao buscar grupos:", error);
+      console.error("Error fetching groups:", error);
       throw error;
     }
 
-    console.log(`Total de grupos com dados (potencialmente duplicados): ${data?.length}, count: ${count}`);
-
-    // Remove duplicados usando Map para melhor performance com grandes conjuntos de dados
-    const uniqueGroupsMap = new Map();
-    
-    if (data) {
-      data.forEach(group => {
-        if (group.GRU_CODIGO && !uniqueGroupsMap.has(group.GRU_CODIGO)) {
-          uniqueGroupsMap.set(group.GRU_CODIGO, {
-            GRU_CODIGO: group.GRU_CODIGO,
-            GRU_DESCRICAO: group.GRU_DESCRICAO || group.GRU_CODIGO // Fallback para o código se a descrição estiver vazia
-          });
-        }
-      });
-    }
-    
-    // Converter Map para array
-    const uniqueGroups = Array.from(uniqueGroupsMap.values());
-    
-    console.log(`Total de grupos únicos após processamento: ${uniqueGroups.length}`);
-    
-    // Ordenar por GRU_DESCRICAO
-    uniqueGroups.sort((a, b) => {
-      return (a.GRU_DESCRICAO || "").localeCompare(b.GRU_DESCRICAO || "");
-    });
-
-    // Salvar em cache
-    groupsCache = uniqueGroups;
-    
-    return groupsCache;
+    console.log(`Found ${data?.length || 0} active groups`);
+    return data || [];
   } catch (error) {
-    console.error("Erro ao buscar grupos:", error);
-    return []; // Retornar array vazio em caso de erro
+    console.error("Error fetching groups:", error);
+    return []; // Return empty array in case of error
   }
 };
 
@@ -348,6 +85,282 @@ export const fetchEmpresas = async () => {
   } catch (error) {
     console.error("Erro ao buscar empresas:", error);
     return []; // Retornar array vazio em caso de erro
+  }
+};
+
+export const fetchItems = async (
+  searchTerm: string,
+  groupFilter: string,
+  empresaFilter: string,
+  page: number,
+  pageSize: number
+) => {
+  // Calculate range based on current page and page size
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+  
+  // Build our query
+  let query = supabase
+    .from("BLUEBAY_ITEM")
+    .select("*", { count: "exact" })
+    .eq("ativo", true); // Only fetch active items
+
+  // Apply filters
+  if (searchTerm) {
+    query = query.or(`ITEM_CODIGO.ilike.%${searchTerm}%,DESCRICAO.ilike.%${searchTerm}%,CODIGOAUX.ilike.%${searchTerm}%`);
+  }
+
+  if (groupFilter && groupFilter !== "all") {
+    query = query.eq("GRU_CODIGO", groupFilter);
+  }
+
+  // Apply empresa filter if selected
+  if (empresaFilter && empresaFilter !== "all") {
+    query = query.eq("empresa", empresaFilter);
+  }
+
+  // Apply pagination and ordering after filters
+  query = query.order("DESCRICAO").range(from, to);
+
+  const { data, error, count } = await query;
+
+  if (error) throw error;
+  
+  // Filter items to only include those with active groups
+  const activeGroups = await getActiveGroupCodes();
+  
+  // Get unique items (no duplicates) and filter by active groups
+  const uniqueItemsMap = new Map();
+  if (data) {
+    for (const item of data) {
+      // Only include items whose groups are active or if there's no GRU_CODIGO
+      if (!item.GRU_CODIGO || activeGroups.includes(item.GRU_CODIGO)) {
+        if (!uniqueItemsMap.has(item.ITEM_CODIGO)) {
+          uniqueItemsMap.set(item.ITEM_CODIGO, item);
+        }
+      }
+    }
+  }
+  
+  const uniqueItems = Array.from(uniqueItemsMap.values());
+  
+  return { 
+    items: uniqueItems, 
+    count: uniqueItems.length // Adjusted count based on active groups filtering
+  };
+};
+
+/**
+ * Get all active group codes from bluebay_grupo_item_view
+ */
+const getActiveGroupCodes = async (): Promise<string[]> => {
+  try {
+    const { data, error } = await supabase
+      .from("bluebay_grupo_item_view")
+      .select("gru_codigo")
+      .eq("ativo", true);
+
+    if (error) {
+      console.error("Error fetching active group codes:", error);
+      return [];
+    }
+
+    return data.map(group => group.gru_codigo);
+  } catch (error) {
+    console.error("Error in getActiveGroupCodes:", error);
+    return [];
+  }
+};
+
+// Função para buscar todos os itens sem limitação (usando batches)
+export const fetchAllItems = async (
+  searchTerm?: string,
+  groupFilter?: string,
+  empresaFilter?: string
+): Promise<any[]> => {
+  try {
+    console.log("Iniciando busca de todos os itens em lotes");
+    
+    // Usar um tamanho de lote apropriado
+    const batchSize = 5000; // Usar um valor maior que o limite do Supabase para maximizar a eficiência
+    
+    // Get active groups to filter items
+    const activeGroups = await getActiveGroupCodes();
+    
+    if (searchTerm) {
+      // Para buscas com termo, usamos uma abordagem diferentes para garantir resultados completos
+      console.log(`Buscando por texto: "${searchTerm}" em todos os itens`);
+      
+      // Array para guardar todas as consultas que faremos
+      const searchQueries = [
+        { field: "ITEM_CODIGO", term: searchTerm },
+        { field: "DESCRICAO", term: searchTerm },
+        { field: "CODIGOAUX", term: searchTerm }
+      ];
+      
+      // Conjunto para controlar itens já processados e evitar duplicatas
+      const processedItemCodes = new Set<string>();
+      let totalItems: any[] = [];
+      
+      // Para cada campo de busca, executamos o carregamento em lotes
+      for (const { field, term } of searchQueries) {
+        console.log(`Buscando itens por ${field} contendo "${term}"`);
+        
+        const itemsData = await fetchInBatches<any>(
+          async (offset: number, limit: number) => {
+            let query = supabase
+              .from("BLUEBAY_ITEM")
+              .select("*", { count: "exact", head: false })
+              .eq("ativo", true) // Only fetch active items
+              .ilike(field, `%${term}%`)
+              .order("DESCRICAO")
+              .range(offset, offset + limit - 1)
+              .throwOnError();
+            
+            if (groupFilter && groupFilter !== "all") {
+              query = query.eq("GRU_CODIGO", groupFilter);
+            }
+            
+            if (empresaFilter && empresaFilter !== "all") {
+              query = query.eq("empresa", empresaFilter);
+            }
+            
+            return await query;
+          },
+          batchSize
+        );
+        
+        console.log(`Encontrados ${itemsData.length} itens por ${field}`);
+        
+        // Adiciona os novos itens que ainda não foram processados
+        let newItemsAdded = 0;
+        
+        for (const item of itemsData) {
+          if (item && item.ITEM_CODIGO && !processedItemCodes.has(item.ITEM_CODIGO)) {
+            totalItems.push(item);
+            processedItemCodes.add(item.ITEM_CODIGO);
+            newItemsAdded++;
+          }
+        }
+        
+        console.log(`Adicionados ${newItemsAdded} novos itens únicos por ${field} (total acumulado: ${processedItemCodes.size})`);
+      }
+      
+      console.log(`Total final após busca por texto: ${totalItems.length} itens únicos`);
+      
+      // After fetching items, filter to keep only those with active groups
+      const filteredItems = totalItems.filter(item => 
+        !item.GRU_CODIGO || activeGroups.includes(item.GRU_CODIGO)
+      );
+      
+      return filteredItems;
+    } else {
+      // Abordagem 1: Buscar itens diretamente do estoque
+      console.log("Buscando todos os itens diretamente do ESTOQUE com LOCAL = 1");
+      
+      // Primeiro buscamos todos os códigos dos itens do estoque com LOCAL = 1
+      console.log(`Buscando todos os códigos de itens do estoque...`);
+      
+      let estoqueQuery = supabase
+        .from("BLUEBAY_ESTOQUE")
+        .select("ITEM_CODIGO", { count: "exact", head: false })
+        .eq("LOCAL", 1);
+        
+      const { data: itemCodes, error: itemCodesError, count: totalItemsCount } = await estoqueQuery;
+
+      if (itemCodesError) {
+        console.error("Erro ao buscar códigos de itens:", itemCodesError);
+        throw itemCodesError;
+      }
+
+      console.log(`Total de ${totalItemsCount || itemCodes.length} códigos de itens encontrados no estoque`);
+      
+      // Extrair códigos únicos
+      const uniqueItemCodesSet = new Set<string>();
+      itemCodes.forEach(item => {
+        if (item && item.ITEM_CODIGO) {
+          uniqueItemCodesSet.add(item.ITEM_CODIGO);
+        }
+      });
+      
+      const uniqueItemCodes = Array.from(uniqueItemCodesSet);
+      console.log(`Total de ${uniqueItemCodes.length} códigos únicos de itens extraídos`);
+      
+      // Buscar todos os itens em lotes
+      let allItems: any[] = [];
+      const codeBatchSize = 500; // Tamanho do lote para consultas IN
+      const totalBatches = Math.ceil(uniqueItemCodes.length / codeBatchSize);
+      
+      console.log(`Dividindo ${uniqueItemCodes.length} códigos em ${totalBatches} lotes para busca de detalhes`);
+      
+      for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
+        const startIdx = batchIndex * codeBatchSize;
+        const endIdx = Math.min(startIdx + codeBatchSize, uniqueItemCodes.length);
+        const codeBatch = uniqueItemCodes.slice(startIdx, endIdx);
+        
+        console.log(`Processando lote ${batchIndex + 1}/${totalBatches} com ${codeBatch.length} códigos`);
+        
+        let query = supabase
+          .from("BLUEBAY_ITEM")
+          .select("*", { count: "exact", head: false })
+          .eq("ativo", true) // Only fetch active items
+          .in("ITEM_CODIGO", codeBatch)
+          .throwOnError();
+        
+        if (groupFilter && groupFilter !== "all") {
+          query = query.eq("GRU_CODIGO", groupFilter);
+        }
+        
+        if (empresaFilter && empresaFilter !== "all") {
+          query = query.eq("empresa", empresaFilter);
+        }
+        
+        const { data: batchItems, error: batchError, count: batchCount } = await query;
+        
+        if (batchError) {
+          console.error(`Erro ao buscar lote ${batchIndex + 1}:`, batchError);
+          continue; // Continue para o próximo lote em caso de erro
+        }
+        
+        console.log(`Lote ${batchIndex + 1}: Encontrados ${batchItems.length} de ${batchCount} itens possíveis`);
+        allItems = [...allItems, ...batchItems];
+        
+        console.log(`Progresso: ${allItems.length}/${uniqueItemCodes.length} itens (${Math.round((allItems.length / uniqueItemCodes.length) * 100)}%)`);
+      }
+      
+      // Verificar itens duplicados
+      console.log(`Verificando duplicatas no conjunto final de ${allItems.length} itens`);
+      const uniqueItemsMap = new Map<string, any>();
+      let duplicateCount = 0;
+      
+      allItems.forEach(item => {
+        if (item && item.ITEM_CODIGO) {
+          if (!uniqueItemsMap.has(item.ITEM_CODIGO)) {
+            uniqueItemsMap.set(item.ITEM_CODIGO, item);
+          } else {
+            duplicateCount++;
+          }
+        }
+      });
+      
+      if (duplicateCount > 0) {
+        console.log(`Removidas ${duplicateCount} duplicatas na fase final`);
+      }
+      
+      const finalItems = Array.from(uniqueItemsMap.values());
+      
+      // After fetching items, filter to keep only those with active groups
+      const filteredItems = finalItems.filter(item => 
+        !item.GRU_CODIGO || activeGroups.includes(item.GRU_CODIGO)
+      );
+      
+      console.log(`Total final: ${filteredItems.length} itens únicos carregados com sucesso`);
+      
+      return filteredItems;
+    }
+  } catch (error) {
+    console.error("Erro ao buscar todos os itens:", error);
+    throw error;
   }
 };
 
