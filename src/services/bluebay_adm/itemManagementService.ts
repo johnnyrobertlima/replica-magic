@@ -123,63 +123,58 @@ export const fetchItems = async (
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
   
-  // Get active Bluebay groups
-  const bluebayGroupCodes = await getBluebayGroupCodes();
-  
-  // Build our query
-  let query = supabase
-    .from("BLUEBAY_ITEM")
-    .select("*", { count: "exact" })
-    .eq("ativo", true); // Only fetch active items
+  try {
+    // Get active Bluebay groups
+    const bluebayGroupCodes = await getBluebayGroupCodes();
+    console.log(`Using ${bluebayGroupCodes.length} Bluebay group codes for filtering items`);
+    
+    // Build our query
+    let query = supabase
+      .from("BLUEBAY_ITEM")
+      .select("*", { count: "exact" })
+      .eq("ativo", true); // Only fetch active items
 
-  // Filter by Bluebay group codes
-  if (bluebayGroupCodes.length > 0) {
-    query = query.in("GRU_CODIGO", bluebayGroupCodes);
-  } else {
-    // If no Bluebay groups found, return empty result
-    return { items: [], count: 0 };
-  }
-
-  // Apply additional filters
-  if (searchTerm) {
-    query = query.or(`ITEM_CODIGO.ilike.%${searchTerm}%,DESCRICAO.ilike.%${searchTerm}%,CODIGOAUX.ilike.%${searchTerm}%`);
-  }
-
-  if (groupFilter && groupFilter !== "all") {
-    query = query.eq("GRU_CODIGO", groupFilter);
-  }
-
-  // Apply empresa filter if selected
-  if (empresaFilter && empresaFilter !== "all") {
-    query = query.eq("empresa", empresaFilter);
-  }
-
-  // Apply pagination and ordering after filters
-  query = query.order("DESCRICAO").range(from, to);
-
-  const { data, error, count } = await query;
-
-  if (error) throw error;
-  
-  // Ensure we only include items with Bluebay group codes
-  const uniqueItemsMap = new Map();
-  if (data) {
-    for (const item of data) {
-      // Only include items whose groups are in bluebayGroupCodes
-      if (bluebayGroupCodes.includes(item.GRU_CODIGO)) {
-        if (!uniqueItemsMap.has(item.ITEM_CODIGO)) {
-          uniqueItemsMap.set(item.ITEM_CODIGO, item);
-        }
-      }
+    // Filter by Bluebay group codes if available
+    if (bluebayGroupCodes.length > 0) {
+      query = query.in("GRU_CODIGO", bluebayGroupCodes);
+    } else {
+      console.warn("No Bluebay group codes available for filtering. Query may return unexpected results.");
     }
+
+    // Apply additional filters
+    if (searchTerm) {
+      query = query.or(`ITEM_CODIGO.ilike.%${searchTerm}%,DESCRICAO.ilike.%${searchTerm}%,CODIGOAUX.ilike.%${searchTerm}%`);
+    }
+
+    if (groupFilter && groupFilter !== "all") {
+      query = query.eq("GRU_CODIGO", groupFilter);
+    }
+
+    // Apply empresa filter if selected
+    if (empresaFilter && empresaFilter !== "all") {
+      query = query.eq("empresa", empresaFilter);
+    }
+
+    // Apply pagination and ordering after filters
+    query = query.order("DESCRICAO").range(from, to);
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      console.error("Error fetching items:", error);
+      throw error;
+    }
+    
+    console.log(`Fetched page ${page}: ${data?.length || 0} items, total count: ${count || 0}`);
+    
+    return { 
+      items: data || [], 
+      count: count // Use the count from the query
+    };
+  } catch (error) {
+    console.error("Error in fetchItems:", error);
+    throw error;
   }
-  
-  const uniqueItems = Array.from(uniqueItemsMap.values());
-  
-  return { 
-    items: uniqueItems, 
-    count: count // Use the count from the query
-  };
 };
 
 /**
@@ -238,6 +233,7 @@ export const fetchAllItems = async (
     
     // Get Bluebay groups to filter items
     const bluebayGroupCodes = await getBluebayGroupCodes();
+    console.log(`Using ${bluebayGroupCodes.length} Bluebay group codes for filtering all items`);
     
     if (bluebayGroupCodes.length === 0) {
       console.log("Nenhum grupo Bluebay encontrado para filtrar itens");
