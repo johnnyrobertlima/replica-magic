@@ -27,7 +27,7 @@ export const fetchGroups = async () => {
     }
 
     // Make sure we sanitize the data to prevent empty string values
-    // and remove duplicate groups by using a Map with gru_codigo as key
+    // and remove duplicate groups by using a Map with a composite key of gru_codigo+gru_descricao
     const groupsMap = new Map();
     
     data?.forEach(group => {
@@ -36,9 +36,12 @@ export const fetchGroups = async () => {
         group.gru_codigo = `group-${group.id}`;
       }
       
+      // Create a composite key using both code and description to ensure uniqueness
+      const key = `${group.gru_codigo}|${group.gru_descricao}`;
+      
       // Only add if not already in the map
-      if (!groupsMap.has(group.gru_codigo)) {
-        groupsMap.set(group.gru_codigo, group);
+      if (!groupsMap.has(key)) {
+        groupsMap.set(key, group);
       }
     });
     

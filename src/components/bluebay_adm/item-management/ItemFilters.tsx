@@ -49,6 +49,16 @@ export const ItemFilters = ({
     }
   };
 
+  // Filter out any potential duplicate descriptions that might have slipped through
+  const uniqueGroups = groups.reduce((acc, current) => {
+    const x = acc.find(item => item.gru_descricao === current.gru_descricao);
+    if (!x) {
+      return acc.concat([current]);
+    } else {
+      return acc;
+    }
+  }, []);
+
   return (
     <div className="space-y-4 bg-card p-4 rounded-md border shadow-sm">
       <div className="flex flex-col md:flex-row gap-4">
@@ -68,7 +78,7 @@ export const ItemFilters = ({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os grupos</SelectItem>
-              {groups.map((group) => (
+              {uniqueGroups.map((group) => (
                 <SelectItem 
                   key={group.id || group.gru_codigo} 
                   value={group.gru_codigo || `group-${group.id}`} // Ensure we never pass an empty string

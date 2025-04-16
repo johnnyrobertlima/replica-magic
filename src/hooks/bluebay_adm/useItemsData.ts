@@ -26,17 +26,20 @@ export const useItemsData = (
     try {
       const fetchedGroups = await fetchGroups();
       
-      // Create a Map to store unique groups based on gru_codigo
-      const uniqueGroupsMap = new Map();
+      // Create a Map to store unique groups based on description
+      // This is a secondary check to ensure we don't show duplicate descriptions in the dropdown
+      const uniqueDescriptionsMap = new Map();
       
       fetchedGroups.forEach(group => {
-        if (!uniqueGroupsMap.has(group.gru_codigo) && group.gru_codigo) {
-          uniqueGroupsMap.set(group.gru_codigo, group);
+        const descriptionKey = group.gru_descricao ? group.gru_descricao.toLowerCase().trim() : '';
+        
+        if (descriptionKey && !uniqueDescriptionsMap.has(descriptionKey)) {
+          uniqueDescriptionsMap.set(descriptionKey, group);
         }
       });
       
       // Convert the Map back to an array and sort by description
-      const uniqueGroups = Array.from(uniqueGroupsMap.values())
+      const uniqueGroups = Array.from(uniqueDescriptionsMap.values())
         .sort((a, b) => (a.gru_descricao || '').localeCompare(b.gru_descricao || ''));
       
       setGroups(uniqueGroups);
