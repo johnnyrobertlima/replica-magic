@@ -111,7 +111,7 @@ export const fetchEmpresas = async () => {
 
 export const fetchItems = async (
   searchTerm: string,
-  groupFilter: string,
+  groupFilter: string[],
   empresaFilter: string,
   page: number,
   pageSize: number
@@ -131,8 +131,9 @@ export const fetchItems = async (
     query = query.or(`ITEM_CODIGO.ilike.%${searchTerm}%,DESCRICAO.ilike.%${searchTerm}%,CODIGOAUX.ilike.%${searchTerm}%`);
   }
 
-  if (groupFilter && groupFilter !== "all") {
-    query = query.eq("GRU_CODIGO", groupFilter);
+  // Apply group filter if selected (now handling multiple groups)
+  if (groupFilter.length > 0) {
+    query = query.in("GRU_CODIGO", groupFilter);
   }
 
   // Apply empresa filter if selected
@@ -196,7 +197,7 @@ const getActiveGroupCodes = async (): Promise<string[]> => {
 // Função para buscar todos os itens sem limitação (usando batches)
 export const fetchAllItems = async (
   searchTerm?: string,
-  groupFilter?: string,
+  groupFilter?: string[],
   empresaFilter?: string
 ): Promise<any[]> => {
   try {
@@ -235,8 +236,9 @@ export const fetchAllItems = async (
               .range(offset, offset + limit - 1)
               .throwOnError();
             
-            if (groupFilter && groupFilter !== "all") {
-              query = query.eq("GRU_CODIGO", groupFilter);
+            // Apply group filter if selected (now handling multiple groups)
+            if (groupFilter && groupFilter.length > 0) {
+              query = query.in("GRU_CODIGO", groupFilter);
             }
             
             if (empresaFilter && empresaFilter !== "all") {
@@ -322,8 +324,9 @@ export const fetchAllItems = async (
           .in("ITEM_CODIGO", codeBatch)
           .throwOnError();
         
-        if (groupFilter && groupFilter !== "all") {
-          query = query.eq("GRU_CODIGO", groupFilter);
+        // Apply group filter if selected (now handling multiple groups)
+        if (groupFilter && groupFilter.length > 0) {
+          query = query.in("GRU_CODIGO", groupFilter);
         }
         
         if (empresaFilter && empresaFilter !== "all") {

@@ -5,7 +5,7 @@ import { fetchItems, fetchGroups, fetchAllItems, fetchEmpresas } from "@/service
 
 export const useItemsData = (
   searchTerm: string,
-  groupFilter: string,
+  groupFilter: string[],
   empresaFilter: string,
   pagination: any
 ) => {
@@ -18,13 +18,20 @@ export const useItemsData = (
   const { toast } = useToast();
   const isFirstRender = useRef(true);
   const previousSearchTerm = useRef(searchTerm);
-  const previousGroupFilter = useRef(groupFilter);
+  const previousGroupFilter = useRef<string[]>(groupFilter);
   const previousEmpresaFilter = useRef(empresaFilter);
   const previousPage = useRef(pagination.currentPage);
 
   const loadGroups = useCallback(async () => {
     try {
       const fetchedGroups = await fetchGroups();
+      // Sort groups by name
+      fetchedGroups.sort((a, b) => {
+        if (a.gru_descricao && b.gru_descricao) {
+          return a.gru_descricao.localeCompare(b.gru_descricao);
+        }
+        return 0;
+      });
       setGroups(fetchedGroups);
     } catch (error: any) {
       console.error("Error fetching groups:", error);
@@ -135,13 +142,13 @@ export const useItemsData = (
     
     const filtersChanged = 
       previousSearchTerm.current !== searchTerm || 
-      previousGroupFilter.current !== groupFilter ||
+      JSON.stringify(previousGroupFilter.current) !== JSON.stringify(groupFilter) ||
       previousEmpresaFilter.current !== empresaFilter;
     
     const pageChanged = previousPage.current !== pagination.currentPage;
     
     previousSearchTerm.current = searchTerm;
-    previousGroupFilter.current = groupFilter;
+    previousGroupFilter.current = [...groupFilter];
     previousEmpresaFilter.current = empresaFilter;
     previousPage.current = pagination.currentPage;
     
