@@ -5,7 +5,9 @@ import {
   fetchGroups, 
   fetchEmpresas, 
   saveGroup,
-  deleteGroup
+  deleteGroup,
+  exportGroupsToExcel,
+  importGroupsFromExcel
 } from "@/services/bluebay_adm/itemGroupService";
 
 interface ItemGroup {
@@ -111,6 +113,56 @@ export const useItemGroupManagement = () => {
     }
   }, [loadData, toast]);
 
+  const handleExportGroups = useCallback(() => {
+    try {
+      if (groups.length === 0) {
+        toast({
+          variant: "destructive",
+          title: "Exportação falhou",
+          description: "Não há grupos para exportar",
+        });
+        return;
+      }
+
+      exportGroupsToExcel(groups);
+      
+      toast({
+        title: "Exportação concluída",
+        description: `${groups.length} grupos exportados com sucesso.`,
+      });
+    } catch (error: any) {
+      console.error("Error exporting groups:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao exportar",
+        description: error.message || "Ocorreu um erro na exportação",
+      });
+    }
+  }, [groups, toast]);
+
+  const handleImportGroups = useCallback(async (data: any[]) => {
+    try {
+      setIsLoading(true);
+      const importedCount = await importGroupsFromExcel(data);
+      
+      toast({
+        title: "Importação concluída",
+        description: `${importedCount} grupos importados com sucesso.`,
+      });
+      
+      await loadData();
+    } catch (error: any) {
+      console.error("Error importing groups:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro na importação",
+        description: error.message || "Ocorreu um erro ao importar os grupos",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [loadData, toast]);
+
   return {
     groups,
     empresas,
@@ -119,6 +171,8 @@ export const useItemGroupManagement = () => {
     setSelectedGroup,
     handleSaveGroup,
     handleDeleteGroup,
+    handleExportGroups,
+    handleImportGroups,
     refreshData: loadData
   };
 };

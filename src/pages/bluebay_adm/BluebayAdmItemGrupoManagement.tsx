@@ -4,6 +4,7 @@ import { BluebayAdmMenu } from "@/components/bluebay_adm/BluebayAdmMenu";
 import { ItemGroupManagementHeader } from "@/components/bluebay_adm/item-group-management/ItemGroupManagementHeader";
 import { ItemGroupTable } from "@/components/bluebay_adm/item-group-management/ItemGroupTable";
 import { ItemGroupDialog } from "@/components/bluebay_adm/item-group-management/ItemGroupDialog";
+import { ItemGroupImportDialog } from "@/components/bluebay_adm/item-group-management/ItemGroupImportDialog";
 import { useItemGroupManagement } from "@/hooks/bluebay_adm/useItemGroupManagement";
 import { Dialog } from "@/components/ui/dialog";
 
@@ -11,15 +12,19 @@ import { Dialog } from "@/components/ui/dialog";
 const MemoizedItemGroupManagementHeader = memo(ItemGroupManagementHeader);
 const MemoizedItemGroupTable = memo(ItemGroupTable);
 const MemoizedItemGroupDialog = memo(ItemGroupDialog);
+const MemoizedItemGroupImportDialog = memo(ItemGroupImportDialog);
 
 const BluebayAdmItemGrupoManagement = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const { 
     groups, 
     isLoading, 
     selectedGroup, 
     setSelectedGroup, 
-    handleSaveGroup, 
+    handleSaveGroup,
+    handleExportGroups,
+    handleImportGroups,
     empresas,
     refreshData 
   } = useItemGroupManagement();
@@ -46,6 +51,18 @@ const BluebayAdmItemGrupoManagement = () => {
     }
   };
 
+  const handleOpenImportDialog = () => {
+    setIsImportDialogOpen(true);
+  };
+
+  const handleCloseImportDialog = () => {
+    setIsImportDialogOpen(false);
+  };
+
+  const handleImport = async (data: any[]) => {
+    await handleImportGroups(data);
+  };
+
   return (
     <main className="container-fluid p-0 max-w-full">
       <BluebayAdmMenu />
@@ -54,6 +71,8 @@ const BluebayAdmItemGrupoManagement = () => {
           <MemoizedItemGroupManagementHeader 
             onNewGroup={handleNewGroup}
             onRefresh={refreshData}
+            onExport={handleExportGroups}
+            onImport={handleOpenImportDialog}
           />
 
           <MemoizedItemGroupTable
@@ -71,6 +90,12 @@ const BluebayAdmItemGrupoManagement = () => {
             isOpen={isDialogOpen}
           />
         </Dialog>
+
+        <MemoizedItemGroupImportDialog
+          isOpen={isImportDialogOpen}
+          onClose={handleCloseImportDialog}
+          onImport={handleImport}
+        />
       </div>
     </main>
   );

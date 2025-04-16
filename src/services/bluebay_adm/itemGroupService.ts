@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { fetchInBatches } from "@/services/bluebay/utils/batchFetchUtils";
+import * as XLSX from 'xlsx';
 
 // Define interfaces for better type safety
 interface Empresa {
@@ -179,5 +180,92 @@ export const deleteGroup = async (id: string): Promise<boolean> => {
   } catch (error) {
     console.error("Erro ao excluir grupo:", error);
     return false;
+  }
+};
+
+// Function to export groups to Excel
+export const exportGroupsToExcel = (groups: ItemGroup[]): void => {
+  try {
+    if (!groups || groups.length === 0) {
+      console.error("Nenhum grupo para exportar");
+      return;
+    }
+
+    console.info(`Exportando ${groups.length} grupos para Excel...`);
+    
+    // Transform data for export (simplify structure)
+    const exportData = groups.map(group => ({
+      GRU_CODIGO: group.gru_codigo,
+      GRU_DESCRICAO: group.gru_descricao,
+      empresa: group.empresa_nome,
+      ativo: group.ativo
+    }));
+    
+    // Create workbook and worksheet
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Grupos');
+    
+    // Write to file and trigger download
+    XLSX.writeFile(workbook, 'grupos_de_itens.xlsx');
+    
+    console.info("Exportação concluída com sucesso");
+  } catch (error) {
+    console.error("Erro ao exportar grupos para Excel:", error);
+  }
+};
+
+// Function to import groups from Excel data
+export const importGroupsFromExcel = async (data: any[]): Promise<number> => {
+  console.info(`Importando ${data.length} grupos do Excel...`);
+  
+  let successCount = 0;
+  let errorCount = 0;
+  
+  try {
+    for (const row of data) {
+      try {
+        // Validate required fields
+        if (!row.GRU_CODIGO || !row.GRU_DESCRICAO) {
+          console.warn("Linha ignorada por falta de dados obrigatórios:", row);
+          errorCount++;
+          continue;
+        }
+        
+        // Prepare data for save
+        const groupData = {
+          GRU_CODIGO: row.GRU_CODIGO,
+          GRU_DESCRICAO: row.GRU_DESCRICAO,
+          empresa: row.empresa || 'nao_definida',
+          ativo: row.ativo !== undefined ? row.ativo : true
+        };
+        
+        // Check if group already exists
+        const { data: existingGroup } = await supabase
+          .from('bluebay_grupo_item')
+          .select('id')
+          .eq('gru_codigo', groupData.GRU_CODIGO)
+          .single();
+        
+        if (existingGroup) {
+          // Update existing group
+          await saveGroup({ ...groupData, id: existingGroup.id });
+        } else {
+          // Create new group
+          await saveGroup(groupData);
+        }
+        
+        successCount++;
+      } catch (error) {
+        console.error("Erro ao importar grupo:", error, row);
+        errorCount++;
+      }
+    }
+    
+    console.info(`Importação concluída. ${successCount} grupos importados com sucesso. ${errorCount} erros.`);
+    return successCount;
+  } catch (error) {
+    console.error("Erro geral na importação:", error);
+    throw error;
   }
 };

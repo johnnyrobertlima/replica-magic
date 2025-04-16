@@ -1,15 +1,19 @@
 
 import { Button } from "@/components/ui/button";
-import { Plus, RefreshCw } from "lucide-react";
+import { Plus, RefreshCw, FileSpreadsheet, Import } from "lucide-react";
 
 interface ItemGroupManagementHeaderProps {
   onNewGroup: () => void;
   onRefresh?: () => void;
+  onExport?: () => void;
+  onImport?: () => void;
 }
 
 export const ItemGroupManagementHeader = ({
   onNewGroup,
-  onRefresh
+  onRefresh,
+  onExport,
+  onImport
 }: ItemGroupManagementHeaderProps) => {
   return (
     <div className="flex justify-between items-center">
@@ -20,6 +24,18 @@ export const ItemGroupManagementHeader = ({
         </p>
       </div>
       <div className="flex gap-2">
+        {onExport && (
+          <Button variant="outline" onClick={onExport} title="Exportar para Excel">
+            <FileSpreadsheet className="h-4 w-4 mr-2" />
+            Exportar
+          </Button>
+        )}
+        {onImport && (
+          <Button variant="outline" onClick={onImport} title="Importar de Excel">
+            <Import className="h-4 w-4 mr-2" />
+            Importar
+          </Button>
+        )}
         {onRefresh && (
           <Button variant="outline" onClick={onRefresh} title="Atualizar lista">
             <RefreshCw className="h-4 w-4 mr-2" />
