@@ -1,117 +1,80 @@
+
+import { exportToExcel } from "@/utils/excelUtils";
 import { supabase } from "@/integrations/supabase/client";
 import * as XLSX from 'xlsx';
-import { saveAs } from 'file-saver';
 
 /**
- * Exports items to Excel based on current filters
- * @param searchTerm Search term to filter items
- * @param groupFilter Group filter
- * @param empresaFilter Empresa filter
- * @returns Promise with the number of exported items
+ * Export all items to Excel
+ * @returns The number of exported items
  */
 export const exportItemsToExcel = async (
-  searchTerm: string, 
-  groupFilter: string | string[], 
-  empresaFilter: string
+  searchTerm?: string,
+  groupFilter?: string,
+  empresaFilter?: string
 ): Promise<number> => {
   try {
-    console.log("Exporting items to Excel with filters:", {
-      searchTerm,
-      groupFilter,
-      empresaFilter
-    });
-
-    // Start building our query
+    console.log("Iniciando exportação de itens para Excel...");
+    
+    // Build our query to fetch all items
     let query = supabase
       .from("BLUEBAY_ITEM")
-      .select("*")
-      .eq("ativo", true); // Only fetch active items
+      .select("*");
 
-    // Apply filters
+    // Apply filters if provided
     if (searchTerm) {
       query = query.or(`ITEM_CODIGO.ilike.%${searchTerm}%,DESCRICAO.ilike.%${searchTerm}%,CODIGOAUX.ilike.%${searchTerm}%`);
     }
 
-    // Apply group filter
     if (groupFilter && groupFilter !== "all") {
-      if (Array.isArray(groupFilter) && groupFilter.length > 0) {
-        query = query.in("GRU_CODIGO", groupFilter);
-      } else if (typeof groupFilter === "string") {
-        query = query.eq("GRU_CODIGO", groupFilter);
-      }
+      query = query.eq("GRU_CODIGO", groupFilter);
     }
 
-    // Apply empresa filter if selected
     if (empresaFilter && empresaFilter !== "all") {
       query = query.eq("empresa", empresaFilter);
     }
 
-    // Apply ordering
+    // Order the results
     query = query.order("DESCRICAO");
 
+    // Fetch all data (no pagination)
     const { data, error } = await query;
 
-    if (error) throw error;
+    if (error) {
+      console.error("Erro ao buscar itens para exportação:", error);
+      throw error;
+    }
 
     if (!data || data.length === 0) {
+      console.log("Nenhum item encontrado para exportação");
       return 0;
     }
 
-    // Convert data to Excel format
-    const excelData = data.map(item => ({
-      'Código': item.ITEM_CODIGO || '',
-      'Descrição': item.DESCRICAO || '',
+    console.log(`Exportando ${data.length} itens para Excel`);
+
+    // Format the data for export (remove any sensitive fields if needed)
+    const formattedData = data.map(item => ({
+      Código: item.ITEM_CODIGO,
       'Código Auxiliar': item.CODIGOAUX || '',
-      'Grupo': item.GRU_DESCRICAO || '',
+      Descrição: item.DESCRICAO || '',
       'Código do Grupo': item.GRU_CODIGO || '',
-      'Empresa': item.empresa || '',
-      'Estação': item.estacao || '',
-      'Gênero': item.genero || '',
+      'Descrição do Grupo': item.GRU_DESCRICAO || '',
+      Empresa: item.empresa || '',
+      Estação: item.estacao || '',
+      Gênero: item.genero || '',
       'Faixa Etária': item.faixa_etaria || '',
-      'NCM': item.ncm || '',
-      'Data de Cadastro': item.DATACADASTRO ? new Date(item.DATACADASTRO).toLocaleDateString() : '',
-      'Ativo': item.ativo ? 'Sim' : 'Não'
+      NCM: item.ncm || '',
+      Ativo: item.ativo !== false ? 'Sim' : 'Não',
+      'Data Cadastro': item.DATACADASTRO || '',
     }));
 
-    // Create a worksheet
-    const worksheet = XLSX.utils.json_to_sheet(excelData);
-
-    // Set column widths
-    const columnWidths = [
-      { wch: 15 }, // Código
-      { wch: 40 }, // Descrição
-      { wch: 20 }, // Código Auxiliar
-      { wch: 25 }, // Grupo
-      { wch: 15 }, // Código do Grupo
-      { wch: 15 }, // Empresa
-      { wch: 15 }, // Estação
-      { wch: 15 }, // Gênero
-      { wch: 15 }, // Faixa Etária
-      { wch: 15 }, // NCM
-      { wch: 15 }, // Data de Cadastro
-      { wch: 10 }  // Ativo
-    ];
-    worksheet['!cols'] = columnWidths;
-
-    // Create a workbook
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Itens');
-
-    // Convert to binary
-    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-
-    // Create a Blob and save the file
-    const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
-
-    // Generate filename with current date
-    const now = new Date();
-    const formattedDate = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}`;
+    // Export to Excel
+    const filename = `itens_bluebay_${new Date().toISOString().split('T')[0]}`;
+    const exportedCount = exportToExcel(formattedData, filename);
     
-    saveAs(blob, `itens_${formattedDate}.xlsx`);
-
-    return data.length;
+    console.log(`Exportação concluída: ${exportedCount} itens`);
+    return exportedCount;
   } catch (error) {
-    console.error("Error exporting items to Excel:", error);
+    console.error("Erro na exportação de itens:", error);
     throw error;
   }
 };
