@@ -47,7 +47,17 @@ export const fetchGroups = async (): Promise<any[]> => {
   console.info("Buscando todos os grupos...");
   
   try {
-    // Use the fetchInBatches utility to handle large datasets with proper typing
+    // First, let's try to get a count of all distinct GRU_DESCRICAO values to log the expectation
+    const { count, error: countError } = await supabase
+      .from('BLUEBAY_ITEM')
+      .select('GRU_DESCRICAO', { count: 'exact', head: true })
+      .not('GRU_DESCRICAO', 'is', null);
+    
+    if (!countError) {
+      console.info(`Esperamos carregar aproximadamente ${count} grupos (antes da deduplicação)`);
+    }
+    
+    // Use the fetchInBatches utility with a larger batch size for efficiency
     const fetchGroupBatch = async (offset: number, limit: number) => {
       return await supabase
         .from('BLUEBAY_ITEM')
@@ -56,8 +66,8 @@ export const fetchGroups = async (): Promise<any[]> => {
         .range(offset, offset + limit - 1);
     };
     
-    // Fetch all groups in batches and specify the correct type
-    const batchedData = await fetchInBatches<GroupItem>(fetchGroupBatch);
+    // Fetch all groups in batches with a larger batch size (10,000 instead of 5,000)
+    const batchedData = await fetchInBatches<GroupItem>(fetchGroupBatch, 10000);
     console.info(`Total de registros com grupo carregados: ${batchedData.length}`);
     
     // Create a map to store unique groups by description
