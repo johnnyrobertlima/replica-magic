@@ -18,7 +18,6 @@ export const exportItemsToExcel = async (
   try {
     // First, get Bluebay group codes to filter by
     const bluebayGroupCodes = await getBluebayGroupCodes();
-    console.log(`Using ${bluebayGroupCodes.length} Bluebay group codes for filtering export items`);
     
     // Fetch all items with filters
     const items = await fetchFilteredItems(searchTerm, groupFilter, empresaFilter, bluebayGroupCodes);

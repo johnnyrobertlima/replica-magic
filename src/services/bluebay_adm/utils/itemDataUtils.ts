@@ -18,10 +18,7 @@ export const getBluebayGroupCodes = async (): Promise<string[]> => {
       return [];
     }
 
-    // Make sure we filter out null or undefined values and log the counts
-    const filteredCodes = data.map(group => group.gru_codigo).filter(Boolean);
-    console.log(`Fetched ${data.length} Bluebay group codes, ${filteredCodes.length} valid codes after filtering`);
-    return filteredCodes;
+    return data.map(group => group.gru_codigo).filter(Boolean);
   } catch (error) {
     console.error("Error in getBluebayGroupCodes:", error);
     return [];
@@ -42,14 +39,8 @@ export const fetchFilteredItems = async (
     let query = supabase
       .from("BLUEBAY_ITEM")
       .select("*")
-      .eq("ativo", true); // Only fetch active items
-    
-    // Apply Bluebay group filter if we have group codes
-    if (bluebayGroupCodes.length > 0) {
-      query = query.in("GRU_CODIGO", bluebayGroupCodes);
-    } else {
-      console.warn("No Bluebay group codes available for filtering, query may return unexpected results");
-    }
+      .eq("ativo", true) // Only fetch active items
+      .in("GRU_CODIGO", bluebayGroupCodes);
     
     // Apply filters
     if (searchTerm) {
@@ -72,7 +63,6 @@ export const fetchFilteredItems = async (
       throw error;
     }
 
-    console.log(`Fetched ${data?.length || 0} items from BLUEBAY_ITEM table`);
     return data || [];
   } catch (error) {
     console.error("Error fetching filtered items:", error);
