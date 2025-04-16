@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 import { fetchInBatches } from "@/services/bluebay/utils/batchFetchUtils";
@@ -26,12 +27,25 @@ export const fetchGroups = async () => {
     }
 
     // Make sure we sanitize the data to prevent empty string values
-    const sanitizedData = data?.map(group => ({
-      ...group,
-      gru_codigo: group.gru_codigo || `group-${group.id}`, // Fallback for empty string
-    })) || [];
+    // and remove duplicate groups by using a Map with gru_codigo as key
+    const groupsMap = new Map();
+    
+    data?.forEach(group => {
+      if (!group.gru_codigo) {
+        // Fallback for empty string
+        group.gru_codigo = `group-${group.id}`;
+      }
+      
+      // Only add if not already in the map
+      if (!groupsMap.has(group.gru_codigo)) {
+        groupsMap.set(group.gru_codigo, group);
+      }
+    });
+    
+    // Convert Map back to array
+    const sanitizedData = Array.from(groupsMap.values());
 
-    console.log(`Found ${sanitizedData.length || 0} active groups`);
+    console.log(`Found ${sanitizedData.length || 0} unique active groups`);
     return sanitizedData;
   } catch (error) {
     console.error("Error fetching groups:", error);
@@ -40,7 +54,7 @@ export const fetchGroups = async () => {
 };
 
 /**
- * Busca todas as empresas distintas da tabela BLUEBAY_ITEM
+ * Busca todas as empresas distintas dos grupos ativos
  */
 export const fetchEmpresas = async () => {
   // Verificamos se temos as empresas em cache
@@ -49,14 +63,15 @@ export const fetchEmpresas = async () => {
     return empresasCache;
   }
 
-  console.log("Buscando todas as empresas...");
+  console.log("Buscando empresas de grupos ativos...");
   
   try {
-    // Buscar todas as empresas distintas
+    // Buscar empresas dos grupos ativos
     const { data, error } = await supabase
-      .from("BLUEBAY_ITEM")
-      .select("empresa", { count: "exact", head: false })
-      .not("empresa", "is", null);
+      .from("bluebay_grupo_item_view")
+      .select("empresa_nome")
+      .eq("ativo", true)
+      .not("empresa_nome", "is", null);
 
     if (error) {
       console.error("Erro ao buscar empresas:", error);
@@ -70,8 +85,8 @@ export const fetchEmpresas = async () => {
     
     if (data) {
       data.forEach(item => {
-        if (item.empresa && item.empresa.trim()) {
-          empresasSet.add(item.empresa.trim());
+        if (item.empresa_nome && item.empresa_nome.trim()) {
+          empresasSet.add(item.empresa_nome.trim());
         }
       });
     }
@@ -185,7 +200,7 @@ export const fetchAllItems = async (
   empresaFilter?: string
 ): Promise<any[]> => {
   try {
-    console.log("Iniciando busca de todos os itens em lotes");
+    console.log("Iniciando busca de todos os itens em lotes de 1000");
     
     // Get active groups to filter items
     const activeGroups = await getActiveGroupCodes();
@@ -230,7 +245,7 @@ export const fetchAllItems = async (
             
             return await query;
           },
-          5000
+          1000 // Reduzir para 1000 registros por lote
         );
         
         console.log(`Encontrados ${itemsData.length} itens por ${field}`);
@@ -270,7 +285,7 @@ export const fetchAllItems = async (
             .range(offset, offset + limit - 1)
             .throwOnError();
         },
-        5000
+        1000 // Reduzir para 1000 registros por lote
       );
       
       console.log(`Total de ${itemCodes.length} códigos de itens encontrados no estoque`);

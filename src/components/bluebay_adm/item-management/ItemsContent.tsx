@@ -2,6 +2,7 @@
 import { ItemsTable } from "@/components/bluebay_adm/item-management/ItemsTable";
 import { ItemsTableSkeleton } from "@/components/bluebay_adm/item-management/ItemsTableSkeleton";
 import { Pagination } from "@/components/bluebay_adm/item-management/Pagination";
+import { Loader } from "lucide-react";
 
 interface ItemsContentProps {
   items: any[];
@@ -32,7 +33,20 @@ export const ItemsContent = ({
   return (
     <>
       {isLoading ? (
-        <ItemsTableSkeleton />
+        <div className="space-y-4">
+          <div className="flex items-center justify-center space-x-2 py-8 text-muted-foreground">
+            <Loader className="h-8 w-8 animate-spin" />
+            <div className="text-lg">
+              Carregando produtos em lotes de 1000...
+              {items.length > 0 && (
+                <span className="ml-2 font-medium">
+                  ({items.length} carregados até o momento)
+                </span>
+              )}
+            </div>
+          </div>
+          <ItemsTableSkeleton />
+        </div>
       ) : (
         <>
           <ItemsTable 
