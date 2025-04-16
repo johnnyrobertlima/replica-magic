@@ -1,4 +1,3 @@
-
 import {
   Table,
   TableBody,
@@ -19,6 +18,7 @@ interface ItemGroup {
   gru_descricao: string;
   ativo: boolean;
   empresa_nome: string;
+  empresa_id: string;
 }
 
 interface ItemGroupTableProps {

@@ -16,6 +16,7 @@ interface ItemGroup {
   gru_descricao: string;
   ativo: boolean;
   empresa_nome: string;
+  empresa_id: string; // Adding this required property to fix the type error
 }
 
 export const useItemGroupManagement = () => {

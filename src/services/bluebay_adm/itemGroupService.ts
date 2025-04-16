@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { fetchInBatches } from "@/services/bluebay/utils/batchFetchUtils";
 import * as XLSX from 'xlsx';
@@ -15,7 +14,7 @@ interface ItemGroup {
   gru_descricao: string;
   ativo: boolean;
   empresa_nome: string;
-  empresa_id: string;
+  empresa_id: string; // Ensure empresa_id is included in ItemGroup interface
 }
 
 export const fetchEmpresas = async (): Promise<string[]> => {
@@ -183,7 +182,7 @@ export const deleteGroup = async (id: string): Promise<boolean> => {
   }
 };
 
-// Function to export groups to Excel
+// Update the exportGroupsToExcel function to include empresa_id
 export const exportGroupsToExcel = (groups: ItemGroup[]): void => {
   try {
     if (!groups || groups.length === 0) {

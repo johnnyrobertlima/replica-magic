@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,7 @@ interface ItemGroup {
   gru_descricao: string;
   ativo: boolean;
   empresa_nome?: string;
+  empresa_id?: string;
 }
 
 interface ItemGroupDialogProps {
