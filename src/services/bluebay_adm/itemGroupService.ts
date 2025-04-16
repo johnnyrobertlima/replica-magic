@@ -37,21 +37,27 @@ export const fetchEmpresas = async (): Promise<string[]> => {
   }
 };
 
+// Define an interface for the group data to fix typing issues
+interface GroupItem {
+  GRU_CODIGO: string;
+  GRU_DESCRICAO: string;
+}
+
 export const fetchGroups = async (): Promise<any[]> => {
   console.info("Buscando todos os grupos...");
   
   try {
-    // Use the fetchInBatches utility to handle large datasets
-    const fetchGroupBatch = (offset: number, limit: number) => {
-      return supabase
+    // Use the fetchInBatches utility to handle large datasets with proper typing
+    const fetchGroupBatch = async (offset: number, limit: number) => {
+      return await supabase
         .from('BLUEBAY_ITEM')
         .select('GRU_CODIGO, GRU_DESCRICAO')
         .not('GRU_DESCRICAO', 'is', null)
         .range(offset, offset + limit - 1);
     };
     
-    // Fetch all groups in batches
-    const batchedData = await fetchInBatches(fetchGroupBatch);
+    // Fetch all groups in batches and specify the correct type
+    const batchedData = await fetchInBatches<GroupItem>(fetchGroupBatch);
     console.info(`Total de registros com grupo carregados: ${batchedData.length}`);
     
     // Create a map to store unique groups by description
