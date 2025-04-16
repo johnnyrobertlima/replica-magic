@@ -187,9 +187,6 @@ export const fetchAllItems = async (
   try {
     console.log("Iniciando busca de todos os itens em lotes");
     
-    // Usar um tamanho de lote apropriado
-    const batchSize = 5000; // Usar um valor maior que o limite do Supabase para maximizar a eficiência
-    
     // Get active groups to filter items
     const activeGroups = await getActiveGroupCodes();
     
@@ -233,7 +230,7 @@ export const fetchAllItems = async (
             
             return await query;
           },
-          batchSize
+          5000
         );
         
         console.log(`Encontrados ${itemsData.length} itens por ${field}`);
@@ -261,25 +258,22 @@ export const fetchAllItems = async (
       
       return filteredItems;
     } else {
-      // Abordagem 1: Buscar itens diretamente do estoque
-      console.log("Buscando todos os itens diretamente do ESTOQUE com LOCAL = 1");
+      // Usar fetchInBatches para carregar todos os códigos de estoque
+      console.log("Buscando todos os códigos de itens do estoque com LOCAL = 1");
       
-      // Primeiro buscamos todos os códigos dos itens do estoque com LOCAL = 1
-      console.log(`Buscando todos os códigos de itens do estoque...`);
+      const itemCodes = await fetchInBatches<{ITEM_CODIGO: string}>(
+        async (offset: number, limit: number) => {
+          return await supabase
+            .from("BLUEBAY_ESTOQUE")
+            .select("ITEM_CODIGO", { count: "exact", head: false })
+            .eq("LOCAL", 1)
+            .range(offset, offset + limit - 1)
+            .throwOnError();
+        },
+        5000
+      );
       
-      let estoqueQuery = supabase
-        .from("BLUEBAY_ESTOQUE")
-        .select("ITEM_CODIGO", { count: "exact", head: false })
-        .eq("LOCAL", 1);
-        
-      const { data: itemCodes, error: itemCodesError, count: totalItemsCount } = await estoqueQuery;
-
-      if (itemCodesError) {
-        console.error("Erro ao buscar códigos de itens:", itemCodesError);
-        throw itemCodesError;
-      }
-
-      console.log(`Total de ${totalItemsCount || itemCodes.length} códigos de itens encontrados no estoque`);
+      console.log(`Total de ${itemCodes.length} códigos de itens encontrados no estoque`);
       
       // Extrair códigos únicos
       const uniqueItemCodesSet = new Set<string>();
