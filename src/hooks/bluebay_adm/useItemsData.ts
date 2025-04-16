@@ -5,7 +5,7 @@ import { fetchItems, fetchGroups, fetchAllItems, fetchEmpresas } from "@/service
 
 export const useItemsData = (
   searchTerm: string,
-  groupFilter: string,
+  groupFilter: string | string[],
   empresaFilter: string,
   pagination: any
 ) => {
@@ -135,7 +135,7 @@ export const useItemsData = (
     
     const filtersChanged = 
       previousSearchTerm.current !== searchTerm || 
-      previousGroupFilter.current !== groupFilter ||
+      JSON.stringify(previousGroupFilter.current) !== JSON.stringify(groupFilter) ||
       previousEmpresaFilter.current !== empresaFilter;
     
     const pageChanged = previousPage.current !== pagination.currentPage;

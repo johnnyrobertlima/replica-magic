@@ -7,7 +7,7 @@ import { useProductData } from "./useProductData";
 
 export const useItemManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [groupFilter, setGroupFilter] = useState("all");
+  const [groupFilter, setGroupFilter] = useState<string | string[]>("all");
   const [empresaFilter, setEmpresaFilter] = useState("all");
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -48,7 +48,7 @@ export const useItemManagement = () => {
   }, []);
   
   // Handler for group filter change
-  const handleGroupFilterChange = useCallback((value: string) => {
+  const handleGroupFilterChange = useCallback((value: string | string[]) => {
     setGroupFilter(value);
   }, []);
   

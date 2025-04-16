@@ -111,7 +111,7 @@ export const fetchEmpresas = async () => {
 
 export const fetchItems = async (
   searchTerm: string,
-  groupFilter: string,
+  groupFilter: string | string[],
   empresaFilter: string,
   page: number,
   pageSize: number
@@ -131,8 +131,13 @@ export const fetchItems = async (
     query = query.or(`ITEM_CODIGO.ilike.%${searchTerm}%,DESCRICAO.ilike.%${searchTerm}%,CODIGOAUX.ilike.%${searchTerm}%`);
   }
 
+  // Handle group filtering - support both single string and array of strings
   if (groupFilter && groupFilter !== "all") {
-    query = query.eq("GRU_CODIGO", groupFilter);
+    if (Array.isArray(groupFilter) && groupFilter.length > 0) {
+      query = query.in("GRU_CODIGO", groupFilter);
+    } else if (typeof groupFilter === "string") {
+      query = query.eq("GRU_CODIGO", groupFilter);
+    }
   }
 
   // Apply empresa filter if selected
@@ -196,7 +201,7 @@ const getActiveGroupCodes = async (): Promise<string[]> => {
 // Função para buscar todos os itens sem limitação (usando batches)
 export const fetchAllItems = async (
   searchTerm?: string,
-  groupFilter?: string,
+  groupFilter?: string | string[],
   empresaFilter?: string
 ): Promise<any[]> => {
   try {
@@ -235,8 +240,13 @@ export const fetchAllItems = async (
               .range(offset, offset + limit - 1)
               .throwOnError();
             
+            // Handle group filtering - support both single string and array of strings
             if (groupFilter && groupFilter !== "all") {
-              query = query.eq("GRU_CODIGO", groupFilter);
+              if (Array.isArray(groupFilter) && groupFilter.length > 0) {
+                query = query.in("GRU_CODIGO", groupFilter);
+              } else if (typeof groupFilter === "string") {
+                query = query.eq("GRU_CODIGO", groupFilter);
+              }
             }
             
             if (empresaFilter && empresaFilter !== "all") {
@@ -322,8 +332,13 @@ export const fetchAllItems = async (
           .in("ITEM_CODIGO", codeBatch)
           .throwOnError();
         
+        // Handle group filtering - support both single string and array of strings
         if (groupFilter && groupFilter !== "all") {
-          query = query.eq("GRU_CODIGO", groupFilter);
+          if (Array.isArray(groupFilter) && groupFilter.length > 0) {
+            query = query.in("GRU_CODIGO", groupFilter);
+          } else if (typeof groupFilter === "string") {
+            query = query.eq("GRU_CODIGO", groupFilter);
+          }
         }
         
         if (empresaFilter && empresaFilter !== "all") {
