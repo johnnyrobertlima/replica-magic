@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
@@ -104,7 +103,7 @@ export const exportItemsToExcel = async (
     
     // Create a Blob and save the file
     const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
-    
+
     // Generate filename with current date
     const now = new Date();
     const formattedDate = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}`;
