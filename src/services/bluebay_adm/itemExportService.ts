@@ -1,26 +1,109 @@
-
-import { exportToExcel } from "@/utils/excelUtils";
 import { supabase } from "@/integrations/supabase/client";
 import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 
 /**
- * Export all items to Excel
- * @returns The number of exported items
+ * Export items to Excel file based on filters
+ * @param searchTerm Search term to filter items
+ * @param groupFilter Group filter
+ * @param empresaFilter Company filter
+ * @returns Number of exported items
  */
 export const exportItemsToExcel = async (
-  searchTerm?: string,
-  groupFilter?: string,
-  empresaFilter?: string
+  searchTerm: string,
+  groupFilter: string,
+  empresaFilter: string
 ): Promise<number> => {
   try {
-    console.log("Iniciando exportação de itens para Excel...");
+    // First, get Bluebay group codes to filter by
+    const bluebayGroupCodes = await getBluebayGroupCodes();
     
-    // Build our query to fetch all items
+    // Fetch all items with filters
+    const items = await fetchFilteredItemsForExport(searchTerm, groupFilter, empresaFilter, bluebayGroupCodes);
+    
+    if (!items || items.length === 0) {
+      console.log("No items to export");
+      return 0;
+    }
+    
+    console.log(`Exporting ${items.length} items to Excel`);
+    
+    // Convert to worksheet rows
+    const worksheetData = items.map(item => ({
+      'Código': item.ITEM_CODIGO || '',
+      'Descrição': item.DESCRICAO || '',
+      'Grupo': item.GRU_DESCRICAO || '',
+      'Código Auxiliar': item.CODIGOAUX || '',
+      'Empresa': item.empresa || '',
+      'Estação': item.estacao || '',
+      'Gênero': item.genero || '',
+      'Faixa Etária': item.faixa_etaria || '',
+      'NCM': item.ncm || ''
+    }));
+    
+    // Create workbook with a single worksheet
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(worksheetData);
+    
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(wb, ws, "Itens");
+    
+    // Generate filename with current date
+    const now = new Date();
+    const fileName = `itens_bluebay_${now.toISOString().split('T')[0]}.xlsx`;
+    
+    // Write to file and save
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    saveAs(new Blob([wbout], { type: 'application/octet-stream' }), fileName);
+    
+    return items.length;
+  } catch (error) {
+    console.error("Error exporting items to Excel:", error);
+    throw new Error("Ocorreu um erro ao exportar os itens para Excel");
+  }
+};
+
+/**
+ * Get Bluebay group codes from the database
+ */
+const getBluebayGroupCodes = async (): Promise<string[]> => {
+  try {
+    const { data, error } = await supabase
+      .from("bluebay_grupo_item_view")
+      .select("gru_codigo")
+      .eq("ativo", true)
+      .eq("empresa_nome", "Bluebay");
+
+    if (error) {
+      console.error("Error fetching Bluebay group codes:", error);
+      return [];
+    }
+
+    return data.map(group => group.gru_codigo).filter(Boolean);
+  } catch (error) {
+    console.error("Error in getBluebayGroupCodes:", error);
+    return [];
+  }
+};
+
+/**
+ * Fetch filtered items for export
+ */
+const fetchFilteredItemsForExport = async (
+  searchTerm: string,
+  groupFilter: string,
+  empresaFilter: string,
+  bluebayGroupCodes: string[]
+): Promise<any[]> => {
+  try {
+    // Build our query
     let query = supabase
       .from("BLUEBAY_ITEM")
-      .select("*");
-
-    // Apply filters if provided
+      .select("*")
+      .eq("ativo", true) // Only fetch active items
+      .in("GRU_CODIGO", bluebayGroupCodes);
+    
+    // Apply filters
     if (searchTerm) {
       query = query.or(`ITEM_CODIGO.ilike.%${searchTerm}%,DESCRICAO.ilike.%${searchTerm}%,CODIGOAUX.ilike.%${searchTerm}%`);
     }
@@ -33,215 +116,148 @@ export const exportItemsToExcel = async (
       query = query.eq("empresa", empresaFilter);
     }
 
-    // Order the results
-    query = query.order("DESCRICAO");
-
-    // Fetch all data (no pagination)
-    const { data, error } = await query;
+    // Get all matching items
+    const { data, error } = await query.order("DESCRICAO");
 
     if (error) {
-      console.error("Erro ao buscar itens para exportação:", error);
+      console.error("Error fetching items for export:", error);
       throw error;
     }
 
-    if (!data || data.length === 0) {
-      console.log("Nenhum item encontrado para exportação");
-      return 0;
-    }
-
-    console.log(`Exportando ${data.length} itens para Excel`);
-
-    // Format the data for export (remove any sensitive fields if needed)
-    const formattedData = data.map(item => ({
-      Código: item.ITEM_CODIGO,
-      'Código Auxiliar': item.CODIGOAUX || '',
-      Descrição: item.DESCRICAO || '',
-      'Código do Grupo': item.GRU_CODIGO || '',
-      'Descrição do Grupo': item.GRU_DESCRICAO || '',
-      Empresa: item.empresa || '',
-      Estação: item.estacao || '',
-      Gênero: item.genero || '',
-      'Faixa Etária': item.faixa_etaria || '',
-      NCM: item.ncm || '',
-      Ativo: item.ativo !== false ? 'Sim' : 'Não',
-      'Data Cadastro': item.DATACADASTRO || '',
-    }));
-
-    // Export to Excel
-    const filename = `itens_bluebay_${new Date().toISOString().split('T')[0]}`;
-    const exportedCount = exportToExcel(formattedData, filename);
-    
-    console.log(`Exportação concluída: ${exportedCount} itens`);
-    return exportedCount;
+    return data || [];
   } catch (error) {
-    console.error("Erro na exportação de itens:", error);
+    console.error("Error fetching filtered items for export:", error);
     throw error;
   }
 };
 
-/**
- * Import items from Excel and update in the database
- * @param file The Excel file to import
- * @returns Object with the total items processed and any errors
- */
-export const importItemsFromExcel = async (file: File): Promise<{
+interface ImportResult {
   success: boolean;
   totalProcessed: number;
   updated: number;
   errors: string[];
-}> => {
+}
+
+/**
+ * Import items from Excel file
+ * @param file Excel file to import
+ * @returns ImportResult
+ */
+export const importItemsFromExcel = async (file: File): Promise<ImportResult> => {
   try {
-    console.log("Iniciando importação de itens do Excel...");
+    const reader = new FileReader();
     
-    const data = await readExcelFile(file);
-    if (!data || data.length === 0) {
-      return { success: false, totalProcessed: 0, updated: 0, errors: ["Arquivo vazio ou inválido"] };
-    }
-    
-    console.log(`Processando ${data.length} itens do arquivo Excel`);
-    
-    const result = {
-      success: true,
-      totalProcessed: data.length,
-      updated: 0,
-      errors: [] as string[]
-    };
-    
-    // Process items in batches to avoid timeouts
-    const batchSize = 50;
-    const batches = Math.ceil(data.length / batchSize);
-    
-    for (let i = 0; i < batches; i++) {
-      const start = i * batchSize;
-      const end = Math.min(start + batchSize, data.length);
-      const batch = data.slice(start, end);
-      
-      console.log(`Processando lote ${i + 1}/${batches} (${batch.length} itens)`);
-      
-      // Process each item in the batch
-      for (const item of batch) {
+    // Use a promise to handle the asynchronous file reading
+    const workbook = await new Promise<XLSX.WorkBook>((resolve, reject) => {
+      reader.onload = (e: any) => {
         try {
-          // Skip items without a code
-          if (!item.Código && !item['Código']) {
-            result.errors.push(`Item sem código foi ignorado`);
-            continue;
-          }
-          
-          // Get the item code from the appropriate field
-          const itemCode = item.Código || item['Código'];
-          
-          // Check if item exists
-          const { data: existingItems, error: checkError } = await supabase
-            .from("BLUEBAY_ITEM")
-            .select("ITEM_CODIGO")
-            .eq("ITEM_CODIGO", itemCode)
-            .limit(1);
-            
-          if (checkError) {
-            result.errors.push(`Erro ao verificar item ${itemCode}: ${checkError.message}`);
-            continue;
-          }
-          
-          const exists = existingItems && existingItems.length > 0;
-          
-          if (!exists) {
-            result.errors.push(`Item ${itemCode} não encontrado no banco de dados`);
-            continue;
-          }
-          
-          // Map Excel columns to database fields
-          const updateData: any = {
-            DESCRICAO: item.Descrição || item['Descrição'] || undefined,
-            CODIGOAUX: item['Código Auxiliar'] || item.CODIGOAUX || undefined,
-            GRU_CODIGO: item['Código do Grupo'] || item.GRU_CODIGO || undefined,
-            GRU_DESCRICAO: item['Descrição do Grupo'] || item.GRU_DESCRICAO || undefined,
-            empresa: item.Empresa || item.empresa || undefined,
-            estacao: item.Estação || item.estacao || undefined,
-            genero: item.Gênero || item.genero || undefined,
-            faixa_etaria: item['Faixa Etária'] || item.faixa_etaria || undefined,
-            ncm: item.NCM || item.ncm || undefined,
-          };
-          
-          // Handle boolean fields
-          if (item.Ativo !== undefined || item.ativo !== undefined) {
-            const ativoValue = item.Ativo || item.ativo;
-            if (typeof ativoValue === 'boolean') {
-              updateData.ativo = ativoValue;
-            } else if (typeof ativoValue === 'string') {
-              updateData.ativo = ativoValue.toLowerCase() === 'sim' || 
-                                 ativoValue.toLowerCase() === 'true' || 
-                                 ativoValue === '1';
-            }
-          }
-          
-          // Remove undefined fields
-          Object.keys(updateData).forEach(key => {
-            if (updateData[key] === undefined) {
-              delete updateData[key];
-            }
-          });
-          
-          // Update the item in the database
-          const { error: updateError } = await supabase
-            .from("BLUEBAY_ITEM")
-            .update(updateData)
-            .eq("ITEM_CODIGO", itemCode);
-            
-          if (updateError) {
-            result.errors.push(`Erro ao atualizar item ${itemCode}: ${updateError.message}`);
-          } else {
-            result.updated++;
-          }
-        } catch (itemError: any) {
-          result.errors.push(`Erro inesperado ao processar item: ${itemError.message}`);
+          const binarystr = e.target.result;
+          const wb = XLSX.read(binarystr, { type: 'binary' });
+          resolve(wb);
+        } catch (err) {
+          reject(err);
         }
+      };
+      reader.onerror = (error) => {
+        reject(error);
+      };
+      reader.readAsBinaryString(file);
+    });
+
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const items: any[] = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+    const importResult: ImportResult = {
+      success: true,
+      totalProcessed: 0,
+      updated: 0,
+      errors: []
+    };
+
+    // Process each item in the Excel file
+    for (let i = 1; i < items.length; i++) {
+      importResult.totalProcessed++;
+      const row = items[i];
+
+      // Skip empty rows
+      if (!row || row.length === 0) {
+        continue;
+      }
+
+      // Map columns to item properties
+      const itemCode = row[0]?.toString(); // Ensure itemCode is a string
+      const description = row[1]?.toString();
+      const groupCode = row[2]?.toString();
+      const auxCode = row[3]?.toString();
+      const company = row[4]?.toString();
+      const estacao = row[5]?.toString();
+      const genero = row[6]?.toString();
+      const faixaEtaria = row[7]?.toString();
+      const ncm = row[8]?.toString();
+
+      // Validate required fields
+      if (!itemCode || !description || !groupCode) {
+        importResult.errors.push(`Linha ${i + 1}: Código do item, descrição e código do grupo são obrigatórios.`);
+        continue;
+      }
+
+      try {
+        // Check if the item exists
+        const { data: existingItem, error: selectError } = await supabase
+          .from('BLUEBAY_ITEM')
+          .select('ITEM_CODIGO')
+          .eq('ITEM_CODIGO', itemCode)
+          .single();
+
+        if (selectError) {
+          throw selectError;
+        }
+
+        // Prepare item data for update or insert
+        const itemData = {
+          ITEM_CODIGO: itemCode,
+          DESCRICAO: description,
+          GRU_CODIGO: groupCode,
+          CODIGOAUX: auxCode,
+          empresa: company,
+          estacao: estacao,
+          genero: genero,
+          faixa_etaria: faixaEtaria,
+          ncm: ncm
+        };
+
+        // Update or insert the item
+        if (existingItem) {
+          const { error: updateError } = await supabase
+            .from('BLUEBAY_ITEM')
+            .update(itemData)
+            .eq('ITEM_CODIGO', itemCode);
+
+          if (updateError) {
+            throw updateError;
+          }
+
+          importResult.updated++;
+        } else {
+          importResult.errors.push(`Linha ${i + 1}: Item com código ${itemCode} não encontrado para atualização.`);
+          continue;
+        }
+      } catch (error: any) {
+        console.error(`Erro ao processar linha ${i + 1}:`, error);
+        importResult.errors.push(`Linha ${i + 1}: ${error.message || 'Erro desconhecido'}`);
       }
     }
-    
-    console.log(`Importação concluída: ${result.updated} itens atualizados, ${result.errors.length} erros`);
-    return result;
+
+    importResult.success = importResult.errors.length === 0;
+    return importResult;
   } catch (error: any) {
-    console.error("Erro na importação de itens:", error);
+    console.error("Erro ao importar itens do Excel:", error);
     return {
       success: false,
       totalProcessed: 0,
       updated: 0,
-      errors: [error.message || "Erro desconhecido durante a importação"]
+      errors: [error.message || "Ocorreu um erro ao importar os itens do Excel"]
     };
   }
-};
-
-/**
- * Read an Excel file and convert to array of objects
- */
-const readExcelFile = async (file: File): Promise<any[]> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    
-    reader.onload = (e) => {
-      try {
-        const data = e.target?.result;
-        if (!data) {
-          reject(new Error("Falha ao ler o arquivo"));
-          return;
-        }
-        
-        const workbook = XLSX.read(data, { type: 'binary' });
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
-        
-        // Convert to JSON with header row as keys
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
-        resolve(jsonData);
-      } catch (error) {
-        reject(error);
-      }
-    };
-    
-    reader.onerror = (error) => {
-      reject(error);
-    };
-    
-    reader.readAsBinaryString(file);
-  });
 };
