@@ -13,6 +13,11 @@ import { getServices } from "@/services/oniAgenciaServices";
 import { getCollaborators } from "@/services/oniAgenciaCollaboratorServices";
 import { useEditorialLines, useProducts, useStatuses } from "./useOniAgenciaThemes";
 
+// Cache time constants
+const MINUTE = 60 * 1000;
+const CACHE_TIME = 10 * MINUTE; // 10 minutos
+const STALE_TIME = 2 * MINUTE;  // 2 minutos
+
 export function useContentSchedules(clientId: string, year: number, month: number) {
   const { toast } = useToast();
   
@@ -20,8 +25,9 @@ export function useContentSchedules(clientId: string, year: number, month: numbe
     queryKey: ['oniAgenciaContentSchedules', clientId, year, month],
     queryFn: () => getContentSchedules(clientId, year, month),
     enabled: !!clientId && !!year && !!month,
-    staleTime: 30000, // Consider data fresh for 30 seconds
-    refetchOnWindowFocus: true, // Refetch when window gets focus
+    staleTime: STALE_TIME,
+    gcTime: CACHE_TIME,
+    refetchOnWindowFocus: false, // Só atualiza manualmente ou por invalidação
   });
 }
 
@@ -30,7 +36,9 @@ export function useAllContentSchedules(clientId: string) {
     queryKey: ['allOniAgenciaContentSchedules', clientId],
     queryFn: () => getAllContentSchedules(clientId),
     enabled: !!clientId,
-    staleTime: 30000, // Consider data fresh for 30 seconds
+    staleTime: STALE_TIME,
+    gcTime: CACHE_TIME,
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -38,6 +46,8 @@ export function useServices() {
   return useQuery({
     queryKey: ['oniAgenciaServices'],
     queryFn: getServices,
+    staleTime: CACHE_TIME, // Dados que raramente mudam
+    gcTime: CACHE_TIME * 2,
   });
 }
 
@@ -45,6 +55,8 @@ export function useCollaborators() {
   return useQuery({
     queryKey: ['oniAgenciaCollaborators'],
     queryFn: getCollaborators,
+    staleTime: CACHE_TIME, // Dados que raramente mudam
+    gcTime: CACHE_TIME * 2,
   });
 }
 
@@ -103,13 +115,9 @@ export function useUpdateContentSchedule() {
           queryKey: ['allOniAgenciaContentSchedules', client_id]
         });
       } else {
-        // If client_id is not available, invalidate all schedules
+        // Se client_id não está disponível, invalidar consultas mais amplas
         queryClient.invalidateQueries({ 
           queryKey: ['oniAgenciaContentSchedules'] 
-        });
-        
-        queryClient.invalidateQueries({
-          queryKey: ['allOniAgenciaContentSchedules']
         });
       }
     },

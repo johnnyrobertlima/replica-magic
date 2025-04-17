@@ -4,6 +4,20 @@ import { OniAgenciaContentSchedule, ContentScheduleFormData, CalendarEvent } fro
 
 const ONI_AGENCIA_CONTENT_SCHEDULES_TABLE = 'oni_agencia_content_schedules';
 
+// Query base com todas as relações necessárias
+const getBaseQuery = () => {
+  return supabase
+    .from(ONI_AGENCIA_CONTENT_SCHEDULES_TABLE)
+    .select(`
+      *,
+      service:service_id(id, name, category, color),
+      collaborator:collaborator_id(id, name, email, photo_url),
+      editorial_line:editorial_line_id(id, name, symbol, color),
+      product:product_id(id, name, symbol, color),
+      status:status_id(id, name, color)
+    `);
+};
+
 export async function getContentSchedules(clientId: string, year: number, month: number): Promise<CalendarEvent[]> {
   try {
     // Calculate the start and end dates for the given month
@@ -16,16 +30,7 @@ export async function getContentSchedules(clientId: string, year: number, month:
       endDate: endDate.toISOString().split('T')[0],
     });
 
-    const { data, error } = await supabase
-      .from(ONI_AGENCIA_CONTENT_SCHEDULES_TABLE)
-      .select(`
-        *,
-        service:service_id(id, name, category, color),
-        collaborator:collaborator_id(id, name, email, photo_url),
-        editorial_line:editorial_line_id(id, name, symbol, color),
-        product:product_id(id, name, symbol, color),
-        status:status_id(id, name, color)
-      `)
+    const { data, error } = await getBaseQuery()
       .eq('client_id', clientId)
       .gte('scheduled_date', startDate.toISOString().split('T')[0])
       .lte('scheduled_date', endDate.toISOString().split('T')[0]);
@@ -35,7 +40,7 @@ export async function getContentSchedules(clientId: string, year: number, month:
       throw error;
     }
 
-    console.log('Fetched content schedules:', data);
+    console.log(`Fetched ${data?.length || 0} content schedules for month ${month}/${year}`);
     return data as unknown as CalendarEvent[];
   } catch (error) {
     console.error('Error in getContentSchedules:', error);
@@ -47,16 +52,8 @@ export async function getAllContentSchedules(clientId: string): Promise<Calendar
   try {
     console.log('Fetching all events for client:', clientId);
 
-    const { data, error } = await supabase
-      .from(ONI_AGENCIA_CONTENT_SCHEDULES_TABLE)
-      .select(`
-        *,
-        service:service_id(id, name, category, color),
-        collaborator:collaborator_id(id, name, email, photo_url),
-        editorial_line:editorial_line_id(id, name, symbol, color),
-        product:product_id(id, name, symbol, color),
-        status:status_id(id, name, color)
-      `)
+    // Podemos limitar as colunas retornadas na consulta principal para otimizar
+    const { data, error } = await getBaseQuery()
       .eq('client_id', clientId);
 
     if (error) {
@@ -64,7 +61,7 @@ export async function getAllContentSchedules(clientId: string): Promise<Calendar
       throw error;
     }
 
-    console.log('Fetched all content schedules:', data);
+    console.log(`Fetched ${data?.length || 0} content schedules total`);
     return data as unknown as CalendarEvent[];
   } catch (error) {
     console.error('Error in getAllContentSchedules:', error);
@@ -80,7 +77,7 @@ export async function createContentSchedule(schedule: ContentScheduleFormData): 
       title: schedule.title || " " // Use a space character to satisfy NOT NULL constraint
     };
     
-    console.log('Creating content schedule:', processedSchedule);
+    console.log('Creating content schedule');
     
     const { data, error } = await supabase
       .from(ONI_AGENCIA_CONTENT_SCHEDULES_TABLE)
@@ -93,7 +90,7 @@ export async function createContentSchedule(schedule: ContentScheduleFormData): 
       throw error;
     }
 
-    console.log('Created content schedule:', data);
+    console.log('Created content schedule:', data?.id);
     return data as unknown as OniAgenciaContentSchedule;
   } catch (error) {
     console.error('Error creating content schedule:', error);
@@ -111,7 +108,7 @@ export async function updateContentSchedule(id: string, schedule: Partial<Conten
       processedSchedule.title = " "; // Use a space character to satisfy NOT NULL constraint
     }
     
-    console.log('Updating content schedule:', id, processedSchedule);
+    console.log('Updating content schedule:', id);
     
     // Only update the fields that are actually provided
     const { data, error } = await supabase
@@ -126,7 +123,7 @@ export async function updateContentSchedule(id: string, schedule: Partial<Conten
       throw error;
     }
 
-    console.log('Updated content schedule:', data);
+    console.log('Updated content schedule:', id);
     return data as unknown as OniAgenciaContentSchedule;
   } catch (error) {
     console.error('Error updating content schedule:', error);
@@ -136,6 +133,8 @@ export async function updateContentSchedule(id: string, schedule: Partial<Conten
 
 export async function deleteContentSchedule(id: string): Promise<void> {
   try {
+    console.log('Deleting content schedule:', id);
+    
     const { error } = await supabase
       .from(ONI_AGENCIA_CONTENT_SCHEDULES_TABLE)
       .delete()
@@ -145,6 +144,8 @@ export async function deleteContentSchedule(id: string): Promise<void> {
       console.error('Error deleting content schedule:', error);
       throw error;
     }
+    
+    console.log('Deleted content schedule:', id);
   } catch (error) {
     console.error('Error deleting content schedule:', error);
     throw error;

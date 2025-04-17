@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { OniAgenciaMenu } from "@/components/oni_agencia/OniAgenciaMenu";
 import { CalendarDays, RefreshCw, List, LayoutGrid } from "lucide-react";
 import { ContentCalendar } from "@/components/oni_agencia/content-schedule/ContentCalendar";
@@ -24,12 +24,21 @@ const OniAgenciaControlePauta = () => {
   
   const { data: clients = [], isLoading: isLoadingClients } = useClients();
   
-  // If there are clients and none is selected, select the first one
+  // Se houver clientes e nenhum estiver selecionado, selecione o primeiro
   useEffect(() => {
     if (clients.length > 0 && !selectedClient) {
       setSelectedClient(clients[0].id);
     }
   }, [clients, selectedClient]);
+  
+  // UseCallback para melhorar a performance
+  const handleClientChange = useCallback((clientId: string) => {
+    setSelectedClient(clientId);
+  }, []);
+
+  const handleCollaboratorChange = useCallback((collaboratorId: string | null) => {
+    setSelectedCollaborator(collaboratorId);
+  }, []);
   
   const { 
     data: schedules = [], 
@@ -38,43 +47,21 @@ const OniAgenciaControlePauta = () => {
     isRefetching
   } = useContentSchedules(selectedClient, selectedYear, selectedMonth);
   
-  // Log the current state to debug
-  useEffect(() => {
-    console.log("OniAgenciaControlePauta state:", {
-      selectedClient,
-      selectedMonth,
-      selectedYear,
-      selectedCollaborator,
-      schedulesLoaded: schedules.length,
-      schedules,
-      viewMode
-    });
-  }, [selectedClient, selectedMonth, selectedYear, selectedCollaborator, schedules, viewMode]);
-  
-  // Refetch when month/year/client changes
-  useEffect(() => {
-    if (selectedClient) {
-      console.log('Refetching schedules due to state change');
-      refetchSchedules();
-    }
-  }, [selectedClient, selectedMonth, selectedYear, refetchSchedules]);
-  
-  const handleMonthYearChange = (month: number, year: number) => {
-    console.log('Changing month/year to:', { month, year });
+  // Refetch quando mês/ano/cliente muda
+  const handleMonthYearChange = useCallback((month: number, year: number) => {
     setSelectedMonth(month);
     setSelectedYear(year);
-  };
+  }, []);
 
-  const handleManualRefetch = () => {
-    console.log('Manually refreshing schedules');
+  const handleManualRefetch = useCallback(() => {
     refetchSchedules();
-  };
+  }, [refetchSchedules]);
 
-  const handleViewChange = (value: string) => {
+  const handleViewChange = useCallback((value: string) => {
     if (value === "calendar" || value === "list") {
       setViewMode(value);
     }
-  };
+  }, []);
   
   return (
     <main className="container-fluid p-0 max-w-full">
@@ -112,10 +99,10 @@ const OniAgenciaControlePauta = () => {
           selectedMonth={selectedMonth}
           selectedYear={selectedYear}
           selectedCollaborator={selectedCollaborator}
-          onClientChange={setSelectedClient}
+          onClientChange={handleClientChange}
           onMonthChange={setSelectedMonth}
           onYearChange={setSelectedYear}
-          onCollaboratorChange={setSelectedCollaborator}
+          onCollaboratorChange={handleCollaboratorChange}
           isCollapsed={isCollapsed}
           onToggleCollapse={toggleFilters}
         />
