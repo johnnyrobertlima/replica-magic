@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 import { fetchInBatches } from "@/services/bluebay/utils/batchFetchUtils";
@@ -18,7 +19,6 @@ export const fetchGroups = async () => {
       .from("bluebay_grupo_item_view")
       .select("id, gru_codigo, gru_descricao, empresa_nome, empresa_id")
       .eq("ativo", true)
-      .eq("empresa_nome", "Bluebay") // Filter groups by company = Bluebay
       .order("gru_descricao");
 
     if (error) {
@@ -123,24 +123,13 @@ export const fetchItems = async (
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
   
-  // Get active Bluebay groups
-  const bluebayGroupCodes = await getBluebayGroupCodes();
-  
   // Build our query
   let query = supabase
     .from("BLUEBAY_ITEM")
     .select("*", { count: "exact" })
     .eq("ativo", true); // Only fetch active items
 
-  // Filter by Bluebay group codes
-  if (bluebayGroupCodes.length > 0) {
-    query = query.in("GRU_CODIGO", bluebayGroupCodes);
-  } else {
-    // If no Bluebay groups found, return empty result
-    return { items: [], count: 0 };
-  }
-
-  // Apply additional filters
+  // Apply filters
   if (searchTerm) {
     query = query.or(`ITEM_CODIGO.ilike.%${searchTerm}%,DESCRICAO.ilike.%${searchTerm}%,CODIGOAUX.ilike.%${searchTerm}%`);
   }
@@ -161,12 +150,15 @@ export const fetchItems = async (
 
   if (error) throw error;
   
-  // Ensure we only include items with Bluebay group codes
+  // Filter items to only include those with active groups
+  const activeGroups = await getActiveGroupCodes();
+  
+  // Get unique items (no duplicates) and filter by active groups
   const uniqueItemsMap = new Map();
   if (data) {
     for (const item of data) {
-      // Only include items whose groups are in bluebayGroupCodes
-      if (bluebayGroupCodes.includes(item.GRU_CODIGO)) {
+      // Only include items whose groups are active or if there's no GRU_CODIGO
+      if (!item.GRU_CODIGO || activeGroups.includes(item.GRU_CODIGO)) {
         if (!uniqueItemsMap.has(item.ITEM_CODIGO)) {
           uniqueItemsMap.set(item.ITEM_CODIGO, item);
         }
@@ -178,31 +170,8 @@ export const fetchItems = async (
   
   return { 
     items: uniqueItems, 
-    count: count // Use the count from the query
+    count: uniqueItems.length // Adjusted count based on active groups filtering
   };
-};
-
-/**
- * Get all Bluebay group codes from bluebay_grupo_item_view
- */
-const getBluebayGroupCodes = async (): Promise<string[]> => {
-  try {
-    const { data, error } = await supabase
-      .from("bluebay_grupo_item_view")
-      .select("gru_codigo")
-      .eq("ativo", true)
-      .eq("empresa_nome", "Bluebay");
-
-    if (error) {
-      console.error("Error fetching Bluebay group codes:", error);
-      return [];
-    }
-
-    return data.map(group => group.gru_codigo).filter(Boolean);
-  } catch (error) {
-    console.error("Error in getBluebayGroupCodes:", error);
-    return [];
-  }
 };
 
 /**
@@ -236,13 +205,8 @@ export const fetchAllItems = async (
   try {
     console.log("Iniciando busca de todos os itens em lotes de 1000");
     
-    // Get Bluebay groups to filter items
-    const bluebayGroupCodes = await getBluebayGroupCodes();
-    
-    if (bluebayGroupCodes.length === 0) {
-      console.log("Nenhum grupo Bluebay encontrado para filtrar itens");
-      return [];
-    }
+    // Get active groups to filter items
+    const activeGroups = await getActiveGroupCodes();
     
     if (searchTerm) {
       // Para buscas com termo, usamos uma abordagem diferentes para garantir resultados completos
@@ -269,7 +233,6 @@ export const fetchAllItems = async (
               .from("BLUEBAY_ITEM")
               .select("*", { count: "exact", head: false })
               .eq("ativo", true) // Only fetch active items
-              .in("GRU_CODIGO", bluebayGroupCodes) // Filter by Bluebay group codes
               .ilike(field, `%${term}%`)
               .order("DESCRICAO")
               .range(offset, offset + limit - 1)
@@ -306,7 +269,12 @@ export const fetchAllItems = async (
       
       console.log(`Total final após busca por texto: ${totalItems.length} itens únicos`);
       
-      return totalItems;
+      // After fetching items, filter to keep only those with active groups
+      const filteredItems = totalItems.filter(item => 
+        !item.GRU_CODIGO || activeGroups.includes(item.GRU_CODIGO)
+      );
+      
+      return filteredItems;
     } else {
       // Usar fetchInBatches para carregar todos os códigos de estoque
       console.log("Buscando todos os códigos de itens do estoque com LOCAL = 1");
@@ -355,7 +323,6 @@ export const fetchAllItems = async (
           .select("*", { count: "exact", head: false })
           .eq("ativo", true) // Only fetch active items
           .in("ITEM_CODIGO", codeBatch)
-          .in("GRU_CODIGO", bluebayGroupCodes) // Filter by Bluebay group codes
           .throwOnError();
         
         if (groupFilter && groupFilter !== "all") {
@@ -400,9 +367,14 @@ export const fetchAllItems = async (
       
       const finalItems = Array.from(uniqueItemsMap.values());
       
-      console.log(`Total final: ${finalItems.length} itens únicos carregados com sucesso`);
+      // After fetching items, filter to keep only those with active groups
+      const filteredItems = finalItems.filter(item => 
+        !item.GRU_CODIGO || activeGroups.includes(item.GRU_CODIGO)
+      );
       
-      return finalItems;
+      console.log(`Total final: ${filteredItems.length} itens únicos carregados com sucesso`);
+      
+      return filteredItems;
     }
   } catch (error) {
     console.error("Erro ao buscar todos os itens:", error);
