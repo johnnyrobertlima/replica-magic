@@ -379,3 +379,98 @@ export const fetchAllItems = async (
     throw error;
   }
 };
+
+/**
+ * Gets item details with matriz and filial values
+ */
+export const getItemWithMatrizFilial = async (itemCode: string) => {
+  try {
+    console.log(`Fetching item with matriz/filial for item code: ${itemCode}`);
+    const { data, error } = await supabase
+      .from("BLUEBAY_ITEM")
+      .select("*")
+      .eq("ITEM_CODIGO", itemCode)
+      .maybeSingle();
+
+    if (error) {
+      console.error(`Error fetching item ${itemCode}:`, error);
+      throw error;
+    }
+
+    if (!data) {
+      console.log(`Item ${itemCode} not found`);
+      return null;
+    }
+
+    console.log(`Item found: ${itemCode} with MATRIZ=${data.MATRIZ}, FILIAL=${data.FILIAL}`);
+    return data;
+  } catch (error) {
+    console.error(`Error in getItemWithMatrizFilial for ${itemCode}:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Saves or updates an item in the database
+ */
+export const saveItem = async (itemData: any, isUpdate: boolean = false) => {
+  try {
+    console.log(`${isUpdate ? 'Updating' : 'Creating'} item:`, itemData);
+    
+    // Clean data for saving
+    const cleanedData = {
+      ...itemData,
+      // Add any necessary data transformations here
+    };
+    
+    let result;
+    if (isUpdate) {
+      const { data, error } = await supabase
+        .from("BLUEBAY_ITEM")
+        .update(cleanedData)
+        .eq("ITEM_CODIGO", itemData.ITEM_CODIGO)
+        .select();
+        
+      if (error) throw error;
+      result = { data, message: "Item atualizado com sucesso" };
+    } else {
+      const { data, error } = await supabase
+        .from("BLUEBAY_ITEM")
+        .insert(cleanedData)
+        .select();
+        
+      if (error) throw error;
+      result = { data, message: "Item cadastrado com sucesso" };
+    }
+    
+    console.log(`Item ${isUpdate ? 'updated' : 'created'} successfully:`, result);
+    return result;
+  } catch (error) {
+    console.error(`Error ${isUpdate ? 'updating' : 'creating'} item:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Marks an item as inactive (soft delete)
+ */
+export const deleteItem = async (itemCode: string) => {
+  try {
+    console.log(`Deleting item with code: ${itemCode}`);
+    
+    // Mark as inactive instead of actually deleting
+    const { data, error } = await supabase
+      .from("BLUEBAY_ITEM")
+      .update({ ativo: false })
+      .eq("ITEM_CODIGO", itemCode)
+      .select();
+      
+    if (error) throw error;
+    
+    console.log(`Item ${itemCode} marked as inactive`);
+    return { data, message: "Item excluído com sucesso" };
+  } catch (error) {
+    console.error(`Error deleting item ${itemCode}:`, error);
+    throw error;
+  }
+};
