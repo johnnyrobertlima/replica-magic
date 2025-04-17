@@ -1,6 +1,5 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { v4 as uuidv4 } from "uuid";
 import { fetchInBatches } from "@/services/bluebay/utils/batchFetchUtils";
 
 // Cache para grupos (não muda com frequência)
@@ -19,6 +18,7 @@ export const fetchGroups = async () => {
       .from("bluebay_grupo_item_view")
       .select("id, gru_codigo, gru_descricao, empresa_nome, empresa_id")
       .eq("ativo", true)
+      .eq("empresa_id", "19f0609b-5c9f-4e69-a0ae-3a5fda98f08c")
       .order("gru_descricao");
 
     if (error) {
@@ -74,6 +74,7 @@ export const fetchEmpresas = async () => {
       .from("bluebay_grupo_item_view")
       .select("empresa_nome")
       .eq("ativo", true)
+      .eq("empresa_id", "19f0609b-5c9f-4e69-a0ae-3a5fda98f08c")
       .not("empresa_nome", "is", null);
 
     if (error) {
@@ -119,9 +120,8 @@ export const fetchItems = async (
   page: number,
   pageSize: number
 ) => {
-  // Calculate range based on current page and page size
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
+  // Get active groups to filter items
+  const activeGroups = await getActiveGroupCodes();
   
   // Build our query
   let query = supabase
@@ -138,12 +138,15 @@ export const fetchItems = async (
     query = query.eq("GRU_CODIGO", groupFilter);
   }
 
-  // Apply empresa filter if selected
   if (empresaFilter && empresaFilter !== "all") {
     query = query.eq("empresa", empresaFilter);
   }
 
-  // Apply pagination and ordering after filters
+  // Calculate range based on current page and page size
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  // Apply pagination and ordering
   query = query.order("DESCRICAO").range(from, to);
 
   const { data, error, count } = await query;
@@ -151,14 +154,11 @@ export const fetchItems = async (
   if (error) throw error;
   
   // Filter items to only include those with active groups
-  const activeGroups = await getActiveGroupCodes();
-  
-  // Get unique items (no duplicates) and filter by active groups
   const uniqueItemsMap = new Map();
   if (data) {
     for (const item of data) {
-      // Only include items whose groups are active or if there's no GRU_CODIGO
-      if (!item.GRU_CODIGO || activeGroups.includes(item.GRU_CODIGO)) {
+      // Only include items whose groups are active
+      if (activeGroups.includes(item.GRU_CODIGO)) {
         if (!uniqueItemsMap.has(item.ITEM_CODIGO)) {
           uniqueItemsMap.set(item.ITEM_CODIGO, item);
         }
@@ -182,7 +182,8 @@ const getActiveGroupCodes = async (): Promise<string[]> => {
     const { data, error } = await supabase
       .from("bluebay_grupo_item_view")
       .select("gru_codigo")
-      .eq("ativo", true);
+      .eq("ativo", true)
+      .eq("empresa_id", "19f0609b-5c9f-4e69-a0ae-3a5fda98f08c");
 
     if (error) {
       console.error("Error fetching active group codes:", error);
@@ -258,9 +259,12 @@ export const fetchAllItems = async (
         
         for (const item of itemsData) {
           if (item && item.ITEM_CODIGO && !processedItemCodes.has(item.ITEM_CODIGO)) {
-            totalItems.push(item);
-            processedItemCodes.add(item.ITEM_CODIGO);
-            newItemsAdded++;
+            // Only include items whose groups are active
+            if (!item.GRU_CODIGO || activeGroups.includes(item.GRU_CODIGO)) {
+              totalItems.push(item);
+              processedItemCodes.add(item.ITEM_CODIGO);
+              newItemsAdded++;
+            }
           }
         }
         
@@ -268,13 +272,7 @@ export const fetchAllItems = async (
       }
       
       console.log(`Total final após busca por texto: ${totalItems.length} itens únicos`);
-      
-      // After fetching items, filter to keep only those with active groups
-      const filteredItems = totalItems.filter(item => 
-        !item.GRU_CODIGO || activeGroups.includes(item.GRU_CODIGO)
-      );
-      
-      return filteredItems;
+      return totalItems;
     } else {
       // Usar fetchInBatches para carregar todos os códigos de estoque
       console.log("Buscando todos os códigos de itens do estoque com LOCAL = 1");
@@ -341,7 +339,13 @@ export const fetchAllItems = async (
         }
         
         console.log(`Lote ${batchIndex + 1}: Encontrados ${batchItems.length} de ${batchCount} itens possíveis`);
-        allItems = [...allItems, ...batchItems];
+        
+        // Filter items by active groups
+        const validItems = batchItems.filter(item => 
+          !item.GRU_CODIGO || activeGroups.includes(item.GRU_CODIGO)
+        );
+        
+        allItems = [...allItems, ...validItems];
         
         console.log(`Progresso: ${allItems.length}/${uniqueItemCodes.length} itens (${Math.round((allItems.length / uniqueItemCodes.length) * 100)}%)`);
       }
@@ -366,165 +370,12 @@ export const fetchAllItems = async (
       }
       
       const finalItems = Array.from(uniqueItemsMap.values());
+      console.log(`Total final: ${finalItems.length} itens únicos carregados com sucesso`);
       
-      // After fetching items, filter to keep only those with active groups
-      const filteredItems = finalItems.filter(item => 
-        !item.GRU_CODIGO || activeGroups.includes(item.GRU_CODIGO)
-      );
-      
-      console.log(`Total final: ${filteredItems.length} itens únicos carregados com sucesso`);
-      
-      return filteredItems;
+      return finalItems;
     }
   } catch (error) {
     console.error("Erro ao buscar todos os itens:", error);
     throw error;
-  }
-};
-
-export const saveItem = async (itemData: any, isUpdate: boolean) => {
-  try {
-    // Clean up UUID fields to prevent the "invalid input syntax for type uuid" error
-    const cleanedItemData = {
-      ...itemData,
-      id_subcategoria: itemData.id_subcategoria || null,
-      id_marca: itemData.id_marca || null
-    };
-
-    if (isUpdate) {
-      const { error } = await supabase
-        .from("BLUEBAY_ITEM")
-        .update({
-          DESCRICAO: cleanedItemData.DESCRICAO,
-          GRU_CODIGO: cleanedItemData.GRU_CODIGO,
-          GRU_DESCRICAO: cleanedItemData.GRU_DESCRICAO,
-          CODIGOAUX: cleanedItemData.CODIGOAUX,
-          id_subcategoria: cleanedItemData.id_subcategoria,
-          id_marca: cleanedItemData.id_marca,
-          empresa: cleanedItemData.empresa,
-          estacao: cleanedItemData.estacao,
-          genero: cleanedItemData.genero,
-          faixa_etaria: cleanedItemData.faixa_etaria,
-          ativo: cleanedItemData.ativo,
-          ncm: cleanedItemData.ncm
-        })
-        .eq("ITEM_CODIGO", cleanedItemData.ITEM_CODIGO);
-
-      if (error) throw error;
-      
-      return { success: true, message: "O item foi atualizado com sucesso." };
-    } else {
-      // For new items, include current date and default values for MATRIZ and FILIAL
-      const { error } = await supabase
-        .from("BLUEBAY_ITEM")
-        .insert({
-          ITEM_CODIGO: cleanedItemData.ITEM_CODIGO,
-          DESCRICAO: cleanedItemData.DESCRICAO,
-          GRU_CODIGO: cleanedItemData.GRU_CODIGO,
-          GRU_DESCRICAO: cleanedItemData.GRU_DESCRICAO,
-          CODIGOAUX: cleanedItemData.CODIGOAUX,
-          id_subcategoria: cleanedItemData.id_subcategoria,
-          id_marca: cleanedItemData.id_marca,
-          empresa: cleanedItemData.empresa,
-          estacao: cleanedItemData.estacao,
-          genero: cleanedItemData.genero,
-          faixa_etaria: cleanedItemData.faixa_etaria,
-          ativo: cleanedItemData.ativo,
-          ncm: cleanedItemData.ncm,
-          DATACADASTRO: new Date().toISOString(),
-          MATRIZ: 1, // Required for foreign key constraint
-          FILIAL: 1  // Required for foreign key constraint
-        });
-
-      if (error) throw error;
-      
-      return { success: true, message: "O item foi cadastrado com sucesso." };
-    }
-  } finally {
-    // Limpar o cache de grupos quando salvarmos um item
-    // pois pode ter sido adicionado um novo grupo
-    groupsCache = null;
-  }
-};
-
-export const deleteItem = async (itemCode: string) => {
-  try {
-    // First delete any variations that might exist for this item
-    await supabase
-      .from("BLUEBAY_ITEM_VARIACAO")
-      .delete()
-      .eq("item_codigo", itemCode);
-      
-    // Then delete the item itself
-    const { error } = await supabase
-      .from("BLUEBAY_ITEM")
-      .delete()
-      .eq("ITEM_CODIGO", itemCode);
-
-    if (error) throw error;
-    
-    return { success: true, message: "O item foi excluído com sucesso." };
-  } finally {
-    // Limpar o cache de grupos quando excluirmos um item
-    // pois pode ser que tenhamos removido um grupo
-    groupsCache = null;
-  }
-};
-
-// Function to verify if an item exists before creating variations
-export const verifyItemExists = async (itemCode: string): Promise<boolean> => {
-  if (!itemCode) return false;
-  
-  try {
-    console.log(`Checking if item exists: ${itemCode}`);
-    
-    const { data, error } = await supabase
-      .from("BLUEBAY_ITEM")
-      .select("ITEM_CODIGO, MATRIZ, FILIAL")
-      .eq("ITEM_CODIGO", itemCode)
-      .limit(1);
-
-    if (error) {
-      console.error("Error verifying item existence:", error);
-      return false;
-    }
-
-    const exists = Array.isArray(data) && data.length > 0;
-    console.log(`Item ${itemCode} exists: ${exists}`);
-    return exists;
-  } catch (error) {
-    console.error("Exception checking item existence:", error);
-    return false;
-  }
-};
-
-// Função para obter um item completo, incluindo matriz e filial
-export const getItemWithMatrizFilial = async (itemCode: string): Promise<{
-  ITEM_CODIGO: string;
-  MATRIZ: number;
-  FILIAL: number;
-} | null> => {
-  if (!itemCode) return null;
-  
-  try {
-    const { data, error } = await supabase
-      .from("BLUEBAY_ITEM")
-      .select("ITEM_CODIGO, MATRIZ, FILIAL")
-      .eq("ITEM_CODIGO", itemCode)
-      .limit(1);
-
-    if (error) {
-      console.error("Error fetching item details:", error);
-      return null;
-    }
-
-    if (Array.isArray(data) && data.length > 0) {
-      return data[0];
-    }
-    
-    return null;
-  } catch (error) {
-    console.error("Exception fetching item details:", error);
-    return null;
   }
 };
