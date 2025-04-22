@@ -12,11 +12,25 @@ export function useScheduleFormState({
   selectedEvent?: CalendarEvent;
 }) {
   const [currentSelectedEvent, setCurrentSelectedEvent] = useState<CalendarEvent | null>(selectedEvent || null);
-  const [formData, setFormData] = useState<ContentScheduleFormData>({
+  const [formData, setFormData] = useState<{
+    // Permitir creators como string[] | null
+    client_id: string;
+    service_id: string;
+    collaborator_id: string | null;
+    creators: string[] | null;
+    title: string;
+    description: string | null;
+    scheduled_date: string;
+    execution_phase: string | null;
+    editorial_line_id: string | null;
+    product_id: string | null;
+    status_id: string | null;
+  }>({
     client_id: clientId,
     service_id: "",
     collaborator_id: null,
-    title: "", // Changed from null to empty string
+    creators: [],
+    title: "",
     description: null,
     scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
     execution_phase: null,
@@ -25,25 +39,22 @@ export function useScheduleFormState({
     status_id: null
   });
   
-  // Use a ref to track when we're in the middle of user input
   const isUserEditing = useRef(false);
 
-  // Set the selectedEvent when it comes from props
   useEffect(() => {
     if (selectedEvent && !isUserEditing.current) {
-      console.log("useScheduleFormState selectedEvent effect:", selectedEvent.id);
       handleSelectEvent(selectedEvent);
     }
   }, [selectedEvent]);
 
   const resetForm = () => {
-    console.log("resetting form in useScheduleFormState");
     setCurrentSelectedEvent(null);
     setFormData({
       client_id: clientId,
       service_id: "",
       collaborator_id: null,
-      title: "", // Changed from null to empty string
+      creators: [],
+      title: "",
       description: null,
       scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
       execution_phase: null,
@@ -54,15 +65,13 @@ export function useScheduleFormState({
   };
 
   const handleSelectEvent = (event: CalendarEvent) => {
-    console.log("selecting event in useScheduleFormState:", event.id);
     setCurrentSelectedEvent(event);
-    
-    // Ensure we properly map null or empty values
     setFormData({
       client_id: event.client_id,
-      service_id: event.service_id || "", // Ensure it's never null - THIS IS CRITICAL
+      service_id: event.service_id || "",
       collaborator_id: event.collaborator_id,
-      title: event.title || "", // Ensure it's never null
+      creators: event.creators || [],
+      title: event.title || "",
       description: event.description,
       scheduled_date: event.scheduled_date,
       execution_phase: event.execution_phase,
@@ -74,49 +83,39 @@ export function useScheduleFormState({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    console.log("Input changed:", name, value);
-    
-    // Set the flag to indicate user is editing
     isUserEditing.current = true;
-    
     setFormData(prev => ({ ...prev, [name]: value || (name === "title" ? "" : null) }));
-    
-    // Reset the flag after a short delay
-    setTimeout(() => {
-      isUserEditing.current = false;
-    }, 100);
+    setTimeout(() => { isUserEditing.current = false; }, 100);
   };
 
-  const handleSelectChange = (name: string, value: string) => {
-    console.log("Select changed:", name, value);
-    
-    // Set the flag to indicate user is editing
+  // Multi-select awareness
+  const handleSelectChange = (name: string, value: string | string[]) => {
     isUserEditing.current = true;
-    
-    // Handle UUID fields consistently - if value is empty or "null", set to null instead of empty string
-    if (
-      (name === "service_id" || 
-      name === "status_id" || 
-      name === "editorial_line_id" || 
-      name === "product_id" || 
-      name === "collaborator_id") && 
-      (value === "" || value === "null")
-    ) {
-      // For service_id, which is required, keep the current value if an event is selected
-      if (name === "service_id" && currentSelectedEvent) {
-        // Don't change the service_id value
-        console.log("Keeping existing service_id for required field");
-      } else {
-        setFormData(prev => ({ ...prev, [name]: null }));
-      }
+
+    // nova lógica para creators
+    if (name === "creators") {
+      setFormData(prev => ({ ...prev, creators: Array.isArray(value) ? value : [] }));
     } else {
-      setFormData(prev => ({ ...prev, [name]: value === "null" ? null : value }));
+      // Lida com campos padrão (como colaborador_id, etc)
+      if (
+        (name === "service_id" || 
+        name === "status_id" || 
+        name === "editorial_line_id" || 
+        name === "product_id" || 
+        name === "collaborator_id") && 
+        (value === "" || value === "null")
+      ) {
+        if (name === "service_id" && currentSelectedEvent) {
+          // mantém service_id
+        } else {
+          setFormData(prev => ({ ...prev, [name]: null }));
+        }
+      } else {
+        setFormData(prev => ({ ...prev, [name]: value === "null" ? null : value }));
+      }
     }
-    
-    // Reset the flag after a short delay
-    setTimeout(() => {
-      isUserEditing.current = false;
-    }, 100);
+
+    setTimeout(() => { isUserEditing.current = false; }, 100);
   };
 
   return {

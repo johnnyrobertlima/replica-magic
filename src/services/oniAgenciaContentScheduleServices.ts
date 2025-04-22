@@ -71,125 +71,103 @@ export async function getAllContentSchedules(clientId: string): Promise<Calendar
 // Helper function to sanitize data before sending to the API
 const sanitizeScheduleData = (schedule: ContentScheduleFormData | Partial<ContentScheduleFormData>) => {
   const processedSchedule = { ...schedule };
-  
-  // Ensure title is never null or empty before submitting to the database
+
   if ('title' in processedSchedule && (!processedSchedule.title || processedSchedule.title === "")) {
-    processedSchedule.title = " "; // Use a space character to satisfy NOT NULL constraint
+    processedSchedule.title = " ";
   }
-  
-  // CRITICAL: Ensure service_id is never null as it's a required field in the database
   if ('service_id' in processedSchedule) {
     if (processedSchedule.service_id === "" || processedSchedule.service_id === null) {
-      // If we're attempting to update with an empty service_id, we need to fetch the current value
-      // to maintain the existing value rather than setting null
       delete processedSchedule.service_id;
     }
   }
-  
-  // Ensure UUID fields are null, not empty strings
   if ('status_id' in processedSchedule && processedSchedule.status_id === "") {
     processedSchedule.status_id = null;
   }
-  
   if ('editorial_line_id' in processedSchedule && processedSchedule.editorial_line_id === "") {
     processedSchedule.editorial_line_id = null;
   }
-  
   if ('product_id' in processedSchedule && processedSchedule.product_id === "") {
     processedSchedule.product_id = null;
   }
-  
   if ('collaborator_id' in processedSchedule && processedSchedule.collaborator_id === "") {
     processedSchedule.collaborator_id = null;
   }
-  
+
+  // Creators: se não for um array, undefined ou vazio, setar para null
+  if ('creators' in processedSchedule) {
+    if (!Array.isArray(processedSchedule.creators) || processedSchedule.creators.length === 0) {
+      processedSchedule.creators = null;
+    }
+  }
+
   return processedSchedule;
 };
 
 export async function createContentSchedule(schedule: ContentScheduleFormData): Promise<OniAgenciaContentSchedule> {
   try {
-    // Sanitize the data before submitting
     const processedSchedule = sanitizeScheduleData(schedule);
-    
-    // Make sure required fields are present and not undefined/null for create operation
+
     if (!processedSchedule.client_id || !processedSchedule.scheduled_date || processedSchedule.title === undefined) {
       throw new Error('Missing required fields for content schedule creation');
     }
-    
-    // CRITICAL: Ensure service_id is NEVER null as it's a required field
     if (!processedSchedule.service_id) {
       throw new Error('service_id is required for content schedule creation');
     }
-    
-    // For creation, we need to ensure all required fields are set
+
     const createData = {
       client_id: processedSchedule.client_id,
-      service_id: processedSchedule.service_id, // Must be non-null
-      title: processedSchedule.title || " ", // Ensure it's never null or empty
+      service_id: processedSchedule.service_id,
+      title: processedSchedule.title || " ",
       scheduled_date: processedSchedule.scheduled_date,
-      // Optional fields
       collaborator_id: processedSchedule.collaborator_id,
+      creators: processedSchedule.creators,
       description: processedSchedule.description,
       execution_phase: processedSchedule.execution_phase,
       editorial_line_id: processedSchedule.editorial_line_id,
       product_id: processedSchedule.product_id,
       status_id: processedSchedule.status_id
-    };
-    
+    } as Partial<OniAgenciaContentSchedule>;
+
     console.log('Creating content schedule:', createData);
-    
+
     const { data, error } = await supabase
       .from(ONI_AGENCIA_CONTENT_SCHEDULES_TABLE)
       .insert(createData)
       .select()
       .single();
 
-    if (error) {
-      console.error('Error creating content schedule:', error);
-      throw error;
-    }
-
-    console.log('Created content schedule:', data?.id);
+    if (error) throw error;
     return data as unknown as OniAgenciaContentSchedule;
   } catch (error) {
-    console.error('Error creating content schedule:', error);
     throw error;
   }
 }
 
 export async function updateContentSchedule(id: string, schedule: Partial<ContentScheduleFormData>): Promise<OniAgenciaContentSchedule> {
   try {
-    // Sanitize the data before submitting
     const processedSchedule = sanitizeScheduleData(schedule);
-    
-    console.log('Updating content schedule:', id, processedSchedule);
-    
-    // CRITICAL FIX: If service_id is being set to null, we need to handle it specially
+
     if ('service_id' in schedule && (schedule.service_id === null || schedule.service_id === "")) {
-      // First, fetch the current record to get the existing service_id
       const { data: existingRecord, error: fetchError } = await supabase
         .from(ONI_AGENCIA_CONTENT_SCHEDULES_TABLE)
         .select('service_id')
         .eq('id', id)
         .single();
-        
-      if (fetchError) {
-        console.error('Error fetching existing content schedule:', fetchError);
-        throw fetchError;
-      }
-      
-      // If we found an existing record, use its service_id value
+      if (fetchError) throw fetchError;
       if (existingRecord && existingRecord.service_id) {
         processedSchedule.service_id = existingRecord.service_id;
-        console.log('Using existing service_id value for update:', existingRecord.service_id);
       } else {
-        // This shouldn't happen, but if it does, we'll reject the update
-        console.error('Cannot update schedule: no existing service_id found and null value not allowed');
         throw new Error('service_id cannot be null');
       }
     }
-    
-    // Only update the fields that are actually provided
+
+    // Adiciona o campo creators aqui também
+    if ('creators' in processedSchedule && (!Array.isArray(processedSchedule.creators) || processedSchedule.creators.length === 0)) {
+      processedSchedule.creators = null;
+    }
+
+    console.log('Updating content schedule:', id, processedSchedule);
+
     const { data, error } = await supabase
       .from(ONI_AGENCIA_CONTENT_SCHEDULES_TABLE)
       .update(processedSchedule)
@@ -197,15 +175,9 @@ export async function updateContentSchedule(id: string, schedule: Partial<Conten
       .select()
       .single();
 
-    if (error) {
-      console.error('Error updating content schedule:', error);
-      throw error;
-    }
-
-    console.log('Updated content schedule:', id);
+    if (error) throw error;
     return data as unknown as OniAgenciaContentSchedule;
   } catch (error) {
-    console.error('Error updating content schedule:', error);
     throw error;
   }
 }
@@ -213,7 +185,7 @@ export async function updateContentSchedule(id: string, schedule: Partial<Conten
 export async function deleteContentSchedule(id: string): Promise<void> {
   try {
     console.log('Deleting content schedule:', id);
-    
+
     const { error } = await supabase
       .from(ONI_AGENCIA_CONTENT_SCHEDULES_TABLE)
       .delete()
