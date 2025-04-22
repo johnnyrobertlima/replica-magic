@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
 import { useCreateContentSchedule, useUpdateContentSchedule, useDeleteContentSchedule } from "@/hooks/useOniAgenciaContentSchedules";
@@ -42,7 +41,6 @@ export function useScheduleMutations({
     }
     
     // Remove empty string values for UUID fields - they should be null instead
-    if (sanitized.service_id === "") sanitized.service_id = null;
     if (sanitized.status_id === "") sanitized.status_id = null;
     if (sanitized.editorial_line_id === "") sanitized.editorial_line_id = null;
     if (sanitized.product_id === "") sanitized.product_id = null;
@@ -65,16 +63,43 @@ export function useScheduleMutations({
       console.log("Sanitized form data:", sanitizedData);
       
       if (currentSelectedEvent) {
+        // If we're updating an existing event
         console.log("Updating event:", currentSelectedEvent.id, sanitizedData);
-        await updateMutation.mutateAsync({
-          id: currentSelectedEvent.id,
-          schedule: sanitizedData
-        });
+        
+        // Special handling for service_id to prevent null values
+        if (!sanitizedData.service_id) {
+          // If service_id is null or empty but we're updating, don't include it
+          // the service will keep its existing value in the database
+          const { service_id, ...updateDataWithoutService } = sanitizedData;
+          
+          console.log("Updating without changing service_id:", updateDataWithoutService);
+          await updateMutation.mutateAsync({
+            id: currentSelectedEvent.id,
+            schedule: updateDataWithoutService
+          });
+        } else {
+          // Normal update with service_id included
+          await updateMutation.mutateAsync({
+            id: currentSelectedEvent.id,
+            schedule: sanitizedData
+          });
+        }
+        
         toast({
           title: "Agendamento atualizado",
           description: "Agendamento atualizado com sucesso."
         });
       } else {
+        // For new events, service_id is required
+        if (!sanitizedData.service_id) {
+          toast({
+            title: "Erro",
+            description: "Selecione um serviço para criar o agendamento.",
+            variant: "destructive"
+          });
+          return;
+        }
+        
         console.log("Creating new event:", sanitizedData);
         await createMutation.mutateAsync(sanitizedData);
         toast({

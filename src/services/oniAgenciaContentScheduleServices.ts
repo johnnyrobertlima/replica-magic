@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { OniAgenciaContentSchedule, ContentScheduleFormData, CalendarEvent } from "@/types/oni-agencia";
 
@@ -78,11 +77,16 @@ const sanitizeScheduleData = (schedule: ContentScheduleFormData | Partial<Conten
     processedSchedule.title = " "; // Use a space character to satisfy NOT NULL constraint
   }
   
-  // Ensure UUID fields are null, not empty strings
-  if ('service_id' in processedSchedule && processedSchedule.service_id === "") {
-    processedSchedule.service_id = null;
+  // CRITICAL: Ensure service_id is never null as it's a required field in the database
+  if ('service_id' in processedSchedule) {
+    if (processedSchedule.service_id === "" || processedSchedule.service_id === null) {
+      // If we're attempting to update with an empty service_id, we need to fetch the current value
+      // to maintain the existing value rather than setting null
+      delete processedSchedule.service_id;
+    }
   }
   
+  // Ensure UUID fields are null, not empty strings
   if ('status_id' in processedSchedule && processedSchedule.status_id === "") {
     processedSchedule.status_id = null;
   }
@@ -112,15 +116,15 @@ export async function createContentSchedule(schedule: ContentScheduleFormData): 
       throw new Error('Missing required fields for content schedule creation');
     }
     
-    // Ensure service_id is a valid string or null, not an empty string
-    if (processedSchedule.service_id === "") {
-      processedSchedule.service_id = null;
+    // CRITICAL: Ensure service_id is NEVER null as it's a required field
+    if (!processedSchedule.service_id) {
+      throw new Error('service_id is required for content schedule creation');
     }
     
     // For creation, we need to ensure all required fields are set
     const createData = {
       client_id: processedSchedule.client_id,
-      service_id: processedSchedule.service_id || null, // Ensure it's never undefined
+      service_id: processedSchedule.service_id, // Must be non-null
       title: processedSchedule.title || " ", // Ensure it's never null or empty
       scheduled_date: processedSchedule.scheduled_date,
       // Optional fields
@@ -160,8 +164,30 @@ export async function updateContentSchedule(id: string, schedule: Partial<Conten
     
     console.log('Updating content schedule:', id, processedSchedule);
     
-    // For update operations we don't need to check for required fields
-    // as they should already exist in the database
+    // CRITICAL FIX: If service_id is being set to null, we need to handle it specially
+    if ('service_id' in schedule && (schedule.service_id === null || schedule.service_id === "")) {
+      // First, fetch the current record to get the existing service_id
+      const { data: existingRecord, error: fetchError } = await supabase
+        .from(ONI_AGENCIA_CONTENT_SCHEDULES_TABLE)
+        .select('service_id')
+        .eq('id', id)
+        .single();
+        
+      if (fetchError) {
+        console.error('Error fetching existing content schedule:', fetchError);
+        throw fetchError;
+      }
+      
+      // If we found an existing record, use its service_id value
+      if (existingRecord && existingRecord.service_id) {
+        processedSchedule.service_id = existingRecord.service_id;
+        console.log('Using existing service_id value for update:', existingRecord.service_id);
+      } else {
+        // This shouldn't happen, but if it does, we'll reject the update
+        console.error('Cannot update schedule: no existing service_id found and null value not allowed');
+        throw new Error('service_id cannot be null');
+      }
+    }
     
     // Only update the fields that are actually provided
     const { data, error } = await supabase

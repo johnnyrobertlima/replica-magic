@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
@@ -61,7 +60,7 @@ export function useScheduleFormState({
     // Ensure we properly map null or empty values
     setFormData({
       client_id: event.client_id,
-      service_id: event.service_id || "", // Ensure it's never null
+      service_id: event.service_id || "", // Ensure it's never null - THIS IS CRITICAL
       collaborator_id: event.collaborator_id,
       title: event.title || "", // Ensure it's never null
       description: event.description,
@@ -103,7 +102,13 @@ export function useScheduleFormState({
       name === "collaborator_id") && 
       (value === "" || value === "null")
     ) {
-      setFormData(prev => ({ ...prev, [name]: null }));
+      // For service_id, which is required, keep the current value if an event is selected
+      if (name === "service_id" && currentSelectedEvent) {
+        // Don't change the service_id value
+        console.log("Keeping existing service_id for required field");
+      } else {
+        setFormData(prev => ({ ...prev, [name]: null }));
+      }
     } else {
       setFormData(prev => ({ ...prev, [name]: value === "null" ? null : value }));
     }
