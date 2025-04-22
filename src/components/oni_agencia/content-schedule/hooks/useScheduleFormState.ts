@@ -57,6 +57,8 @@ export function useScheduleFormState({
   const handleSelectEvent = (event: CalendarEvent) => {
     console.log("selecting event in useScheduleFormState:", event.id);
     setCurrentSelectedEvent(event);
+    
+    // Ensure we properly map null or empty values
     setFormData({
       client_id: event.client_id,
       service_id: event.service_id || "", // Ensure it's never null
@@ -92,7 +94,7 @@ export function useScheduleFormState({
     // Set the flag to indicate user is editing
     isUserEditing.current = true;
     
-    // Handle UUID fields specially - if value is empty, set to null instead of empty string
+    // Handle UUID fields consistently - if value is empty or "null", set to null instead of empty string
     if (
       (name === "service_id" || 
       name === "status_id" || 

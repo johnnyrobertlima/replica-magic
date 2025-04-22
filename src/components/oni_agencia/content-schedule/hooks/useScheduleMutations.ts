@@ -31,6 +31,16 @@ export function useScheduleMutations({
       sanitized.title = " "; // Use a space to satisfy non-null constraint
     }
     
+    // Ensure client_id is always set
+    if (!sanitized.client_id) {
+      sanitized.client_id = clientId;
+    }
+    
+    // Ensure scheduled_date is always set
+    if (!sanitized.scheduled_date) {
+      sanitized.scheduled_date = selectedDate.toISOString().split('T')[0];
+    }
+    
     // Remove empty string values for UUID fields - they should be null instead
     if (sanitized.service_id === "") sanitized.service_id = null;
     if (sanitized.status_id === "") sanitized.status_id = null;

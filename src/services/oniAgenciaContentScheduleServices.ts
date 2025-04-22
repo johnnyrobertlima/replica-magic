@@ -107,11 +107,36 @@ export async function createContentSchedule(schedule: ContentScheduleFormData): 
     // Sanitize the data before submitting
     const processedSchedule = sanitizeScheduleData(schedule);
     
-    console.log('Creating content schedule:', processedSchedule);
+    // Make sure required fields are present and not undefined/null for create operation
+    if (!processedSchedule.client_id || !processedSchedule.scheduled_date || processedSchedule.title === undefined) {
+      throw new Error('Missing required fields for content schedule creation');
+    }
+    
+    // Ensure service_id is a valid string or null, not an empty string
+    if (processedSchedule.service_id === "") {
+      processedSchedule.service_id = null;
+    }
+    
+    // For creation, we need to ensure all required fields are set
+    const createData = {
+      client_id: processedSchedule.client_id,
+      service_id: processedSchedule.service_id || null, // Ensure it's never undefined
+      title: processedSchedule.title || " ", // Ensure it's never null or empty
+      scheduled_date: processedSchedule.scheduled_date,
+      // Optional fields
+      collaborator_id: processedSchedule.collaborator_id,
+      description: processedSchedule.description,
+      execution_phase: processedSchedule.execution_phase,
+      editorial_line_id: processedSchedule.editorial_line_id,
+      product_id: processedSchedule.product_id,
+      status_id: processedSchedule.status_id
+    };
+    
+    console.log('Creating content schedule:', createData);
     
     const { data, error } = await supabase
       .from(ONI_AGENCIA_CONTENT_SCHEDULES_TABLE)
-      .insert(processedSchedule)
+      .insert(createData)
       .select()
       .single();
 
@@ -134,6 +159,9 @@ export async function updateContentSchedule(id: string, schedule: Partial<Conten
     const processedSchedule = sanitizeScheduleData(schedule);
     
     console.log('Updating content schedule:', id, processedSchedule);
+    
+    // For update operations we don't need to check for required fields
+    // as they should already exist in the database
     
     // Only update the fields that are actually provided
     const { data, error } = await supabase
