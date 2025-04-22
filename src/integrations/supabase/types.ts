@@ -2120,6 +2120,17 @@ export type Database = {
       }
     }
     Views: {
+      agendamentos_filtrados: {
+        Row: {
+          agendamento: string | null
+          colaborador_nome: string | null
+          data: string | null
+          linha_editorial: string | null
+          servico: string | null
+          status: string | null
+        }
+        Relationships: []
+      }
       bluebay_grupo_item_view: {
         Row: {
           ativo: boolean | null
@@ -2397,6 +2408,17 @@ export type Database = {
         Returns: {
           item_codigo: string
           fisico: number
+        }[]
+      }
+      get_filtered_schedules_by_collaborator: {
+        Args: { collab_id: string }
+        Returns: {
+          colaborador_nome: string
+          agendamento: string
+          data: string
+          servico: string
+          linha_editorial: string
+          status: string
         }[]
       }
       get_itens_por_cliente: {

@@ -17,7 +17,7 @@ export function useScheduleFormState({
     client_id: clientId,
     service_id: "",
     collaborator_id: null,
-    title: null,
+    title: "", // Changed from null to empty string
     description: null,
     scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
     execution_phase: null,
@@ -29,7 +29,7 @@ export function useScheduleFormState({
   // Use a ref to track when we're in the middle of user input
   const isUserEditing = useRef(false);
 
-  // Set the selectedEvent when it comes from props - only on initial mount or when selectedEvent changes
+  // Set the selectedEvent when it comes from props
   useEffect(() => {
     if (selectedEvent && !isUserEditing.current) {
       console.log("useScheduleFormState selectedEvent effect:", selectedEvent.id);
@@ -44,7 +44,7 @@ export function useScheduleFormState({
       client_id: clientId,
       service_id: "",
       collaborator_id: null,
-      title: null,
+      title: "", // Changed from null to empty string
       description: null,
       scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
       execution_phase: null,
@@ -59,9 +59,9 @@ export function useScheduleFormState({
     setCurrentSelectedEvent(event);
     setFormData({
       client_id: event.client_id,
-      service_id: event.service_id,
+      service_id: event.service_id || "", // Ensure it's never null
       collaborator_id: event.collaborator_id,
-      title: event.title, 
+      title: event.title || "", // Ensure it's never null
       description: event.description,
       scheduled_date: event.scheduled_date,
       execution_phase: event.execution_phase,
@@ -78,7 +78,7 @@ export function useScheduleFormState({
     // Set the flag to indicate user is editing
     isUserEditing.current = true;
     
-    setFormData(prev => ({ ...prev, [name]: value || null }));
+    setFormData(prev => ({ ...prev, [name]: value || (name === "title" ? "" : null) }));
     
     // Reset the flag after a short delay
     setTimeout(() => {
@@ -92,7 +92,19 @@ export function useScheduleFormState({
     // Set the flag to indicate user is editing
     isUserEditing.current = true;
     
-    setFormData(prev => ({ ...prev, [name]: value === "null" ? null : value }));
+    // Handle UUID fields specially - if value is empty, set to null instead of empty string
+    if (
+      (name === "service_id" || 
+      name === "status_id" || 
+      name === "editorial_line_id" || 
+      name === "product_id" || 
+      name === "collaborator_id") && 
+      (value === "" || value === "null")
+    ) {
+      setFormData(prev => ({ ...prev, [name]: null }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value === "null" ? null : value }));
+    }
     
     // Reset the flag after a short delay
     setTimeout(() => {

@@ -69,15 +69,45 @@ export async function getAllContentSchedules(clientId: string): Promise<Calendar
   }
 }
 
+// Helper function to sanitize data before sending to the API
+const sanitizeScheduleData = (schedule: ContentScheduleFormData | Partial<ContentScheduleFormData>) => {
+  const processedSchedule = { ...schedule };
+  
+  // Ensure title is never null or empty before submitting to the database
+  if ('title' in processedSchedule && (!processedSchedule.title || processedSchedule.title === "")) {
+    processedSchedule.title = " "; // Use a space character to satisfy NOT NULL constraint
+  }
+  
+  // Ensure UUID fields are null, not empty strings
+  if ('service_id' in processedSchedule && processedSchedule.service_id === "") {
+    processedSchedule.service_id = null;
+  }
+  
+  if ('status_id' in processedSchedule && processedSchedule.status_id === "") {
+    processedSchedule.status_id = null;
+  }
+  
+  if ('editorial_line_id' in processedSchedule && processedSchedule.editorial_line_id === "") {
+    processedSchedule.editorial_line_id = null;
+  }
+  
+  if ('product_id' in processedSchedule && processedSchedule.product_id === "") {
+    processedSchedule.product_id = null;
+  }
+  
+  if ('collaborator_id' in processedSchedule && processedSchedule.collaborator_id === "") {
+    processedSchedule.collaborator_id = null;
+  }
+  
+  return processedSchedule;
+};
+
 export async function createContentSchedule(schedule: ContentScheduleFormData): Promise<OniAgenciaContentSchedule> {
   try {
-    // Ensure the title is never null before submitting to the database
-    const processedSchedule = {
-      ...schedule,
-      title: schedule.title || " " // Use a space character to satisfy NOT NULL constraint
-    };
+    // Sanitize the data before submitting
+    const processedSchedule = sanitizeScheduleData(schedule);
     
-    console.log('Creating content schedule');
+    console.log('Creating content schedule:', processedSchedule);
     
     const { data, error } = await supabase
       .from(ONI_AGENCIA_CONTENT_SCHEDULES_TABLE)
@@ -100,15 +130,10 @@ export async function createContentSchedule(schedule: ContentScheduleFormData): 
 
 export async function updateContentSchedule(id: string, schedule: Partial<ContentScheduleFormData>): Promise<OniAgenciaContentSchedule> {
   try {
-    // Process the schedule data to handle title
-    const processedSchedule = { ...schedule };
+    // Sanitize the data before submitting
+    const processedSchedule = sanitizeScheduleData(schedule);
     
-    // If title is included in the update, ensure it's not null
-    if ('title' in processedSchedule && (processedSchedule.title === null || processedSchedule.title === "")) {
-      processedSchedule.title = " "; // Use a space character to satisfy NOT NULL constraint
-    }
-    
-    console.log('Updating content schedule:', id);
+    console.log('Updating content schedule:', id, processedSchedule);
     
     // Only update the fields that are actually provided
     const { data, error } = await supabase

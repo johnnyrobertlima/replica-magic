@@ -22,15 +22,21 @@ export function useScheduleMutations({
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
   const isDeleting = deleteMutation.isPending;
 
-  // Helper function to ensure title is handled correctly
+  // Helper function to sanitize data before sending to API
   const sanitizeFormData = (data: ContentScheduleFormData): ContentScheduleFormData => {
     const sanitized = { ...data };
     
     // If title is null or an empty string, set it to a default value
-    // This is a workaround until the database constraint is fixed
     if (sanitized.title === null || sanitized.title === "") {
       sanitized.title = " "; // Use a space to satisfy non-null constraint
     }
+    
+    // Remove empty string values for UUID fields - they should be null instead
+    if (sanitized.service_id === "") sanitized.service_id = null;
+    if (sanitized.status_id === "") sanitized.status_id = null;
+    if (sanitized.editorial_line_id === "") sanitized.editorial_line_id = null;
+    if (sanitized.product_id === "") sanitized.product_id = null;
+    if (sanitized.collaborator_id === "") sanitized.collaborator_id = null;
     
     return sanitized;
   };
@@ -44,6 +50,9 @@ export function useScheduleMutations({
     
     try {
       const sanitizedData = sanitizeFormData(formData);
+
+      // Log sanitized data for debugging
+      console.log("Sanitized form data:", sanitizedData);
       
       if (currentSelectedEvent) {
         console.log("Updating event:", currentSelectedEvent.id, sanitizedData);
@@ -85,10 +94,10 @@ export function useScheduleMutations({
     if (!currentSelectedEvent) return;
     
     try {
-      // Atualiza apenas o status e o colaborador
+      // Atualiza apenas o status, o colaborador e a descrição
       const updateData = {
-        status_id: formData.status_id,
-        collaborator_id: formData.collaborator_id,
+        status_id: formData.status_id === "" ? null : formData.status_id,
+        collaborator_id: formData.collaborator_id === "" ? null : formData.collaborator_id,
         description: formData.description
       };
       

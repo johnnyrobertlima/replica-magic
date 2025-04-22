@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { format } from "date-fns";
 
@@ -9,7 +9,7 @@ export function useCalendarEvents(
   isDialogOpen: boolean,
   setIsDialogOpen: (open: boolean) => void
 ) {
-  // Use useMemo para calcular eventos para a data selecionada
+  // Use useMemo para calcular eventos para a data selecionada de forma otimizada
   const currentEvents = useMemo(() => {
     if (!selectedDate) return [];
     
