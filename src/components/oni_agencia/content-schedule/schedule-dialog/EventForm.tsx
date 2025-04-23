@@ -42,12 +42,10 @@ export function EventForm({
   onInputChange,
   onSelectChange
 }: EventFormProps) {
-  // Ensure creators is always an array, with multiple safety checks
+  // Ensure creators is always an array with multiple safety checks
   const creatorsArray = Array.isArray(formData.creators) 
     ? formData.creators 
-    : formData.creators 
-      ? [formData.creators] 
-      : [];
+    : (formData.creators ? [formData.creators] : []);
   
   return (
     <div className="grid gap-4 py-4">

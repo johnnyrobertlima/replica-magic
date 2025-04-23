@@ -35,12 +35,12 @@ export function CreatorsMultiSelect({
 }: CreatorsMultiSelectProps) {
   const [open, setOpen] = useState(false);
   
-  // Ensure value is always an array, even if it comes in as undefined or null
+  // Ensure value is always a valid array
   const safeValue = Array.isArray(value) ? value : [];
-
+  
   // Make sure collaborators is always an array
   const safeCollaborators = Array.isArray(collaborators) ? collaborators : [];
-
+  
   // Find selected collaborators with safeguards against undefined values
   const selectedCollaborators = safeCollaborators.filter(c => 
     c && c.id && safeValue.includes(c.id)
@@ -82,14 +82,14 @@ export function CreatorsMultiSelect({
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="p-0">
+        <PopoverContent className="w-[300px] p-0">
           <Command>
             <CommandInput placeholder="Buscar creators..." />
             <CommandEmpty>Nenhum creator encontrado.</CommandEmpty>
-            {safeCollaborators && safeCollaborators.length > 0 ? (
-              <CommandGroup>
-                <ScrollArea className="h-64">
-                  {safeCollaborators.map((collaborator) => (
+            <CommandGroup>
+              <ScrollArea className="h-64">
+                {safeCollaborators && safeCollaborators.length > 0 ? (
+                  safeCollaborators.map((collaborator) => (
                     collaborator && collaborator.id ? (
                       <CommandItem
                         key={collaborator.id}
@@ -107,16 +107,14 @@ export function CreatorsMultiSelect({
                         {collaborator.name}
                       </CommandItem>
                     ) : null
-                  ))}
-                </ScrollArea>
-              </CommandGroup>
-            ) : (
-              <CommandGroup>
-                <div className="p-2 text-sm text-muted-foreground">
-                  Nenhum colaborador disponível.
-                </div>
-              </CommandGroup>
-            )}
+                  ))
+                ) : (
+                  <div className="p-2 text-sm text-muted-foreground">
+                    Nenhum colaborador disponível.
+                  </div>
+                )}
+              </ScrollArea>
+            </CommandGroup>
           </Command>
         </PopoverContent>
       </Popover>
@@ -124,20 +122,22 @@ export function CreatorsMultiSelect({
       {selectedCollaborators.length > 0 && (
         <div className="flex flex-wrap gap-1 mt-2">
           {selectedCollaborators.map((collaborator) => (
-            <Badge
-              key={collaborator.id}
-              variant="secondary"
-              className="flex items-center gap-1"
-            >
-              {collaborator.name}
-              <button
-                type="button"
-                className="rounded-full outline-none focus:outline-none"
-                onClick={() => handleRemove(collaborator.id)}
+            collaborator && collaborator.id ? (
+              <Badge
+                key={collaborator.id}
+                variant="secondary"
+                className="flex items-center gap-1"
               >
-                <X className="h-3 w-3" />
-              </button>
-            </Badge>
+                {collaborator.name}
+                <button
+                  type="button"
+                  className="rounded-full outline-none focus:outline-none"
+                  onClick={() => handleRemove(collaborator.id)}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            ) : null
           ))}
         </div>
       )}

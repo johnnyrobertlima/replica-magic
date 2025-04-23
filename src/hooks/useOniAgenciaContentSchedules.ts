@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   getContentSchedules, 
@@ -72,6 +73,10 @@ export function useCreateContentSchedule() {
         ...newSchedule,
         creators: Array.isArray(newSchedule.creators) ? newSchedule.creators : []
       };
+      
+      // Log what we're sending to the API for debugging
+      console.log("Creating schedule with data:", processedSchedule);
+      
       return createContentSchedule(processedSchedule);
     },
     onSuccess: (_, variables) => {
@@ -87,6 +92,11 @@ export function useCreateContentSchedule() {
       
       queryClient.invalidateQueries({
         queryKey: ['allOniAgenciaContentSchedules', client_id]
+      });
+      
+      toast({
+        title: "Agendamento criado",
+        description: "O agendamento foi criado com sucesso.",
       });
     },
     onError: (error) => {
@@ -112,6 +122,10 @@ export function useUpdateContentSchedule() {
         creators: Array.isArray(schedule.creators) ? schedule.creators : 
                  (schedule.creators === undefined ? undefined : [])
       };
+      
+      // Log what we're updating for debugging
+      console.log("Updating schedule ID:", id, "with data:", processedSchedule);
+      
       return updateContentSchedule(id, processedSchedule);
     },
     onSuccess: (data, variables) => {
@@ -133,6 +147,11 @@ export function useUpdateContentSchedule() {
           queryKey: ['oniAgenciaContentSchedules'] 
         });
       }
+      
+      toast({
+        title: "Agendamento atualizado",
+        description: "O agendamento foi atualizado com sucesso.",
+      });
     },
     onError: (error) => {
       console.error('Error updating content schedule:', error);
@@ -161,6 +180,11 @@ export function useDeleteContentSchedule() {
       
       queryClient.invalidateQueries({
         queryKey: ['allOniAgenciaContentSchedules', clientId]
+      });
+      
+      toast({
+        title: "Agendamento excluído",
+        description: "O agendamento foi excluído com sucesso.",
       });
     },
     onError: (error) => {
