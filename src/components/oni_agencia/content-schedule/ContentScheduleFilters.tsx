@@ -120,20 +120,20 @@ export function ContentScheduleFilters({
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="collaborator-select">Colaborador</Label>
+            <Label htmlFor="collaborator-select">Colaborador e Creator</Label>
             <Select
               value={selectedCollaborator || "all"}
               onValueChange={handleCollaboratorChange}
             >
               <SelectTrigger id="collaborator-select" className="w-full">
-                <SelectValue placeholder="Todos os colaboradores" />
+                <SelectValue placeholder="Todos" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos os colaboradores</SelectItem>
+                <SelectItem value="all">Todos</SelectItem>
                 {isLoadingCollaborators ? (
                   <div className="flex items-center justify-center p-2">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="ml-2">Carregando colaboradores...</span>
+                    <span className="ml-2">Carregando...</span>
                   </div>
                 ) : (
                   collaborators.map((collaborator) => (

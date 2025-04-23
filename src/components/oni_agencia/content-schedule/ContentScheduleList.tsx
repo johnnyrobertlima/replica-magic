@@ -1,4 +1,3 @@
-
 import { parseISO } from "date-fns";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { ScheduleEventDialog } from "./ScheduleEventDialog";
@@ -32,9 +31,11 @@ export function ContentScheduleList({
     setSelectedEvent
   } = useDateSelection();
 
-  // Group events by date
+  // Group events by date with updated filtering logic
   const groupedEvents = events.reduce<Record<string, CalendarEvent[]>>((acc, event) => {
-    if (selectedCollaborator && event.collaborator_id !== selectedCollaborator) {
+    if (selectedCollaborator && 
+        event.collaborator_id !== selectedCollaborator && 
+        !event.creators?.includes(selectedCollaborator)) {
       return acc;
     }
     
