@@ -1,3 +1,4 @@
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -6,7 +7,6 @@ import { CollaboratorSelect } from "./CollaboratorSelect";
 import { EditorialLineSelect } from "./EditorialLineSelect";
 import { ProductSelect } from "./ProductSelect";
 import { StatusSelect } from "./StatusSelect";
-import { CollaboratorsMultiSelect } from "./CollaboratorsMultiSelect";
 import { ContentScheduleFormData, OniAgenciaService, OniAgenciaCollaborator } from "@/types/oni-agencia";
 import { EditorialLine, Product, Status } from "@/pages/admin/sub-themes/types";
 
@@ -81,15 +81,7 @@ export function EventForm({
         value={formData.collaborator_id}
         onValueChange={(value) => onSelectChange("collaborator_id", value)}
       />
-
-      <CollaboratorsMultiSelect
-        collaborators={collaborators}
-        isLoading={isLoadingCollaborators}
-        value={formData.creators || []}
-        onChange={(newArr) => onSelectChange("creators", newArr)}
-        label="Creators (Autores)"
-      />
-
+      
       <EditorialLineSelect
         editorialLines={editorialLines}
         isLoading={isLoadingEditorialLines}

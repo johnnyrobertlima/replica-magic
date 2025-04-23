@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { OniAgenciaMenu } from "@/components/oni_agencia/OniAgenciaMenu";
 import { CalendarDays, RefreshCw, List, LayoutGrid } from "lucide-react";
@@ -23,12 +24,14 @@ const OniAgenciaControlePauta = () => {
   
   const { data: clients = [], isLoading: isLoadingClients } = useClients();
   
+  // Se houver clientes e nenhum estiver selecionado, selecione o primeiro
   useEffect(() => {
     if (clients.length > 0 && !selectedClient) {
       setSelectedClient(clients[0].id);
     }
   }, [clients, selectedClient]);
   
+  // UseCallback para melhorar a performance
   const handleClientChange = useCallback((clientId: string) => {
     setSelectedClient(clientId);
   }, []);
@@ -44,6 +47,7 @@ const OniAgenciaControlePauta = () => {
     isRefetching
   } = useContentSchedules(selectedClient, selectedYear, selectedMonth);
   
+  // Refetch quando mês/ano/cliente muda
   const handleMonthYearChange = useCallback((month: number, year: number) => {
     setSelectedMonth(month);
     setSelectedYear(year);
@@ -59,13 +63,6 @@ const OniAgenciaControlePauta = () => {
     }
   }, []);
   
-  const filteredSchedules = schedules.filter(event => {
-    if (!selectedCollaborator) return true;
-    if (event.collaborator_id === selectedCollaborator) return true;
-    if (Array.isArray(event.creators) && event.creators.includes(selectedCollaborator)) return true;
-    return false;
-  });
-
   return (
     <main className="container-fluid p-0 max-w-full">
       <OniAgenciaMenu />
@@ -114,7 +111,7 @@ const OniAgenciaControlePauta = () => {
           <div className={`w-full overflow-x-auto ${isCollapsed ? 'h-[calc(100vh-150px)]' : 'h-[calc(100vh-250px)]'} transition-all duration-300`}>
             {viewMode === "calendar" ? (
               <ContentCalendar
-                events={filteredSchedules}
+                events={schedules}
                 clientId={selectedClient}
                 month={selectedMonth}
                 year={selectedYear}
@@ -123,7 +120,7 @@ const OniAgenciaControlePauta = () => {
               />
             ) : (
               <ContentScheduleList
-                events={filteredSchedules}
+                events={schedules}
                 clientId={selectedClient}
                 selectedCollaborator={selectedCollaborator}
               />
