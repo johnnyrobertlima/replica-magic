@@ -88,6 +88,13 @@ export function ContentCalendar({
     currentEventsCount: currentEvents.length
   });
 
+  const filteredEvents = selectedCollaborator
+    ? events.filter(event => 
+        event.collaborator_id === selectedCollaborator || 
+        (event.creators && event.creators.includes(selectedCollaborator))
+      )
+    : events;
+
   const handleCellSelect = (date: Date) => {
     console.log("Cell selected in ContentCalendar:", format(date, 'yyyy-MM-dd'));
     // When a cell is clicked (not an event), we want to create a new event
@@ -119,7 +126,7 @@ export function ContentCalendar({
       <div className="bg-white rounded-md border shadow-sm w-full h-full">
         <div className="px-4 pt-4">
           <PautaStatusIndicator 
-            events={events} 
+            events={filteredEvents} 
             clientId={clientId} 
             month={month} 
             year={year} 

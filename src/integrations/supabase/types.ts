@@ -1527,6 +1527,7 @@ export type Database = {
           client_id: string
           collaborator_id: string | null
           created_at: string
+          creators: string[] | null
           description: string | null
           editorial_line_id: string | null
           execution_phase: string | null
@@ -1542,6 +1543,7 @@ export type Database = {
           client_id: string
           collaborator_id?: string | null
           created_at?: string
+          creators?: string[] | null
           description?: string | null
           editorial_line_id?: string | null
           execution_phase?: string | null
@@ -1557,6 +1559,7 @@ export type Database = {
           client_id?: string
           collaborator_id?: string | null
           created_at?: string
+          creators?: string[] | null
           description?: string | null
           editorial_line_id?: string | null
           execution_phase?: string | null

@@ -1,4 +1,3 @@
-
 // Modify the OniAgenciaContentSchedule interface to make title optional
 export interface OniAgenciaContentSchedule {
   id: string;
@@ -12,6 +11,7 @@ export interface OniAgenciaContentSchedule {
   editorial_line_id: string | null;
   product_id: string | null;
   status_id: string | null;
+  creators: string[] | null;
   created_at: string;
   updated_at: string;
 }
