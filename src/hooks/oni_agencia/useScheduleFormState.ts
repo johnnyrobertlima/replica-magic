@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
@@ -23,7 +24,7 @@ export function useScheduleFormState({
     editorial_line_id: null,
     product_id: null,
     status_id: null,
-    creators: []
+    creators: [] // Inicializa como array vazio
   });
   
   const isUserEditing = useRef(false);
@@ -49,7 +50,7 @@ export function useScheduleFormState({
       editorial_line_id: null,
       product_id: null,
       status_id: null,
-      creators: []
+      creators: [] // Sempre reinicia como array vazio
     });
   };
 
@@ -57,23 +58,39 @@ export function useScheduleFormState({
     console.log("selecting event in useScheduleFormState:", event.id);
     setCurrentSelectedEvent(event);
     
-    const eventCreators = event.creators || [];
+    // Tratamento abrangente para garantir que creators seja sempre um array
+    let creatorsArray: string[] = [];
     
-    const safeCreators = Array.isArray(eventCreators) ? eventCreators : 
-                         eventCreators ? [eventCreators] : [];
+    if (event.creators !== null && event.creators !== undefined) {
+      if (Array.isArray(event.creators)) {
+        creatorsArray = event.creators;
+      } else if (typeof event.creators === 'string') {
+        try {
+          // Tenta parsear como JSON se for string
+          const parsed = JSON.parse(event.creators);
+          creatorsArray = Array.isArray(parsed) ? parsed : [String(parsed)];
+        } catch {
+          // Se falhar no parse, trata como um único item
+          creatorsArray = [String(event.creators)];
+        }
+      } else {
+        // Para qualquer outro tipo, converte para string e usa como item único
+        creatorsArray = [String(event.creators)];
+      }
+    }
     
     setFormData({
       client_id: event.client_id,
-      service_id: event.service_id || "",
+      service_id: event.service_id || "", // Garante que nunca seja null
       collaborator_id: event.collaborator_id,
-      title: event.title || "",
+      title: event.title || "", // Garante que nunca seja null
       description: event.description,
       scheduled_date: event.scheduled_date,
       execution_phase: event.execution_phase,
       editorial_line_id: event.editorial_line_id,
       product_id: event.product_id,
       status_id: event.status_id,
-      creators: safeCreators
+      creators: creatorsArray // Sempre um array válido
     });
   };
 
@@ -97,7 +114,7 @@ export function useScheduleFormState({
     
     if (name === "creators") {
       try {
-        let creatorsArray = [];
+        let creatorsArray: string[] = [];
         
         if (value) {
           try {
@@ -105,16 +122,16 @@ export function useScheduleFormState({
             if (Array.isArray(parsed)) {
               creatorsArray = parsed;
             } else if (parsed) {
-              creatorsArray = [parsed];
+              creatorsArray = [String(parsed)];
             }
           } catch (e) {
-            console.error("Failed to parse creators JSON:", e);
+            console.error("Falha ao analisar JSON de creators:", e);
           }
         }
         
         setFormData(prev => ({ ...prev, [name]: creatorsArray }));
       } catch (e) {
-        console.error("Error parsing creators JSON:", e);
+        console.error("Erro ao analisar JSON de creators:", e);
         setFormData(prev => ({ ...prev, [name]: [] }));
       }
     } else {

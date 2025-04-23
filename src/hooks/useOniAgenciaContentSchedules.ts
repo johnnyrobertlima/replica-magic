@@ -68,13 +68,13 @@ export function useCreateContentSchedule() {
   
   return useMutation({
     mutationFn: (newSchedule: ContentScheduleFormData) => {
-      // Ensure creators is properly formatted before sending to API
+      // Garantir que creators seja formatado corretamente antes de enviar para API
       const processedSchedule = {
         ...newSchedule,
         creators: Array.isArray(newSchedule.creators) ? newSchedule.creators : []
       };
       
-      // Log what we're sending to the API for debugging
+      // Log do que estamos enviando para a API para debug
       console.log("Creating schedule with data:", processedSchedule);
       
       return createContentSchedule(processedSchedule);
@@ -85,7 +85,7 @@ export function useCreateContentSchedule() {
       const year = date.getFullYear();
       const month = date.getMonth() + 1;
       
-      // Invalidate both specific month query and all schedules
+      // Invalidar tanto a consulta do mês específico quanto todos os agendamentos
       queryClient.invalidateQueries({ 
         queryKey: ['oniAgenciaContentSchedules', client_id, year, month] 
       });
@@ -116,14 +116,14 @@ export function useUpdateContentSchedule() {
   
   return useMutation({
     mutationFn: ({ id, schedule }: { id: string; schedule: Partial<ContentScheduleFormData> }) => {
-      // Ensure creators is properly formatted before sending to API
+      // Garantir que creators seja formatado corretamente antes de enviar para API
       const processedSchedule = {
         ...schedule,
         creators: Array.isArray(schedule.creators) ? schedule.creators : 
-                 (schedule.creators === undefined ? undefined : [])
+                (schedule.creators === undefined ? undefined : [])
       };
       
-      // Log what we're updating for debugging
+      // Log do que estamos atualizando para debug
       console.log("Updating schedule ID:", id, "with data:", processedSchedule);
       
       return updateContentSchedule(id, processedSchedule);
@@ -133,7 +133,7 @@ export function useUpdateContentSchedule() {
       const { client_id } = schedule;
       
       if (client_id) {
-        // Invalidate all relevant queries
+        // Invalidar todas as consultas relevantes
         queryClient.invalidateQueries({ 
           queryKey: ['oniAgenciaContentSchedules', client_id] 
         });
@@ -173,7 +173,7 @@ export function useDeleteContentSchedule() {
       return deleteContentSchedule(id).then(() => ({ clientId, year, month }));
     },
     onSuccess: ({ clientId, year, month }) => {
-      // Invalidate both specific month query and all schedules
+      // Invalidar tanto a consulta do mês específico quanto todos os agendamentos
       queryClient.invalidateQueries({ 
         queryKey: ['oniAgenciaContentSchedules', clientId, year, month] 
       });

@@ -42,7 +42,7 @@ export function EventForm({
   onInputChange,
   onSelectChange
 }: EventFormProps) {
-  // Ensure creators is always an array with multiple safety checks
+  // Garantir que creators seja sempre um array com múltiplas verificações de segurança
   const creatorsArray = Array.isArray(formData.creators) 
     ? formData.creators 
     : (formData.creators ? [formData.creators] : []);
@@ -93,11 +93,11 @@ export function EventForm({
         isLoading={isLoadingCollaborators}
         value={creatorsArray}
         onValueChange={(values) => {
-          // Ensure we're passing a valid array before converting to JSON
+          // Certifique-se de que estamos passando um array válido antes de converter para JSON
           if (Array.isArray(values)) {
             onSelectChange("creators", JSON.stringify(values));
           } else {
-            console.error("Invalid creators value:", values);
+            console.error("Valor inválido para creators:", values);
             onSelectChange("creators", JSON.stringify([]));
           }
         }}

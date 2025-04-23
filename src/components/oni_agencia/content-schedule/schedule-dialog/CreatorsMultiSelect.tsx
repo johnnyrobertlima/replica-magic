@@ -35,7 +35,7 @@ export function CreatorsMultiSelect({
 }: CreatorsMultiSelectProps) {
   const [open, setOpen] = useState(false);
   
-  // Ensure value is always a valid array
+  // Ensure value is always a valid array, this fixes the "undefined is not iterable" error
   const safeValue = Array.isArray(value) ? value : [];
   
   // Make sure collaborators is always an array
