@@ -80,9 +80,14 @@ const sanitizeScheduleData = (schedule: ContentScheduleFormData | Partial<Conten
   // CRITICAL: Ensure service_id is never null as it's a required field in the database
   if ('service_id' in processedSchedule) {
     if (processedSchedule.service_id === "" || processedSchedule.service_id === null) {
-      // If we're attempting to update with an empty service_id, we need to fetch the current value
-      // to maintain the existing value rather than setting null
       delete processedSchedule.service_id;
+    }
+  }
+  
+  // Ensure creators is always stored as an array, not null or undefined
+  if ('creators' in processedSchedule) {
+    if (!Array.isArray(processedSchedule.creators)) {
+      processedSchedule.creators = processedSchedule.creators ? [processedSchedule.creators] : [];
     }
   }
   

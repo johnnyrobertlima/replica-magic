@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   getContentSchedules, 
@@ -67,7 +66,14 @@ export function useCreateContentSchedule() {
   const { toast } = useToast();
   
   return useMutation({
-    mutationFn: (newSchedule: ContentScheduleFormData) => createContentSchedule(newSchedule),
+    mutationFn: (newSchedule: ContentScheduleFormData) => {
+      // Ensure creators is properly formatted before sending to API
+      const processedSchedule = {
+        ...newSchedule,
+        creators: Array.isArray(newSchedule.creators) ? newSchedule.creators : []
+      };
+      return createContentSchedule(processedSchedule);
+    },
     onSuccess: (_, variables) => {
       const { client_id, scheduled_date } = variables;
       const date = new Date(scheduled_date);
@@ -99,8 +105,15 @@ export function useUpdateContentSchedule() {
   const { toast } = useToast();
   
   return useMutation({
-    mutationFn: ({ id, schedule }: { id: string; schedule: Partial<ContentScheduleFormData> }) => 
-      updateContentSchedule(id, schedule),
+    mutationFn: ({ id, schedule }: { id: string; schedule: Partial<ContentScheduleFormData> }) => {
+      // Ensure creators is properly formatted before sending to API
+      const processedSchedule = {
+        ...schedule,
+        creators: Array.isArray(schedule.creators) ? schedule.creators : 
+                 (schedule.creators === undefined ? undefined : [])
+      };
+      return updateContentSchedule(id, processedSchedule);
+    },
     onSuccess: (data, variables) => {
       const { schedule } = variables;
       const { client_id } = schedule;

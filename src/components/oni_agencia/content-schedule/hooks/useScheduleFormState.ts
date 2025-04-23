@@ -24,7 +24,7 @@ export function useScheduleFormState({
     editorial_line_id: null,
     product_id: null,
     status_id: null,
-    creators: []
+    creators: [] // Initialize as empty array
   });
   
   // Use a ref to track when we're in the middle of user input
@@ -52,7 +52,7 @@ export function useScheduleFormState({
       editorial_line_id: null,
       product_id: null,
       status_id: null,
-      creators: []
+      creators: [] // Reset to empty array
     });
   };
 

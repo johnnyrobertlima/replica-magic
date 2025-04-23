@@ -38,7 +38,10 @@ export function CreatorsMultiSelect({
   // Ensure value is always an array, even if it comes in as undefined or null
   const safeValue = Array.isArray(value) ? value : [];
 
-  const selectedCollaborators = collaborators.filter(c => 
+  // Make sure collaborators is always an array
+  const safeCollaborators = Array.isArray(collaborators) ? collaborators : [];
+
+  const selectedCollaborators = safeCollaborators.filter(c => 
     safeValue.includes(c.id)
   );
 
@@ -65,6 +68,7 @@ export function CreatorsMultiSelect({
             aria-expanded={open}
             className="justify-between"
             disabled={isLoading}
+            data-testid="creators-select"
           >
             <span className="truncate">
               {safeValue.length === 0
@@ -78,26 +82,29 @@ export function CreatorsMultiSelect({
           <Command>
             <CommandInput placeholder="Buscar creators..." />
             <CommandEmpty>Nenhum creator encontrado.</CommandEmpty>
-            <CommandGroup>
-              <ScrollArea className="h-64">
-                {collaborators.map((collaborator) => (
-                  <CommandItem
-                    key={collaborator.id}
-                    onSelect={() => handleSelect(collaborator.id)}
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        safeValue.includes(collaborator.id) 
-                          ? "opacity-100"
-                          : "opacity-0"
-                      )}
-                    />
-                    {collaborator.name}
-                  </CommandItem>
-                ))}
-              </ScrollArea>
-            </CommandGroup>
+            {safeCollaborators.length > 0 && (
+              <CommandGroup>
+                <ScrollArea className="h-64">
+                  {safeCollaborators.map((collaborator) => (
+                    <CommandItem
+                      key={collaborator.id}
+                      value={collaborator.id}
+                      onSelect={() => handleSelect(collaborator.id)}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          safeValue.includes(collaborator.id) 
+                            ? "opacity-100"
+                            : "opacity-0"
+                        )}
+                      />
+                      {collaborator.name}
+                    </CommandItem>
+                  ))}
+                </ScrollArea>
+              </CommandGroup>
+            )}
           </Command>
         </PopoverContent>
       </Popover>
@@ -112,6 +119,7 @@ export function CreatorsMultiSelect({
             >
               {collaborator.name}
               <button
+                type="button"
                 className="rounded-full outline-none focus:outline-none"
                 onClick={() => handleRemove(collaborator.id)}
               >
