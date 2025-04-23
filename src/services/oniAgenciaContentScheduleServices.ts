@@ -23,12 +23,6 @@ export async function getContentSchedules(clientId: string, year: number, month:
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0); // Last day of the month
 
-    console.log('Fetching events for date range:', {
-      clientId,
-      startDate: startDate.toISOString().split('T')[0],
-      endDate: endDate.toISOString().split('T')[0],
-    });
-
     // Verificar se o clientId é válido
     if (!clientId) {
       console.error('Error in getContentSchedules: Invalid clientId');
@@ -49,8 +43,6 @@ export async function getContentSchedules(clientId: string, year: number, month:
       console.log(`No content schedules found for month ${month}/${year}`);
       return [];
     }
-
-    console.log(`Fetched ${data?.length || 0} content schedules for month ${month}/${year}`);
     
     // Garantir que os dados estejam em um formato seguro
     const safeData = data.map(item => {
@@ -70,17 +62,22 @@ export async function getContentSchedules(clientId: string, year: number, month:
 
 export async function getAllContentSchedules(clientId: string): Promise<CalendarEvent[]> {
   try {
-    console.log('Fetching all events for client:', clientId);
-
     // Verificar se o clientId é válido
     if (!clientId) {
       console.error('Error in getAllContentSchedules: Invalid clientId');
       return [];
     }
 
+    // Optimize query by limiting to just the current year range
+    const currentDate = new Date();
+    const startDate = new Date(currentDate.getFullYear() - 1, currentDate.getMonth(), 1);
+    const endDate = new Date(currentDate.getFullYear() + 1, currentDate.getMonth() + 1, 0);
+
     // Podemos limitar as colunas retornadas na consulta principal para otimizar
     const { data, error } = await getBaseQuery()
-      .eq('client_id', clientId);
+      .eq('client_id', clientId)
+      .gte('scheduled_date', startDate.toISOString().split('T')[0])
+      .lte('scheduled_date', endDate.toISOString().split('T')[0]);
 
     if (error) {
       console.error('Error fetching all content schedules:', error);
@@ -91,8 +88,6 @@ export async function getAllContentSchedules(clientId: string): Promise<Calendar
       console.log(`No content schedules found for client ${clientId}`);
       return [];
     }
-
-    console.log(`Fetched ${data?.length || 0} content schedules total`);
     
     // Garantir que os dados estejam em um formato seguro
     const safeData = data.map(item => {

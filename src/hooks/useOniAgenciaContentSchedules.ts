@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   getContentSchedules, 
@@ -14,8 +15,8 @@ import { useEditorialLines, useProducts, useStatuses } from "./useOniAgenciaThem
 
 // Cache time constants
 const MINUTE = 60 * 1000;
-const CACHE_TIME = 10 * MINUTE; // 10 minutos
-const STALE_TIME = 2 * MINUTE;  // 2 minutos
+const CACHE_TIME = 30 * MINUTE; // 30 minutos (increased from 10)
+const STALE_TIME = 5 * MINUTE;  // 5 minutos (increased from 2)
 
 export function useContentSchedules(clientId: string, year: number, month: number) {
   const { toast } = useToast();
@@ -27,7 +28,7 @@ export function useContentSchedules(clientId: string, year: number, month: numbe
     staleTime: STALE_TIME,
     gcTime: CACHE_TIME,
     refetchOnWindowFocus: false, // Só atualiza manualmente ou por invalidação
-    retry: 2, // Tentar novamente em caso de falha
+    retry: 1, // Reduced retry attempts
     retryDelay: attempt => Math.min(attempt * 1000, 3000) // Exponential backoff
   });
 }
@@ -40,8 +41,10 @@ export function useAllContentSchedules(clientId: string) {
     staleTime: STALE_TIME,
     gcTime: CACHE_TIME,
     refetchOnWindowFocus: false,
-    retry: 2, // Tentar novamente em caso de falha
-    retryDelay: attempt => Math.min(attempt * 1000, 3000) // Exponential backoff
+    retry: 1, // Reduced retry attempts
+    retryDelay: attempt => Math.min(attempt * 1000, 3000), // Exponential backoff
+    // Don't refetch this query too often as it's expensive
+    refetchInterval: false,
   });
 }
 
@@ -49,9 +52,9 @@ export function useServices() {
   return useQuery({
     queryKey: ['oniAgenciaServices'],
     queryFn: getServices,
-    staleTime: CACHE_TIME, // Dados que raramente mudam
-    gcTime: CACHE_TIME * 2,
-    retry: 2, // Tentar novamente em caso de falha
+    staleTime: CACHE_TIME * 2, // Dados que raramente mudam
+    gcTime: CACHE_TIME * 3,
+    retry: 1, // Reduced retry attempts
   });
 }
 
@@ -59,9 +62,9 @@ export function useCollaborators() {
   return useQuery({
     queryKey: ['oniAgenciaCollaborators'],
     queryFn: getCollaborators,
-    staleTime: CACHE_TIME, // Dados que raramente mudam
-    gcTime: CACHE_TIME * 2,
-    retry: 2, // Tentar novamente em caso de falha
+    staleTime: CACHE_TIME * 2, // Dados que raramente mudam
+    gcTime: CACHE_TIME * 3,
+    retry: 1, // Reduced retry attempts
   });
 }
 

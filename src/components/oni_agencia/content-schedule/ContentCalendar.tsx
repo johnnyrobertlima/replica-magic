@@ -1,3 +1,4 @@
+
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { format, isSameDay, isToday, parseISO } from "date-fns";
@@ -15,7 +16,7 @@ import { useMonthNavigation } from "./hooks/useMonthNavigation";
 import { useCalendarEvents } from "./hooks/useCalendarEvents";
 import { usePautaStatus } from "./hooks/usePautaStatus";
 import { PautaStatusIndicator } from "./PautaStatusIndicator";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 interface ContentCalendarProps {
   events: CalendarEvent[];
@@ -81,22 +82,17 @@ export function ContentCalendar({
 
   const weekDays = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
-  console.log("ContentCalendar render state:", { 
-    selectedDate, 
-    isDialogOpen, 
-    eventsCount: events.length,
-    currentEventsCount: currentEvents.length
-  });
-
-  const filteredEvents = selectedCollaborator
-    ? events.filter(event => 
-        event.collaborator_id === selectedCollaborator || 
-        (event.creators && event.creators.includes(selectedCollaborator))
-      )
-    : events;
+  // Memoize filtered events to improve performance
+  const filteredEvents = useMemo(() => {
+    if (!selectedCollaborator) return events;
+    
+    return events.filter(event => 
+      event.collaborator_id === selectedCollaborator || 
+      (event.creators && Array.isArray(event.creators) && event.creators.includes(selectedCollaborator))
+    );
+  }, [events, selectedCollaborator]);
 
   const handleCellSelect = (date: Date) => {
-    console.log("Cell selected in ContentCalendar:", format(date, 'yyyy-MM-dd'));
     // When a cell is clicked (not an event), we want to create a new event
     handleDateSelect(date);
     
@@ -105,13 +101,11 @@ export function ContentCalendar({
   };
 
   const handleCellEventClick = (event: CalendarEvent, date: Date) => {
-    console.log("Event clicked in ContentCalendar:", event.id, event.title);
     // When an event is clicked, we want to edit that specific event
     handleEventClick(event, date);
   };
 
   const handleDialogClose = () => {
-    console.log("ScheduleEventDialog closed");
     setSelectedDate(undefined);
     setSelectedEvent(undefined);
     setIsDialogOpen(false);

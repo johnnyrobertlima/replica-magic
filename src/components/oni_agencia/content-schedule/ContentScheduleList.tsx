@@ -1,3 +1,4 @@
+
 import { parseISO } from "date-fns";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { ScheduleEventDialog } from "./ScheduleEventDialog";
@@ -7,6 +8,7 @@ import { exportToPdf } from "@/utils/exportUtils";
 import { EmptyState } from "./event-list/EmptyState";
 import { ExportButton } from "./event-list/ExportButton";
 import { EventDateSection } from "./event-list/EventDateSection";
+import { useMemo } from "react";
 
 interface ContentScheduleListProps {
   events: CalendarEvent[];
@@ -31,25 +33,31 @@ export function ContentScheduleList({
     setSelectedEvent
   } = useDateSelection();
 
-  // Group events by date with updated filtering logic
-  const groupedEvents = events.reduce<Record<string, CalendarEvent[]>>((acc, event) => {
-    if (selectedCollaborator && 
-        event.collaborator_id !== selectedCollaborator && 
-        !event.creators?.includes(selectedCollaborator)) {
+  // Filter events based on selectedCollaborator (optimized with useMemo)
+  const filteredEvents = useMemo(() => {
+    if (!selectedCollaborator) return events;
+    
+    return events.filter(event => 
+      event.collaborator_id === selectedCollaborator || 
+      (event.creators && Array.isArray(event.creators) && event.creators.includes(selectedCollaborator))
+    );
+  }, [events, selectedCollaborator]);
+  
+  // Group events by date (optimized with useMemo)
+  const groupedEvents = useMemo(() => {
+    return filteredEvents.reduce<Record<string, CalendarEvent[]>>((acc, event) => {
+      const dateKey = event.scheduled_date;
+      if (!acc[dateKey]) {
+        acc[dateKey] = [];
+      }
+      
+      acc[dateKey].push(event);
       return acc;
-    }
-    
-    const dateKey = event.scheduled_date;
-    if (!acc[dateKey]) {
-      acc[dateKey] = [];
-    }
-    
-    acc[dateKey].push(event);
-    return acc;
-  }, {});
+    }, {});
+  }, [filteredEvents]);
   
   // Sort dates
-  const sortedDates = Object.keys(groupedEvents).sort();
+  const sortedDates = useMemo(() => Object.keys(groupedEvents).sort(), [groupedEvents]);
   
   const handleEventItemClick = (event: CalendarEvent) => {
     const date = parseISO(event.scheduled_date);
@@ -66,10 +74,7 @@ export function ContentScheduleList({
   const handleExportToPdf = () => {
     try {
       const clientName = "Agenda";
-      const filteredEvents = selectedCollaborator 
-        ? events.filter(event => event.collaborator_id === selectedCollaborator)
-        : events;
-        
+      
       // Exportar PDF somente com os dados dos agendamentos em paisagem
       exportToPdf({
         filename: `${clientName}_cronograma_conteudo.pdf`,
