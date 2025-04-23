@@ -41,7 +41,7 @@ export function ContentScheduleList({
       // Check if the person is a collaborator
       const isCollaborator = event.collaborator_id === selectedCollaborator;
       
-      // Improved handling of creators array
+      // Process creators to ensure we're working with a proper array
       let creators: string[] = [];
       
       if (event.creators) {
@@ -49,16 +49,31 @@ export function ContentScheduleList({
           creators = event.creators;
         } else if (typeof event.creators === 'string') {
           try {
-            creators = JSON.parse(event.creators);
+            const parsedCreators = JSON.parse(event.creators);
+            creators = Array.isArray(parsedCreators) ? parsedCreators : [parsedCreators];
           } catch (e) {
             creators = [event.creators];
           }
         } else {
-          creators = []; // Empty array if creators is null or undefined
+          creators = [];
         }
       }
       
+      // Check if the person is in the creators array
       const isCreator = creators.includes(selectedCollaborator);
+      
+      // Add debug logging for better visibility
+      if (event.title === "teste" || event.title === " ") {
+        console.log("ContentScheduleList filtering:", {
+          eventTitle: event.title,
+          collaborator_id: event.collaborator_id,
+          creators,
+          selectedCollaborator,
+          isCollaborator,
+          isCreator,
+          shouldShow: isCollaborator || isCreator
+        });
+      }
       
       // Return true if the person is either a collaborator or a creator
       return isCollaborator || isCreator;

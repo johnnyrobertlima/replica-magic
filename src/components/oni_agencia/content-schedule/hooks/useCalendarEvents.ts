@@ -25,14 +25,39 @@ export function useCalendarEvents(
         // Check if the person is a collaborator
         const isCollaborator = event.collaborator_id === selectedCollaborator;
         
-        // Check if the person is in the creators array - with better handling of creators
-        const creators = Array.isArray(event.creators) ? 
-          event.creators : 
-          (typeof event.creators === 'string' ? 
-            [event.creators] : 
-            []);
-            
+        // Process creators to ensure we're working with a proper array
+        let creators: string[] = [];
+        
+        if (event.creators) {
+          if (Array.isArray(event.creators)) {
+            creators = event.creators;
+          } else if (typeof event.creators === 'string') {
+            try {
+              const parsedCreators = JSON.parse(event.creators);
+              creators = Array.isArray(parsedCreators) ? parsedCreators : [parsedCreators];
+            } catch (e) {
+              creators = [event.creators];
+            }
+          } else {
+            creators = [];
+          }
+        }
+        
+        // Check if the person is in the creators array
         const isCreator = creators.includes(selectedCollaborator);
+        
+        // Add debug logging for better visibility
+        if (event.title === "teste" || event.title === " ") {
+          console.log("useCalendarEvents filtering:", {
+            eventTitle: event.title,
+            collaborator_id: event.collaborator_id,
+            creators,
+            selectedCollaborator,
+            isCollaborator,
+            isCreator,
+            shouldShow: isCollaborator || isCreator
+          });
+        }
         
         // Return true if the person is either a collaborator or a creator
         return isCollaborator || isCreator;

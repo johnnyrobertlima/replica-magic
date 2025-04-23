@@ -33,35 +33,34 @@ export async function getAllContentSchedules(clientId: string): Promise<Calendar
     
     console.log(`Fetched ${data.length} content schedules total`);
     
-    // Ensure data is in a safe format with consistent handling of creators field
+    // Process data to ensure consistent handling of creators field
     const safeData = data.map(item => {
-      let creators = [];
+      // Create a normalized version of creators that's always an array of strings
+      let creatorsArray: string[] = [];
       
-      // Handle different possible formats of creators field
-      if (item.creators) {
+      if (item.creators !== null && item.creators !== undefined) {
         if (Array.isArray(item.creators)) {
-          creators = item.creators;
+          // If it's already an array, use it directly
+          creatorsArray = item.creators;
         } else if (typeof item.creators === 'string') {
           try {
             // Try to parse JSON string
-            creators = JSON.parse(item.creators);
-            // Ensure we have an array after parsing
-            if (!Array.isArray(creators)) {
-              creators = [creators];
-            }
+            const parsed = JSON.parse(item.creators);
+            // Handle both array and single string cases
+            creatorsArray = Array.isArray(parsed) ? parsed : [parsed];
           } catch (e) {
             // If parsing fails, treat as a single string creator
-            creators = [item.creators];
+            creatorsArray = [item.creators];
           }
         } else {
-          // If it's some other type, convert to array with the value
-          creators = [item.creators];
+          // Handle any other possible type
+          creatorsArray = [String(item.creators)];
         }
       }
 
       return {
         ...item,
-        creators: creators // Always return an array
+        creators: creatorsArray // Always return a proper array
       };
     });
 
