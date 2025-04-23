@@ -1,7 +1,6 @@
 
 import { CalendarEvent } from "@/types/oni-agencia";
 import { getBaseQuery } from "./baseQuery";
-export { getAllContentSchedules } from "./getAllContentSchedules";
 
 export async function getContentSchedules(clientId: string, year: number, month: number): Promise<CalendarEvent[]> {
   try {
