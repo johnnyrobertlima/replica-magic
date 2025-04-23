@@ -1,3 +1,4 @@
+
 import { format, isSameDay } from "date-fns";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { EventItem } from "../EventItem";
@@ -40,7 +41,16 @@ export function CalendarDayCell({
   let dayEvents = events.filter(event => event.scheduled_date === dateString);
   
   if (selectedCollaborator) {
-    dayEvents = dayEvents.filter(event => event.collaborator_id === selectedCollaborator);
+    dayEvents = dayEvents.filter(event => {
+      // Check if the person is a collaborator
+      const isCollaborator = event.collaborator_id === selectedCollaborator;
+      
+      // Check if the person is in the creators array
+      const isCreator = event.creators?.includes(selectedCollaborator) || false;
+      
+      // Return true if the person is either a collaborator or a creator
+      return isCollaborator || isCreator;
+    });
   }
   
   const MAX_VISIBLE_EVENTS = 4;
@@ -103,7 +113,7 @@ export function CalendarDayCell({
                 <TooltipContent side="right" className="max-w-[300px] bg-white border shadow-md">
                   <div className="text-xs space-y-1">
                     <p className="font-bold">{event.title}</p>
-                    <p><strong>Serviço:</strong> {event.service.name}</p>
+                    <p><strong>Serviço:</strong> {event.service?.name}</p>
                     {event.product && <p><strong>Produto:</strong> {event.product.name}</p>}
                     {event.collaborator && <p><strong>Responsável:</strong> {event.collaborator.name}</p>}
                     {event.status && <p><strong>Status:</strong> {event.status.name}</p>}
@@ -143,3 +153,4 @@ export function CalendarDayCell({
     </div>
   );
 }
+
