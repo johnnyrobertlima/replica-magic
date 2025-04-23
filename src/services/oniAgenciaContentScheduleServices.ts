@@ -53,12 +53,46 @@ export async function getContentSchedules(clientId: string, year: number, month:
     
     console.log(`Fetched ${data.length} content schedules for month ${month}/${year}`);
     
+    // Debug the creators field format for one event
+    if (data.length > 0 && data[0].title === "teste") {
+      console.log("Example event creators format:", {
+        event_title: data[0].title,
+        creators_raw: data[0].creators,
+        creators_type: typeof data[0].creators,
+        is_array: Array.isArray(data[0].creators)
+      });
+    }
+    
     // Garantir que os dados estejam em um formato seguro
     const safeData = data.map(item => {
+      // Ensure creators is always an array
+      let creators = item.creators;
+      
+      // If creators is a string, try to parse it as JSON
+      if (typeof item.creators === 'string') {
+        try {
+          creators = JSON.parse(item.creators);
+        } catch (e) {
+          creators = [item.creators]; // If it can't be parsed, treat as a single item array
+        }
+      } else if (!Array.isArray(item.creators) && item.creators !== null) {
+        creators = [item.creators]; // If it's not an array but not null, convert to array
+      } else if (item.creators === null) {
+        creators = []; // If null, make it empty array
+      }
+      
+      // Debug for the "teste" event
+      if (item.title === "teste") {
+        console.log("Processed creators for teste:", {
+          before: item.creators,
+          after: creators,
+          is_array_after: Array.isArray(creators)
+        });
+      }
+      
       return {
         ...item,
-        creators: Array.isArray(item.creators) ? item.creators : 
-                 (item.creators ? [String(item.creators)] : [])
+        creators: creators || []
       };
     });
 

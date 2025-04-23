@@ -90,10 +90,23 @@ export function ContentCalendar({
       // Check if the person is a collaborator
       const isCollaborator = event.collaborator_id === selectedCollaborator;
       
-      // Check if the person is in the creators array
+      // Check if the person is in the creators array - properly check creators array
       const isCreator = event.creators && 
                         Array.isArray(event.creators) && 
                         event.creators.includes(selectedCollaborator);
+      
+      // Add console logs for debugging
+      if (event.title === "teste") {
+        console.log("Filtering event:", {
+          title: event.title,
+          collaborator_id: event.collaborator_id,
+          creators: event.creators,
+          selectedCollaborator,
+          isCollaborator,
+          isCreator,
+          shouldShow: isCollaborator || isCreator
+        });
+      }
       
       // Return true if the person is either a collaborator or a creator
       return isCollaborator || isCreator;
