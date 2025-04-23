@@ -53,19 +53,6 @@ export function ContentScheduleList({
         isCreator = creatorsArray.includes(selectedCollaborator);
       }
       
-      // Add debug logging for better visibility
-      if (event.title === "teste" || event.title === " ") {
-        console.log("ContentScheduleList filtering:", {
-          eventTitle: event.title,
-          collaborator_id: event.collaborator_id,
-          creators: event.creators,
-          selectedCollaborator,
-          isCollaborator,
-          isCreator,
-          shouldShow: isCollaborator || isCreator
-        });
-      }
-      
       // Return true if the person is either a collaborator or a creator
       return isCollaborator || isCreator;
     });
@@ -98,17 +85,17 @@ export function ContentScheduleList({
     setIsDialogOpen(false);
   };
 
-  // Handle PDF export
+  // Handle PDF export - FIXED: Now using filteredEvents to respect current filters
   const handleExportToPdf = () => {
     try {
       const clientName = "Agenda";
       
-      // Exportar PDF somente com os dados dos agendamentos em paisagem
+      // Export PDF with only the filtered events data in landscape
       exportToPdf({
         filename: `${clientName}_cronograma_conteudo.pdf`,
         content: null,
         orientation: 'landscape', // Explicitly set to landscape
-        data: filteredEvents,
+        data: filteredEvents, // Use filteredEvents instead of all events
       });
       
       toast({

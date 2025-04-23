@@ -42,13 +42,13 @@ export const exportToPdf = (options: ExportToPdfOptions) => {
 
   try {
     if (options.data) {
-      // Criar um documento HTML temporário com os dados formatados
+      // Create a temporary HTML document with the formatted data
       const tempDiv = document.createElement('div');
       tempDiv.style.display = 'none';
       tempDiv.style.width = '100%';
       document.body.appendChild(tempDiv);
       
-      // Adicionar estilos básicos com fonte menor (agora em tamanho 10)
+      // Add basic styles with smaller font (now size 10)
       tempDiv.innerHTML = `
         <div style="font-family: Arial, sans-serif; padding: 20px; font-size: 10px;">
           <h1 style="text-align: center; color: #333; margin-bottom: 20px; font-size: 12px;">Agenda de Conteúdo</h1>
@@ -58,7 +58,7 @@ export const exportToPdf = (options: ExportToPdfOptions) => {
       
       const contentDiv = tempDiv.querySelector('#pdf-content');
       if (contentDiv && Array.isArray(options.data)) {
-        // Agrupar eventos por data
+        // Group events by date
         const groupedEvents = options.data.reduce((acc: Record<string, any[]>, event: any) => {
           const dateKey = event.scheduled_date;
           if (!acc[dateKey]) {
@@ -68,10 +68,10 @@ export const exportToPdf = (options: ExportToPdfOptions) => {
           return acc;
         }, {});
         
-        // Ordenar datas
+        // Sort dates
         const sortedDates = Object.keys(groupedEvents).sort();
         
-        // Criar conteúdo para cada data
+        // Create content for each date
         sortedDates.forEach(dateString => {
           const date = new Date(dateString);
           const formattedDate = format(date, "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR });
@@ -105,11 +105,15 @@ export const exportToPdf = (options: ExportToPdfOptions) => {
               const row = document.createElement('tr');
               row.style.borderBottom = '1px solid #e5e7eb';
               
+              // Handle potentially missing properties safely
+              const serviceColor = event.service?.color || '#ccc';
+              const serviceName = event.service?.name || 'Não definido';
+              
               row.innerHTML = `
                 <td style="padding: 8px;">
                   <div style="display: flex; align-items: center;">
-                    <div style="height: 10px; width: 10px; border-radius: 50%; background-color: ${event.service.color}; margin-right: 5px;"></div>
-                    ${event.service.name}
+                    <div style="height: 10px; width: 10px; border-radius: 50%; background-color: ${serviceColor}; margin-right: 5px;"></div>
+                    ${serviceName}
                   </div>
                 </td>
                 <td style="padding: 8px;">
@@ -121,7 +125,7 @@ export const exportToPdf = (options: ExportToPdfOptions) => {
                     "—"}
                 </td>
                 <td style="padding: 8px; font-weight: 500;">
-                  ${event.title}
+                  ${event.title || "—"}
                   ${event.product ? `<span style="color: #6b7280; margin-left: 4px;">- ${event.product.name}</span>` : ''}
                 </td>
                 <td style="padding: 8px; max-width: 200px; white-space: pre-line;">
@@ -144,35 +148,35 @@ export const exportToPdf = (options: ExportToPdfOptions) => {
         });
       }
       
-      // Usar window.print() para imprimir apenas esta div temporária
+      // Use window.print() to print only this temporary div
       const originalBodyDisplay = document.body.style.display;
       const allElements = document.body.children;
       
-      // Esconder todos os outros elementos
+      // Hide all other elements
       for (let i = 0; i < allElements.length; i++) {
         if (allElements[i] !== tempDiv) {
           (allElements[i] as HTMLElement).style.display = 'none';
         }
       }
       
-      // Mostrar apenas nosso conteúdo temporário
+      // Only show our temporary content
       tempDiv.style.display = 'block';
       
-      // Imprimir
+      // Print
       window.print();
       
-      // Restaurar visibilidade dos elementos originais
+      // Restore visibility of original elements
       for (let i = 0; i < allElements.length; i++) {
         if (allElements[i] !== tempDiv) {
           (allElements[i] as HTMLElement).style.display = '';
         }
       }
       
-      // Remover o elemento temporário
+      // Remove the temporary element
       document.body.removeChild(tempDiv);
       
     } else if (options.content) {
-      // Comportamento padrão: imprimir o elemento fornecido
+      // Default behavior: print the provided element
       window.print();
     }
   } catch (error) {
