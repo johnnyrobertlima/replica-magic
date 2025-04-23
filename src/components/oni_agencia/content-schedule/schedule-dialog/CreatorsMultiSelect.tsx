@@ -1,4 +1,5 @@
 
+import React, { useState } from "react";
 import { OniAgenciaCollaborator } from "@/types/oni-agencia";
 import {
   Command,
@@ -32,7 +33,7 @@ export function CreatorsMultiSelect({
   value = [],
   onValueChange
 }: CreatorsMultiSelectProps) {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
 
   const selectedCollaborators = collaborators.filter(c => 
     value.includes(c.id)

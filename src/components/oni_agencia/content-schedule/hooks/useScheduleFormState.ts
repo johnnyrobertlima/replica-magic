@@ -22,7 +22,8 @@ export function useScheduleFormState({
     execution_phase: null,
     editorial_line_id: null,
     product_id: null,
-    status_id: null
+    status_id: null,
+    creators: []
   });
   
   // Use a ref to track when we're in the middle of user input
@@ -49,7 +50,8 @@ export function useScheduleFormState({
       execution_phase: null,
       editorial_line_id: null,
       product_id: null,
-      status_id: null
+      status_id: null,
+      creators: []
     });
   };
 
@@ -68,7 +70,8 @@ export function useScheduleFormState({
       execution_phase: event.execution_phase,
       editorial_line_id: event.editorial_line_id,
       product_id: event.product_id,
-      status_id: event.status_id
+      status_id: event.status_id,
+      creators: event.creators || []
     });
   };
 
@@ -93,24 +96,35 @@ export function useScheduleFormState({
     // Set the flag to indicate user is editing
     isUserEditing.current = true;
     
-    // Handle UUID fields consistently - if value is empty or "null", set to null instead of empty string
-    if (
-      (name === "service_id" || 
-      name === "status_id" || 
-      name === "editorial_line_id" || 
-      name === "product_id" || 
-      name === "collaborator_id") && 
-      (value === "" || value === "null")
-    ) {
-      // For service_id, which is required, keep the current value if an event is selected
-      if (name === "service_id" && currentSelectedEvent) {
-        // Don't change the service_id value
-        console.log("Keeping existing service_id for required field");
-      } else {
-        setFormData(prev => ({ ...prev, [name]: null }));
+    // Special handling for creators which is an array
+    if (name === "creators") {
+      try {
+        const creatorsArray = JSON.parse(value);
+        setFormData(prev => ({ ...prev, [name]: creatorsArray }));
+      } catch (e) {
+        console.error("Error parsing creators JSON:", e);
+        setFormData(prev => ({ ...prev, [name]: [] }));
       }
     } else {
-      setFormData(prev => ({ ...prev, [name]: value === "null" ? null : value }));
+      // Handle UUID fields consistently - if value is empty or "null", set to null instead of empty string
+      if (
+        (name === "service_id" || 
+        name === "status_id" || 
+        name === "editorial_line_id" || 
+        name === "product_id" || 
+        name === "collaborator_id") && 
+        (value === "" || value === "null")
+      ) {
+        // For service_id, which is required, keep the current value if an event is selected
+        if (name === "service_id" && currentSelectedEvent) {
+          // Don't change the service_id value
+          console.log("Keeping existing service_id for required field");
+        } else {
+          setFormData(prev => ({ ...prev, [name]: null }));
+        }
+      } else {
+        setFormData(prev => ({ ...prev, [name]: value === "null" ? null : value }));
+      }
     }
     
     // Reset the flag after a short delay
