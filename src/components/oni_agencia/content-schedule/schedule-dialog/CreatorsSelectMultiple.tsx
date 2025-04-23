@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { OniAgenciaCollaborator } from "@/types/oni-agencia";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 interface CreatorsSelectMultipleProps {
   collaborators: OniAgenciaCollaborator[];
@@ -77,19 +78,28 @@ export function CreatorsSelectMultiple({
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-2">
+        <PopoverContent className="w-[300px] p-2 bg-white">
           <ScrollArea className="h-64">
             <div className="space-y-2">
               {safeCollaborators.length > 0 ? (
                 safeCollaborators.map((collaborator) => (
                   collaborator && collaborator.id ? (
-                    <div key={collaborator.id} className="flex items-center space-x-2">
+                    <div 
+                      key={collaborator.id} 
+                      className="flex items-center space-x-2 bg-white hover:bg-green-50 p-2 rounded-md transition-colors"
+                    >
                       <Checkbox
                         id={`creator-${collaborator.id}`}
                         checked={safeValue.includes(collaborator.id)}
                         onCheckedChange={(checked) => 
                           handleToggleCreator(collaborator.id, checked === true)
                         }
+                        className={cn(
+                          "border-gray-300",
+                          safeValue.includes(collaborator.id) 
+                            ? "bg-green-500 text-white border-green-500" 
+                            : ""
+                        )}
                       />
                       <Label 
                         htmlFor={`creator-${collaborator.id}`}
@@ -117,7 +127,7 @@ export function CreatorsSelectMultiple({
               <Badge
                 key={collaborator.id}
                 variant="secondary"
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 bg-green-100 text-green-800"
               >
                 {collaborator.name}
                 <button
@@ -135,3 +145,4 @@ export function CreatorsSelectMultiple({
     </div>
   );
 }
+
