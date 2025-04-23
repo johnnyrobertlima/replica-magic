@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
@@ -16,7 +17,7 @@ export function useScheduleFormState({
     client_id: clientId,
     service_id: "",
     collaborator_id: null,
-    title: "", // Changed from null to empty string
+    title: "",
     description: null,
     scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
     execution_phase: null,
@@ -44,7 +45,7 @@ export function useScheduleFormState({
       client_id: clientId,
       service_id: "",
       collaborator_id: null,
-      title: "", // Changed from null to empty string
+      title: "",
       description: null,
       scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
       execution_phase: null,
@@ -62,7 +63,7 @@ export function useScheduleFormState({
     // Ensure we properly map null or empty values
     setFormData({
       client_id: event.client_id,
-      service_id: event.service_id || "", // Ensure it's never null - THIS IS CRITICAL
+      service_id: event.service_id || "", // Ensure it's never null
       collaborator_id: event.collaborator_id,
       title: event.title || "", // Ensure it's never null
       description: event.description,
@@ -71,7 +72,7 @@ export function useScheduleFormState({
       editorial_line_id: event.editorial_line_id,
       product_id: event.product_id,
       status_id: event.status_id,
-      creators: event.creators || []
+      creators: Array.isArray(event.creators) ? event.creators : [] // Ensure creators is always an array
     });
   };
 
@@ -99,7 +100,8 @@ export function useScheduleFormState({
     // Special handling for creators which is an array
     if (name === "creators") {
       try {
-        const creatorsArray = JSON.parse(value);
+        // Make sure we parse the JSON string correctly, and default to empty array if it fails
+        const creatorsArray = value ? JSON.parse(value) : [];
         setFormData(prev => ({ ...prev, [name]: creatorsArray }));
       } catch (e) {
         console.error("Error parsing creators JSON:", e);

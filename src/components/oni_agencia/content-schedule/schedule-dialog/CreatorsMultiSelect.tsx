@@ -34,21 +34,24 @@ export function CreatorsMultiSelect({
   onValueChange
 }: CreatorsMultiSelectProps) {
   const [open, setOpen] = useState(false);
+  
+  // Ensure value is always an array, even if it comes in as undefined or null
+  const safeValue = Array.isArray(value) ? value : [];
 
   const selectedCollaborators = collaborators.filter(c => 
-    value.includes(c.id)
+    safeValue.includes(c.id)
   );
 
   const handleSelect = (collaboratorId: string) => {
-    if (value.includes(collaboratorId)) {
-      onValueChange(value.filter(id => id !== collaboratorId));
+    if (safeValue.includes(collaboratorId)) {
+      onValueChange(safeValue.filter(id => id !== collaboratorId));
     } else {
-      onValueChange([...value, collaboratorId]);
+      onValueChange([...safeValue, collaboratorId]);
     }
   };
 
   const handleRemove = (collaboratorId: string) => {
-    onValueChange(value.filter(id => id !== collaboratorId));
+    onValueChange(safeValue.filter(id => id !== collaboratorId));
   };
 
   return (
@@ -64,9 +67,9 @@ export function CreatorsMultiSelect({
             disabled={isLoading}
           >
             <span className="truncate">
-              {value.length === 0
+              {safeValue.length === 0
                 ? "Selecione os creators..."
-                : `${value.length} creator${value.length === 1 ? "" : "s"} selecionado${value.length === 1 ? "" : "s"}`}
+                : `${safeValue.length} creator${safeValue.length === 1 ? "" : "s"} selecionado${safeValue.length === 1 ? "" : "s"}`}
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
@@ -85,7 +88,7 @@ export function CreatorsMultiSelect({
                     <Check
                       className={cn(
                         "mr-2 h-4 w-4",
-                        value.includes(collaborator.id) 
+                        safeValue.includes(collaborator.id) 
                           ? "opacity-100"
                           : "opacity-0"
                       )}

@@ -42,6 +42,9 @@ export function EventForm({
   onInputChange,
   onSelectChange
 }: EventFormProps) {
+  // Ensure creators is always an array
+  const creatorsArray = Array.isArray(formData.creators) ? formData.creators : [];
+  
   return (
     <div className="grid gap-4 py-4">
       <div className="grid gap-2">
@@ -86,7 +89,7 @@ export function EventForm({
       <CreatorsMultiSelect
         collaborators={collaborators}
         isLoading={isLoadingCollaborators}
-        value={formData.creators || []}
+        value={creatorsArray}
         onValueChange={(values) => onSelectChange("creators", JSON.stringify(values))}
       />
       
