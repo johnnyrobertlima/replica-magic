@@ -24,11 +24,12 @@ export function useScheduleFormState({
     editorial_line_id: null,
     product_id: null,
     status_id: null,
-    creators: [] // Initialize as empty array
+    creators: [] // Inicializa sempre como array vazio
   });
   
   const isUserEditing = useRef(false);
 
+  // Set the selectedEvent when it comes from props
   useEffect(() => {
     if (selectedEvent && !isUserEditing.current) {
       console.log("useScheduleFormState selectedEvent effect:", selectedEvent.id);
@@ -58,43 +59,39 @@ export function useScheduleFormState({
     console.log("selecting event in useScheduleFormState:", event.id);
     setCurrentSelectedEvent(event);
     
-    // Ensure creators is always handled as an array
+    // Garantir tratamento abrangente para creators
     let creatorsArray: string[] = [];
     
-    // If creators exists in event
-    if (event.creators) {
-      // If it's already an array, use it
+    if (event.creators !== null && event.creators !== undefined) {
       if (Array.isArray(event.creators)) {
         creatorsArray = event.creators;
-      } 
-      // If it's a string, try to parse it (in case it's JSON)
-      else if (typeof event.creators === 'string') {
+      } else if (typeof event.creators === 'string') {
         try {
+          // Tenta parsear como JSON se for string
           const parsed = JSON.parse(event.creators);
-          creatorsArray = Array.isArray(parsed) ? parsed : [parsed];
+          creatorsArray = Array.isArray(parsed) ? parsed : [String(parsed)];
         } catch {
-          // If parsing fails, treat as a single item
-          creatorsArray = [event.creators as string];
+          // Se falhar no parse, trata como um único item
+          creatorsArray = [String(event.creators)];
         }
-      } 
-      // For any other type, convert to string and use as single item
-      else {
+      } else {
+        // Para qualquer outro tipo, converte para string e usa como item único
         creatorsArray = [String(event.creators)];
       }
     }
     
     setFormData({
       client_id: event.client_id,
-      service_id: event.service_id || "", // Ensure it's never null
+      service_id: event.service_id || "", // Garantir que nunca seja null
       collaborator_id: event.collaborator_id,
-      title: event.title || "", // Ensure it's never null
+      title: event.title || "", // Garantir que nunca seja null
       description: event.description,
       scheduled_date: event.scheduled_date,
       execution_phase: event.execution_phase,
       editorial_line_id: event.editorial_line_id,
       product_id: event.product_id,
       status_id: event.status_id,
-      creators: creatorsArray
+      creators: creatorsArray // Sempre um array válido
     });
   };
 
@@ -118,7 +115,7 @@ export function useScheduleFormState({
     
     if (name === "creators") {
       try {
-        let creatorsArray = [];
+        let creatorsArray: string[] = [];
         
         if (value) {
           try {
@@ -126,16 +123,17 @@ export function useScheduleFormState({
             if (Array.isArray(parsed)) {
               creatorsArray = parsed;
             } else if (parsed) {
-              creatorsArray = [parsed];
+              creatorsArray = [String(parsed)];
             }
           } catch (e) {
-            console.error("Failed to parse creators JSON:", e);
+            console.error("Falha ao analisar JSON de creators:", e);
           }
         }
         
+        console.log("handleSelectChange - Setting creators to:", creatorsArray);
         setFormData(prev => ({ ...prev, [name]: creatorsArray }));
       } catch (e) {
-        console.error("Error parsing creators JSON:", e);
+        console.error("Erro ao analisar JSON de creators:", e);
         setFormData(prev => ({ ...prev, [name]: [] }));
       }
     } else {

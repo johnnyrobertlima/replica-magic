@@ -35,13 +35,13 @@ export function CreatorsMultiSelect({
 }: CreatorsMultiSelectProps) {
   const [open, setOpen] = useState(false);
   
-  // Ensure value is always a valid array, this fixes the "undefined is not iterable" error
+  // Garantir que value seja sempre um array válido
   const safeValue = Array.isArray(value) ? value : [];
   
-  // Make sure collaborators is always an array
+  // Garantir que collaborators seja sempre um array
   const safeCollaborators = Array.isArray(collaborators) ? collaborators : [];
   
-  // Find selected collaborators with safeguards against undefined values
+  // Encontrar colaboradores selecionados com proteções contra valores undefined
   const selectedCollaborators = safeCollaborators.filter(c => 
     c && c.id && safeValue.includes(c.id)
   );
@@ -59,6 +59,37 @@ export function CreatorsMultiSelect({
   const handleRemove = (collaboratorId: string) => {
     if (!collaboratorId) return;
     onValueChange(safeValue.filter(id => id !== collaboratorId));
+  };
+
+  // Componentes filhos que serão renderizados dentro do Command.Group
+  const renderCollaboratorItems = () => {
+    if (!safeCollaborators || safeCollaborators.length === 0) {
+      return (
+        <div className="p-2 text-sm text-muted-foreground">
+          Nenhum colaborador disponível.
+        </div>
+      );
+    }
+
+    return safeCollaborators.map((collaborator) => (
+      collaborator && collaborator.id ? (
+        <CommandItem
+          key={collaborator.id}
+          value={collaborator.id}
+          onSelect={() => handleSelect(collaborator.id)}
+        >
+          <Check
+            className={cn(
+              "mr-2 h-4 w-4",
+              safeValue.includes(collaborator.id) 
+                ? "opacity-100"
+                : "opacity-0"
+            )}
+          />
+          {collaborator.name}
+        </CommandItem>
+      ) : null
+    ));
   };
 
   return (
@@ -88,31 +119,7 @@ export function CreatorsMultiSelect({
             <CommandEmpty>Nenhum creator encontrado.</CommandEmpty>
             <CommandGroup>
               <ScrollArea className="h-64">
-                {safeCollaborators && safeCollaborators.length > 0 ? (
-                  safeCollaborators.map((collaborator) => (
-                    collaborator && collaborator.id ? (
-                      <CommandItem
-                        key={collaborator.id}
-                        value={collaborator.id}
-                        onSelect={() => handleSelect(collaborator.id)}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            safeValue.includes(collaborator.id) 
-                              ? "opacity-100"
-                              : "opacity-0"
-                          )}
-                        />
-                        {collaborator.name}
-                      </CommandItem>
-                    ) : null
-                  ))
-                ) : (
-                  <div className="p-2 text-sm text-muted-foreground">
-                    Nenhum colaborador disponível.
-                  </div>
-                )}
+                {renderCollaboratorItems()}
               </ScrollArea>
             </CommandGroup>
           </Command>
