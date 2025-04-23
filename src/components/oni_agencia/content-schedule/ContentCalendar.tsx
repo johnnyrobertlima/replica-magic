@@ -55,10 +55,10 @@ export function ContentCalendar({
   
   const currentDate = new Date(year, month - 1, 1);
   
-  // Use the custom hook to manage calendar events
+  // Use the custom hook to manage calendar events - now passing selectedCollaborator
   const { 
     currentEvents
-  } = useCalendarEvents(events, selectedDate, isDialogOpen, setIsDialogOpen);
+  } = useCalendarEvents(events, selectedDate, isDialogOpen, setIsDialogOpen, selectedCollaborator);
   
   // Configure sensors for drag and drop
   const sensors = useSensors(
@@ -90,10 +90,14 @@ export function ContentCalendar({
       // Check if the person is a collaborator
       const isCollaborator = event.collaborator_id === selectedCollaborator;
       
-      // Check if the person is in the creators array - properly check creators array
-      const isCreator = event.creators && 
-                        Array.isArray(event.creators) && 
-                        event.creators.includes(selectedCollaborator);
+      // Check if the person is in the creators array - with better handling
+      const creators = Array.isArray(event.creators) ? 
+        event.creators : 
+        (typeof event.creators === 'string' ? 
+          [event.creators] : 
+          []);
+          
+      const isCreator = creators.includes(selectedCollaborator);
       
       // Add console logs for debugging
       if (event.title === "teste") {

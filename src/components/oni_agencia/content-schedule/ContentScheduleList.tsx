@@ -41,10 +41,24 @@ export function ContentScheduleList({
       // Check if the person is a collaborator
       const isCollaborator = event.collaborator_id === selectedCollaborator;
       
-      // Check if the person is in the creators array
-      const isCreator = event.creators && 
-                        Array.isArray(event.creators) && 
-                        event.creators.includes(selectedCollaborator);
+      // Improved handling of creators array
+      let creators: string[] = [];
+      
+      if (event.creators) {
+        if (Array.isArray(event.creators)) {
+          creators = event.creators;
+        } else if (typeof event.creators === 'string') {
+          try {
+            creators = JSON.parse(event.creators);
+          } catch (e) {
+            creators = [event.creators];
+          }
+        } else {
+          creators = []; // Empty array if creators is null or undefined
+        }
+      }
+      
+      const isCreator = creators.includes(selectedCollaborator);
       
       // Return true if the person is either a collaborator or a creator
       return isCollaborator || isCreator;
