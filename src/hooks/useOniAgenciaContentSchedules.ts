@@ -15,8 +15,8 @@ import { useEditorialLines, useProducts, useStatuses } from "./useOniAgenciaThem
 
 // Cache time constants
 const MINUTE = 60 * 1000;
-const CACHE_TIME = 30 * MINUTE; // 30 minutos (increased from 10)
-const STALE_TIME = 5 * MINUTE;  // 5 minutos (increased from 2)
+const CACHE_TIME = 60 * MINUTE; // 60 minutos (increased from 30)
+const STALE_TIME = 15 * MINUTE;  // 15 minutos (increased from 5)
 
 export function useContentSchedules(clientId: string, year: number, month: number) {
   const { toast } = useToast();

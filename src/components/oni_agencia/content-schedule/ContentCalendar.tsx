@@ -86,10 +86,18 @@ export function ContentCalendar({
   const filteredEvents = useMemo(() => {
     if (!selectedCollaborator) return events;
     
-    return events.filter(event => 
-      event.collaborator_id === selectedCollaborator || 
-      (event.creators && Array.isArray(event.creators) && event.creators.includes(selectedCollaborator))
-    );
+    return events.filter(event => {
+      // Check if the person is a collaborator
+      const isCollaborator = event.collaborator_id === selectedCollaborator;
+      
+      // Check if the person is in the creators array
+      const isCreator = event.creators && 
+                        Array.isArray(event.creators) && 
+                        event.creators.includes(selectedCollaborator);
+      
+      // Return true if the person is either a collaborator or a creator
+      return isCollaborator || isCreator;
+    });
   }, [events, selectedCollaborator]);
 
   const handleCellSelect = (date: Date) => {
@@ -153,7 +161,7 @@ export function ContentCalendar({
                 return (
                   <CalendarDayCell 
                     date={date}
-                    events={events}
+                    events={filteredEvents}
                     isSelected={isSelected}
                     isCurrentDay={isCurrentDay}
                     onSelect={handleCellSelect}

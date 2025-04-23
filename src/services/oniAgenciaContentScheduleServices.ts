@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { OniAgenciaContentSchedule, ContentScheduleFormData, CalendarEvent } from "@/types/oni-agencia";
 
@@ -29,6 +30,12 @@ export async function getContentSchedules(clientId: string, year: number, month:
       return [];
     }
 
+    console.log(`Fetching events for date range:`, {
+      clientId,
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0]
+    });
+
     const { data, error } = await getBaseQuery()
       .eq('client_id', clientId)
       .gte('scheduled_date', startDate.toISOString().split('T')[0])
@@ -43,6 +50,8 @@ export async function getContentSchedules(clientId: string, year: number, month:
       console.log(`No content schedules found for month ${month}/${year}`);
       return [];
     }
+    
+    console.log(`Fetched ${data.length} content schedules for month ${month}/${year}`);
     
     // Garantir que os dados estejam em um formato seguro
     const safeData = data.map(item => {
@@ -68,10 +77,13 @@ export async function getAllContentSchedules(clientId: string): Promise<Calendar
       return [];
     }
 
-    // Optimize query by limiting to just the current year range
+    console.log(`Fetching all events for client: ${clientId}`);
+
+    // Optimize query by limiting to just a smaller period around current date
+    // This significantly improves performance by fetching less data
     const currentDate = new Date();
-    const startDate = new Date(currentDate.getFullYear() - 1, currentDate.getMonth(), 1);
-    const endDate = new Date(currentDate.getFullYear() + 1, currentDate.getMonth() + 1, 0);
+    const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);  // 1 month before
+    const endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 2, 0);    // 2 months ahead
 
     // Podemos limitar as colunas retornadas na consulta principal para otimizar
     const { data, error } = await getBaseQuery()
@@ -88,6 +100,8 @@ export async function getAllContentSchedules(clientId: string): Promise<Calendar
       console.log(`No content schedules found for client ${clientId}`);
       return [];
     }
+    
+    console.log(`Fetched ${data.length} content schedules total`);
     
     // Garantir que os dados estejam em um formato seguro
     const safeData = data.map(item => {
