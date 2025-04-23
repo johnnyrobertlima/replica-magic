@@ -85,17 +85,17 @@ export function ContentScheduleList({
     setIsDialogOpen(false);
   };
 
-  // Handle PDF export - FIXED: Now using filteredEvents to respect current filters
+  // Handle PDF export - IMPORTANTE: Usando filteredEvents para respeitar os filtros atuais
   const handleExportToPdf = () => {
     try {
       const clientName = "Agenda";
       
-      // Export PDF with only the filtered events data in landscape
+      // Garantindo que usamos exatamente os eventos filtrados que estão sendo mostrados na lista
       exportToPdf({
         filename: `${clientName}_cronograma_conteudo.pdf`,
         content: null,
-        orientation: 'landscape', // Explicitly set to landscape
-        data: filteredEvents, // Use filteredEvents instead of all events
+        orientation: 'landscape', 
+        data: filteredEvents, // Usamos filteredEvents para garantir que exportamos exatamente o que o usuário está vendo
       });
       
       toast({

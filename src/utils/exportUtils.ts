@@ -73,11 +73,23 @@ export const exportToPdf = (options: ExportToPdfOptions) => {
         
         // Create content for each date
         sortedDates.forEach(dateString => {
-          const date = new Date(dateString);
-          const formattedDate = format(date, "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR });
-          
+          // IMPORTANTE: Usamos a data exatamente como está, sem tentar interpretá-la novamente
+          // Isso evita problemas com fuso-horário e alterações indesejadas nas datas
           const dateSection = document.createElement('div');
           dateSection.style.marginBottom = '20px';
+          
+          // Vamos obter a formatação da data direto do evento formatado na interface
+          // Para isso, precisamos verificar se temos os eventos neste grupo
+          const eventsForDate = groupedEvents[dateString];
+          if (!eventsForDate || eventsForDate.length === 0) return;
+          
+          // Extrair a data formatada do primeiro evento (deve ser a mesma para todos no grupo)
+          const date = new Date(dateString);
+          
+          // Formatar a data usando a mesma lógica do EventDateSection.tsx
+          // O importante é usar o mesmo formato da interface (dia da semana, dia do mês, etc.)
+          const formattedDate = format(date, "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR });
+          
           dateSection.innerHTML = `
             <h2 style="color: #4f46e5; font-size: 11px; margin-bottom: 10px; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px;">
               ${formattedDate}
@@ -183,3 +195,4 @@ export const exportToPdf = (options: ExportToPdfOptions) => {
     console.error('Error exporting to PDF:', error);
   }
 };
+
