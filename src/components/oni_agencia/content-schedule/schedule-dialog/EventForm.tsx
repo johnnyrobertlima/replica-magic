@@ -7,7 +7,7 @@ import { CollaboratorSelect } from "./CollaboratorSelect";
 import { EditorialLineSelect } from "./EditorialLineSelect";
 import { ProductSelect } from "./ProductSelect";
 import { StatusSelect } from "./StatusSelect";
-import { CreatorsMultiSelect } from "./CreatorsMultiSelect";
+import { CreatorsSelectMultiple } from "./CreatorsSelectMultiple";
 import { ContentScheduleFormData, OniAgenciaService, OniAgenciaCollaborator } from "@/types/oni-agencia";
 import { EditorialLine, Product, Status } from "@/pages/admin/sub-themes/types";
 
@@ -91,7 +91,7 @@ export function EventForm({
         onValueChange={(value) => onSelectChange("collaborator_id", value)}
       />
       
-      <CreatorsMultiSelect
+      <CreatorsSelectMultiple
         collaborators={safeCollaborators}
         isLoading={isLoadingCollaborators}
         value={creatorsArray}
