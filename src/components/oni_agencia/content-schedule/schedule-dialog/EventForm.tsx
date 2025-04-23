@@ -10,6 +10,7 @@ import { StatusSelect } from "./StatusSelect";
 import { CreatorsMultiSelect } from "./CreatorsMultiSelect";
 import { ContentScheduleFormData, OniAgenciaService, OniAgenciaCollaborator } from "@/types/oni-agencia";
 import { EditorialLine, Product, Status } from "@/pages/admin/sub-themes/types";
+import { useEffect } from "react";
 
 interface EventFormProps {
   formData: ContentScheduleFormData;
@@ -46,6 +47,13 @@ export function EventForm({
   const creatorsArray = Array.isArray(formData.creators) 
     ? formData.creators 
     : (formData.creators ? [formData.creators] : []);
+  
+  // Log para debug
+  useEffect(() => {
+    console.log("EventForm - formData:", formData);
+    console.log("EventForm - creatorsArray:", creatorsArray);
+    console.log("EventForm - collaborators:", collaborators);
+  }, [formData, creatorsArray, collaborators]);
   
   return (
     <div className="grid gap-4 py-4">
@@ -95,6 +103,7 @@ export function EventForm({
         onValueChange={(values) => {
           // Certifique-se de que estamos passando um array válido antes de converter para JSON
           if (Array.isArray(values)) {
+            console.log("EventForm - Updating creators with values:", values);
             onSelectChange("creators", JSON.stringify(values));
           } else {
             console.error("Valor inválido para creators:", values);

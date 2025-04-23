@@ -29,6 +29,12 @@ export function useScheduleFormState({
   
   const isUserEditing = useRef(false);
 
+  // Log state changes para debug
+  useEffect(() => {
+    console.log("useScheduleFormState - formData:", formData);
+    console.log("useScheduleFormState - currentSelectedEvent:", currentSelectedEvent);
+  }, [formData, currentSelectedEvent]);
+
   useEffect(() => {
     if (selectedEvent && !isUserEditing.current) {
       console.log("useScheduleFormState selectedEvent effect:", selectedEvent.id);
@@ -78,6 +84,8 @@ export function useScheduleFormState({
         creatorsArray = [String(event.creators)];
       }
     }
+    
+    console.log("handleSelectEvent - Setting creators to:", creatorsArray);
     
     setFormData({
       client_id: event.client_id,
@@ -129,6 +137,7 @@ export function useScheduleFormState({
           }
         }
         
+        console.log("handleSelectChange - Setting creators to:", creatorsArray);
         setFormData(prev => ({ ...prev, [name]: creatorsArray }));
       } catch (e) {
         console.error("Erro ao analisar JSON de creators:", e);

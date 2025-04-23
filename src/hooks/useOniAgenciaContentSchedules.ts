@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   getContentSchedules, 
@@ -28,6 +27,8 @@ export function useContentSchedules(clientId: string, year: number, month: numbe
     staleTime: STALE_TIME,
     gcTime: CACHE_TIME,
     refetchOnWindowFocus: false, // Só atualiza manualmente ou por invalidação
+    retry: 2, // Tentar novamente em caso de falha
+    retryDelay: attempt => Math.min(attempt * 1000, 3000) // Exponential backoff
   });
 }
 
@@ -39,6 +40,8 @@ export function useAllContentSchedules(clientId: string) {
     staleTime: STALE_TIME,
     gcTime: CACHE_TIME,
     refetchOnWindowFocus: false,
+    retry: 2, // Tentar novamente em caso de falha
+    retryDelay: attempt => Math.min(attempt * 1000, 3000) // Exponential backoff
   });
 }
 
@@ -48,6 +51,7 @@ export function useServices() {
     queryFn: getServices,
     staleTime: CACHE_TIME, // Dados que raramente mudam
     gcTime: CACHE_TIME * 2,
+    retry: 2, // Tentar novamente em caso de falha
   });
 }
 
@@ -57,6 +61,7 @@ export function useCollaborators() {
     queryFn: getCollaborators,
     staleTime: CACHE_TIME, // Dados que raramente mudam
     gcTime: CACHE_TIME * 2,
+    retry: 2, // Tentar novamente em caso de falha
   });
 }
 

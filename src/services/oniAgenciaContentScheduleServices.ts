@@ -29,6 +29,12 @@ export async function getContentSchedules(clientId: string, year: number, month:
       endDate: endDate.toISOString().split('T')[0],
     });
 
+    // Verificar se o clientId é válido
+    if (!clientId) {
+      console.error('Error in getContentSchedules: Invalid clientId');
+      return [];
+    }
+
     const { data, error } = await getBaseQuery()
       .eq('client_id', clientId)
       .gte('scheduled_date', startDate.toISOString().split('T')[0])
@@ -39,8 +45,23 @@ export async function getContentSchedules(clientId: string, year: number, month:
       throw error;
     }
 
+    if (!data || data.length === 0) {
+      console.log(`No content schedules found for month ${month}/${year}`);
+      return [];
+    }
+
     console.log(`Fetched ${data?.length || 0} content schedules for month ${month}/${year}`);
-    return data as unknown as CalendarEvent[];
+    
+    // Garantir que os dados estejam em um formato seguro
+    const safeData = data.map(item => {
+      return {
+        ...item,
+        creators: Array.isArray(item.creators) ? item.creators : 
+                 (item.creators ? [String(item.creators)] : [])
+      };
+    });
+
+    return safeData as unknown as CalendarEvent[];
   } catch (error) {
     console.error('Error in getContentSchedules:', error);
     throw error;
@@ -51,6 +72,12 @@ export async function getAllContentSchedules(clientId: string): Promise<Calendar
   try {
     console.log('Fetching all events for client:', clientId);
 
+    // Verificar se o clientId é válido
+    if (!clientId) {
+      console.error('Error in getAllContentSchedules: Invalid clientId');
+      return [];
+    }
+
     // Podemos limitar as colunas retornadas na consulta principal para otimizar
     const { data, error } = await getBaseQuery()
       .eq('client_id', clientId);
@@ -60,8 +87,23 @@ export async function getAllContentSchedules(clientId: string): Promise<Calendar
       throw error;
     }
 
+    if (!data || data.length === 0) {
+      console.log(`No content schedules found for client ${clientId}`);
+      return [];
+    }
+
     console.log(`Fetched ${data?.length || 0} content schedules total`);
-    return data as unknown as CalendarEvent[];
+    
+    // Garantir que os dados estejam em um formato seguro
+    const safeData = data.map(item => {
+      return {
+        ...item,
+        creators: Array.isArray(item.creators) ? item.creators : 
+                 (item.creators ? [String(item.creators)] : [])
+      };
+    });
+
+    return safeData as unknown as CalendarEvent[];
   } catch (error) {
     console.error('Error in getAllContentSchedules:', error);
     throw error;
