@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
@@ -57,9 +56,15 @@ export function useScheduleFormState({
   const handleSelectEvent = (event: CalendarEvent) => {
     console.log("selecting event in useScheduleFormState:", event.id);
     setCurrentSelectedEvent(event);
+    
+    const eventCreators = event.creators || [];
+    
+    const safeCreators = Array.isArray(eventCreators) ? eventCreators : 
+                         eventCreators ? [eventCreators] : [];
+    
     setFormData({
       client_id: event.client_id,
-      service_id: event.service_id,
+      service_id: event.service_id || "",
       collaborator_id: event.collaborator_id,
       title: event.title || "",
       description: event.description,
@@ -68,7 +73,7 @@ export function useScheduleFormState({
       editorial_line_id: event.editorial_line_id,
       product_id: event.product_id,
       status_id: event.status_id,
-      creators: event.creators || []
+      creators: safeCreators
     });
   };
 
@@ -90,7 +95,46 @@ export function useScheduleFormState({
     
     isUserEditing.current = true;
     
-    setFormData(prev => ({ ...prev, [name]: value === "null" ? null : value }));
+    if (name === "creators") {
+      try {
+        let creatorsArray = [];
+        
+        if (value) {
+          try {
+            const parsed = JSON.parse(value);
+            if (Array.isArray(parsed)) {
+              creatorsArray = parsed;
+            } else if (parsed) {
+              creatorsArray = [parsed];
+            }
+          } catch (e) {
+            console.error("Failed to parse creators JSON:", e);
+          }
+        }
+        
+        setFormData(prev => ({ ...prev, [name]: creatorsArray }));
+      } catch (e) {
+        console.error("Error parsing creators JSON:", e);
+        setFormData(prev => ({ ...prev, [name]: [] }));
+      }
+    } else {
+      if (
+        (name === "service_id" || 
+        name === "status_id" || 
+        name === "editorial_line_id" || 
+        name === "product_id" || 
+        name === "collaborator_id") && 
+        (value === "" || value === "null")
+      ) {
+        if (name === "service_id" && currentSelectedEvent) {
+          console.log("Keeping existing service_id for required field");
+        } else {
+          setFormData(prev => ({ ...prev, [name]: null }));
+        }
+      } else {
+        setFormData(prev => ({ ...prev, [name]: value === "null" ? null : value }));
+      }
+    }
     
     setTimeout(() => {
       isUserEditing.current = false;

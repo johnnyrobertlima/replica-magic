@@ -42,8 +42,12 @@ export function EventForm({
   onInputChange,
   onSelectChange
 }: EventFormProps) {
-  // Ensure creators is always an array
-  const creatorsArray = Array.isArray(formData.creators) ? formData.creators : [];
+  // Ensure creators is always an array, with multiple safety checks
+  const creatorsArray = Array.isArray(formData.creators) 
+    ? formData.creators 
+    : formData.creators 
+      ? [formData.creators] 
+      : [];
   
   return (
     <div className="grid gap-4 py-4">
@@ -73,42 +77,50 @@ export function EventForm({
       </div>
       
       <ServiceSelect
-        services={services}
+        services={services || []}
         isLoading={isLoadingServices}
         value={formData.service_id}
         onValueChange={(value) => onSelectChange("service_id", value)}
       />
       
       <CollaboratorSelect
-        collaborators={collaborators}
+        collaborators={collaborators || []}
         isLoading={isLoadingCollaborators}
         value={formData.collaborator_id}
         onValueChange={(value) => onSelectChange("collaborator_id", value)}
       />
       
       <CreatorsMultiSelect
-        collaborators={collaborators}
+        collaborators={collaborators || []}
         isLoading={isLoadingCollaborators}
         value={creatorsArray}
-        onValueChange={(values) => onSelectChange("creators", JSON.stringify(values))}
+        onValueChange={(values) => {
+          // Ensure we're passing a valid array before converting to JSON
+          if (Array.isArray(values)) {
+            onSelectChange("creators", JSON.stringify(values));
+          } else {
+            console.error("Invalid creators value:", values);
+            onSelectChange("creators", JSON.stringify([]));
+          }
+        }}
       />
       
       <EditorialLineSelect
-        editorialLines={editorialLines}
+        editorialLines={editorialLines || []}
         isLoading={isLoadingEditorialLines}
         value={formData.editorial_line_id}
         onValueChange={(value) => onSelectChange("editorial_line_id", value)}
       />
       
       <ProductSelect
-        products={products}
+        products={products || []}
         isLoading={isLoadingProducts}
         value={formData.product_id}
         onValueChange={(value) => onSelectChange("product_id", value)}
       />
       
       <StatusSelect
-        statuses={statuses}
+        statuses={statuses || []}
         isLoading={isLoadingStatuses}
         value={formData.status_id}
         onValueChange={(value) => onSelectChange("status_id", value)}

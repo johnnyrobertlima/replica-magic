@@ -41,11 +41,14 @@ export function CreatorsMultiSelect({
   // Make sure collaborators is always an array
   const safeCollaborators = Array.isArray(collaborators) ? collaborators : [];
 
+  // Find selected collaborators with safeguards against undefined values
   const selectedCollaborators = safeCollaborators.filter(c => 
-    safeValue.includes(c.id)
+    c && c.id && safeValue.includes(c.id)
   );
 
   const handleSelect = (collaboratorId: string) => {
+    if (!collaboratorId) return;
+    
     if (safeValue.includes(collaboratorId)) {
       onValueChange(safeValue.filter(id => id !== collaboratorId));
     } else {
@@ -54,6 +57,7 @@ export function CreatorsMultiSelect({
   };
 
   const handleRemove = (collaboratorId: string) => {
+    if (!collaboratorId) return;
     onValueChange(safeValue.filter(id => id !== collaboratorId));
   };
 
@@ -82,27 +86,35 @@ export function CreatorsMultiSelect({
           <Command>
             <CommandInput placeholder="Buscar creators..." />
             <CommandEmpty>Nenhum creator encontrado.</CommandEmpty>
-            {safeCollaborators.length > 0 && (
+            {safeCollaborators && safeCollaborators.length > 0 ? (
               <CommandGroup>
                 <ScrollArea className="h-64">
                   {safeCollaborators.map((collaborator) => (
-                    <CommandItem
-                      key={collaborator.id}
-                      value={collaborator.id}
-                      onSelect={() => handleSelect(collaborator.id)}
-                    >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          safeValue.includes(collaborator.id) 
-                            ? "opacity-100"
-                            : "opacity-0"
-                        )}
-                      />
-                      {collaborator.name}
-                    </CommandItem>
+                    collaborator && collaborator.id ? (
+                      <CommandItem
+                        key={collaborator.id}
+                        value={collaborator.id}
+                        onSelect={() => handleSelect(collaborator.id)}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            safeValue.includes(collaborator.id) 
+                              ? "opacity-100"
+                              : "opacity-0"
+                          )}
+                        />
+                        {collaborator.name}
+                      </CommandItem>
+                    ) : null
                   ))}
                 </ScrollArea>
+              </CommandGroup>
+            ) : (
+              <CommandGroup>
+                <div className="p-2 text-sm text-muted-foreground">
+                  Nenhum colaborador disponível.
+                </div>
               </CommandGroup>
             )}
           </Command>
