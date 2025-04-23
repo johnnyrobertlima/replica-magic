@@ -82,7 +82,7 @@ export function ContentCalendar({
 
   const weekDays = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
-  // Memoize filtered events to improve performance
+  // Memoize filtered events to improve performance with direct ID checks
   const filteredEvents = useMemo(() => {
     if (!selectedCollaborator) return events;
     
@@ -90,33 +90,24 @@ export function ContentCalendar({
       // Check if the person is a collaborator
       const isCollaborator = event.collaborator_id === selectedCollaborator;
       
-      // Process creators to ensure we're working with a proper array
-      let creators: string[] = [];
+      // Check directly if ID is in creators array
+      let isCreator = false;
       
       if (event.creators) {
-        if (Array.isArray(event.creators)) {
-          creators = event.creators;
-        } else if (typeof event.creators === 'string') {
-          try {
-            const parsedCreators = JSON.parse(event.creators);
-            creators = Array.isArray(parsedCreators) ? parsedCreators : [parsedCreators];
-          } catch (e) {
-            creators = [event.creators];
-          }
-        } else {
-          creators = [];
-        }
+        // Make sure creators is always processed as an array
+        const creatorsArray = Array.isArray(event.creators) ? event.creators : 
+                             (typeof event.creators === 'string' ? [event.creators] : []);
+        
+        // Direct ID check - exactly what we need
+        isCreator = creatorsArray.includes(selectedCollaborator);
       }
-      
-      // Check if the person is in the creators array
-      const isCreator = creators.includes(selectedCollaborator);
       
       // Add debug logging for one specific event to help with troubleshooting
       if (event.title === "teste" || event.title === " ") {
         console.log("ContentCalendar filtering event:", {
           title: event.title,
           collaborator_id: event.collaborator_id,
-          creators: creators,
+          creators: event.creators,
           selectedCollaborator,
           isCollaborator,
           isCreator,
