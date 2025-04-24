@@ -76,6 +76,10 @@ export function ContentScheduleFilters({
     }
   };
   
+  const handleClientChange = (value: string) => {
+    onClientChange(value);
+  };
+  
   return (
     <Collapsible
       open={!isCollapsed}
@@ -97,12 +101,13 @@ export function ContentScheduleFilters({
             <Label htmlFor="client-select">Cliente</Label>
             <Select
               value={selectedClient}
-              onValueChange={onClientChange}
+              onValueChange={handleClientChange}
             >
               <SelectTrigger id="client-select" className="w-full">
                 <SelectValue placeholder="Selecione um cliente" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="">Todos os clientes</SelectItem>
                 {isLoadingClients ? (
                   <div className="flex items-center justify-center p-2">
                     <Loader2 className="h-4 w-4 animate-spin" />

@@ -24,7 +24,7 @@ export function useAllContentSchedules(clientId: string) {
   return useQuery({
     queryKey: ['allOniAgenciaContentSchedules', clientId],
     queryFn: () => getAllContentSchedules(clientId),
-    enabled: true, // Always enable this query
+    enabled: !!clientId || clientId === "", // Enable when clientId is empty string (all clients)
     staleTime: STALE_TIME,
     gcTime: CACHE_TIME,
     refetchOnWindowFocus: false,

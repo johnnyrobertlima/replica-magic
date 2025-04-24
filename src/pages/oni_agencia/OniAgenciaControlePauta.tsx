@@ -5,7 +5,7 @@ import { CalendarDays, RefreshCw, List, LayoutGrid } from "lucide-react";
 import { ContentCalendar } from "@/components/oni_agencia/content-schedule/ContentCalendar";
 import { ContentScheduleFilters } from "@/components/oni_agencia/content-schedule/ContentScheduleFilters";
 import { ContentScheduleList } from "@/components/oni_agencia/content-schedule/ContentScheduleList";
-import { useContentSchedules } from "@/hooks/useOniAgenciaContentSchedules";
+import { useContentSchedules, useAllContentSchedules } from "@/hooks/useOniAgenciaContentSchedules";
 import { useClients } from "@/hooks/useOniAgenciaClients";
 import { useCollapsible } from "@/components/oni_agencia/content-schedule/hooks/useCollapsible";
 import { Button } from "@/components/ui/button";
@@ -40,12 +40,15 @@ const OniAgenciaControlePauta = () => {
     setSelectedCollaborator(collaboratorId);
   }, []);
   
+  // Use either useContentSchedules or useAllContentSchedules based on selectedClient
   const { 
-    data: schedules = [], 
+    data: filteredSchedules = [], 
     isLoading: isLoadingSchedules,
     refetch: refetchSchedules,
     isRefetching
-  } = useContentSchedules(selectedClient, selectedYear, selectedMonth);
+  } = selectedClient 
+    ? useContentSchedules(selectedClient, selectedYear, selectedMonth)
+    : useAllContentSchedules(selectedClient); // Empty string means "all clients"
   
   // Refetch quando mês/ano/cliente muda
   const handleMonthYearChange = useCallback((month: number, year: number) => {
@@ -79,8 +82,8 @@ const OniAgenciaControlePauta = () => {
                 <List className="h-4 w-4" />
               </ToggleGroupItem>
             </ToggleGroup>
-            <EditorialLinePopover events={schedules} />
-            <ProductsPopover events={schedules} />
+            <EditorialLinePopover events={filteredSchedules} />
+            <ProductsPopover events={filteredSchedules} />
             <Button 
               variant="outline" 
               size="sm" 
@@ -107,32 +110,24 @@ const OniAgenciaControlePauta = () => {
           onToggleCollapse={toggleFilters}
         />
         
-        {selectedClient ? (
-          <div className={`w-full overflow-x-auto ${isCollapsed ? 'h-[calc(100vh-150px)]' : 'h-[calc(100vh-250px)]'} transition-all duration-300`}>
-            {viewMode === "calendar" ? (
-              <ContentCalendar
-                events={schedules}
-                clientId={selectedClient}
-                month={selectedMonth}
-                year={selectedYear}
-                onMonthChange={handleMonthYearChange}
-                selectedCollaborator={selectedCollaborator}
-              />
-            ) : (
-              <ContentScheduleList
-                events={schedules}
-                clientId={selectedClient}
-                selectedCollaborator={selectedCollaborator}
-              />
-            )}
-          </div>
-        ) : (
-          <div className="bg-white rounded-md border shadow-sm p-8 text-center">
-            <p className="text-muted-foreground">
-              Selecione um cliente para visualizar o calendário de conteúdo.
-            </p>
-          </div>
-        )}
+        <div className={`w-full overflow-x-auto ${isCollapsed ? 'h-[calc(100vh-150px)]' : 'h-[calc(100vh-250px)]'} transition-all duration-300`}>
+          {viewMode === "calendar" ? (
+            <ContentCalendar
+              events={filteredSchedules}
+              clientId={selectedClient || "all"} // Pass "all" when no client is selected
+              month={selectedMonth}
+              year={selectedYear}
+              onMonthChange={handleMonthYearChange}
+              selectedCollaborator={selectedCollaborator}
+            />
+          ) : (
+            <ContentScheduleList
+              events={filteredSchedules}
+              clientId={selectedClient || "all"} // Pass "all" when no client is selected
+              selectedCollaborator={selectedCollaborator}
+            />
+          )}
+        </div>
       </div>
     </main>
   );
