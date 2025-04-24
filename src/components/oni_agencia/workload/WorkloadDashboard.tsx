@@ -11,7 +11,7 @@ export function WorkloadDashboard() {
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
 
   const { data: clients = [] } = useClients();
-  const { data: events = [], isLoading } = useAllContentSchedules(selectedClient);
+  const { data: events = [], isLoading } = useAllContentSchedules(selectedYear, selectedMonth);
 
   return (
     <div className="space-y-6">
