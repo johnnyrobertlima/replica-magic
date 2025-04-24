@@ -85,17 +85,17 @@ export function ContentScheduleList({
     setIsDialogOpen(false);
   };
 
-  // Handle PDF export - IMPORTANTE: Usando filteredEvents para respeitar os filtros atuais
+  // Handle PDF export - Agora corrigido para problemas de fuso horário
   const handleExportToPdf = () => {
     try {
       const clientName = "Agenda";
       
-      // Garantindo que usamos exatamente os eventos filtrados que estão sendo mostrados na lista
+      // Usamos filteredEvents para garantir que exportamos exatamente o que o usuário está vendo
       exportToPdf({
         filename: `${clientName}_cronograma_conteudo.pdf`,
         content: null,
         orientation: 'landscape', 
-        data: filteredEvents, // Usamos filteredEvents para garantir que exportamos exatamente o que o usuário está vendo
+        data: filteredEvents,
       });
       
       toast({
