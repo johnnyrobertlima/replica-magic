@@ -11,6 +11,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useDroppable } from "@dnd-kit/core";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface CalendarDayCellProps {
   date: Date;
@@ -32,6 +33,7 @@ export function CalendarDayCell({
   selectedCollaborator
 }: CalendarDayCellProps) {
   const [isHovering, setIsHovering] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const dateString = format(date, 'yyyy-MM-dd');
   
   const { setNodeRef, isOver } = useDroppable({
@@ -42,19 +44,14 @@ export function CalendarDayCell({
   
   if (selectedCollaborator) {
     dayEvents = dayEvents.filter(event => {
-      // Check if the person is a collaborator
       const isCollaborator = event.collaborator_id === selectedCollaborator;
-      
-      // Check if the person is in the creators array
       const isCreator = event.creators?.includes(selectedCollaborator) || false;
-      
-      // Return true if the person is either a collaborator or a creator
       return isCollaborator || isCreator;
     });
   }
   
   const MAX_VISIBLE_EVENTS = 4;
-  const visibleEvents = dayEvents.slice(0, MAX_VISIBLE_EVENTS);
+  const visibleEvents = isExpanded ? dayEvents : dayEvents.slice(0, MAX_VISIBLE_EVENTS);
   const hiddenEventsCount = dayEvents.length - MAX_VISIBLE_EVENTS;
   
   const handleCellClick = (e: React.MouseEvent) => {
@@ -75,6 +72,11 @@ export function CalendarDayCell({
     e.stopPropagation();
     console.log("Event clicked:", event.id, event.title);
     onEventClick(event, date);
+  };
+
+  const handleExpandClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsExpanded(!isExpanded);
   };
   
   return (
@@ -134,17 +136,24 @@ export function CalendarDayCell({
             </TooltipProvider>
           ))}
           
-          {hiddenEventsCount > 0 && (
-            <div 
-              className="text-xs text-primary font-medium px-1 py-0.5 cursor-pointer hover:underline event-item-wrapper"
-              onClick={(e) => {
-                e.stopPropagation();
-                console.log("Showing all events for date:", date);
-                onSelect(date);
-              }}
+          {!isExpanded && hiddenEventsCount > 0 && (
+            <button
+              className="text-xs text-primary font-medium px-1 py-0.5 hover:bg-gray-100 rounded flex items-center justify-between"
+              onClick={handleExpandClick}
             >
-              + {hiddenEventsCount} mais agendamento{hiddenEventsCount > 1 ? 's' : ''}...
-            </div>
+              <span>+ {hiddenEventsCount} mais agendamento{hiddenEventsCount > 1 ? 's' : ''}</span>
+              <ChevronDown className="h-3 w-3" />
+            </button>
+          )}
+          
+          {isExpanded && hiddenEventsCount > 0 && (
+            <button
+              className="text-xs text-primary font-medium px-1 py-0.5 hover:bg-gray-100 rounded flex items-center justify-between"
+              onClick={handleExpandClick}
+            >
+              <span>Mostrar menos</span>
+              <ChevronUp className="h-3 w-3" />
+            </button>
           )}
         </div>
       ) : (
@@ -153,4 +162,3 @@ export function CalendarDayCell({
     </div>
   );
 }
-
