@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { BkFaturamento, InvoiceItem } from "./types/financialTypes";
 
@@ -23,7 +22,8 @@ export const fetchBkFaturamentoData = async (
     // Fallback to direct query on the BLUEBAY_FATURAMENTO table if RPC fails
     const query = supabase
       .from('BLUEBAY_FATURAMENTO')
-      .select('*');
+      .select('*')
+      .neq('TRANSACAO', 1011); // Filter out TRANSACAO = 1011
     
     if (startDate) {
       query.gte('DATA_EMISSAO', startDate);
@@ -44,8 +44,11 @@ export const fetchBkFaturamentoData = async (
     return processFaturamentoData(fallbackData || []);
   }
 
-  console.log(`Fetched ${rpcData?.length || 0} faturamento records via RPC`);
-  return processFaturamentoData(rpcData || []);
+  // Filter out TRANSACAO = 1011 from RPC results
+  const filteredRpcData = rpcData?.filter(item => item.TRANSACAO !== 1011) || [];
+
+  console.log(`Fetched ${filteredRpcData?.length || 0} faturamento records via RPC`);
+  return processFaturamentoData(filteredRpcData);
 };
 
 /**
