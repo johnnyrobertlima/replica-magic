@@ -1,8 +1,7 @@
 
 import { useMemo } from "react";
-import { BarChart } from "@/components/ui/chart";
 import { CalendarEvent } from "@/types/oni-agencia";
-import { Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart } from "recharts";
 
 interface MonthWorkloadChartProps {
   events: CalendarEvent[];

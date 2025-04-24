@@ -1,7 +1,7 @@
 
-import { ClientSelect } from "@/components/oni_agencia/content-schedule/schedule-dialog/ClientSelect";
-import { MonthSelect } from "@/components/oni_agencia/content-schedule/schedule-dialog/MonthSelect";
-import { YearSelect } from "@/components/oni_agencia/content-schedule/schedule-dialog/YearSelect";
+import { ClientSelect } from "@/components/oni_agencia/workload/ClientSelect";
+import { MonthSelect } from "@/components/oni_agencia/workload/MonthSelect";
+import { YearSelect } from "@/components/oni_agencia/workload/YearSelect";
 
 interface WorkloadFiltersProps {
   selectedClient: string;
