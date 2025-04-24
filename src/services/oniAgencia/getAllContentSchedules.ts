@@ -4,22 +4,23 @@ import { getBaseQuery } from "./baseQuery";
 
 export async function getAllContentSchedules(clientId: string): Promise<CalendarEvent[]> {
   try {
-    if (!clientId) {
-      console.error('Error in getAllContentSchedules: Invalid clientId');
-      return [];
-    }
-
-    console.log(`Fetching all events for client: ${clientId}`);
-
     // Optimize query by limiting to just a smaller period around current date
     const currentDate = new Date();
     const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
     const endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 2, 0);
 
-    const { data, error } = await getBaseQuery()
-      .eq('client_id', clientId)
+    console.log(`Fetching events for ${clientId ? `client: ${clientId}` : 'all clients'}`);
+
+    let query = getBaseQuery()
       .gte('scheduled_date', startDate.toISOString().split('T')[0])
       .lte('scheduled_date', endDate.toISOString().split('T')[0]);
+    
+    // Only filter by client_id if a specific client is selected
+    if (clientId) {
+      query = query.eq('client_id', clientId);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error('Error fetching all content schedules:', error);
@@ -27,7 +28,7 @@ export async function getAllContentSchedules(clientId: string): Promise<Calendar
     }
 
     if (!data || data.length === 0) {
-      console.log(`No content schedules found for client ${clientId}`);
+      console.log(`No content schedules found ${clientId ? `for client ${clientId}` : 'for any client'}`);
       return [];
     }
     

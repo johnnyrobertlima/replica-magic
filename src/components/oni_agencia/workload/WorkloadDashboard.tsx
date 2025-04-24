@@ -25,11 +25,17 @@ export function WorkloadDashboard() {
       />
       
       <div className="bg-white rounded-lg border shadow p-6">
-        <MonthWorkloadChart 
-          events={events} 
-          selectedMonth={selectedMonth}
-          selectedYear={selectedYear}
-        />
+        {isLoading ? (
+          <div className="h-[400px] flex items-center justify-center">
+            <div className="text-muted-foreground">Carregando dados...</div>
+          </div>
+        ) : (
+          <MonthWorkloadChart 
+            events={events} 
+            selectedMonth={selectedMonth}
+            selectedYear={selectedYear}
+          />
+        )}
       </div>
     </div>
   );
