@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   Users, 
@@ -7,7 +6,8 @@ import {
   UserPlus,
   CalendarDays,
   BookText,
-  Briefcase
+  Briefcase,
+  BarChart2
 } from "lucide-react";
 import { OniAgenciaMenu } from "@/components/oni_agencia/OniAgenciaMenu";
 import { ServiceCard } from "@/components/oni_agencia/ServiceCard";
@@ -31,6 +31,14 @@ const OniAgenciaHome = () => {
             icon={CalendarDays}
             iconColor="bg-blue-100 text-blue-600"
             path="/client-area/oniagencia/controle-pauta"
+          />
+
+          <ServiceCard
+            title="Carga de Trabalho"
+            description="Análise de distribuição de tarefas por colaborador."
+            icon={BarChart2}
+            iconColor="bg-purple-100 text-purple-600"
+            path="/client-area/oniagencia/cargacolab"
           />
           
           <ServiceCard
