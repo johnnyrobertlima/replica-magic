@@ -1616,6 +1616,44 @@ export type Database = {
           },
         ]
       }
+      oni_agencia_schedule_history: {
+        Row: {
+          changed_by: string | null
+          created_at: string
+          field_name: string
+          id: string
+          new_value: string
+          old_value: string | null
+          schedule_id: string
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string
+          field_name: string
+          id?: string
+          new_value: string
+          old_value?: string | null
+          schedule_id: string
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string
+          field_name?: string
+          id?: string
+          new_value?: string
+          old_value?: string | null
+          schedule_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oni_agencia_schedule_history_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "oni_agencia_content_schedules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       oni_agencia_services: {
         Row: {
           category: string

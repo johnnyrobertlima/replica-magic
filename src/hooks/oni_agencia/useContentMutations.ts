@@ -1,4 +1,3 @@
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { ContentScheduleFormData } from "@/types/oni-agencia";
@@ -7,20 +6,41 @@ import {
   updateContentSchedule, 
   deleteContentSchedule 
 } from "@/services/oniAgenciaContentScheduleServices";
+import { supabase } from "@/integrations/supabase/client";
 
 export function useCreateContentSchedule() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   
   return useMutation({
-    mutationFn: (newSchedule: ContentScheduleFormData) => {
+    mutationFn: async (newSchedule: ContentScheduleFormData) => {
       const processedSchedule = {
         ...newSchedule,
         creators: Array.isArray(newSchedule.creators) ? newSchedule.creators : []
       };
       
-      console.log("Creating schedule with data:", processedSchedule);
-      return createContentSchedule(processedSchedule);
+      // Create the schedule
+      const { data, error } = await supabase
+        .from('oni_agencia_content_schedules')
+        .insert(processedSchedule)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Record creation in history
+      const { error: historyError } = await supabase
+        .from('oni_agencia_schedule_history')
+        .insert({
+          schedule_id: data.id,
+          field_name: 'Criação',
+          new_value: 'Agendamento criado',
+          changed_by: (await supabase.auth.getUser()).data.user?.id
+        });
+
+      if (historyError) throw historyError;
+
+      return data;
     },
     onSuccess: (_, variables) => {
       const { client_id, scheduled_date } = variables;
@@ -57,15 +77,53 @@ export function useUpdateContentSchedule() {
   const { toast } = useToast();
   
   return useMutation({
-    mutationFn: ({ id, schedule }: { id: string; schedule: Partial<ContentScheduleFormData> }) => {
-      const processedSchedule = {
-        ...schedule,
-        creators: Array.isArray(schedule.creators) ? schedule.creators : 
-                (schedule.creators === undefined ? undefined : [])
-      };
-      
-      console.log("Updating schedule ID:", id, "with data:", processedSchedule);
-      return updateContentSchedule(id, processedSchedule);
+    mutationFn: async ({ id, schedule }: { id: string; schedule: Partial<ContentScheduleFormData> }) => {
+      // Get current state for comparison
+      const { data: currentState, error: fetchError } = await supabase
+        .from('oni_agencia_content_schedules')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Update the schedule
+      const { data, error } = await supabase
+        .from('oni_agencia_content_schedules')
+        .update(schedule)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Record changes in history
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      const changes = [];
+
+      // Compare and record changes
+      for (const [key, newValue] of Object.entries(schedule)) {
+        const oldValue = currentState[key];
+        if (newValue !== oldValue) {
+          changes.push({
+            schedule_id: id,
+            field_name: key,
+            old_value: oldValue?.toString() || null,
+            new_value: newValue?.toString() || '',
+            changed_by: userId
+          });
+        }
+      }
+
+      if (changes.length > 0) {
+        const { error: historyError } = await supabase
+          .from('oni_agencia_schedule_history')
+          .insert(changes);
+
+        if (historyError) throw historyError;
+      }
+
+      return data;
     },
     onSuccess: (_, variables) => {
       const { schedule } = variables;

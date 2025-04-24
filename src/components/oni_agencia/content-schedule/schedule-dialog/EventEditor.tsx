@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { format } from "date-fns";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
@@ -7,7 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EventForm } from "./EventForm";
 import { DialogActions } from "./DialogActions";
 import { StatusUpdateForm } from "./StatusUpdateForm";
-import { ArrowDown } from "lucide-react";
+import { ScheduleHistory } from "./ScheduleHistory";
+import { ArrowDown, History } from "lucide-react";
 
 interface EventEditorProps {
   event: CalendarEvent;
@@ -58,19 +58,17 @@ export function EventEditor({
   onInputChange,
   onSelectChange
 }: EventEditorProps) {
-  // Start with "details" tab active by default for better UX
-  const [activeTab, setActiveTab] = useState<"details" | "status">("details");
+  const [activeTab, setActiveTab] = useState<"details" | "status" | "history">("details");
   const [note, setNote] = useState<string>(formData.description || "");
   
-  // Sync note with formData description
   const handleNoteChange = (value: string) => {
     setNote(value);
     onSelectChange("description", value);
   };
 
   return (
-    <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "details" | "status")}>
-      <TabsList className="grid w-full grid-cols-2">
+    <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "details" | "status" | "history")}>
+      <TabsList className="grid w-full grid-cols-3">
         <TabsTrigger value="details">Detalhes</TabsTrigger>
         <TabsTrigger 
           value="status" 
@@ -80,6 +78,13 @@ export function EventEditor({
             <ArrowDown className="h-4 w-4 absolute -top-3 left-1/2 transform -translate-x-1/2 text-purple-500" />
           )}
           Atualizar Status
+        </TabsTrigger>
+        <TabsTrigger 
+          value="history"
+          className="flex items-center gap-2"
+        >
+          <History className="h-4 w-4" />
+          Histórico
         </TabsTrigger>
       </TabsList>
       <TabsContent value="details">
@@ -137,6 +142,9 @@ export function EventEditor({
             />
           </DialogFooter>
         </form>
+      </TabsContent>
+      <TabsContent value="history" className="space-y-4">
+        <ScheduleHistory event={event} />
       </TabsContent>
     </Tabs>
   );
