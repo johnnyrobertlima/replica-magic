@@ -24,13 +24,6 @@ const OniAgenciaControlePauta = () => {
   
   const { data: clients = [], isLoading: isLoadingClients } = useClients();
   
-  // Se houver clientes e nenhum estiver selecionado, selecione o primeiro
-  useEffect(() => {
-    if (clients.length > 0 && !selectedClient) {
-      setSelectedClient(clients[0].id);
-    }
-  }, [clients, selectedClient]);
-  
   // UseCallback para melhorar a performance
   const handleClientChange = useCallback((clientId: string) => {
     setSelectedClient(clientId);
@@ -48,7 +41,7 @@ const OniAgenciaControlePauta = () => {
     isRefetching
   } = selectedClient 
     ? useContentSchedules(selectedClient, selectedYear, selectedMonth)
-    : useAllContentSchedules(selectedClient); // Empty string means "all clients"
+    : useAllContentSchedules(selectedYear, selectedMonth); // Updated to pass year and month parameters
   
   // Refetch quando mês/ano/cliente muda
   const handleMonthYearChange = useCallback((month: number, year: number) => {

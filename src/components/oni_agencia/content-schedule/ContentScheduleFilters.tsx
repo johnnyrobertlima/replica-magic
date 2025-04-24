@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -77,7 +78,7 @@ export function ContentScheduleFilters({
   };
   
   const handleClientChange = (value: string) => {
-    onClientChange(value);
+    onClientChange(value === "all" ? "" : value);
   };
   
   return (
@@ -100,14 +101,14 @@ export function ContentScheduleFilters({
           <div className="space-y-2">
             <Label htmlFor="client-select">Cliente</Label>
             <Select
-              value={selectedClient}
+              value={selectedClient === "" ? "all" : selectedClient}
               onValueChange={handleClientChange}
             >
               <SelectTrigger id="client-select" className="w-full">
                 <SelectValue placeholder="Selecione um cliente" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os clientes</SelectItem>
+                <SelectItem value="all">Todos os clientes</SelectItem>
                 {isLoadingClients ? (
                   <div className="flex items-center justify-center p-2">
                     <Loader2 className="h-4 w-4 animate-spin" />

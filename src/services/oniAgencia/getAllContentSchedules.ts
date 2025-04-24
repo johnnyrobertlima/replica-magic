@@ -2,25 +2,20 @@
 import { CalendarEvent } from "@/types/oni-agencia";
 import { getBaseQuery } from "./baseQuery";
 
-export async function getAllContentSchedules(clientId: string): Promise<CalendarEvent[]> {
+export async function getAllContentSchedules(year: number, month: number): Promise<CalendarEvent[]> {
   try {
-    // Optimize query by limiting to just a smaller period around current date
-    const currentDate = new Date();
-    const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
-    const endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 2, 0);
+    // Calculate the start and end dates for the given month
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0); // Last day of the month
 
-    console.log(`Fetching events for ${clientId ? `client: ${clientId}` : 'all clients'}`);
+    console.log(`Fetching events for all clients in date range:`, {
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0]
+    });
 
-    let query = getBaseQuery()
+    const { data, error } = await getBaseQuery()
       .gte('scheduled_date', startDate.toISOString().split('T')[0])
       .lte('scheduled_date', endDate.toISOString().split('T')[0]);
-    
-    // Only filter by client_id if a specific client is selected
-    if (clientId) {
-      query = query.eq('client_id', clientId);
-    }
-
-    const { data, error } = await query;
 
     if (error) {
       console.error('Error fetching all content schedules:', error);
@@ -28,11 +23,11 @@ export async function getAllContentSchedules(clientId: string): Promise<Calendar
     }
 
     if (!data || data.length === 0) {
-      console.log(`No content schedules found ${clientId ? `for client ${clientId}` : 'for any client'}`);
+      console.log(`No content schedules found for month ${month}/${year}`);
       return [];
     }
     
-    console.log(`Fetched ${data.length} content schedules total`);
+    console.log(`Fetched ${data.length} content schedules total for month ${month}/${year}`);
     
     // Process data to ensure consistent handling of creators field
     const safeData = data.map(item => {

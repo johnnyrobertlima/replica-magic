@@ -20,11 +20,11 @@ export function useContentSchedules(clientId: string, year: number, month: numbe
   });
 }
 
-export function useAllContentSchedules(clientId: string) {
+export function useAllContentSchedules(year: number, month: number) {
   return useQuery({
-    queryKey: ['allOniAgenciaContentSchedules', clientId],
-    queryFn: () => getAllContentSchedules(clientId),
-    enabled: !!clientId || clientId === "", // Enable when clientId is empty string (all clients)
+    queryKey: ['allOniAgenciaContentSchedules', year, month],
+    queryFn: () => getAllContentSchedules(year, month),
+    enabled: !!year && !!month,
     staleTime: STALE_TIME,
     gcTime: CACHE_TIME,
     refetchOnWindowFocus: false,
