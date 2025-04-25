@@ -28,7 +28,7 @@ interface ContentScheduleFiltersProps {
   onCollaboratorChange?: (collaboratorId: string | null) => void;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
-  hideClientFilter?: boolean; // New optional prop
+  hideClientFilter?: boolean; // Optional prop
 }
 
 export function ContentScheduleFilters({
@@ -42,8 +42,9 @@ export function ContentScheduleFilters({
   onCollaboratorChange,
   isCollapsed = false,
   onToggleCollapse,
-  hideClientFilter = false // Default to false
+  hideClientFilter = false
 }: ContentScheduleFiltersProps) {
+  const { data: clients = [], isLoading: isLoadingClients } = useClients();
   const { data: collaborators = [], isLoading: isLoadingCollaborators } = useCollaborators();
   
   const getMonthOptions = () => {
@@ -107,6 +108,18 @@ export function ContentScheduleFilters({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os clientes</SelectItem>
+                  {isLoadingClients ? (
+                    <div className="flex items-center justify-center p-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="ml-2">Carregando...</span>
+                    </div>
+                  ) : (
+                    clients.map((client) => (
+                      <SelectItem key={client.id} value={client.id}>
+                        {client.name}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
