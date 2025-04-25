@@ -1,20 +1,23 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAllContentSchedules } from '@/hooks/useOniAgenciaContentSchedules';
 import { OniAgenciaMenu } from "@/components/oni_agencia/OniAgenciaMenu";
 import { ContentCalendar } from "@/components/oni_agencia/content-schedule/ContentCalendar";
 import { ContentScheduleFilters } from "@/components/oni_agencia/content-schedule/ContentScheduleFilters";
 import { ContentScheduleList } from "@/components/oni_agencia/content-schedule/ContentScheduleList";
 import { useCollapsible } from "@/components/oni_agencia/content-schedule/hooks/useCollapsible";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { EditorialLinePopover } from "@/components/oni_agencia/content-schedule/EditorialLinePopover";
 import { ProductsPopover } from "@/components/oni_agencia/content-schedule/ProductsPopover";
+import { useToast } from "@/hooks/use-toast";
 
-const FEIRINHA_CLIENT_ID = "3f75b33c-2c10-4a3d-91f2-e4fd5ac37357"; // Replace with actual Feirinha da Concórdia client ID
+// Feirinha da Concórdia client ID - replace with actual ID if necessary
+const FEIRINHA_CLIENT_ID = "3f75b33c-2c10-4a3d-91f2-e4fd5ac37357";
 
 const FeirinhaDaConcordiaAgenda = () => {
+  const { toast } = useToast();
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState<number>(currentDate.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
@@ -23,16 +26,23 @@ const FeirinhaDaConcordiaAgenda = () => {
   const { isCollapsed, toggle: toggleFilters } = useCollapsible(false);
 
   const { 
-    data: filteredSchedules = [], 
+    data: allSchedules = [], 
     isLoading: isLoadingSchedules,
     refetch: refetchSchedules,
     isRefetching
   } = useAllContentSchedules(selectedYear, selectedMonth);
 
   // Filter schedules for Feirinha da Concórdia only
-  const feirinhaSchedules = filteredSchedules.filter(
-    schedule => schedule.client_id === FEIRINHA_CLIENT_ID
-  );
+  const feirinhaSchedules = React.useMemo(() => {
+    console.log(`Filtering ${allSchedules.length} schedules for client ID: ${FEIRINHA_CLIENT_ID}`);
+    return allSchedules.filter(schedule => 
+      schedule.client_id === FEIRINHA_CLIENT_ID
+    );
+  }, [allSchedules]);
+
+  useEffect(() => {
+    console.log(`Found ${feirinhaSchedules.length} schedules for Feirinha da Concórdia`);
+  }, [feirinhaSchedules]);
 
   const handleMonthYearChange = (month: number, year: number) => {
     setSelectedMonth(month);
@@ -49,6 +59,22 @@ const FeirinhaDaConcordiaAgenda = () => {
     setSelectedCollaborator(collaboratorId);
   };
 
+  const handleRefetch = async () => {
+    try {
+      await refetchSchedules();
+      toast({
+        title: "Agenda atualizada",
+        description: "Os dados da agenda foram atualizados com sucesso.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro ao atualizar",
+        description: "Ocorreu um erro ao atualizar os dados da agenda.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <main className="container-fluid p-0 max-w-full">
       <OniAgenciaMenu />
@@ -62,7 +88,7 @@ const FeirinhaDaConcordiaAgenda = () => {
                 <CalendarDays className="h-4 w-4" />
               </ToggleGroupItem>
               <ToggleGroupItem value="list" aria-label="Visualização em lista">
-                <CalendarDays className="h-4 w-4" />
+                <List className="h-4 w-4" />
               </ToggleGroupItem>
             </ToggleGroup>
             <EditorialLinePopover events={feirinhaSchedules} />
@@ -70,11 +96,11 @@ const FeirinhaDaConcordiaAgenda = () => {
             <Button 
               variant="outline" 
               size="sm" 
-              onClick={() => refetchSchedules()}
+              onClick={handleRefetch}
               disabled={isRefetching || isLoadingSchedules}
             >
-              <CalendarDays className={`h-4 w-4 ${isRefetching ? 'animate-spin' : ''}`} />
-              <span className="ml-2">Atualizar</span>
+              <CalendarDays className={`h-4 w-4 mr-2 ${isRefetching ? 'animate-spin' : ''}`} />
+              <span>Atualizar</span>
             </Button>
           </div>
         </div>
@@ -93,21 +119,28 @@ const FeirinhaDaConcordiaAgenda = () => {
         />
         
         <div className={`w-full overflow-x-auto ${isCollapsed ? 'h-[calc(100vh-150px)]' : 'h-[calc(100vh-250px)]'} transition-all duration-300`}>
-          {viewMode === "calendar" ? (
-            <ContentCalendar
-              events={feirinhaSchedules}
-              clientId={FEIRINHA_CLIENT_ID}
-              month={selectedMonth}
-              year={selectedYear}
-              onMonthChange={handleMonthYearChange}
-              selectedCollaborator={selectedCollaborator}
-            />
+          {isLoadingSchedules ? (
+            <div className="flex items-center justify-center h-full">
+              <CalendarDays className="h-6 w-6 animate-spin mr-2" />
+              <span>Carregando agendamentos...</span>
+            </div>
           ) : (
-            <ContentScheduleList
-              events={feirinhaSchedules}
-              clientId={FEIRINHA_CLIENT_ID}
-              selectedCollaborator={selectedCollaborator}
-            />
+            viewMode === "calendar" ? (
+              <ContentCalendar
+                events={feirinhaSchedules}
+                clientId={FEIRINHA_CLIENT_ID}
+                month={selectedMonth}
+                year={selectedYear}
+                onMonthChange={handleMonthYearChange}
+                selectedCollaborator={selectedCollaborator}
+              />
+            ) : (
+              <ContentScheduleList
+                events={feirinhaSchedules}
+                clientId={FEIRINHA_CLIENT_ID}
+                selectedCollaborator={selectedCollaborator}
+              />
+            )
           )}
         </div>
       </div>
