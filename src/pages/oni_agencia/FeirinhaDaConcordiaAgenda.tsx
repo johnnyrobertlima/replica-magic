@@ -14,7 +14,6 @@ import { ProductsPopover } from "@/components/oni_agencia/content-schedule/Produ
 import { useToast } from "@/hooks/use-toast";
 import { useClients } from '@/hooks/useOniAgenciaClients';
 
-// Vamos tentar buscar o ID diretamente dos clientes ao invés de usar um valor fixo
 const FeirinhaDaConcordiaAgenda = () => {
   const { toast } = useToast();
   const currentDate = new Date();
@@ -159,6 +158,7 @@ const FeirinhaDaConcordiaAgenda = () => {
           onCollaboratorChange={handleCollaboratorChange}
           isCollapsed={isCollapsed}
           onToggleCollapse={toggleFilters}
+          hideClientFilter={true} // New prop to hide client selector
         />
         
         <div className={`w-full overflow-x-auto ${isCollapsed ? 'h-[calc(100vh-150px)]' : 'h-[calc(100vh-250px)]'} transition-all duration-300`}>

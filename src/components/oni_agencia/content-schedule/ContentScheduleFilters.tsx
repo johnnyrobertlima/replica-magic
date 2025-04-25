@@ -28,6 +28,7 @@ interface ContentScheduleFiltersProps {
   onCollaboratorChange?: (collaboratorId: string | null) => void;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
+  hideClientFilter?: boolean; // New optional prop
 }
 
 export function ContentScheduleFilters({
@@ -40,9 +41,9 @@ export function ContentScheduleFilters({
   onYearChange,
   onCollaboratorChange,
   isCollapsed = false,
-  onToggleCollapse
+  onToggleCollapse,
+  hideClientFilter = false // Default to false
 }: ContentScheduleFiltersProps) {
-  const { data: clients = [], isLoading: isLoadingClients } = useClients();
   const { data: collaborators = [], isLoading: isLoadingCollaborators } = useCollaborators();
   
   const getMonthOptions = () => {
@@ -77,10 +78,6 @@ export function ContentScheduleFilters({
     }
   };
   
-  const handleClientChange = (value: string) => {
-    onClientChange(value === "all" ? "" : value);
-  };
-  
   return (
     <Collapsible
       open={!isCollapsed}
@@ -98,32 +95,22 @@ export function ContentScheduleFilters({
       
       <CollapsibleContent>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-white rounded-b-md border shadow-sm">
-          <div className="space-y-2">
-            <Label htmlFor="client-select">Cliente</Label>
-            <Select
-              value={selectedClient === "" ? "all" : selectedClient}
-              onValueChange={handleClientChange}
-            >
-              <SelectTrigger id="client-select" className="w-full">
-                <SelectValue placeholder="Selecione um cliente" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os clientes</SelectItem>
-                {isLoadingClients ? (
-                  <div className="flex items-center justify-center p-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="ml-2">Carregando clientes...</span>
-                  </div>
-                ) : (
-                  clients.map((client) => (
-                    <SelectItem key={client.id} value={client.id}>
-                      {client.name}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-          </div>
+          {!hideClientFilter && (
+            <div className="space-y-2">
+              <Label htmlFor="client-select">Cliente</Label>
+              <Select
+                value={selectedClient === "" ? "all" : selectedClient}
+                onValueChange={(value) => onClientChange(value === "all" ? "" : value)}
+              >
+                <SelectTrigger id="client-select" className="w-full">
+                  <SelectValue placeholder="Selecione um cliente" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os clientes</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           
           <div className="space-y-2">
             <Label htmlFor="collaborator-select">Colaborador e Creator</Label>
