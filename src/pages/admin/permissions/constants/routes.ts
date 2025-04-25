@@ -32,6 +32,9 @@ export const RESOURCE_PATHS = [
   // Oni Agência routes
   "/client-area/oniagencia",
   "/client-area/oniagencia/controle-pauta",
+  "/client-area/oniagencia/controle-pauta/feirinhadaconcordia",
+  "/client-area/oniagencia/controle-pauta/promobras",
+  "/client-area/oniagencia/controle-pauta/pordentrodafeirinha",
   "/client-area/oniagencia/cargacolab",
   "/client-area/oniagencia/clientes",
   "/client-area/oniagencia/servicos",
