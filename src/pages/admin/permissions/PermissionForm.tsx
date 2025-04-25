@@ -6,6 +6,7 @@ import { usePermissionMutations } from "./usePermissionMutations";
 import { ResourcePathSelector } from "./components/ResourcePathSelector";
 import { PermissionTypeSelector } from "./components/PermissionTypeSelector";
 import { SubmitButton } from "./components/SubmitButton";
+import { ClientAccessManager } from "./components/ClientAccessManager";
 import { RESOURCE_PATHS } from "./constants/routes";
 
 interface PermissionFormProps {
@@ -59,22 +60,32 @@ export const PermissionForm = ({ selectedGroupId, existingPaths, onSuccess }: Pe
   };
 
   return (
-    <form onSubmit={handleSubmit} className="grid gap-4 p-4 border rounded-lg">
+    <div className="grid gap-6 p-4 border rounded-lg">
       <h2 className="text-lg font-semibold">Adicionar Nova Permissão</h2>
       
-      <ResourcePathSelector 
-        resourcePath={formData.resource_path}
-        onResourcePathChange={handleResourcePathChange}
-        availablePaths={allPaths}
-        selectedGroupId={selectedGroupId}
-      />
-      
-      <PermissionTypeSelector 
-        permissionType={formData.permission_type}
-        onPermissionTypeChange={handlePermissionTypeChange}
-      />
-      
-      <SubmitButton isLoading={createMutation.isPending} />
-    </form>
+      <form onSubmit={handleSubmit} className="grid gap-4">
+        <ResourcePathSelector 
+          resourcePath={formData.resource_path}
+          onResourcePathChange={handleResourcePathChange}
+          availablePaths={allPaths}
+          selectedGroupId={selectedGroupId}
+        />
+        
+        <PermissionTypeSelector 
+          permissionType={formData.permission_type}
+          onPermissionTypeChange={handlePermissionTypeChange}
+        />
+        
+        <SubmitButton isLoading={createMutation.isPending} />
+      </form>
+
+      <div className="border-t pt-4 mt-4">
+        <h3 className="text-lg font-semibold mb-4">Acesso aos Clientes</h3>
+        <ClientAccessManager 
+          selectedGroupId={selectedGroupId} 
+          onAccessUpdate={onSuccess}
+        />
+      </div>
+    </div>
   );
 };
