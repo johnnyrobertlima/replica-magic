@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClients, createClient, updateClient, deleteClient } from "@/services/oniAgenciaClientServices";
 import { ClientFormData } from "@/types/oni-agencia";
@@ -10,8 +11,10 @@ export function useClients() {
   return useQuery({
     queryKey: ['oniAgenciaClients'],
     queryFn: async () => {
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.user) throw new Error('No session');
+      const { data: sessionData } = await supabase.auth.getSession();
+      const session = sessionData?.session;
+      
+      if (!session) throw new Error('No session');
 
       const { data, error } = await supabase
         .from('oni_agencia_clients')
