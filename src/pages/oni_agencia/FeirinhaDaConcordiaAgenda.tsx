@@ -12,10 +12,9 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { EditorialLinePopover } from "@/components/oni_agencia/content-schedule/EditorialLinePopover";
 import { ProductsPopover } from "@/components/oni_agencia/content-schedule/ProductsPopover";
 import { useToast } from "@/hooks/use-toast";
+import { useClients } from '@/hooks/useOniAgenciaClients';
 
-// Feirinha da Concórdia client ID - replace with actual ID if necessary
-const FEIRINHA_CLIENT_ID = "3f75b33c-2c10-4a3d-91f2-e4fd5ac37357";
-
+// Vamos tentar buscar o ID diretamente dos clientes ao invés de usar um valor fixo
 const FeirinhaDaConcordiaAgenda = () => {
   const { toast } = useToast();
   const currentDate = new Date();
@@ -24,6 +23,33 @@ const FeirinhaDaConcordiaAgenda = () => {
   const [selectedCollaborator, setSelectedCollaborator] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
   const { isCollapsed, toggle: toggleFilters } = useCollapsible(false);
+  const [feirinhaClientId, setFeirinhaClientId] = useState<string | null>(null);
+  
+  // Buscar a lista de clientes para encontrar o ID da Feirinha da Concórdia
+  const { data: clients, isLoading: isLoadingClients } = useClients();
+
+  // Encontrar o ID do cliente Feirinha da Concórdia
+  useEffect(() => {
+    if (clients && clients.length > 0) {
+      const feirinha = clients.find(client => 
+        client.name.toLowerCase().includes('feirinha') && 
+        client.name.toLowerCase().includes('concórdia')
+      );
+      
+      if (feirinha) {
+        console.log("Encontrado cliente Feirinha da Concórdia:", feirinha);
+        setFeirinhaClientId(feirinha.id);
+      } else {
+        console.error("Cliente Feirinha da Concórdia não encontrado na lista de clientes");
+        
+        // Exibir todos os clientes no console para debug
+        console.log("Lista de clientes disponíveis:", clients.map(c => ({ id: c.id, nome: c.name })));
+        
+        // Usar ID fixo como fallback
+        setFeirinhaClientId("3f75b33c-2c10-4a3d-91f2-e4fd5ac37357");
+      }
+    }
+  }, [clients]);
 
   const { 
     data: allSchedules = [], 
@@ -32,17 +58,20 @@ const FeirinhaDaConcordiaAgenda = () => {
     isRefetching
   } = useAllContentSchedules(selectedYear, selectedMonth);
 
-  // Filter schedules for Feirinha da Concórdia only
+  // Filter schedules for Feirinha da Concórdia only when we have the client ID
   const feirinhaSchedules = React.useMemo(() => {
-    console.log(`Filtering ${allSchedules.length} schedules for client ID: ${FEIRINHA_CLIENT_ID}`);
-    return allSchedules.filter(schedule => 
-      schedule.client_id === FEIRINHA_CLIENT_ID
+    if (!feirinhaClientId) return [];
+    
+    console.log(`Filtrando ${allSchedules.length} agendamentos para o cliente ID: ${feirinhaClientId}`);
+    
+    const filtered = allSchedules.filter(schedule => 
+      schedule.client_id === feirinhaClientId
     );
-  }, [allSchedules]);
-
-  useEffect(() => {
-    console.log(`Found ${feirinhaSchedules.length} schedules for Feirinha da Concórdia`);
-  }, [feirinhaSchedules]);
+    
+    console.log(`Encontrados ${filtered.length} agendamentos para Feirinha da Concórdia`);
+    
+    return filtered;
+  }, [allSchedules, feirinhaClientId]);
 
   const handleMonthYearChange = (month: number, year: number) => {
     setSelectedMonth(month);
@@ -68,12 +97,26 @@ const FeirinhaDaConcordiaAgenda = () => {
       });
     } catch (error) {
       toast({
+        variant: "destructive",
         title: "Erro ao atualizar",
         description: "Ocorreu um erro ao atualizar os dados da agenda.",
-        variant: "destructive",
       });
     }
   };
+
+  if (isLoadingClients) {
+    return (
+      <main className="container-fluid p-0 max-w-full">
+        <OniAgenciaMenu />
+        <div className="container mx-auto p-4 max-w-full">
+          <div className="flex items-center justify-center h-[70vh]">
+            <CalendarDays className="h-8 w-8 animate-spin mr-3" />
+            <span className="text-xl">Carregando informações do cliente...</span>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="container-fluid p-0 max-w-full">
@@ -106,7 +149,7 @@ const FeirinhaDaConcordiaAgenda = () => {
         </div>
         
         <ContentScheduleFilters
-          selectedClient={FEIRINHA_CLIENT_ID}
+          selectedClient={feirinhaClientId || ""}
           selectedMonth={selectedMonth}
           selectedYear={selectedYear}
           selectedCollaborator={selectedCollaborator}
@@ -119,16 +162,24 @@ const FeirinhaDaConcordiaAgenda = () => {
         />
         
         <div className={`w-full overflow-x-auto ${isCollapsed ? 'h-[calc(100vh-150px)]' : 'h-[calc(100vh-250px)]'} transition-all duration-300`}>
-          {isLoadingSchedules ? (
+          {isLoadingSchedules || !feirinhaClientId ? (
             <div className="flex items-center justify-center h-full">
               <CalendarDays className="h-6 w-6 animate-spin mr-2" />
               <span>Carregando agendamentos...</span>
+            </div>
+          ) : feirinhaSchedules.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full">
+              <CalendarDays className="h-12 w-12 mb-4 text-gray-400" />
+              <h3 className="text-xl font-medium mb-2">Nenhum agendamento encontrado</h3>
+              <p className="text-gray-500 text-center">
+                Não há agendamentos para a Feirinha da Concórdia no período selecionado.
+              </p>
             </div>
           ) : (
             viewMode === "calendar" ? (
               <ContentCalendar
                 events={feirinhaSchedules}
-                clientId={FEIRINHA_CLIENT_ID}
+                clientId={feirinhaClientId}
                 month={selectedMonth}
                 year={selectedYear}
                 onMonthChange={handleMonthYearChange}
@@ -137,7 +188,7 @@ const FeirinhaDaConcordiaAgenda = () => {
             ) : (
               <ContentScheduleList
                 events={feirinhaSchedules}
-                clientId={FEIRINHA_CLIENT_ID}
+                clientId={feirinhaClientId}
                 selectedCollaborator={selectedCollaborator}
               />
             )
