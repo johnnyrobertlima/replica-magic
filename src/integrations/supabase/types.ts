@@ -1045,48 +1045,6 @@ export type Database = {
         }
         Relationships: []
       }
-      group_client_access: {
-        Row: {
-          all_clients: boolean
-          client_id: string | null
-          created_at: string
-          group_id: string
-          id: string
-          updated_at: string
-        }
-        Insert: {
-          all_clients?: boolean
-          client_id?: string | null
-          created_at?: string
-          group_id: string
-          id?: string
-          updated_at?: string
-        }
-        Update: {
-          all_clients?: boolean
-          client_id?: string | null
-          created_at?: string
-          group_id?: string
-          id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "group_client_access_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "oni_agencia_clients"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "group_client_access_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "groups"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       group_permissions: {
         Row: {
           created_at: string | null
@@ -2615,10 +2573,6 @@ export type Database = {
       remove_user_from_group: {
         Args: { p_assignment_id: string }
         Returns: undefined
-      }
-      user_has_client_access: {
-        Args: { user_id: string; client_id: string }
-        Returns: boolean
       }
     }
     Enums: {
