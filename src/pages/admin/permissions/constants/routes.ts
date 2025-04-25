@@ -1,4 +1,3 @@
-
 // Resource paths that can be used in permissions
 export const RESOURCE_PATHS = [
   "/client-area",
@@ -31,6 +30,7 @@ export const RESOURCE_PATHS = [
   "/client-area/bk/pedidos",
   // Oni Agência routes
   "/client-area/oniagencia",
+  "/client-area/oniagencia/cliente_vab",
   "/client-area/oniagencia/controle-pauta",
   "/client-area/oniagencia/controle-pauta/feirinhadaconcordia",
   "/client-area/oniagencia/controle-pauta/promobras",
