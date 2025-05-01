@@ -45,9 +45,16 @@ export function MobileEventList({
                 <CardContent className="p-3">
                   <div className="flex items-center justify-between mb-1">
                     <span className="font-medium text-sm">{event.title || "Sem título"}</span>
-                    <StatusBadge color={event.status?.color || "#9CA3AF"} className="text-xs px-1.5 py-0.5">
-                      {event.status?.name || "Pendente"}
-                    </StatusBadge>
+                    {/* Display client name in the status badge position */}
+                    {event.client?.name ? (
+                      <StatusBadge color={event.status?.color || "#9CA3AF"} className="text-xs px-1.5 py-0.5">
+                        {event.client.name}
+                      </StatusBadge>
+                    ) : (
+                      <StatusBadge color={event.status?.color || "#9CA3AF"} className="text-xs px-1.5 py-0.5">
+                        {event.status?.name || "Pendente"}
+                      </StatusBadge>
+                    )}
                   </div>
                   
                   <div className="flex items-center text-xs text-muted-foreground mb-2">
@@ -59,14 +66,6 @@ export function MobileEventList({
                       </>
                     )}
                   </div>
-
-                  {/* Add client name as a separate line when available */}
-                  {event.client?.name && (
-                    <div className="flex items-center text-xs font-medium mb-1">
-                      <span className="text-muted-foreground">Cliente:</span>
-                      <span className="ml-1">{event.client.name}</span>
-                    </div>
-                  )}
                   
                   {event.description && (
                     <Accordion type="single" collapsible className="w-full">
