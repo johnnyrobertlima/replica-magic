@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { 
   Menu, 
   X, 
@@ -23,10 +23,12 @@ export const OniAgenciaMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const location = useLocation();
 
   const menuItems = [
     { name: "Home Oni Agência", path: "/client-area/oniagencia", icon: <BarChart2 className="h-4 w-4 mr-2" /> },
     { name: "Controle de Pauta", path: "/client-area/oniagencia/controle-pauta", icon: <CalendarDays className="h-4 w-4 mr-2" /> },
+    { name: "Visualização em Campo", path: "/client-area/oniagencia/controle-pauta/visualizacaoemcampo", icon: <CalendarDays className="h-4 w-4 mr-2" /> },
     { name: "Clientes", path: "/client-area/oniagencia/clientes", icon: <Users className="h-4 w-4 mr-2" /> },
     { name: "Serviços", path: "/client-area/oniagencia/servicos", icon: <FileSpreadsheet className="h-4 w-4 mr-2" /> },
     { name: "Colaboradores", path: "/client-area/oniagencia/colaboradores", icon: <UserPlus className="h-4 w-4 mr-2" /> },
@@ -53,12 +55,20 @@ export const OniAgenciaMenu = () => {
     }
   };
 
+  // Função para verificar se a rota atual é ou está dentro de um caminho pai
+  const isActiveRoute = (path: string) => {
+    if (path === "/client-area/oniagencia" && location.pathname === "/client-area/oniagencia") {
+      return true;
+    }
+    return location.pathname.startsWith(path) && path !== "/client-area/oniagencia";
+  };
+
   return (
-    <div className="sticky top-0 z-50 w-full bg-primary shadow-md">
+    <div className="sticky top-0 z-50 w-full bg-gradient-to-r from-primary to-primary-600 shadow-md">
       <div className="container mx-auto px-4">
         {/* Desktop Menu */}
         <div className="hidden md:flex justify-between items-center py-3">
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center space-x-1 overflow-x-auto pb-1 scrollbar-none">
             {menuItems.map((item) => (
               <NavLink
                 key={item.path}
@@ -66,7 +76,7 @@ export const OniAgenciaMenu = () => {
                 className={({ isActive }) =>
                   cn(
                     "flex items-center px-3 py-2 rounded-md text-white hover:bg-primary-700 transition-colors whitespace-nowrap",
-                    isActive ? "bg-primary-800" : ""
+                    (isActive || isActiveRoute(item.path)) ? "bg-primary-800 font-medium" : ""
                   )
                 }
                 end={item.path === "/client-area/oniagencia"}
@@ -79,7 +89,7 @@ export const OniAgenciaMenu = () => {
           
           <button
             onClick={handleLogout}
-            className="flex items-center px-4 py-2 rounded-md text-white bg-blue-700 hover:bg-blue-800 transition-colors"
+            className="flex items-center px-4 py-2 rounded-md text-white bg-blue-700 hover:bg-blue-800 transition-colors ml-2 shrink-0"
           >
             <LogOut className="h-4 w-4 mr-2" />
             Sair
@@ -88,13 +98,14 @@ export const OniAgenciaMenu = () => {
 
         {/* Mobile Menu Button */}
         <div className="md:hidden flex justify-between items-center py-3">
-          <span className="font-semibold text-lg text-white">Oni Agência Menu</span>
+          <span className="font-semibold text-lg text-white">Oni Agência</span>
           <div className="flex items-center">
             <Button
               variant="ghost"
               size="sm"
               onClick={handleLogout}
               className="mr-2 text-white bg-blue-700 hover:bg-blue-800"
+              aria-label="Sair"
             >
               <LogOut size={20} />
             </Button>
@@ -103,6 +114,7 @@ export const OniAgenciaMenu = () => {
               size="sm"
               onClick={() => setIsOpen(!isOpen)}
               className="p-1 text-white hover:bg-primary-700"
+              aria-label={isOpen ? "Fechar menu" : "Abrir menu"}
             >
               {isOpen ? <X size={24} /> : <Menu size={24} />}
             </Button>
@@ -111,15 +123,15 @@ export const OniAgenciaMenu = () => {
 
         {/* Mobile Menu Dropdown */}
         {isOpen && (
-          <div className="md:hidden py-2 space-y-1">
+          <div className="md:hidden py-2 space-y-1 max-h-[calc(100vh-70px)] overflow-y-auto bg-primary-800 rounded-b-lg">
             {menuItems.map((item) => (
               <NavLink
                 key={item.path}
                 to={item.path}
                 className={({ isActive }) =>
                   cn(
-                    "flex items-center px-4 py-2 text-sm rounded-md transition-colors text-white",
-                    isActive ? "bg-primary-800" : "hover:bg-primary-700"
+                    "flex items-center px-4 py-3 text-sm rounded-md transition-colors text-white",
+                    (isActive || isActiveRoute(item.path)) ? "bg-primary-900 font-medium" : "hover:bg-primary-700"
                   )
                 }
                 onClick={() => setIsOpen(false)}
@@ -132,7 +144,7 @@ export const OniAgenciaMenu = () => {
             
             <button
               onClick={handleLogout}
-              className="flex w-full items-center px-4 py-2 text-sm rounded-md transition-colors text-white bg-blue-700 hover:bg-blue-800"
+              className="flex w-full items-center px-4 py-3 text-sm rounded-md transition-colors text-white bg-blue-700 hover:bg-blue-800"
             >
               <LogOut className="h-4 w-4 mr-2" />
               Sair

@@ -56,10 +56,10 @@ const VisualizacaoEmCampo = () => {
   }, [refetchSchedules, toast]);
   
   return (
-    <main className="container-fluid p-0 max-w-full">
+    <main className="container-fluid p-0 max-w-full bg-gray-50 min-h-screen">
       <OniAgenciaMenu />
       <div className="container mx-auto px-2 py-3 max-w-full">
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-2 mb-4 bg-white p-4 rounded-lg shadow-sm">
           <CalendarDays className="h-5 w-5 text-primary" />
           <h1 className="text-xl font-semibold tracking-tight">Visualização em Campo</h1>
           <div className="ml-auto">
@@ -77,20 +77,22 @@ const VisualizacaoEmCampo = () => {
           </div>
         </div>
         
-        <ContentScheduleFilters
-          selectedClient={selectedClient}
-          selectedMonth={selectedMonth}
-          selectedYear={selectedYear}
-          selectedCollaborator={selectedCollaborator}
-          onClientChange={handleClientChange}
-          onMonthChange={setSelectedMonth}
-          onYearChange={setSelectedYear}
-          onCollaboratorChange={handleCollaboratorChange}
-          isCollapsed={isCollapsed}
-          onToggleCollapse={toggleFilters}
-        />
+        <div className="bg-white rounded-lg shadow-sm mb-4">
+          <ContentScheduleFilters
+            selectedClient={selectedClient}
+            selectedMonth={selectedMonth}
+            selectedYear={selectedYear}
+            selectedCollaborator={selectedCollaborator}
+            onClientChange={handleClientChange}
+            onMonthChange={setSelectedMonth}
+            onYearChange={setSelectedYear}
+            onCollaboratorChange={handleCollaboratorChange}
+            isCollapsed={isCollapsed}
+            onToggleCollapse={toggleFilters}
+          />
+        </div>
         
-        <div className={`w-full overflow-x-auto ${isCollapsed ? 'h-[calc(100vh-120px)]' : 'h-[calc(100vh-220px)]'} transition-all duration-300`}>
+        <div className={`w-full overflow-x-auto bg-gray-50 rounded-lg transition-all duration-300 ${isCollapsed ? 'h-[calc(100vh-180px)]' : 'h-[calc(100vh-280px)]'}`}>
           <MobileContentScheduleList
             events={filteredSchedules}
             clientId={selectedClient || "all"}
