@@ -8,8 +8,15 @@ import { EditorialLineSelect } from "./EditorialLineSelect";
 import { ProductSelect } from "./ProductSelect";
 import { StatusSelect } from "./StatusSelect";
 import { CreatorsSelectMultiple } from "./CreatorsSelectMultiple";
-import { ContentScheduleFormData, OniAgenciaService, OniAgenciaCollaborator } from "@/types/oni-agencia";
+import { ContentScheduleFormData, OniAgenciaService, OniAgenciaCollaborator, OniAgenciaClient } from "@/types/oni-agencia";
 import { EditorialLine, Product, Status } from "@/pages/admin/sub-themes/types";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useState } from "react";
 
 interface EventFormProps {
   formData: ContentScheduleFormData;
@@ -18,13 +25,16 @@ interface EventFormProps {
   editorialLines: EditorialLine[];
   products: Product[];
   statuses: Status[];
+  clients: OniAgenciaClient[];
   isLoadingServices: boolean;
   isLoadingCollaborators: boolean;
   isLoadingEditorialLines: boolean;
   isLoadingProducts: boolean;
   isLoadingStatuses: boolean;
+  isLoadingClients: boolean;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onSelectChange: (name: string, value: string) => void;
+  onDateChange: (name: string, value: Date | null) => void;
 }
 
 export function EventForm({
@@ -34,13 +44,16 @@ export function EventForm({
   editorialLines,
   products,
   statuses,
+  clients,
   isLoadingServices,
   isLoadingCollaborators,
   isLoadingEditorialLines,
   isLoadingProducts,
   isLoadingStatuses,
+  isLoadingClients,
   onInputChange,
-  onSelectChange
+  onSelectChange,
+  onDateChange
 }: EventFormProps) {
   // Garantir que creators seja sempre um array com múltiplas verificações de segurança
   const creatorsArray = Array.isArray(formData.creators) 
@@ -49,9 +62,24 @@ export function EventForm({
   
   // Certificar que collaborators seja um array válido
   const safeCollaborators = Array.isArray(collaborators) ? collaborators : [];
+
+  // Find client name
+  const client = clients?.find(c => c.id === formData.client_id);
+  const clientName = client ? client.name : 'Cliente não encontrado';
+  
+  // Parse capture date if it exists
+  const captureDate = formData.capture_date ? new Date(formData.capture_date) : null;
   
   return (
     <div className="grid gap-4 py-4">
+      {/* Display client name */}
+      <div className="grid gap-2">
+        <Label>Cliente</Label>
+        <div className="p-2 bg-muted rounded-md">
+          <span className="font-medium">{clientName}</span>
+        </div>
+      </div>
+
       <div className="grid gap-2">
         <Label htmlFor="title">Título</Label>
         <Input
@@ -75,6 +103,35 @@ export function EventForm({
           rows={3}
           placeholder="Descrição detalhada do agendamento"
         />
+      </div>
+
+      {/* Capture Date field */}
+      <div className="grid gap-2">
+        <Label htmlFor="capture_date">Data de Captura</Label>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              id="capture_date"
+              variant={"outline"}
+              className={cn(
+                "w-full justify-start text-left font-normal",
+                !captureDate && "text-muted-foreground"
+              )}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {captureDate ? format(captureDate, "dd/MM/yyyy") : <span>Selecione uma data</span>}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={captureDate || undefined}
+              onSelect={(date) => onDateChange("capture_date", date)}
+              initialFocus
+              className={cn("p-3 pointer-events-auto")}
+            />
+          </PopoverContent>
+        </Popover>
       </div>
       
       <ServiceSelect

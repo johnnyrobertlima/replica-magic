@@ -1,3 +1,4 @@
+
 // Modify the OniAgenciaContentSchedule interface to make title optional
 export interface OniAgenciaContentSchedule {
   id: string;
@@ -12,6 +13,7 @@ export interface OniAgenciaContentSchedule {
   product_id: string | null;
   status_id: string | null;
   creators: string[] | null;
+  capture_date: string | null; // Add new capture date field
   created_at: string;
   updated_at: string;
 }
@@ -104,5 +106,9 @@ export interface CalendarEvent extends OniAgenciaContentSchedule {
     id: string;
     name: string;
     color: string | null;
+  } | null;
+  client?: {
+    id: string;
+    name: string;
   } | null;
 }

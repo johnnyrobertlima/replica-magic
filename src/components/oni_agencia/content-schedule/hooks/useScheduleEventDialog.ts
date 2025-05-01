@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { useScheduleFormState } from "./useScheduleFormState";
 import { useScheduleMutations } from "./useScheduleMutations";
+import { format } from "date-fns";
 
 export function useScheduleEventDialog({
   clientId,
@@ -26,7 +27,8 @@ export function useScheduleEventDialog({
     resetForm,
     handleSelectEvent,
     handleInputChange,
-    handleSelectChange
+    handleSelectChange,
+    handleDateChange
   } = useScheduleFormState({
     clientId,
     selectedDate,
@@ -86,6 +88,7 @@ export function useScheduleEventDialog({
     isDeleting,
     handleInputChange,
     handleSelectChange,
+    handleDateChange,
     handleSubmit: submitForm,
     handleStatusUpdate: updateStatus,
     handleDelete: deleteEvent,

@@ -8,6 +8,7 @@ import {
   useProducts,
   useStatuses
 } from "@/hooks/useOniAgenciaContentSchedules";
+import { useClients } from "@/hooks/useOniAgenciaClients";
 import { DialogContainer } from "./schedule-dialog/DialogContainer";
 import { DialogContent } from "./schedule-dialog/DialogContent";
 import { useScheduleEventDialog } from "./hooks/useScheduleEventDialog";
@@ -38,6 +39,7 @@ export function ScheduleEventDialog({
     isDeleting,
     handleInputChange,
     handleSelectChange,
+    handleDateChange,
     handleSubmit,
     handleStatusUpdate,
     handleDelete,
@@ -59,6 +61,7 @@ export function ScheduleEventDialog({
   const { data: editorialLines = [], isLoading: isLoadingEditorialLines } = useEditorialLines();
   const { data: products = [], isLoading: isLoadingProducts } = useProducts();
   const { data: statuses = [], isLoading: isLoadingStatuses } = useStatuses();
+  const { data: clients = [], isLoading: isLoadingClients } = useClients();
 
   const dialogTitle = currentSelectedEvent ? "Editar Agendamento" : "Novo Agendamento";
 
@@ -81,11 +84,13 @@ export function ScheduleEventDialog({
         editorialLines={editorialLines}
         products={products}
         statuses={statuses}
+        clients={clients}
         isLoadingServices={isLoadingServices}
         isLoadingCollaborators={isLoadingCollaborators}
         isLoadingEditorialLines={isLoadingEditorialLines}
         isLoadingProducts={isLoadingProducts}
         isLoadingStatuses={isLoadingStatuses}
+        isLoadingClients={isLoadingClients}
         isSubmitting={isSubmitting}
         isDeleting={isDeleting}
         formData={formData}
@@ -100,6 +105,7 @@ export function ScheduleEventDialog({
         }}
         onInputChange={handleInputChange}
         onSelectChange={handleSelectChange}
+        onDateChange={handleDateChange}
       />
     </DialogContainer>
   );

@@ -1,9 +1,9 @@
 
-import { useState, useEffect, useRef } from "react";
-import { format } from "date-fns";
+import { useState, useEffect } from "react";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
+import { format } from "date-fns";
 
-export function useScheduleFormState({
+export const useScheduleFormState = ({
   clientId,
   selectedDate,
   selectedEvent
@@ -11,168 +11,144 @@ export function useScheduleFormState({
   clientId: string;
   selectedDate: Date;
   selectedEvent?: CalendarEvent;
-}) {
-  const [currentSelectedEvent, setCurrentSelectedEvent] = useState<CalendarEvent | null>(selectedEvent || null);
+}) => {
+  const [currentSelectedEvent, setCurrentSelectedEvent] = useState<CalendarEvent | null>(null);
   const [formData, setFormData] = useState<ContentScheduleFormData>({
     client_id: clientId,
     service_id: "",
     collaborator_id: null,
-    title: "",
+    title: null,
     description: null,
-    scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
+    scheduled_date: format(selectedDate, "yyyy-MM-dd"),
     execution_phase: null,
     editorial_line_id: null,
     product_id: null,
     status_id: null,
-    creators: [] // Inicializa como array vazio
+    creators: null,
+    capture_date: null
   });
   
-  const isUserEditing = useRef(false);
-
-  // Log state changes para debug
+  // Effect for selectedEvent from props
   useEffect(() => {
-    console.log("useScheduleFormState - formData:", formData);
-    console.log("useScheduleFormState - currentSelectedEvent:", currentSelectedEvent);
-  }, [formData, currentSelectedEvent]);
-
-  useEffect(() => {
-    if (selectedEvent && !isUserEditing.current) {
+    if (selectedEvent) {
       console.log("useScheduleFormState selectedEvent effect:", selectedEvent.id);
       handleSelectEvent(selectedEvent);
     }
   }, [selectedEvent]);
-
+  
+  // Effect for clientId
+  useEffect(() => {
+    if (clientId !== formData.client_id) {
+      setFormData(prev => ({ ...prev, client_id: clientId }));
+    }
+  }, [clientId, formData.client_id]);
+  
+  // Effect for selectedDate
+  useEffect(() => {
+    if (selectedDate) {
+      const formattedDate = format(selectedDate, "yyyy-MM-dd");
+      if (formattedDate !== formData.scheduled_date) {
+        setFormData(prev => ({ ...prev, scheduled_date: formattedDate }));
+      }
+    }
+  }, [selectedDate, formData.scheduled_date]);
+  
   const resetForm = () => {
-    console.log("resetting form in useScheduleFormState");
     setCurrentSelectedEvent(null);
     setFormData({
       client_id: clientId,
       service_id: "",
       collaborator_id: null,
-      title: "",
+      title: null,
       description: null,
-      scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
+      scheduled_date: format(selectedDate, "yyyy-MM-dd"),
       execution_phase: null,
       editorial_line_id: null,
       product_id: null,
       status_id: null,
-      creators: [] // Sempre reinicia como array vazio
+      creators: null,
+      capture_date: null
     });
   };
-
+  
   const handleSelectEvent = (event: CalendarEvent) => {
     console.log("selecting event in useScheduleFormState:", event.id);
-    setCurrentSelectedEvent(event);
     
-    // Tratamento abrangente para garantir que creators seja sempre um array
-    let creatorsArray: string[] = [];
-    
-    if (event.creators !== null && event.creators !== undefined) {
-      if (Array.isArray(event.creators)) {
-        creatorsArray = event.creators;
-      } else if (typeof event.creators === 'string') {
-        try {
-          // Tenta parsear como JSON se for string
-          const parsed = JSON.parse(event.creators);
-          creatorsArray = Array.isArray(parsed) ? parsed : [String(parsed)];
-        } catch {
-          // Se falhar no parse, trata como um único item
-          creatorsArray = [String(event.creators)];
-        }
-      } else {
-        // Para qualquer outro tipo, converte para string e usa como item único
-        creatorsArray = [String(event.creators)];
+    // Ensure creators is handled properly
+    let creators = event.creators;
+    if (typeof creators === 'string') {
+      try {
+        creators = JSON.parse(creators);
+      } catch (e) {
+        creators = [creators]; // Convert to array if parsing fails
       }
     }
     
-    console.log("handleSelectEvent - Setting creators to:", creatorsArray);
-    
+    setCurrentSelectedEvent(event);
     setFormData({
       client_id: event.client_id,
-      service_id: event.service_id || "", // Garante que nunca seja null
+      service_id: event.service_id,
       collaborator_id: event.collaborator_id,
-      title: event.title || "", // Garante que nunca seja null
+      title: event.title,
       description: event.description,
       scheduled_date: event.scheduled_date,
       execution_phase: event.execution_phase,
       editorial_line_id: event.editorial_line_id,
       product_id: event.product_id,
       status_id: event.status_id,
-      creators: creatorsArray // Sempre um array válido
+      creators: creators,
+      capture_date: event.capture_date
     });
   };
-
+  
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    console.log("Input changed:", name, value);
-    
-    isUserEditing.current = true;
-    
-    setFormData(prev => ({ ...prev, [name]: value || (name === "title" ? "" : null) }));
-    
-    setTimeout(() => {
-      isUserEditing.current = false;
-    }, 100);
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
-
+  
   const handleSelectChange = (name: string, value: string) => {
     console.log("Select changed:", name, value);
     
-    isUserEditing.current = true;
-    
-    if (name === "creators") {
-      try {
-        let creatorsArray: string[] = [];
-        
-        if (value) {
-          try {
-            const parsed = JSON.parse(value);
-            if (Array.isArray(parsed)) {
-              creatorsArray = parsed;
-            } else if (parsed) {
-              creatorsArray = [String(parsed)];
-            }
-          } catch (e) {
-            console.error("Falha ao analisar JSON de creators:", e);
-          }
-        }
-        
-        console.log("handleSelectChange - Setting creators to:", creatorsArray);
-        setFormData(prev => ({ ...prev, [name]: creatorsArray }));
-      } catch (e) {
-        console.error("Erro ao analisar JSON de creators:", e);
-        setFormData(prev => ({ ...prev, [name]: [] }));
-      }
-    } else {
-      if (
-        (name === "service_id" || 
-        name === "status_id" || 
-        name === "editorial_line_id" || 
-        name === "product_id" || 
-        name === "collaborator_id") && 
-        (value === "" || value === "null")
-      ) {
-        if (name === "service_id" && currentSelectedEvent) {
-          console.log("Keeping existing service_id for required field");
-        } else {
-          setFormData(prev => ({ ...prev, [name]: null }));
-        }
-      } else {
-        setFormData(prev => ({ ...prev, [name]: value === "null" ? null : value }));
-      }
+    // Special case for empty client_id, service_id
+    if ((name === 'client_id' || name === 'service_id') && !value) {
+      // Don't allow empty values for these required fields
+      console.log(`Keeping existing ${name} for required field`);
+      return;
     }
     
-    setTimeout(() => {
-      isUserEditing.current = false;
-    }, 100);
+    // Special handling for creators
+    if (name === 'creators') {
+      try {
+        const parsedValue = JSON.parse(value);
+        setFormData((prev) => ({ ...prev, [name]: parsedValue }));
+      } catch (e) {
+        console.error("Error parsing creators JSON:", e);
+        setFormData((prev) => ({ ...prev, [name]: [] }));
+      }
+      return;
+    }
+    
+    // Normalize null values for empty strings
+    const normalizedValue = value === "" ? null : value;
+    setFormData((prev) => ({ ...prev, [name]: normalizedValue }));
   };
-
+  
+  const handleDateChange = (name: string, value: Date | null) => {
+    if (value) {
+      const formattedDate = format(value, "yyyy-MM-dd");
+      setFormData(prev => ({ ...prev, [name]: formattedDate }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: null }));
+    }
+  };
+  
   return {
     currentSelectedEvent,
     formData,
     resetForm,
     handleSelectEvent,
     handleInputChange,
-    handleSelectChange
+    handleSelectChange,
+    handleDateChange
   };
-}
+};

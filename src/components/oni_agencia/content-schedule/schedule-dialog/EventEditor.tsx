@@ -1,6 +1,7 @@
+
 import { useState } from "react";
 import { format } from "date-fns";
-import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
+import { CalendarEvent, ContentScheduleFormData, OniAgenciaClient } from "@/types/oni-agencia";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EventForm } from "./EventForm";
@@ -18,11 +19,13 @@ interface EventEditorProps {
   editorialLines: any[];
   products: any[];
   statuses: any[];
+  clients: OniAgenciaClient[];
   isLoadingServices: boolean;
   isLoadingCollaborators: boolean;
   isLoadingEditorialLines: boolean;
   isLoadingProducts: boolean;
   isLoadingStatuses: boolean;
+  isLoadingClients: boolean;
   isSubmitting: boolean;
   isDeleting: boolean;
   onSubmit: (e: React.FormEvent) => Promise<void>;
@@ -32,6 +35,7 @@ interface EventEditorProps {
   formData: ContentScheduleFormData;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onSelectChange: (name: string, value: string) => void;
+  onDateChange: (name: string, value: Date | null) => void;
 }
 
 export function EventEditor({
@@ -43,11 +47,13 @@ export function EventEditor({
   editorialLines,
   products,
   statuses,
+  clients,
   isLoadingServices,
   isLoadingCollaborators,
   isLoadingEditorialLines,
   isLoadingProducts,
   isLoadingStatuses,
+  isLoadingClients,
   isSubmitting,
   isDeleting,
   onSubmit,
@@ -56,7 +62,8 @@ export function EventEditor({
   onCancel,
   formData,
   onInputChange,
-  onSelectChange
+  onSelectChange,
+  onDateChange
 }: EventEditorProps) {
   const [activeTab, setActiveTab] = useState<"details" | "status" | "history">("details");
   const [note, setNote] = useState<string>(formData.description || "");
@@ -96,13 +103,16 @@ export function EventEditor({
             editorialLines={editorialLines}
             products={products}
             statuses={statuses}
+            clients={clients}
             isLoadingServices={isLoadingServices}
             isLoadingCollaborators={isLoadingCollaborators}
             isLoadingEditorialLines={isLoadingEditorialLines}
             isLoadingProducts={isLoadingProducts}
             isLoadingStatuses={isLoadingStatuses}
+            isLoadingClients={isLoadingClients}
             onInputChange={onInputChange}
             onSelectChange={onSelectChange}
+            onDateChange={onDateChange}
           />
           
           <DialogFooter>

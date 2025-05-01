@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
+import { CalendarEvent, ContentScheduleFormData, OniAgenciaClient } from "@/types/oni-agencia";
 import { EventList } from "./EventList";
 import { EventEditor } from "./EventEditor";
 import { NewEventForm } from "./NewEventForm";
@@ -16,11 +16,13 @@ interface DialogContentProps {
   editorialLines: any[];
   products: any[];
   statuses: any[];
+  clients: OniAgenciaClient[];
   isLoadingServices: boolean;
   isLoadingCollaborators: boolean;
   isLoadingEditorialLines: boolean;
   isLoadingProducts: boolean;
   isLoadingStatuses: boolean;
+  isLoadingClients: boolean;
   isSubmitting: boolean;
   isDeleting: boolean;
   formData: ContentScheduleFormData;
@@ -32,6 +34,7 @@ interface DialogContentProps {
   onCancel: () => void;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onSelectChange: (name: string, value: string) => void;
+  onDateChange: (name: string, value: Date | null) => void;
 }
 
 export function DialogContent({
@@ -45,11 +48,13 @@ export function DialogContent({
   editorialLines,
   products,
   statuses,
+  clients,
   isLoadingServices,
   isLoadingCollaborators,
   isLoadingEditorialLines,
   isLoadingProducts,
   isLoadingStatuses,
+  isLoadingClients,
   isSubmitting,
   isDeleting,
   formData,
@@ -60,7 +65,8 @@ export function DialogContent({
   onDelete,
   onCancel,
   onInputChange,
-  onSelectChange
+  onSelectChange,
+  onDateChange
 }: DialogContentProps) {
   // Local state to track if we're in "create new" mode
   const [showNewForm, setShowNewForm] = useState(false);
@@ -113,11 +119,13 @@ export function DialogContent({
         editorialLines={editorialLines}
         products={products}
         statuses={statuses}
+        clients={clients}
         isLoadingServices={isLoadingServices}
         isLoadingCollaborators={isLoadingCollaborators}
         isLoadingEditorialLines={isLoadingEditorialLines}
         isLoadingProducts={isLoadingProducts}
         isLoadingStatuses={isLoadingStatuses}
+        isLoadingClients={isLoadingClients}
         isSubmitting={isSubmitting}
         isDeleting={isDeleting}
         onSubmit={onSubmit}
@@ -127,6 +135,7 @@ export function DialogContent({
         formData={formData}
         onInputChange={onInputChange}
         onSelectChange={onSelectChange}
+        onDateChange={onDateChange}
       />
     );
   }
@@ -142,17 +151,20 @@ export function DialogContent({
       editorialLines={editorialLines}
       products={products}
       statuses={statuses}
+      clients={clients}
       isLoadingServices={isLoadingServices}
       isLoadingCollaborators={isLoadingCollaborators}
       isLoadingEditorialLines={isLoadingEditorialLines}
       isLoadingProducts={isLoadingProducts}
       isLoadingStatuses={isLoadingStatuses}
+      isLoadingClients={isLoadingClients}
       isSubmitting={isSubmitting}
       isDeleting={isDeleting}
       onSubmit={onSubmit}
       onCancel={onCancel}
       onInputChange={onInputChange}
       onSelectChange={onSelectChange}
+      onDateChange={onDateChange}
     />
   );
 }
