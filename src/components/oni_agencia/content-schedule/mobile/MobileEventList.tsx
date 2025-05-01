@@ -46,9 +46,16 @@ export function MobileEventList({
                 <CardContent className="p-3">
                   <div className="flex items-center justify-between mb-1">
                     <span className="font-medium text-sm">{event.title || "Sem título"}</span>
-                    <StatusBadge color={event.status?.color || "#9CA3AF"} className="text-xs px-1.5 py-0.5">
-                      {event.client?.name || event.status?.name || "Pendente"}
-                    </StatusBadge>
+                    <div className="flex items-center gap-2">
+                      {event.client?.name && (
+                        <Badge variant="outline" className="text-xs px-1.5 py-0.5">
+                          {event.client.name}
+                        </Badge>
+                      )}
+                      <StatusBadge color={event.status?.color || "#9CA3AF"} className="text-xs px-1.5 py-0.5">
+                        {event.status?.name || "Pendente"}
+                      </StatusBadge>
+                    </div>
                   </div>
                   
                   <div className="flex items-center text-xs text-muted-foreground mb-2">
