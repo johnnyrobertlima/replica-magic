@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "../status-badge/StatusBadge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
 
 interface MobileEventListProps {
   groupedEvents: Record<string, CalendarEvent[]>;
@@ -45,16 +46,9 @@ export function MobileEventList({
                 <CardContent className="p-3">
                   <div className="flex items-center justify-between mb-1">
                     <span className="font-medium text-sm">{event.title || "Sem título"}</span>
-                    {/* Display client name in the status badge position */}
-                    {event.client?.name ? (
-                      <StatusBadge color={event.status?.color || "#9CA3AF"} className="text-xs px-1.5 py-0.5">
-                        {event.client.name}
-                      </StatusBadge>
-                    ) : (
-                      <StatusBadge color={event.status?.color || "#9CA3AF"} className="text-xs px-1.5 py-0.5">
-                        {event.status?.name || "Pendente"}
-                      </StatusBadge>
-                    )}
+                    <StatusBadge color={event.status?.color || "#9CA3AF"} className="text-xs px-1.5 py-0.5">
+                      {event.client?.name || event.status?.name || "Pendente"}
+                    </StatusBadge>
                   </div>
                   
                   <div className="flex items-center text-xs text-muted-foreground mb-2">
