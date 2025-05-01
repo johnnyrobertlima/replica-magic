@@ -1,3 +1,4 @@
+
 import OniAgenciaHome from "@/pages/OniAgenciaHome";
 import OniAgenciaControlePauta from "@/pages/oni_agencia/OniAgenciaControlePauta";
 import OniAgenciaClientes from "@/pages/oni_agencia/OniAgenciaClientes";
@@ -6,6 +7,7 @@ import OniAgenciaColaboradores from "@/pages/oni_agencia/OniAgenciaColaboradores
 import OniAgenciaRelatorios from "@/pages/oni_agencia/OniAgenciaRelatorios";
 import OniAgenciaClientScopes from "@/pages/oni_agencia/OniAgenciaClientScopes";
 import OniAgenciaWorkload from "@/pages/oni_agencia/OniAgenciaWorkload";
+import VisualizacaoEmCampo from "@/pages/oni_agencia/VisualizacaoEmCampo";
 
 export const oniAgenciaRoutes = [
   {
@@ -15,6 +17,10 @@ export const oniAgenciaRoutes = [
   {
     path: "/client-area/oniagencia/controle-pauta",
     element: OniAgenciaControlePauta,
+  },
+  {
+    path: "/client-area/oniagencia/controle-pauta/visualizacaoemcampo",
+    element: VisualizacaoEmCampo,
   },
   {
     path: "/client-area/oniagencia/cargacolab",

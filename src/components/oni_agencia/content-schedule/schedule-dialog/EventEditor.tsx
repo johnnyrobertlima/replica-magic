@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { CalendarEvent, ContentScheduleFormData, OniAgenciaClient } from "@/types/oni-agencia";
 import { DialogFooter } from "@/components/ui/dialog";
@@ -37,6 +37,7 @@ interface EventEditorProps {
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onSelectChange: (name: string, value: string) => void;
   onDateChange: (name: string, value: Date | null) => void;
+  defaultActiveTab?: "details" | "status" | "history";
 }
 
 export function EventEditor({
@@ -64,10 +65,16 @@ export function EventEditor({
   formData,
   onInputChange,
   onSelectChange,
-  onDateChange
+  onDateChange,
+  defaultActiveTab = "details"
 }: EventEditorProps) {
-  const [activeTab, setActiveTab] = useState<"details" | "status" | "history">("details");
+  const [activeTab, setActiveTab] = useState<"details" | "status" | "history">(defaultActiveTab);
   const [note, setNote] = useState<string>(formData.description || "");
+  
+  // Update activeTab when defaultActiveTab changes
+  useEffect(() => {
+    setActiveTab(defaultActiveTab);
+  }, [defaultActiveTab]);
   
   const handleNoteChange = (value: string) => {
     setNote(value);

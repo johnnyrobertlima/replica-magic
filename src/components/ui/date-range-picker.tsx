@@ -131,7 +131,7 @@ export function DatePickerWithRange({
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0 bg-white" align="start">
           <div className="grid gap-2">
-            <div className="grid gap-2 p-4">
+            <div className="grid gap-2 p-4 bg-white">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium">Filtros rápidos</p>
               </div>

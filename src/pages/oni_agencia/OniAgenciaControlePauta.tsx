@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { OniAgenciaMenu } from "@/components/oni_agencia/OniAgenciaMenu";
-import { CalendarDays, RefreshCw, List, LayoutGrid } from "lucide-react";
+import { CalendarDays, RefreshCw, List, LayoutGrid, Smartphone } from "lucide-react";
 import { ContentCalendar } from "@/components/oni_agencia/content-schedule/ContentCalendar";
 import { ContentScheduleFilters } from "@/components/oni_agencia/content-schedule/ContentScheduleFilters";
 import { ContentScheduleList } from "@/components/oni_agencia/content-schedule/ContentScheduleList";
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { EditorialLinePopover } from "@/components/oni_agencia/content-schedule/EditorialLinePopover";
 import { ProductsPopover } from "@/components/oni_agencia/content-schedule/ProductsPopover";
+import { Link } from "react-router-dom";
 
 const OniAgenciaControlePauta = () => {
   const currentDate = new Date();
@@ -67,6 +68,17 @@ const OniAgenciaControlePauta = () => {
           <CalendarDays className="h-6 w-6 text-primary" />
           <h1 className="text-2xl font-semibold tracking-tight">Controle de Pauta</h1>
           <div className="ml-auto flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              asChild
+              title="Visualização para dispositivos móveis"
+            >
+              <Link to="/client-area/oniagencia/controle-pauta/visualizacaoemcampo">
+                <Smartphone className="h-4 w-4 mr-1" />
+                <span className="sr-md:inline hidden">Ver em campo</span>
+              </Link>
+            </Button>
             <ToggleGroup type="single" value={viewMode} onValueChange={handleViewChange}>
               <ToggleGroupItem value="calendar" aria-label="Visualização em calendário" title="Visualização em calendário">
                 <LayoutGrid className="h-4 w-4" />

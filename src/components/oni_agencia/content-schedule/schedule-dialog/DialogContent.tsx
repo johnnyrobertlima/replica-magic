@@ -1,9 +1,9 @@
 
-import React, { useState, useEffect } from "react";
-import { CalendarEvent, ContentScheduleFormData, OniAgenciaClient } from "@/types/oni-agencia";
+import { useState, useEffect } from "react";
+import { CalendarEvent } from "@/types/oni-agencia";
 import { EventList } from "./EventList";
 import { EventEditor } from "./EventEditor";
-import { NewEventForm } from "./NewEventForm";
+import { ContentScheduleFormData } from "@/types/oni-agencia";
 
 interface DialogContentProps {
   selectedEvent?: CalendarEvent;
@@ -16,7 +16,7 @@ interface DialogContentProps {
   editorialLines: any[];
   products: any[];
   statuses: any[];
-  clients: OniAgenciaClient[];
+  clients: any[];
   isLoadingServices: boolean;
   isLoadingCollaborators: boolean;
   isLoadingEditorialLines: boolean;
@@ -35,6 +35,7 @@ interface DialogContentProps {
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onSelectChange: (name: string, value: string) => void;
   onDateChange: (name: string, value: Date | null) => void;
+  defaultTab?: "details" | "status" | "history";
 }
 
 export function DialogContent({
@@ -66,86 +67,47 @@ export function DialogContent({
   onCancel,
   onInputChange,
   onSelectChange,
-  onDateChange
+  onDateChange,
+  defaultTab
 }: DialogContentProps) {
-  // Local state to track if we're in "create new" mode
-  const [showNewForm, setShowNewForm] = useState(false);
+  const [showEventList, setShowEventList] = useState(!selectedEvent && events.length > 0);
   
-  // Reset state when dialog opens with no selected event
+  // Use defaultTab if provided
   useEffect(() => {
-    // Log the current state to help debug
-    console.log("DialogContent state:", { 
-      hasSelectedEvent: !!selectedEvent, 
-      hasCurrentSelectedEvent: !!currentSelectedEvent,
-      eventsLength: events.length 
-    });
-    
-    if (!selectedEvent && !currentSelectedEvent) {
-      // If no event is selected, we should always show the new form
-      console.log("No event selected, showing new form");
-      setShowNewForm(true);
-    } else {
-      setShowNewForm(false);
+    if (currentSelectedEvent && defaultTab) {
+      // The EventEditor component will handle setting this tab when rendering
+      console.log("Setting default tab to:", defaultTab);
     }
-  }, [selectedEvent, currentSelectedEvent, events.length]);
-  
-  // Handler for the "Criar Novo" button
-  const handleCreateNew = () => {
-    console.log("handleCreateNew called, resetting form and showing new form");
+  }, [currentSelectedEvent, defaultTab]);
+
+  const resetAndShowList = () => {
     onResetForm();
-    setShowNewForm(true);
+    setShowEventList(events.length > 0);
   };
   
-  // Show the event list if there are multiple events and not in "create new" mode
-  if (!selectedEvent && !currentSelectedEvent && events.length > 1 && !showNewForm) {
+  const handleExplicitCreateNew = () => {
+    onResetForm();
+    setShowEventList(false);
+  };
+
+  if (showEventList) {
     return (
       <EventList 
-        events={events} 
-        onSelectEvent={onSelectEvent}
-        onCreateNew={handleCreateNew}
+        events={events}
+        onSelectEvent={(event) => {
+          onSelectEvent(event);
+          setShowEventList(false);
+        }}
+        onCreateNew={handleExplicitCreateNew}
       />
     );
   }
 
-  // Show the event editor if an event was selected
-  if (currentSelectedEvent) {
-    return (
-      <EventEditor
-        event={currentSelectedEvent}
-        clientId={clientId}
-        selectedDate={selectedDate}
-        services={services}
-        collaborators={collaborators}
-        editorialLines={editorialLines}
-        products={products}
-        statuses={statuses}
-        clients={clients}
-        isLoadingServices={isLoadingServices}
-        isLoadingCollaborators={isLoadingCollaborators}
-        isLoadingEditorialLines={isLoadingEditorialLines}
-        isLoadingProducts={isLoadingProducts}
-        isLoadingStatuses={isLoadingStatuses}
-        isLoadingClients={isLoadingClients}
-        isSubmitting={isSubmitting}
-        isDeleting={isDeleting}
-        onSubmit={onSubmit}
-        onStatusUpdate={onStatusUpdate}
-        onDelete={onDelete}
-        onCancel={onCancel}
-        formData={formData}
-        onInputChange={onInputChange}
-        onSelectChange={onSelectChange}
-        onDateChange={onDateChange}
-      />
-    );
-  }
-
-  // Show new event form by default when no explicit selection
-  // This is the fallback case that should handle all situations where we need a new form
-  console.log("Showing new event form by default");
   return (
-    <NewEventForm
-      formData={formData}
+    <EventEditor
+      event={currentSelectedEvent!}
+      clientId={clientId}
+      selectedDate={selectedDate}
       services={services}
       collaborators={collaborators}
       editorialLines={editorialLines}
@@ -161,10 +123,14 @@ export function DialogContent({
       isSubmitting={isSubmitting}
       isDeleting={isDeleting}
       onSubmit={onSubmit}
+      onStatusUpdate={onStatusUpdate}
+      onDelete={onDelete}
       onCancel={onCancel}
+      formData={formData}
       onInputChange={onInputChange}
       onSelectChange={onSelectChange}
       onDateChange={onDateChange}
+      defaultActiveTab={defaultTab}
     />
   );
 }

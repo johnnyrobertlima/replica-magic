@@ -1,3 +1,4 @@
+
 import { Route } from "react-router-dom";
 import { Fragment } from "react";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
@@ -15,6 +16,7 @@ import FeirinhaDaConcordiaAgenda from "@/pages/oni_agencia/FeirinhaDaConcordiaAg
 import PromobrasAgenda from "@/pages/oni_agencia/PromobrasAgenda";
 import PorDentroDaFeirinhaAgenda from "@/pages/oni_agencia/PorDentroDaFeirinhaAgenda";
 import ClienteVabHome from "@/pages/oni_agencia/ClienteVabHome";
+import VisualizacaoEmCampo from "@/pages/oni_agencia/VisualizacaoEmCampo";
 
 export const oniAgenciaRoutes = (
   <>
@@ -26,6 +28,11 @@ export const oniAgenciaRoutes = (
     <Route path="/client-area/oniagencia/controle-pauta" element={
       <PermissionGuard resourcePath="/client-area/oniagencia/controle-pauta">
         <OniAgenciaControlePauta />
+      </PermissionGuard>
+    } />
+    <Route path="/client-area/oniagencia/controle-pauta/visualizacaoemcampo" element={
+      <PermissionGuard resourcePath="/client-area/oniagencia/controle-pauta">
+        <VisualizacaoEmCampo />
       </PermissionGuard>
     } />
     <Route path="/client-area/oniagencia/cargacolab" element={
