@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { 
   Users, 
@@ -7,7 +8,8 @@ import {
   CalendarDays,
   BookText,
   Briefcase,
-  BarChart2
+  BarChart2,
+  Smartphone
 } from "lucide-react";
 import { OniAgenciaMenu } from "@/components/oni_agencia/OniAgenciaMenu";
 import { ServiceCard } from "@/components/oni_agencia/ServiceCard";
@@ -25,6 +27,14 @@ const OniAgenciaHome = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <ServiceCard
+            title="Visualização em Campo"
+            description="Visualize agendamentos em dispositivos móveis para trabalho em campo."
+            icon={Smartphone}
+            iconColor="bg-indigo-100 text-indigo-600"
+            path="/client-area/oniagencia/controle-pauta/visualizacaoemcampo"
+          />
+
           <ServiceCard
             title="Controle de Pauta"
             description="Gerencie todas as pautas, status e atribuições de trabalho."
