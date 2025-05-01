@@ -12,7 +12,8 @@ import {
   UserPlus, 
   CalendarDays,
   BookText,
-  Briefcase
+  Briefcase,
+  Smartphone
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -27,8 +28,8 @@ export const OniAgenciaMenu = () => {
 
   const menuItems = [
     { name: "Home Oni Agência", path: "/client-area/oniagencia", icon: <BarChart2 className="h-4 w-4 mr-2" /> },
+    { name: "Visualização em Campo", path: "/client-area/oniagencia/controle-pauta/visualizacaoemcampo", icon: <Smartphone className="h-4 w-4 mr-2" /> },
     { name: "Controle de Pauta", path: "/client-area/oniagencia/controle-pauta", icon: <CalendarDays className="h-4 w-4 mr-2" /> },
-    { name: "Visualização em Campo", path: "/client-area/oniagencia/controle-pauta/visualizacaoemcampo", icon: <CalendarDays className="h-4 w-4 mr-2" /> },
     { name: "Clientes", path: "/client-area/oniagencia/clientes", icon: <Users className="h-4 w-4 mr-2" /> },
     { name: "Serviços", path: "/client-area/oniagencia/servicos", icon: <FileSpreadsheet className="h-4 w-4 mr-2" /> },
     { name: "Colaboradores", path: "/client-area/oniagencia/colaboradores", icon: <UserPlus className="h-4 w-4 mr-2" /> },
@@ -64,7 +65,7 @@ export const OniAgenciaMenu = () => {
   };
 
   return (
-    <div className="sticky top-0 z-50 w-full bg-gradient-to-r from-primary to-primary-600 shadow-md">
+    <div className="sticky top-0 z-50 w-full bg-primary shadow-md">
       <div className="container mx-auto px-4">
         {/* Desktop Menu */}
         <div className="hidden md:flex justify-between items-center py-3">
@@ -110,10 +111,10 @@ export const OniAgenciaMenu = () => {
               <LogOut size={20} />
             </Button>
             <Button
-              variant="ghost"
-              size="sm"
+              variant="outline"
+              size="icon"
               onClick={() => setIsOpen(!isOpen)}
-              className="p-1 text-white hover:bg-primary-700"
+              className="text-white border-blue-600 bg-blue-600 hover:bg-blue-700"
               aria-label={isOpen ? "Fechar menu" : "Abrir menu"}
             >
               {isOpen ? <X size={24} /> : <Menu size={24} />}
@@ -123,7 +124,7 @@ export const OniAgenciaMenu = () => {
 
         {/* Mobile Menu Dropdown */}
         {isOpen && (
-          <div className="md:hidden py-2 space-y-1 max-h-[calc(100vh-70px)] overflow-y-auto bg-primary-800 rounded-b-lg">
+          <div className="md:hidden py-2 space-y-1 max-h-[calc(100vh-70px)] overflow-y-auto bg-primary-900 rounded-b-lg">
             {menuItems.map((item) => (
               <NavLink
                 key={item.path}
