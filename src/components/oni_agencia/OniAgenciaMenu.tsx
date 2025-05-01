@@ -31,6 +31,7 @@ import {
 export const OniAgenciaMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [adminMenuOpen, setAdminMenuOpen] = useState(false);
+  const [mobileAdminExpanded, setMobileAdminExpanded] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const location = useLocation();
@@ -81,6 +82,10 @@ export const OniAgenciaMenu = () => {
   // Check if any admin route is active
   const isAnyAdminRouteActive = () => {
     return adminMenuItems.some(item => isActiveRoute(item.path));
+  };
+
+  const toggleMobileAdminMenu = () => {
+    setMobileAdminExpanded(!mobileAdminExpanded);
   };
 
   return (
@@ -198,29 +203,39 @@ export const OniAgenciaMenu = () => {
               </NavLink>
             ))}
             
-            {/* Admin section header */}
-            <div className="px-4 pt-2 pb-1 text-sm font-semibold text-gray-300 flex items-center">
-              <Settings className="h-4 w-4 mr-2" />
-              Admin
-            </div>
+            {/* Admin section header with toggle */}
+            <button 
+              onClick={toggleMobileAdminMenu}
+              className="w-full px-4 pt-2 pb-1 text-sm font-semibold text-gray-300 flex items-center justify-between"
+            >
+              <div className="flex items-center">
+                <Settings className="h-4 w-4 mr-2" />
+                Admin
+              </div>
+              <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${mobileAdminExpanded ? 'rotate-180' : ''}`} />
+            </button>
             
-            {/* Admin menu items */}
-            {adminMenuItems.map((item) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                className={({ isActive }) =>
-                  cn(
-                    "flex items-center px-6 py-3 text-sm rounded-md transition-colors text-white",
-                    (isActive || isActiveRoute(item.path)) ? "bg-primary-900 font-medium" : "hover:bg-primary-700"
-                  )
-                }
-                onClick={() => setIsOpen(false)}
-              >
-                {item.icon}
-                {item.name}
-              </NavLink>
-            ))}
+            {/* Admin menu items, conditionally displayed */}
+            {mobileAdminExpanded && (
+              <div className="space-y-1">
+                {adminMenuItems.map((item) => (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    className={({ isActive }) =>
+                      cn(
+                        "flex items-center px-6 py-3 text-sm rounded-md transition-colors text-white",
+                        (isActive || isActiveRoute(item.path)) ? "bg-primary-900 font-medium" : "hover:bg-primary-700"
+                      )
+                    }
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {item.icon}
+                    {item.name}
+                  </NavLink>
+                ))}
+              </div>
+            )}
             
             <button
               onClick={handleLogout}
@@ -235,4 +250,3 @@ export const OniAgenciaMenu = () => {
     </div>
   );
 };
-
