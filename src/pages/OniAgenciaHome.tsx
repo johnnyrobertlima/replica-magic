@@ -9,7 +9,8 @@ import {
   BookText,
   Briefcase,
   BarChart2,
-  Smartphone
+  Smartphone,
+  Settings
 } from "lucide-react";
 import { OniAgenciaMenu } from "@/components/oni_agencia/OniAgenciaMenu";
 import { ServiceCard } from "@/components/oni_agencia/ServiceCard";
@@ -44,12 +45,29 @@ const OniAgenciaHome = () => {
           />
 
           <ServiceCard
+            title="Relatórios"
+            description="Acesse relatórios e métricas de desempenho da agência."
+            icon={CheckSquare}
+            iconColor="bg-red-100 text-red-600"
+            path="/client-area/oniagencia/relatorios"
+          />
+          
+          <ServiceCard
             title="Carga de Trabalho"
             description="Análise de distribuição de tarefas por colaborador."
             icon={BarChart2}
             iconColor="bg-purple-100 text-purple-600"
             path="/client-area/oniagencia/cargacolab"
           />
+          
+          {/* Admin section header */}
+          <div className="col-span-1 md:col-span-2 lg:col-span-3 mt-6 mb-2">
+            <div className="flex items-center gap-2">
+              <Settings className="h-5 w-5 text-primary" />
+              <h2 className="text-xl font-semibold text-primary">Administração</h2>
+            </div>
+            <div className="h-0.5 bg-gray-200 mt-2"></div>
+          </div>
           
           <ServiceCard
             title="Clientes Oni Agência"
@@ -81,14 +99,6 @@ const OniAgenciaHome = () => {
             icon={Briefcase}
             iconColor="bg-cyan-100 text-cyan-600"
             path="/client-area/oniagencia/escopos"
-          />
-          
-          <ServiceCard
-            title="Relatórios"
-            description="Acesse relatórios e métricas de desempenho da agência."
-            icon={CheckSquare}
-            iconColor="bg-red-100 text-red-600"
-            path="/client-area/oniagencia/relatorios"
           />
           
           <ServiceCard
