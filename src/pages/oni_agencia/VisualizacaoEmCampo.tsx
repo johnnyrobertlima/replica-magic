@@ -17,7 +17,7 @@ const VisualizacaoEmCampo = () => {
   const [selectedMonth, setSelectedMonth] = useState<number>(currentDate.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
   const [selectedCollaborator, setSelectedCollaborator] = useState<string | null>(null);
-  const { isCollapsed, toggle: toggleFilters } = useCollapsible(false);
+  const { isCollapsed, toggle: toggleFilters } = useCollapsible(true); // Iniciar com filtros recolhidos
   
   const { data: clients = [] } = useClients();
   
