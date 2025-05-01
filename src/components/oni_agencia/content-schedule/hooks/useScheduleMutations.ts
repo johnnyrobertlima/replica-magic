@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
 import { useCreateContentSchedule, useUpdateContentSchedule, useDeleteContentSchedule } from "@/hooks/useOniAgenciaContentSchedules";
@@ -75,7 +76,11 @@ export function useScheduleMutations({
           console.log("Updating without changing service_id:", updateDataWithoutService);
           await updateMutation.mutateAsync({
             id: currentSelectedEvent.id,
-            data: updateDataWithoutService
+            data: {
+              // Add the service_id back from the current event to make TypeScript happy
+              service_id: currentSelectedEvent.service_id,
+              ...updateDataWithoutService
+            }
           });
         } else {
           // Normal update with service_id included
@@ -129,11 +134,11 @@ export function useScheduleMutations({
     if (!currentSelectedEvent) return;
     
     try {
-      // Create a complete update object but only change certain fields
-      const updateData: Partial<ContentScheduleFormData> = {
+      // Create a complete update object with all required fields from the current event
+      const updateData: ContentScheduleFormData = {
         client_id: currentSelectedEvent.client_id,
         service_id: currentSelectedEvent.service_id,
-        title: currentSelectedEvent.title,
+        title: currentSelectedEvent.title || "",
         scheduled_date: currentSelectedEvent.scheduled_date,
         // Only update these fields
         status_id: formData.status_id === "" ? null : formData.status_id,
@@ -143,7 +148,7 @@ export function useScheduleMutations({
         execution_phase: currentSelectedEvent.execution_phase,
         editorial_line_id: currentSelectedEvent.editorial_line_id,
         product_id: currentSelectedEvent.product_id,
-        creators: currentSelectedEvent.creators,
+        creators: currentSelectedEvent.creators || [],
         capture_date: currentSelectedEvent.capture_date
       };
       

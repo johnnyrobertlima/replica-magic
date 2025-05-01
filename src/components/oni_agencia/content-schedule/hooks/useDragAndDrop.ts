@@ -63,7 +63,7 @@ export function useDragAndDrop(events: CalendarEvent[], userName: string) {
           editorial_line_id: draggedEvent.editorial_line_id,
           product_id: draggedEvent.product_id,
           status_id: draggedEvent.status_id,
-          creators: draggedEvent.creators,
+          creators: draggedEvent.creators || [],
           capture_date: draggedEvent.capture_date
         };
         
