@@ -51,17 +51,26 @@ export function useDragAndDrop(events: CalendarEvent[], userName: string) {
           ? `${draggedEvent.description}\n\n${movementRecord}` 
           : movementRecord;
         
-        // Create an update with the required fields
+        // Create a complete update object with all required fields
         const updateData = {
-          scheduled_date: newDate,
+          client_id: draggedEvent.client_id,
+          service_id: draggedEvent.service_id,
+          collaborator_id: draggedEvent.collaborator_id,
+          title: draggedEvent.title || "",
           description: updatedDescription,
-          client_id: draggedEvent.client_id
+          scheduled_date: newDate,
+          execution_phase: draggedEvent.execution_phase,
+          editorial_line_id: draggedEvent.editorial_line_id,
+          product_id: draggedEvent.product_id,
+          status_id: draggedEvent.status_id,
+          creators: draggedEvent.creators,
+          capture_date: draggedEvent.capture_date
         };
         
         updateMutation.mutate(
           {
             id: draggedEvent.id,
-            data: updateData // Changed from 'schedule' to 'data'
+            data: updateData
           },
           {
             onSuccess: () => {

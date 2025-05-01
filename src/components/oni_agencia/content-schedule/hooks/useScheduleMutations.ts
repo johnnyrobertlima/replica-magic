@@ -75,13 +75,13 @@ export function useScheduleMutations({
           console.log("Updating without changing service_id:", updateDataWithoutService);
           await updateMutation.mutateAsync({
             id: currentSelectedEvent.id,
-            data: updateDataWithoutService // Changed from 'schedule' to 'data'
+            data: updateDataWithoutService
           });
         } else {
           // Normal update with service_id included
           await updateMutation.mutateAsync({
             id: currentSelectedEvent.id,
-            data: sanitizedData // Changed from 'schedule' to 'data'
+            data: sanitizedData
           });
         }
         
@@ -129,17 +129,28 @@ export function useScheduleMutations({
     if (!currentSelectedEvent) return;
     
     try {
-      // Atualiza apenas o status, o colaborador e a descrição
-      const updateData = {
+      // Create a complete update object but only change certain fields
+      const updateData: Partial<ContentScheduleFormData> = {
+        client_id: currentSelectedEvent.client_id,
+        service_id: currentSelectedEvent.service_id,
+        title: currentSelectedEvent.title,
+        scheduled_date: currentSelectedEvent.scheduled_date,
+        // Only update these fields
         status_id: formData.status_id === "" ? null : formData.status_id,
         collaborator_id: formData.collaborator_id === "" ? null : formData.collaborator_id,
-        description: formData.description
+        description: formData.description,
+        // Keep other fields
+        execution_phase: currentSelectedEvent.execution_phase,
+        editorial_line_id: currentSelectedEvent.editorial_line_id,
+        product_id: currentSelectedEvent.product_id,
+        creators: currentSelectedEvent.creators,
+        capture_date: currentSelectedEvent.capture_date
       };
       
       console.log("Updating event status:", currentSelectedEvent.id, updateData);
       await updateMutation.mutateAsync({
         id: currentSelectedEvent.id,
-        data: updateData // Changed from 'schedule' to 'data'
+        data: updateData
       });
       
       toast({
