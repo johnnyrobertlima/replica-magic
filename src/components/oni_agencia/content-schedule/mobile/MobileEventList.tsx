@@ -40,18 +40,25 @@ export function MobileEventList({
               >
                 <div 
                   className="h-1.5 w-full" 
-                  style={{ backgroundColor: event.service.color }}
+                  style={{ backgroundColor: event.service?.color }}
                 />
                 <CardContent className="p-3">
                   <div className="flex items-center justify-between mb-1">
                     <span className="font-medium text-sm">{event.title || "Sem título"}</span>
-                    <StatusBadge color={event.status?.color || "#9CA3AF"} className="text-xs px-1.5 py-0.5">
-                      {event.status?.name || "Pendente"}
-                    </StatusBadge>
+                    <div className="flex items-center gap-1">
+                      {event.client?.name && (
+                        <span className="text-xs text-muted-foreground">
+                          {event.client.name}
+                        </span>
+                      )}
+                      <StatusBadge color={event.status?.color || "#9CA3AF"} className="text-xs px-1.5 py-0.5">
+                        {event.status?.name || "Pendente"}
+                      </StatusBadge>
+                    </div>
                   </div>
                   
                   <div className="flex items-center text-xs text-muted-foreground mb-2">
-                    <span className="mr-2">{event.service.name}</span>
+                    <span className="mr-2">{event.service?.name}</span>
                     {event.editorial_line && (
                       <>
                         <span className="mx-1">•</span>
