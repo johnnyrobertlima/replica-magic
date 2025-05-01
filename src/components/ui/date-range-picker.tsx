@@ -149,7 +149,7 @@ export function DatePickerWithRange({
                 ))}
               </div>
             </div>
-            <div className="p-3 border-t">
+            <div className="p-3 border-t bg-white">
               <Calendar
                 initialFocus
                 mode="range"

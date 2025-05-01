@@ -9,6 +9,7 @@ import { DialogActions } from "./DialogActions";
 import { StatusUpdateForm } from "./StatusUpdateForm";
 import { ScheduleHistory } from "./ScheduleHistory";
 import { ArrowDown, History } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface EventEditorProps {
   event: CalendarEvent;
@@ -94,67 +95,76 @@ export function EventEditor({
           Histórico
         </TabsTrigger>
       </TabsList>
+      
       <TabsContent value="details">
-        <form onSubmit={onSubmit}>
-          <EventForm
-            formData={formData}
-            services={services}
-            collaborators={collaborators}
-            editorialLines={editorialLines}
-            products={products}
-            statuses={statuses}
-            clients={clients}
-            isLoadingServices={isLoadingServices}
-            isLoadingCollaborators={isLoadingCollaborators}
-            isLoadingEditorialLines={isLoadingEditorialLines}
-            isLoadingProducts={isLoadingProducts}
-            isLoadingStatuses={isLoadingStatuses}
-            isLoadingClients={isLoadingClients}
-            onInputChange={onInputChange}
-            onSelectChange={onSelectChange}
-            onDateChange={onDateChange}
-          />
-          
-          <DialogFooter>
-            <DialogActions
-              isSubmitting={isSubmitting}
-              isDeleting={isDeleting}
-              onCancel={onCancel}
-              onDelete={onDelete}
-              isEditing={true}
+        <ScrollArea className="h-[60vh]">
+          <form onSubmit={onSubmit}>
+            <EventForm
+              formData={formData}
+              services={services}
+              collaborators={collaborators}
+              editorialLines={editorialLines}
+              products={products}
+              statuses={statuses}
+              clients={clients}
+              isLoadingServices={isLoadingServices}
+              isLoadingCollaborators={isLoadingCollaborators}
+              isLoadingEditorialLines={isLoadingEditorialLines}
+              isLoadingProducts={isLoadingProducts}
+              isLoadingStatuses={isLoadingStatuses}
+              isLoadingClients={isLoadingClients}
+              onInputChange={onInputChange}
+              onSelectChange={onSelectChange}
+              onDateChange={onDateChange}
             />
-          </DialogFooter>
-        </form>
+            
+            <DialogFooter>
+              <DialogActions
+                isSubmitting={isSubmitting}
+                isDeleting={isDeleting}
+                onCancel={onCancel}
+                onDelete={onDelete}
+                isEditing={true}
+              />
+            </DialogFooter>
+          </form>
+        </ScrollArea>
       </TabsContent>
+      
       <TabsContent value="status">
-        <form onSubmit={onStatusUpdate}>
-          <StatusUpdateForm
-            event={event}
-            statuses={statuses}
-            collaborators={collaborators}
-            isLoadingStatuses={isLoadingStatuses}
-            isLoadingCollaborators={isLoadingCollaborators}
-            selectedStatus={formData.status_id}
-            selectedCollaborator={formData.collaborator_id}
-            note={note}
-            onStatusChange={(value) => onSelectChange("status_id", value)}
-            onCollaboratorChange={(value) => onSelectChange("collaborator_id", value)}
-            onNoteChange={handleNoteChange}
-          />
-          
-          <DialogFooter>
-            <DialogActions
-              isSubmitting={isSubmitting}
-              isDeleting={false}
-              onCancel={onCancel}
-              isEditing={true}
-              saveLabel="Atualizar Status"
+        <ScrollArea className="h-[60vh]">
+          <form onSubmit={onStatusUpdate}>
+            <StatusUpdateForm
+              event={event}
+              statuses={statuses}
+              collaborators={collaborators}
+              isLoadingStatuses={isLoadingStatuses}
+              isLoadingCollaborators={isLoadingCollaborators}
+              selectedStatus={formData.status_id}
+              selectedCollaborator={formData.collaborator_id}
+              note={note}
+              onStatusChange={(value) => onSelectChange("status_id", value)}
+              onCollaboratorChange={(value) => onSelectChange("collaborator_id", value)}
+              onNoteChange={handleNoteChange}
             />
-          </DialogFooter>
-        </form>
+            
+            <DialogFooter>
+              <DialogActions
+                isSubmitting={isSubmitting}
+                isDeleting={false}
+                onCancel={onCancel}
+                isEditing={true}
+                saveLabel="Atualizar Status"
+              />
+            </DialogFooter>
+          </form>
+        </ScrollArea>
       </TabsContent>
+      
       <TabsContent value="history" className="space-y-4">
-        <ScheduleHistory event={event} />
+        <ScrollArea className="h-[60vh]">
+          <ScheduleHistory event={event} />
+        </ScrollArea>
       </TabsContent>
     </Tabs>
   );

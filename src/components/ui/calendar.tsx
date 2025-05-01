@@ -19,26 +19,26 @@ function Calendar({
       showOutsideDays={showOutsideDays}
       className={cn("w-full p-0", className)}
       classNames={{
-        months: "flex flex-col w-full",
-        month: "w-full",
-        caption: "flex justify-center pt-1 relative items-center",
+        months: "flex flex-col w-full bg-white",
+        month: "w-full bg-white",
+        caption: "flex justify-center pt-1 relative items-center bg-white",
         caption_label: "text-sm font-medium",
-        nav: "space-x-1 flex items-center",
+        nav: "space-x-1 flex items-center bg-white",
         nav_button: cn(
           buttonVariants({ variant: "outline" }),
-          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
+          "h-7 w-7 bg-white p-0 opacity-50 hover:opacity-100"
         ),
         nav_button_previous: "absolute left-1",
         nav_button_next: "absolute right-1",
-        table: "w-full border-collapse",
-        head_row: "flex w-full",
+        table: "w-full border-collapse bg-white",
+        head_row: "flex w-full bg-white",
         head_cell:
-          "text-muted-foreground rounded-md w-full font-normal text-[0.8rem]",
-        row: "flex w-full",
-        cell: "relative w-full p-0 text-center text-sm focus-within:relative focus-within:z-20",
+          "text-muted-foreground rounded-md w-full font-normal text-[0.8rem] bg-white",
+        row: "flex w-full bg-white",
+        cell: "relative w-full p-0 text-center text-sm focus-within:relative focus-within:z-20 bg-white",
         day: cn(
           buttonVariants({ variant: "ghost" }),
-          "h-9 w-9 p-0 font-normal aria-selected:opacity-100"
+          "h-9 w-9 p-0 font-normal aria-selected:opacity-100 bg-white"
         ),
         day_range_end: "day-range-end",
         day_selected:
