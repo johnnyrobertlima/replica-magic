@@ -7,17 +7,20 @@ import { MobileEventList } from "./MobileEventList";
 import { MobileScheduleEventDialog } from "./MobileScheduleEventDialog";
 import { useDateSelection } from "../hooks/useDateSelection";
 import { EmptyState } from "../event-list/EmptyState";
+import { MobileContentLoading } from "./MobileContentLoading";
 
 interface MobileContentScheduleListProps {
   events: CalendarEvent[];
   clientId: string;
   selectedCollaborator?: string | null;
+  isLoading?: boolean;
 }
 
 export function MobileContentScheduleList({ 
   events, 
   clientId,
-  selectedCollaborator 
+  selectedCollaborator,
+  isLoading = false
 }: MobileContentScheduleListProps) {
   const { toast } = useToast();
   const [statusTabActive, setStatusTabActive] = useState<boolean>(true);
@@ -97,6 +100,11 @@ export function MobileContentScheduleList({
     setSelectedEvent(undefined);
     setIsDialogOpen(false);
   };
+
+  // Show loading state if loading
+  if (isLoading) {
+    return <MobileContentLoading />;
+  }
 
   // Show empty state if no events
   if (sortedDates.length === 0) {

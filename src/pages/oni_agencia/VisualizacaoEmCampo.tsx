@@ -8,8 +8,10 @@ import { useCollapsible } from "@/components/oni_agencia/content-schedule/hooks/
 import { Button } from "@/components/ui/button";
 import { MobileContentScheduleList } from "@/components/oni_agencia/content-schedule/mobile/MobileContentScheduleList";
 import { useClients } from "@/hooks/useOniAgenciaClients";
+import { useToast } from "@/hooks/use-toast";
 
 const VisualizacaoEmCampo = () => {
+  const { toast } = useToast();
   const currentDate = new Date();
   const [selectedClient, setSelectedClient] = useState<string>("");
   const [selectedMonth, setSelectedMonth] = useState<number>(currentDate.getMonth() + 1);
@@ -45,8 +47,13 @@ const VisualizacaoEmCampo = () => {
   }, []);
 
   const handleManualRefetch = useCallback(() => {
+    toast({
+      title: "Atualizando dados",
+      description: "Buscando os agendamentos mais recentes...",
+      duration: 3000,
+    });
     refetchSchedules();
-  }, [refetchSchedules]);
+  }, [refetchSchedules, toast]);
   
   return (
     <main className="container-fluid p-0 max-w-full">
@@ -88,6 +95,7 @@ const VisualizacaoEmCampo = () => {
             events={filteredSchedules}
             clientId={selectedClient || "all"}
             selectedCollaborator={selectedCollaborator}
+            isLoading={isLoadingSchedules || isRefetching}
           />
         </div>
       </div>
