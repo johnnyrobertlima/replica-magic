@@ -36,7 +36,7 @@ export function MobileEventList({
             {groupedEvents[dateString].map((event) => (
               <Card 
                 key={event.id}
-                className="overflow-hidden"
+                className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
                 onClick={() => onEventClick(event)}
               >
                 <div 
@@ -48,7 +48,7 @@ export function MobileEventList({
                     <span className="font-medium text-sm">{event.title || "Sem título"}</span>
                     <div className="flex items-center gap-2">
                       {event.client && (
-                        <Badge variant="outline" className="text-xs px-1.5 py-0.5">
+                        <Badge variant="outline" className="text-xs px-1.5 py-0.5 border-blue-300">
                           {event.client.name || "Cliente não informado"}
                         </Badge>
                       )}

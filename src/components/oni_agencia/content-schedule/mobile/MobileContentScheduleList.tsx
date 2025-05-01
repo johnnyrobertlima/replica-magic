@@ -51,8 +51,18 @@ export function MobileContentScheduleList({
     });
   }, [events, selectedCollaborator]);
   
-  // Group events by date
+  // Group events by date - additionally log event data to check for client information
   const groupedEvents = useMemo(() => {
+    // Log a sample event to check if client data is present
+    if (filteredEvents.length > 0) {
+      console.log("Sample event data:", filteredEvents[0]);
+      if (filteredEvents[0].client) {
+        console.log("Client data in event:", filteredEvents[0].client);
+      } else {
+        console.log("No client data found in event");
+      }
+    }
+    
     return filteredEvents.reduce<Record<string, CalendarEvent[]>>((acc, event) => {
       const dateKey = event.scheduled_date;
       if (!acc[dateKey]) {
