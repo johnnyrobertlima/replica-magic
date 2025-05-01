@@ -51,18 +51,18 @@ export function useDragAndDrop(events: CalendarEvent[], userName: string) {
           ? `${draggedEvent.description}\n\n${movementRecord}` 
           : movementRecord;
         
-        // Create a minimal update object with only the necessary fields
+        // Create an update with the required fields
         const updateData = {
-          id: draggedEvent.id,
-          schedule: {
-            scheduled_date: newDate,
-            description: updatedDescription,
-            client_id: draggedEvent.client_id
-          }
+          scheduled_date: newDate,
+          description: updatedDescription,
+          client_id: draggedEvent.client_id
         };
         
         updateMutation.mutate(
-          updateData,
+          {
+            id: draggedEvent.id,
+            data: updateData // Changed from 'schedule' to 'data'
+          },
           {
             onSuccess: () => {
               toast({

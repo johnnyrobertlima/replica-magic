@@ -75,13 +75,13 @@ export function useScheduleMutations({
           console.log("Updating without changing service_id:", updateDataWithoutService);
           await updateMutation.mutateAsync({
             id: currentSelectedEvent.id,
-            schedule: updateDataWithoutService
+            data: updateDataWithoutService // Changed from 'schedule' to 'data'
           });
         } else {
           // Normal update with service_id included
           await updateMutation.mutateAsync({
             id: currentSelectedEvent.id,
-            schedule: sanitizedData
+            data: sanitizedData // Changed from 'schedule' to 'data'
           });
         }
         
@@ -139,7 +139,7 @@ export function useScheduleMutations({
       console.log("Updating event status:", currentSelectedEvent.id, updateData);
       await updateMutation.mutateAsync({
         id: currentSelectedEvent.id,
-        schedule: updateData
+        data: updateData // Changed from 'schedule' to 'data'
       });
       
       toast({
@@ -164,12 +164,7 @@ export function useScheduleMutations({
     try {
       if (confirm("Tem certeza que deseja excluir este agendamento?")) {
         console.log("Deleting event:", currentSelectedEvent.id);
-        await deleteMutation.mutateAsync({
-          id: currentSelectedEvent.id,
-          clientId,
-          year: selectedDate.getFullYear(),
-          month: selectedDate.getMonth() + 1
-        });
+        await deleteMutation.mutateAsync(currentSelectedEvent.id);
         
         toast({
           title: "Agendamento excluído",

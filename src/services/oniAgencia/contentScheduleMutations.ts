@@ -27,7 +27,8 @@ export async function createContentSchedule(schedule: ContentScheduleFormData): 
       editorial_line_id: processedSchedule.editorial_line_id,
       product_id: processedSchedule.product_id,
       status_id: processedSchedule.status_id,
-      creators: processedSchedule.creators
+      creators: processedSchedule.creators,
+      capture_date: processedSchedule.capture_date // Include capture_date
     };
     
     console.log('Creating content schedule:', createData);

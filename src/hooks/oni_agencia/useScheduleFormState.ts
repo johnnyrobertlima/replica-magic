@@ -25,7 +25,7 @@ export const useScheduleFormState = ({
     product_id: null,
     status_id: null,
     creators: null,
-    capture_date: null
+    capture_date: null // Add capture_date field
   });
   
   // Effect for selectedEvent from props
@@ -67,7 +67,7 @@ export const useScheduleFormState = ({
       product_id: null,
       status_id: null,
       creators: null,
-      capture_date: null
+      capture_date: null // Add capture_date field
     });
   };
   
@@ -97,7 +97,7 @@ export const useScheduleFormState = ({
       product_id: event.product_id,
       status_id: event.status_id,
       creators: creators,
-      capture_date: event.capture_date
+      capture_date: event.capture_date // Add capture_date field
     });
   };
   

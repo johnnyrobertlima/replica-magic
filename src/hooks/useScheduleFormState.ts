@@ -24,7 +24,8 @@ export function useScheduleFormState({
     editorial_line_id: null,
     product_id: null,
     status_id: null,
-    creators: [] // Inicializa sempre como array vazio
+    creators: [], // Initialize as empty array
+    capture_date: null // Add capture_date field
   });
   
   const isUserEditing = useRef(false);
@@ -51,7 +52,8 @@ export function useScheduleFormState({
       editorial_line_id: null,
       product_id: null,
       status_id: null,
-      creators: [] // Reset to empty array
+      creators: [], // Reset to empty array
+      capture_date: null // Add capture_date field
     });
   };
 
@@ -91,7 +93,8 @@ export function useScheduleFormState({
       editorial_line_id: event.editorial_line_id,
       product_id: event.product_id,
       status_id: event.status_id,
-      creators: creatorsArray // Sempre um array válido
+      creators: creatorsArray, // Sempre um array válido
+      capture_date: event.capture_date // Add capture_date field
     });
   };
 
@@ -159,6 +162,24 @@ export function useScheduleFormState({
       isUserEditing.current = false;
     }, 100);
   };
+  
+  // Add handleDateChange function
+  const handleDateChange = (name: string, value: Date | null) => {
+    console.log("Date changed:", name, value);
+    
+    isUserEditing.current = true;
+    
+    if (value) {
+      const formattedDate = format(value, "yyyy-MM-dd");
+      setFormData(prev => ({ ...prev, [name]: formattedDate }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: null }));
+    }
+    
+    setTimeout(() => {
+      isUserEditing.current = false;
+    }, 100);
+  };
 
   return {
     currentSelectedEvent,
@@ -166,6 +187,7 @@ export function useScheduleFormState({
     resetForm,
     handleSelectEvent,
     handleInputChange,
-    handleSelectChange
+    handleSelectChange,
+    handleDateChange
   };
 }
