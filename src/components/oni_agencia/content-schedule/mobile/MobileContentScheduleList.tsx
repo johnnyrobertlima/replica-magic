@@ -51,15 +51,24 @@ export function MobileContentScheduleList({
     });
   }, [events, selectedCollaborator]);
   
-  // Group events by date - additionally log event data to check for client information
+  // Group events by date - log event and client data for debugging
   const groupedEvents = useMemo(() => {
-    // Log a sample event to check if client data is present
+    // Log sample events to check if client data is present
     if (filteredEvents.length > 0) {
       console.log("Sample event data:", filteredEvents[0]);
+      
+      // Check for client data
       if (filteredEvents[0].client) {
         console.log("Client data in event:", filteredEvents[0].client);
       } else {
         console.log("No client data found in event");
+        
+        // Let's check if client_id exists at least
+        if (filteredEvents[0].client_id) {
+          console.log("Client ID exists:", filteredEvents[0].client_id);
+        } else {
+          console.log("No client_id found in event either");
+        }
       }
     }
     

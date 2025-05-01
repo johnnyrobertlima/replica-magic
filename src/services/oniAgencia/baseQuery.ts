@@ -13,7 +13,8 @@ export const getBaseQuery = () => {
       collaborator:collaborator_id(id, name, email, photo_url),
       editorial_line:editorial_line_id(id, name, symbol, color),
       product:product_id(id, name, symbol, color),
-      status:status_id(id, name, color)
+      status:status_id(id, name, color),
+      client:client_id(id, name)
     `);
 };
 
