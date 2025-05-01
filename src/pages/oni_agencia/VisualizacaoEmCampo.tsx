@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { OniAgenciaMenu } from "@/components/oni_agencia/OniAgenciaMenu";
 import { CalendarDays, RefreshCw } from "lucide-react";
 import { ContentScheduleFilters } from "@/components/oni_agencia/content-schedule/ContentScheduleFilters";
-import { useAllContentSchedules } from "@/hooks/useOniAgenciaContentSchedules";
+import { useAllContentSchedules, useContentSchedules } from "@/hooks/useOniAgenciaContentSchedules";
 import { useCollapsible } from "@/components/oni_agencia/content-schedule/hooks/useCollapsible";
 import { Button } from "@/components/ui/button";
 import { MobileContentScheduleList } from "@/components/oni_agencia/content-schedule/mobile/MobileContentScheduleList";
