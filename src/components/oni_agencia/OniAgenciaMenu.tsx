@@ -46,9 +46,6 @@ export const OniAgenciaMenu = () => {
     return adminMenuItems.some(item => isActiveRoute(item.path));
   };
 
-  // We need to compute this value here instead of passing the function
-  const anyAdminRouteActive = isAnyAdminRouteActive();
-
   return (
     <div className="sticky top-0 z-50 w-full bg-primary shadow-md">
       <div className="container mx-auto px-4">
@@ -56,7 +53,7 @@ export const OniAgenciaMenu = () => {
           mainMenuItems={mainMenuItems}
           adminMenuItems={adminMenuItems}
           isActiveRoute={isActiveRoute}
-          isAnyAdminRouteActive={anyAdminRouteActive}
+          isAnyAdminRouteActive={isAnyAdminRouteActive}
           onLogout={handleLogout}
         />
 

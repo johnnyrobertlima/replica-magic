@@ -15,7 +15,7 @@ import { MenuItemType } from "./types";
 interface AdminSubmenuProps {
   items: MenuItemType[];
   isActive: (path: string) => boolean;
-  isAnyRouteActive: boolean; // Changed from function to boolean
+  isAnyRouteActive: boolean;
   onItemClick?: () => void;
 }
 
