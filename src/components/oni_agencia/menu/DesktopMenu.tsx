@@ -9,7 +9,7 @@ interface DesktopMenuProps {
   mainMenuItems: MenuItemType[];
   adminMenuItems: MenuItemType[];
   isActiveRoute: (path: string) => boolean;
-  isAnyAdminRouteActive: boolean;
+  isAnyAdminRouteActive: boolean; // Changed from function to boolean
   onLogout: () => void;
 }
 
