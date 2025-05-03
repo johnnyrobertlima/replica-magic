@@ -36,15 +36,18 @@ export const AdminSubmenu = ({ items, isActive, isAnyRouteActive, onItemClick }:
           <ChevronDown className="ml-1 h-4 w-4" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-56 bg-primary-800 text-white border-primary-700">
+      <DropdownMenuContent 
+        align="start" 
+        className="w-56 bg-white text-gray-800 border border-gray-200 shadow-md rounded-md p-1 z-50"
+      >
         {items.map((item) => (
-          <DropdownMenuItem key={item.path} asChild className="focus:bg-primary-700 focus:text-white hover:bg-primary-700">
+          <DropdownMenuItem key={item.path} asChild className="focus:bg-gray-100 focus:text-gray-900 hover:bg-gray-100 rounded-sm p-0">
             <NavLink
               to={item.path}
               className={({ isActive: routeActive }) =>
                 cn(
-                  "flex w-full items-center px-2 py-1.5 text-white",
-                  (routeActive || isActive(item.path)) ? "bg-primary-900 font-medium" : ""
+                  "flex w-full items-center px-2 py-1.5 text-gray-800",
+                  (routeActive || isActive(item.path)) ? "bg-gray-100 font-medium" : ""
                 )
               }
               onClick={() => {
@@ -53,7 +56,7 @@ export const AdminSubmenu = ({ items, isActive, isAnyRouteActive, onItemClick }:
               }}
             >
               {item.icon}
-              {item.name}
+              <span className="ml-2">{item.name}</span>
             </NavLink>
           </DropdownMenuItem>
         ))}

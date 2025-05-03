@@ -35,7 +35,7 @@ export const MobileAdminSubmenu = ({ items, isActive, onItemClick }: MobileAdmin
       </button>
       
       {expanded && (
-        <div className="space-y-1 pl-4">
+        <div className="space-y-1 pl-4 bg-white rounded-md my-1 border border-gray-200 shadow-sm">
           {items.map((item) => (
             <MobileMenuItem
               key={item.path}
