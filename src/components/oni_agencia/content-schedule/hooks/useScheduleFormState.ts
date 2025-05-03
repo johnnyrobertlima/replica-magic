@@ -24,8 +24,7 @@ export function useScheduleFormState({
     editorial_line_id: null,
     product_id: null,
     status_id: null,
-    creators: [],
-    capture_date: null // Add the capture_date field
+    creators: []
   });
   
   // Use a ref to track when we're in the middle of user input
@@ -53,8 +52,7 @@ export function useScheduleFormState({
       editorial_line_id: null,
       product_id: null,
       status_id: null,
-      creators: [],
-      capture_date: null // Add the capture_date field
+      creators: []
     });
   };
 
@@ -62,20 +60,39 @@ export function useScheduleFormState({
     console.log("selecting event in useScheduleFormState:", event.id);
     setCurrentSelectedEvent(event);
     
-    // Ensure we properly map null or empty values
+    // Garantir tratamento abrangente para creators
+    let creatorsArray: string[] = [];
+    
+    if (event.creators !== null && event.creators !== undefined) {
+      if (Array.isArray(event.creators)) {
+        creatorsArray = event.creators;
+      } else if (typeof event.creators === 'string') {
+        try {
+          // Tenta parsear como JSON se for string
+          const parsed = JSON.parse(event.creators as string);
+          creatorsArray = Array.isArray(parsed) ? parsed : [String(parsed)];
+        } catch {
+          // Se falhar no parse, trata como um único item
+          creatorsArray = [String(event.creators)];
+        }
+      } else {
+        // Para qualquer outro tipo, converte para string e usa como item único
+        creatorsArray = [String(event.creators)];
+      }
+    }
+    
     setFormData({
       client_id: event.client_id,
-      service_id: event.service_id || "", // Ensure it's never null
+      service_id: event.service_id || "", // Garantir que nunca seja null
       collaborator_id: event.collaborator_id,
-      title: event.title || "", // Ensure it's never null
+      title: event.title || "", // Garantir que nunca seja null
       description: event.description,
       scheduled_date: event.scheduled_date,
       execution_phase: event.execution_phase,
       editorial_line_id: event.editorial_line_id,
       product_id: event.product_id,
       status_id: event.status_id,
-      creators: Array.isArray(event.creators) ? event.creators : [], // Ensure creators is always an array
-      capture_date: event.capture_date // Add the capture_date field
+      creators: creatorsArray // Sempre um array válido
     });
   };
 
@@ -83,12 +100,10 @@ export function useScheduleFormState({
     const { name, value } = e.target;
     console.log("Input changed:", name, value);
     
-    // Set the flag to indicate user is editing
     isUserEditing.current = true;
     
     setFormData(prev => ({ ...prev, [name]: value || (name === "title" ? "" : null) }));
     
-    // Reset the flag after a short delay
     setTimeout(() => {
       isUserEditing.current = false;
     }, 100);
@@ -97,21 +112,32 @@ export function useScheduleFormState({
   const handleSelectChange = (name: string, value: string) => {
     console.log("Select changed:", name, value);
     
-    // Set the flag to indicate user is editing
     isUserEditing.current = true;
     
-    // Special handling for creators which is an array
     if (name === "creators") {
       try {
-        // Make sure we parse the JSON string correctly, and default to empty array if it fails
-        const creatorsArray = value ? JSON.parse(value) : [];
-        setFormData(prev => ({ ...prev, [name]: creatorsArray }));
+        let creatorsArray: string[] = [];
+        
+        if (value) {
+          try {
+            const parsed = JSON.parse(value);
+            if (Array.isArray(parsed)) {
+              creatorsArray = parsed;
+            } else if (parsed) {
+              creatorsArray = [String(parsed)];
+            }
+          } catch (e) {
+            console.error("Falha ao analisar JSON de creators:", e);
+          }
+        }
+        
+        console.log("handleSelectChange - Setting creators to:", creatorsArray);
+        setFormData(prev => ({ ...prev, creators: creatorsArray }));
       } catch (e) {
-        console.error("Error parsing creators JSON:", e);
-        setFormData(prev => ({ ...prev, [name]: [] }));
+        console.error("Erro ao analisar JSON de creators:", e);
+        setFormData(prev => ({ ...prev, creators: [] }));
       }
     } else {
-      // Handle UUID fields consistently - if value is empty or "null", set to null instead of empty string
       if (
         (name === "service_id" || 
         name === "status_id" || 
@@ -120,9 +146,7 @@ export function useScheduleFormState({
         name === "collaborator_id") && 
         (value === "" || value === "null")
       ) {
-        // For service_id, which is required, keep the current value if an event is selected
         if (name === "service_id" && currentSelectedEvent) {
-          // Don't change the service_id value
           console.log("Keeping existing service_id for required field");
         } else {
           setFormData(prev => ({ ...prev, [name]: null }));
@@ -132,13 +156,12 @@ export function useScheduleFormState({
       }
     }
     
-    // Reset the flag after a short delay
     setTimeout(() => {
       isUserEditing.current = false;
     }, 100);
   };
-
-  // Add the handleDateChange function
+  
+  // Modificar handleDateChange para não usar campo capture_date
   const handleDateChange = (name: string, value: Date | null) => {
     console.log("Date changed:", name, value);
     

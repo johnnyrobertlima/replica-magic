@@ -24,8 +24,7 @@ export function useScheduleFormState({
     editorial_line_id: null,
     product_id: null,
     status_id: null,
-    creators: [], // Initialize as empty array
-    capture_date: null // Add capture_date field
+    creators: [] // Initialize as empty array
   });
   
   const isUserEditing = useRef(false);
@@ -52,8 +51,7 @@ export function useScheduleFormState({
       editorial_line_id: null,
       product_id: null,
       status_id: null,
-      creators: [], // Reset to empty array
-      capture_date: null // Add capture_date field
+      creators: [] // Reset to empty array
     });
   };
 
@@ -93,8 +91,7 @@ export function useScheduleFormState({
       editorial_line_id: event.editorial_line_id,
       product_id: event.product_id,
       status_id: event.status_id,
-      creators: creatorsArray, // Sempre um array válido
-      capture_date: event.capture_date // Add capture_date field
+      creators: creatorsArray // Sempre um array válido
     });
   };
 
@@ -134,10 +131,10 @@ export function useScheduleFormState({
         }
         
         console.log("handleSelectChange - Setting creators to:", creatorsArray);
-        setFormData(prev => ({ ...prev, [name]: creatorsArray }));
+        setFormData(prev => ({ ...prev, creators: creatorsArray }));
       } catch (e) {
         console.error("Erro ao analisar JSON de creators:", e);
-        setFormData(prev => ({ ...prev, [name]: [] }));
+        setFormData(prev => ({ ...prev, creators: [] }));
       }
     } else {
       if (

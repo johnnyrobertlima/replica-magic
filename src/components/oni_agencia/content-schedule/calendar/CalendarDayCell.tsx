@@ -122,9 +122,6 @@ export function CalendarDayCell({
                     {event.status && <p><strong>Status:</strong> {event.status.name}</p>}
                     {event.editorial_line && <p><strong>Linha Editorial:</strong> {event.editorial_line.name}</p>}
                     {event.execution_phase && <p><strong>Fase de Execução:</strong> {event.execution_phase}</p>}
-                    {event.capture_date && (
-                      <p><strong>Data de Captura:</strong> {format(new Date(event.capture_date), 'dd/MM/yyyy')}</p>
-                    )}
                     {event.description && (
                       <div>
                         <strong>Descrição:</strong>
