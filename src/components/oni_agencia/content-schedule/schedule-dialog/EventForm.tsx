@@ -10,13 +10,6 @@ import { StatusSelect } from "./StatusSelect";
 import { CreatorsSelectMultiple } from "./CreatorsSelectMultiple";
 import { ContentScheduleFormData, OniAgenciaService, OniAgenciaCollaborator, OniAgenciaClient } from "@/types/oni-agencia";
 import { EditorialLine, Product, Status } from "@/pages/admin/sub-themes/types";
-import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useState } from "react";
 
 interface EventFormProps {
   formData: ContentScheduleFormData;
@@ -67,9 +60,6 @@ export function EventForm({
   const client = clients?.find(c => c.id === formData.client_id);
   const clientName = client ? client.name : 'Cliente não encontrado';
   
-  // Parse capture date if it exists
-  const captureDate = formData.capture_date ? new Date(formData.capture_date) : null;
-  
   return (
     <div className="grid gap-4 py-4">
       {/* Display client name */}
@@ -103,35 +93,6 @@ export function EventForm({
           rows={3}
           placeholder="Descrição detalhada do agendamento"
         />
-      </div>
-
-      {/* Capture Date field */}
-      <div className="grid gap-2">
-        <Label htmlFor="capture_date">Data de Captura</Label>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              id="capture_date"
-              variant={"outline"}
-              className={cn(
-                "w-full justify-start text-left font-normal",
-                !captureDate && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {captureDate ? format(captureDate, "dd/MM/yyyy") : <span>Selecione uma data</span>}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={captureDate || undefined}
-              onSelect={(date) => onDateChange("capture_date", date)}
-              initialFocus
-              className={cn("p-3 pointer-events-auto")}
-            />
-          </PopoverContent>
-        </Popover>
       </div>
       
       <ServiceSelect

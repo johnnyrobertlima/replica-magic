@@ -24,8 +24,8 @@ export function useScheduleFormState({
     editorial_line_id: null,
     product_id: null,
     status_id: null,
-    creators: [], // Initialize as empty array
-    capture_date: null // Add capture_date field
+    creators: [] // Initialize as empty array
+    // Removida a referência a capture_date
   });
   
   // Use a ref to track when we're in the middle of user input
@@ -53,8 +53,8 @@ export function useScheduleFormState({
       editorial_line_id: null,
       product_id: null,
       status_id: null,
-      creators: [], // Reset to empty array
-      capture_date: null // Add capture_date field
+      creators: [] // Reset to empty array
+      // Removida a referência a capture_date
     });
   };
 
@@ -94,8 +94,8 @@ export function useScheduleFormState({
       editorial_line_id: event.editorial_line_id,
       product_id: event.product_id,
       status_id: event.status_id,
-      creators: creatorsArray, // Sempre um array válido
-      capture_date: event.capture_date // Add capture_date field
+      creators: creatorsArray // Sempre um array válido
+      // Removida a referência a capture_date
     });
   };
 
@@ -164,7 +164,7 @@ export function useScheduleFormState({
     }, 100);
   };
   
-  // Add handleDateChange function
+  // Modificar handleDateChange para não usar campo capture_date
   const handleDateChange = (name: string, value: Date | null) => {
     console.log("Date changed:", name, value);
     

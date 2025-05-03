@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
 import { useCreateContentSchedule, useUpdateContentSchedule, useDeleteContentSchedule } from "@/hooks/useOniAgenciaContentSchedules";
@@ -148,8 +147,8 @@ export function useScheduleMutations({
         execution_phase: currentSelectedEvent.execution_phase,
         editorial_line_id: currentSelectedEvent.editorial_line_id,
         product_id: currentSelectedEvent.product_id,
-        creators: currentSelectedEvent.creators || [],
-        capture_date: currentSelectedEvent.capture_date
+        creators: currentSelectedEvent.creators || []
+        // Removida a referência a capture_date
       };
       
       console.log("Updating event status:", currentSelectedEvent.id, updateData);

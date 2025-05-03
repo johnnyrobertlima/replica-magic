@@ -13,7 +13,7 @@ export interface OniAgenciaContentSchedule {
   product_id: string | null;
   status_id: string | null;
   creators: string[] | null;
-  capture_date: string | null; // Add new capture date field
+  // Removida a referência a capture_date
   created_at: string;
   updated_at: string;
 }
