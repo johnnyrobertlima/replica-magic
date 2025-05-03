@@ -3,6 +3,7 @@ import { useState } from "react";
 import { ChevronDown, Settings } from "lucide-react";
 import { MenuItemType } from "./types";
 import { MobileMenuItem } from "./MobileMenuItem";
+import { cn } from "@/lib/utils";
 
 interface MobileAdminSubmenuProps {
   items: MenuItemType[];
@@ -21,17 +22,20 @@ export const MobileAdminSubmenu = ({ items, isActive, onItemClick }: MobileAdmin
     <>
       <button 
         onClick={toggleExpanded}
-        className="w-full px-4 pt-2 pb-1 text-sm font-semibold text-gray-300 flex items-center justify-between"
+        className={cn(
+          "flex w-full items-center px-4 py-2 text-sm rounded-md transition-colors text-white hover:bg-primary-700",
+          expanded ? "bg-primary-800 font-medium" : ""
+        )}
       >
         <div className="flex items-center">
           <Settings className="h-4 w-4 mr-2" />
           Admin
         </div>
-        <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`ml-auto h-4 w-4 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
       </button>
       
       {expanded && (
-        <div className="space-y-1">
+        <div className="space-y-1 pl-4">
           {items.map((item) => (
             <MobileMenuItem
               key={item.path}

@@ -53,7 +53,7 @@ export const OniAgenciaMenu = () => {
           mainMenuItems={mainMenuItems}
           adminMenuItems={adminMenuItems}
           isActiveRoute={isActiveRoute}
-          isAnyAdminRouteActive={isAnyAdminRouteActive()} // Call the function here
+          isAnyAdminRouteActive={isAnyAdminRouteActive()} // Execute a função aqui
           onLogout={handleLogout}
         />
 
