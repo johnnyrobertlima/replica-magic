@@ -45,6 +45,15 @@ export function StatusTable({ entityName, statuses, isLoading, onDelete }: Statu
     const status = statuses.find(s => s.id === statusId);
     return status ? status.name : "Não encontrado";
   };
+  
+  const handleEdit = (status: Status) => {
+    // Create and dispatch a custom event with the status data
+    const event = new CustomEvent('statusEdit', { 
+      detail: status,
+      bubbles: true 
+    });
+    document.dispatchEvent(event);
+  };
 
   if (isLoading) {
     return (
@@ -94,11 +103,7 @@ export function StatusTable({ entityName, statuses, isLoading, onDelete }: Statu
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => {
-                        // A função handleEdit deve ser passada por props do componente pai
-                        const event = new CustomEvent('statusEdit', { detail: status });
-                        document.dispatchEvent(event);
-                      }}
+                      onClick={() => handleEdit(status)}
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>

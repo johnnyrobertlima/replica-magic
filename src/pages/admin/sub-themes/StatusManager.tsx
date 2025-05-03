@@ -43,17 +43,20 @@ export function StatusManager() {
 
   useEffect(() => {
     fetchStatuses();
-
-    // Manipulador para ouvir eventos de edição do StatusTable
-    const handleStatusEdit = (event: Event) => {
-      const customEvent = event as CustomEvent<Status>;
-      setSelectedStatus(customEvent.detail);
+  }, []);
+  
+  // Add a separate effect to listen for the edit event
+  useEffect(() => {
+    const handleStatusEdit = (event: CustomEvent<Status>) => {
+      setSelectedStatus(event.detail);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    document.addEventListener('statusEdit', handleStatusEdit);
+    // Use correct type assertion for CustomEvent
+    document.addEventListener('statusEdit', handleStatusEdit as EventListener);
 
     return () => {
-      document.removeEventListener('statusEdit', handleStatusEdit);
+      document.removeEventListener('statusEdit', handleStatusEdit as EventListener);
     };
   }, []);
 
