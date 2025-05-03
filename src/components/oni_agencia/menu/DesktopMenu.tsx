@@ -38,6 +38,7 @@ export const DesktopMenu = ({
           items={adminMenuItems} 
           isActive={isActiveRoute} 
           isAnyRouteActive={isAnyAdminRouteActive} 
+          onItemClick={() => {}}
         />
       </div>
       
