@@ -18,8 +18,8 @@ export const MenuItem = ({ path, name, icon, isActive, onClick, end = false }: M
       to={path}
       className={({ isActive: routeActive }) =>
         cn(
-          "flex items-center px-3 py-2 rounded-md text-white hover:bg-blue-700 transition-colors whitespace-nowrap",
-          (routeActive || isActive(path)) ? "bg-blue-800 font-medium" : ""
+          "flex items-center px-3 py-2 rounded-md text-white bg-blue-700 hover:bg-blue-600 transition-colors whitespace-nowrap",
+          (routeActive || isActive(path)) ? "bg-blue-600" : ""
         )
       }
       onClick={onClick}
