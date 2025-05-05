@@ -9,9 +9,10 @@ interface StatusChange {
   old_status: string;
   new_status: string;
   changed_at: string;
-  scheduled_date: string; // Added field for the scheduled date
-  schedule_id: string; // Added field for the schedule ID to create the link
-  previous_collaborator_name: string | null; // Added field for the previous collaborator
+  scheduled_date: string;
+  schedule_id: string;
+  previous_collaborator_name: string | null;
+  client_name: string; // Added client name
 }
 
 export function useCollaboratorStatusChanges() {
@@ -40,7 +41,9 @@ export function useCollaboratorStatusChanges() {
               title, 
               collaborator_id,
               scheduled_date,
-              oni_agencia_collaborators:collaborator_id (name)
+              client_id,
+              oni_agencia_collaborators:collaborator_id (name),
+              oni_agencia_clients:client_id (name)
             )
           `)
           .eq('field_name', 'status_id')
@@ -107,7 +110,8 @@ export function useCollaboratorStatusChanges() {
           schedule_id: item.schedule_id,
           previous_collaborator_name: item.field_name === 'collaborator_id' && item.old_value 
             ? previousCollaboratorsMap[item.old_value] || 'Desconhecido'
-            : null
+            : null,
+          client_name: item.oni_agencia_content_schedules?.oni_agencia_clients?.name || 'Cliente desconhecido'
         }));
 
         setStatusChanges(formattedChanges);

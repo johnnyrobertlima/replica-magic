@@ -16,6 +16,7 @@ interface StatusChange {
   scheduled_date: string;
   schedule_id: string;
   previous_collaborator_name: string | null;
+  client_name: string;
 }
 
 export function CollaboratorStatusGrid() {
@@ -76,6 +77,7 @@ export function CollaboratorStatusGrid() {
                 <TableRow>
                   <TableHead>Colaborador</TableHead>
                   <TableHead>Agendamento</TableHead>
+                  <TableHead>Cliente</TableHead>
                   <TableHead>Data do Agendamento</TableHead>
                   <TableHead>Status Anterior</TableHead>
                   <TableHead>Novo Status</TableHead>
@@ -87,15 +89,18 @@ export function CollaboratorStatusGrid() {
                 {statusChanges.map((change, index) => (
                   <TableRow key={index}>
                     <TableCell className="font-medium">{change.collaborator_name}</TableCell>
+                    <TableCell>{change.schedule_title}</TableCell>
+                    <TableCell>{change.client_name}</TableCell>
                     <TableCell>
-                      <Link 
-                        to={`/client-area/oniagencia/controle-pauta?scheduleId=${change.schedule_id}`}
-                        className="text-blue-600 hover:text-blue-800 underline"
-                      >
-                        {change.schedule_title}
-                      </Link>
+                      {change.scheduled_date ? (
+                        <Link 
+                          to={`/client-area/oniagencia/controle-pauta?scheduleId=${change.schedule_id}`}
+                          className="text-blue-600 hover:text-blue-800 underline"
+                        >
+                          {formatDate(change.scheduled_date)}
+                        </Link>
+                      ) : "—"}
                     </TableCell>
-                    <TableCell>{change.scheduled_date ? formatDate(change.scheduled_date) : "—"}</TableCell>
                     <TableCell>{change.old_status || "—"}</TableCell>
                     <TableCell>{change.new_status}</TableCell>
                     <TableCell>{change.previous_collaborator_name || "—"}</TableCell>
