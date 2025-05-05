@@ -9,19 +9,47 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Badge } from "@/components/ui/badge";
 
 interface MobileEventListProps {
-  groupedEvents: Record<string, CalendarEvent[]>;
-  sortedDates: string[];
-  onEventClick: (event: CalendarEvent) => void;
+  events: CalendarEvent[];
+  clientId: string;
+  onEventClick?: (event: CalendarEvent) => void;
 }
 
 export function MobileEventList({ 
-  groupedEvents, 
-  sortedDates,
+  events, 
+  clientId,
   onEventClick 
 }: MobileEventListProps) {
+  // Se não há eventos, mostrar mensagem
+  if (!events || events.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full py-10">
+        <p className="text-muted-foreground">Nenhum agendamento encontrado</p>
+      </div>
+    );
+  }
+
+  // Agrupar eventos por data
+  const groupedEvents = events.reduce<Record<string, CalendarEvent[]>>((acc, event) => {
+    const dateKey = event.scheduled_date;
+    if (!acc[dateKey]) {
+      acc[dateKey] = [];
+    }
+    acc[dateKey].push(event);
+    return acc;
+  }, {});
+
+  // Ordenar datas
+  const sortedDates = Object.keys(groupedEvents).sort();
+
   const formatDateHeader = (dateString: string) => {
     const date = parseISO(dateString);
     return format(date, "EEEE, d 'de' MMMM", { locale: ptBR });
+  };
+
+  const handleEventClick = (event: CalendarEvent) => {
+    if (onEventClick) {
+      onEventClick(event);
+    }
   };
 
   return (
@@ -37,7 +65,7 @@ export function MobileEventList({
               <Card 
                 key={event.id}
                 className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => onEventClick(event)}
+                onClick={() => handleEventClick(event)}
               >
                 <div 
                   className="h-1.5 w-full" 

@@ -5,6 +5,8 @@ import { MobileEventList } from "./MobileEventList";
 import { MobileContentLoading } from './MobileContentLoading';
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
+import { MobileDialogContainer } from "./MobileDialogContainer";
+import { ScheduleEventDialog } from "../ScheduleEventDialog";
 
 interface MobileContentScheduleListProps {
   events: CalendarEvent[];
@@ -25,14 +27,22 @@ export function MobileContentScheduleList({
   onLoadMore,
   isLoadingMore = false
 }: MobileContentScheduleListProps) {
-  // Estado para controlar eventos filtrados por colaborador (memoizado)
+  // Estado para controlar eventos filtrados por colaborador
   const [filteredEvents, setFilteredEvents] = useState<CalendarEvent[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | undefined>();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // Ref para o elemento de interseção para lazy loading
   const loadMoreRef = useRef<HTMLDivElement>(null);
   
   // Efeito para filtrar eventos por colaborador
   useEffect(() => {
+    if (!events) {
+      setFilteredEvents([]);
+      return;
+    }
+    
     if (!selectedCollaborator) {
       setFilteredEvents(events);
       return;
@@ -85,8 +95,20 @@ export function MobileContentScheduleList({
     };
   }, [hasMore, onLoadMore, isLoadingMore]);
   
+  const handleEventClick = useCallback((event: CalendarEvent) => {
+    setSelectedEvent(event);
+    setSelectedDate(new Date(event.scheduled_date));
+    setIsDialogOpen(true);
+  }, []);
+  
+  const handleDialogClose = useCallback(() => {
+    setSelectedEvent(undefined);
+    setSelectedDate(undefined);
+    setIsDialogOpen(false);
+  }, []);
+  
   // Se estiver carregando e não há eventos, mostrar o estado de carregamento
-  if (isLoading && events.length === 0) {
+  if (isLoading && (!events || events.length === 0)) {
     return <MobileContentLoading />;
   }
   
@@ -95,6 +117,7 @@ export function MobileContentScheduleList({
       <MobileEventList 
         events={filteredEvents}
         clientId={clientId}
+        onEventClick={handleEventClick}
       />
       
       {/* Elemento de carregamento para lazy loading */}
@@ -129,11 +152,17 @@ export function MobileContentScheduleList({
         </div>
       )}
       
-      {/* Mensagem quando não há eventos */}
-      {filteredEvents.length === 0 && !isLoading && (
-        <div className="flex flex-col items-center justify-center h-full py-10">
-          <p className="text-muted-foreground">Nenhum agendamento encontrado</p>
-        </div>
+      {/* Dialog para visualizar/editar evento */}
+      {selectedDate && (
+        <ScheduleEventDialog
+          isOpen={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+          clientId={clientId}
+          selectedDate={selectedDate}
+          events={filteredEvents.filter(e => e.scheduled_date === selectedDate.toISOString().split('T')[0])}
+          onClose={handleDialogClose}
+          selectedEvent={selectedEvent}
+        />
       )}
     </div>
   );
