@@ -3,12 +3,12 @@ import { useState, useEffect, useCallback } from "react";
 import { OniAgenciaMenu } from "@/components/oni_agencia/OniAgenciaMenu";
 import { CalendarDays, RefreshCw } from "lucide-react";
 import { ContentScheduleFilters } from "@/components/oni_agencia/content-schedule/ContentScheduleFilters";
-import { useAllContentSchedules, useContentSchedules } from "@/hooks/useOniAgenciaContentSchedules";
 import { useCollapsible } from "@/components/oni_agencia/content-schedule/hooks/useCollapsible";
 import { Button } from "@/components/ui/button";
 import { MobileContentScheduleList } from "@/components/oni_agencia/content-schedule/mobile/MobileContentScheduleList";
 import { useClients } from "@/hooks/useOniAgenciaClients";
 import { useToast } from "@/hooks/use-toast";
+import { useOptimizedContentSchedules } from "@/hooks/oni_agencia/useOptimizedContentSchedules";
 
 const VisualizacaoEmCampo = () => {
   const { toast } = useToast();
@@ -17,33 +17,47 @@ const VisualizacaoEmCampo = () => {
   const [selectedMonth, setSelectedMonth] = useState<number>(currentDate.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
   const [selectedCollaborator, setSelectedCollaborator] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const { isCollapsed, toggle: toggleFilters } = useCollapsible(true); // Iniciar com filtros recolhidos
   
+  // Consulta otimizada de clientes com cache eficiente
   const { data: clients = [] } = useClients();
   
   // UseCallback para melhorar a performance
   const handleClientChange = useCallback((clientId: string) => {
     setSelectedClient(clientId);
+    // Resetar a página quando mudar o filtro
+    setCurrentPage(1);
   }, []);
 
   const handleCollaboratorChange = useCallback((collaboratorId: string | null) => {
     setSelectedCollaborator(collaboratorId);
+    // Resetar a página quando mudar o filtro
+    setCurrentPage(1);
   }, []);
   
-  // Usamos useAllContentSchedules para obter todos os agendamentos
+  // Hook otimizado para busca de agendamentos com paginação e lazy loading
   const { 
-    data: filteredSchedules = [], 
+    allItems: filteredSchedules,
     isLoading: isLoadingSchedules,
     refetch: refetchSchedules,
-    isRefetching
-  } = selectedClient 
-    ? useContentSchedules(selectedClient, selectedYear, selectedMonth)
-    : useAllContentSchedules(selectedYear, selectedMonth);
+    isRefetching,
+    hasMore,
+    loadMore,
+    isLoadingMore
+  } = useOptimizedContentSchedules(
+    selectedClient || null, 
+    selectedYear, 
+    selectedMonth,
+    currentPage
+  );
   
   // Refetch quando mês/ano/cliente muda
   const handleMonthYearChange = useCallback((month: number, year: number) => {
     setSelectedMonth(month);
     setSelectedYear(year);
+    // Resetar a página quando mudar o filtro
+    setCurrentPage(1);
   }, []);
 
   const handleManualRefetch = useCallback(() => {
@@ -52,8 +66,17 @@ const VisualizacaoEmCampo = () => {
       description: "Buscando os agendamentos mais recentes...",
       duration: 3000,
     });
+    // Resetar a página e refazer a consulta
+    setCurrentPage(1);
     refetchSchedules();
   }, [refetchSchedules, toast]);
+
+  // Função para carregar mais itens (lazy loading)
+  const handleLoadMore = useCallback(() => {
+    if (hasMore && !isLoadingMore) {
+      setCurrentPage(prev => prev + 1);
+    }
+  }, [hasMore, isLoadingMore]);
   
   return (
     <main className="container-fluid p-0 max-w-full bg-gray-50 min-h-screen">
@@ -94,10 +117,13 @@ const VisualizacaoEmCampo = () => {
         
         <div className={`w-full overflow-x-auto bg-gray-50 rounded-lg transition-all duration-300 ${isCollapsed ? 'h-[calc(100vh-180px)]' : 'h-[calc(100vh-280px)]'}`}>
           <MobileContentScheduleList
-            events={filteredSchedules}
+            events={filteredSchedules || []}
             clientId={selectedClient || "all"}
             selectedCollaborator={selectedCollaborator}
-            isLoading={isLoadingSchedules || isRefetching}
+            isLoading={isLoadingSchedules}
+            hasMore={hasMore}
+            onLoadMore={handleLoadMore}
+            isLoadingMore={isLoadingMore}
           />
         </div>
       </div>
