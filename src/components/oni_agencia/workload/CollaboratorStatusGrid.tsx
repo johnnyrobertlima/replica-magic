@@ -5,6 +5,7 @@ import { ptBR } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { useCollaboratorStatusChanges } from "./hooks/useCollaboratorStatusChanges";
+import { Link } from "react-router-dom";
 
 interface StatusChange {
   collaborator_name: string;
@@ -12,6 +13,9 @@ interface StatusChange {
   old_status: string;
   new_status: string;
   changed_at: string;
+  scheduled_date: string;
+  schedule_id: string;
+  previous_collaborator_name: string | null;
 }
 
 export function CollaboratorStatusGrid() {
@@ -72,8 +76,10 @@ export function CollaboratorStatusGrid() {
                 <TableRow>
                   <TableHead>Colaborador</TableHead>
                   <TableHead>Agendamento</TableHead>
+                  <TableHead>Data do Agendamento</TableHead>
                   <TableHead>Status Anterior</TableHead>
                   <TableHead>Novo Status</TableHead>
+                  <TableHead>Colaborador Anterior</TableHead>
                   <TableHead>Data da Alteração</TableHead>
                 </TableRow>
               </TableHeader>
@@ -81,9 +87,18 @@ export function CollaboratorStatusGrid() {
                 {statusChanges.map((change, index) => (
                   <TableRow key={index}>
                     <TableCell className="font-medium">{change.collaborator_name}</TableCell>
-                    <TableCell>{change.schedule_title}</TableCell>
+                    <TableCell>
+                      <Link 
+                        to={`/client-area/oniagencia/controle-pauta?scheduleId=${change.schedule_id}`}
+                        className="text-blue-600 hover:text-blue-800 underline"
+                      >
+                        {change.schedule_title}
+                      </Link>
+                    </TableCell>
+                    <TableCell>{change.scheduled_date ? formatDate(change.scheduled_date) : "—"}</TableCell>
                     <TableCell>{change.old_status || "—"}</TableCell>
                     <TableCell>{change.new_status}</TableCell>
+                    <TableCell>{change.previous_collaborator_name || "—"}</TableCell>
                     <TableCell>{formatDate(change.changed_at)}</TableCell>
                   </TableRow>
                 ))}
