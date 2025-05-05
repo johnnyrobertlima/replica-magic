@@ -16,10 +16,11 @@ export function useCalendarEvents(
     
     const dateString = format(selectedDate, 'yyyy-MM-dd');
     
-    // Filter events for the selected date and remove "Publicado" status events
+    // Filter events for the selected date and remove "Publicado" and "Agendado" status events
     let filteredEvents = events.filter(event => 
       event.scheduled_date === dateString && 
-      !(event.status?.name === "Publicado")
+      !(event.status?.name === "Publicado") &&
+      !(event.status?.name === "Agendado")
     );
     
     // Apply collaborator filter if provided

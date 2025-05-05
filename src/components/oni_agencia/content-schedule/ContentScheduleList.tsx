@@ -33,14 +33,17 @@ export function ContentScheduleList({
     setSelectedEvent
   } = useDateSelection();
 
-  // Filter events based on selectedCollaborator and remove "Publicado" status events
+  // Filter events based on selectedCollaborator and remove "Publicado" and "Agendado" status events
   const filteredEvents = useMemo(() => {
-    // First filter out events with "Publicado" status
-    const withoutPublished = events.filter(event => !(event.status?.name === "Publicado"));
+    // First filter out events with "Publicado" and "Agendado" status
+    const withoutExcludedStatuses = events.filter(event => 
+      !(event.status?.name === "Publicado") && 
+      !(event.status?.name === "Agendado")
+    );
     
-    if (!selectedCollaborator) return withoutPublished;
+    if (!selectedCollaborator) return withoutExcludedStatuses;
     
-    return withoutPublished.filter(event => {
+    return withoutExcludedStatuses.filter(event => {
       // Check if the person is a collaborator
       const isCollaborator = event.collaborator_id === selectedCollaborator;
       

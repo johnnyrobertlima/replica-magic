@@ -43,17 +43,18 @@ export function MobileContentScheduleList({
       return;
     }
     
-    // Primeiro, filtrar para remover eventos com status "Publicado"
-    const withoutPublished = events.filter(event => 
-      !(event.status?.name === "Publicado")
+    // Primeiro, filtrar para remover eventos com status "Publicado" e "Agendado"
+    const withoutExcludedStatuses = events.filter(event => 
+      !(event.status?.name === "Publicado") &&
+      !(event.status?.name === "Agendado")
     );
     
     if (!selectedCollaborator) {
-      setFilteredEvents(withoutPublished);
+      setFilteredEvents(withoutExcludedStatuses);
       return;
     }
     
-    const filtered = withoutPublished.filter(event => {
+    const filtered = withoutExcludedStatuses.filter(event => {
       // Verificar se a pessoa é um colaborador principal
       const isCollaborator = event.collaborator_id === selectedCollaborator;
       
