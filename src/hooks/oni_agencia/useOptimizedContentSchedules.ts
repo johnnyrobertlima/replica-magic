@@ -4,7 +4,7 @@ import {
   getAllContentSchedulesPaginated, 
   getContentSchedulesPaginated 
 } from "@/services/oniAgenciaContentScheduleServices";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { useToast } from "@/hooks/use-toast";
 
@@ -105,10 +105,17 @@ export function useOptimizedContentSchedules(
     }
   });
   
-  // Use o meta.errorHandler definido acima
-  if (result.error) {
-    result.meta?.errorHandler?.(result.error);
-  }
+  // Handle errors directly instead of trying to access result.meta
+  useEffect(() => {
+    if (result.error) {
+      console.error('Erro ao carregar agendamentos:', result.error);
+      toast({
+        title: "Erro ao carregar dados",
+        description: "Não foi possível carregar os agendamentos. Verifique sua conexão e tente novamente.",
+        variant: "destructive",
+      });
+    }
+  }, [result.error, toast]);
   
   // Funções auxiliares para manipulação de paginação
   const loadMore = () => {
