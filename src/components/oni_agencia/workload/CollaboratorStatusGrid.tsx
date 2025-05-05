@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -6,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { useCollaboratorStatusChanges } from "./hooks/useCollaboratorStatusChanges";
 import { Link } from "react-router-dom";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface StatusChange {
   collaborator_name: string;
@@ -38,8 +38,35 @@ export function CollaboratorStatusGrid() {
           <CardTitle>Histórico de Alterações</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex justify-center items-center h-40">
-            <p className="text-muted-foreground">Carregando dados...</p>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Colaborador</TableHead>
+                  <TableHead>Agendamento</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Data do Agendamento</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>De</TableHead>
+                  <TableHead>Para</TableHead>
+                  <TableHead>Data da Alteração</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <TableRow key={index}>
+                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         </CardContent>
       </Card>

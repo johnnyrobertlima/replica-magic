@@ -1,15 +1,28 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
 import { OniAgenciaMenu } from "@/components/oni_agencia/OniAgenciaMenu";
 import { CalendarDays, RefreshCw } from "lucide-react";
 import { ContentScheduleFilters } from "@/components/oni_agencia/content-schedule/ContentScheduleFilters";
 import { useCollapsible } from "@/components/oni_agencia/content-schedule/hooks/useCollapsible";
 import { Button } from "@/components/ui/button";
-import { MobileContentScheduleList } from "@/components/oni_agencia/content-schedule/mobile/MobileContentScheduleList";
 import { useClients } from "@/hooks/useOniAgenciaClients";
 import { useToast } from "@/hooks/use-toast";
-import { useOptimizedContentSchedules } from "@/hooks/oni_agencia/useOptimizedContentSchedules";
-import { CalendarEvent } from "@/types/oni-agencia";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useInfiniteContentSchedules } from "@/hooks/oni_agencia/useInfiniteContentSchedules";
+
+// Lazy loading do componente de lista para mobile
+const MobileContentScheduleList = lazy(() => 
+  import('@/components/oni_agencia/content-schedule/mobile/MobileContentScheduleList').then(module => ({ 
+    default: module.MobileContentScheduleList 
+  }))
+);
+
+// Componente de fallback durante carregamento
+const LoadingFallback = () => (
+  <div className="bg-white rounded-lg shadow-sm p-4 w-full h-[calc(100vh-200px)]">
+    <Skeleton className="w-full h-full rounded-md" />
+  </div>
+);
 
 const VisualizacaoEmCampo = () => {
   const { toast } = useToast();
@@ -18,8 +31,6 @@ const VisualizacaoEmCampo = () => {
   const [selectedMonth, setSelectedMonth] = useState<number>(currentDate.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
   const [selectedCollaborator, setSelectedCollaborator] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [cachedEvents, setCachedEvents] = useState<CalendarEvent[]>([]);
   const { isCollapsed, toggle: toggleFilters } = useCollapsible(true); // Iniciar com filtros recolhidos
   
   // Consulta otimizada de clientes com cache eficiente
@@ -28,46 +39,38 @@ const VisualizacaoEmCampo = () => {
   // UseCallback para melhorar a performance
   const handleClientChange = useCallback((clientId: string) => {
     setSelectedClient(clientId);
-    // Resetar a página quando mudar o filtro
-    setCurrentPage(1);
   }, []);
 
   const handleCollaboratorChange = useCallback((collaboratorId: string | null) => {
     setSelectedCollaborator(collaboratorId);
-    // Resetar a página quando mudar o filtro
-    setCurrentPage(1);
   }, []);
   
-  // Hook otimizado para busca de agendamentos com paginação e lazy loading
+  // Hook otimizado com infinite query
   const { 
-    allItems: fetchedEvents,
-    isLoading: isLoadingSchedules,
-    refetch: refetchSchedules,
-    isRefetching,
-    hasMore,
-    loadMore,
-    isLoadingMore,
-    error
-  } = useOptimizedContentSchedules(
+    data: infiniteSchedules,
+    isLoading,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+    refetch,
+    isRefetching
+  } = useInfiniteContentSchedules(
     selectedClient || null, 
     selectedYear, 
     selectedMonth,
-    currentPage
+    selectedCollaborator
   );
   
-  // Cache de eventos para evitar problemas de renderização
-  useEffect(() => {
-    if (fetchedEvents && !isLoadingSchedules) {
-      setCachedEvents(fetchedEvents);
-    }
-  }, [fetchedEvents, isLoadingSchedules]);
+  // Aplainar os dados paginados
+  const flattenedSchedules = useMemo(() => {
+    if (!infiniteSchedules?.pages) return [];
+    return infiniteSchedules.pages.flatMap(page => page.data);
+  }, [infiniteSchedules]);
 
   // Refetch quando mês/ano/cliente muda
   const handleMonthYearChange = useCallback((month: number, year: number) => {
     setSelectedMonth(month);
     setSelectedYear(year);
-    // Resetar a página quando mudar o filtro
-    setCurrentPage(1);
   }, []);
 
   const handleManualRefetch = useCallback(() => {
@@ -76,21 +79,13 @@ const VisualizacaoEmCampo = () => {
       description: "Buscando os agendamentos mais recentes...",
       duration: 3000,
     });
-    // Resetar a página e refazer a consulta
-    setCurrentPage(1);
-    refetchSchedules();
-  }, [refetchSchedules, toast]);
-
-  // Função para carregar mais itens (lazy loading)
-  const handleLoadMore = useCallback(() => {
-    if (hasMore && !isLoadingMore) {
-      setCurrentPage(prev => prev + 1);
-    }
-  }, [hasMore, isLoadingMore]);
+    refetch();
+  }, [refetch, toast]);
 
   // Exibir mensagem de erro caso ocorra
   useEffect(() => {
-    if (error) {
+    const hasError = infiniteSchedules?.pages.some(page => page.error);
+    if (hasError) {
       toast({
         title: "Erro ao carregar dados",
         description: "Não foi possível carregar os agendamentos. Tente novamente mais tarde.",
@@ -98,7 +93,7 @@ const VisualizacaoEmCampo = () => {
         duration: 5000,
       });
     }
-  }, [error, toast]);
+  }, [infiniteSchedules, toast]);
   
   return (
     <main className="container-fluid p-0 max-w-full bg-gray-50 min-h-screen">
@@ -112,7 +107,7 @@ const VisualizacaoEmCampo = () => {
               variant="outline" 
               size="sm" 
               onClick={handleManualRefetch}
-              disabled={isRefetching || isLoadingSchedules}
+              disabled={isRefetching || isLoading}
               title="Atualizar agendamentos"
               className="flex items-center"
             >
@@ -138,15 +133,17 @@ const VisualizacaoEmCampo = () => {
         </div>
         
         <div className={`w-full overflow-x-auto bg-gray-50 rounded-lg transition-all duration-300 ${isCollapsed ? 'h-[calc(100vh-180px)]' : 'h-[calc(100vh-280px)]'}`}>
-          <MobileContentScheduleList
-            events={cachedEvents || []}
-            clientId={selectedClient || "all"}
-            selectedCollaborator={selectedCollaborator}
-            isLoading={isLoadingSchedules && currentPage === 1}
-            hasMore={hasMore}
-            onLoadMore={handleLoadMore}
-            isLoadingMore={isLoadingMore || (isLoadingSchedules && currentPage > 1)}
-          />
+          <Suspense fallback={<LoadingFallback />}>
+            <MobileContentScheduleList
+              events={flattenedSchedules}
+              clientId={selectedClient || "all"}
+              selectedCollaborator={selectedCollaborator}
+              isLoading={isLoading && !isFetchingNextPage}
+              hasMore={hasNextPage}
+              onLoadMore={() => fetchNextPage()}
+              isLoadingMore={isFetchingNextPage}
+            />
+          </Suspense>
         </div>
       </div>
     </main>
