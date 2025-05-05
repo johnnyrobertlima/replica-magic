@@ -11,7 +11,7 @@ const OniAgenciaWorkload = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight">Carga de Trabalho</h1>
           <p className="text-muted-foreground mt-2">
-            Análise de distribuição de tarefas por colaborador
+            Análise de distribuição de tarefas por colaborador e histórico de status
           </p>
         </div>
         <WorkloadDashboard />

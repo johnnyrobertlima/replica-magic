@@ -1,41 +1,35 @@
 
 import { useState } from "react";
-import { useAllContentSchedules } from "@/hooks/useOniAgenciaContentSchedules";
-import { MonthWorkloadChart } from "./MonthWorkloadChart";
 import { WorkloadFilters } from "./WorkloadFilters";
-import { useClients } from "@/hooks/useOniAgenciaClients";
+import { MonthWorkloadChart } from "./MonthWorkloadChart";
+import { CollaboratorStatusGrid } from "./CollaboratorStatusGrid";
 
 export function WorkloadDashboard() {
-  const [selectedClient, setSelectedClient] = useState<string>("");
-  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
-  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
-
-  const { data: clients = [] } = useClients();
-  const { data: events = [], isLoading } = useAllContentSchedules(selectedYear, selectedMonth);
-
+  const [clientId, setClientId] = useState<string | null>(null);
+  const [month, setMonth] = useState<number>(new Date().getMonth() + 1); // Current month
+  const [year, setYear] = useState<number>(new Date().getFullYear()); // Current year
+  
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <WorkloadFilters
-        selectedClient={selectedClient}
-        selectedMonth={selectedMonth}
-        selectedYear={selectedYear}
-        onClientChange={setSelectedClient}
-        onMonthChange={setSelectedMonth}
-        onYearChange={setSelectedYear}
+        clientId={clientId}
+        month={month}
+        year={year}
+        onClientChange={setClientId}
+        onMonthChange={setMonth}
+        onYearChange={setYear}
       />
       
-      <div className="bg-white rounded-lg border shadow p-6">
-        {isLoading ? (
-          <div className="h-[400px] flex items-center justify-center">
-            <div className="text-muted-foreground">Carregando dados...</div>
-          </div>
-        ) : (
-          <MonthWorkloadChart 
-            events={events} 
-            selectedMonth={selectedMonth}
-            selectedYear={selectedYear}
-          />
-        )}
+      <MonthWorkloadChart 
+        clientId={clientId}
+        month={month}
+        year={year}
+      />
+      
+      {/* New Collaborator Status Grid Section */}
+      <div className="mt-10">
+        <h3 className="text-lg font-semibold mb-4">Histórico de Alterações de Status</h3>
+        <CollaboratorStatusGrid />
       </div>
     </div>
   );
