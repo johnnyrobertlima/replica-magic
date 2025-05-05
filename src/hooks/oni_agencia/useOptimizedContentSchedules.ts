@@ -93,15 +93,22 @@ export function useOptimizedContentSchedules(
     retry: 3,
     retryDelay: attempt => Math.min(attempt * 1000, 3000),
     refetchInterval: false,
-    onError: (error) => {
-      console.error('Erro ao carregar agendamentos:', error);
-      toast({
-        title: "Erro ao carregar dados",
-        description: "Não foi possível carregar os agendamentos. Verifique sua conexão e tente novamente.",
-        variant: "destructive",
-      });
+    meta: {
+      errorHandler: (error: any) => {
+        console.error('Erro ao carregar agendamentos:', error);
+        toast({
+          title: "Erro ao carregar dados",
+          description: "Não foi possível carregar os agendamentos. Verifique sua conexão e tente novamente.",
+          variant: "destructive",
+        });
+      }
     }
   });
+  
+  // Use o meta.errorHandler definido acima
+  if (result.error) {
+    result.meta?.errorHandler?.(result.error);
+  }
   
   // Funções auxiliares para manipulação de paginação
   const loadMore = () => {
