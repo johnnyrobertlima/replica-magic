@@ -36,19 +36,24 @@ export function MobileContentScheduleList({
   // Ref para o elemento de interseção para lazy loading
   const loadMoreRef = useRef<HTMLDivElement>(null);
   
-  // Efeito para filtrar eventos por colaborador
+  // Efeito para filtrar eventos por colaborador e status
   useEffect(() => {
     if (!events) {
       setFilteredEvents([]);
       return;
     }
     
+    // Primeiro, filtrar para remover eventos com status "Publicado"
+    const withoutPublished = events.filter(event => 
+      !(event.status?.name === "Publicado")
+    );
+    
     if (!selectedCollaborator) {
-      setFilteredEvents(events);
+      setFilteredEvents(withoutPublished);
       return;
     }
     
-    const filtered = events.filter(event => {
+    const filtered = withoutPublished.filter(event => {
       // Verificar se a pessoa é um colaborador principal
       const isCollaborator = event.collaborator_id === selectedCollaborator;
       
