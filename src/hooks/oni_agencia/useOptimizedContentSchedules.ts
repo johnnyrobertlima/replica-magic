@@ -1,13 +1,17 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { getContentSchedules, getAllContentSchedules } from "@/services/oniAgenciaContentScheduleServices";
+import { 
+  getAllContentSchedulesPaginated, 
+  getContentSchedulesPaginated 
+} from "@/services/oniAgenciaContentScheduleServices";
 import { useState } from "react";
 import { CalendarEvent } from "@/types/oni-agencia";
+import { useToast } from "@/hooks/use-toast";
 
 // Cache time constants
 const MINUTE = 60 * 1000;
-const CACHE_TIME = 120 * MINUTE; // Aumentado para 2 horas
-const STALE_TIME = 30 * MINUTE;  // Aumentado para 30 minutos
+const CACHE_TIME = 120 * MINUTE; // 2 horas
+const STALE_TIME = 30 * MINUTE;  // 30 minutos
 const PAGE_SIZE = 50; // Tamanho da página para paginação
 
 /**
@@ -21,6 +25,7 @@ export function useOptimizedContentSchedules(
 ) {
   const [totalItems, setTotalItems] = useState(0);
   const [allItems, setAllItems] = useState<CalendarEvent[]>([]);
+  const { toast } = useToast();
   
   // Determinar se é uma consulta para todos os clientes ou para um cliente específico
   const isAllClients = !clientId || clientId === "";
@@ -32,8 +37,8 @@ export function useOptimizedContentSchedules(
       try {
         // Selecionar a função apropriada com base no clientId
         const fetchFunction = isAllClients 
-          ? getAllContentSchedules 
-          : getContentSchedules;
+          ? getAllContentSchedulesPaginated 
+          : getContentSchedulesPaginated;
         
         let data: CalendarEvent[];
         
@@ -44,6 +49,17 @@ export function useOptimizedContentSchedules(
         
         // @ts-ignore - Os parâmetros são dinâmicos
         data = await fetchFunction(...params);
+        
+        // Verificar se data é um array válido
+        if (!data || !Array.isArray(data)) {
+          console.error('Resposta inválida da API:', data);
+          return {
+            data: [],
+            page,
+            hasMore: false,
+            totalItems: 0
+          };
+        }
         
         // Atualizar o estado com os dados recebidos
         if (page === 1) {
@@ -74,9 +90,17 @@ export function useOptimizedContentSchedules(
     staleTime: STALE_TIME,
     gcTime: CACHE_TIME,
     refetchOnWindowFocus: false,
-    retry: 1,
+    retry: 3,
     retryDelay: attempt => Math.min(attempt * 1000, 3000),
     refetchInterval: false,
+    onError: (error) => {
+      console.error('Erro ao carregar agendamentos:', error);
+      toast({
+        title: "Erro ao carregar dados",
+        description: "Não foi possível carregar os agendamentos. Verifique sua conexão e tente novamente.",
+        variant: "destructive",
+      });
+    }
   });
   
   // Funções auxiliares para manipulação de paginação

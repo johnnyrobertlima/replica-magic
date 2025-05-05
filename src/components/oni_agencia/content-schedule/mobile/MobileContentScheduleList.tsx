@@ -5,8 +5,8 @@ import { MobileEventList } from "./MobileEventList";
 import { MobileContentLoading } from './MobileContentLoading';
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
-import { MobileDialogContainer } from "./MobileDialogContainer";
 import { ScheduleEventDialog } from "../ScheduleEventDialog";
+import { toast } from "@/hooks/use-toast";
 
 interface MobileContentScheduleListProps {
   events: CalendarEvent[];
@@ -110,6 +110,35 @@ export function MobileContentScheduleList({
   // Se estiver carregando e não há eventos, mostrar o estado de carregamento
   if (isLoading && (!events || events.length === 0)) {
     return <MobileContentLoading />;
+  }
+
+  // Tratar erros de conexão ou dados
+  if (!isLoading && (!events || events.length === 0)) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-4 text-center">
+        <p className="text-lg font-medium text-muted-foreground mb-2">Nenhum agendamento encontrado</p>
+        <p className="text-sm text-muted-foreground mb-4">
+          Não foi possível carregar os agendamentos ou não existem agendamentos para os filtros selecionados.
+        </p>
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => {
+            if (onLoadMore) {
+              toast({
+                title: "Tentando novamente",
+                description: "Aguarde enquanto tentamos carregar os agendamentos novamente.",
+                duration: 3000,
+              });
+              onLoadMore();
+            }
+          }}
+          className="text-xs"
+        >
+          Tentar novamente
+        </Button>
+      </div>
+    );
   }
   
   return (

@@ -9,6 +9,7 @@ import { MobileContentScheduleList } from "@/components/oni_agencia/content-sche
 import { useClients } from "@/hooks/useOniAgenciaClients";
 import { useToast } from "@/hooks/use-toast";
 import { useOptimizedContentSchedules } from "@/hooks/oni_agencia/useOptimizedContentSchedules";
+import { CalendarEvent } from "@/types/oni-agencia";
 
 const VisualizacaoEmCampo = () => {
   const { toast } = useToast();
@@ -18,6 +19,7 @@ const VisualizacaoEmCampo = () => {
   const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
   const [selectedCollaborator, setSelectedCollaborator] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [cachedEvents, setCachedEvents] = useState<CalendarEvent[]>([]);
   const { isCollapsed, toggle: toggleFilters } = useCollapsible(true); // Iniciar com filtros recolhidos
   
   // Consulta otimizada de clientes com cache eficiente
@@ -38,13 +40,14 @@ const VisualizacaoEmCampo = () => {
   
   // Hook otimizado para busca de agendamentos com paginação e lazy loading
   const { 
-    allItems: filteredSchedules,
+    allItems: fetchedEvents,
     isLoading: isLoadingSchedules,
     refetch: refetchSchedules,
     isRefetching,
     hasMore,
     loadMore,
-    isLoadingMore
+    isLoadingMore,
+    error
   } = useOptimizedContentSchedules(
     selectedClient || null, 
     selectedYear, 
@@ -52,6 +55,13 @@ const VisualizacaoEmCampo = () => {
     currentPage
   );
   
+  // Cache de eventos para evitar problemas de renderização
+  useEffect(() => {
+    if (fetchedEvents && !isLoadingSchedules) {
+      setCachedEvents(fetchedEvents);
+    }
+  }, [fetchedEvents, isLoadingSchedules]);
+
   // Refetch quando mês/ano/cliente muda
   const handleMonthYearChange = useCallback((month: number, year: number) => {
     setSelectedMonth(month);
@@ -77,6 +87,18 @@ const VisualizacaoEmCampo = () => {
       setCurrentPage(prev => prev + 1);
     }
   }, [hasMore, isLoadingMore]);
+
+  // Exibir mensagem de erro caso ocorra
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Erro ao carregar dados",
+        description: "Não foi possível carregar os agendamentos. Tente novamente mais tarde.",
+        variant: "destructive",
+        duration: 5000,
+      });
+    }
+  }, [error, toast]);
   
   return (
     <main className="container-fluid p-0 max-w-full bg-gray-50 min-h-screen">
@@ -117,13 +139,13 @@ const VisualizacaoEmCampo = () => {
         
         <div className={`w-full overflow-x-auto bg-gray-50 rounded-lg transition-all duration-300 ${isCollapsed ? 'h-[calc(100vh-180px)]' : 'h-[calc(100vh-280px)]'}`}>
           <MobileContentScheduleList
-            events={filteredSchedules || []}
+            events={cachedEvents || []}
             clientId={selectedClient || "all"}
             selectedCollaborator={selectedCollaborator}
-            isLoading={isLoadingSchedules}
+            isLoading={isLoadingSchedules && currentPage === 1}
             hasMore={hasMore}
             onLoadMore={handleLoadMore}
-            isLoadingMore={isLoadingMore}
+            isLoadingMore={isLoadingMore || (isLoadingSchedules && currentPage > 1)}
           />
         </div>
       </div>
