@@ -13,6 +13,8 @@ import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useInfiniteContentSchedules } from "@/hooks/oni_agencia/useInfiniteContentSchedules";
 import { queryClient } from "@/lib/queryClient";
+import { supabase } from "@/integrations/supabase/client";
+import { CalendarEvent } from "@/types/oni-agencia";
 
 // Lazy load components para melhorar o carregamento inicial
 const ContentCalendar = lazy(() => import("@/components/oni_agencia/content-schedule/ContentCalendar").then(module => ({ default: module.ContentCalendar })));
@@ -63,13 +65,13 @@ const OniAgenciaControlePauta = () => {
   
   // Aplainar os dados paginados para uso nos componentes
   const flattenedSchedules = useMemo(() => {
-    if (!infiniteSchedules?.pages) return [];
-    return infiniteSchedules.pages.flatMap(page => page.data);
+    if (!infiniteSchedules?.pages) return [] as CalendarEvent[];
+    return infiniteSchedules.pages.flatMap(page => page.data) as CalendarEvent[];
   }, [infiniteSchedules]);
   
   // Prefetch da próxima página quando necessário
   useEffect(() => {
-    if (hasNextPage && !isLoadingSchedules && !isFetchingNextPage) {
+    if (hasNextPage && !isLoadingSchedules && !isFetchingNextPage && infiniteSchedules?.pages) {
       const currentPageParam = infiniteSchedules?.pageParams[infiniteSchedules.pageParams.length - 1];
       const nextPageParam = typeof currentPageParam === 'number' ? currentPageParam + 1 : 1;
       
@@ -85,7 +87,15 @@ const OniAgenciaControlePauta = () => {
               p_limit: 50,
               p_offset: pageParam * 50
             })
-            .returns();
+            .then(result => {
+              const { data, error } = result;
+              if (error) throw error;
+              return {
+                data: (Array.isArray(data) ? data : []) as CalendarEvent[],
+                nextPage: (Array.isArray(data) && data.length >= 50) ? pageParam + 1 : undefined,
+                totalCount: Array.isArray(data) ? data.length : 0
+              };
+            });
         },
         initialPageParam: nextPageParam,
       });
@@ -179,9 +189,9 @@ const OniAgenciaControlePauta = () => {
                 events={flattenedSchedules}
                 clientId={selectedClient || "all"}
                 selectedCollaborator={selectedCollaborator}
-                hasNextPage={hasNextPage}
+                hasNextPage={!!hasNextPage}
                 isFetchingNextPage={isFetchingNextPage}
-                fetchNextPage={fetchNextPage}
+                fetchNextPage={() => fetchNextPage()}
               />
             )}
           </Suspense>

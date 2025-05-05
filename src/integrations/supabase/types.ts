@@ -1694,6 +1694,13 @@ export type Database = {
             referencedRelation: "oni_agencia_content_schedules"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "oni_agencia_schedule_history_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "oni_agencia_content_schedules_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       oni_agencia_services: {
@@ -2270,6 +2277,79 @@ export type Database = {
         }
         Relationships: []
       }
+      oni_agencia_content_schedules_view: {
+        Row: {
+          client_id: string | null
+          client_name: string | null
+          collaborator_id: string | null
+          collaborator_name: string | null
+          creators: string[] | null
+          description: string | null
+          editorial_line_color: string | null
+          editorial_line_id: string | null
+          editorial_line_name: string | null
+          editorial_line_symbol: string | null
+          execution_phase: string | null
+          id: string | null
+          product_color: string | null
+          product_id: string | null
+          product_name: string | null
+          product_symbol: string | null
+          scheduled_date: string | null
+          service_category: string | null
+          service_color: string | null
+          service_id: string | null
+          service_name: string | null
+          status_color: string | null
+          status_id: string | null
+          status_name: string | null
+          title: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oni_agencia_content_schedules_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "oni_agencia_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oni_agencia_content_schedules_collaborator_id_fkey"
+            columns: ["collaborator_id"]
+            isOneToOne: false
+            referencedRelation: "oni_agencia_collaborators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oni_agencia_content_schedules_editorial_line_id_fkey"
+            columns: ["editorial_line_id"]
+            isOneToOne: false
+            referencedRelation: "editorial_lines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oni_agencia_content_schedules_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oni_agencia_content_schedules_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "oni_agencia_services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oni_agencia_content_schedules_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "oni_agencia_status"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_groups_with_profiles: {
         Row: {
           group_id: string | null
@@ -2519,6 +2599,43 @@ export type Database = {
           valor_unitario: number
           pedido: string
           representante: number
+        }[]
+      }
+      get_paginated_schedules: {
+        Args: {
+          p_client_id?: string
+          p_month?: number
+          p_year?: number
+          p_collaborator_id?: string
+          p_limit?: number
+          p_offset?: number
+        }
+        Returns: {
+          client_id: string | null
+          client_name: string | null
+          collaborator_id: string | null
+          collaborator_name: string | null
+          creators: string[] | null
+          description: string | null
+          editorial_line_color: string | null
+          editorial_line_id: string | null
+          editorial_line_name: string | null
+          editorial_line_symbol: string | null
+          execution_phase: string | null
+          id: string | null
+          product_color: string | null
+          product_id: string | null
+          product_name: string | null
+          product_symbol: string | null
+          scheduled_date: string | null
+          service_category: string | null
+          service_color: string | null
+          service_id: string | null
+          service_name: string | null
+          status_color: string | null
+          status_id: string | null
+          status_name: string | null
+          title: string | null
         }[]
       }
       get_pedidos_agrupados: {

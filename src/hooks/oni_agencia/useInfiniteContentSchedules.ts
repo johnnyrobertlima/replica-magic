@@ -23,7 +23,7 @@ export function useInfiniteContentSchedules(
     queryFn: async ({ pageParam = 0 }) => {
       try {
         // Usar a função RPC otimizada
-        const { data, error, count } = await supabase
+        const { data, error } = await supabase
           .rpc('get_paginated_schedules', {
             p_client_id: clientId,
             p_year: year,
@@ -31,18 +31,20 @@ export function useInfiniteContentSchedules(
             p_collaborator_id: collaboratorId,
             p_limit: PAGE_SIZE,
             p_offset: pageParam * PAGE_SIZE
-          })
-          .returns<CalendarEvent[]>();
+          });
 
         if (error) {
           console.error('Error fetching content schedules:', error);
           throw error;
         }
 
+        // Verificar se o resultado é um array (tratando possíveis erros de tipo)
+        const safeData = Array.isArray(data) ? data : [];
+
         return {
-          data: data || [],
-          nextPage: (data?.length || 0) >= PAGE_SIZE ? pageParam + 1 : undefined,
-          totalCount: count
+          data: safeData as CalendarEvent[],
+          nextPage: safeData.length >= PAGE_SIZE ? pageParam + 1 : undefined,
+          totalCount: safeData.length
         };
       } catch (error) {
         console.error('Error in useInfiniteContentSchedules:', error);

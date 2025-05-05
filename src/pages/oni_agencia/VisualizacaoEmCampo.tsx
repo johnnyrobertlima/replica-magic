@@ -9,6 +9,7 @@ import { useClients } from "@/hooks/useOniAgenciaClients";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useInfiniteContentSchedules } from "@/hooks/oni_agencia/useInfiniteContentSchedules";
+import { CalendarEvent } from "@/types/oni-agencia";
 
 // Lazy loading do componente de lista para mobile
 const MobileContentScheduleList = lazy(() => 
@@ -63,8 +64,8 @@ const VisualizacaoEmCampo = () => {
   
   // Aplainar os dados paginados
   const flattenedSchedules = useMemo(() => {
-    if (!infiniteSchedules?.pages) return [];
-    return infiniteSchedules.pages.flatMap(page => page.data);
+    if (!infiniteSchedules?.pages) return [] as CalendarEvent[];
+    return infiniteSchedules.pages.flatMap(page => page.data) as CalendarEvent[];
   }, [infiniteSchedules]);
 
   // Refetch quando mês/ano/cliente muda
@@ -84,8 +85,11 @@ const VisualizacaoEmCampo = () => {
 
   // Exibir mensagem de erro caso ocorra
   useEffect(() => {
-    const hasError = infiniteSchedules?.pages.some(page => page.error);
-    if (hasError) {
+    const pagesWithErrors = infiniteSchedules?.pages.filter(page => 
+      page && typeof page === 'object' && 'error' in page
+    );
+    
+    if (pagesWithErrors && pagesWithErrors.length > 0) {
       toast({
         title: "Erro ao carregar dados",
         description: "Não foi possível carregar os agendamentos. Tente novamente mais tarde.",
@@ -139,7 +143,7 @@ const VisualizacaoEmCampo = () => {
               clientId={selectedClient || "all"}
               selectedCollaborator={selectedCollaborator}
               isLoading={isLoading && !isFetchingNextPage}
-              hasMore={hasNextPage}
+              hasMore={!!hasNextPage}
               onLoadMore={() => fetchNextPage()}
               isLoadingMore={isFetchingNextPage}
             />
