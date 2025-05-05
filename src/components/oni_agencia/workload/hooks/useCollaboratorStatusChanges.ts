@@ -12,7 +12,8 @@ interface StatusChange {
   scheduled_date: string;
   schedule_id: string;
   previous_collaborator_name: string | null;
-  client_name: string; // Added client name
+  client_name: string;
+  field_type: 'status' | 'collaborator';
 }
 
 export function useCollaboratorStatusChanges() {
@@ -27,7 +28,7 @@ export function useCollaboratorStatusChanges() {
         setIsLoading(true);
         setError(null);
 
-        // Fetch status changes from oni_agencia_schedule_history table
+        // Fetch both status and collaborator changes from oni_agencia_schedule_history table
         const { data, error: fetchError } = await supabase
           .from('oni_agencia_schedule_history')
           .select(`
@@ -46,9 +47,9 @@ export function useCollaboratorStatusChanges() {
               oni_agencia_clients:client_id (name)
             )
           `)
-          .eq('field_name', 'status_id')
+          .in('field_name', ['status_id', 'collaborator_id'])
           .order('created_at', { ascending: false })
-          .limit(50);
+          .limit(100);
 
         if (fetchError) {
           throw fetchError;
@@ -56,8 +57,8 @@ export function useCollaboratorStatusChanges() {
 
         // Get status names
         const statusIds = new Set([
-          ...data.map(item => item.old_value).filter(Boolean),
-          ...data.map(item => item.new_value).filter(Boolean)
+          ...data.filter(item => item.field_name === 'status_id').map(item => item.old_value).filter(Boolean),
+          ...data.filter(item => item.field_name === 'status_id').map(item => item.new_value).filter(Boolean)
         ]);
 
         const { data: statusData, error: statusError } = await supabase
@@ -75,52 +76,58 @@ export function useCollaboratorStatusChanges() {
           return acc;
         }, {} as Record<string, string>);
 
-        // Get additional collaborator info for changes in collaborator field
-        const collaboratorChanges = data.filter(item => item.field_name === 'collaborator_id' && item.old_value);
-        let previousCollaboratorsMap = {} as Record<string, string>;
+        // Get collaborator names for both current and previous collaborators
+        const collaboratorIds = new Set([
+          ...data.filter(item => item.field_name === 'collaborator_id').map(item => item.old_value).filter(Boolean),
+          ...data.filter(item => item.field_name === 'collaborator_id').map(item => item.new_value).filter(Boolean)
+        ]);
 
-        if (collaboratorChanges.length > 0) {
-          const oldCollaboratorIds = collaboratorChanges
-            .map(item => item.old_value)
-            .filter(Boolean);
+        const { data: collaboratorsData, error: collaboratorsError } = await supabase
+          .from('oni_agencia_collaborators')
+          .select('id, name')
+          .in('id', Array.from(collaboratorIds));
 
-          if (oldCollaboratorIds.length > 0) {
-            const { data: collaboratorsData } = await supabase
-              .from('oni_agencia_collaborators')
-              .select('id, name')
-              .in('id', oldCollaboratorIds);
-
-            if (collaboratorsData) {
-              previousCollaboratorsMap = collaboratorsData.reduce((acc, collab) => {
-                acc[collab.id] = collab.name;
-                return acc;
-              }, {} as Record<string, string>);
-            }
-          }
+        if (collaboratorsError) {
+          throw collaboratorsError;
         }
 
+        // Create a map of collaborator IDs to names
+        const collaboratorMap = collaboratorsData.reduce((acc, collab) => {
+          acc[collab.id] = collab.name;
+          return acc;
+        }, {} as Record<string, string>);
+
         // Transform data for the grid
-        const formattedChanges: StatusChange[] = data.map(item => ({
-          collaborator_name: item.oni_agencia_content_schedules?.oni_agencia_collaborators?.name || 'Sem colaborador',
-          schedule_title: item.oni_agencia_content_schedules?.title || 'Sem título',
-          old_status: item.old_value ? statusMap[item.old_value] || 'Desconhecido' : '',
-          new_status: statusMap[item.new_value] || 'Desconhecido',
-          changed_at: item.created_at,
-          scheduled_date: item.oni_agencia_content_schedules?.scheduled_date || '',
-          schedule_id: item.schedule_id,
-          previous_collaborator_name: item.field_name === 'collaborator_id' && item.old_value 
-            ? previousCollaboratorsMap[item.old_value] || 'Desconhecido'
-            : null,
-          client_name: item.oni_agencia_content_schedules?.oni_agencia_clients?.name || 'Cliente desconhecido'
-        }));
+        const formattedChanges: StatusChange[] = data.map(item => {
+          const isStatusChange = item.field_name === 'status_id';
+          
+          return {
+            collaborator_name: item.oni_agencia_content_schedules?.oni_agencia_collaborators?.name || 'Sem colaborador',
+            schedule_title: item.oni_agencia_content_schedules?.title || 'Sem título',
+            old_status: isStatusChange 
+              ? (item.old_value ? statusMap[item.old_value] || 'Desconhecido' : '') 
+              : (item.old_value ? collaboratorMap[item.old_value] || 'Desconhecido' : ''),
+            new_status: isStatusChange 
+              ? (statusMap[item.new_value] || 'Desconhecido') 
+              : (collaboratorMap[item.new_value] || 'Desconhecido'),
+            changed_at: item.created_at,
+            scheduled_date: item.oni_agencia_content_schedules?.scheduled_date || '',
+            schedule_id: item.schedule_id,
+            previous_collaborator_name: item.field_name === 'collaborator_id' && item.old_value 
+              ? collaboratorMap[item.old_value] || 'Desconhecido'
+              : null,
+            client_name: item.oni_agencia_content_schedules?.oni_agencia_clients?.name || 'Cliente desconhecido',
+            field_type: isStatusChange ? 'status' : 'collaborator'
+          };
+        });
 
         setStatusChanges(formattedChanges);
       } catch (err) {
-        console.error('Error fetching collaborator status changes:', err);
-        setError(err instanceof Error ? err : new Error('Erro desconhecido ao carregar alterações de status'));
+        console.error('Error fetching changes:', err);
+        setError(err instanceof Error ? err : new Error('Erro desconhecido ao carregar alterações'));
         toast({
           title: "Erro ao carregar dados",
-          description: "Não foi possível carregar o histórico de status dos colaboradores",
+          description: "Não foi possível carregar o histórico de alterações",
           variant: "destructive",
         });
       } finally {

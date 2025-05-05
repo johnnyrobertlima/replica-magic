@@ -17,6 +17,7 @@ interface StatusChange {
   schedule_id: string;
   previous_collaborator_name: string | null;
   client_name: string;
+  field_type: 'status' | 'collaborator';
 }
 
 export function CollaboratorStatusGrid() {
@@ -34,7 +35,7 @@ export function CollaboratorStatusGrid() {
     return (
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>Histórico de Status dos Colaboradores</CardTitle>
+          <CardTitle>Histórico de Alterações</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex justify-center items-center h-40">
@@ -49,7 +50,7 @@ export function CollaboratorStatusGrid() {
     return (
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>Histórico de Status dos Colaboradores</CardTitle>
+          <CardTitle>Histórico de Alterações</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex justify-center items-center h-40">
@@ -63,12 +64,12 @@ export function CollaboratorStatusGrid() {
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Histórico de Status dos Colaboradores</CardTitle>
+        <CardTitle>Histórico de Alterações</CardTitle>
       </CardHeader>
       <CardContent>
         {statusChanges.length === 0 ? (
           <div className="flex justify-center items-center h-40">
-            <p className="text-muted-foreground">Nenhum histórico de status encontrado</p>
+            <p className="text-muted-foreground">Nenhum histórico de alterações encontrado</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -79,9 +80,9 @@ export function CollaboratorStatusGrid() {
                   <TableHead>Agendamento</TableHead>
                   <TableHead>Cliente</TableHead>
                   <TableHead>Data do Agendamento</TableHead>
-                  <TableHead>Status Anterior</TableHead>
-                  <TableHead>Novo Status</TableHead>
-                  <TableHead>Colaborador Anterior</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>De</TableHead>
+                  <TableHead>Para</TableHead>
                   <TableHead>Data da Alteração</TableHead>
                 </TableRow>
               </TableHeader>
@@ -101,9 +102,11 @@ export function CollaboratorStatusGrid() {
                         </Link>
                       ) : "—"}
                     </TableCell>
+                    <TableCell>
+                      {change.field_type === 'status' ? 'Status' : 'Colaborador'}
+                    </TableCell>
                     <TableCell>{change.old_status || "—"}</TableCell>
                     <TableCell>{change.new_status}</TableCell>
-                    <TableCell>{change.previous_collaborator_name || "—"}</TableCell>
                     <TableCell>{formatDate(change.changed_at)}</TableCell>
                   </TableRow>
                 ))}
