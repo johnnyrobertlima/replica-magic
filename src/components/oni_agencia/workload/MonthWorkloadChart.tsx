@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart } from "recharts";
 
-interface MonthWorkloadChartProps {
+export interface MonthWorkloadChartProps {
   events: CalendarEvent[];
   selectedMonth: number;
   selectedYear: number;

@@ -12,18 +12,18 @@ export function WorkloadDashboard() {
   return (
     <div className="space-y-8">
       <WorkloadFilters
-        clientId={clientId}
-        month={month}
-        year={year}
+        selectedClient={clientId || ""}
+        selectedMonth={month}
+        selectedYear={year}
         onClientChange={setClientId}
         onMonthChange={setMonth}
         onYearChange={setYear}
       />
       
       <MonthWorkloadChart 
-        clientId={clientId}
-        month={month}
-        year={year}
+        events={[]} // We need to pass events here
+        selectedMonth={month}
+        selectedYear={year}
       />
       
       {/* New Collaborator Status Grid Section */}
