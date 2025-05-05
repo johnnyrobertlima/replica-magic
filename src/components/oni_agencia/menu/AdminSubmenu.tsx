@@ -27,8 +27,8 @@ export const AdminSubmenu = ({ items, isActive, isAnyRouteActive, onItemClick }:
       <DropdownMenuTrigger asChild>
         <button
           className={cn(
-            "flex items-center px-3 py-2 rounded-md text-white hover:bg-primary-700 transition-colors whitespace-nowrap",
-            isAnyRouteActive ? "bg-primary-800 font-medium" : ""
+            "flex items-center px-3 py-2 rounded-md text-white hover:bg-blue-700 transition-colors whitespace-nowrap",
+            isAnyRouteActive ? "bg-blue-800 font-medium" : ""
           )}
         >
           <Settings className="h-4 w-4 mr-2" />
