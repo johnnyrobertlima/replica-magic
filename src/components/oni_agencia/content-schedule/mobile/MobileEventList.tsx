@@ -1,12 +1,8 @@
 
-import { format, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import React from "react";
 import { CalendarEvent } from "@/types/oni-agencia";
-import { Card, CardContent } from "@/components/ui/card";
-import { StatusBadge } from "../status-badge/StatusBadge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Badge } from "@/components/ui/badge";
+import { EventDateSection } from "./components/EventDateSection";
+import { EventsEmptyState } from "./components/EventsEmptyState";
 
 interface MobileEventListProps {
   events: CalendarEvent[];
@@ -19,16 +15,12 @@ export function MobileEventList({
   clientId,
   onEventClick 
 }: MobileEventListProps) {
-  // Se não há eventos, mostrar mensagem
+  // If no events, show empty state
   if (!events || events.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full py-10">
-        <p className="text-muted-foreground">Nenhum agendamento encontrado</p>
-      </div>
-    );
+    return <EventsEmptyState />;
   }
 
-  // Agrupar eventos por data
+  // Group events by date
   const groupedEvents = events.reduce<Record<string, CalendarEvent[]>>((acc, event) => {
     const dateKey = event.scheduled_date;
     if (!acc[dateKey]) {
@@ -38,13 +30,8 @@ export function MobileEventList({
     return acc;
   }, {});
 
-  // Ordenar datas
+  // Sort dates
   const sortedDates = Object.keys(groupedEvents).sort();
-
-  const formatDateHeader = (dateString: string) => {
-    const date = parseISO(dateString);
-    return format(date, "EEEE, d 'de' MMMM", { locale: ptBR });
-  };
 
   const handleEventClick = (event: CalendarEvent) => {
     if (onEventClick) {
@@ -55,79 +42,12 @@ export function MobileEventList({
   return (
     <div className="space-y-4">
       {sortedDates.map((dateString) => (
-        <div key={dateString} className="mb-4">
-          <h3 className="text-base font-semibold text-primary mb-2 capitalize">
-            {formatDateHeader(dateString)}
-          </h3>
-          
-          <div className="space-y-2">
-            {groupedEvents[dateString].map((event) => (
-              <Card 
-                key={event.id}
-                className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => handleEventClick(event)}
-              >
-                <div 
-                  className="h-1.5 w-full" 
-                  style={{ backgroundColor: event.service?.color }}
-                />
-                <CardContent className="p-3">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-medium text-sm">{event.title || "Sem título"}</span>
-                    <div className="flex items-center gap-2">
-                      {event.client && (
-                        <Badge variant="outline" className="text-xs px-1.5 py-0.5 border-blue-300">
-                          {event.client.name || "Cliente não informado"}
-                        </Badge>
-                      )}
-                      <StatusBadge color={event.status?.color || "#9CA3AF"} className="text-xs px-1.5 py-0.5">
-                        {event.status?.name || "Pendente"}
-                      </StatusBadge>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center text-xs text-muted-foreground mb-2">
-                    <span className="mr-2">{event.service?.name}</span>
-                    {event.editorial_line && (
-                      <>
-                        <span className="mx-1">•</span>
-                        <span>{event.editorial_line.name}</span>
-                      </>
-                    )}
-                  </div>
-                  
-                  {event.description && (
-                    <Accordion type="single" collapsible className="w-full">
-                      <AccordionItem value="description" className="border-none">
-                        <AccordionTrigger className="py-1 text-xs">
-                          Descrição
-                        </AccordionTrigger>
-                        <AccordionContent className="text-xs">
-                          {event.description}
-                        </AccordionContent>
-                      </AccordionItem>
-                    </Accordion>
-                  )}
-                  
-                  {event.collaborator && (
-                    <div className="flex items-center mt-2">
-                      <Avatar className="h-5 w-5 mr-2">
-                        <AvatarImage 
-                          src={event.collaborator.photo_url || ''} 
-                          alt={event.collaborator.name} 
-                        />
-                        <AvatarFallback className="text-[10px]">
-                          {event.collaborator.name.substring(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-xs">{event.collaborator.name}</span>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
+        <EventDateSection
+          key={dateString}
+          dateString={dateString}
+          events={groupedEvents[dateString]}
+          onEventClick={handleEventClick}
+        />
       ))}
     </div>
   );

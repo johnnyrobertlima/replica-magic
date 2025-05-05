@@ -32,7 +32,7 @@ export function MobileScheduleEventDialog({
   events,
   onClose,
   selectedEvent,
-  initialStatusTabActive = true
+  initialStatusTabActive = false
 }: MobileScheduleEventDialogProps) {
   const {
     currentSelectedEvent,
