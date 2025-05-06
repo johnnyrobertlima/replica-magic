@@ -30,6 +30,21 @@
 .day-events-container {
   max-height: calc(100% - 24px);
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+}
+
+.day-events-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+.day-events-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.day-events-container::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.5);
+  border-radius: 4px;
 }
 
 /* Styling for overflow indicator */
