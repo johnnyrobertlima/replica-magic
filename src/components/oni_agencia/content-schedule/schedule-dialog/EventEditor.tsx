@@ -168,10 +168,8 @@ export function EventEditor({
         </ScrollArea>
       </TabsContent>
       
-      <TabsContent value="history" className="space-y-4">
-        <ScrollArea className="h-[60vh]">
-          <ScheduleHistory event={event} />
-        </ScrollArea>
+      <TabsContent value="history" className="flex flex-col h-[60vh]">
+        <ScheduleHistory event={event} />
       </TabsContent>
     </Tabs>
   );

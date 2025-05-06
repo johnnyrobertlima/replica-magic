@@ -1,6 +1,7 @@
 
-import { useEffect } from "react";
+import React, { useState } from "react";
 import { CalendarEvent } from "@/types/oni-agencia";
+import { useScheduleEventDialog } from "./hooks/useMobileScheduleEventDialog";
 import { 
   useServices,
   useCollaborators,
@@ -10,8 +11,13 @@ import {
 } from "@/hooks/useOniAgenciaContentSchedules";
 import { useClients } from "@/hooks/useOniAgenciaClients";
 import { MobileDialogContainer } from "./MobileDialogContainer";
-import { DialogContent } from "../schedule-dialog/DialogContent";
-import { useScheduleEventDialog } from "./hooks/useMobileScheduleEventDialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { EventForm } from "../schedule-dialog/EventForm";
+import { StatusUpdateForm } from "../schedule-dialog/StatusUpdateForm";
+import { ScheduleHistory } from "../schedule-dialog/ScheduleHistory";
+import { DialogActions } from "../schedule-dialog/DialogActions";
+import { History } from "lucide-react";
 
 interface MobileScheduleEventDialogProps {
   isOpen: boolean;
@@ -34,13 +40,15 @@ export function MobileScheduleEventDialog({
   selectedEvent,
   initialStatusTabActive = false
 }: MobileScheduleEventDialogProps) {
+  const defaultTab = initialStatusTabActive ? "status" : "details";
+  
   const {
     currentSelectedEvent,
     formData,
     activeTab,
+    setActiveTab,
     isSubmitting,
     isDeleting,
-    setActiveTab,
     handleInputChange,
     handleSelectChange,
     handleDateChange,
@@ -54,19 +62,12 @@ export function MobileScheduleEventDialog({
     selectedDate,
     events,
     selectedEvent,
-    initialTabActive: initialStatusTabActive ? "status" : "details",
+    initialTabActive: defaultTab as "details" | "status" | "history",
     onClose: () => {
       onOpenChange(false);
       onClose();
     }
   });
-
-  // Set active tab when initialStatusTabActive changes
-  useEffect(() => {
-    if (initialStatusTabActive) {
-      setActiveTab("status");
-    }
-  }, [initialStatusTabActive, setActiveTab]);
 
   const { data: services = [], isLoading: isLoadingServices } = useServices();
   const { data: collaborators = [], isLoading: isLoadingCollaborators } = useCollaborators();
@@ -74,52 +75,108 @@ export function MobileScheduleEventDialog({
   const { data: products = [], isLoading: isLoadingProducts } = useProducts();
   const { data: statuses = [], isLoading: isLoadingStatuses } = useStatuses();
   const { data: clients = [], isLoading: isLoadingClients } = useClients();
+  
+  const [description, setDescription] = useState(formData.description || "");
+  
+  const handleNoteChange = (value: string) => {
+    setDescription(value);
+    handleSelectChange("description", value);
+  };
 
-  const dialogTitle = currentSelectedEvent ? "Editar Agendamento" : "Novo Agendamento";
+  // If no current event, show nothing
+  if (!currentSelectedEvent) {
+    return null;
+  }
 
   return (
-    <MobileDialogContainer 
+    <MobileDialogContainer
       isOpen={isOpen} 
-      onOpenChange={onOpenChange} 
-      selectedDate={selectedDate} 
+      onOpenChange={onOpenChange}
+      selectedDate={selectedDate}
       onClose={onClose}
-      title={dialogTitle}
+      title={currentSelectedEvent?.id ? "Editar Agendamento" : "Novo Agendamento"}
     >
-      <DialogContent
-        selectedEvent={selectedEvent}
-        events={events}
-        currentSelectedEvent={currentSelectedEvent}
-        clientId={clientId}
-        selectedDate={selectedDate}
-        services={services}
-        collaborators={collaborators}
-        editorialLines={editorialLines}
-        products={products}
-        statuses={statuses}
-        clients={clients}
-        isLoadingServices={isLoadingServices}
-        isLoadingCollaborators={isLoadingCollaborators}
-        isLoadingEditorialLines={isLoadingEditorialLines}
-        isLoadingProducts={isLoadingProducts}
-        isLoadingStatuses={isLoadingStatuses}
-        isLoadingClients={isLoadingClients}
-        isSubmitting={isSubmitting}
-        isDeleting={isDeleting}
-        formData={formData}
-        onSelectEvent={handleSelectEvent}
-        onResetForm={resetForm}
-        onSubmit={handleSubmit}
-        onStatusUpdate={handleStatusUpdate}
-        onDelete={handleDelete}
-        onCancel={() => {
-          onOpenChange(false);
-          onClose();
-        }}
-        onInputChange={handleInputChange}
-        onSelectChange={handleSelectChange}
-        onDateChange={handleDateChange}
-        defaultTab={activeTab}
-      />
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "details" | "status" | "history")} className="flex flex-col h-full">
+        <TabsList className="w-full grid grid-cols-3">
+          <TabsTrigger value="details">Detalhes</TabsTrigger>
+          <TabsTrigger value="status">Status</TabsTrigger>
+          <TabsTrigger value="history" className="flex items-center justify-center gap-1">
+            <History className="h-4 w-4" />
+            Histórico
+          </TabsTrigger>
+        </TabsList>
+        
+        <div className="flex-1 overflow-hidden">
+          <TabsContent value="details" className="h-full flex flex-col">
+            <ScrollArea className="flex-1">
+              <div className="p-4">
+                <EventForm
+                  formData={formData}
+                  services={services}
+                  collaborators={collaborators}
+                  editorialLines={editorialLines}
+                  products={products}
+                  statuses={statuses}
+                  clients={clients}
+                  isLoadingServices={isLoadingServices}
+                  isLoadingCollaborators={isLoadingCollaborators}
+                  isLoadingEditorialLines={isLoadingEditorialLines}
+                  isLoadingProducts={isLoadingProducts}
+                  isLoadingStatuses={isLoadingStatuses}
+                  isLoadingClients={isLoadingClients}
+                  onInputChange={handleInputChange}
+                  onSelectChange={handleSelectChange}
+                  onDateChange={handleDateChange}
+                />
+              </div>
+            </ScrollArea>
+            
+            <div className="border-t p-4">
+              <DialogActions
+                isSubmitting={isSubmitting}
+                isDeleting={isDeleting}
+                onCancel={onClose}
+                onDelete={handleDelete}
+                isEditing={!!currentSelectedEvent?.id}
+              />
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="status" className="h-full flex flex-col">
+            <ScrollArea className="flex-1">
+              <div className="p-4">
+                <StatusUpdateForm
+                  event={currentSelectedEvent}
+                  statuses={statuses}
+                  collaborators={collaborators}
+                  isLoadingStatuses={isLoadingStatuses}
+                  isLoadingCollaborators={isLoadingCollaborators}
+                  selectedStatus={formData.status_id}
+                  selectedCollaborator={formData.collaborator_id}
+                  note={description}
+                  onStatusChange={(value) => handleSelectChange("status_id", value)}
+                  onCollaboratorChange={(value) => handleSelectChange("collaborator_id", value)}
+                  onNoteChange={handleNoteChange}
+                />
+              </div>
+            </ScrollArea>
+            
+            <div className="border-t p-4">
+              <DialogActions
+                isSubmitting={isSubmitting}
+                isDeleting={false}
+                onCancel={onClose}
+                isEditing={true}
+                saveLabel="Atualizar Status"
+              />
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="history" className="h-full flex flex-col">
+            <ScheduleHistory event={currentSelectedEvent} />
+          </TabsContent>
+        </div>
+      </Tabs>
     </MobileDialogContainer>
   );
 }
