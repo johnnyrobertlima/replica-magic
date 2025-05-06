@@ -23,14 +23,13 @@ export function CalendarDay({
   onEventClick
 }: CalendarDayProps) {
   // Set up the droppable area for this day with a stable ID
-  const dropId = `day-${format(date, 'yyyy-MM-dd')}`;
+  const dateStr = format(date, 'yyyy-MM-dd');
+  const dropId = `day-${dateStr}`;
   
   const { setNodeRef, isOver } = useDroppable({
     id: dropId,
     data: { date }
   });
-  
-  const dateStr = format(date, 'yyyy-MM-dd');
   
   // Melhoria de performance utilizando useCallback para funções de evento
   const handleDayClick = useCallback(() => {
@@ -43,7 +42,7 @@ export function CalendarDay({
     onEventClick(event, date);
   }, [date, onEventClick]);
   
-  // FIXED: Filtra eventos para esse dia específico usando useMemo para otimização
+  // Filtra eventos para esse dia específico usando useMemo para otimização
   const filteredEvents = useMemo(() => {
     // First filter events for this specific day
     const dayEvents = events.filter(event => event.scheduled_date === dateStr);
@@ -69,26 +68,46 @@ export function CalendarDay({
     });
   }, [events, dateStr, selectedCollaborator]);
   
+  // Log filtrados para debugging
+  if (filteredEvents.length > 0) {
+    console.log(`Rendering ${filteredEvents.length} events for date ${dateStr}`);
+  }
+  
   const isActive = selectedDate && format(selectedDate, 'yyyy-MM-dd') === dateStr;
+  const today = new Date();
+  const isToday = format(today, 'yyyy-MM-dd') === dateStr;
+  const isCurrentMonth = date.getMonth() === new Date().getMonth();
+  
+  // Determinar se é de outro mês em relação ao mês selecionado (não ao mês atual)
+  const selectedMonth = selectedDate ? selectedDate.getMonth() : new Date().getMonth();
+  const isOtherMonth = date.getMonth() !== selectedMonth;
   
   return (
     <div 
       ref={setNodeRef}
-      className={`calendar-day relative p-1 min-h-[80px] border border-gray-100 ${
-        isActive ? 'bg-blue-50' : isOver ? 'bg-blue-50' : 'bg-white'
+      className={`calendar-day relative ${
+        isToday ? 'today' : ''
+      } ${
+        isActive ? 'selected' : ''
+      } ${
+        isOtherMonth ? 'other-month' : ''
+      } ${
+        isOver ? 'drop-active' : ''
+      } ${
+        filteredEvents.length > 0 ? 'has-events' : ''
       }`} 
       onClick={handleDayClick}
     >
-      {/* Show day number in the top-left corner */}
-      <div className="text-xs text-gray-500 mb-1">{date.getDate()}</div>
+      <span className="day-number">{date.getDate()}</span>
       
-      {/* Render events for this day */}
       {filteredEvents.length > 0 && (
-        <EventsList 
-          events={filteredEvents}
-          date={date}
-          onEventClick={handleEventClick}
-        />
+        <div className="mt-5">
+          <EventsList 
+            events={filteredEvents}
+            date={date}
+            onEventClick={handleEventClick}
+          />
+        </div>
       )}
     </div>
   );

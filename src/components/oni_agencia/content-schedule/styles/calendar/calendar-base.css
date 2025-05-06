@@ -9,7 +9,7 @@
 }
 
 .calendar-day {
-  min-height: 100px;
+  min-height: 120px;
   padding: 4px;
   border: 1px solid #f1f5f9;
   position: relative;
@@ -26,6 +26,11 @@
   left: 4px;
   font-size: 0.75rem;
   color: #64748b;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Responsive adjustments */
@@ -40,6 +45,12 @@
 .calendar-day.today {
   background-color: #f0f9ff;
   border: 1px solid #bae6fd;
+}
+
+.calendar-day.today .day-number {
+  background-color: #0ea5e9;
+  color: white;
+  border-radius: 50%;
 }
 
 /* Selected day highlight */
@@ -68,4 +79,10 @@
   height: 6px;
   background-color: #3b82f6;
   border-radius: 50%;
+}
+
+/* Drop target styling */
+.calendar-day.drop-active {
+  background-color: #e0f7fa;
+  border: 2px dashed #4fc3f7;
 }

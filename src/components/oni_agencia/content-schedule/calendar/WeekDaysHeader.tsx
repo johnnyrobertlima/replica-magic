@@ -1,16 +1,15 @@
 
+import React from 'react';
+
 interface WeekDaysHeaderProps {
-  weekDays: string[];
+  weekDays?: string[];
 }
 
-export function WeekDaysHeader({ weekDays }: WeekDaysHeaderProps) {
+export function WeekDaysHeader({ weekDays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"] }: WeekDaysHeaderProps) {
   return (
-    <div className="grid grid-cols-7 w-full border-b">
+    <div className="grid grid-cols-7 border-b">
       {weekDays.map((day, index) => (
-        <div 
-          key={index} 
-          className="text-center py-3 font-medium text-sm border-r last:border-r-0 bg-gray-50 hover:bg-gray-100 transition-colors"
-        >
+        <div key={index} className="text-center py-2 text-sm font-medium text-gray-500">
           {day}
         </div>
       ))}

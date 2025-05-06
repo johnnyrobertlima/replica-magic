@@ -6,6 +6,7 @@ import { CalendarDay } from "./CalendarDay";
 import { CalendarDayHeader } from "./CalendarDayHeader";
 import { CalendarNavigation } from "./CalendarNavigation";
 import { CalendarHeader } from "./CalendarHeader";
+import { WeekDaysHeader } from "./WeekDaysHeader";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { ScheduleEventDialog } from "../ScheduleEventDialog";
 
@@ -44,13 +45,13 @@ export function Calendar({
 }: CalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date(year, month - 1, 1));
   
-  // FIXED: Update currentDate when month or year props change
+  // Update currentDate when month or year props change
   useEffect(() => {
     setCurrentDate(new Date(year, month - 1, 1));
   }, [month, year]);
   
   const daysInMonth = getDaysInMonth(currentDate);
-  const firstDay = getDay(new Date(year, month - 1, 1));
+  const firstDayOfMonth = getDay(new Date(year, month - 1, 1));
   
   const handlePrevMonth = () => {
     const prevMonth = subMonths(currentDate, 1);
@@ -66,7 +67,7 @@ export function Calendar({
     onMonthYearChange(newMonth, newYear);
   };
 
-  // FIXED: Added debugging log to track events data
+  // Added debugging log to track events data
   useEffect(() => {
     console.log(`Calendar component received ${events?.length || 0} total events for ${year}-${month}`);
     
@@ -82,11 +83,16 @@ export function Calendar({
 
   const renderCalendarDays = () => {
     const days = [];
-    const daysToRender = 42; // 6 rows x 7 days
+    const totalDays = 42; // 6 rows x 7 days
     
     // Create days from previous month to fill the first week
-    for (let i = 0; i < firstDay; i++) {
-      const prevMonthDate = new Date(year, month - 2, getDaysInMonth(new Date(year, month - 2, 1)) - (firstDay - i) + 1);
+    const prevMonthDays = firstDayOfMonth;
+    const prevMonth = subMonths(new Date(year, month - 1, 1), 1);
+    const daysInPrevMonth = getDaysInMonth(prevMonth);
+    
+    for (let i = 0; i < prevMonthDays; i++) {
+      const day = daysInPrevMonth - (prevMonthDays - 1) + i;
+      const prevMonthDate = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), day);
       days.push(
         <CalendarDay 
           key={`prev-${i}`}
@@ -117,7 +123,7 @@ export function Calendar({
     }
     
     // Add days from next month to fill the remaining cells
-    const remainingDays = daysToRender - (firstDay + daysInMonth);
+    const remainingDays = totalDays - (prevMonthDays + daysInMonth);
     for (let i = 1; i <= remainingDays; i++) {
       const nextMonthDate = new Date(year, month, i);
       days.push(
@@ -136,6 +142,9 @@ export function Calendar({
     return days;
   };
 
+  // Dias da semana em português
+  const weekDays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
   return (
     <div className="bg-white rounded-md border shadow-sm w-full">
       <CalendarHeader 
@@ -147,8 +156,11 @@ export function Calendar({
         onPrevMonth={handlePrevMonth}
         onNextMonth={handleNextMonth}
       />
+      
+      {/* Adicionamos o componente WeekDaysHeader aqui */}
+      <WeekDaysHeader weekDays={weekDays} />
+      
       <div className="grid grid-cols-7 gap-px">
-        <CalendarDayHeader />
         {renderCalendarDays()}
       </div>
       

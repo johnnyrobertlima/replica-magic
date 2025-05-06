@@ -10,8 +10,11 @@ interface DraggableEventItemProps {
 }
 
 export function DraggableEventItem({ event, onClick }: DraggableEventItemProps) {
+  // Garantimos que o ID do evento está definido
+  const eventId = event.id || 'temp-' + Math.random().toString(36);
+  
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: event.id,
+    id: eventId,
     data: {
       event
     }

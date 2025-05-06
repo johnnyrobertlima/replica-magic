@@ -17,6 +17,7 @@ export function useDragAndDrop() {
     // Extract the CalendarEvent from the draggable item's data
     const calendarEvent = event.active.data.current?.event as CalendarEvent;
     if (calendarEvent) {
+      console.log("Iniciando arrasto do evento:", calendarEvent.id, calendarEvent.title);
       setIsDragging(true);
       setActiveDragEvent(calendarEvent);
     }
@@ -36,7 +37,20 @@ export function useDragAndDrop() {
   }, [activeDragEvent]);
 
   const handleDrop = async (date: Date) => {
-    if (!activeDragEvent) return;
+    if (!activeDragEvent) {
+      console.error("Nenhum evento ativo para arrastar");
+      return;
+    }
+    
+    if (!activeDragEvent.id) {
+      console.error("Evento sem ID não pode ser arrastado:", activeDragEvent);
+      toast({
+        variant: "destructive",
+        title: "Erro ao mover agendamento",
+        description: "O evento não possui um ID válido.",
+      });
+      return;
+    }
     
     const formattedDate = format(date, "yyyy-MM-dd");
     
@@ -115,7 +129,12 @@ export function useDragAndDrop() {
         };
       });
       
-      // Make the update API call
+      // Certifique-se que o ID do evento existe e está sendo passado corretamente
+      if (!activeDragEvent.id) {
+        throw new Error("ID do evento não definido");
+      }
+      
+      // Make the update API call with the correct event ID
       await updateContentSchedule(activeDragEvent.id, updateData);
       
       // Show success toast
