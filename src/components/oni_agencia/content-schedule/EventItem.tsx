@@ -8,12 +8,12 @@ interface EventItemProps {
 }
 
 export function EventItem({ event, onClick }: EventItemProps) {
-  // Extract all the data we need from the event
-  const { service, editorial_line, collaborator, status, product, title } = event;
+  // Extract all the data we need from the event with proper null checks
+  const { service, editorial_line, collaborator, status, product, title = "" } = event;
   
-  // Truncate the title and product name if they're too long
-  const truncatedTitle = title.length > 18 ? `${title.substring(0, 18)}...` : title;
-  const productName = product?.name ? product.name : "";
+  // Safely handle title and product name
+  const truncatedTitle = title && title.length > 18 ? `${title.substring(0, 18)}...` : title || "Sem título";
+  const productName = product?.name || "";
   const displayText = product ? `${productName} - ${truncatedTitle}` : truncatedTitle;
   
   // Calculate text color based on background color brightness
@@ -33,7 +33,7 @@ export function EventItem({ event, onClick }: EventItemProps) {
     return brightness > 0.5 ? "#000" : "#fff";
   };
   
-  const textColor = calculateTextColor(status?.color);
+  const textColor = status?.color ? calculateTextColor(status.color) : "#000";
   
   // Get the Lucide icon if a symbol is specified that matches a Lucide icon name
   const renderEditorialLineSymbol = () => {
@@ -50,16 +50,19 @@ export function EventItem({ event, onClick }: EventItemProps) {
     return <FileText className="h-3 w-3" />;
   };
   
+  // Safe service color
+  const serviceColor = service?.color || '#ccc';
+  
   return (
     <div
       onClick={onClick}
       className="h-6 text-[10px] rounded-sm hover:brightness-90 transition-all cursor-pointer w-full flex items-center overflow-hidden"
-      title={`${title} - ${service.name}${status ? ` (${status.name})` : ''}`}
+      title={`${title || "Sem título"} - ${service?.name || ""}${status ? ` (${status.name})` : ''}`}
     >
       {/* Service color block - no text */}
       <div 
         className="h-full w-6 flex-shrink-0" 
-        style={{ backgroundColor: service.color || '#ccc' }}
+        style={{ backgroundColor: serviceColor }}
       />
       
       {/* Editorial line with color and optional symbol */}
@@ -84,7 +87,7 @@ export function EventItem({ event, onClick }: EventItemProps) {
             className="bg-gray-300 h-full w-full flex items-center justify-center text-[8px] font-medium text-gray-700"
             title={collaborator?.name || "Sem responsável"}
           >
-            {collaborator?.name?.charAt(0) || "?"}
+            {collaborator?.name ? collaborator.name.charAt(0) : "?"}
           </div>
         )}
       </div>
