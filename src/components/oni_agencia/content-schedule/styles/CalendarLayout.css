@@ -81,7 +81,7 @@
   background-color: rgba(0, 0, 0, 0.05);
 }
 
-/* Custom tooltip styling for calendar days */
+/* Remove custom tooltip styles, we'll use native browser tooltip */
 [data-radix-tooltip-content] {
   z-index: 50;
 }
@@ -188,4 +188,10 @@
   background-color: #f3f4f6;
   color: #374151;
   font-weight: 500;
+}
+
+/* Safari tooltip fix */
+[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  display: block;
 }

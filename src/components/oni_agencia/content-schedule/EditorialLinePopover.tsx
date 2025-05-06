@@ -5,10 +5,18 @@ import { Button } from "@/components/ui/button";
 import { FileText } from "lucide-react";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { useEditorialLines } from "@/hooks/useOniAgenciaThemes";
+import React from "react";
 
 interface EditorialLinePopoverProps {
   events: CalendarEvent[];
 }
+
+// Create forwarded ref button for PopoverTrigger
+const PopoverButton = React.forwardRef<
+  HTMLButtonElement, 
+  React.ComponentPropsWithoutRef<typeof Button>
+>((props, ref) => <Button ref={ref} {...props} />);
+PopoverButton.displayName = "PopoverButton";
 
 export function EditorialLinePopover({ events }: EditorialLinePopoverProps) {
   const { data: editorialLines = [] } = useEditorialLines();
@@ -29,15 +37,15 @@ export function EditorialLinePopover({ events }: EditorialLinePopoverProps) {
     });
     
     setCounts(initialCounts);
-  }, [events, editorialLines]);
+  }, [events, editorialLines]); // Add proper dependency array
 
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" title="Visualizar contagem por linha editorial">
+        <PopoverButton variant="outline" size="sm" title="Visualizar contagem por linha editorial">
           <FileText className="h-4 w-4 mr-2" />
           <span>Linha Editorial</span>
-        </Button>
+        </PopoverButton>
       </PopoverTrigger>
       <PopoverContent className="w-80 bg-white border shadow-md">
         <div className="space-y-2">
