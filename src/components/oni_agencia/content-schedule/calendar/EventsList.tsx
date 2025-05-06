@@ -22,6 +22,7 @@ export function EventsList({ events, date, onEventClick }: EventsListProps) {
           event={event}
           onClick={(e) => {
             console.log("EventsList: Event clicked:", event.id);
+            e.stopPropagation(); // Prevenir propagação para garantir que o evento seja capturado aqui
             onEventClick(e, event);
           }}
         />

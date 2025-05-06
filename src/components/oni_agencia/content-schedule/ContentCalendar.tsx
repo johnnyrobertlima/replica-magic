@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { CalendarHeader } from "./calendar/CalendarHeader";
@@ -70,7 +69,9 @@ export function ContentCalendar({
 
   const handleEventClickWrapper = (event: CalendarEvent, date: Date) => {
     console.log("ContentCalendar: Event click handler called:", event.id, event.title);
-    handleEventClick(event, date);
+    setSelectedEvent(event);
+    setSelectedDate(date);
+    setIsDialogOpen(true);
   };
 
   return (

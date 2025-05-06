@@ -32,8 +32,8 @@ export function DraggableEventItem({ event, onClick }: DraggableEventItemProps) 
   
   const handleClick = (e: React.MouseEvent) => {
     if (!isDragging) {
-      // Importante: adicionar um log para verificar se este evento está sendo acionado
-      console.log("Event item clicked:", event.id, event.title);
+      // Log detalhado para depuração
+      console.log("DraggableEventItem clicked:", event.id, event.title);
       onClick(e);
     }
   };

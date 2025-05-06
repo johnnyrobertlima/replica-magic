@@ -25,6 +25,17 @@ export function EventItem({ event, onClick, className }: EventItemProps) {
     statusColor === 'black'
   );
   
+  const handleClick = (e: React.MouseEvent) => {
+    // Adicionar log para depuração
+    console.log("EventItem clicked:", event.id, event.title);
+    
+    // Parar propagação para evitar conflito com eventos de clique do calendário
+    e.stopPropagation();
+    
+    // Chamar o handler de onClick passado como propriedade
+    onClick(e);
+  };
+  
   return (
     <div 
       className={cn(
@@ -33,7 +44,7 @@ export function EventItem({ event, onClick, className }: EventItemProps) {
         isDarkColor ? "text-gray-700" : "text-gray-800",
         className
       )}
-      onClick={onClick}
+      onClick={handleClick}
       title={event.title || "Sem título"}
     >
       {event.title || "Sem título"}
