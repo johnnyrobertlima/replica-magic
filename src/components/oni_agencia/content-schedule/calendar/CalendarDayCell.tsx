@@ -118,7 +118,8 @@ export function CalendarDayCell({
           {!isHovering ? (
             <div className="flex flex-col gap-[2px]">
               <EventsList 
-                events={visibleEvents} 
+                events={visibleEvents}
+                date={date}
                 onEventClick={handleEventClick} 
               />
               
@@ -136,7 +137,8 @@ export function CalendarDayCell({
           ) : (
             /* When hovering, show ScrollArea with all events */
             <ScrollableEvents 
-              events={dayEvents} 
+              events={dayEvents}
+              date={date}
               onEventClick={handleEventClick} 
             />
           )}

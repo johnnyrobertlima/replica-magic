@@ -5,15 +5,16 @@ import { EventsList } from "./EventsList";
 
 interface ScrollableEventsProps {
   events: CalendarEvent[];
+  date: Date;
   onEventClick: (e: React.MouseEvent, event: CalendarEvent) => void;
 }
 
-export function ScrollableEvents({ events, onEventClick }: ScrollableEventsProps) {
+export function ScrollableEvents({ events, date, onEventClick }: ScrollableEventsProps) {
   if (!events || events.length === 0) return null;
   
   return (
     <ScrollArea className="h-[calc(100%-20px)]">
-      <EventsList events={events} onEventClick={onEventClick} />
+      <EventsList events={events} date={date} onEventClick={onEventClick} />
     </ScrollArea>
   );
 }
