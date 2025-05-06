@@ -3,7 +3,6 @@ import { format } from "date-fns";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { EventsList } from "./EventsList";
 import { useDroppable } from "@dnd-kit/core";
-import { useDragAndDrop } from "../hooks/useDragAndDrop";
 import React from "react";
 
 interface CalendarDayProps {
@@ -23,12 +22,11 @@ export function CalendarDay({
   onSelect,
   onEventClick
 }: CalendarDayProps) {
-  // Get the handleDrop function from our custom hook
-  const { handleDrop } = useDragAndDrop();
+  // Set up the droppable area for this day with a stable ID
+  const dropId = `day-${format(date, 'yyyy-MM-dd')}`;
   
-  // Set up the droppable area for this day
   const { setNodeRef, isOver } = useDroppable({
-    id: `day-${format(date, 'yyyy-MM-dd')}`,
+    id: dropId,
     data: { date }
   });
   

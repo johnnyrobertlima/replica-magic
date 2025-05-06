@@ -24,8 +24,8 @@ export function CalendarContainer({
   onSelect,
   onEventClick
 }: CalendarContainerProps) {
+  // Get username first - maintain hook order
   const userName = useCurrentUser();
-  const { isDragging, handleDragStart, handleDragEnd } = useDragAndDrop();
   
   // Configure sensors for drag and drop
   const sensors = useSensors(
@@ -35,6 +35,9 @@ export function CalendarContainer({
       },
     })
   );
+  
+  // Get drag-and-drop handlers
+  const { isDragging, handleDragStart, handleDragEnd } = useDragAndDrop();
 
   return (
     <DndContext 

@@ -17,15 +17,15 @@ export function useCalendarEvents(
     const dateString = format(selectedDate, 'yyyy-MM-dd');
     
     // Filter events for the selected date and remove "Publicado" and "Agendado" status events
-    let filteredEvents = events.filter(event => 
+    const filteredByDate = events.filter(event => 
       event.scheduled_date === dateString && 
       !(event.status?.name === "Publicado") &&
       !(event.status?.name === "Agendado")
     );
     
-    // Verificar eventos duplicados
-    filteredEvents = filteredEvents.reduce<CalendarEvent[]>((acc, event) => {
-      // Verificar se já temos esse evento no array
+    // Ensure we have no duplicate events
+    const uniqueEvents = filteredByDate.reduce<CalendarEvent[]>((acc, event) => {
+      // Check if this event ID is already in the accumulator
       if (!acc.some(e => e.id === event.id)) {
         acc.push(event);
       }
@@ -34,28 +34,19 @@ export function useCalendarEvents(
     
     // Apply collaborator filter if provided
     if (selectedCollaborator) {
-      filteredEvents = filteredEvents.filter(event => {
+      return uniqueEvents.filter(event => {
         // Check if the person is the main collaborator
         const isCollaborator = event.collaborator_id === selectedCollaborator;
         
-        // Check if the person is in the creators array - now with proper direct ID check
-        let isCreator = false;
-        
-        if (event.creators) {
-          // Ensure creators is always treated as an array of strings
-          const creatorsArray = Array.isArray(event.creators) ? event.creators : 
-                               (typeof event.creators === 'string' ? [event.creators] : []);
-          
-          // Direct ID check - exactly what we need
-          isCreator = creatorsArray.includes(selectedCollaborator);
-        }
+        // Check if the person is in the creators array
+        const isCreator = event.creators?.includes(selectedCollaborator) || false;
         
         // Return true if the person is either a collaborator or a creator
         return isCollaborator || isCreator;
       });
     }
     
-    return filteredEvents;
+    return uniqueEvents;
   }, [selectedDate, events, selectedCollaborator]);
   
   return {

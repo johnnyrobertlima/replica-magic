@@ -66,59 +66,54 @@ export function useDragAndDrop() {
       delete (updateData as any).created_at;
       delete (updateData as any).updated_at;
       
-      // Backup do evento original para uso em caso de erro
+      // Backup of the original event for use in case of error
       const originalEvent = { ...activeDragEvent };
       
-      // Atualizar imediatamente o evento no estado local
+      // Update the event in local state immediately
       const updatedEvent = {
         ...activeDragEvent,
         scheduled_date: formattedDate
       };
       
-      // Do optimistic updates to all relevant caches first
-      // 1. For standard query cache
-      const eventsCacheKey = ['content-schedules'];
-      const cachedEvents = queryClient.getQueryData<CalendarEvent[]>(eventsCacheKey);
+      // Immediately update all queries to reflect the change
       
-      if (cachedEvents) {
-        // Remover o evento antigo e adicionar o novo
-        const filteredEvents = cachedEvents.filter(event => event.id !== activeDragEvent.id);
-        const updatedEvents = [...filteredEvents, updatedEvent];
+      // 1. For standard query cache
+      queryClient.setQueriesData({ queryKey: ['content-schedules'] }, (old: any) => {
+        if (!old || !Array.isArray(old)) return old;
         
-        // Update the query cache with our modified data
-        queryClient.setQueryData(eventsCacheKey, updatedEvents);
-      }
+        // Remove the old event and add the new one
+        const filteredEvents = old.filter((event: CalendarEvent) => event.id !== activeDragEvent.id);
+        return [...filteredEvents, updatedEvent];
+      });
       
       // 2. For infinite query cache
-      const infiniteCacheKey = ['infinite-content-schedules'];
-      const infiniteData = queryClient.getQueryData<any>(infiniteCacheKey);
-      
-      if (infiniteData && infiniteData.pages) {
-        const updatedPages = infiniteData.pages.map((page: any) => {
-          if (page.data) {
-            // Remover o evento antigo e adicionar o novo
-            const filteredData = page.data.filter((event: CalendarEvent) => 
-              event.id !== activeDragEvent.id
-            );
-            
-            const updatedData = [...filteredData];
-            // Adicionar o evento ao array apenas se corresponder ao mesmo mês/ano da página
-            if (page.data.some((event: CalendarEvent) => 
-              event.scheduled_date.substring(0, 7) === formattedDate.substring(0, 7)
-            )) {
-              updatedData.push(updatedEvent);
-            }
-            
-            return { ...page, data: updatedData };
+      queryClient.setQueriesData({ queryKey: ['infinite-content-schedules'] }, (old: any) => {
+        if (!old || !old.pages) return old;
+        
+        const updatedPages = old.pages.map((page: any) => {
+          if (!page.data) return page;
+          
+          // Remove the old event
+          const filteredData = page.data.filter((event: CalendarEvent) => 
+            event.id !== activeDragEvent.id
+          );
+          
+          // Add the updated event to the page if it matches the date range
+          const updatedData = [...filteredData];
+          if (page.data.some((event: CalendarEvent) => 
+            event.scheduled_date.substring(0, 7) === formattedDate.substring(0, 7)
+          )) {
+            updatedData.push(updatedEvent);
           }
-          return page;
+          
+          return { ...page, data: updatedData };
         });
         
-        queryClient.setQueryData(infiniteCacheKey, {
-          ...infiniteData,
+        return {
+          ...old,
           pages: updatedPages
-        });
-      }
+        };
+      });
       
       // Make the update API call
       await updateContentSchedule(activeDragEvent.id, updateData);
@@ -129,7 +124,7 @@ export function useDragAndDrop() {
         description: "O agendamento foi movido para outra data com sucesso.",
       });
       
-      // Force data refresh after our optimistic update
+      // Force a refetch to ensure data consistency
       queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
       queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
       queryClient.invalidateQueries({ queryKey: ['scheduleHistory'] });
@@ -142,7 +137,7 @@ export function useDragAndDrop() {
         description: "Não foi possível mover o agendamento para a nova data.",
       });
       
-      // If there's an error, we should refetch to restore the correct data
+      // If there's an error, refetch to restore the correct data
       queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
       queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
     } finally {
