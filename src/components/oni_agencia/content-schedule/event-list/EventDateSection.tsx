@@ -57,9 +57,9 @@ export function EventDateSection({
                 <div className="flex items-center">
                   <div 
                     className="h-3 w-3 rounded-full mr-2" 
-                    style={{ backgroundColor: event.service.color }}
+                    style={{ backgroundColor: event.service?.color }}
                   />
-                  {event.service.name}
+                  {event.service?.name}
                 </div>
               </TableCell>
               <TableCell>
@@ -106,13 +106,9 @@ export function EventDateSection({
               </TableCell>
               <TableCell>
                 {event.status ? (
-                  <StatusBadge color={event.status.color || "#9CA3AF"}>
-                    {event.status.name}
-                  </StatusBadge>
+                  <StatusBadge status={event.status} />
                 ) : (
-                  <StatusBadge color="#9CA3AF">
-                    Pendente
-                  </StatusBadge>
+                  <StatusBadge color="#9CA3AF">Pendente</StatusBadge>
                 )}
               </TableCell>
             </TableRow>

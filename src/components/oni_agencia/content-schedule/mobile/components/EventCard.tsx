@@ -32,9 +32,10 @@ export function EventCard({ event, onClick }: EventCardProps) {
                 {event.client.name || "Cliente não informado"}
               </Badge>
             )}
-            <StatusBadge color={event.status?.color || "#9CA3AF"} className="text-xs px-1.5 py-0.5">
-              {event.status?.name || "Pendente"}
-            </StatusBadge>
+            <StatusBadge 
+              status={event.status} 
+              className="text-xs px-1.5 py-0.5"
+            />
           </div>
         </div>
         

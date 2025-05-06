@@ -47,7 +47,7 @@ const OniAgenciaControlePauta = () => {
     setSelectedCollaborator(collaboratorId);
   }, []);
   
-  // Usar o novo hook useInfiniteContentSchedules com useInfiniteQuery
+  // Usar o hook useInfiniteContentSchedules com useInfiniteQuery
   const { 
     data: infiniteSchedules,
     isLoading: isLoadingSchedules,
@@ -77,8 +77,8 @@ const OniAgenciaControlePauta = () => {
       
       queryClient.prefetchInfiniteQuery({
         queryKey: ['infiniteContentSchedules', selectedClient || null, selectedYear, selectedMonth, selectedCollaborator],
-        queryFn: ({ pageParam = nextPageParam }) => {
-          return supabase
+        queryFn: async ({ pageParam = nextPageParam }) => {
+          const { data, error } = await supabase
             .rpc('get_paginated_schedules', {
               p_client_id: selectedClient || null,
               p_year: selectedYear,
@@ -86,16 +86,23 @@ const OniAgenciaControlePauta = () => {
               p_collaborator_id: selectedCollaborator,
               p_limit: 50,
               p_offset: pageParam * 50
-            })
-            .then(result => {
-              const { data, error } = result;
-              if (error) throw error;
-              return {
-                data: (Array.isArray(data) ? data : []) as CalendarEvent[],
-                nextPage: (Array.isArray(data) && data.length >= 50) ? pageParam + 1 : undefined,
-                totalCount: Array.isArray(data) ? data.length : 0
-              };
             });
+            
+          if (error) throw error;
+          
+          // Garantir que os dados tenham as propriedades created_at e updated_at para satisfazer o tipo CalendarEvent
+          const safeData = Array.isArray(data) ? data : [];
+          const processedData = safeData.map(item => ({
+            ...item,
+            created_at: item.created_at || new Date().toISOString(),
+            updated_at: item.updated_at || new Date().toISOString()
+          })) as CalendarEvent[];
+          
+          return {
+            data: processedData,
+            nextPage: processedData.length >= 50 ? pageParam + 1 : undefined,
+            totalCount: processedData.length
+          };
         },
         initialPageParam: nextPageParam,
       });

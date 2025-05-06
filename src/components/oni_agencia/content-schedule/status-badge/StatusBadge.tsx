@@ -4,14 +4,16 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
 export interface StatusBadgeProps {
-  status: {
-    name: string;
+  status?: {
+    name?: string;
     color?: string | null;
   };
+  color?: string | null;
   className?: string;
+  children?: React.ReactNode;
 }
 
-export function StatusBadge({ status, className }: StatusBadgeProps) {
+export function StatusBadge({ status, color, className, children }: StatusBadgeProps) {
   // Função para determinar a cor do text baseada na cor de fundo
   const getTextColor = (bgColor: string | null | undefined) => {
     if (!bgColor) return "text-foreground";
@@ -29,11 +31,13 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
     return luminance > 0.5 ? "text-black" : "text-white";
   };
 
-  const textColor = getTextColor(status.color);
+  // Determinar a cor a partir do status ou diretamente do prop color
+  const badgeColor = status?.color || color;
+  const textColor = getTextColor(badgeColor);
   
-  const style = status.color ? { 
-    backgroundColor: status.color,
-    borderColor: status.color 
+  const style = badgeColor ? { 
+    backgroundColor: badgeColor,
+    borderColor: badgeColor 
   } : {};
 
   return (
@@ -41,7 +45,7 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
       className={cn("font-medium whitespace-nowrap", textColor, className)}
       style={style}
     >
-      {status.name}
+      {children || status?.name}
     </Badge>
   );
 }

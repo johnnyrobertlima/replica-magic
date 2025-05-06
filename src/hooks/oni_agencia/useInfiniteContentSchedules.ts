@@ -40,11 +40,18 @@ export function useInfiniteContentSchedules(
 
         // Verificar se o resultado é um array (tratando possíveis erros de tipo)
         const safeData = Array.isArray(data) ? data : [];
+        
+        // Garantir que os dados tenham as propriedades created_at e updated_at para satisfazer o tipo CalendarEvent
+        const processedData = safeData.map(item => ({
+          ...item,
+          created_at: item.created_at || new Date().toISOString(),
+          updated_at: item.updated_at || new Date().toISOString()
+        })) as CalendarEvent[];
 
         return {
-          data: safeData as CalendarEvent[],
-          nextPage: safeData.length >= PAGE_SIZE ? pageParam + 1 : undefined,
-          totalCount: safeData.length
+          data: processedData,
+          nextPage: processedData.length >= PAGE_SIZE ? pageParam + 1 : undefined,
+          totalCount: processedData.length
         };
       } catch (error) {
         console.error('Error in useInfiniteContentSchedules:', error);
