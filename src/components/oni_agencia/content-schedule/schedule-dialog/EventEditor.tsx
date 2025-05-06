@@ -81,8 +81,13 @@ export function EventEditor({
     onSelectChange("description", value);
   };
 
+  // Determine the tab content height based on active tab
+  const getContentHeight = () => {
+    return activeTab === "history" ? "h-[60vh]" : "h-[60vh]";
+  };
+
   return (
-    <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "details" | "status" | "history")}>
+    <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "details" | "status" | "history")} className="flex flex-col h-full">
       <TabsList className="grid w-full grid-cols-3">
         <TabsTrigger value="details">Detalhes</TabsTrigger>
         <TabsTrigger 
@@ -103,76 +108,78 @@ export function EventEditor({
         </TabsTrigger>
       </TabsList>
       
-      <TabsContent value="details">
-        <ScrollArea className="h-[60vh]">
-          <form onSubmit={onSubmit}>
-            <EventForm
-              formData={formData}
-              services={services}
-              collaborators={collaborators}
-              editorialLines={editorialLines}
-              products={products}
-              statuses={statuses}
-              clients={clients}
-              isLoadingServices={isLoadingServices}
-              isLoadingCollaborators={isLoadingCollaborators}
-              isLoadingEditorialLines={isLoadingEditorialLines}
-              isLoadingProducts={isLoadingProducts}
-              isLoadingStatuses={isLoadingStatuses}
-              isLoadingClients={isLoadingClients}
-              onInputChange={onInputChange}
-              onSelectChange={onSelectChange}
-              onDateChange={onDateChange}
-            />
-            
-            <DialogFooter>
-              <DialogActions
-                isSubmitting={isSubmitting}
-                isDeleting={isDeleting}
-                onCancel={onCancel}
-                onDelete={onDelete}
-                isEditing={true}
+      <div className="flex-grow">
+        <TabsContent value="details" className="mt-2 h-full">
+          <ScrollArea className={getContentHeight()}>
+            <form onSubmit={onSubmit}>
+              <EventForm
+                formData={formData}
+                services={services}
+                collaborators={collaborators}
+                editorialLines={editorialLines}
+                products={products}
+                statuses={statuses}
+                clients={clients}
+                isLoadingServices={isLoadingServices}
+                isLoadingCollaborators={isLoadingCollaborators}
+                isLoadingEditorialLines={isLoadingEditorialLines}
+                isLoadingProducts={isLoadingProducts}
+                isLoadingStatuses={isLoadingStatuses}
+                isLoadingClients={isLoadingClients}
+                onInputChange={onInputChange}
+                onSelectChange={onSelectChange}
+                onDateChange={onDateChange}
               />
-            </DialogFooter>
-          </form>
-        </ScrollArea>
-      </TabsContent>
-      
-      <TabsContent value="status">
-        <ScrollArea className="h-[60vh]">
-          <form onSubmit={onStatusUpdate}>
-            <StatusUpdateForm
-              event={event}
-              statuses={statuses}
-              collaborators={collaborators}
-              isLoadingStatuses={isLoadingStatuses}
-              isLoadingCollaborators={isLoadingCollaborators}
-              selectedStatus={formData.status_id}
-              selectedCollaborator={formData.collaborator_id}
-              note={note}
-              onStatusChange={(value) => onSelectChange("status_id", value)}
-              onCollaboratorChange={(value) => onSelectChange("collaborator_id", value)}
-              onNoteChange={handleNoteChange}
-            />
-            
-            <DialogFooter>
-              <DialogActions
-                isSubmitting={isSubmitting}
-                isDeleting={false}
-                onCancel={onCancel}
-                isEditing={true}
-                saveLabel="Atualizar Status"
+              
+              <DialogFooter>
+                <DialogActions
+                  isSubmitting={isSubmitting}
+                  isDeleting={isDeleting}
+                  onCancel={onCancel}
+                  onDelete={onDelete}
+                  isEditing={true}
+                />
+              </DialogFooter>
+            </form>
+          </ScrollArea>
+        </TabsContent>
+        
+        <TabsContent value="status" className="mt-2 h-full">
+          <ScrollArea className={getContentHeight()}>
+            <form onSubmit={onStatusUpdate}>
+              <StatusUpdateForm
+                event={event}
+                statuses={statuses}
+                collaborators={collaborators}
+                isLoadingStatuses={isLoadingStatuses}
+                isLoadingCollaborators={isLoadingCollaborators}
+                selectedStatus={formData.status_id}
+                selectedCollaborator={formData.collaborator_id}
+                note={note}
+                onStatusChange={(value) => onSelectChange("status_id", value)}
+                onCollaboratorChange={(value) => onSelectChange("collaborator_id", value)}
+                onNoteChange={handleNoteChange}
               />
-            </DialogFooter>
-          </form>
-        </ScrollArea>
-      </TabsContent>
-      
-      <TabsContent value="history" className="space-y-4">
-        <ScrollArea className="h-[60vh]">
-          <ScheduleHistory event={event} />
-        </ScrollArea>
-      </TabsContent>
+              
+              <DialogFooter>
+                <DialogActions
+                  isSubmitting={isSubmitting}
+                  isDeleting={false}
+                  onCancel={onCancel}
+                  isEditing={true}
+                  saveLabel="Atualizar Status"
+                />
+              </DialogFooter>
+            </form>
+          </ScrollArea>
+        </TabsContent>
+        
+        <TabsContent value="history" className="mt-2 h-full">
+          <div className="h-[60vh]">
+            <ScheduleHistory event={event} />
+          </div>
+        </TabsContent>
+      </div>
     </Tabs>
   );
 }
