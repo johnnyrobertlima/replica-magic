@@ -39,6 +39,7 @@
   scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
 }
 
+/* Enhanced scrolling behavior when hovering */
 .day-events-container::-webkit-scrollbar {
   width: 4px;
 }
@@ -50,6 +51,16 @@
 .day-events-container::-webkit-scrollbar-thumb {
   background-color: rgba(156, 163, 175, 0.5);
   border-radius: 4px;
+}
+
+/* Make scrollbar visible on hover */
+.scrollable-container::-webkit-scrollbar {
+  width: 4px;
+  opacity: 1;
+}
+
+.scrollable-container::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.8);
 }
 
 /* Styling for overflow indicator */
