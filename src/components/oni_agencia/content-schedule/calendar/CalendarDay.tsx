@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { EventsList } from "./EventsList";
 import { useDroppable } from "@dnd-kit/core";
-import React from "react";
+import React, { useCallback } from "react";
 
 interface CalendarDayProps {
   date: Date;
@@ -31,8 +31,20 @@ export function CalendarDay({
   });
   
   const dateStr = format(date, 'yyyy-MM-dd');
-  const dayEvents = events.filter(event => event.scheduled_date === dateStr);
   
+  // Melhoria de performance utilizando useCallback para funções de evento
+  const handleDayClick = useCallback(() => {
+    onSelect(date);
+  }, [date, onSelect]);
+  
+  // Create an event click handler that adapts the parameters
+  const handleEventClick = useCallback((e: React.MouseEvent, event: CalendarEvent) => {
+    e.stopPropagation();
+    onEventClick(event, date);
+  }, [date, onEventClick]);
+  
+  // Filtra eventos para esse dia e aplicando o filtro de colaborador se necessário
+  const dayEvents = events.filter(event => event.scheduled_date === dateStr);
   const filteredEvents = selectedCollaborator 
     ? dayEvents.filter(event => {
         const isCollaborator = event.collaborator_id === selectedCollaborator;
@@ -40,16 +52,6 @@ export function CalendarDay({
         return isCollaborator || isCreator;
       })
     : dayEvents;
-  
-  const handleDayClick = () => {
-    onSelect(date);
-  };
-  
-  // Create an event click handler that adapts the parameters
-  const handleEventClick = (e: React.MouseEvent, event: CalendarEvent) => {
-    e.stopPropagation();
-    onEventClick(event, date);
-  };
   
   return (
     <div 

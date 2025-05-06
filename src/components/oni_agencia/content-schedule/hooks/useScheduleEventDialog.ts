@@ -1,25 +1,27 @@
 
-import { useEffect, useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { useScheduleFormState } from "./useScheduleFormState";
 import { useScheduleMutations } from "./useScheduleMutations";
-import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
+
+interface UseScheduleEventDialogProps {
+  clientId: string;
+  selectedDate: Date;
+  events: CalendarEvent[];
+  selectedEvent?: CalendarEvent;
+  onClose: () => void;
+  onManualRefetch?: () => void; // Adicionamos essa prop
+}
 
 export function useScheduleEventDialog({
   clientId,
   selectedDate,
   events,
   selectedEvent,
-  onClose
-}: {
-  clientId: string;
-  selectedDate: Date;
-  events: CalendarEvent[];
-  selectedEvent?: CalendarEvent;
-  onClose: () => void;
-}) {
-  // Add a ref to prevent multiple selections
+  onClose,
+  onManualRefetch
+}: UseScheduleEventDialogProps) {
   const hasSelectedEventRef = useRef(false);
   const queryClient = useQueryClient();
   
@@ -44,17 +46,13 @@ export function useScheduleEventDialog({
     handleStatusUpdate,
     handleDelete
   } = useScheduleMutations({
-    onClose: () => {
-      // Force a data refresh when closing the dialog
-      queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
-      queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
-      onClose();
-    },
+    onClose,
     clientId,
-    selectedDate
+    selectedDate,
+    onManualRefetch // Passamos a função de atualização manual
   });
 
-  // Only set the selectedEvent when it comes from props and not already selected
+  // Configura o evento selecionado apenas quando ele vem das props e ainda não foi selecionado
   useEffect(() => {
     if (selectedEvent && !hasSelectedEventRef.current) {
       console.log('Setting explicitly selected event:', selectedEvent.id);
@@ -63,25 +61,25 @@ export function useScheduleEventDialog({
     }
   }, [selectedEvent, handleSelectEvent]);
 
-  // Create wrapper functions to pass the current state
+  // Wrapper para o submit que passa o evento selecionado e os dados do formulário
   const submitForm = (e: React.FormEvent) => {
-    e.preventDefault();
     console.log("Submitting form:", formData);
     return handleSubmit(e, currentSelectedEvent, formData);
   };
   
+  // Wrapper para atualizar status
   const updateStatus = (e: React.FormEvent) => {
-    e.preventDefault();
     console.log("Updating status:", formData.status_id);
     return handleStatusUpdate(e, currentSelectedEvent, formData);
   };
   
+  // Wrapper para excluir evento
   const deleteEvent = () => {
     console.log("Deleting event:", currentSelectedEvent?.id);
     return handleDelete(currentSelectedEvent);
   };
   
-  // Enhanced reset form function
+  // Função aprimorada para resetar o formulário
   const handleResetForm = () => {
     console.log("Enhanced reset form called");
     hasSelectedEventRef.current = false;

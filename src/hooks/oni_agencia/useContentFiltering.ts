@@ -3,6 +3,7 @@ import { useMemo, useState, useEffect, useCallback } from "react";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { useInfiniteContentSchedules } from "@/hooks/oni_agencia/useInfiniteContentSchedules";
 import { useServices } from "@/hooks/useOniAgenciaContentSchedules";
+import { useToast } from "@/hooks/use-toast";
 
 export function useContentFiltering(
   selectedClient: string, 
@@ -12,6 +13,8 @@ export function useContentFiltering(
 ) {
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
   const [isFullyLoaded, setIsFullyLoaded] = useState(false);
+  const [lastRefetchTime, setLastRefetchTime] = useState<number>(Date.now());
+  const { toast } = useToast();
   
   // Get services
   const { data: services = [], isLoading: isLoadingServices } = useServices();
@@ -80,10 +83,33 @@ export function useContentFiltering(
     console.log("Services filter changed:", serviceIds);
   }, []);
 
+  // Função para atualização manual com debounce para evitar múltiplas chamadas
   const handleManualRefetch = useCallback(() => {
+    const now = Date.now();
+    // Evita múltiplas atualizações em um curto período de tempo (limite de 2 segundos)
+    if (now - lastRefetchTime < 2000) {
+      console.log("Ignorando atualização manual (muito próxima da última atualização)");
+      return;
+    }
+    
+    setLastRefetchTime(now);
     setIsFullyLoaded(false); // Reset loading state on manual refresh
-    refetchSchedules();
-  }, [refetchSchedules]);
+    console.log("Executando atualização manual dos dados");
+    
+    refetchSchedules().then(() => {
+      toast({
+        title: "Dados atualizados",
+        description: "Os agendamentos foram atualizados com sucesso.",
+      });
+    }).catch(error => {
+      console.error("Erro ao atualizar os dados:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro na atualização",
+        description: "Não foi possível atualizar os agendamentos.",
+      });
+    });
+  }, [refetchSchedules, lastRefetchTime, toast]);
 
   // Show loading state until all data is loaded
   const showLoadingState = isLoadingSchedules || isFetchingNextPage || !isFullyLoaded;

@@ -18,7 +18,7 @@ const OniAgenciaControlePauta = () => {
   const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
   const { isCollapsed, toggle: toggleFilters } = useCollapsible(false);
   
-  // UseCallback for better performance
+  // UseCallback para better performance
   const handleClientChange = useCallback((clientId: string) => {
     setSelectedClient(clientId);
   }, []);
@@ -27,7 +27,7 @@ const OniAgenciaControlePauta = () => {
     setSelectedCollaborator(collaboratorId);
   }, []);
   
-  // Refetch when month/year/client changes
+  // Refetch quando mês/ano/cliente mudarem
   const handleMonthYearChange = useCallback((month: number, year: number) => {
     setSelectedMonth(month);
     setSelectedYear(year);
@@ -58,18 +58,18 @@ const OniAgenciaControlePauta = () => {
     selectedCollaborator
   );
   
-  // Configurar polling para atualização automática periodicamente
+  // Polling para atualização automática periodicamente
   useEffect(() => {
     // Refetch data every 30 seconds
     const intervalId = setInterval(() => {
       if (selectedClient) {
-        queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
-        queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
+        console.log("Executando atualização automática periódica");
+        handleManualRefetch();
       }
     }, 30000); // 30 segundos
     
     return () => clearInterval(intervalId);
-  }, [queryClient, selectedClient]);
+  }, [queryClient, selectedClient, handleManualRefetch]);
   
   return (
     <main className="container-fluid p-0 max-w-full">
@@ -113,6 +113,7 @@ const OniAgenciaControlePauta = () => {
           fetchNextPage={fetchNextPage}
           showLoadingState={showLoadingState}
           isCollapsed={isCollapsed}
+          onManualRefetch={handleManualRefetch} // Passamos a função de atualização manual
         />
       </div>
     </main>

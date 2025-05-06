@@ -1,44 +1,28 @@
 
-import { Suspense, lazy } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useState } from "react";
+import { Calendar } from "@/components/oni_agencia/content-schedule/calendar/Calendar";
+import { ContentScheduleList } from "@/components/oni_agencia/content-schedule/ContentScheduleList";
 import { CalendarEvent } from "@/types/oni-agencia";
-
-// Lazy load components for better initial loading
-const ContentCalendar = lazy(() => 
-  import("@/components/oni_agencia/content-schedule/ContentCalendar").then(
-    module => ({ default: module.ContentCalendar })
-  )
-);
-
-const OptimizedContentScheduleList = lazy(() => 
-  import("@/components/oni_agencia/content-schedule/OptimizedContentScheduleList").then(
-    module => ({ default: module.OptimizedContentScheduleList })
-  )
-);
-
-// Fallback component for Suspense
-const LoadingFallback = () => (
-  <div className="w-full h-[calc(100vh-250px)] bg-white rounded-md border shadow-sm p-4">
-    <Skeleton className="w-full h-full rounded-md" />
-  </div>
-);
+import { useDndContext } from "@/components/oni_agencia/content-schedule/hooks/useDndContext";
+import { ContentScheduleLoading } from "../ContentScheduleLoading";
 
 interface ContentAreaProps {
   viewMode: "calendar" | "list";
   filteredSchedules: CalendarEvent[];
   clientId: string;
-  month: number; 
+  month: number;
   year: number;
-  selectedCollaborator: string | null;
+  selectedCollaborator?: string | null;
   onMonthYearChange: (month: number, year: number) => void;
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
   fetchNextPage: () => void;
   showLoadingState: boolean;
   isCollapsed: boolean;
+  onManualRefetch?: () => void; // Adicionamos essa prop
 }
 
-export function ContentArea({
+export function ContentArea({ 
   viewMode,
   filteredSchedules,
   clientId,
@@ -50,35 +34,65 @@ export function ContentArea({
   isFetchingNextPage,
   fetchNextPage,
   showLoadingState,
-  isCollapsed
+  isCollapsed,
+  onManualRefetch
 }: ContentAreaProps) {
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const {
+    selectedEvent,
+    selectedDate,
+    isDialogOpen,
+    dndContext,
+    handleEventClick,
+    handleDateSelect,
+    handleDragEnd,
+    handleDialogOpenChange,
+    handleDialogClose
+  } = useDndContext({
+    clientId,
+    month,
+    year,
+    onManualRefetch // Passamos a função de atualização manual
+  });
+  
+  // Caso esteja carregando, mostra um loader
+  if (showLoadingState) {
+    return <ContentScheduleLoading isCollapsed={isCollapsed} />;
+  }
+  
+  if (viewMode === "calendar") {
+    return (
+      <div className={`pt-4 ${isCollapsed ? 'mt-0' : 'mt-4'}`}>
+        <dndContext.DndContext onDragEnd={handleDragEnd}>
+          <Calendar 
+            events={filteredSchedules}
+            month={month}
+            year={year}
+            clientId={clientId}
+            selectedCollaborator={selectedCollaborator}
+            onMonthYearChange={onMonthYearChange}
+            onDateSelect={handleDateSelect}
+            onEventClick={handleEventClick}
+            selectedDate={selectedDate}
+            selectedEvent={selectedEvent}
+            isDialogOpen={isDialogOpen}
+            onDialogOpenChange={handleDialogOpenChange}
+            onDialogClose={handleDialogClose}
+            onManualRefetch={onManualRefetch} // Passamos a função de atualização manual
+          />
+        </dndContext.DndContext>
+      </div>
+    );
+  }
+  
   return (
-    <div className={`w-full overflow-x-auto ${isCollapsed ? 'h-[calc(100vh-150px)]' : 'h-[calc(100vh-250px)]'} transition-all duration-300`}>
-      {showLoadingState ? (
-        <LoadingFallback />
-      ) : (
-        <Suspense fallback={<LoadingFallback />}>
-          {viewMode === "calendar" ? (
-            <ContentCalendar
-              events={filteredSchedules}
-              clientId={clientId || "all"} 
-              month={month}
-              year={year}
-              onMonthChange={onMonthYearChange}
-              selectedCollaborator={selectedCollaborator}
-            />
-          ) : (
-            <OptimizedContentScheduleList
-              events={filteredSchedules}
-              clientId={clientId || "all"}
-              selectedCollaborator={selectedCollaborator}
-              hasNextPage={!!hasNextPage}
-              isFetchingNextPage={isFetchingNextPage}
-              fetchNextPage={fetchNextPage}
-            />
-          )}
-        </Suspense>
-      )}
+    <div className={`pt-4 ${isCollapsed ? 'mt-0' : 'mt-4'}`}>
+      <ContentScheduleList 
+        events={filteredSchedules} 
+        clientId={clientId} 
+        selectedCollaborator={selectedCollaborator}
+        onManualRefetch={onManualRefetch} // Passamos a função de atualização manual
+      />
     </div>
   );
 }

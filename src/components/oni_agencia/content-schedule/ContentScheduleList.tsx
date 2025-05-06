@@ -14,12 +14,14 @@ interface ContentScheduleListProps {
   events: CalendarEvent[];
   clientId: string;
   selectedCollaborator?: string | null;
+  onManualRefetch?: () => void; // Adicionamos essa prop
 }
 
 export function ContentScheduleList({ 
   events, 
   clientId,
-  selectedCollaborator 
+  selectedCollaborator,
+  onManualRefetch
 }: ContentScheduleListProps) {
   const { toast } = useToast();
   const { 
@@ -91,7 +93,7 @@ export function ContentScheduleList({
     setIsDialogOpen(false);
   };
 
-  // Handle PDF export - Agora corrigido para problemas de fuso horário
+  // Handle PDF export - Corrigido para problemas de fuso horário
   const handleExportToPdf = () => {
     try {
       const clientName = "Agenda";
@@ -151,6 +153,7 @@ export function ContentScheduleList({
           events={[]}
           onClose={handleDialogClose}
           selectedEvent={selectedEvent}
+          onManualRefetch={onManualRefetch} // Passamos a função de atualização manual
         />
       )}
     </div>

@@ -21,6 +21,7 @@ interface ScheduleEventDialogProps {
   events: CalendarEvent[];
   onClose: () => void;
   selectedEvent?: CalendarEvent;
+  onManualRefetch?: () => void; // Adicionamos essa prop para receber a função de atualização
 }
 
 export function ScheduleEventDialog({
@@ -30,7 +31,8 @@ export function ScheduleEventDialog({
   selectedDate,
   events,
   onClose,
-  selectedEvent
+  selectedEvent,
+  onManualRefetch
 }: ScheduleEventDialogProps) {
   const {
     currentSelectedEvent,
@@ -50,6 +52,7 @@ export function ScheduleEventDialog({
     selectedDate,
     events,
     selectedEvent,
+    onManualRefetch, // Passamos a função de atualização manual
     onClose: () => {
       onOpenChange(false);
       onClose();

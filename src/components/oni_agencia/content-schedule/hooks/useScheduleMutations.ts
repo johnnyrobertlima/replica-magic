@@ -8,11 +8,13 @@ import { useQueryClient } from "@tanstack/react-query";
 export function useScheduleMutations({
   onClose,
   clientId,
-  selectedDate
+  selectedDate,
+  onManualRefetch // Adicionamos esse parâmetro para permitir atualização manual após operações
 }: {
   onClose: () => void;
   clientId: string;
   selectedDate: Date;
+  onManualRefetch?: () => void;
 }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -66,7 +68,7 @@ export function useScheduleMutations({
       console.log("Sanitized form data:", sanitizedData);
       
       if (currentSelectedEvent) {
-        // If we're updating an existing event
+        // Se estamos atualizando um evento existente
         console.log("Updating event:", currentSelectedEvent.id, sanitizedData);
         
         // Special handling for service_id to prevent null values
@@ -97,7 +99,7 @@ export function useScheduleMutations({
           description: "Agendamento atualizado com sucesso."
         });
       } else {
-        // For new events, service_id is required
+        // Para novos eventos, service_id é obrigatório
         if (!sanitizedData.service_id) {
           toast({
             title: "Erro",
@@ -115,9 +117,13 @@ export function useScheduleMutations({
         });
       }
       
-      // Force refetch of all related data after submission
-      queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
-      queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
+      // Executar atualização manual se a função foi fornecida
+      if (onManualRefetch) {
+        setTimeout(() => {
+          console.log("Executando atualização manual após salvar");
+          onManualRefetch();
+        }, 300);
+      }
       
       onClose();
     } catch (error) {
@@ -168,10 +174,13 @@ export function useScheduleMutations({
         description: "Status do agendamento atualizado com sucesso."
       });
       
-      // Force refetch of all relevant data
-      queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
-      queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
-      queryClient.invalidateQueries({ queryKey: ['scheduleHistory'] });
+      // Executar atualização manual se a função foi fornecida
+      if (onManualRefetch) {
+        setTimeout(() => {
+          console.log("Executando atualização manual após atualizar status");
+          onManualRefetch();
+        }, 300);
+      }
       
       onClose();
     } catch (error) {
@@ -197,9 +206,13 @@ export function useScheduleMutations({
           description: "Agendamento excluído com sucesso."
         });
         
-        // Force refetch after deletion
-        queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
-        queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
+        // Executar atualização manual se a função foi fornecida
+        if (onManualRefetch) {
+          setTimeout(() => {
+            console.log("Executando atualização manual após excluir");
+            onManualRefetch();
+          }, 300);
+        }
         
         onClose();
       }
