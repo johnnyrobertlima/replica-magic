@@ -51,6 +51,8 @@ export function useUpdateContentSchedule() {
         description: "O agendamento foi atualizado com sucesso.",
       });
       queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
+      // Também invalidar as consultas de histórico
+      queryClient.invalidateQueries({ queryKey: ['scheduleHistory'] });
     },
     onError: (error) => {
       console.error("Error updating content schedule:", error);

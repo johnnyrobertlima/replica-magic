@@ -28,7 +28,6 @@ export async function createContentSchedule(schedule: ContentScheduleFormData): 
       product_id: processedSchedule.product_id,
       status_id: processedSchedule.status_id,
       creators: processedSchedule.creators
-      // Removida a referência a capture_date
     };
     
     console.log('Creating content schedule:', createData);
@@ -58,19 +57,20 @@ export async function updateContentSchedule(id: string, schedule: Partial<Conten
     
     console.log('Updating content schedule:', id, processedSchedule);
     
+    // Fetch the existing record to compare changes
+    const { data: existingRecord, error: fetchError } = await supabase
+      .from(TABLE_NAME)
+      .select('*')
+      .eq('id', id)
+      .single();
+      
+    if (fetchError) {
+      console.error('Error fetching existing content schedule:', fetchError);
+      throw fetchError;
+    }
+    
     // Handle service_id specially to prevent nulling
     if ('service_id' in schedule && (schedule.service_id === null || schedule.service_id === "")) {
-      const { data: existingRecord, error: fetchError } = await supabase
-        .from(TABLE_NAME)
-        .select('service_id')
-        .eq('id', id)
-        .single();
-        
-      if (fetchError) {
-        console.error('Error fetching existing content schedule:', fetchError);
-        throw fetchError;
-      }
-      
       if (existingRecord && existingRecord.service_id) {
         processedSchedule.service_id = existingRecord.service_id;
         console.log('Using existing service_id value for update:', existingRecord.service_id);
@@ -80,6 +80,7 @@ export async function updateContentSchedule(id: string, schedule: Partial<Conten
       }
     }
     
+    // Update the record
     const { data, error } = await supabase
       .from(TABLE_NAME)
       .update(processedSchedule)
@@ -90,6 +91,46 @@ export async function updateContentSchedule(id: string, schedule: Partial<Conten
     if (error) {
       console.error('Error updating content schedule:', error);
       throw error;
+    }
+    
+    // Record history for important field changes
+    const fieldsToTrack = [
+      { field: 'status_id', name: 'status_id' },
+      { field: 'collaborator_id', name: 'collaborator_id' }
+    ];
+    
+    // Get current user ID
+    const { data: { user } } = await supabase.auth.getUser();
+    const userId = user?.id;
+    
+    // Process history recording for tracked fields
+    for (const fieldConfig of fieldsToTrack) {
+      const { field, name } = fieldConfig;
+      
+      if (schedule[field] !== undefined && existingRecord[field] !== schedule[field]) {
+        console.log(`Recording history for ${name} change:`, {
+          old: existingRecord[field],
+          new: schedule[field]
+        });
+        
+        // Record in history table
+        const historyEntry = {
+          schedule_id: id,
+          field_name: name,
+          old_value: existingRecord[field],
+          new_value: schedule[field],
+          changed_by: userId
+        };
+        
+        const { error: historyError } = await supabase
+          .from('oni_agencia_schedule_history')
+          .insert(historyEntry);
+          
+        if (historyError) {
+          console.error('Error recording history:', historyError);
+          // Don't throw here, just log - we don't want to fail the update if history recording fails
+        }
+      }
     }
 
     console.log('Updated content schedule:', id);

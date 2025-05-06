@@ -148,7 +148,6 @@ export function useScheduleMutations({
         editorial_line_id: currentSelectedEvent.editorial_line_id,
         product_id: currentSelectedEvent.product_id,
         creators: currentSelectedEvent.creators || []
-        // Removida a referência a capture_date
       };
       
       console.log("Updating event status:", currentSelectedEvent.id, updateData);
