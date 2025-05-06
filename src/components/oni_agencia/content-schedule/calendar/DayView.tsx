@@ -31,7 +31,7 @@ export function DayView({
   onEventClick
 }: DayViewProps) {
   const userName = useCurrentUser();
-  const { isDragging, handleDragStart, handleDragEnd } = useDragAndDrop(events, userName);
+  const { isDragging, handleDragStart, handleDragEnd } = useDragAndDrop();
   
   // Configure sensors for drag and drop
   const sensors = useSensors(

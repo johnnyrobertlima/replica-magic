@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { updateContentSchedule } from "@/services/oniAgenciaContentScheduleServices";
 import { format } from "date-fns";
+import { DragStartEvent, DragEndEvent } from "@dnd-kit/core";
 
 export function useDragAndDrop() {
   const [isDragging, setIsDragging] = useState(false);
@@ -12,12 +13,16 @@ export function useDragAndDrop() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const handleDragStart = (event: CalendarEvent) => {
-    setIsDragging(true);
-    setActiveDragEvent(event);
+  const handleDragStart = (event: DragStartEvent) => {
+    // Extract the CalendarEvent from the draggable item's data
+    const calendarEvent = event.active.data.current?.event as CalendarEvent;
+    if (calendarEvent) {
+      setIsDragging(true);
+      setActiveDragEvent(calendarEvent);
+    }
   };
 
-  const handleDragEnd = () => {
+  const handleDragEnd = (event: DragEndEvent) => {
     setIsDragging(false);
     setActiveDragEvent(null);
   };

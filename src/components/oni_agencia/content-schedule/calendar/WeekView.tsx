@@ -34,7 +34,7 @@ export function WeekView({
   onEventClick
 }: WeekViewProps) {
   const userName = useCurrentUser();
-  const { isDragging, handleDragStart, handleDragEnd } = useDragAndDrop(events, userName);
+  const { isDragging, handleDragStart, handleDragEnd } = useDragAndDrop();
   
   // Get the first day of the week (Sunday) for the current month
   const weekStart = startOfWeek(currentDate);

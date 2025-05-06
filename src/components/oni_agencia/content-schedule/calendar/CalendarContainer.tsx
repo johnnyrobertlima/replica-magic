@@ -25,7 +25,7 @@ export function CalendarContainer({
   onEventClick
 }: CalendarContainerProps) {
   const userName = useCurrentUser();
-  const { isDragging, handleDragStart, handleDragEnd } = useDragAndDrop(events, userName);
+  const { isDragging, handleDragStart, handleDragEnd } = useDragAndDrop();
   
   // Configure sensors for drag and drop
   const sensors = useSensors(
