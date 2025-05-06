@@ -11,7 +11,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useDroppable } from "@dnd-kit/core";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -38,9 +38,8 @@ export function CalendarDayCell({
   onEventClick,
   selectedCollaborator
 }: CalendarDayCellProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const dateString = format(date, 'yyyy-MM-dd');
   
   const { setNodeRef, isOver } = useDroppable({
@@ -81,11 +80,6 @@ export function CalendarDayCell({
     console.log("Event clicked:", event.id, event.title);
     onEventClick(event, date);
   };
-
-  const handleExpandClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsExpanded(!isExpanded);
-  };
   
   const handlePopoverToggle = (open: boolean) => {
     setIsPopoverOpen(open);
@@ -123,7 +117,7 @@ export function CalendarDayCell({
       {dayEvents.length > 0 ? (
         <>
           {/* When not hovering, show limited events and "more" indicator */}
-          {!isHovering && (
+          {!isHovering ? (
             <div className="flex flex-col gap-[2px]">
               {visibleEvents.map((event) => (
                 <TooltipProvider key={event.id}>
@@ -161,7 +155,7 @@ export function CalendarDayCell({
                 </TooltipProvider>
               ))}
               
-              {/* Show "more events" indicator when not hovering */}
+              {/* Show "more events" indicator when not hovering and there are more than MAX_VISIBLE_EVENTS */}
               {hiddenEventsCount > 0 && (
                 <Popover open={isPopoverOpen} onOpenChange={handlePopoverToggle}>
                   <PopoverTrigger asChild>
@@ -178,12 +172,6 @@ export function CalendarDayCell({
                   >
                     <div className="flex justify-between items-center mb-2 pb-1 border-b">
                       <h4 className="text-sm font-medium">Agendamentos de {format(date, 'dd/MM')}</h4>
-                      <button 
-                        className="text-gray-500 hover:bg-gray-100 rounded-full p-1"
-                        onClick={() => setIsPopoverOpen(false)}
-                      >
-                        <ChevronUp className="h-3 w-3" />
-                      </button>
                     </div>
                     <div className="flex flex-col gap-1">
                       {dayEvents.map((event) => (
@@ -199,10 +187,8 @@ export function CalendarDayCell({
                 </Popover>
               )}
             </div>
-          )}
-          
-          {/* When hovering, show ScrollArea with all events */}
-          {isHovering && (
+          ) : (
+            /* When hovering, show ScrollArea with all events */
             <ScrollArea className="h-[calc(100%-20px)]">
               <div className="flex flex-col gap-[2px] pr-2">
                 {dayEvents.map((event) => (
@@ -250,4 +236,3 @@ export function CalendarDayCell({
     </div>
   );
 }
-
