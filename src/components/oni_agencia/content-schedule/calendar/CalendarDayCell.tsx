@@ -56,9 +56,11 @@ export function CalendarDayCell({
     });
   }
   
+  // Constants for visible events display
   const MAX_VISIBLE_EVENTS = 3;
   const visibleEvents = dayEvents.slice(0, MAX_VISIBLE_EVENTS);
   const hiddenEventsCount = dayEvents.length - MAX_VISIBLE_EVENTS;
+  const showAllEventsOnScroll = isHovering;
   
   const handleCellClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -122,7 +124,8 @@ export function CalendarDayCell({
         <div 
           className={`flex flex-col gap-[2px] day-events-container ${isHovering ? 'scrollable-container' : ''}`}
         >
-          {dayEvents.map((event) => (
+          {/* Show all events when hovering (for scrolling), or just visible events when not */}
+          {(showAllEventsOnScroll ? dayEvents : visibleEvents).map((event) => (
             <TooltipProvider key={event.id}>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -157,6 +160,44 @@ export function CalendarDayCell({
               </Tooltip>
             </TooltipProvider>
           ))}
+          
+          {/* Show the overflow indicator only when not hovering AND there are hidden events */}
+          {!isHovering && hiddenEventsCount > 0 && (
+            <Popover open={isPopoverOpen} onOpenChange={handlePopoverToggle}>
+              <PopoverTrigger asChild>
+                <button
+                  className="text-xs text-primary font-medium px-1 py-0.5 hover:bg-gray-100 rounded flex items-center justify-between events-overflow-indicator"
+                >
+                  <span>+ {hiddenEventsCount} mais agendamento{hiddenEventsCount > 1 ? 's' : ''}</span>
+                  <ChevronDown className="h-3 w-3" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent 
+                className="w-[240px] p-2 max-h-[300px] overflow-y-auto" 
+                sideOffset={5}
+              >
+                <div className="flex justify-between items-center mb-2 pb-1 border-b">
+                  <h4 className="text-sm font-medium">Agendamentos de {format(date, 'dd/MM')}</h4>
+                  <button 
+                    className="text-gray-500 hover:bg-gray-100 rounded-full p-1"
+                    onClick={() => setIsPopoverOpen(false)}
+                  >
+                    <ChevronUp className="h-3 w-3" />
+                  </button>
+                </div>
+                <div className="flex flex-col gap-1">
+                  {dayEvents.map((event) => (
+                    <div key={event.id} className="event-item-wrapper">
+                      <EventItem 
+                        event={event}
+                        onClick={(e) => handleEventClick(e, event)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+          )}
         </div>
       ) : (
         <div className="h-[calc(100%-20px)] w-full empty-cell-area" />
