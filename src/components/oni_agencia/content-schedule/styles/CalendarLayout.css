@@ -200,3 +200,27 @@
 button[title]:hover::after {
   display: none;
 }
+
+/* Day tooltip badge styles */
+.day-tooltip {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  background-color: var(--primary);
+  color: white;
+  font-size: 0.65rem;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Fix for tooltip display on Safari and other browsers */
+button[title] {
+  position: relative;
+}

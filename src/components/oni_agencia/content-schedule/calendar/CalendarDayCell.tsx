@@ -95,14 +95,22 @@ export function CalendarDayCell({
       onMouseLeave={handleMouseLeave}
     >
       <div className="flex justify-between items-center mb-1">
-        <button 
-          className={`h-5 w-5 p-0 text-xs font-normal flex items-center justify-center rounded-full ${
-            isSelected ? 'bg-primary text-primary-foreground' : ''
-          }`}
-          title={dayTooltip}
-        >
-          {format(date, 'd')}
-        </button>
+        <div className="relative group">
+          <button 
+            className={`h-5 w-5 p-0 text-xs font-normal flex items-center justify-center rounded-full ${
+              isSelected ? 'bg-primary text-primary-foreground' : ''
+            }`}
+            title={dayTooltip}
+            aria-label={dayTooltip || `Dia ${format(date, 'd')}`}
+          >
+            {format(date, 'd')}
+          </button>
+          
+          {/* Display a visible tooltip badge for days with hidden events */}
+          {hiddenEventsCount > 0 && (
+            <span className="day-tooltip">+{hiddenEventsCount}</span>
+          )}
+        </div>
       </div>
       
       {dayEvents.length > 0 ? (
