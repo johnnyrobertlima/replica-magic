@@ -4,7 +4,7 @@ import { Calendar } from "@/components/oni_agencia/content-schedule/calendar/Cal
 import { ContentScheduleList } from "@/components/oni_agencia/content-schedule/ContentScheduleList";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { useDndContext } from "@/components/oni_agencia/content-schedule/hooks/useDndContext";
-import { ContentScheduleLoading } from "../ContentScheduleLoading";
+import { ContentScheduleLoading } from "@/components/oni_agencia/content-schedule/ContentScheduleLoading";
 
 interface ContentAreaProps {
   viewMode: "calendar" | "list";
@@ -19,7 +19,7 @@ interface ContentAreaProps {
   fetchNextPage: () => void;
   showLoadingState: boolean;
   isCollapsed: boolean;
-  onManualRefetch?: () => void; // Adicionamos essa prop
+  onManualRefetch?: () => void;
 }
 
 export function ContentArea({ 
@@ -52,7 +52,7 @@ export function ContentArea({
     clientId,
     month,
     year,
-    onManualRefetch // Passamos a função de atualização manual
+    onManualRefetch
   });
   
   // Caso esteja carregando, mostra um loader
@@ -78,7 +78,7 @@ export function ContentArea({
             isDialogOpen={isDialogOpen}
             onDialogOpenChange={handleDialogOpenChange}
             onDialogClose={handleDialogClose}
-            onManualRefetch={onManualRefetch} // Passamos a função de atualização manual
+            onManualRefetch={onManualRefetch}
           />
         </dndContext.DndContext>
       </div>
@@ -91,7 +91,7 @@ export function ContentArea({
         events={filteredSchedules} 
         clientId={clientId} 
         selectedCollaborator={selectedCollaborator}
-        onManualRefetch={onManualRefetch} // Passamos a função de atualização manual
+        onManualRefetch={onManualRefetch}
       />
     </div>
   );
