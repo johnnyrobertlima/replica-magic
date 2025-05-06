@@ -1,10 +1,9 @@
 
-import { useState } from "react";
-import { Calendar } from "@/components/oni_agencia/content-schedule/calendar/Calendar";
-import { ContentScheduleList } from "@/components/oni_agencia/content-schedule/ContentScheduleList";
+import React from 'react';
+import { ContentCalendar } from "../ContentCalendar";
+import { ContentScheduleList } from "../ContentScheduleList";
 import { CalendarEvent } from "@/types/oni-agencia";
-import { useDndContext } from "@/components/oni_agencia/content-schedule/hooks/useDndContext";
-import { ContentScheduleLoading } from "@/components/oni_agencia/content-schedule/ContentScheduleLoading";
+import { OptimizedContentScheduleList } from "../OptimizedContentScheduleList";
 
 interface ContentAreaProps {
   viewMode: "calendar" | "list";
@@ -12,7 +11,7 @@ interface ContentAreaProps {
   clientId: string;
   month: number;
   year: number;
-  selectedCollaborator?: string | null;
+  selectedCollaborator: string | null;
   onMonthYearChange: (month: number, year: number) => void;
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
@@ -22,7 +21,7 @@ interface ContentAreaProps {
   onManualRefetch?: () => void;
 }
 
-export function ContentArea({ 
+export function ContentArea({
   viewMode,
   filteredSchedules,
   clientId,
@@ -37,65 +36,30 @@ export function ContentArea({
   isCollapsed,
   onManualRefetch
 }: ContentAreaProps) {
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const {
-    selectedEvent,
-    selectedDate,
-    isDialogOpen,
-    dndContext,
-    handleEventClick,
-    handleDateSelect,
-    handleDragEnd,
-    handleDialogOpenChange,
-    handleDialogClose
-  } = useDndContext({
-    clientId,
-    month,
-    year,
-    onManualRefetch
-  });
-  
-  // Debug logs to track events count
   console.log(`ContentArea received ${filteredSchedules.length} events, showLoadingState=${showLoadingState}`);
-  
-  // Caso esteja carregando, mostra um loader
-  if (showLoadingState) {
-    return <ContentScheduleLoading isCollapsed={isCollapsed} />;
-  }
-  
-  if (viewMode === "calendar") {
-    return (
-      <div className={`pt-4 ${isCollapsed ? 'mt-0' : 'mt-4'}`}>
-        <dndContext.DndContext onDragEnd={handleDragEnd}>
-          <Calendar 
-            events={filteredSchedules}
-            month={month}
-            year={year}
-            clientId={clientId}
-            selectedCollaborator={selectedCollaborator}
-            onMonthYearChange={onMonthYearChange}
-            onDateSelect={handleDateSelect}
-            onEventClick={handleEventClick}
-            selectedDate={selectedDate}
-            selectedEvent={selectedEvent}
-            isDialogOpen={isDialogOpen}
-            onDialogOpenChange={handleDialogOpenChange}
-            onDialogClose={handleDialogClose}
-            onManualRefetch={onManualRefetch}
-          />
-        </dndContext.DndContext>
-      </div>
-    );
-  }
-  
+
+  const heightClass = isCollapsed ? "h-[calc(100vh-16rem)]" : "h-[calc(100vh-19.5rem)]";
+
   return (
-    <div className={`pt-4 ${isCollapsed ? 'mt-0' : 'mt-4'}`}>
-      <ContentScheduleList 
-        events={filteredSchedules} 
-        clientId={clientId} 
-        selectedCollaborator={selectedCollaborator}
-        onManualRefetch={onManualRefetch}
-      />
+    <div className={`w-full pt-4 ${heightClass} overflow-hidden`}>
+      {viewMode === "calendar" ? (
+        <ContentCalendar
+          events={filteredSchedules}
+          clientId={clientId}
+          month={month}
+          year={year}
+          onMonthChange={onMonthYearChange}
+          selectedCollaborator={selectedCollaborator}
+          onManualRefetch={onManualRefetch}
+        />
+      ) : (
+        <ContentScheduleList
+          events={filteredSchedules}
+          clientId={clientId}
+          selectedCollaborator={selectedCollaborator}
+          onManualRefetch={onManualRefetch}
+        />
+      )}
     </div>
   );
 }

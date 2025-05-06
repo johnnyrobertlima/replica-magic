@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { CalendarHeader } from "./calendar/CalendarHeader";
@@ -22,6 +23,7 @@ interface ContentCalendarProps {
   year: number;
   onMonthChange: (month: number, year: number) => void;
   selectedCollaborator?: string | null;
+  onManualRefetch?: () => void; // Adicionando esta prop
 }
 
 export function ContentCalendar({ 
@@ -30,7 +32,8 @@ export function ContentCalendar({
   month, 
   year, 
   onMonthChange,
-  selectedCollaborator
+  selectedCollaborator,
+  onManualRefetch // Passando esta prop
 }: ContentCalendarProps) {
   const [view, setView] = useState<"month" | "week" | "day">("month");
   
@@ -63,6 +66,11 @@ export function ContentCalendar({
     if (value === "month" || value === "week" || value === "day") {
       setView(value);
     }
+  };
+
+  const handleEventClickWrapper = (event: CalendarEvent, date: Date) => {
+    console.log("ContentCalendar: Event click handler called:", event.id, event.title);
+    handleEventClick(event, date);
   };
 
   return (
@@ -109,7 +117,7 @@ export function ContentCalendar({
             currentDate={currentDate}
             selectedCollaborator={selectedCollaborator}
             onSelect={handleDateSelect}
-            onEventClick={handleEventClick}
+            onEventClick={handleEventClickWrapper}
           />
         </>
       )}
@@ -121,7 +129,7 @@ export function ContentCalendar({
           currentDate={currentDate}
           selectedCollaborator={selectedCollaborator}
           onSelect={handleDateSelect}
-          onEventClick={handleEventClick}
+          onEventClick={handleEventClickWrapper}
           weekDays={weekDays}
         />
       )}
@@ -133,7 +141,7 @@ export function ContentCalendar({
           currentDate={currentDate}
           selectedCollaborator={selectedCollaborator}
           onSelect={handleDateSelect}
-          onEventClick={handleEventClick}
+          onEventClick={handleEventClickWrapper}
         />
       )}
       
@@ -146,6 +154,7 @@ export function ContentCalendar({
           events={currentEvents}
           onClose={handleDialogClose}
           selectedEvent={selectedEvent}
+          onManualRefetch={onManualRefetch} // Passando esta prop para atualizar os dados
         />
       )}
     </div>
