@@ -17,6 +17,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface CalendarDayCellProps {
   date: Date;
@@ -60,7 +61,6 @@ export function CalendarDayCell({
   const MAX_VISIBLE_EVENTS = 3;
   const visibleEvents = dayEvents.slice(0, MAX_VISIBLE_EVENTS);
   const hiddenEventsCount = dayEvents.length - MAX_VISIBLE_EVENTS;
-  const showAllEventsOnScroll = isHovering;
   
   const handleCellClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -121,87 +121,133 @@ export function CalendarDayCell({
       </div>
       
       {dayEvents.length > 0 ? (
-        <div 
-          className={`flex flex-col gap-[2px] day-events-container ${isHovering ? 'scrollable-container' : ''}`}
-        >
-          {/* Show all events when hovering (for scrolling), or just visible events when not */}
-          {(showAllEventsOnScroll ? dayEvents : visibleEvents).map((event) => (
-            <TooltipProvider key={event.id}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="event-item-wrapper">
-                    <DraggableEventItem 
-                      event={event}
-                      onClick={(e) => handleEventClick(e, event)}
-                    />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="max-w-[300px] bg-white border shadow-md">
-                  <div className="text-xs space-y-1">
-                    <p className="font-bold">{event.title}</p>
-                    {event.client && <p><strong>Cliente:</strong> {event.client.name}</p>}
-                    <p><strong>Serviço:</strong> {event.service?.name}</p>
-                    {event.product && <p><strong>Produto:</strong> {event.product.name}</p>}
-                    {event.collaborator && <p><strong>Responsável:</strong> {event.collaborator.name}</p>}
-                    {event.status && <p><strong>Status:</strong> {event.status.name}</p>}
-                    {event.editorial_line && <p><strong>Linha Editorial:</strong> {event.editorial_line.name}</p>}
-                    {event.execution_phase && <p><strong>Fase de Execução:</strong> {event.execution_phase}</p>}
-                    {event.description && (
-                      <div>
-                        <strong>Descrição:</strong>
-                        <p className="mt-1 text-gray-600 italic max-h-[100px] overflow-y-auto">
-                          {event.description}
-                        </p>
+        <>
+          {/* When not hovering, show limited events and "more" indicator */}
+          {!isHovering && (
+            <div className="flex flex-col gap-[2px]">
+              {visibleEvents.map((event) => (
+                <TooltipProvider key={event.id}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="event-item-wrapper">
+                        <DraggableEventItem 
+                          event={event}
+                          onClick={(e) => handleEventClick(e, event)}
+                        />
                       </div>
-                    )}
-                    <p><strong>Data:</strong> {format(new Date(event.scheduled_date), 'dd/MM/yyyy')}</p>
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ))}
-          
-          {/* Show the overflow indicator only when not hovering AND there are hidden events */}
-          {!isHovering && hiddenEventsCount > 0 && (
-            <Popover open={isPopoverOpen} onOpenChange={handlePopoverToggle}>
-              <PopoverTrigger asChild>
-                <button
-                  className="text-xs text-primary font-medium px-1 py-0.5 hover:bg-gray-100 rounded flex items-center justify-between events-overflow-indicator"
-                >
-                  <span>+ {hiddenEventsCount} mais agendamento{hiddenEventsCount > 1 ? 's' : ''}</span>
-                  <ChevronDown className="h-3 w-3" />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent 
-                className="w-[240px] p-2 max-h-[300px] overflow-y-auto" 
-                sideOffset={5}
-              >
-                <div className="flex justify-between items-center mb-2 pb-1 border-b">
-                  <h4 className="text-sm font-medium">Agendamentos de {format(date, 'dd/MM')}</h4>
-                  <button 
-                    className="text-gray-500 hover:bg-gray-100 rounded-full p-1"
-                    onClick={() => setIsPopoverOpen(false)}
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="max-w-[300px] bg-white border shadow-md">
+                      <div className="text-xs space-y-1">
+                        <p className="font-bold">{event.title}</p>
+                        {event.client && <p><strong>Cliente:</strong> {event.client.name}</p>}
+                        <p><strong>Serviço:</strong> {event.service?.name}</p>
+                        {event.product && <p><strong>Produto:</strong> {event.product.name}</p>}
+                        {event.collaborator && <p><strong>Responsável:</strong> {event.collaborator.name}</p>}
+                        {event.status && <p><strong>Status:</strong> {event.status.name}</p>}
+                        {event.editorial_line && <p><strong>Linha Editorial:</strong> {event.editorial_line.name}</p>}
+                        {event.execution_phase && <p><strong>Fase de Execução:</strong> {event.execution_phase}</p>}
+                        {event.description && (
+                          <div>
+                            <strong>Descrição:</strong>
+                            <p className="mt-1 text-gray-600 italic max-h-[100px] overflow-y-auto">
+                              {event.description}
+                            </p>
+                          </div>
+                        )}
+                        <p><strong>Data:</strong> {format(new Date(event.scheduled_date), 'dd/MM/yyyy')}</p>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ))}
+              
+              {/* Show "more events" indicator when not hovering */}
+              {hiddenEventsCount > 0 && (
+                <Popover open={isPopoverOpen} onOpenChange={handlePopoverToggle}>
+                  <PopoverTrigger asChild>
+                    <button
+                      className="text-xs text-primary font-medium px-1 py-0.5 hover:bg-gray-100 rounded flex items-center justify-between events-overflow-indicator"
+                    >
+                      <span>+ {hiddenEventsCount} mais agendamento{hiddenEventsCount > 1 ? 's' : ''}</span>
+                      <ChevronDown className="h-3 w-3" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent 
+                    className="w-[240px] p-2 max-h-[300px] overflow-y-auto" 
+                    sideOffset={5}
                   >
-                    <ChevronUp className="h-3 w-3" />
-                  </button>
-                </div>
-                <div className="flex flex-col gap-1">
-                  {dayEvents.map((event) => (
-                    <div key={event.id} className="event-item-wrapper">
-                      <EventItem 
-                        event={event}
-                        onClick={(e) => handleEventClick(e, event)}
-                      />
+                    <div className="flex justify-between items-center mb-2 pb-1 border-b">
+                      <h4 className="text-sm font-medium">Agendamentos de {format(date, 'dd/MM')}</h4>
+                      <button 
+                        className="text-gray-500 hover:bg-gray-100 rounded-full p-1"
+                        onClick={() => setIsPopoverOpen(false)}
+                      >
+                        <ChevronUp className="h-3 w-3" />
+                      </button>
                     </div>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
+                    <div className="flex flex-col gap-1">
+                      {dayEvents.map((event) => (
+                        <div key={event.id} className="event-item-wrapper">
+                          <EventItem 
+                            event={event}
+                            onClick={(e) => handleEventClick(e, event)}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              )}
+            </div>
           )}
-        </div>
+          
+          {/* When hovering, show ScrollArea with all events */}
+          {isHovering && (
+            <ScrollArea className="h-[calc(100%-20px)]">
+              <div className="flex flex-col gap-[2px] pr-2">
+                {dayEvents.map((event) => (
+                  <TooltipProvider key={event.id}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="event-item-wrapper">
+                          <DraggableEventItem 
+                            event={event}
+                            onClick={(e) => handleEventClick(e, event)}
+                          />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="max-w-[300px] bg-white border shadow-md">
+                        <div className="text-xs space-y-1">
+                          <p className="font-bold">{event.title}</p>
+                          {event.client && <p><strong>Cliente:</strong> {event.client.name}</p>}
+                          <p><strong>Serviço:</strong> {event.service?.name}</p>
+                          {event.product && <p><strong>Produto:</strong> {event.product.name}</p>}
+                          {event.collaborator && <p><strong>Responsável:</strong> {event.collaborator.name}</p>}
+                          {event.status && <p><strong>Status:</strong> {event.status.name}</p>}
+                          {event.editorial_line && <p><strong>Linha Editorial:</strong> {event.editorial_line.name}</p>}
+                          {event.execution_phase && <p><strong>Fase de Execução:</strong> {event.execution_phase}</p>}
+                          {event.description && (
+                            <div>
+                              <strong>Descrição:</strong>
+                              <p className="mt-1 text-gray-600 italic max-h-[100px] overflow-y-auto">
+                                {event.description}
+                              </p>
+                            </div>
+                          )}
+                          <p><strong>Data:</strong> {format(new Date(event.scheduled_date), 'dd/MM/yyyy')}</p>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                ))}
+              </div>
+            </ScrollArea>
+          )}
+        </>
       ) : (
         <div className="h-[calc(100%-20px)] w-full empty-cell-area" />
       )}
     </div>
   );
 }
+
