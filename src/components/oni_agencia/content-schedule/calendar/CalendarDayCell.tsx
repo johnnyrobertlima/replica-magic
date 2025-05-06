@@ -12,6 +12,11 @@ import {
 } from "@/components/ui/tooltip";
 import { useDroppable } from "@dnd-kit/core";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface CalendarDayCellProps {
   date: Date;
@@ -32,8 +37,8 @@ export function CalendarDayCell({
   onEventClick,
   selectedCollaborator
 }: CalendarDayCellProps) {
-  const [isHovering, setIsHovering] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const dateString = format(date, 'yyyy-MM-dd');
   
   const { setNodeRef, isOver } = useDroppable({
@@ -51,7 +56,7 @@ export function CalendarDayCell({
   }
   
   const MAX_VISIBLE_EVENTS = 3;
-  const visibleEvents = isExpanded ? dayEvents : dayEvents.slice(0, MAX_VISIBLE_EVENTS);
+  const visibleEvents = dayEvents.slice(0, MAX_VISIBLE_EVENTS);
   const hiddenEventsCount = dayEvents.length - MAX_VISIBLE_EVENTS;
   
   const handleCellClick = (e: React.MouseEvent) => {
@@ -79,6 +84,10 @@ export function CalendarDayCell({
     setIsExpanded(!isExpanded);
   };
   
+  const handlePopoverToggle = (open: boolean) => {
+    setIsPopoverOpen(open);
+  };
+  
   return (
     <div 
       ref={setNodeRef}
@@ -86,8 +95,6 @@ export function CalendarDayCell({
         isCurrentDay ? 'bg-blue-50' : ''
       } ${isOver ? 'bg-blue-100' : ''}`}
       onClick={handleCellClick}
-      onMouseEnter={() => setIsHovering(true)}
-      onMouseLeave={() => setIsHovering(false)}
     >
       <div className="flex justify-between items-center mb-1">
         <button 
@@ -100,7 +107,7 @@ export function CalendarDayCell({
       </div>
       
       {dayEvents.length > 0 ? (
-        <div className="flex flex-col gap-[2px] overflow-y-auto max-h-[120px] day-events-container">
+        <div className="flex flex-col gap-[2px] day-events-container">
           {visibleEvents.map((event) => (
             <TooltipProvider key={event.id}>
               <Tooltip>
@@ -137,24 +144,41 @@ export function CalendarDayCell({
             </TooltipProvider>
           ))}
           
-          {!isExpanded && hiddenEventsCount > 0 && (
-            <button
-              className="text-xs text-primary font-medium px-1 py-0.5 hover:bg-gray-100 rounded flex items-center justify-between events-overflow-indicator"
-              onClick={handleExpandClick}
-            >
-              <span>+ {hiddenEventsCount} mais agendamento{hiddenEventsCount > 1 ? 's' : ''}</span>
-              <ChevronDown className="h-3 w-3" />
-            </button>
-          )}
-          
-          {isExpanded && dayEvents.length > MAX_VISIBLE_EVENTS && (
-            <button
-              className="text-xs text-primary font-medium px-1 py-0.5 hover:bg-gray-100 rounded flex items-center justify-between events-overflow-indicator"
-              onClick={handleExpandClick}
-            >
-              <span>Mostrar menos</span>
-              <ChevronUp className="h-3 w-3" />
-            </button>
+          {hiddenEventsCount > 0 && (
+            <Popover open={isPopoverOpen} onOpenChange={handlePopoverToggle}>
+              <PopoverTrigger asChild>
+                <button
+                  className="text-xs text-primary font-medium px-1 py-0.5 hover:bg-gray-100 rounded flex items-center justify-between events-overflow-indicator"
+                >
+                  <span>+ {hiddenEventsCount} mais agendamento{hiddenEventsCount > 1 ? 's' : ''}</span>
+                  <ChevronDown className="h-3 w-3" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent 
+                className="w-[240px] p-2 max-h-[300px] overflow-y-auto" 
+                sideOffset={5}
+              >
+                <div className="flex justify-between items-center mb-2 pb-1 border-b">
+                  <h4 className="text-sm font-medium">Agendamentos de {format(date, 'dd/MM')}</h4>
+                  <button 
+                    className="text-gray-500 hover:bg-gray-100 rounded-full p-1"
+                    onClick={() => setIsPopoverOpen(false)}
+                  >
+                    <ChevronUp className="h-3 w-3" />
+                  </button>
+                </div>
+                <div className="flex flex-col gap-1">
+                  {dayEvents.map((event) => (
+                    <div key={event.id} className="event-item-wrapper">
+                      <EventItem 
+                        event={event}
+                        onClick={(e) => handleEventClick(e, event)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
           )}
         </div>
       ) : (

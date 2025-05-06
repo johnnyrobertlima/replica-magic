@@ -12,17 +12,18 @@ interface CalendarHeaderProps {
 
 export function CalendarHeader({ currentDate, onPrevMonth, onNextMonth }: CalendarHeaderProps) {
   return (
-    <div className="flex justify-between items-center p-4 border-b">
-      <h2 className="text-lg font-medium flex items-center gap-2">
-        <CalendarIcon className="h-5 w-5 text-primary" />
+    <div className="flex items-center gap-2">
+      <CalendarIcon className="h-5 w-5 text-primary" />
+      <h2 className="text-lg font-medium">
         {format(currentDate, 'MMMM yyyy', { locale: ptBR })}
       </h2>
-      <div className="flex gap-2">
+      <div className="flex gap-1 ml-2">
         <Button
           variant="outline"
           size="icon"
           onClick={onPrevMonth}
           title="Mês anterior"
+          className="h-7 w-7"
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
@@ -31,6 +32,7 @@ export function CalendarHeader({ currentDate, onPrevMonth, onNextMonth }: Calend
           size="icon"
           onClick={onNextMonth}
           title="Próximo mês"
+          className="h-7 w-7"
         >
           <ChevronRight className="h-4 w-4" />
         </Button>

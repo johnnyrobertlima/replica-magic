@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { CalendarHeader } from "./calendar/CalendarHeader";
 import { WeekDaysHeader } from "./calendar/WeekDaysHeader";
@@ -9,6 +10,10 @@ import { PautaStatusIndicator } from "./PautaStatusIndicator";
 import { ScheduleEventDialog } from "./ScheduleEventDialog";
 import { useDateSelection } from "./hooks/useDateSelection";
 import { useMonthNavigation } from "./hooks/useMonthNavigation";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Calendar, LayoutGrid, Rows } from "lucide-react";
+import { WeekView } from "./calendar/WeekView";
+import { DayView } from "./calendar/DayView";
 
 interface ContentCalendarProps {
   events: CalendarEvent[];
@@ -27,6 +32,8 @@ export function ContentCalendar({
   onMonthChange,
   selectedCollaborator
 }: ContentCalendarProps) {
+  const [view, setView] = useState<"month" | "week" | "day">("month");
+  
   const { 
     selectedDate, 
     selectedEvent, 
@@ -52,6 +59,12 @@ export function ContentCalendar({
     setIsDialogOpen(false);
   };
 
+  const handleViewChange = (value: string) => {
+    if (value === "month" || value === "week" || value === "day") {
+      setView(value);
+    }
+  };
+
   return (
     <div className="bg-white rounded-md border shadow-sm w-full h-full">
       <div className="px-4 pt-4">
@@ -63,22 +76,66 @@ export function ContentCalendar({
         />
       </div>
       
-      <CalendarHeader 
-        currentDate={currentDate}
-        onPrevMonth={handlePrevMonth}
-        onNextMonth={handleNextMonth}
-      />
+      <div className="flex justify-between items-center p-4 border-b">
+        <CalendarHeader 
+          currentDate={currentDate}
+          onPrevMonth={handlePrevMonth}
+          onNextMonth={handleNextMonth}
+        />
+        
+        <ToggleGroup type="single" value={view} onValueChange={handleViewChange} className="ml-auto">
+          <ToggleGroupItem value="month" aria-label="Visualização por mês">
+            <Calendar className="h-4 w-4 mr-1" />
+            <span className="sr-md:inline hidden">Mês</span>
+          </ToggleGroupItem>
+          <ToggleGroupItem value="week" aria-label="Visualização por semana">
+            <Rows className="h-4 w-4 mr-1" />
+            <span className="sr-md:inline hidden">Semana</span>
+          </ToggleGroupItem>
+          <ToggleGroupItem value="day" aria-label="Visualização por dia">
+            <LayoutGrid className="h-4 w-4 mr-1" />
+            <span className="sr-md:inline hidden">Dia</span>
+          </ToggleGroupItem>
+        </ToggleGroup>
+      </div>
       
-      <WeekDaysHeader weekDays={weekDays} />
+      {view === "month" && (
+        <>
+          <WeekDaysHeader weekDays={weekDays} />
+          
+          <CalendarContainer
+            events={events}
+            selectedDate={selectedDate}
+            currentDate={currentDate}
+            selectedCollaborator={selectedCollaborator}
+            onSelect={handleDateSelect}
+            onEventClick={handleEventClick}
+          />
+        </>
+      )}
       
-      <CalendarContainer
-        events={events}
-        selectedDate={selectedDate}
-        currentDate={currentDate}
-        selectedCollaborator={selectedCollaborator}
-        onSelect={handleDateSelect}
-        onEventClick={handleEventClick}
-      />
+      {view === "week" && (
+        <WeekView
+          events={events}
+          selectedDate={selectedDate}
+          currentDate={currentDate}
+          selectedCollaborator={selectedCollaborator}
+          onSelect={handleDateSelect}
+          onEventClick={handleEventClick}
+          weekDays={weekDays}
+        />
+      )}
+      
+      {view === "day" && (
+        <DayView
+          events={events}
+          selectedDate={selectedDate || currentDate}
+          currentDate={currentDate}
+          selectedCollaborator={selectedCollaborator}
+          onSelect={handleDateSelect}
+          onEventClick={handleEventClick}
+        />
+      )}
       
       {selectedDate && (
         <ScheduleEventDialog
