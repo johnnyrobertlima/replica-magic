@@ -111,7 +111,7 @@ export function WeekView({
                           <div className="text-xs space-y-1">
                             <p className="font-bold">{event.title}</p>
                             {event.client && <p><strong>Cliente:</strong> {event.client.name}</p>}
-                            <p><strong>Serviço:</strong> {event.service?.name}</p>}
+                            <p><strong>Serviço:</strong> {event.service?.name}</p>
                             {event.product && <p><strong>Produto:</strong> {event.product.name}</p>}
                             {event.collaborator && <p><strong>Responsável:</strong> {event.collaborator.name}</p>}
                             {event.status && <p><strong>Status:</strong> {event.status.name}</p>}
