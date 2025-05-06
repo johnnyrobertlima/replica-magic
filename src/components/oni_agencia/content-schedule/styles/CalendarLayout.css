@@ -47,3 +47,28 @@
 .events-overflow-indicator:hover {
   background-color: rgba(0, 0, 0, 0.05);
 }
+
+/* Estilos para informações adicionais nos cards */
+.card-client-product {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  margin-top: 2px;
+}
+
+.card-info-item {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* Ajuste para garantir que o CardDescription tenha altura adequada */
+.card-description-with-info {
+  min-height: 1.2rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+}

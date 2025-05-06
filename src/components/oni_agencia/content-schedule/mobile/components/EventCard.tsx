@@ -19,7 +19,7 @@ interface EventCardProps {
 
 export const EventCard: React.FC<EventCardProps> = ({ event, onClick }) => {
   // Safely extract values with null checks
-  const { title = "Sem título", scheduled_date, service, status, collaborator, product } = event;
+  const { title = "Sem título", scheduled_date, service, status, collaborator, product, client } = event;
   
   // Format the date
   const formattedDate = scheduled_date ? 
@@ -60,11 +60,12 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onClick }) => {
     >
       <CardHeader className="p-3 pb-2">
         <CardTitle className="text-base font-medium line-clamp-1">{title}</CardTitle>
-        {product && (
-          <CardDescription className="text-xs line-clamp-1 mt-0.5">
-            {product.name}
-          </CardDescription>
-        )}
+        {/* Agora exibimos o cliente e produto juntos na descrição do card */}
+        <CardDescription className="text-xs line-clamp-1 mt-0.5">
+          {client?.name ? `${client.name}` : "Sem cliente"}
+          {product && client?.name ? " • " : ""}
+          {product?.name}
+        </CardDescription>
       </CardHeader>
       
       <CardContent className="p-3 pt-0 pb-2">

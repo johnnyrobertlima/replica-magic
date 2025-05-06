@@ -14,10 +14,10 @@ export function MobileContentLoading() {
           className="bg-white rounded-md border p-3 overflow-hidden"
           style={{ borderLeft: '4px solid #e5e7eb' }}
         >
-          {/* Card header - title & product */}
+          {/* Card header - title & client/product */}
           <div className="mb-2">
             <Skeleton className="h-5 w-3/4 mb-1" />
-            <Skeleton className="h-3 w-2/4 mt-1" /> {/* Product line skeleton */}
+            <Skeleton className="h-3 w-2/4 mt-1" /> {/* Cliente e produto */}
           </div>
           
           {/* Card body - date & service */}
