@@ -195,3 +195,8 @@
   content: attr(data-tooltip);
   display: block;
 }
+
+/* Garantir que o título seja exibido de forma nativa no Safari */
+button[title]:hover::after {
+  display: none;
+}

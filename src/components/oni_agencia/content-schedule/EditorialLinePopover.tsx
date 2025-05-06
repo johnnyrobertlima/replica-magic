@@ -37,7 +37,7 @@ export function EditorialLinePopover({ events }: EditorialLinePopoverProps) {
     });
     
     setCounts(initialCounts);
-  }, [events, editorialLines]); // Add proper dependency array
+  }, [events, editorialLines]); // Adicionar corretamente as dependências
 
   return (
     <Popover>
