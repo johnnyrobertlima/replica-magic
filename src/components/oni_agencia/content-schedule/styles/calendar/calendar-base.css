@@ -1,64 +1,71 @@
 
-/* Base Calendar Layout Styles */
-
-/* Fixed heights for calendar cells and rows */
-.calendar-day-cell {
-  min-height: 120px;
-  max-height: 120px;
+/* Base calendar styles */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  transition: all 0.2s ease;
 }
 
-/* Mobile adjustments */
-@media (max-width: 640px) {
-  .calendar-day-cell {
+.calendar-day {
+  min-height: 100px;
+  padding: 4px;
+  border: 1px solid #f1f5f9;
+  position: relative;
+  background-color: white;
+}
+
+.calendar-day:hover {
+  background-color: #f8fafc;
+}
+
+.calendar-day .day-number {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .calendar-day {
     min-height: 80px;
-    max-height: 80px;
+    padding: 2px;
   }
 }
 
-/* Week view styles */
-.week-view-container {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  border-left: 1px solid var(--border);
-  height: calc(100vh - 300px);
-  min-height: 500px;
+/* Current day highlight */
+.calendar-day.today {
+  background-color: #f0f9ff;
+  border: 1px solid #bae6fd;
 }
 
-.week-view-day {
-  border-right: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  padding: 8px;
-  overflow-y: auto;
+/* Selected day highlight */
+.calendar-day.selected {
+  background-color: #e0f2fe;
+  border: 1px solid #7dd3fc;
 }
 
-/* Day view styles */
-.day-view-container {
-  height: calc(100vh - 300px);
-  min-height: 500px;
-  border: 1px solid var(--border);
-  padding: 12px;
-  overflow-y: auto;
+/* Days from another month */
+.calendar-day.other-month {
+  background-color: #f8fafc;
+  color: #94a3b8;
 }
 
-.day-view-hour {
-  display: flex;
-  border-bottom: 1px solid var(--border);
-  padding: 8px 0;
+/* Days with events indicator */
+.calendar-day.has-events {
+  position: relative;
 }
 
-.day-view-hour-label {
-  width: 50px;
-  font-size: 0.75rem;
-  color: var(--muted-foreground);
-  text-align: center;
-  padding-top: 4px;
-}
-
-.day-view-hour-content {
-  flex: 1;
-  padding-left: 8px;
+.calendar-day.has-events::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 6px;
+  height: 6px;
+  background-color: #3b82f6;
+  border-radius: 50%;
 }

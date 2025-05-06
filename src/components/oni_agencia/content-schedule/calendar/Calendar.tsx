@@ -44,14 +44,13 @@ export function Calendar({
 }: CalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date(year, month - 1, 1));
   
+  // FIXED: Update currentDate when month or year props change
   useEffect(() => {
     setCurrentDate(new Date(year, month - 1, 1));
   }, [month, year]);
   
   const daysInMonth = getDaysInMonth(currentDate);
   const firstDay = getDay(new Date(year, month - 1, 1));
-  const monthName = format(currentDate, 'MMMM', { locale: ptBR });
-  const yearNumber = format(currentDate, 'yyyy');
   
   const handlePrevMonth = () => {
     const prevMonth = subMonths(currentDate, 1);
@@ -67,6 +66,20 @@ export function Calendar({
     onMonthYearChange(newMonth, newYear);
   };
 
+  // FIXED: Added debugging log to track events data
+  useEffect(() => {
+    console.log(`Calendar component received ${events?.length || 0} total events for ${year}-${month}`);
+    
+    // Group events by date for debugging
+    const eventsByDate = events.reduce((acc, event) => {
+      const date = event.scheduled_date;
+      acc[date] = (acc[date] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    console.log("Events by date:", eventsByDate);
+  }, [events, month, year]);
+
   const renderCalendarDays = () => {
     const days = [];
     const daysToRender = 42; // 6 rows x 7 days
@@ -78,7 +91,7 @@ export function Calendar({
         <CalendarDay 
           key={`prev-${i}`}
           date={prevMonthDate}
-          events={[]}
+          events={[]} // Previous month days don't show events
           selectedDate={selectedDate}
           onSelect={onDateSelect}
           onEventClick={onEventClick}
@@ -94,7 +107,7 @@ export function Calendar({
         <CalendarDay 
           key={`current-${i}`}
           date={currentDayDate}
-          events={events}
+          events={events} // Pass all events, each day will filter its own
           selectedDate={selectedDate}
           onSelect={onDateSelect}
           onEventClick={onEventClick}
@@ -111,7 +124,7 @@ export function Calendar({
         <CalendarDay 
           key={`next-${i}`}
           date={nextMonthDate}
-          events={[]}
+          events={[]} // Next month days don't show events
           selectedDate={selectedDate}
           onSelect={onDateSelect}
           onEventClick={onEventClick}
@@ -134,7 +147,7 @@ export function Calendar({
         onPrevMonth={handlePrevMonth}
         onNextMonth={handleNextMonth}
       />
-      <div className="calendar-grid">
+      <div className="grid grid-cols-7 gap-px">
         <CalendarDayHeader />
         {renderCalendarDays()}
       </div>

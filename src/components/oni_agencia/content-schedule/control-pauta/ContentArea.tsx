@@ -55,6 +55,9 @@ export function ContentArea({
     onManualRefetch
   });
   
+  // Debug logs to track events count
+  console.log(`ContentArea received ${filteredSchedules.length} events, showLoadingState=${showLoadingState}`);
+  
   // Caso esteja carregando, mostra um loader
   if (showLoadingState) {
     return <ContentScheduleLoading isCollapsed={isCollapsed} />;

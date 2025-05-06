@@ -29,6 +29,9 @@ export function EventsList({ events, date, onEventClick, isDraggable = true }: E
   
   if (uniqueEvents.length === 0) return null;
 
+  // FIXED: Adicionar logs para debugging
+  console.log(`Rendering ${uniqueEvents.length} events for date ${date.toISOString().split('T')[0]}`);
+
   return (
     <div className="flex flex-col gap-[2px] pr-2 w-full">
       {uniqueEvents.map((event) => (
