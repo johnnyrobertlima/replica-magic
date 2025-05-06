@@ -17,6 +17,12 @@ interface StatusChange {
   changed_by_name: string;
 }
 
+// Type for user profile data structure
+interface UserProfile {
+  full_name: string | null;
+  email: string | null;
+}
+
 export function useCollaboratorStatusChanges() {
   const [statusChanges, setStatusChanges] = useState<StatusChange[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -41,7 +47,7 @@ export function useCollaboratorStatusChanges() {
             created_at,
             schedule_id,
             changed_by,
-            user_profiles:changed_by (full_name, email),
+            user_profiles!changed_by(full_name, email),
             oni_agencia_content_schedules:schedule_id (
               title, 
               collaborator_id,
@@ -104,9 +110,9 @@ export function useCollaboratorStatusChanges() {
         // Transform data for the grid
         const formattedChanges: StatusChange[] = data.map(item => {
           const isStatusChange = item.field_name === 'status_id';
-          const changedByName = item.user_profiles?.full_name || 
-                               item.user_profiles?.email || 
-                               'Sistema';
+          // Extract user profile data safely
+          const userProfile = item.user_profiles as UserProfile | null;
+          const changedByName = userProfile?.full_name || userProfile?.email || 'Sistema';
           
           return {
             collaborator_name: item.oni_agencia_content_schedules?.oni_agencia_collaborators?.name || 'Sem colaborador',

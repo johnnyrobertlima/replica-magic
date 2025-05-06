@@ -12,6 +12,12 @@ interface ScheduleHistory {
   changed_by_name?: string;
 }
 
+// Type for user profile data structure
+interface UserProfile {
+  full_name: string | null;
+  email: string | null;
+}
+
 export function useScheduleHistory(scheduleId: string) {
   return useQuery({
     queryKey: ['scheduleHistory', scheduleId],
@@ -26,7 +32,7 @@ export function useScheduleHistory(scheduleId: string) {
           new_value,
           changed_by,
           created_at,
-          user_profiles:changed_by (full_name, email)
+          user_profiles!changed_by(full_name, email)
         `)
         .eq('schedule_id', scheduleId)
         .order('created_at', { ascending: false });
@@ -34,8 +40,8 @@ export function useScheduleHistory(scheduleId: string) {
       if (historyError) throw historyError;
       
       // Fetch status and collaborator information for resolving IDs to names
-      const statusIds = new Set();
-      const collaboratorIds = new Set();
+      const statusIds = new Set<string>();
+      const collaboratorIds = new Set<string>();
       
       historyData.forEach(entry => {
         if (entry.field_name === 'status_id') {
@@ -48,7 +54,7 @@ export function useScheduleHistory(scheduleId: string) {
       });
       
       // Fetch status names
-      const statusMap = {};
+      const statusMap: Record<string, string> = {};
       if (statusIds.size > 0) {
         const { data: statuses } = await supabase
           .from('oni_agencia_status')
@@ -63,7 +69,7 @@ export function useScheduleHistory(scheduleId: string) {
       }
       
       // Fetch collaborator names
-      const collaboratorMap = {};
+      const collaboratorMap: Record<string, string> = {};
       if (collaboratorIds.size > 0) {
         const { data: collaborators } = await supabase
           .from('oni_agencia_collaborators')
@@ -79,6 +85,9 @@ export function useScheduleHistory(scheduleId: string) {
       
       // Map and enhance history entries with resolved names
       const enhancedHistory = historyData.map(entry => {
+        // Extract user profile data safely
+        const userProfile = entry.user_profiles as UserProfile | null;
+        
         const formattedEntry: ScheduleHistory = {
           id: entry.id,
           field_name: entry.field_name === 'status_id' ? 'Status' : 'Colaborador Responsável',
@@ -86,7 +95,7 @@ export function useScheduleHistory(scheduleId: string) {
           new_value: '',
           changed_by: entry.changed_by,
           created_at: entry.created_at,
-          changed_by_name: entry.user_profiles?.full_name || entry.user_profiles?.email || 'Sistema'
+          changed_by_name: userProfile?.full_name || userProfile?.email || 'Sistema'
         };
         
         // Resolve values to human-readable names based on field type
