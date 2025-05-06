@@ -94,11 +94,58 @@ const OniAgenciaControlePauta = () => {
           
           // Ensure that data includes created_at and updated_at properties
           const safeData = Array.isArray(data) ? data : [];
-          const processedData = safeData.map(item => ({
-            ...item,
-            created_at: item.created_at || now,
-            updated_at: item.updated_at || now
-          })) as CalendarEvent[];
+          const processedData = safeData.map(item => {
+            // Create a new object with all required properties
+            return {
+              id: item.id || '',
+              client_id: item.client_id || '',
+              service_id: item.service_id || '',
+              collaborator_id: item.collaborator_id || null,
+              title: item.title || null,
+              description: item.description || null,
+              scheduled_date: item.scheduled_date || '',
+              execution_phase: item.execution_phase || null,
+              editorial_line_id: item.editorial_line_id || null,
+              product_id: item.product_id || null,
+              status_id: item.status_id || null,
+              creators: item.creators || null,
+              created_at: now,
+              updated_at: now,
+              service: item.service_name ? {
+                id: item.service_id || '',
+                name: item.service_name || '',
+                category: item.service_category || null,
+                color: item.service_color || null
+              } : null,
+              collaborator: item.collaborator_name ? {
+                id: item.collaborator_id || '',
+                name: item.collaborator_name || '',
+                email: null,
+                photo_url: null
+              } : null,
+              editorial_line: item.editorial_line_name ? {
+                id: item.editorial_line_id || '',
+                name: item.editorial_line_name || '',
+                symbol: item.editorial_line_symbol || null,
+                color: item.editorial_line_color || null
+              } : null,
+              product: item.product_name ? {
+                id: item.product_id || '',
+                name: item.product_name || '',
+                symbol: item.product_symbol || null,
+                color: item.product_color || null
+              } : null,
+              status: item.status_name ? {
+                id: item.status_id || '',
+                name: item.status_name || '',
+                color: item.status_color || null
+              } : null,
+              client: item.client_name ? {
+                id: item.client_id || '',
+                name: item.client_name || ''
+              } : null
+            } as CalendarEvent;
+          });
           
           return {
             data: processedData,

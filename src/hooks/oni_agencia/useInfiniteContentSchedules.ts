@@ -46,13 +46,59 @@ export function useInfiniteContentSchedules(
           // Create a timestamp for now to use as fallback
           const now = new Date().toISOString();
           
+          // Since we know item might not have created_at/updated_at, create a new object
+          // that satisfies the CalendarEvent type
           return {
-            ...item,
-            // Ensure these fields are always present
-            created_at: item.created_at || now,
-            updated_at: item.updated_at || now
-          };
-        }) as CalendarEvent[];
+            id: item.id || '',
+            client_id: item.client_id || '',
+            service_id: item.service_id || '',
+            collaborator_id: item.collaborator_id || null,
+            title: item.title || null,
+            description: item.description || null,
+            scheduled_date: item.scheduled_date || '',
+            execution_phase: item.execution_phase || null,
+            editorial_line_id: item.editorial_line_id || null,
+            product_id: item.product_id || null,
+            status_id: item.status_id || null,
+            creators: item.creators || null,
+            created_at: now, // Add required properties
+            updated_at: now, // Add required properties
+            // Add nested objects if available
+            service: item.service_name ? {
+              id: item.service_id || '',
+              name: item.service_name || '',
+              category: item.service_category || null,
+              color: item.service_color || null
+            } : null,
+            collaborator: item.collaborator_name ? {
+              id: item.collaborator_id || '',
+              name: item.collaborator_name || '',
+              email: null,
+              photo_url: null
+            } : null,
+            editorial_line: item.editorial_line_name ? {
+              id: item.editorial_line_id || '',
+              name: item.editorial_line_name || '',
+              symbol: item.editorial_line_symbol || null,
+              color: item.editorial_line_color || null
+            } : null,
+            product: item.product_name ? {
+              id: item.product_id || '',
+              name: item.product_name || '',
+              symbol: item.product_symbol || null,
+              color: item.product_color || null
+            } : null,
+            status: item.status_name ? {
+              id: item.status_id || '',
+              name: item.status_name || '',
+              color: item.status_color || null
+            } : null,
+            client: item.client_name ? {
+              id: item.client_id || '',
+              name: item.client_name || ''
+            } : null
+          } as CalendarEvent;
+        });
 
         return {
           data: processedData,
