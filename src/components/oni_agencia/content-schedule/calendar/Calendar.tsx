@@ -23,7 +23,7 @@ interface CalendarProps {
   isDialogOpen: boolean;
   onDialogOpenChange: (open: boolean) => void;
   onDialogClose: () => void;
-  onManualRefetch?: () => void; // Adicionamos essa prop
+  onManualRefetch?: () => void;
 }
 
 export function Calendar({
@@ -125,7 +125,11 @@ export function Calendar({
 
   return (
     <div className="bg-white rounded-md border shadow-sm w-full">
-      <CalendarHeader month={monthName} year={yearNumber} />
+      <CalendarHeader 
+        currentDate={currentDate}
+        onPrevMonth={handlePrevMonth}
+        onNextMonth={handleNextMonth}
+      />
       <CalendarNavigation 
         onPrevMonth={handlePrevMonth}
         onNextMonth={handleNextMonth}
@@ -144,7 +148,7 @@ export function Calendar({
           events={events.filter(e => e.scheduled_date === format(selectedDate, 'yyyy-MM-dd'))}
           onClose={onDialogClose}
           selectedEvent={selectedEvent}
-          onManualRefetch={onManualRefetch} // Passamos a função de atualização manual
+          onManualRefetch={onManualRefetch}
         />
       )}
     </div>
