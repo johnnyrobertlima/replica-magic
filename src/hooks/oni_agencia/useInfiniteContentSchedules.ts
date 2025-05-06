@@ -3,26 +3,30 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
 
 // Cache time constants
 const MINUTE = 60 * 1000;
 const CACHE_TIME = 10 * MINUTE; // 10 minutos
 const STALE_TIME = 5 * MINUTE;  // 5 minutos
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 100; // Increased page size for better performance
 
 export function useInfiniteContentSchedules(
   clientId: string | null,
   year: number,
   month: number,
-  collaboratorId: string | null = null
+  collaboratorId: string | null = null,
+  autoFetchAllPages: boolean = true // New parameter to control auto-fetching behavior
 ) {
   const { toast } = useToast();
 
-  return useInfiniteQuery({
+  const infiniteQuery = useInfiniteQuery({
     queryKey: ['infiniteContentSchedules', clientId, year, month, collaboratorId],
     queryFn: async ({ pageParam = 0 }) => {
       try {
-        // Usar a função RPC otimizada
+        console.log(`Fetching page ${pageParam} of content schedules for ${year}-${month}`);
+        
+        // Use the RPC function which now returns all events for the month
         const { data, error } = await supabase
           .rpc('get_paginated_schedules', {
             p_client_id: clientId,
@@ -38,16 +42,15 @@ export function useInfiniteContentSchedules(
           throw error;
         }
 
-        // Verificar se o resultado é um array (tratando possíveis erros de tipo)
+        // Safety check - ensure data is an array
         const safeData = Array.isArray(data) ? data : [];
         
-        // Create a timestamp for now to use as fallback
+        // Create timestamps for now to use as fallback
         const now = new Date().toISOString();
         
         // Process data to ensure it includes created_at and updated_at
         const processedData = safeData.map(item => {
-          // Since we know item might not have created_at/updated_at, create a new object
-          // that satisfies the CalendarEvent type
+          // Map the data from the RPC function to our CalendarEvent type
           return {
             id: item.id || '',
             client_id: item.client_id || '',
@@ -61,8 +64,8 @@ export function useInfiniteContentSchedules(
             product_id: item.product_id || null,
             status_id: item.status_id || null,
             creators: item.creators || null,
-            created_at: item.created_at || now, // Add fallback value
-            updated_at: item.updated_at || now, // Add fallback value
+            created_at: (item as any).created_at || now, // Type assertion to avoid TS error
+            updated_at: (item as any).updated_at || now, // Type assertion to avoid TS error
             // Add nested objects if available
             service: item.service_name ? {
               id: item.service_id || '',
@@ -100,10 +103,15 @@ export function useInfiniteContentSchedules(
           } as CalendarEvent;
         });
 
+        // Determine if there are more pages
+        const hasMorePages = processedData.length >= PAGE_SIZE;
+        console.log(`Fetched ${processedData.length} events for page ${pageParam}. Has more: ${hasMorePages}`);
+
         return {
           data: processedData,
-          nextPage: processedData.length >= PAGE_SIZE ? pageParam + 1 : undefined,
-          totalCount: processedData.length
+          nextPage: hasMorePages ? pageParam + 1 : undefined,
+          totalCount: processedData.length,
+          isLastPage: !hasMorePages
         };
       } catch (error) {
         console.error('Error in useInfiniteContentSchedules:', error);
@@ -128,4 +136,25 @@ export function useInfiniteContentSchedules(
       }
     }
   });
+
+  // Auto-fetch all pages when requested
+  useEffect(() => {
+    if (autoFetchAllPages && 
+        infiniteQuery.hasNextPage && 
+        !infiniteQuery.isFetchingNextPage && 
+        !infiniteQuery.isLoading && 
+        infiniteQuery.data) {
+      console.log("Auto-fetching next page of content schedules");
+      infiniteQuery.fetchNextPage();
+    }
+  }, [
+    autoFetchAllPages,
+    infiniteQuery.hasNextPage,
+    infiniteQuery.isFetchingNextPage,
+    infiniteQuery.isLoading,
+    infiniteQuery.data,
+    infiniteQuery.fetchNextPage
+  ]);
+
+  return infiniteQuery;
 }

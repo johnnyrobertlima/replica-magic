@@ -1,43 +1,53 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { ChevronDown } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 interface LoadMoreIndicatorProps {
   hasMore: boolean;
   isLoadingMore: boolean;
   onLoadMore?: () => void;
-  loadMoreRef: React.RefObject<HTMLDivElement>;
+  loadMoreRef?: React.RefObject<HTMLDivElement>;
+  hideWhenNoMoreData?: boolean; // New prop to control visibility
 }
 
 export function LoadMoreIndicator({ 
   hasMore, 
   isLoadingMore, 
   onLoadMore,
-  loadMoreRef
+  loadMoreRef,
+  hideWhenNoMoreData = true // Default to true
 }: LoadMoreIndicatorProps) {
-  if (!hasMore) return null;
-
+  // If there's no more data and we want to hide the component
+  if (!hasMore && hideWhenNoMoreData) {
+    return null;
+  }
+  
   return (
-    <div
-      ref={loadMoreRef}
-      className="w-full flex justify-center py-4"
+    <div 
+      ref={loadMoreRef} 
+      className="flex justify-center py-4"
     >
-      {isLoadingMore ? (
-        <div className="flex items-center justify-center py-4">
-          <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
-          <span className="ml-2 text-sm text-muted-foreground">Carregando mais...</span>
-        </div>
-      ) : (
-        <Button 
-          variant="outline" 
-          size="sm"
+      {hasMore ? (
+        <Button
+          variant="outline"
           onClick={onLoadMore}
-          className="text-xs flex items-center"
+          disabled={isLoadingMore}
+          className="w-full max-w-[200px]"
         >
-          <ChevronDown className="h-4 w-4 mr-1" />
-          Carregar mais
+          {isLoadingMore ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Carregando...
+            </>
+          ) : (
+            'Carregar mais'
+          )}
         </Button>
+      ) : (
+        <span className="text-sm text-muted-foreground">
+          Todos os eventos carregados
+        </span>
       )}
     </div>
   );

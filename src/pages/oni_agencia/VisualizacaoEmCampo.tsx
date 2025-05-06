@@ -11,14 +11,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useInfiniteContentSchedules } from "@/hooks/oni_agencia/useInfiniteContentSchedules";
 import { CalendarEvent } from "@/types/oni-agencia";
 
-// Lazy loading do componente de lista para mobile
+// Lazy loading for mobile list component
 const MobileContentScheduleList = lazy(() => 
   import('@/components/oni_agencia/content-schedule/mobile/MobileContentScheduleList').then(module => ({ 
     default: module.MobileContentScheduleList 
   }))
 );
 
-// Componente de fallback durante carregamento
+// Loading fallback component
 const LoadingFallback = () => (
   <div className="bg-white rounded-lg shadow-sm p-4 w-full h-[calc(100vh-200px)]">
     <Skeleton className="w-full h-full rounded-md" />
@@ -32,21 +32,24 @@ const VisualizacaoEmCampo = () => {
   const [selectedMonth, setSelectedMonth] = useState<number>(currentDate.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
   const [selectedCollaborator, setSelectedCollaborator] = useState<string | null>(null);
-  const { isCollapsed, toggle: toggleFilters } = useCollapsible(true); // Iniciar com filtros recolhidos
+  const { isCollapsed, toggle: toggleFilters } = useCollapsible(true); // Start with collapsed filters
+  const [isFullyLoaded, setIsFullyLoaded] = useState(false);
   
-  // Consulta otimizada de clientes com cache eficiente
+  // Optimized clients query
   const { data: clients = [] } = useClients();
   
-  // UseCallback para melhorar a performance
+  // UseCallback for better performance
   const handleClientChange = useCallback((clientId: string) => {
     setSelectedClient(clientId);
+    setIsFullyLoaded(false); // Reset loading state when client changes
   }, []);
 
   const handleCollaboratorChange = useCallback((collaboratorId: string | null) => {
     setSelectedCollaborator(collaboratorId);
+    setIsFullyLoaded(false); // Reset loading state when collaborator changes
   }, []);
   
-  // Hook otimizado com infinite query
+  // Enhanced hook with auto-fetching enabled
   const { 
     data: infiniteSchedules,
     isLoading,
@@ -59,22 +62,35 @@ const VisualizacaoEmCampo = () => {
     selectedClient || null, 
     selectedYear, 
     selectedMonth,
-    selectedCollaborator
+    selectedCollaborator,
+    true // Enable auto-fetching of all pages
   );
   
-  // Aplainar os dados paginados
+  // Monitor loading state to know when all data is fully loaded
+  useEffect(() => {
+    if (infiniteSchedules?.pages && !hasNextPage && !isFetchingNextPage && !isLoading) {
+      setIsFullyLoaded(true);
+      console.log("Mobile view: All content schedules for the month fully loaded!");
+    } else {
+      setIsFullyLoaded(false);
+    }
+  }, [infiniteSchedules, hasNextPage, isFetchingNextPage, isLoading]);
+  
+  // Flatten the paginated data
   const flattenedSchedules = useMemo(() => {
     if (!infiniteSchedules?.pages) return [] as CalendarEvent[];
     return infiniteSchedules.pages.flatMap(page => page.data) as CalendarEvent[];
   }, [infiniteSchedules]);
 
-  // Refetch quando mês/ano/cliente muda
+  // Refetch when month/year/client changes
   const handleMonthYearChange = useCallback((month: number, year: number) => {
+    setIsFullyLoaded(false); // Reset loading state when date changes
     setSelectedMonth(month);
     setSelectedYear(year);
   }, []);
 
   const handleManualRefetch = useCallback(() => {
+    setIsFullyLoaded(false); // Reset loading state on manual refresh
     toast({
       title: "Atualizando dados",
       description: "Buscando os agendamentos mais recentes...",
@@ -83,21 +99,8 @@ const VisualizacaoEmCampo = () => {
     refetch();
   }, [refetch, toast]);
 
-  // Exibir mensagem de erro caso ocorra
-  useEffect(() => {
-    const pagesWithErrors = infiniteSchedules?.pages.filter(page => 
-      page && typeof page === 'object' && 'error' in page
-    );
-    
-    if (pagesWithErrors && pagesWithErrors.length > 0) {
-      toast({
-        title: "Erro ao carregar dados",
-        description: "Não foi possível carregar os agendamentos. Tente novamente mais tarde.",
-        variant: "destructive",
-        duration: 5000,
-      });
-    }
-  }, [infiniteSchedules, toast]);
+  // Show loading state until all data is loaded
+  const showLoadingState = isLoading || isFetchingNextPage || !isFullyLoaded;
   
   return (
     <main className="container-fluid p-0 max-w-full bg-gray-50 min-h-screen">
@@ -115,7 +118,7 @@ const VisualizacaoEmCampo = () => {
               title="Atualizar agendamentos"
               className="flex items-center"
             >
-              <RefreshCw className={`h-4 w-4 ${isRefetching ? 'animate-spin' : ''} mr-1`} />
+              <RefreshCw className={`h-4 w-4 ${isRefetching || isFetchingNextPage ? 'animate-spin' : ''} mr-1`} />
               <span className="sr-md:inline hidden">Atualizar</span>
             </Button>
           </div>
@@ -137,17 +140,21 @@ const VisualizacaoEmCampo = () => {
         </div>
         
         <div className={`w-full overflow-x-auto bg-gray-50 rounded-lg transition-all duration-300 ${isCollapsed ? 'h-[calc(100vh-180px)]' : 'h-[calc(100vh-280px)]'}`}>
-          <Suspense fallback={<LoadingFallback />}>
-            <MobileContentScheduleList
-              events={flattenedSchedules}
-              clientId={selectedClient || "all"}
-              selectedCollaborator={selectedCollaborator}
-              isLoading={isLoading && !isFetchingNextPage}
-              hasMore={!!hasNextPage}
-              onLoadMore={() => fetchNextPage()}
-              isLoadingMore={isFetchingNextPage}
-            />
-          </Suspense>
+          {showLoadingState ? (
+            <LoadingFallback />
+          ) : (
+            <Suspense fallback={<LoadingFallback />}>
+              <MobileContentScheduleList
+                events={flattenedSchedules}
+                clientId={selectedClient || "all"}
+                selectedCollaborator={selectedCollaborator}
+                isLoading={false} // We're handling loading state at this level now
+                hasMore={false} // Auto-fetching will handle this so no manual loading needed
+                onLoadMore={() => {}} // No need for manual load more now
+                isLoadingMore={false}
+              />
+            </Suspense>
+          )}
         </div>
       </div>
     </main>

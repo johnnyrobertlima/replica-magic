@@ -12,15 +12,13 @@ import { ProductsPopover } from "@/components/oni_agencia/content-schedule/Produ
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useInfiniteContentSchedules } from "@/hooks/oni_agencia/useInfiniteContentSchedules";
-import { queryClient } from "@/lib/queryClient";
-import { supabase } from "@/integrations/supabase/client";
 import { CalendarEvent } from "@/types/oni-agencia";
 
-// Lazy load components para melhorar o carregamento inicial
+// Lazy load components for better initial loading
 const ContentCalendar = lazy(() => import("@/components/oni_agencia/content-schedule/ContentCalendar").then(module => ({ default: module.ContentCalendar })));
 const OptimizedContentScheduleList = lazy(() => import("@/components/oni_agencia/content-schedule/OptimizedContentScheduleList").then(module => ({ default: module.OptimizedContentScheduleList })));
 
-// Componente de fallback para Suspense
+// Fallback component for Suspense
 const LoadingFallback = () => (
   <div className="w-full h-[calc(100vh-250px)] bg-white rounded-md border shadow-sm p-4">
     <Skeleton className="w-full h-full rounded-md" />
@@ -35,19 +33,22 @@ const OniAgenciaControlePauta = () => {
   const [selectedCollaborator, setSelectedCollaborator] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
   const { isCollapsed, toggle: toggleFilters } = useCollapsible(false);
+  const [isFullyLoaded, setIsFullyLoaded] = useState(false);
   
   const { data: clients = [], isLoading: isLoadingClients } = useClients();
   
-  // UseCallback para melhorar a performance
+  // UseCallback for better performance
   const handleClientChange = useCallback((clientId: string) => {
     setSelectedClient(clientId);
+    setIsFullyLoaded(false); // Reset loading state when client changes
   }, []);
 
   const handleCollaboratorChange = useCallback((collaboratorId: string | null) => {
     setSelectedCollaborator(collaboratorId);
+    setIsFullyLoaded(false); // Reset loading state when collaborator changes
   }, []);
   
-  // Usar o hook useInfiniteContentSchedules com useInfiniteQuery
+  // Use the enhanced infinite query hook with auto-fetching enabled
   const { 
     data: infiniteSchedules,
     isLoading: isLoadingSchedules,
@@ -60,112 +61,38 @@ const OniAgenciaControlePauta = () => {
     selectedClient || null, 
     selectedYear, 
     selectedMonth,
-    selectedCollaborator
+    selectedCollaborator,
+    true // Enable auto-fetching of all pages
   );
   
-  // Aplainar os dados paginados para uso nos componentes
+  // Monitor loading state to know when all data is fully loaded
+  useEffect(() => {
+    // Set isFullyLoaded to true when:
+    // 1. We have data AND
+    // 2. Either there's no more pages OR we're not fetching next page
+    if (infiniteSchedules?.pages && !hasNextPage && !isFetchingNextPage && !isLoadingSchedules) {
+      setIsFullyLoaded(true);
+      console.log("All content schedules for the month fully loaded!");
+    } else {
+      setIsFullyLoaded(false);
+    }
+  }, [infiniteSchedules, hasNextPage, isFetchingNextPage, isLoadingSchedules]);
+  
+  // Flatten the paginated data for use in components
   const flattenedSchedules = useMemo(() => {
     if (!infiniteSchedules?.pages) return [] as CalendarEvent[];
     return infiniteSchedules.pages.flatMap(page => page.data) as CalendarEvent[];
   }, [infiniteSchedules]);
   
-  // Prefetch da próxima página quando necessário
-  useEffect(() => {
-    if (hasNextPage && !isLoadingSchedules && !isFetchingNextPage && infiniteSchedules?.pages) {
-      const currentPageParam = infiniteSchedules?.pageParams[infiniteSchedules.pageParams.length - 1];
-      const nextPageParam = typeof currentPageParam === 'number' ? currentPageParam + 1 : 1;
-      
-      queryClient.prefetchInfiniteQuery({
-        queryKey: ['infiniteContentSchedules', selectedClient || null, selectedYear, selectedMonth, selectedCollaborator],
-        queryFn: async ({ pageParam = nextPageParam }) => {
-          const { data, error } = await supabase
-            .rpc('get_paginated_schedules', {
-              p_client_id: selectedClient || null,
-              p_year: selectedYear,
-              p_month: selectedMonth,
-              p_collaborator_id: selectedCollaborator,
-              p_limit: 50,
-              p_offset: pageParam * 50
-            });
-            
-          if (error) throw error;
-          
-          // Create a timestamp for now to use as fallback
-          const now = new Date().toISOString();
-          
-          // Ensure that data includes created_at and updated_at properties
-          const safeData = Array.isArray(data) ? data : [];
-          const processedData = safeData.map(item => {
-            // Create a new object with all required properties
-            return {
-              id: item.id || '',
-              client_id: item.client_id || '',
-              service_id: item.service_id || '',
-              collaborator_id: item.collaborator_id || null,
-              title: item.title || null,
-              description: item.description || null,
-              scheduled_date: item.scheduled_date || '',
-              execution_phase: item.execution_phase || null,
-              editorial_line_id: item.editorial_line_id || null,
-              product_id: item.product_id || null,
-              status_id: item.status_id || null,
-              creators: item.creators || null,
-              created_at: item.created_at || now,
-              updated_at: item.updated_at || now,
-              service: item.service_name ? {
-                id: item.service_id || '',
-                name: item.service_name || '',
-                category: item.service_category || null,
-                color: item.service_color || null
-              } : null,
-              collaborator: item.collaborator_name ? {
-                id: item.collaborator_id || '',
-                name: item.collaborator_name || '',
-                email: null,
-                photo_url: null
-              } : null,
-              editorial_line: item.editorial_line_name ? {
-                id: item.editorial_line_id || '',
-                name: item.editorial_line_name || '',
-                symbol: item.editorial_line_symbol || null,
-                color: item.editorial_line_color || null
-              } : null,
-              product: item.product_name ? {
-                id: item.product_id || '',
-                name: item.product_name || '',
-                symbol: item.product_symbol || null,
-                color: item.product_color || null
-              } : null,
-              status: item.status_name ? {
-                id: item.status_id || '',
-                name: item.status_name || '',
-                color: item.status_color || null
-              } : null,
-              client: item.client_name ? {
-                id: item.client_id || '',
-                name: item.client_name || ''
-              } : null
-            } as CalendarEvent;
-          });
-          
-          return {
-            data: processedData,
-            nextPage: processedData.length >= 50 ? pageParam + 1 : undefined,
-            totalCount: processedData.length
-          };
-        },
-        initialPageParam: nextPageParam,
-      });
-    }
-  }, [infiniteSchedules, hasNextPage, isLoadingSchedules, isFetchingNextPage, selectedClient, selectedYear, selectedMonth, selectedCollaborator]);
-  
-  // Refetch quando mês/ano/cliente muda
+  // Refetch when month/year/client changes
   const handleMonthYearChange = useCallback((month: number, year: number) => {
+    setIsFullyLoaded(false); // Reset loading state when date changes
     setSelectedMonth(month);
     setSelectedYear(year);
   }, []);
 
   const handleManualRefetch = useCallback(() => {
+    setIsFullyLoaded(false); // Reset loading state on manual refresh
     refetchSchedules();
   }, [refetchSchedules]);
 
@@ -174,6 +101,9 @@ const OniAgenciaControlePauta = () => {
       setViewMode(value);
     }
   }, []);
+  
+  // Show loading state until all data is loaded
+  const showLoadingState = isLoadingSchedules || isFetchingNextPage || !isFullyLoaded;
   
   return (
     <main className="container-fluid p-0 max-w-full">
@@ -211,7 +141,7 @@ const OniAgenciaControlePauta = () => {
               disabled={isRefetching || isLoadingSchedules}
               title="Atualizar agendamentos"
             >
-              <RefreshCw className={`h-4 w-4 ${isRefetching ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-4 w-4 ${isRefetching || isFetchingNextPage ? 'animate-spin' : ''}`} />
               <span className="ml-2">Atualizar</span>
             </Button>
           </div>
@@ -231,27 +161,31 @@ const OniAgenciaControlePauta = () => {
         />
         
         <div className={`w-full overflow-x-auto ${isCollapsed ? 'h-[calc(100vh-150px)]' : 'h-[calc(100vh-250px)]'} transition-all duration-300`}>
-          <Suspense fallback={<LoadingFallback />}>
-            {viewMode === "calendar" ? (
-              <ContentCalendar
-                events={flattenedSchedules}
-                clientId={selectedClient || "all"} 
-                month={selectedMonth}
-                year={selectedYear}
-                onMonthChange={handleMonthYearChange}
-                selectedCollaborator={selectedCollaborator}
-              />
-            ) : (
-              <OptimizedContentScheduleList
-                events={flattenedSchedules}
-                clientId={selectedClient || "all"}
-                selectedCollaborator={selectedCollaborator}
-                hasNextPage={!!hasNextPage}
-                isFetchingNextPage={isFetchingNextPage}
-                fetchNextPage={() => fetchNextPage()}
-              />
-            )}
-          </Suspense>
+          {showLoadingState ? (
+            <LoadingFallback />
+          ) : (
+            <Suspense fallback={<LoadingFallback />}>
+              {viewMode === "calendar" ? (
+                <ContentCalendar
+                  events={flattenedSchedules}
+                  clientId={selectedClient || "all"} 
+                  month={selectedMonth}
+                  year={selectedYear}
+                  onMonthChange={handleMonthYearChange}
+                  selectedCollaborator={selectedCollaborator}
+                />
+              ) : (
+                <OptimizedContentScheduleList
+                  events={flattenedSchedules}
+                  clientId={selectedClient || "all"}
+                  selectedCollaborator={selectedCollaborator}
+                  hasNextPage={!!hasNextPage}
+                  isFetchingNextPage={isFetchingNextPage}
+                  fetchNextPage={() => fetchNextPage()}
+                />
+              )}
+            </Suspense>
+          )}
         </div>
       </div>
     </main>

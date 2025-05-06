@@ -1,5 +1,5 @@
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { ScheduleEventDialog } from "./ScheduleEventDialog";
 import { useDateSelection } from "./hooks/useDateSelection";
@@ -9,8 +9,6 @@ import { EmptyState } from "./event-list/EmptyState";
 import { ExportButton } from "./event-list/ExportButton";
 import { parseISO } from "date-fns";
 import { VirtualizedEventList } from "./virtualized/VirtualizedEventList";
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
 
 interface OptimizedContentScheduleListProps {
   events: CalendarEvent[];
@@ -41,7 +39,7 @@ export function OptimizedContentScheduleList({
     setSelectedEvent
   } = useDateSelection();
 
-  // Filter events based on selectedCollaborator and remove "Publicado" and "Agendado" status events
+  // Filter events based on selectedCollaborator and remove specific status events
   const filteredEvents = useMemo(() => {
     // First filter out events with "Publicado" and "Agendado" status
     const withoutExcludedStatuses = events.filter(event => 
@@ -85,7 +83,7 @@ export function OptimizedContentScheduleList({
     try {
       const clientName = "Agenda";
       
-      // Usamos filteredEvents para garantir que exportamos exatamente o que o usuário está vendo
+      // Export exactly what the user is seeing
       exportToPdf({
         filename: `${clientName}_cronograma_conteudo.pdf`,
         content: null,
@@ -125,24 +123,7 @@ export function OptimizedContentScheduleList({
             onEventClick={handleEventItemClick}
           />
           
-          {hasNextPage && (
-            <div className="flex justify-center my-4">
-              <Button
-                variant="outline"
-                onClick={() => fetchNextPage?.()}
-                disabled={isFetchingNextPage}
-              >
-                {isFetchingNextPage ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Carregando...
-                  </>
-                ) : (
-                  'Carregar mais'
-                )}
-              </Button>
-            </div>
-          )}
+          {/* No need for the Load More button since we auto-fetch all pages */}
         </div>
       </div>
       
