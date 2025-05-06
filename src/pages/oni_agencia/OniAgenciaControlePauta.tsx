@@ -32,44 +32,24 @@ const OniAgenciaControlePauta = () => {
   const [selectedMonth, setSelectedMonth] = useState<number>(currentDate.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
   const [selectedCollaborator, setSelectedCollaborator] = useState<string | null>(null);
-  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
   const { isCollapsed, toggle: toggleFilters } = useCollapsible(false);
   const [isFullyLoaded, setIsFullyLoaded] = useState(false);
-  const [hasInteractedWithFilters, setHasInteractedWithFilters] = useState(false);
   
   const { data: clients = [], isLoading: isLoadingClients } = useClients();
   
   // UseCallback for better performance
   const handleClientChange = useCallback((clientId: string) => {
     setSelectedClient(clientId);
-    setHasInteractedWithFilters(true);
     setIsFullyLoaded(false); // Reset loading state when client changes
   }, []);
 
   const handleCollaboratorChange = useCallback((collaboratorId: string | null) => {
     setSelectedCollaborator(collaboratorId);
-    setHasInteractedWithFilters(true);
     setIsFullyLoaded(false); // Reset loading state when collaborator changes
   }, []);
   
-  const handleServicesChange = useCallback((serviceIds: string[]) => {
-    setSelectedServiceIds(serviceIds);
-    setHasInteractedWithFilters(true);
-    setIsFullyLoaded(false); // Reset loading state when services change
-  }, []);
-
-  // Handle period change (combined month and year)
-  const handlePeriodChange = useCallback((month: number, year: number) => {
-    setSelectedMonth(month);
-    setSelectedYear(year);
-    setHasInteractedWithFilters(true);
-    setIsFullyLoaded(false); // Reset loading state when period changes
-  }, []);
-  
   // Use the enhanced infinite query hook with auto-fetching enabled
-  // Initial load: pass null for year and month to get all data
-  // After filter interaction: pass actual values
   const { 
     data: infiniteSchedules,
     isLoading: isLoadingSchedules,
@@ -80,11 +60,10 @@ const OniAgenciaControlePauta = () => {
     isRefetching
   } = useInfiniteContentSchedules(
     selectedClient || null, 
-    hasInteractedWithFilters ? selectedYear : null, 
-    hasInteractedWithFilters ? selectedMonth : null,
+    selectedYear, 
+    selectedMonth,
     selectedCollaborator,
-    true, // Enable auto-fetching of all pages
-    hasInteractedWithFilters ? selectedServiceIds : []
+    true // Enable auto-fetching of all pages
   );
   
   // Monitor loading state to know when all data is fully loaded
@@ -103,7 +82,7 @@ const OniAgenciaControlePauta = () => {
   // Flatten the paginated data for use in components
   const flattenedSchedules = useMemo(() => {
     if (!infiniteSchedules?.pages) return [] as CalendarEvent[];
-    return infiniteSchedules.pages.flatMap((page) => page.data as CalendarEvent[]);
+    return infiniteSchedules.pages.flatMap(page => page.data) as CalendarEvent[];
   }, [infiniteSchedules]);
   
   // Refetch when month/year/client changes
@@ -111,7 +90,6 @@ const OniAgenciaControlePauta = () => {
     setIsFullyLoaded(false); // Reset loading state when date changes
     setSelectedMonth(month);
     setSelectedYear(year);
-    setHasInteractedWithFilters(true);
   }, []);
 
   const handleManualRefetch = useCallback(() => {
@@ -175,13 +153,10 @@ const OniAgenciaControlePauta = () => {
           selectedMonth={selectedMonth}
           selectedYear={selectedYear}
           selectedCollaborator={selectedCollaborator}
-          selectedServiceIds={selectedServiceIds}
           onClientChange={handleClientChange}
           onMonthChange={setSelectedMonth}
           onYearChange={setSelectedYear}
           onCollaboratorChange={handleCollaboratorChange}
-          onServicesChange={handleServicesChange}
-          onPeriodChange={handlePeriodChange}
           isCollapsed={isCollapsed}
           onToggleCollapse={toggleFilters}
         />

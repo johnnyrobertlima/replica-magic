@@ -1,134 +1,130 @@
 
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { 
-  getAllContentSchedulesPaginated, 
-  getContentSchedulesPaginated 
-} from "@/services/oniAgenciaContentScheduleServices";
-import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
 
 // Cache time constants
 const MINUTE = 60 * 1000;
-const CACHE_TIME = 120 * MINUTE; // 2 horas
-const STALE_TIME = 30 * MINUTE;  // 30 minutos
-const PAGE_SIZE = 50; // Tamanho da página para paginação
+const CACHE_TIME = 10 * MINUTE; // 10 minutos
+const STALE_TIME = 5 * MINUTE;  // 5 minutos
+const PAGE_SIZE = 100; // Increased page size for better performance
 
-// Define interfaces for better type safety
-interface FetchPageResult {
-  data: CalendarEvent[];
-  page: number;
-  hasMore: boolean;
-  totalItems: number;
-}
-
-/**
- * Hook otimizado para buscar agendamentos de conteúdo com paginação
- */
 export function useInfiniteContentSchedules(
   clientId: string | null,
-  year: number | null = null, // Make optional
-  month: number | null = null, // Make optional
-  selectedCollaborator: string | null = null,
-  autoFetch: boolean = false,
-  serviceIds: string[] = []
+  year: number,
+  month: number,
+  collaboratorId: string | null = null,
+  autoFetchAllPages: boolean = true // New parameter to control auto-fetching behavior
 ) {
-  const [totalItems, setTotalItems] = useState(0);
-  const [allItems, setAllItems] = useState<CalendarEvent[]>([]);
   const { toast } = useToast();
-  
-  // Determinar se é uma consulta para todos os clientes ou para um cliente específico
-  const isAllClients = !clientId || clientId === "";
-  
-  // Determine if we're doing a filtered query or loading all data
-  const isFilteredQuery = !!year && !!month;
-  
-  // Consulta paginada com suporte a cache eficiente
-  const result = useInfiniteQuery<FetchPageResult>({
-    queryKey: [
-      'optimizedContentSchedules', 
-      isAllClients ? 'all' : clientId, 
-      year || 'all', 
-      month || 'all', 
-      selectedCollaborator, 
-      serviceIds.length > 0 ? serviceIds : 'all'
-    ],
-    queryFn: async ({ pageParam }) => {
+
+  const infiniteQuery = useInfiniteQuery({
+    queryKey: ['infiniteContentSchedules', clientId, year, month, collaboratorId],
+    queryFn: async ({ pageParam = 0 }) => {
       try {
-        // Selecionar a função apropriada com base no clientId
-        const fetchFunction = isAllClients 
-          ? getAllContentSchedulesPaginated 
-          : getContentSchedulesPaginated;
+        console.log(`Fetching page ${pageParam} of content schedules for ${year}-${month}`);
         
-        let data: CalendarEvent[];
-        const currentPage = pageParam as number;
-        
-        // Parâmetros para a função de consulta
-        if (isFilteredQuery) {
-          // If we have year and month filters, use them
-          const params = isAllClients 
-            ? [year!, month!, currentPage, PAGE_SIZE, selectedCollaborator, serviceIds] 
-            : [clientId as string, year!, month!, currentPage, PAGE_SIZE, selectedCollaborator, serviceIds];
-          
-          // @ts-ignore - Os parâmetros são dinâmicos
-          data = await fetchFunction(...params);
-        } else {
-          // If no filters, fetch all data - parameters change based on API requirements
-          const params = isAllClients 
-            ? [null, null, currentPage, PAGE_SIZE, selectedCollaborator, serviceIds] 
-            : [clientId as string, null, null, currentPage, PAGE_SIZE, selectedCollaborator, serviceIds];
-          
-          // @ts-ignore - Os parâmetros são dinâmicos
-          data = await fetchFunction(...params);
+        // Use the RPC function which now returns all events for the month
+        const { data, error } = await supabase
+          .rpc('get_paginated_schedules', {
+            p_client_id: clientId,
+            p_year: year,
+            p_month: month,
+            p_collaborator_id: collaboratorId,
+            p_limit: PAGE_SIZE,
+            p_offset: pageParam * PAGE_SIZE
+          });
+
+        if (error) {
+          console.error('Error fetching content schedules:', error);
+          throw error;
         }
+
+        // Safety check - ensure data is an array
+        const safeData = Array.isArray(data) ? data : [];
         
-        // Verificar se data é um array válido
-        if (!data || !Array.isArray(data)) {
-          console.error('Resposta inválida da API:', data);
+        // Create timestamps for now to use as fallback
+        const now = new Date().toISOString();
+        
+        // Process data to ensure it includes created_at and updated_at
+        const processedData = safeData.map(item => {
+          // Map the data from the RPC function to our CalendarEvent type
           return {
-            data: [],
-            page: currentPage,
-            hasMore: false,
-            totalItems: 0
-          };
-        }
-        
-        // Atualizar o estado com os dados recebidos
-        if (currentPage === 1) {
-          setAllItems(data);
-        } else {
-          setAllItems(prev => [...prev, ...data]);
-        }
-        
-        // Atualizar o total de itens (se disponível na resposta)
-        if (data.length < PAGE_SIZE) {
-          setTotalItems((currentPage - 1) * PAGE_SIZE + data.length);
-        } else {
-          setTotalItems(currentPage * PAGE_SIZE + 1); // Indica que há mais páginas
-        }
-        
+            id: item.id || '',
+            client_id: item.client_id || '',
+            service_id: item.service_id || '',
+            collaborator_id: item.collaborator_id || null,
+            title: item.title || null,
+            description: item.description || null,
+            scheduled_date: item.scheduled_date || '',
+            execution_phase: item.execution_phase || null,
+            editorial_line_id: item.editorial_line_id || null,
+            product_id: item.product_id || null,
+            status_id: item.status_id || null,
+            creators: item.creators || null,
+            created_at: (item as any).created_at || now, // Type assertion to avoid TS error
+            updated_at: (item as any).updated_at || now, // Type assertion to avoid TS error
+            // Add nested objects if available
+            service: item.service_name ? {
+              id: item.service_id || '',
+              name: item.service_name || '',
+              category: item.service_category || null,
+              color: item.service_color || null
+            } : null,
+            collaborator: item.collaborator_name ? {
+              id: item.collaborator_id || '',
+              name: item.collaborator_name || '',
+              email: null,
+              photo_url: null
+            } : null,
+            editorial_line: item.editorial_line_name ? {
+              id: item.editorial_line_id || '',
+              name: item.editorial_line_name || '',
+              symbol: item.editorial_line_symbol || null,
+              color: item.editorial_line_color || null
+            } : null,
+            product: item.product_name ? {
+              id: item.product_id || '',
+              name: item.product_name || '',
+              symbol: item.product_symbol || null,
+              color: item.product_color || null
+            } : null,
+            status: item.status_name ? {
+              id: item.status_id || '',
+              name: item.status_name || '',
+              color: item.status_color || null
+            } : null,
+            client: item.client_name ? {
+              id: item.client_id || '',
+              name: item.client_name || ''
+            } : null
+          } as CalendarEvent;
+        });
+
+        // Determine if there are more pages
+        const hasMorePages = processedData.length >= PAGE_SIZE;
+        console.log(`Fetched ${processedData.length} events for page ${pageParam}. Has more: ${hasMorePages}`);
+
         return {
-          data,
-          page: currentPage,
-          hasMore: data.length === PAGE_SIZE,
-          totalItems: totalItems
+          data: processedData,
+          nextPage: hasMorePages ? pageParam + 1 : undefined,
+          totalCount: processedData.length,
+          isLastPage: !hasMorePages
         };
       } catch (error) {
         console.error('Error in useInfiniteContentSchedules:', error);
         throw error;
       }
     },
-    getNextPageParam: (lastPage) => {
-      return lastPage.hasMore ? lastPage.page + 1 : undefined;
-    },
-    initialPageParam: 1,
-    enabled: autoFetch,
+    getNextPageParam: (lastPage) => lastPage.nextPage,
     staleTime: STALE_TIME,
     gcTime: CACHE_TIME,
     refetchOnWindowFocus: false,
-    retry: 3,
+    retry: 1,
     retryDelay: attempt => Math.min(attempt * 1000, 3000),
-    refetchInterval: false,
+    initialPageParam: 0,
     meta: {
       errorHandler: (error: any) => {
         console.error('Erro ao carregar agendamentos:', error);
@@ -140,32 +136,25 @@ export function useInfiniteContentSchedules(
       }
     }
   });
-  
-  // Handle errors directly instead of trying to access result.meta
+
+  // Auto-fetch all pages when requested
   useEffect(() => {
-    if (result.error) {
-      console.error('Erro ao carregar agendamentos:', result.error);
-      toast({
-        title: "Erro ao carregar dados",
-        description: "Não foi possível carregar os agendamentos. Verifique sua conexão e tente novamente.",
-        variant: "destructive",
-      });
+    if (autoFetchAllPages && 
+        infiniteQuery.hasNextPage && 
+        !infiniteQuery.isFetchingNextPage && 
+        !infiniteQuery.isLoading && 
+        infiniteQuery.data) {
+      console.log("Auto-fetching next page of content schedules");
+      infiniteQuery.fetchNextPage();
     }
-  }, [result.error, toast]);
-  
-  // Funções auxiliares para manipulação de paginação
-  const loadMore = () => {
-    if (result.hasNextPage && !result.isFetching) {
-      result.fetchNextPage();
-    }
-  };
-  
-  return {
-    ...result,
-    allItems,
-    totalItems,
-    hasMore: result.hasNextPage || false,
-    loadMore,
-    isLoadingMore: result.isFetchingNextPage && result.hasNextPage,
-  };
+  }, [
+    autoFetchAllPages,
+    infiniteQuery.hasNextPage,
+    infiniteQuery.isFetchingNextPage,
+    infiniteQuery.isLoading,
+    infiniteQuery.data,
+    infiniteQuery.fetchNextPage
+  ]);
+
+  return infiniteQuery;
 }

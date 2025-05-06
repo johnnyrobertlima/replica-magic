@@ -7,60 +7,31 @@ import { getBaseQuery } from "./baseQuery";
  * para melhorar a performance e reduzir a carga no banco de dados
  */
 export async function getAllContentSchedulesPaginated(
-  year: number | null, 
-  month: number | null, 
+  year: number, 
+  month: number, 
   page: number = 1,
-  pageSize: number = 50,
-  selectedCollaborator: string | null = null,
-  serviceIds: string[] = []
+  pageSize: number = 50
 ): Promise<CalendarEvent[]> {
   try {
-    let query = getBaseQuery();
-    
-    // Apply date filters only if year and month are provided
-    if (year !== null && month !== null) {
-      // Calculate the start and end dates for the given month
-      const startDate = new Date(year, month - 1, 1);
-      const endDate = new Date(year, month, 0); // Last day of the month
-      
-      query = query
-        .gte('scheduled_date', startDate.toISOString().split('T')[0])
-        .lte('scheduled_date', endDate.toISOString().split('T')[0]);
-      
-      console.log(`Fetching paginated events for all clients in date range:`, {
-        startDate: startDate.toISOString().split('T')[0],
-        endDate: endDate.toISOString().split('T')[0],
-        page,
-        pageSize,
-        selectedCollaborator,
-        serviceIds
-      });
-    } else {
-      console.log(`Fetching all paginated events for all clients`, {
-        page,
-        pageSize,
-        selectedCollaborator,
-        serviceIds
-      });
-    }
-
+    // Calculate the start and end dates for the given month
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0); // Last day of the month
     const offset = (page - 1) * pageSize;
 
-    // Order by scheduled_date
-    query = query.order('scheduled_date', { ascending: true });
-      
-    // Adicionar filtro de colaborador se especificado
-    if (selectedCollaborator) {
-      query = query.or(`collaborator_id.eq.${selectedCollaborator},creators.cs.{${selectedCollaborator}}`);
-    }
-    
-    // Adicionar filtro de serviços se especificado
-    if (serviceIds && serviceIds.length > 0) {
-      query = query.in('service_id', serviceIds);
-    }
-    
-    // Finalizar a consulta com paginação
-    const { data, error } = await query.range(offset, offset + pageSize - 1);
+    console.log(`Fetching paginated events for all clients in date range:`, {
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0],
+      page,
+      pageSize,
+      offset
+    });
+
+    // Consulta paginada para reduzir o volume de dados transferidos
+    const { data, error } = await getBaseQuery()
+      .gte('scheduled_date', startDate.toISOString().split('T')[0])
+      .lte('scheduled_date', endDate.toISOString().split('T')[0])
+      .order('scheduled_date', { ascending: true })
+      .range(offset, offset + pageSize - 1);
 
     if (error) {
       console.error('Error fetching all content schedules paginated:', error);
@@ -68,11 +39,11 @@ export async function getAllContentSchedulesPaginated(
     }
 
     if (!data || data.length === 0) {
-      console.log(`No content schedules found for the specified filters (page ${page})`);
+      console.log(`No content schedules found for month ${month}/${year} (page ${page})`);
       return [];
     }
     
-    console.log(`Fetched ${data.length} content schedules from page ${page}`);
+    console.log(`Fetched ${data.length} content schedules from page ${page} for month ${month}/${year}`);
     
     // Normalizar os dados para garantir consistência
     const safeData = data.map(item => {

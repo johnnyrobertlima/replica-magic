@@ -11,31 +11,21 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { ChevronUp, ChevronDown, Calendar } from "lucide-react";
+import { ChevronUp, ChevronDown } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useClients } from "@/hooks/useOniAgenciaClients";
 import { useCollaborators } from "@/hooks/useOniAgenciaContentSchedules";
-import { ServiceMultiSelect } from "./ServiceMultiSelect";
 import { Loader2 } from "lucide-react";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
 
 interface ContentScheduleFiltersProps {
   selectedClient: string;
   selectedMonth: number;
   selectedYear: number;
   selectedCollaborator?: string | null;
-  selectedServiceIds?: string[];
   onClientChange: (clientId: string) => void;
   onMonthChange: (month: number) => void;
   onYearChange: (year: number) => void;
   onCollaboratorChange?: (collaboratorId: string | null) => void;
-  onServicesChange?: (serviceIds: string[]) => void;
-  onPeriodChange?: (month: number, year: number) => void;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
   hideClientFilter?: boolean; // Optional prop
@@ -46,76 +36,47 @@ export function ContentScheduleFilters({
   selectedMonth,
   selectedYear,
   selectedCollaborator,
-  selectedServiceIds = [],
   onClientChange,
   onMonthChange,
   onYearChange,
   onCollaboratorChange,
-  onServicesChange,
-  onPeriodChange,
   isCollapsed = false,
   onToggleCollapse,
   hideClientFilter = false
 }: ContentScheduleFiltersProps) {
   const { data: clients = [], isLoading: isLoadingClients } = useClients();
   const { data: collaborators = [], isLoading: isLoadingCollaborators } = useCollaborators();
-  const [dateOpen, setDateOpen] = useState(false);
   
-  // Generate the month names for selection
-  const getMonthNames = () => {
+  const getMonthOptions = () => {
     const months = [];
-    for (let i = 0; i < 12; i++) {
-      const date = new Date(2023, i, 1);
-      months.push(format(date, 'LLLL', { locale: ptBR }));
+    for (let i = 1; i <= 12; i++) {
+      const date = new Date(2023, i - 1, 1);
+      months.push({
+        value: i.toString(),
+        label: format(date, 'MMMM', { locale: ptBR })
+      });
     }
     return months;
   };
-
-  const monthNames = getMonthNames();
+  
+  const getYearOptions = () => {
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    
+    for (let i = currentYear - 2; i <= currentYear + 2; i++) {
+      years.push({
+        value: i.toString(),
+        label: i.toString()
+      });
+    }
+    
+    return years;
+  };
   
   const handleCollaboratorChange = (value: string) => {
     if (onCollaboratorChange) {
       onCollaboratorChange(value === "all" ? null : value);
     }
-  };
-  
-  const handleServicesChange = (serviceIds: string[]) => {
-    if (onServicesChange) {
-      onServicesChange(serviceIds);
-    }
-  };
-  
-  // Handle month selection in date picker
-  const handleMonthSelection = (monthIndex: number) => {
-    const newMonth = monthIndex + 1; // Convert from 0-based to 1-based
-    if (onPeriodChange) {
-      onPeriodChange(newMonth, selectedYear);
-    } else {
-      onMonthChange(newMonth);
-    }
-    setDateOpen(false);
-  };
-
-  // Handle year selection in date picker
-  const handleYearSelection = (year: number) => {
-    if (onPeriodChange) {
-      onPeriodChange(selectedMonth, year);
-    } else {
-      onYearChange(year);
-    }
-    setDateOpen(false);
-  };
-
-  // Generate years array for selection
-  const getYears = () => {
-    const currentYear = new Date().getFullYear();
-    return [
-      currentYear - 2,
-      currentYear - 1,
-      currentYear,
-      currentYear + 1,
-      currentYear + 2
-    ];
   };
   
   return (
@@ -134,7 +95,7 @@ export function ContentScheduleFilters({
       </div>
       
       <CollapsibleContent>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-white rounded-b-md border shadow-sm">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-white rounded-b-md border shadow-sm">
           {!hideClientFilter && (
             <div className="space-y-2">
               <Label htmlFor="client-select">Cliente</Label>
@@ -190,76 +151,43 @@ export function ContentScheduleFilters({
               </SelectContent>
             </Select>
           </div>
-
+          
           <div className="space-y-2">
-            <Label htmlFor="service-select">Tipo de conteúdo</Label>
-            <ServiceMultiSelect 
-              value={selectedServiceIds}
-              onChange={handleServicesChange}
-              placeholder="Selecione tipos de conteúdo..."
-              className="content-type-select"
-            />
+            <Label htmlFor="month-select">Mês</Label>
+            <Select
+              value={selectedMonth.toString()}
+              onValueChange={(value) => onMonthChange(parseInt(value))}
+            >
+              <SelectTrigger id="month-select" className="w-full">
+                <SelectValue placeholder="Selecione o mês" />
+              </SelectTrigger>
+              <SelectContent>
+                {getMonthOptions().map((month) => (
+                  <SelectItem key={month.value} value={month.value}>
+                    {month.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="period-select">Período</Label>
-            <Popover open={dateOpen} onOpenChange={setDateOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  id="period-select"
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal bg-white",
-                    !selectedMonth && !selectedYear && "text-muted-foreground"
-                  )}
-                >
-                  <Calendar className="mr-2 h-4 w-4" />
-                  {selectedMonth && selectedYear ? (
-                    <>
-                      {monthNames[selectedMonth - 1]} de {selectedYear}
-                    </>
-                  ) : (
-                    <span>Selecione mês/ano...</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-4 bg-white" align="start">
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="text-sm font-medium mb-2">Mês</h4>
-                    <div className="grid grid-cols-3 gap-2">
-                      {monthNames.map((month, i) => (
-                        <Button
-                          key={i}
-                          variant={selectedMonth === i + 1 ? "default" : "outline"}
-                          size="sm"
-                          className="bg-white hover:bg-gray-100"
-                          onClick={() => handleMonthSelection(i)}
-                        >
-                          {month}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium mb-2">Ano</h4>
-                    <div className="flex gap-2">
-                      {getYears().map((year) => (
-                        <Button
-                          key={year}
-                          variant={selectedYear === year ? "default" : "outline"}
-                          size="sm"
-                          className="bg-white hover:bg-gray-100"
-                          onClick={() => handleYearSelection(year)}
-                        >
-                          {year}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
+            <Label htmlFor="year-select">Ano</Label>
+            <Select
+              value={selectedYear.toString()}
+              onValueChange={(value) => onYearChange(parseInt(value))}
+            >
+              <SelectTrigger id="year-select" className="w-full">
+                <SelectValue placeholder="Selecione o ano" />
+              </SelectTrigger>
+              <SelectContent>
+                {getYearOptions().map((year) => (
+                  <SelectItem key={year.value} value={year.value}>
+                    {year.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </CollapsibleContent>
