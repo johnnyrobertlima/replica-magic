@@ -23,6 +23,15 @@ export function useCalendarEvents(
       !(event.status?.name === "Agendado")
     );
     
+    // Verificar eventos duplicados
+    filteredEvents = filteredEvents.reduce<CalendarEvent[]>((acc, event) => {
+      // Verificar se já temos esse evento no array
+      if (!acc.some(e => e.id === event.id)) {
+        acc.push(event);
+      }
+      return acc;
+    }, []);
+    
     // Apply collaborator filter if provided
     if (selectedCollaborator) {
       filteredEvents = filteredEvents.filter(event => {
@@ -39,19 +48,6 @@ export function useCalendarEvents(
           
           // Direct ID check - exactly what we need
           isCreator = creatorsArray.includes(selectedCollaborator);
-        }
-        
-        // Add debug logging for better visibility
-        if (event.title === "teste" || event.title === " ") {
-          console.log("useCalendarEvents filtering:", {
-            eventTitle: event.title,
-            collaborator_id: event.collaborator_id,
-            creators: event.creators,
-            selectedCollaborator,
-            isCollaborator,
-            isCreator,
-            shouldShow: isCollaborator || isCreator
-          });
         }
         
         // Return true if the person is either a collaborator or a creator

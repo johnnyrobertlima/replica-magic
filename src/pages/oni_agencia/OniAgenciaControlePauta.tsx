@@ -1,14 +1,16 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { OniAgenciaMenu } from "@/components/oni_agencia/OniAgenciaMenu";
 import { ContentScheduleFilters } from "@/components/oni_agencia/content-schedule/ContentScheduleFilters";
 import { useCollapsible } from "@/components/oni_agencia/content-schedule/hooks/useCollapsible";
 import { ControlPautaHeader } from "@/components/oni_agencia/content-schedule/control-pauta/ControlPautaHeader";
 import { ContentArea } from "@/components/oni_agencia/content-schedule/control-pauta/ContentArea";
 import { useContentFiltering } from "@/hooks/oni_agencia/useContentFiltering";
+import { useQueryClient } from "@tanstack/react-query";
 
 const OniAgenciaControlePauta = () => {
   const currentDate = new Date();
+  const queryClient = useQueryClient();
   const [selectedClient, setSelectedClient] = useState<string>("");
   const [selectedMonth, setSelectedMonth] = useState<number>(currentDate.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
@@ -55,6 +57,19 @@ const OniAgenciaControlePauta = () => {
     selectedYear,
     selectedCollaborator
   );
+  
+  // Configurar polling para atualização automática periodicamente
+  useEffect(() => {
+    // Refetch data every 30 seconds
+    const intervalId = setInterval(() => {
+      if (selectedClient) {
+        queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
+        queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
+      }
+    }, 30000); // 30 segundos
+    
+    return () => clearInterval(intervalId);
+  }, [queryClient, selectedClient]);
   
   return (
     <main className="container-fluid p-0 max-w-full">

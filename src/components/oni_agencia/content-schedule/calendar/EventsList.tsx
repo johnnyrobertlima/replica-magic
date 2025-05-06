@@ -15,10 +15,19 @@ interface EventsListProps {
 export function EventsList({ events, date, onEventClick, isDraggable = true }: EventsListProps) {
   if (!events || events.length === 0) return null;
 
+  // Verificar eventos duplicados e garantir que cada evento seja único
+  const uniqueEvents = events.reduce<CalendarEvent[]>((acc, event) => {
+    // Verificar se já temos esse evento no array
+    if (!acc.some(e => e.id === event.id)) {
+      acc.push(event);
+    }
+    return acc;
+  }, []);
+
   return (
     <div className="flex flex-col gap-[2px] pr-2 w-full">
-      {events.map((event) => (
-        <EventTooltip key={event.id} event={event}>
+      {uniqueEvents.map((event) => (
+        <EventTooltip key={`${event.id}-${date.toISOString()}`} event={event}>
           <div className="event-item-wrapper">
             {isDraggable ? (
               <DraggableEventItem 

@@ -1,11 +1,11 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { updateContentSchedule } from "@/services/oniAgenciaContentScheduleServices";
 import { format } from "date-fns";
-import { DragStartEvent, DragEndEvent, DragOverEvent } from "@dnd-kit/core";
+import { DragStartEvent, DragEndEvent } from "@dnd-kit/core";
 
 export function useDragAndDrop() {
   const [isDragging, setIsDragging] = useState(false);
@@ -13,16 +13,16 @@ export function useDragAndDrop() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const handleDragStart = (event: DragStartEvent) => {
+  const handleDragStart = useCallback((event: DragStartEvent) => {
     // Extract the CalendarEvent from the draggable item's data
     const calendarEvent = event.active.data.current?.event as CalendarEvent;
     if (calendarEvent) {
       setIsDragging(true);
       setActiveDragEvent(calendarEvent);
     }
-  };
+  }, []);
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
     if (activeDragEvent && event.over) {
       // Get the date from the droppable area's data
       const dropDate = event.over.data.current?.date as Date;
@@ -33,7 +33,7 @@ export function useDragAndDrop() {
     
     setIsDragging(false);
     setActiveDragEvent(null);
-  };
+  }, [activeDragEvent]);
 
   const handleDrop = async (date: Date) => {
     if (!activeDragEvent) return;
@@ -66,22 +66,24 @@ export function useDragAndDrop() {
       delete (updateData as any).created_at;
       delete (updateData as any).updated_at;
       
+      // Backup do evento original para uso em caso de erro
+      const originalEvent = { ...activeDragEvent };
+      
+      // Atualizar imediatamente o evento no estado local
+      const updatedEvent = {
+        ...activeDragEvent,
+        scheduled_date: formattedDate
+      };
+      
       // Do optimistic updates to all relevant caches first
       // 1. For standard query cache
       const eventsCacheKey = ['content-schedules'];
       const cachedEvents = queryClient.getQueryData<CalendarEvent[]>(eventsCacheKey);
       
       if (cachedEvents) {
-        // Update the cache with the modified event
-        const updatedEvents = cachedEvents.map(event => {
-          if (event.id === activeDragEvent.id) {
-            return {
-              ...event,
-              scheduled_date: formattedDate
-            };
-          }
-          return event;
-        });
+        // Remover o evento antigo e adicionar o novo
+        const filteredEvents = cachedEvents.filter(event => event.id !== activeDragEvent.id);
+        const updatedEvents = [...filteredEvents, updatedEvent];
         
         // Update the query cache with our modified data
         queryClient.setQueryData(eventsCacheKey, updatedEvents);
@@ -94,15 +96,19 @@ export function useDragAndDrop() {
       if (infiniteData && infiniteData.pages) {
         const updatedPages = infiniteData.pages.map((page: any) => {
           if (page.data) {
-            const updatedData = page.data.map((event: CalendarEvent) => {
-              if (event.id === activeDragEvent.id) {
-                return {
-                  ...event,
-                  scheduled_date: formattedDate
-                };
-              }
-              return event;
-            });
+            // Remover o evento antigo e adicionar o novo
+            const filteredData = page.data.filter((event: CalendarEvent) => 
+              event.id !== activeDragEvent.id
+            );
+            
+            const updatedData = [...filteredData];
+            // Adicionar o evento ao array apenas se corresponder ao mesmo mês/ano da página
+            if (page.data.some((event: CalendarEvent) => 
+              event.scheduled_date.substring(0, 7) === formattedDate.substring(0, 7)
+            )) {
+              updatedData.push(updatedEvent);
+            }
+            
             return { ...page, data: updatedData };
           }
           return page;
