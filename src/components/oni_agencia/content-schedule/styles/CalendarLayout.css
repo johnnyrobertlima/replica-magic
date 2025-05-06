@@ -165,3 +165,9 @@
   overflow-y: auto;
 }
 
+/* Additional styling for service selection badges */
+.badge-service {
+  background-color: #f3f4f6;
+  color: #374151;
+  font-weight: 500;
+}

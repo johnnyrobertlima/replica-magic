@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -25,11 +25,26 @@ export function MultiSelect({
 }: MultiSelectProps) {
   const [open, setOpen] = useState(false);
   const [selectedOptions, setSelectedOptions] = useState<string[]>(value || []);
-
+  const containerRef = useRef<HTMLDivElement>(null);
+  
   // Sync internal state with external value
   useEffect(() => {
     setSelectedOptions(value || []);
   }, [value]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const handleToggleOption = (optionValue: string) => {
     let newSelectedOptions: string[];
@@ -67,7 +82,7 @@ export function MultiSelect({
   };
 
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       <button
         type="button"
         onClick={() => setOpen(!open)}
@@ -81,7 +96,7 @@ export function MultiSelect({
       </button>
       
       {open && (
-        <div className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border bg-white shadow-lg">
+        <div className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border bg-white shadow-lg">
           <div className="p-1">
             <div
               className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-100 cursor-pointer"
@@ -94,7 +109,7 @@ export function MultiSelect({
                   <Check className="h-3 w-3 text-white" />
                 )}
               </div>
-              <span>All options</span>
+              <span className="text-gray-800">All options</span>
             </div>
             
             {options.map(option => (
@@ -110,7 +125,7 @@ export function MultiSelect({
                     <Check className="h-3 w-3 text-white" />
                   )}
                 </div>
-                <span>{option.label}</span>
+                <span className="text-gray-800">{option.label}</span>
               </div>
             ))}
           </div>

@@ -61,7 +61,8 @@ const OniAgenciaControlePauta = () => {
   
   const handleServicesChange = useCallback((serviceIds: string[]) => {
     setSelectedServiceIds(serviceIds);
-    setIsFullyLoaded(false); // Reset loading state when services change
+    // Apply filtering immediately
+    console.log("Services filter changed:", serviceIds);
   }, []);
   
   // Use the enhanced infinite query hook with auto-fetching enabled
@@ -102,8 +103,12 @@ const OniAgenciaControlePauta = () => {
   
   // Filter events by selected services
   const filteredSchedules = useMemo(() => {
-    if (selectedServiceIds.length === 0 || selectedServiceIds.length === services.length) {
-      return flattenedSchedules;
+    if (selectedServiceIds.length === 0) {
+      return []; // If no services selected, show nothing
+    }
+    
+    if (selectedServiceIds.length === services.length) {
+      return flattenedSchedules; // If all services selected, show everything
     }
     
     return flattenedSchedules.filter(event => 

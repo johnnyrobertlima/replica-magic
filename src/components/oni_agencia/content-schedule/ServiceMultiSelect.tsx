@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { MultiSelect, Option } from "./MultiSelect";
 import { useServices } from "@/hooks/useOniAgenciaContentSchedules";
 
@@ -15,6 +15,13 @@ export function ServiceMultiSelect({
   className
 }: ServiceMultiSelectProps) {
   const { data: services = [], isLoading } = useServices();
+  
+  // Initialize with all services selected when they load
+  useEffect(() => {
+    if (services.length > 0 && value.length === 0) {
+      onChange(services.map(service => service.id));
+    }
+  }, [services, value.length, onChange]);
   
   if (isLoading) {
     return (
