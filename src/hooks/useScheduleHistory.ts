@@ -85,8 +85,16 @@ export function useScheduleHistory(scheduleId: string) {
       
       // Map and enhance history entries with resolved names
       const enhancedHistory = historyData.map(entry => {
-        // Extract user profile data safely
-        const userProfile = entry.user_profiles as UserProfile | null;
+        // Extract user profile data safely - cast to unknown first to avoid type errors
+        const userProfileData = entry.user_profiles as unknown;
+        let userProfile: UserProfile | null = null;
+        
+        // Only proceed with the cast if it appears to be a valid object with our expected properties
+        if (userProfileData && 
+            typeof userProfileData === 'object' && 
+            userProfileData !== null) {
+          userProfile = userProfileData as UserProfile;
+        }
         
         const formattedEntry: ScheduleHistory = {
           id: entry.id,

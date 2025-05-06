@@ -110,8 +110,18 @@ export function useCollaboratorStatusChanges() {
         // Transform data for the grid
         const formattedChanges: StatusChange[] = data.map(item => {
           const isStatusChange = item.field_name === 'status_id';
-          // Extract user profile data safely
-          const userProfile = item.user_profiles as UserProfile | null;
+          
+          // Extract user profile data safely - cast to unknown first to avoid type errors
+          const userProfileData = item.user_profiles as unknown;
+          let userProfile: UserProfile | null = null;
+          
+          // Only proceed with the cast if it appears to be a valid object with our expected properties
+          if (userProfileData && 
+              typeof userProfileData === 'object' && 
+              userProfileData !== null) {
+            userProfile = userProfileData as UserProfile;
+          }
+          
           const changedByName = userProfile?.full_name || userProfile?.email || 'Sistema';
           
           return {
