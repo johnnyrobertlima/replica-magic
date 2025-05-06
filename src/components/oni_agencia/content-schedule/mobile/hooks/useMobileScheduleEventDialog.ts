@@ -69,17 +69,179 @@ export function useScheduleEventDialog({
   const submitForm = (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Submitting form:", formData);
+    
+    // Apply optimistic update if we have a selected event (for editing)
+    if (currentSelectedEvent) {
+      // For standard queries
+      const eventsCacheKey = ['content-schedules'];
+      const cachedEvents = queryClient.getQueryData<CalendarEvent[]>(eventsCacheKey);
+      
+      if (cachedEvents) {
+        const updatedEvents = cachedEvents.map(event => {
+          if (event.id === currentSelectedEvent.id) {
+            return {
+              ...event,
+              ...formData,
+              // Preserve important nested objects
+              service: event.service,
+              collaborator: event.collaborator,
+              editorial_line: event.editorial_line,
+              product: event.product,
+              status: formData.status_id !== event.status_id 
+                ? { ...event.status, id: formData.status_id } 
+                : event.status,
+              client: event.client
+            };
+          }
+          return event;
+        });
+        
+        queryClient.setQueryData(eventsCacheKey, updatedEvents);
+      }
+      
+      // For infinite query
+      const infiniteCacheKey = ['infinite-content-schedules'];
+      const infiniteData = queryClient.getQueryData<any>(infiniteCacheKey);
+      
+      if (infiniteData && infiniteData.pages) {
+        const updatedPages = infiniteData.pages.map((page: any) => {
+          if (page.data) {
+            const updatedData = page.data.map((event: CalendarEvent) => {
+              if (event.id === currentSelectedEvent.id) {
+                return {
+                  ...event,
+                  ...formData,
+                  // Preserve important nested objects
+                  service: event.service,
+                  collaborator: event.collaborator,
+                  editorial_line: event.editorial_line,
+                  product: event.product,
+                  status: formData.status_id !== event.status_id 
+                    ? { ...event.status, id: formData.status_id } 
+                    : event.status,
+                  client: event.client
+                };
+              }
+              return event;
+            });
+            return { ...page, data: updatedData };
+          }
+          return page;
+        });
+        
+        queryClient.setQueryData(infiniteCacheKey, {
+          ...infiniteData,
+          pages: updatedPages
+        });
+      }
+    }
+    
     return handleSubmit(e, currentSelectedEvent, formData);
   };
   
   const updateStatus = (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Updating status:", formData.status_id);
+    
+    // Apply optimistic update for status change
+    if (currentSelectedEvent) {
+      // For standard queries
+      const eventsCacheKey = ['content-schedules'];
+      const cachedEvents = queryClient.getQueryData<CalendarEvent[]>(eventsCacheKey);
+      
+      if (cachedEvents) {
+        const updatedEvents = cachedEvents.map(event => {
+          if (event.id === currentSelectedEvent.id) {
+            const updatedEvent = {
+              ...event,
+              status_id: formData.status_id,
+              // Update the status object too
+              status: event.status ? {
+                ...event.status,
+                id: formData.status_id
+              } : undefined
+            };
+            return updatedEvent;
+          }
+          return event;
+        });
+        
+        queryClient.setQueryData(eventsCacheKey, updatedEvents);
+      }
+      
+      // For infinite query
+      const infiniteCacheKey = ['infinite-content-schedules'];
+      const infiniteData = queryClient.getQueryData<any>(infiniteCacheKey);
+      
+      if (infiniteData && infiniteData.pages) {
+        const updatedPages = infiniteData.pages.map((page: any) => {
+          if (page.data) {
+            const updatedData = page.data.map((event: CalendarEvent) => {
+              if (event.id === currentSelectedEvent.id) {
+                const updatedEvent = {
+                  ...event,
+                  status_id: formData.status_id,
+                  // Update the status object too
+                  status: event.status ? {
+                    ...event.status,
+                    id: formData.status_id
+                  } : undefined
+                };
+                return updatedEvent;
+              }
+              return event;
+            });
+            return { ...page, data: updatedData };
+          }
+          return page;
+        });
+        
+        queryClient.setQueryData(infiniteCacheKey, {
+          ...infiniteData,
+          pages: updatedPages
+        });
+      }
+    }
+    
     return handleStatusUpdate(e, currentSelectedEvent, formData);
   };
   
   const deleteEvent = () => {
     console.log("Deleting event:", currentSelectedEvent?.id);
+    
+    // Apply optimistic deletion
+    if (currentSelectedEvent) {
+      // For standard queries
+      const eventsCacheKey = ['content-schedules'];
+      const cachedEvents = queryClient.getQueryData<CalendarEvent[]>(eventsCacheKey);
+      
+      if (cachedEvents) {
+        const filteredEvents = cachedEvents.filter(event => event.id !== currentSelectedEvent.id);
+        queryClient.setQueryData(eventsCacheKey, filteredEvents);
+      }
+      
+      // For infinite query
+      const infiniteCacheKey = ['infinite-content-schedules'];
+      const infiniteData = queryClient.getQueryData<any>(infiniteCacheKey);
+      
+      if (infiniteData && infiniteData.pages) {
+        const updatedPages = infiniteData.pages.map((page: any) => {
+          if (page.data) {
+            const filteredData = page.data.filter((event: CalendarEvent) => 
+              event.id !== currentSelectedEvent.id
+            );
+            return { ...page, data: filteredData };
+          }
+          return page;
+        });
+        
+        queryClient.setQueryData(infiniteCacheKey, {
+          ...infiniteData,
+          pages: updatedPages
+        });
+      }
+    }
+    
     return handleDelete(currentSelectedEvent);
   };
   

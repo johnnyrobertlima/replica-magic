@@ -66,17 +66,8 @@ export function useDragAndDrop() {
       delete (updateData as any).created_at;
       delete (updateData as any).updated_at;
       
-      // Make the update API call
-      await updateContentSchedule(activeDragEvent.id, updateData);
-      
-      // Show success toast
-      toast({
-        title: "Agendamento movido",
-        description: "O agendamento foi movido para outra data com sucesso.",
-      });
-      
-      // Update local state to reflect the change immediately - before server refetch
-      // This provides immediate feedback to the user
+      // Do optimistic updates to all relevant caches first
+      // 1. For standard query cache
       const eventsCacheKey = ['content-schedules'];
       const cachedEvents = queryClient.getQueryData<CalendarEvent[]>(eventsCacheKey);
       
@@ -96,7 +87,7 @@ export function useDragAndDrop() {
         queryClient.setQueryData(eventsCacheKey, updatedEvents);
       }
       
-      // Patch infinite query cache if it exists
+      // 2. For infinite query cache
       const infiniteCacheKey = ['infinite-content-schedules'];
       const infiniteData = queryClient.getQueryData<any>(infiniteCacheKey);
       
@@ -123,6 +114,15 @@ export function useDragAndDrop() {
         });
       }
       
+      // Make the update API call
+      await updateContentSchedule(activeDragEvent.id, updateData);
+      
+      // Show success toast
+      toast({
+        title: "Agendamento movido",
+        description: "O agendamento foi movido para outra data com sucesso.",
+      });
+      
       // Force data refresh after our optimistic update
       queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
       queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
@@ -135,6 +135,10 @@ export function useDragAndDrop() {
         title: "Erro ao mover agendamento",
         description: "Não foi possível mover o agendamento para a nova data.",
       });
+      
+      // If there's an error, we should refetch to restore the correct data
+      queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
+      queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
     } finally {
       setIsDragging(false);
       setActiveDragEvent(null);
