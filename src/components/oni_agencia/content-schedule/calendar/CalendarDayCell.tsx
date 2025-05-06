@@ -50,7 +50,7 @@ export function CalendarDayCell({
     });
   }
   
-  const MAX_VISIBLE_EVENTS = 4;
+  const MAX_VISIBLE_EVENTS = 3;
   const visibleEvents = isExpanded ? dayEvents : dayEvents.slice(0, MAX_VISIBLE_EVENTS);
   const hiddenEventsCount = dayEvents.length - MAX_VISIBLE_EVENTS;
   
@@ -100,7 +100,7 @@ export function CalendarDayCell({
       </div>
       
       {dayEvents.length > 0 ? (
-        <div className="flex flex-col gap-[2px] overflow-y-auto max-h-[120px]">
+        <div className="day-events-container">
           {visibleEvents.map((event) => (
             <TooltipProvider key={event.id}>
               <Tooltip>
@@ -139,7 +139,7 @@ export function CalendarDayCell({
           
           {!isExpanded && hiddenEventsCount > 0 && (
             <button
-              className="text-xs text-primary font-medium px-1 py-0.5 hover:bg-gray-100 rounded flex items-center justify-between"
+              className="events-overflow-indicator"
               onClick={handleExpandClick}
             >
               <span>+ {hiddenEventsCount} mais agendamento{hiddenEventsCount > 1 ? 's' : ''}</span>
@@ -149,7 +149,7 @@ export function CalendarDayCell({
           
           {isExpanded && hiddenEventsCount > 0 && (
             <button
-              className="text-xs text-primary font-medium px-1 py-0.5 hover:bg-gray-100 rounded flex items-center justify-between"
+              className="events-overflow-indicator"
               onClick={handleExpandClick}
             >
               <span>Mostrar menos</span>

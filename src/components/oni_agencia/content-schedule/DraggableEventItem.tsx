@@ -1,46 +1,39 @@
 
-import React from 'react';
+import { useDraggable } from "@dnd-kit/core";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { EventItem } from "./EventItem";
-import { useDraggable } from '@dnd-kit/core';
 
 interface DraggableEventItemProps {
   event: CalendarEvent;
-  onClick: (e: React.MouseEvent) => void;
+  onClick?: (e: React.MouseEvent) => void;
+  className?: string;
+  showBorder?: boolean;
 }
 
-export function DraggableEventItem({ event, onClick }: DraggableEventItemProps) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+export function DraggableEventItem({ 
+  event, 
+  onClick, 
+  className,
+  showBorder = true
+}: DraggableEventItemProps) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: event.id,
-    data: {
-      event
-    }
+    data: event
   });
   
-  const style = transform ? {
-    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-    zIndex: isDragging ? 999 : 'auto',
-    opacity: isDragging ? 0.8 : 1,
-    position: isDragging ? 'absolute' : 'relative' as any
-  } : undefined;
-  
-  const handleClick = (e: React.MouseEvent) => {
-    if (!isDragging) {
-      onClick(e);
-    }
-  };
-  
   return (
-    <div 
-      ref={setNodeRef} 
-      style={style} 
-      {...listeners} 
+    <div
+      ref={setNodeRef}
+      {...listeners}
       {...attributes}
-      className="cursor-grab active:cursor-grabbing"
+      className="w-full"
     >
       <EventItem 
         event={event} 
-        onClick={handleClick} 
+        onClick={onClick} 
+        className={className}
+        showBorder={showBorder}
+        isDragging={isDragging}
       />
     </div>
   );
