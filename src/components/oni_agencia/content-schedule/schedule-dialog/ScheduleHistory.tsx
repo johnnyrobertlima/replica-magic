@@ -15,7 +15,7 @@ export function ScheduleHistory({ event }: ScheduleHistoryProps) {
 
   if (isLoading) {
     return (
-      <div className="text-sm text-muted-foreground flex items-center justify-center p-4 space-x-2 h-full">
+      <div className="text-sm text-muted-foreground flex items-center justify-center p-4 space-x-2">
         <Clock className="animate-spin h-4 w-4" />
         <span>Carregando histórico...</span>
       </div>
@@ -24,7 +24,7 @@ export function ScheduleHistory({ event }: ScheduleHistoryProps) {
 
   if (isError) {
     return (
-      <div className="text-sm text-red-500 flex items-center justify-center p-4 space-x-2 h-full">
+      <div className="text-sm text-red-500 flex items-center justify-center p-4 space-x-2">
         <AlertTriangle className="h-4 w-4" />
         <span>Erro ao carregar histórico: {error instanceof Error ? error.message : 'Erro desconhecido'}</span>
       </div>
@@ -33,15 +33,15 @@ export function ScheduleHistory({ event }: ScheduleHistoryProps) {
 
   if (history.length === 0) {
     return (
-      <div className="text-sm text-muted-foreground flex items-center justify-center p-4 h-full">
+      <div className="text-sm text-muted-foreground flex items-center justify-center p-4 h-[150px]">
         <span>Nenhuma alteração registrada para este agendamento.</span>
       </div>
     );
   }
 
   return (
-    <ScrollArea className="h-full pr-4 flex-1">
-      <div className="space-y-4 p-4">
+    <ScrollArea className="h-[200px] pr-4">
+      <div className="space-y-4">
         {history.map((entry) => (
           <div key={entry.id} className="text-sm border-l-2 border-primary pl-4 py-1">
             <div className="flex items-center text-muted-foreground text-xs gap-1 mb-1">
