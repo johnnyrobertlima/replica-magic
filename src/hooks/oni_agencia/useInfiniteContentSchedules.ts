@@ -41,12 +41,18 @@ export function useInfiniteContentSchedules(
         // Verificar se o resultado é um array (tratando possíveis erros de tipo)
         const safeData = Array.isArray(data) ? data : [];
         
-        // Garantir que os dados tenham as propriedades created_at e updated_at para satisfazer o tipo CalendarEvent
-        const processedData = safeData.map(item => ({
-          ...item,
-          created_at: item.created_at || new Date().toISOString(),
-          updated_at: item.updated_at || new Date().toISOString()
-        })) as CalendarEvent[];
+        // Process data to ensure it includes created_at and updated_at
+        const processedData = safeData.map(item => {
+          // Create a timestamp for now to use as fallback
+          const now = new Date().toISOString();
+          
+          return {
+            ...item,
+            // Ensure these fields are always present
+            created_at: item.created_at || now,
+            updated_at: item.updated_at || now
+          };
+        }) as CalendarEvent[];
 
         return {
           data: processedData,

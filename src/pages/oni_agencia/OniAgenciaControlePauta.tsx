@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
 import { OniAgenciaMenu } from "@/components/oni_agencia/OniAgenciaMenu";
 import { CalendarDays, RefreshCw, List, LayoutGrid, Smartphone } from "lucide-react";
@@ -90,12 +89,15 @@ const OniAgenciaControlePauta = () => {
             
           if (error) throw error;
           
-          // Garantir que os dados tenham as propriedades created_at e updated_at para satisfazer o tipo CalendarEvent
+          // Create a timestamp for now to use as fallback
+          const now = new Date().toISOString();
+          
+          // Ensure that data includes created_at and updated_at properties
           const safeData = Array.isArray(data) ? data : [];
           const processedData = safeData.map(item => ({
             ...item,
-            created_at: item.created_at || new Date().toISOString(),
-            updated_at: item.updated_at || new Date().toISOString()
+            created_at: item.created_at || now,
+            updated_at: item.updated_at || now
           })) as CalendarEvent[];
           
           return {
