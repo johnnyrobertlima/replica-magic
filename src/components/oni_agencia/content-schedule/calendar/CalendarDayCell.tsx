@@ -82,7 +82,7 @@ export function CalendarDayCell({
   return (
     <div 
       ref={setNodeRef}
-      className={`h-36 w-full border-r border-b cursor-pointer hover:bg-gray-50 calendar-day-cell p-1 relative overflow-hidden ${
+      className={`h-36 w-full border-r border-b cursor-pointer hover:bg-gray-50 calendar-day-cell p-1 relative ${
         isCurrentDay ? 'bg-blue-50' : ''
       } ${isOver ? 'bg-blue-100' : ''}`}
       onClick={handleCellClick}
@@ -100,7 +100,7 @@ export function CalendarDayCell({
       </div>
       
       {dayEvents.length > 0 ? (
-        <div className="flex flex-col gap-[2px] overflow-y-auto max-h-[100px] events-container">
+        <div className="flex flex-col gap-[2px] overflow-y-auto max-h-[120px]">
           {visibleEvents.map((event) => (
             <TooltipProvider key={event.id}>
               <Tooltip>

@@ -6,7 +6,6 @@ import { CalendarEvent } from "@/types/oni-agencia";
 import { ptBR } from "date-fns/locale";
 import { useDragAndDrop } from "../hooks/useDragAndDrop";
 import { useCurrentUser } from "../hooks/useCurrentUser";
-import "../calendar/CalendarStyles.css"; // Import the custom calendar styles
 
 interface CalendarContainerProps {
   events: CalendarEvent[];
@@ -43,13 +42,13 @@ export function CalendarContainer({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="w-full p-0 calendar-container">
+      <div className="w-full p-0">
         <Calendar
           mode="single"
           selected={selectedDate}
           onSelect={onSelect}
           month={currentDate}
-          className="w-full rounded-md border-none custom-calendar"
+          className="w-full rounded-md border-none"
           locale={ptBR}
           components={{
             Day: ({ date, ...dayProps }) => (
