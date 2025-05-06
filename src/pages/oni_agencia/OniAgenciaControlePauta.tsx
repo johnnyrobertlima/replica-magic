@@ -32,6 +32,7 @@ const OniAgenciaControlePauta = () => {
   const [selectedMonth, setSelectedMonth] = useState<number>(currentDate.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
   const [selectedCollaborator, setSelectedCollaborator] = useState<string | null>(null);
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
   const { isCollapsed, toggle: toggleFilters } = useCollapsible(false);
   const [isFullyLoaded, setIsFullyLoaded] = useState(false);
@@ -49,6 +50,11 @@ const OniAgenciaControlePauta = () => {
     setIsFullyLoaded(false); // Reset loading state when collaborator changes
   }, []);
   
+  const handleServicesChange = useCallback((serviceIds: string[]) => {
+    setSelectedServiceIds(serviceIds);
+    setIsFullyLoaded(false); // Reset loading state when services change
+  }, []);
+  
   // Use the enhanced infinite query hook with auto-fetching enabled
   const { 
     data: infiniteSchedules,
@@ -63,7 +69,8 @@ const OniAgenciaControlePauta = () => {
     selectedYear, 
     selectedMonth,
     selectedCollaborator,
-    true // Enable auto-fetching of all pages
+    true, // Enable auto-fetching of all pages
+    selectedServiceIds
   );
   
   // Monitor loading state to know when all data is fully loaded
@@ -153,10 +160,12 @@ const OniAgenciaControlePauta = () => {
           selectedMonth={selectedMonth}
           selectedYear={selectedYear}
           selectedCollaborator={selectedCollaborator}
+          selectedServiceIds={selectedServiceIds}
           onClientChange={handleClientChange}
           onMonthChange={setSelectedMonth}
           onYearChange={setSelectedYear}
           onCollaboratorChange={handleCollaboratorChange}
+          onServicesChange={handleServicesChange}
           isCollapsed={isCollapsed}
           onToggleCollapse={toggleFilters}
         />

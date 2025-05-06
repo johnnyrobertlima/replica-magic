@@ -15,6 +15,7 @@ import { ChevronUp, ChevronDown } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useClients } from "@/hooks/useOniAgenciaClients";
 import { useCollaborators } from "@/hooks/useOniAgenciaContentSchedules";
+import { ServiceMultiSelect } from "./ServiceMultiSelect";
 import { Loader2 } from "lucide-react";
 
 interface ContentScheduleFiltersProps {
@@ -22,10 +23,12 @@ interface ContentScheduleFiltersProps {
   selectedMonth: number;
   selectedYear: number;
   selectedCollaborator?: string | null;
+  selectedServiceIds?: string[];
   onClientChange: (clientId: string) => void;
   onMonthChange: (month: number) => void;
   onYearChange: (year: number) => void;
   onCollaboratorChange?: (collaboratorId: string | null) => void;
+  onServicesChange?: (serviceIds: string[]) => void;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
   hideClientFilter?: boolean; // Optional prop
@@ -36,10 +39,12 @@ export function ContentScheduleFilters({
   selectedMonth,
   selectedYear,
   selectedCollaborator,
+  selectedServiceIds = [],
   onClientChange,
   onMonthChange,
   onYearChange,
   onCollaboratorChange,
+  onServicesChange,
   isCollapsed = false,
   onToggleCollapse,
   hideClientFilter = false
@@ -76,6 +81,12 @@ export function ContentScheduleFilters({
   const handleCollaboratorChange = (value: string) => {
     if (onCollaboratorChange) {
       onCollaboratorChange(value === "all" ? null : value);
+    }
+  };
+  
+  const handleServicesChange = (serviceIds: string[]) => {
+    if (onServicesChange) {
+      onServicesChange(serviceIds);
     }
   };
   
@@ -150,6 +161,15 @@ export function ContentScheduleFilters({
                 )}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="service-select">Tipo de conteúdo</Label>
+            <ServiceMultiSelect 
+              value={selectedServiceIds}
+              onChange={handleServicesChange}
+              placeholder="Selecione tipos de conteúdo..."
+            />
           </div>
           
           <div className="space-y-2">

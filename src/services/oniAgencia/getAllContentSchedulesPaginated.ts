@@ -10,7 +10,9 @@ export async function getAllContentSchedulesPaginated(
   year: number, 
   month: number, 
   page: number = 1,
-  pageSize: number = 50
+  pageSize: number = 50,
+  selectedCollaborator: string | null = null,
+  serviceIds: string[] = []
 ): Promise<CalendarEvent[]> {
   try {
     // Calculate the start and end dates for the given month
@@ -23,15 +25,29 @@ export async function getAllContentSchedulesPaginated(
       endDate: endDate.toISOString().split('T')[0],
       page,
       pageSize,
-      offset
+      offset,
+      selectedCollaborator,
+      serviceIds
     });
 
-    // Consulta paginada para reduzir o volume de dados transferidos
-    const { data, error } = await getBaseQuery()
+    // Iniciar a consulta básica
+    let query = getBaseQuery()
       .gte('scheduled_date', startDate.toISOString().split('T')[0])
       .lte('scheduled_date', endDate.toISOString().split('T')[0])
-      .order('scheduled_date', { ascending: true })
-      .range(offset, offset + pageSize - 1);
+      .order('scheduled_date', { ascending: true });
+      
+    // Adicionar filtro de colaborador se especificado
+    if (selectedCollaborator) {
+      query = query.or(`collaborator_id.eq.${selectedCollaborator},creators.cs.{${selectedCollaborator}}`);
+    }
+    
+    // Adicionar filtro de serviços se especificado
+    if (serviceIds && serviceIds.length > 0) {
+      query = query.in('service_id', serviceIds);
+    }
+    
+    // Finalizar a consulta com paginação
+    const { data, error } = await query.range(offset, offset + pageSize - 1);
 
     if (error) {
       console.error('Error fetching all content schedules paginated:', error);
