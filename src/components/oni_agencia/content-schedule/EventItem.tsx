@@ -11,10 +11,19 @@ export function EventItem({ event, onClick }: EventItemProps) {
   // Extract all the data we need from the event with proper null checks
   const { service, editorial_line, collaborator, status, product, title = "" } = event;
   
-  // Safely handle title and product name
+  // Safely handle title
   const truncatedTitle = title && title.length > 18 ? `${title.substring(0, 18)}...` : title || "Sem título";
+  
+  // Safely handle product name
   const productName = product?.name || "";
-  const displayText = product ? `${productName} - ${truncatedTitle}` : truncatedTitle;
+  
+  // Create display text - now prioritizing showing product name when available
+  let displayText = truncatedTitle;
+  
+  // If product exists, combine product name with title
+  if (product && productName) {
+    displayText = `${productName} - ${truncatedTitle}`;
+  }
   
   // Calculate text color based on background color brightness
   const calculateTextColor = (bgColor: string | null | undefined): string => {
@@ -57,7 +66,7 @@ export function EventItem({ event, onClick }: EventItemProps) {
     <div
       onClick={onClick}
       className="h-6 text-[10px] rounded-sm hover:brightness-90 transition-all cursor-pointer w-full flex items-center overflow-hidden"
-      title={`${title || "Sem título"} - ${service?.name || ""}${status ? ` (${status.name})` : ''}`}
+      title={`${title || "Sem título"}${product ? ` - ${product.name}` : ""}${service ? ` (${service.name})` : ''}${status ? ` [${status.name}]` : ''}`}
     >
       {/* Service color block - no text */}
       <div 

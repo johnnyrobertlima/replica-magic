@@ -1,0 +1,49 @@
+
+/* Calendar Layout Styles */
+
+/* Fixed heights for calendar cells and rows */
+.calendar-day-cell {
+  min-height: 100px;
+  max-height: 100px;
+  overflow: hidden;
+}
+
+/* Mobile adjustments */
+@media (max-width: 640px) {
+  .calendar-day-cell {
+    min-height: 80px;
+    max-height: 80px;
+  }
+}
+
+/* Event items styling */
+.event-item-wrapper {
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-height: 24px;
+  margin-bottom: 2px;
+}
+
+/* Limit the height of event items list */
+.day-events-container {
+  max-height: calc(100% - 24px);
+  overflow-y: auto;
+}
+
+/* Styling for overflow indicator */
+.events-overflow-indicator {
+  font-size: 0.7rem;
+  color: var(--primary);
+  padding: 2px 4px;
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.events-overflow-indicator:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}

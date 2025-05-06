@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { Button } from "@/components/ui/button";
-import { toast } from "@/hooks/use-toast";
+import { Calendar, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface EmptyEventsListProps {
   onLoadMore?: () => void;
@@ -9,26 +9,22 @@ interface EmptyEventsListProps {
 
 export function EmptyEventsList({ onLoadMore }: EmptyEventsListProps) {
   return (
-    <div className="flex flex-col items-center justify-center h-full p-4 text-center">
-      <p className="text-lg font-medium text-muted-foreground mb-2">Nenhum agendamento encontrado</p>
-      <p className="text-sm text-muted-foreground mb-4">
-        Não foi possível carregar os agendamentos ou não existem agendamentos para os filtros selecionados.
+    <div className="flex flex-col items-center justify-center p-8 h-[calc(100vh-250px)] text-center">
+      <Calendar className="h-12 w-12 text-gray-300 mb-4" />
+      <h3 className="text-lg font-medium text-gray-600 mb-2">Sem agendamentos</h3>
+      <p className="text-sm text-gray-500 mb-6 max-w-md">
+        Não encontramos nenhum agendamento para o período e filtros selecionados.
       </p>
+      
       {onLoadMore && (
         <Button 
           variant="outline" 
-          size="sm"
-          onClick={() => {
-            toast({
-              title: "Tentando novamente",
-              description: "Aguarde enquanto tentamos carregar os agendamentos novamente.",
-              duration: 3000,
-            });
-            onLoadMore();
-          }}
-          className="text-xs"
+          size="sm" 
+          onClick={onLoadMore}
+          className="mt-2 flex items-center gap-2"
         >
-          Tentar novamente
+          <RefreshCw className="h-4 w-4" />
+          <span>Tentar novamente</span>
         </Button>
       )}
     </div>
