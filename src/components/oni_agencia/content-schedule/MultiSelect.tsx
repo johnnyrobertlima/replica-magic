@@ -33,8 +33,8 @@ interface MultiSelectProps {
 }
 
 export function MultiSelect({
-  options,
-  value = [],
+  options = [], // Ensure options has a default value
+  value = [], // Ensure value has a default value
   onChange,
   placeholder = "Selecionar itens...",
   isLoading = false,
@@ -45,25 +45,33 @@ export function MultiSelect({
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
   
+  // Ensure options and value are always arrays
+  const safeOptions = Array.isArray(options) ? options : [];
+  const safeValue = Array.isArray(value) ? value : [];
+  
   // Update selected labels when value or options change
   useEffect(() => {
-    const labels = value.map(v => {
-      const option = options.find(opt => opt.value === v);
-      return option ? option.label : v;
-    });
-    setSelectedLabels(labels);
-  }, [value, options]);
+    if (safeOptions.length > 0 && safeValue.length > 0) {
+      const labels = safeValue.map(v => {
+        const option = safeOptions.find(opt => opt.value === v);
+        return option ? option.label : v;
+      }).filter(Boolean); // Filter out any undefined values
+      setSelectedLabels(labels);
+    } else {
+      setSelectedLabels([]);
+    }
+  }, [safeValue, safeOptions]);
   
   const handleSelect = (selectedValue: string) => {
-    if (value.includes(selectedValue)) {
-      onChange(value.filter(v => v !== selectedValue));
+    if (safeValue.includes(selectedValue)) {
+      onChange(safeValue.filter(v => v !== selectedValue));
     } else {
-      onChange([...value, selectedValue]);
+      onChange([...safeValue, selectedValue]);
     }
   };
   
   const handleRemove = (selectedValue: string) => {
-    onChange(value.filter(v => v !== selectedValue));
+    onChange(safeValue.filter(v => v !== selectedValue));
   };
   
   const handleClearAll = () => {
@@ -82,16 +90,16 @@ export function MultiSelect({
             aria-expanded={open}
             className={cn(
               "w-full justify-between text-left bg-white",
-              value.length > 0 ? "h-auto min-h-9 py-1" : "h-9",
-              !value.length && "text-muted-foreground"
+              safeValue.length > 0 ? "h-auto min-h-9 py-1" : "h-9",
+              !safeValue.length && "text-muted-foreground"
             )}
             onClick={() => setOpen(!open)}
           >
             <div className="flex flex-wrap gap-1">
-              {value.length > 0 ? (
-                value.length > 2 ? (
+              {safeValue.length > 0 ? (
+                safeValue.length > 2 ? (
                   <Badge variant="secondary" className="rounded-sm bg-gray-100">
-                    {value.length} selecionados
+                    {safeValue.length} selecionados
                   </Badge>
                 ) : (
                   selectedLabels.map((label, i) => (
@@ -105,7 +113,7 @@ export function MultiSelect({
                         className="h-3 w-3 cursor-pointer text-muted-foreground"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleRemove(value[i]);
+                          handleRemove(safeValue[i]);
                         }}
                       />
                     </Badge>
@@ -136,7 +144,7 @@ export function MultiSelect({
               className="bg-white"
             />
             
-            {value.length > 0 && (
+            {safeValue.length > 0 && (
               <div className="flex items-center p-2 border-b">
                 <Button
                   variant="ghost"
@@ -159,7 +167,7 @@ export function MultiSelect({
             </CommandEmpty>
             
             <CommandGroup className="max-h-64 overflow-auto bg-white">
-              {options.map((option) => (
+              {safeOptions.map((option) => (
                 <CommandItem
                   key={option.value}
                   value={option.value}
@@ -169,12 +177,12 @@ export function MultiSelect({
                   <div
                     className={cn(
                       "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border",
-                      value.includes(option.value)
+                      safeValue.includes(option.value)
                         ? "border-primary bg-primary text-white"
                         : "border-muted opacity-50"
                     )}
                   >
-                    {value.includes(option.value) && <Check className="h-3 w-3" />}
+                    {safeValue.includes(option.value) && <Check className="h-3 w-3" />}
                   </div>
                   <span>{option.label}</span>
                 </CommandItem>

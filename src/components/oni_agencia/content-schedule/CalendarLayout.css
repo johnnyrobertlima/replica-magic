@@ -1,0 +1,47 @@
+
+/* Add background color to multi-select components */
+.content-type-select,
+.content-type-select .react-select__control,
+.content-type-select .react-select__menu {
+  background-color: #FFFFFF !important;
+}
+
+/* Fix calendar layout */
+.content-calendar-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.calendar-wrapper {
+  flex: 1;
+  overflow: auto;
+  background-color: #FFFFFF;
+}
+
+.calendar-navigation-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.calendar-day-column {
+  min-width: 200px;
+}
+
+.calendar-day-header {
+  padding: 0.75rem;
+  background-color: #f3f4f6;
+  border-bottom: 1px solid #e5e7eb;
+  font-weight: 500;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+/* For popover components */
+.popover-content {
+  background-color: #FFFFFF !important;
+  z-index: 50;
+}

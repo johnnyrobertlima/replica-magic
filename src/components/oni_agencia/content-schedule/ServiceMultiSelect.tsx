@@ -11,7 +11,7 @@ interface ServiceMultiSelectProps {
 }
 
 export function ServiceMultiSelect({ 
-  value, 
+  value = [], // Set default to empty array
   onChange, 
   placeholder = "Selecionar serviços...",
   className
@@ -20,20 +20,26 @@ export function ServiceMultiSelect({
   const [options, setOptions] = useState<{value: string, label: string}[]>([]);
   
   useEffect(() => {
-    if (services && services.length > 0) {
+    if (services && Array.isArray(services) && services.length > 0) {
       setOptions(
         services.map((service) => ({
           value: service.id,
           label: service.name
         }))
       );
+    } else {
+      // Ensure options is always an array even if services data isn't available
+      setOptions([]);
     }
   }, [services]);
+  
+  // Ensure we always pass arrays to MultiSelect
+  const safeValue = Array.isArray(value) ? value : [];
   
   return (
     <MultiSelect 
       options={options}
-      value={value}
+      value={safeValue}
       onChange={onChange}
       placeholder={placeholder}
       isLoading={isLoading}
