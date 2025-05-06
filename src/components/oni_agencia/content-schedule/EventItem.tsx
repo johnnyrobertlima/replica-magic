@@ -56,7 +56,7 @@ export function EventItem({ event, onClick }: EventItemProps) {
   return (
     <div
       onClick={onClick}
-      className="h-6 text-[10px] rounded-sm hover:brightness-90 transition-all cursor-pointer w-full flex items-center overflow-hidden"
+      className="h-6 text-[10px] rounded-sm hover:brightness-90 transition-all cursor-pointer w-full flex items-center overflow-hidden event-item"
       title={`${title || "Sem título"} - ${service?.name || ""}${status ? ` (${status.name})` : ''}`}
     >
       {/* Service color block - no text */}
