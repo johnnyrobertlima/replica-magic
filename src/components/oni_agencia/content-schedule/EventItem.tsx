@@ -46,10 +46,21 @@ export function EventItem({ event, onClick }: EventItemProps) {
   // Safe service color
   const serviceColor = service?.color || '#ccc';
   
+  const handleClick = (e: React.MouseEvent) => {
+    // Add specific logging to track when an event is clicked
+    console.log("EventItem clicked:", event.id, event.title);
+    
+    // Call the onClick handler, this should propagate to parent components
+    onClick(e);
+    
+    // Ensure the event is captured and doesn't propagate further if needed
+    e.stopPropagation();
+  };
+  
   return (
     <div
-      onClick={onClick}
-      className="h-6 text-[10px] rounded-sm hover:brightness-90 transition-all cursor-pointer w-full flex items-center overflow-hidden"
+      onClick={handleClick}
+      className="h-6 text-[10px] rounded-sm hover:brightness-90 transition-all cursor-pointer w-full flex items-center overflow-hidden event-item"
       title={`${title || "Sem título"}${product ? ` - ${product.name}` : ""}${service ? ` (${service.name})` : ''}${status ? ` [${status.name}]` : ''}`}
     >
       {/* Service color block - no text */}

@@ -33,12 +33,14 @@ export function CalendarDay({
   
   // Melhoria de performance utilizando useCallback para funções de evento
   const handleDayClick = useCallback(() => {
+    console.log("Day clicked:", dateStr);
     onSelect(date);
   }, [date, onSelect]);
   
   // Create an event click handler that adapts the parameters
   const handleEventClick = useCallback((e: React.MouseEvent, event: CalendarEvent) => {
-    e.stopPropagation();
+    console.log("CalendarDay - Event clicked:", event.id, "for date:", dateStr);
+    e.stopPropagation(); // Prevent day click when clicking on an event
     onEventClick(event, date);
   }, [date, onEventClick]);
   
@@ -68,9 +70,9 @@ export function CalendarDay({
     });
   }, [events, dateStr, selectedCollaborator]);
   
-  // Log filtrados para debugging
+  // Log filtered events for debugging
   if (filteredEvents.length > 0) {
-    console.log(`Rendering ${filteredEvents.length} events for date ${dateStr}`);
+    console.log(`CalendarDay - Rendering ${filteredEvents.length} events for date ${dateStr}`);
   }
   
   const isActive = selectedDate && format(selectedDate, 'yyyy-MM-dd') === dateStr;

@@ -1,14 +1,10 @@
 
-import { useState, useEffect } from "react";
-import { addMonths, format, getDate, getDaysInMonth, getDay, subMonths } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { CalendarDay } from "./CalendarDay";
-import { CalendarDayHeader } from "./CalendarDayHeader";
-import { CalendarNavigation } from "./CalendarNavigation";
+import { useState, useCallback, useEffect } from "react";
 import { CalendarHeader } from "./CalendarHeader";
-import { WeekDaysHeader } from "./WeekDaysHeader";
-import { CalendarEvent } from "@/types/oni-agencia";
+import { CalendarContainer } from "./CalendarContainer";
 import { ScheduleEventDialog } from "../ScheduleEventDialog";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { CalendarEvent } from "@/types/oni-agencia";
 
 interface CalendarProps {
   events: CalendarEvent[];
@@ -24,7 +20,7 @@ interface CalendarProps {
   isDialogOpen: boolean;
   onDialogOpenChange: (open: boolean) => void;
   onDialogClose: () => void;
-  onManualRefetch?: () => void;
+  onManualRefetch?: () => void; // Ensure this prop is passed to child components
 }
 
 export function Calendar({
@@ -44,125 +40,56 @@ export function Calendar({
   onManualRefetch
 }: CalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date(year, month - 1, 1));
+  const isMobile = useMediaQuery("(max-width: 767px)");
   
-  // Update currentDate when month or year props change
+  const handleMonthChange = useCallback((increment: number) => {
+    const newDate = new Date(currentDate);
+    newDate.setMonth(newDate.getMonth() + increment);
+    setCurrentDate(newDate);
+    
+    const newMonth = newDate.getMonth() + 1;
+    const newYear = newDate.getFullYear();
+    onMonthYearChange(newMonth, newYear);
+  }, [currentDate, onMonthYearChange]);
+  
+  // Make sure currentDate is updated when month/year props change
   useEffect(() => {
-    setCurrentDate(new Date(year, month - 1, 1));
+    const propsDate = new Date(year, month - 1, 1);
+    if (propsDate.getMonth() !== currentDate.getMonth() || propsDate.getFullYear() !== currentDate.getFullYear()) {
+      setCurrentDate(propsDate);
+    }
   }, [month, year]);
   
-  const daysInMonth = getDaysInMonth(currentDate);
-  const firstDayOfMonth = getDay(new Date(year, month - 1, 1));
+  // Filter events that fall within the displayed month
+  const filteredEvents = events.filter(event => {
+    if (!event.scheduled_date) return false;
+    
+    const eventDate = new Date(event.scheduled_date);
+    return eventDate.getMonth() === currentDate.getMonth() && eventDate.getFullYear() === currentDate.getFullYear();
+  });
   
-  const handlePrevMonth = () => {
-    const prevMonth = subMonths(currentDate, 1);
-    const newMonth = prevMonth.getMonth() + 1;
-    const newYear = prevMonth.getFullYear();
-    onMonthYearChange(newMonth, newYear);
-  };
-
-  const handleNextMonth = () => {
-    const nextMonth = addMonths(currentDate, 1);
-    const newMonth = nextMonth.getMonth() + 1;
-    const newYear = nextMonth.getFullYear();
-    onMonthYearChange(newMonth, newYear);
-  };
-
-  // Added debugging log to track events data
-  useEffect(() => {
-    console.log(`Calendar component received ${events?.length || 0} total events for ${year}-${month}`);
-    
-    // Group events by date for debugging
-    const eventsByDate = events.reduce((acc, event) => {
-      const date = event.scheduled_date;
-      acc[date] = (acc[date] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-    
-    console.log("Events by date:", eventsByDate);
-  }, [events, month, year]);
-
-  const renderCalendarDays = () => {
-    const days = [];
-    const totalDays = 42; // 6 rows x 7 days
-    
-    // Create days from previous month to fill the first week
-    const prevMonthDays = firstDayOfMonth;
-    const prevMonth = subMonths(new Date(year, month - 1, 1), 1);
-    const daysInPrevMonth = getDaysInMonth(prevMonth);
-    
-    for (let i = 0; i < prevMonthDays; i++) {
-      const day = daysInPrevMonth - (prevMonthDays - 1) + i;
-      const prevMonthDate = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), day);
-      days.push(
-        <CalendarDay 
-          key={`prev-${i}`}
-          date={prevMonthDate}
-          events={[]} // Previous month days don't show events
-          selectedDate={selectedDate}
-          onSelect={onDateSelect}
-          onEventClick={onEventClick}
-          selectedCollaborator={selectedCollaborator}
-        />
-      );
-    }
-    
-    // Create days for current month
-    for (let i = 1; i <= daysInMonth; i++) {
-      const currentDayDate = new Date(year, month - 1, i);
-      days.push(
-        <CalendarDay 
-          key={`current-${i}`}
-          date={currentDayDate}
-          events={events} // Pass all events, each day will filter its own
-          selectedDate={selectedDate}
-          onSelect={onDateSelect}
-          onEventClick={onEventClick}
-          selectedCollaborator={selectedCollaborator}
-        />
-      );
-    }
-    
-    // Add days from next month to fill the remaining cells
-    const remainingDays = totalDays - (prevMonthDays + daysInMonth);
-    for (let i = 1; i <= remainingDays; i++) {
-      const nextMonthDate = new Date(year, month, i);
-      days.push(
-        <CalendarDay 
-          key={`next-${i}`}
-          date={nextMonthDate}
-          events={[]} // Next month days don't show events
-          selectedDate={selectedDate}
-          onSelect={onDateSelect}
-          onEventClick={onEventClick}
-          selectedCollaborator={selectedCollaborator}
-        />
-      );
-    }
-    
-    return days;
-  };
-
-  // Dias da semana em português
-  const weekDays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-
+  // Log the number of events being displayed for debugging
+  console.log(`Calendar - Displaying ${filteredEvents.length} events for ${month}/${year}`);
+  
+  if (selectedEvent) {
+    console.log("Calendar - Selected event:", selectedEvent.id, selectedEvent.title);
+  }
+  
   return (
-    <div className="bg-white rounded-md border shadow-sm w-full">
+    <div className="bg-white rounded-md border shadow-sm w-full h-full">
       <CalendarHeader 
+        currentDate={currentDate} 
+        onMonthChange={handleMonthChange}
+      />
+      
+      <CalendarContainer
+        events={filteredEvents}
+        selectedDate={selectedDate}
         currentDate={currentDate}
-        onPrevMonth={handlePrevMonth}
-        onNextMonth={handleNextMonth}
+        selectedCollaborator={selectedCollaborator}
+        onSelect={onDateSelect}
+        onEventClick={onEventClick}
       />
-      <CalendarNavigation 
-        onPrevMonth={handlePrevMonth}
-        onNextMonth={handleNextMonth}
-      />
-      
-      {/* Adicionamos o componente WeekDaysHeader aqui */}
-      <WeekDaysHeader weekDays={weekDays} />
-      
-      <div className="grid grid-cols-7 gap-px">
-        {renderCalendarDays()}
-      </div>
       
       {selectedDate && (
         <ScheduleEventDialog
@@ -170,10 +97,10 @@ export function Calendar({
           onOpenChange={onDialogOpenChange}
           clientId={clientId}
           selectedDate={selectedDate}
-          events={events.filter(e => e.scheduled_date === format(selectedDate, 'yyyy-MM-dd'))}
+          events={filteredEvents.filter(e => e.scheduled_date === selectedDate.toISOString().split('T')[0])}
           onClose={onDialogClose}
           selectedEvent={selectedEvent}
-          onManualRefetch={onManualRefetch}
+          onManualRefetch={onManualRefetch} // Pass the refetch function to the dialog
         />
       )}
     </div>

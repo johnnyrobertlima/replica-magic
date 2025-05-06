@@ -37,7 +37,6 @@ export function ContentArea({
   isCollapsed,
   onManualRefetch
 }: ContentAreaProps) {
-  const [dialogOpen, setDialogOpen] = useState(false);
   const {
     selectedEvent,
     selectedDate,
@@ -52,11 +51,11 @@ export function ContentArea({
     clientId,
     month,
     year,
-    onManualRefetch
+    onManualRefetch // Make sure we pass this down to useDndContext
   });
   
   // Debug logs to track events count
-  console.log(`ContentArea received ${filteredSchedules.length} events, showLoadingState=${showLoadingState}`);
+  console.log(`ContentArea - Received ${filteredSchedules.length} events, showLoadingState=${showLoadingState}`);
   
   // Caso esteja carregando, mostra um loader
   if (showLoadingState) {
@@ -81,7 +80,7 @@ export function ContentArea({
             isDialogOpen={isDialogOpen}
             onDialogOpenChange={handleDialogOpenChange}
             onDialogClose={handleDialogClose}
-            onManualRefetch={onManualRefetch}
+            onManualRefetch={onManualRefetch} // Pass it to Calendar
           />
         </dndContext.DndContext>
       </div>
@@ -94,7 +93,7 @@ export function ContentArea({
         events={filteredSchedules} 
         clientId={clientId} 
         selectedCollaborator={selectedCollaborator}
-        onManualRefetch={onManualRefetch}
+        onManualRefetch={onManualRefetch} // Pass it to ContentScheduleList
       />
     </div>
   );

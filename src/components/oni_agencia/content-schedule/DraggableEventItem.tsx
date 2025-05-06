@@ -31,7 +31,9 @@ export function DraggableEventItem({ event, onClick }: DraggableEventItemProps) 
   } : undefined;
   
   const handleClick = (e: React.MouseEvent) => {
+    // Prevent click handling during drag operations
     if (!isDragging) {
+      console.log("DraggableEventItem click detected for event:", event.id);
       onClick(e);
     }
   };

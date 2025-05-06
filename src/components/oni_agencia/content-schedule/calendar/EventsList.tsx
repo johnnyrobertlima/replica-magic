@@ -29,32 +29,37 @@ export function EventsList({ events, date, onEventClick, isDraggable = true }: E
   
   if (uniqueEvents.length === 0) return null;
 
-  // FIXED: Adicionar logs para debugging
-  console.log(`Rendering ${uniqueEvents.length} events for date ${date.toISOString().split('T')[0]}`);
+  console.log(`EventsList - Rendering ${uniqueEvents.length} events for date ${date.toISOString().split('T')[0]}`);
 
   return (
     <div className="flex flex-col gap-[2px] pr-2 w-full">
-      {uniqueEvents.map((event) => (
-        // Usar uma key verdadeiramente única combinando ID do evento e a data ISO
-        <EventTooltip 
-          key={`event-${event.id}-${date.toISOString()}`} 
-          event={event}
-        >
-          <div className="event-item-wrapper">
-            {isDraggable ? (
-              <DraggableEventItem 
-                event={event}
-                onClick={(e) => onEventClick(e, event)}
-              />
-            ) : (
-              <EventItem 
-                event={event}
-                onClick={(e) => onEventClick(e, event)}
-              />
-            )}
-          </div>
-        </EventTooltip>
-      ))}
+      {uniqueEvents.map((event) => {
+        const eventClickHandler = (e: React.MouseEvent) => {
+          console.log(`EventsList - Event clicked: ${event.id}`);
+          onEventClick(e, event);
+        };
+        
+        return (
+          <EventTooltip 
+            key={`event-${event.id}-${date.toISOString()}`} 
+            event={event}
+          >
+            <div className="event-item-wrapper">
+              {isDraggable ? (
+                <DraggableEventItem 
+                  event={event}
+                  onClick={eventClickHandler}
+                />
+              ) : (
+                <EventItem 
+                  event={event}
+                  onClick={eventClickHandler}
+                />
+              )}
+            </div>
+          </EventTooltip>
+        );
+      })}
     </div>
   );
 }

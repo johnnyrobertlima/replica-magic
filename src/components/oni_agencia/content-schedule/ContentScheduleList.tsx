@@ -14,7 +14,7 @@ interface ContentScheduleListProps {
   events: CalendarEvent[];
   clientId: string;
   selectedCollaborator?: string | null;
-  onManualRefetch?: () => void; // Adicionamos essa prop
+  onManualRefetch?: () => void; // Make sure we have this prop
 }
 
 export function ContentScheduleList({ 
@@ -53,7 +53,7 @@ export function ContentScheduleList({
       let isCreator = false;
       
       if (event.creators) {
-        // Ensure creators is always treated as an array of strings
+        // Ensure creators is always treated as an array
         const creatorsArray = Array.isArray(event.creators) ? event.creators : 
                             (typeof event.creators === 'string' ? [event.creators] : []);
         
@@ -83,11 +83,13 @@ export function ContentScheduleList({
   const sortedDates = useMemo(() => Object.keys(groupedEvents).sort(), [groupedEvents]);
   
   const handleEventItemClick = (event: CalendarEvent) => {
+    console.log("ContentScheduleList - Event clicked:", event.id, event.title);
     const date = parseISO(event.scheduled_date);
     handleEventClick(event, date);
   };
   
   const handleDialogClose = () => {
+    console.log("ContentScheduleList - Dialog closed");
     setSelectedDate(undefined);
     setSelectedEvent(undefined);
     setIsDialogOpen(false);
@@ -150,10 +152,10 @@ export function ContentScheduleList({
           onOpenChange={setIsDialogOpen}
           clientId={clientId}
           selectedDate={selectedDate}
-          events={[]}
+          events={filteredEvents.filter(e => e.scheduled_date === selectedDate.toISOString().split('T')[0])}
           onClose={handleDialogClose}
           selectedEvent={selectedEvent}
-          onManualRefetch={onManualRefetch} // Passamos a função de atualização manual
+          onManualRefetch={onManualRefetch} // Make sure to pass onManualRefetch to the dialog
         />
       )}
     </div>
