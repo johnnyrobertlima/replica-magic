@@ -109,8 +109,8 @@ const OniAgenciaControlePauta = () => {
               product_id: item.product_id || null,
               status_id: item.status_id || null,
               creators: item.creators || null,
-              created_at: now,
-              updated_at: now,
+              created_at: item.created_at || now,
+              updated_at: item.updated_at || now,
               service: item.service_name ? {
                 id: item.service_id || '',
                 name: item.service_name || '',
