@@ -46,7 +46,7 @@ export function CalendarDayCell({
   // Constants for visible events display
   const MAX_VISIBLE_EVENTS = 3;
   const visibleEvents = dayEvents.slice(0, MAX_VISIBLE_EVENTS);
-  const hiddenEventsCount = dayEvents.length - MAX_VISIBLE_EVENTS;
+  const hiddenEventsCount = Math.max(0, dayEvents.length - MAX_VISIBLE_EVENTS);
   
   const handleCellClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -54,7 +54,9 @@ export function CalendarDayCell({
       target.closest('.event-item') || 
       target.classList.contains('event-item') ||
       target.closest('.event-item-wrapper') ||
-      target.classList.contains('event-item-wrapper');
+      target.classList.contains('event-item-wrapper') ||
+      target.closest('.events-overflow-indicator') ||
+      target.classList.contains('events-overflow-indicator');
     
     if (!isEventClick) {
       console.log("Cell background clicked for date:", format(date, 'yyyy-MM-dd'));
@@ -106,13 +108,14 @@ export function CalendarDayCell({
                 onEventClick={handleEventClick} 
               />
               
-              {/* Show "more events" indicator when not hovering and there are more than MAX_VISIBLE_EVENTS */}
-              <MoreEventsIndicator 
-                count={hiddenEventsCount}
-                date={date}
-                events={dayEvents}
-                onEventClick={handleEventClick}
-              />
+              {hiddenEventsCount > 0 && (
+                <MoreEventsIndicator 
+                  count={hiddenEventsCount}
+                  date={date}
+                  events={dayEvents}
+                  onEventClick={handleEventClick}
+                />
+              )}
             </div>
           ) : (
             /* When hovering, show ScrollArea with all events */
