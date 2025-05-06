@@ -1,4 +1,3 @@
-
 // Modify the OniAgenciaContentSchedule interface to make title optional
 export interface OniAgenciaContentSchedule {
   id: string;
