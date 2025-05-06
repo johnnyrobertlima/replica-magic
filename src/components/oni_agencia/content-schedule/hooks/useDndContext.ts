@@ -94,11 +94,9 @@ export function useDndContext({ clientId, month, year, onManualRefetch }: UseDnd
       
       // Create a clean update object with only the fields we want to update
       // This avoids sending nested objects that don't exist in the database schema
-      // TypeScript expects a full ContentScheduleFormData object, but Supabase just needs the fields we're updating
-      // Use type assertion to tell TypeScript this is okay
       const updateData = {
         scheduled_date: newDate
-      } as any; // Use type assertion to bypass TypeScript error
+      };
       
       // Update the database with the new date
       await updateMutation.mutateAsync({

@@ -38,8 +38,7 @@ export function CalendarDay({
   
   // Create an event click handler that adapts the parameters
   const handleEventClick = useCallback((e: React.MouseEvent, event: CalendarEvent) => {
-    console.log("CalendarDay: Event clicked:", event.id);
-    e.stopPropagation(); // Prevenir a propagação do evento de clique
+    e.stopPropagation();
     onEventClick(event, date);
   }, [date, onEventClick]);
   

@@ -31,7 +31,6 @@ export function CalendarDayCell({
   
   const { setNodeRef, isOver } = useDroppable({
     id: dateString,
-    data: { date }
   });
   
   let dayEvents = events.filter(event => event.scheduled_date === dateString);

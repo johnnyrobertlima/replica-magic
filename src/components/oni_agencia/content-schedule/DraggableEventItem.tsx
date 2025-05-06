@@ -32,8 +32,6 @@ export function DraggableEventItem({ event, onClick }: DraggableEventItemProps) 
   
   const handleClick = (e: React.MouseEvent) => {
     if (!isDragging) {
-      // Log detalhado para depuração
-      console.log("DraggableEventItem clicked:", event.id, event.title);
       onClick(e);
     }
   };
@@ -44,7 +42,7 @@ export function DraggableEventItem({ event, onClick }: DraggableEventItemProps) 
       style={style} 
       {...listeners} 
       {...attributes}
-      className="cursor-grab active:cursor-grabbing event-item-wrapper"
+      className="cursor-grab active:cursor-grabbing"
     >
       <EventItem 
         event={event} 
