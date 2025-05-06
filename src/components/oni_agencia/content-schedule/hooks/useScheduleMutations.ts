@@ -1,7 +1,9 @@
+
 import { useState } from "react";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
 import { useCreateContentSchedule, useUpdateContentSchedule, useDeleteContentSchedule } from "@/hooks/useOniAgenciaContentSchedules";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function useScheduleMutations({
   onClose,
@@ -13,6 +15,7 @@ export function useScheduleMutations({
   selectedDate: Date;
 }) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const createMutation = useCreateContentSchedule();
   const updateMutation = useUpdateContentSchedule();
@@ -112,6 +115,10 @@ export function useScheduleMutations({
         });
       }
       
+      // Force refetch of all related data after submission
+      queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
+      queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
+      
       onClose();
     } catch (error) {
       console.error("Error in handleSubmit:", error);
@@ -161,13 +168,18 @@ export function useScheduleMutations({
         description: "Status do agendamento atualizado com sucesso."
       });
       
+      // Force refetch of all relevant data
+      queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
+      queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
+      queryClient.invalidateQueries({ queryKey: ['scheduleHistory'] });
+      
       onClose();
     } catch (error) {
       console.error("Error in handleStatusUpdate:", error);
       toast({
+        variant: "destructive",
         title: "Erro",
         description: "Ocorreu um erro ao atualizar o status.",
-        variant: "destructive"
       });
     }
   };
@@ -185,14 +197,18 @@ export function useScheduleMutations({
           description: "Agendamento excluído com sucesso."
         });
         
+        // Force refetch after deletion
+        queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
+        queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
+        
         onClose();
       }
     } catch (error) {
       console.error("Error in handleDelete:", error);
       toast({
+        variant: "destructive",
         title: "Erro",
         description: "Ocorreu um erro ao excluir o agendamento.",
-        variant: "destructive"
       });
     }
   };

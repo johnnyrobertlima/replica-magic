@@ -4,6 +4,7 @@ import { CalendarEvent } from "@/types/oni-agencia";
 import { useScheduleFormState } from "./useScheduleFormState";
 import { useScheduleMutations } from "./useScheduleMutations";
 import { format } from "date-fns";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function useScheduleEventDialog({
   clientId,
@@ -20,6 +21,7 @@ export function useScheduleEventDialog({
 }) {
   // Add a ref to prevent multiple selections
   const hasSelectedEventRef = useRef(false);
+  const queryClient = useQueryClient();
   
   const {
     currentSelectedEvent,
@@ -42,7 +44,12 @@ export function useScheduleEventDialog({
     handleStatusUpdate,
     handleDelete
   } = useScheduleMutations({
-    onClose,
+    onClose: () => {
+      // Force a data refresh when closing the dialog
+      queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
+      queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
+      onClose();
+    },
     clientId,
     selectedDate
   });

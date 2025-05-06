@@ -23,7 +23,12 @@ export function useCreateContentSchedule() {
         title: "Agendamento criado",
         description: "O agendamento foi criado com sucesso.",
       });
+      
+      // Invalidate all content schedules queries to force refetch
       queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
+      
+      // Also invalidate infinite queries
+      queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
     },
     onError: (error) => {
       console.error("Error creating content schedule:", error);
@@ -50,8 +55,14 @@ export function useUpdateContentSchedule() {
         title: "Agendamento atualizado",
         description: "O agendamento foi atualizado com sucesso.",
       });
+      
+      // Invalidate all queries related to content schedules
       queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
-      // Também invalidar as consultas de histórico
+      
+      // Also invalidate infinite queries
+      queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
+      
+      // Invalidate history queries
       queryClient.invalidateQueries({ queryKey: ['scheduleHistory'] });
     },
     onError: (error) => {
@@ -79,7 +90,12 @@ export function useDeleteContentSchedule() {
         title: "Agendamento excluído",
         description: "O agendamento foi excluído com sucesso.",
       });
+      
+      // Invalidate all content schedules queries to force refetch
       queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
+      
+      // Also invalidate infinite queries
+      queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
     },
     onError: (error) => {
       console.error("Error deleting content schedule:", error);

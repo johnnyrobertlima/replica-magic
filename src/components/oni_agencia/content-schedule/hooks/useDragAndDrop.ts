@@ -1,101 +1,90 @@
 
-import { useState, useCallback } from "react";
-import { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
-import { CalendarEvent } from "@/types/oni-agencia";
-import { useUpdateContentSchedule } from "@/hooks/useOniAgenciaContentSchedules";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { CalendarEvent } from "@/types/oni-agencia";
+import { updateContentSchedule } from "@/services/oniAgenciaContentScheduleServices";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
-export function useDragAndDrop(events: CalendarEvent[], userName: string) {
+export function useDragAndDrop() {
   const [isDragging, setIsDragging] = useState(false);
-  const [draggedEvent, setDraggedEvent] = useState<CalendarEvent | null>(null);
-  
-  const updateMutation = useUpdateContentSchedule();
+  const [activeDragEvent, setActiveDragEvent] = useState<CalendarEvent | null>(null);
+  const queryClient = useQueryClient();
   const { toast } = useToast();
-  
-  const handleDragStart = useCallback((event: DragStartEvent) => {
-    const eventId = event.active.id as string;
-    const draggedEvent = events.find(e => e.id === eventId);
-    
-    if (draggedEvent) {
-      setDraggedEvent(draggedEvent);
-      setIsDragging(true);
-      console.log("Started dragging event:", eventId);
-    }
-  }, [events]);
-  
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
+
+  const handleDragStart = (event: CalendarEvent) => {
+    setIsDragging(true);
+    setActiveDragEvent(event);
+  };
+
+  const handleDragEnd = () => {
     setIsDragging(false);
+    setActiveDragEvent(null);
+  };
+
+  const handleDrop = async (date: Date) => {
+    if (!activeDragEvent) return;
     
-    if (!draggedEvent) return;
+    const formattedDate = format(date, "yyyy-MM-dd");
     
-    const { active, over } = event;
-    
-    if (over) {
-      const newDate = over.id as string; // The date string in format YYYY-MM-DD
-      const oldDate = draggedEvent.scheduled_date;
-      
-      if (newDate !== oldDate) {
-        console.log(`Moving event from ${oldDate} to ${newDate}`);
-        
-        // Format dates for the message
-        const oldDateFormatted = format(new Date(oldDate), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
-        const newDateFormatted = format(new Date(newDate), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
-        
-        // Create movement record message
-        const movementRecord = `[${new Date().toLocaleString()}] Movido de ${oldDateFormatted} para ${newDateFormatted} por ${userName}.`;
-        
-        // Append to existing description or create new
-        const updatedDescription = draggedEvent.description 
-          ? `${draggedEvent.description}\n\n${movementRecord}` 
-          : movementRecord;
-        
-        // Create a complete update object with all required fields
-        const updateData = {
-          client_id: draggedEvent.client_id,
-          service_id: draggedEvent.service_id,
-          collaborator_id: draggedEvent.collaborator_id,
-          title: draggedEvent.title || "",
-          description: updatedDescription,
-          scheduled_date: newDate,
-          execution_phase: draggedEvent.execution_phase,
-          editorial_line_id: draggedEvent.editorial_line_id,
-          product_id: draggedEvent.product_id,
-          status_id: draggedEvent.status_id,
-          creators: draggedEvent.creators || []
-        };
-        
-        updateMutation.mutate(
-          {
-            id: draggedEvent.id,
-            data: updateData
-          },
-          {
-            onSuccess: () => {
-              toast({
-                title: "Agendamento movido",
-                description: `O agendamento foi movido para ${newDateFormatted}.`
-              });
-            },
-            onError: (error) => {
-              toast({
-                title: "Erro ao mover agendamento",
-                description: "Ocorreu um erro ao mover o agendamento.",
-                variant: "destructive",
-              });
-            }
-          }
-        );
-      }
+    if (formattedDate === activeDragEvent.scheduled_date) {
+      setIsDragging(false);
+      setActiveDragEvent(null);
+      return;
     }
     
-    setDraggedEvent(null);
-  }, [draggedEvent, updateMutation, toast, userName]);
-  
+    try {
+      console.log(`Moving event ${activeDragEvent.id} from ${activeDragEvent.scheduled_date} to ${formattedDate}`);
+      
+      // Create update data
+      const updateData = {
+        ...activeDragEvent,
+        scheduled_date: formattedDate
+      };
+      
+      // Remove unnecessary fields
+      delete (updateData as any).id;
+      delete (updateData as any).service;
+      delete (updateData as any).collaborator;
+      delete (updateData as any).editorial_line;
+      delete (updateData as any).product;
+      delete (updateData as any).status;
+      delete (updateData as any).client;
+      delete (updateData as any).created_at;
+      delete (updateData as any).updated_at;
+      
+      // Make the update API call
+      await updateContentSchedule(activeDragEvent.id, updateData);
+      
+      // Show success toast
+      toast({
+        title: "Agendamento movido",
+        description: "O agendamento foi movido para outra data com sucesso.",
+      });
+      
+      // Force data refresh
+      queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
+      queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
+      queryClient.invalidateQueries({ queryKey: ['scheduleHistory'] });
+      
+    } catch (error) {
+      console.error("Error moving event:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao mover agendamento",
+        description: "Não foi possível mover o agendamento para a nova data.",
+      });
+    } finally {
+      setIsDragging(false);
+      setActiveDragEvent(null);
+    }
+  };
+
   return {
     isDragging,
+    activeDragEvent,
     handleDragStart,
-    handleDragEnd
+    handleDragEnd,
+    handleDrop,
   };
 }
