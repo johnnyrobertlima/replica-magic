@@ -6,6 +6,7 @@ import { CalendarEvent } from "@/types/oni-agencia";
 import { EventsList } from "./EventsList";
 import { MoreEventsIndicator } from "./MoreEventsIndicator";
 import { ScrollableEvents } from "./ScrollableEvents";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface CalendarDayCellProps {
   date: Date;
@@ -78,6 +79,9 @@ export function CalendarDayCell({
   const handleMouseLeave = () => {
     setIsHovering(false);
   };
+
+  // Text for the additional events tooltip
+  const tooltipText = hiddenEventsCount > 0 ? `Existem +${hiddenEventsCount} agendamentos neste dia` : undefined;
   
   return (
     <div 
@@ -102,23 +106,38 @@ export function CalendarDayCell({
       {dayEvents.length > 0 ? (
         <>
           {!isHovering ? (
-            <div className="flex flex-col gap-[2px]">
-              <EventsList 
-                events={visibleEvents} 
-                onEventClick={handleEventClick} 
-              />
-              
-              {hiddenEventsCount > 0 && (
-                <div className="mt-1">
-                  <MoreEventsIndicator 
-                    count={hiddenEventsCount}
-                    date={date}
-                    events={dayEvents.slice(MAX_VISIBLE_EVENTS)}
-                    onEventClick={handleEventClick}
-                  />
-                </div>
-              )}
-            </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex flex-col gap-[2px]">
+                    <EventsList 
+                      events={visibleEvents} 
+                      onEventClick={handleEventClick} 
+                    />
+                    
+                    {hiddenEventsCount > 0 && (
+                      <div className="mt-1">
+                        <MoreEventsIndicator 
+                          count={hiddenEventsCount}
+                          date={date}
+                          events={dayEvents.slice(MAX_VISIBLE_EVENTS)}
+                          onEventClick={handleEventClick}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </TooltipTrigger>
+                {hiddenEventsCount > 0 && (
+                  <TooltipContent 
+                    side="top" 
+                    className="bg-slate-800/90 text-white border-slate-700 shadow-md"
+                    role="tooltip"
+                  >
+                    {tooltipText}
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
           ) : (
             /* When hovering, show ScrollArea with all events */
             <ScrollableEvents 

@@ -81,6 +81,11 @@
   background-color: rgba(0, 0, 0, 0.05);
 }
 
+/* Custom tooltip styling for calendar days */
+[data-radix-tooltip-content] {
+  z-index: 50;
+}
+
 /* Estilos para informações adicionais nos cards */
 .card-client-product {
   display: flex;
