@@ -22,7 +22,7 @@ export function useScheduleHistory(scheduleId: string) {
   return useQuery({
     queryKey: ['scheduleHistory', scheduleId],
     queryFn: async () => {
-      // Fetch history entries with join to user_profiles for changed_by name
+      // Fetch history entries with correct join syntax for user profiles
       const { data: historyData, error: historyError } = await supabase
         .from('oni_agencia_schedule_history')
         .select(`
@@ -32,12 +32,15 @@ export function useScheduleHistory(scheduleId: string) {
           new_value,
           changed_by,
           created_at,
-          user_profiles!changed_by(full_name, email)
+          user_profiles(full_name, email)
         `)
         .eq('schedule_id', scheduleId)
         .order('created_at', { ascending: false });
 
-      if (historyError) throw historyError;
+      if (historyError) {
+        console.error("Error fetching history:", historyError);
+        throw historyError;
+      }
       
       // Fetch status and collaborator information for resolving IDs to names
       const statusIds = new Set<string>();
@@ -53,13 +56,17 @@ export function useScheduleHistory(scheduleId: string) {
         }
       });
       
+      // Convert to arrays safely for the IN query
+      const statusIdsArray = Array.from(statusIds);
+      const collaboratorIdsArray = Array.from(collaboratorIds);
+      
       // Fetch status names
       const statusMap: Record<string, string> = {};
-      if (statusIds.size > 0) {
+      if (statusIdsArray.length > 0) {
         const { data: statuses } = await supabase
           .from('oni_agencia_status')
           .select('id, name')
-          .in('id', Array.from(statusIds));
+          .in('id', statusIdsArray);
           
         if (statuses) {
           statuses.forEach(status => {
@@ -70,11 +77,11 @@ export function useScheduleHistory(scheduleId: string) {
       
       // Fetch collaborator names
       const collaboratorMap: Record<string, string> = {};
-      if (collaboratorIds.size > 0) {
+      if (collaboratorIdsArray.length > 0) {
         const { data: collaborators } = await supabase
           .from('oni_agencia_collaborators')
           .select('id, name')
-          .in('id', Array.from(collaboratorIds));
+          .in('id', collaboratorIdsArray);
           
         if (collaborators) {
           collaborators.forEach(collab => {
@@ -85,20 +92,19 @@ export function useScheduleHistory(scheduleId: string) {
       
       // Map and enhance history entries with resolved names
       const enhancedHistory = historyData.map(entry => {
-        // Extract user profile data safely - cast to unknown first to avoid type errors
-        const userProfileData = entry.user_profiles as unknown;
+        // Extract user profile data safely - the user_profiles returns an array
+        const userProfiles = entry.user_profiles;
         let userProfile: UserProfile | null = null;
         
-        // Only proceed with the cast if it appears to be a valid object with our expected properties
-        if (userProfileData && 
-            typeof userProfileData === 'object' && 
-            userProfileData !== null) {
-          userProfile = userProfileData as UserProfile;
+        if (Array.isArray(userProfiles) && userProfiles.length > 0) {
+          userProfile = userProfiles[0];
         }
         
         const formattedEntry: ScheduleHistory = {
           id: entry.id,
-          field_name: entry.field_name === 'status_id' ? 'Status' : 'Colaborador Responsável',
+          field_name: entry.field_name === 'status_id' ? 'Status' : 
+                      entry.field_name === 'collaborator_id' ? 'Colaborador Responsável' :
+                      entry.field_name === 'creation' ? 'Criação do Registro' : entry.field_name,
           old_value: null,
           new_value: '',
           changed_by: entry.changed_by,
@@ -113,6 +119,8 @@ export function useScheduleHistory(scheduleId: string) {
         } else if (entry.field_name === 'collaborator_id') {
           formattedEntry.old_value = entry.old_value ? collaboratorMap[entry.old_value] || 'Desconhecido' : null;
           formattedEntry.new_value = collaboratorMap[entry.new_value] || 'Desconhecido';
+        } else if (entry.field_name === 'creation') {
+          formattedEntry.new_value = 'Agendamento criado';
         }
         
         return formattedEntry;

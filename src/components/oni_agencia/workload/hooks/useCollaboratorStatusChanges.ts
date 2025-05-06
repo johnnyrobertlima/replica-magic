@@ -36,7 +36,7 @@ export function useCollaboratorStatusChanges() {
         setError(null);
 
         // Fetch both status and collaborator changes from oni_agencia_schedule_history table
-        // Now including user_profiles join to get the name of who made the change
+        // Using correct join syntax for user profiles
         const { data, error: fetchError } = await supabase
           .from('oni_agencia_schedule_history')
           .select(`
@@ -47,7 +47,7 @@ export function useCollaboratorStatusChanges() {
             created_at,
             schedule_id,
             changed_by,
-            user_profiles!changed_by(full_name, email),
+            user_profiles(full_name, email),
             oni_agencia_content_schedules:schedule_id (
               title, 
               collaborator_id,
@@ -111,15 +111,12 @@ export function useCollaboratorStatusChanges() {
         const formattedChanges: StatusChange[] = data.map(item => {
           const isStatusChange = item.field_name === 'status_id';
           
-          // Extract user profile data safely - cast to unknown first to avoid type errors
-          const userProfileData = item.user_profiles as unknown;
+          // Extract user profile data safely - user_profiles returns an array
+          const userProfiles = item.user_profiles;
           let userProfile: UserProfile | null = null;
           
-          // Only proceed with the cast if it appears to be a valid object with our expected properties
-          if (userProfileData && 
-              typeof userProfileData === 'object' && 
-              userProfileData !== null) {
-            userProfile = userProfileData as UserProfile;
+          if (Array.isArray(userProfiles) && userProfiles.length > 0) {
+            userProfile = userProfiles[0];
           }
           
           const changedByName = userProfile?.full_name || userProfile?.email || 'Sistema';

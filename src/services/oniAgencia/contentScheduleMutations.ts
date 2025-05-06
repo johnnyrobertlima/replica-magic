@@ -32,6 +32,7 @@ export async function createContentSchedule(schedule: ContentScheduleFormData): 
     
     console.log('Creating content schedule:', createData);
     
+    // First create the schedule
     const { data, error } = await supabase
       .from(TABLE_NAME)
       .insert(createData)
@@ -41,6 +42,60 @@ export async function createContentSchedule(schedule: ContentScheduleFormData): 
     if (error) {
       console.error('Error creating content schedule:', error);
       throw error;
+    }
+
+    // Get current user ID
+    const { data: { user } } = await supabase.auth.getUser();
+    const userId = user?.id;
+    
+    // Record creation in history
+    if (data && data.id) {
+      // Add a creation entry to history
+      const historyEntry = {
+        schedule_id: data.id,
+        field_name: 'creation',
+        old_value: null,
+        new_value: 'created',
+        changed_by: userId
+      };
+      
+      const { error: historyError } = await supabase
+        .from('oni_agencia_schedule_history')
+        .insert(historyEntry);
+        
+      if (historyError) {
+        console.error('Error recording creation history:', historyError);
+        // Don't throw, just log the error
+      }
+      
+      // Also record initial status and collaborator if provided
+      if (processedSchedule.status_id) {
+        const statusHistoryEntry = {
+          schedule_id: data.id,
+          field_name: 'status_id',
+          old_value: null,
+          new_value: processedSchedule.status_id,
+          changed_by: userId
+        };
+        
+        await supabase
+          .from('oni_agencia_schedule_history')
+          .insert(statusHistoryEntry);
+      }
+      
+      if (processedSchedule.collaborator_id) {
+        const collaboratorHistoryEntry = {
+          schedule_id: data.id,
+          field_name: 'collaborator_id',
+          old_value: null,
+          new_value: processedSchedule.collaborator_id,
+          changed_by: userId
+        };
+        
+        await supabase
+          .from('oni_agencia_schedule_history')
+          .insert(collaboratorHistoryEntry);
+      }
     }
 
     console.log('Created content schedule:', data?.id);
@@ -96,7 +151,12 @@ export async function updateContentSchedule(id: string, schedule: Partial<Conten
     // Record history for important field changes
     const fieldsToTrack = [
       { field: 'status_id', name: 'status_id' },
-      { field: 'collaborator_id', name: 'collaborator_id' }
+      { field: 'collaborator_id', name: 'collaborator_id' },
+      { field: 'title', name: 'title' },
+      { field: 'description', name: 'description' },
+      { field: 'scheduled_date', name: 'scheduled_date' },
+      { field: 'editorial_line_id', name: 'editorial_line_id' },
+      { field: 'product_id', name: 'product_id' }
     ];
     
     // Get current user ID

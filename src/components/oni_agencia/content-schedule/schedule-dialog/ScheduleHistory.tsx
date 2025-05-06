@@ -4,21 +4,39 @@ import { ptBR } from "date-fns/locale";
 import { useScheduleHistory } from "@/hooks/useScheduleHistory";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CalendarEvent } from "@/types/oni-agencia";
-import { User } from "lucide-react";
+import { User, Clock, AlertTriangle } from "lucide-react";
 
 interface ScheduleHistoryProps {
   event: CalendarEvent;
 }
 
 export function ScheduleHistory({ event }: ScheduleHistoryProps) {
-  const { data: history = [], isLoading } = useScheduleHistory(event.id);
+  const { data: history = [], isLoading, isError, error } = useScheduleHistory(event.id);
 
   if (isLoading) {
-    return <div className="text-sm text-muted-foreground">Carregando histórico...</div>;
+    return (
+      <div className="text-sm text-muted-foreground flex items-center justify-center p-4 space-x-2">
+        <Clock className="animate-spin h-4 w-4" />
+        <span>Carregando histórico...</span>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="text-sm text-red-500 flex items-center justify-center p-4 space-x-2">
+        <AlertTriangle className="h-4 w-4" />
+        <span>Erro ao carregar histórico: {error instanceof Error ? error.message : 'Erro desconhecido'}</span>
+      </div>
+    );
   }
 
   if (history.length === 0) {
-    return <div className="text-sm text-muted-foreground">Nenhuma alteração registrada.</div>;
+    return (
+      <div className="text-sm text-muted-foreground flex items-center justify-center p-4 h-[150px]">
+        <span>Nenhuma alteração registrada para este agendamento.</span>
+      </div>
+    );
   }
 
   return (
