@@ -197,3 +197,26 @@
 .events-popover-event:hover {
   opacity: 0.9;
 }
+
+/* Styled content-type MultiSelect */
+.content-type-select .bg-white,
+.content-type-select [data-cmdk-input],
+.content-type-select [data-cmdk-item] {
+  background-color: #FFFFFF !important;
+}
+
+.content-type-select [data-cmdk-item]:hover {
+  background-color: #f3f4f6 !important;
+}
+
+/* Make popup menus have white background */
+[role="listbox"],
+[role="menu"],
+[data-radix-popper-content-wrapper] {
+  background-color: #FFFFFF !important;
+}
+
+/* Date picker field background */
+[data-radix-popper-content-wrapper] {
+  background-color: #FFFFFF !important;
+}

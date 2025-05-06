@@ -27,8 +27,8 @@ interface FetchPageResult {
  */
 export function useInfiniteContentSchedules(
   clientId: string | null,
-  year: number,
-  month: number,
+  year: number | null = null, // Make optional
+  month: number | null = null, // Make optional
   selectedCollaborator: string | null = null,
   autoFetch: boolean = false,
   serviceIds: string[] = []
@@ -40,15 +40,18 @@ export function useInfiniteContentSchedules(
   // Determinar se é uma consulta para todos os clientes ou para um cliente específico
   const isAllClients = !clientId || clientId === "";
   
+  // Determine if we're doing a filtered query or loading all data
+  const isFilteredQuery = !!year && !!month;
+  
   // Consulta paginada com suporte a cache eficiente
   const result = useInfiniteQuery<FetchPageResult>({
     queryKey: [
       'optimizedContentSchedules', 
       isAllClients ? 'all' : clientId, 
-      year, 
-      month, 
+      year || 'all', 
+      month || 'all', 
       selectedCollaborator, 
-      serviceIds
+      serviceIds.length > 0 ? serviceIds : 'all'
     ],
     queryFn: async ({ pageParam }) => {
       try {
@@ -61,12 +64,23 @@ export function useInfiniteContentSchedules(
         const currentPage = pageParam as number;
         
         // Parâmetros para a função de consulta
-        const params = isAllClients 
-          ? [year, month, currentPage, PAGE_SIZE, selectedCollaborator, serviceIds] 
-          : [clientId as string, year, month, currentPage, PAGE_SIZE, selectedCollaborator, serviceIds];
-        
-        // @ts-ignore - Os parâmetros são dinâmicos
-        data = await fetchFunction(...params);
+        if (isFilteredQuery) {
+          // If we have year and month filters, use them
+          const params = isAllClients 
+            ? [year!, month!, currentPage, PAGE_SIZE, selectedCollaborator, serviceIds] 
+            : [clientId as string, year!, month!, currentPage, PAGE_SIZE, selectedCollaborator, serviceIds];
+          
+          // @ts-ignore - Os parâmetros são dinâmicos
+          data = await fetchFunction(...params);
+        } else {
+          // If no filters, fetch all data - parameters change based on API requirements
+          const params = isAllClients 
+            ? [null, null, currentPage, PAGE_SIZE, selectedCollaborator, serviceIds] 
+            : [clientId as string, null, null, currentPage, PAGE_SIZE, selectedCollaborator, serviceIds];
+          
+          // @ts-ignore - Os parâmetros são dinâmicos
+          data = await fetchFunction(...params);
+        }
         
         // Verificar se data é um array válido
         if (!data || !Array.isArray(data)) {
@@ -108,7 +122,7 @@ export function useInfiniteContentSchedules(
       return lastPage.hasMore ? lastPage.page + 1 : undefined;
     },
     initialPageParam: 1,
-    enabled: !!year && !!month && autoFetch,
+    enabled: autoFetch,
     staleTime: STALE_TIME,
     gcTime: CACHE_TIME,
     refetchOnWindowFocus: false,

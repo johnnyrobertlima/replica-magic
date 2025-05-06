@@ -8,41 +8,52 @@ import { getBaseQuery } from "./baseQuery";
  */
 export async function getContentSchedulesPaginated(
   clientId: string, 
-  year: number, 
-  month: number, 
+  year: number | null, 
+  month: number | null, 
   page: number = 1,
   pageSize: number = 50,
   selectedCollaborator: string | null = null,
   serviceIds: string[] = []
 ): Promise<CalendarEvent[]> {
   try {
-    // Calculate the start and end dates for the given month
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0); // Last day of the month
-    const offset = (page - 1) * pageSize;
-
     if (!clientId) {
       console.error('Error in getContentSchedulesPaginated: Invalid clientId');
       return [];
     }
 
-    console.log(`Fetching paginated events for date range:`, {
-      clientId,
-      startDate: startDate.toISOString().split('T')[0],
-      endDate: endDate.toISOString().split('T')[0],
-      page,
-      pageSize,
-      offset,
-      selectedCollaborator,
-      serviceIds
-    });
+    let query = getBaseQuery().eq('client_id', clientId);
+    
+    // Apply date filters only if year and month are provided
+    if (year !== null && month !== null) {
+      // Calculate the start and end dates for the given month
+      const startDate = new Date(year, month - 1, 1);
+      const endDate = new Date(year, month, 0); // Last day of the month
+      
+      query = query
+        .gte('scheduled_date', startDate.toISOString().split('T')[0])
+        .lte('scheduled_date', endDate.toISOString().split('T')[0]);
+      
+      console.log(`Fetching paginated events for client ${clientId} in date range:`, {
+        startDate: startDate.toISOString().split('T')[0],
+        endDate: endDate.toISOString().split('T')[0],
+        page,
+        pageSize,
+        selectedCollaborator,
+        serviceIds
+      });
+    } else {
+      console.log(`Fetching all paginated events for client ${clientId}`, {
+        page,
+        pageSize,
+        selectedCollaborator,
+        serviceIds
+      });
+    }
 
-    // Iniciar a consulta básica
-    let query = getBaseQuery()
-      .eq('client_id', clientId)
-      .gte('scheduled_date', startDate.toISOString().split('T')[0])
-      .lte('scheduled_date', endDate.toISOString().split('T')[0])
-      .order('scheduled_date', { ascending: true });
+    const offset = (page - 1) * pageSize;
+
+    // Order by scheduled_date
+    query = query.order('scheduled_date', { ascending: true });
     
     // Adicionar filtro de colaborador se especificado
     if (selectedCollaborator) {
@@ -63,11 +74,11 @@ export async function getContentSchedulesPaginated(
     }
 
     if (!data || data.length === 0) {
-      console.log(`No content schedules found for client ${clientId} in month ${month}/${year} (page ${page})`);
+      console.log(`No content schedules found for client ${clientId} with the specified filters (page ${page})`);
       return [];
     }
     
-    console.log(`Fetched ${data.length} content schedules from page ${page} for month ${month}/${year}`);
+    console.log(`Fetched ${data.length} content schedules from page ${page}`);
     
     // Normalizar os dados para garantir consistência
     const safeData = data.map(item => {

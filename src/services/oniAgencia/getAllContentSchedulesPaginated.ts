@@ -7,34 +7,47 @@ import { getBaseQuery } from "./baseQuery";
  * para melhorar a performance e reduzir a carga no banco de dados
  */
 export async function getAllContentSchedulesPaginated(
-  year: number, 
-  month: number, 
+  year: number | null, 
+  month: number | null, 
   page: number = 1,
   pageSize: number = 50,
   selectedCollaborator: string | null = null,
   serviceIds: string[] = []
 ): Promise<CalendarEvent[]> {
   try {
-    // Calculate the start and end dates for the given month
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0); // Last day of the month
+    let query = getBaseQuery();
+    
+    // Apply date filters only if year and month are provided
+    if (year !== null && month !== null) {
+      // Calculate the start and end dates for the given month
+      const startDate = new Date(year, month - 1, 1);
+      const endDate = new Date(year, month, 0); // Last day of the month
+      
+      query = query
+        .gte('scheduled_date', startDate.toISOString().split('T')[0])
+        .lte('scheduled_date', endDate.toISOString().split('T')[0]);
+      
+      console.log(`Fetching paginated events for all clients in date range:`, {
+        startDate: startDate.toISOString().split('T')[0],
+        endDate: endDate.toISOString().split('T')[0],
+        page,
+        pageSize,
+        selectedCollaborator,
+        serviceIds
+      });
+    } else {
+      console.log(`Fetching all paginated events for all clients`, {
+        page,
+        pageSize,
+        selectedCollaborator,
+        serviceIds
+      });
+    }
+
     const offset = (page - 1) * pageSize;
 
-    console.log(`Fetching paginated events for all clients in date range:`, {
-      startDate: startDate.toISOString().split('T')[0],
-      endDate: endDate.toISOString().split('T')[0],
-      page,
-      pageSize,
-      offset,
-      selectedCollaborator,
-      serviceIds
-    });
-
-    // Iniciar a consulta básica
-    let query = getBaseQuery()
-      .gte('scheduled_date', startDate.toISOString().split('T')[0])
-      .lte('scheduled_date', endDate.toISOString().split('T')[0])
-      .order('scheduled_date', { ascending: true });
+    // Order by scheduled_date
+    query = query.order('scheduled_date', { ascending: true });
       
     // Adicionar filtro de colaborador se especificado
     if (selectedCollaborator) {
@@ -55,11 +68,11 @@ export async function getAllContentSchedulesPaginated(
     }
 
     if (!data || data.length === 0) {
-      console.log(`No content schedules found for month ${month}/${year} (page ${page})`);
+      console.log(`No content schedules found for the specified filters (page ${page})`);
       return [];
     }
     
-    console.log(`Fetched ${data.length} content schedules from page ${page} for month ${month}/${year}`);
+    console.log(`Fetched ${data.length} content schedules from page ${page}`);
     
     // Normalizar os dados para garantir consistência
     const safeData = data.map(item => {
