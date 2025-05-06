@@ -1,6 +1,6 @@
 
 import { useState, useCallback } from "react";
-import { DndContext, DragEndEvent } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import { format } from "date-fns";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { useUpdateContentSchedule } from "@/hooks/useOniAgenciaContentSchedules";
@@ -10,7 +10,7 @@ interface UseDndContextProps {
   clientId: string;
   month: number;
   year: number;
-  onManualRefetch?: () => void; // Adicionamos essa prop
+  onManualRefetch?: () => void;
 }
 
 export function useDndContext({ clientId, month, year, onManualRefetch }: UseDndContextProps) {
@@ -92,13 +92,16 @@ export function useDndContext({ clientId, month, year, onManualRefetch }: UseDnd
     try {
       console.log(`Moving event ${eventId} from ${oldDate} to ${newDate}`);
       
-      // Update with the full event data to prevent data loss
+      // Create a clean update object with only the fields we want to update
+      // This avoids sending nested objects that don't exist in the database schema
+      const updateData = {
+        scheduled_date: newDate
+      };
+      
+      // Update the database with the new date
       await updateMutation.mutateAsync({
         id: eventId,
-        data: {
-          ...draggedEvent,
-          scheduled_date: newDate
-        }
+        data: updateData
       });
       
       toast({

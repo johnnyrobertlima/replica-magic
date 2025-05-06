@@ -108,7 +108,20 @@ export async function createContentSchedule(schedule: ContentScheduleFormData): 
 
 export async function updateContentSchedule(id: string, schedule: Partial<ContentScheduleFormData>): Promise<OniAgenciaContentSchedule> {
   try {
-    const processedSchedule = sanitizeScheduleData(schedule);
+    // We need to be careful about nested objects that come from the view
+    // Remove any properties that aren't direct columns in the table
+    const { 
+      client, 
+      service, 
+      collaborator, 
+      editorial_line, 
+      product, 
+      status, 
+      ...cleanedSchedule 
+    } = schedule as any;
+    
+    // Now process the cleaned schedule data
+    const processedSchedule = sanitizeScheduleData(cleanedSchedule);
     
     console.log('Updating content schedule:', id, processedSchedule);
     
