@@ -14,6 +14,14 @@ const CACHE_TIME = 120 * MINUTE; // 2 horas
 const STALE_TIME = 30 * MINUTE;  // 30 minutos
 const PAGE_SIZE = 50; // Tamanho da página para paginação
 
+// Define interfaces for better type safety
+interface FetchPageResult {
+  data: CalendarEvent[];
+  page: number;
+  hasMore: boolean;
+  totalItems: number;
+}
+
 /**
  * Hook otimizado para buscar agendamentos de conteúdo com paginação
  */
@@ -33,7 +41,7 @@ export function useInfiniteContentSchedules(
   const isAllClients = !clientId || clientId === "";
   
   // Consulta paginada com suporte a cache eficiente
-  const result = useInfiniteQuery({
+  const result = useInfiniteQuery<FetchPageResult>({
     queryKey: [
       'optimizedContentSchedules', 
       isAllClients ? 'all' : clientId, 
@@ -42,7 +50,7 @@ export function useInfiniteContentSchedules(
       selectedCollaborator, 
       serviceIds
     ],
-    queryFn: async ({ pageParam = 1 }) => {
+    queryFn: async ({ pageParam }) => {
       try {
         // Selecionar a função apropriada com base no clientId
         const fetchFunction = isAllClients 
@@ -50,11 +58,12 @@ export function useInfiniteContentSchedules(
           : getContentSchedulesPaginated;
         
         let data: CalendarEvent[];
+        const currentPage = pageParam as number;
         
         // Parâmetros para a função de consulta
         const params = isAllClients 
-          ? [year, month, pageParam, PAGE_SIZE, selectedCollaborator, serviceIds] 
-          : [clientId as string, year, month, pageParam, PAGE_SIZE, selectedCollaborator, serviceIds];
+          ? [year, month, currentPage, PAGE_SIZE, selectedCollaborator, serviceIds] 
+          : [clientId as string, year, month, currentPage, PAGE_SIZE, selectedCollaborator, serviceIds];
         
         // @ts-ignore - Os parâmetros são dinâmicos
         data = await fetchFunction(...params);
@@ -64,14 +73,14 @@ export function useInfiniteContentSchedules(
           console.error('Resposta inválida da API:', data);
           return {
             data: [],
-            page: pageParam,
+            page: currentPage,
             hasMore: false,
             totalItems: 0
           };
         }
         
         // Atualizar o estado com os dados recebidos
-        if (pageParam === 1) {
+        if (currentPage === 1) {
           setAllItems(data);
         } else {
           setAllItems(prev => [...prev, ...data]);
@@ -79,14 +88,14 @@ export function useInfiniteContentSchedules(
         
         // Atualizar o total de itens (se disponível na resposta)
         if (data.length < PAGE_SIZE) {
-          setTotalItems((pageParam - 1) * PAGE_SIZE + data.length);
+          setTotalItems((currentPage - 1) * PAGE_SIZE + data.length);
         } else {
-          setTotalItems(pageParam * PAGE_SIZE + 1); // Indica que há mais páginas
+          setTotalItems(currentPage * PAGE_SIZE + 1); // Indica que há mais páginas
         }
         
         return {
           data,
-          page: pageParam,
+          page: currentPage,
           hasMore: data.length === PAGE_SIZE,
           totalItems: totalItems
         };
@@ -98,6 +107,7 @@ export function useInfiniteContentSchedules(
     getNextPageParam: (lastPage) => {
       return lastPage.hasMore ? lastPage.page + 1 : undefined;
     },
+    initialPageParam: 1,
     enabled: !!year && !!month && autoFetch,
     staleTime: STALE_TIME,
     gcTime: CACHE_TIME,

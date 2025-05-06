@@ -32,6 +32,7 @@ const VisualizacaoEmCampo = () => {
   const [selectedMonth, setSelectedMonth] = useState<number>(currentDate.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
   const [selectedCollaborator, setSelectedCollaborator] = useState<string | null>(null);
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
   const { isCollapsed, toggle: toggleFilters } = useCollapsible(true); // Start with collapsed filters
   const [isFullyLoaded, setIsFullyLoaded] = useState(false);
   
@@ -48,6 +49,11 @@ const VisualizacaoEmCampo = () => {
     setSelectedCollaborator(collaboratorId);
     setIsFullyLoaded(false); // Reset loading state when collaborator changes
   }, []);
+
+  const handleServicesChange = useCallback((serviceIds: string[]) => {
+    setSelectedServiceIds(serviceIds);
+    setIsFullyLoaded(false); // Reset loading state when services change
+  }, []);
   
   // Enhanced hook with auto-fetching enabled
   const { 
@@ -63,7 +69,8 @@ const VisualizacaoEmCampo = () => {
     selectedYear, 
     selectedMonth,
     selectedCollaborator,
-    true // Enable auto-fetching of all pages
+    true, // Enable auto-fetching of all pages
+    selectedServiceIds
   );
   
   // Monitor loading state to know when all data is fully loaded
@@ -130,10 +137,12 @@ const VisualizacaoEmCampo = () => {
             selectedMonth={selectedMonth}
             selectedYear={selectedYear}
             selectedCollaborator={selectedCollaborator}
+            selectedServiceIds={selectedServiceIds}
             onClientChange={handleClientChange}
             onMonthChange={setSelectedMonth}
             onYearChange={setSelectedYear}
             onCollaboratorChange={handleCollaboratorChange}
+            onServicesChange={handleServicesChange}
             isCollapsed={isCollapsed}
             onToggleCollapse={toggleFilters}
           />

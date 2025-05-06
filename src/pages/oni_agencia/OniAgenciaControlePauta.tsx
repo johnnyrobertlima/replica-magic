@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
 import { OniAgenciaMenu } from "@/components/oni_agencia/OniAgenciaMenu";
 import { CalendarDays, RefreshCw, List, LayoutGrid, Smartphone } from "lucide-react";
@@ -114,6 +113,7 @@ const OniAgenciaControlePauta = () => {
   const showLoadingState = isLoadingSchedules || isFetchingNextPage || !isFullyLoaded;
   
   return (
+    
     <main className="container-fluid p-0 max-w-full">
       <OniAgenciaMenu />
       <div className="container mx-auto p-4 max-w-full">
