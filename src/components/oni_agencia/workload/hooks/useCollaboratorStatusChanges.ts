@@ -36,7 +36,7 @@ export function useCollaboratorStatusChanges() {
         setError(null);
 
         // Fetch both status and collaborator changes from oni_agencia_schedule_history table
-        // Using correct join syntax for user profiles
+        // Without using the join syntax that's causing issues
         const { data, error: fetchError } = await supabase
           .from('oni_agencia_schedule_history')
           .select(`
@@ -46,16 +46,7 @@ export function useCollaboratorStatusChanges() {
             new_value,
             created_at,
             schedule_id,
-            changed_by,
-            user_profiles(full_name, email),
-            oni_agencia_content_schedules:schedule_id (
-              title, 
-              collaborator_id,
-              scheduled_date,
-              client_id,
-              oni_agencia_collaborators:collaborator_id (name),
-              oni_agencia_clients:client_id (name)
-            )
+            changed_by
           `)
           .in('field_name', ['status_id', 'collaborator_id'])
           .order('created_at', { ascending: false })
@@ -63,6 +54,60 @@ export function useCollaboratorStatusChanges() {
 
         if (fetchError) {
           throw fetchError;
+        }
+
+        // Get unique user IDs to fetch user profiles
+        const userIds = new Set<string>();
+        data.forEach(item => {
+          if (item.changed_by) userIds.add(item.changed_by);
+        });
+
+        // Fetch user profiles separately
+        const userProfileMap: Record<string, UserProfile> = {};
+        if (userIds.size > 0) {
+          const { data: profiles } = await supabase
+            .from('user_profiles')
+            .select('id, full_name, email')
+            .in('id', Array.from(userIds));
+
+          if (profiles) {
+            profiles.forEach(profile => {
+              userProfileMap[profile.id] = {
+                full_name: profile.full_name,
+                email: profile.email
+              };
+            });
+          }
+        }
+
+        // Get schedule IDs to fetch related data
+        const scheduleIds = new Set(data.map(item => item.schedule_id));
+        const scheduleMap: Record<string, any> = {};
+
+        // Fetch schedules information
+        if (scheduleIds.size > 0) {
+          const { data: schedulesData, error: schedulesError } = await supabase
+            .from('oni_agencia_content_schedules')
+            .select(`
+              id, 
+              title, 
+              collaborator_id,
+              scheduled_date,
+              client_id,
+              oni_agencia_collaborators:collaborator_id (name),
+              oni_agencia_clients:client_id (name)
+            `)
+            .in('id', Array.from(scheduleIds));
+
+          if (schedulesError) {
+            throw schedulesError;
+          }
+
+          if (schedulesData) {
+            schedulesData.forEach(schedule => {
+              scheduleMap[schedule.id] = schedule;
+            });
+          }
         }
 
         // Get status names
@@ -110,20 +155,15 @@ export function useCollaboratorStatusChanges() {
         // Transform data for the grid
         const formattedChanges: StatusChange[] = data.map(item => {
           const isStatusChange = item.field_name === 'status_id';
+          const schedule = scheduleMap[item.schedule_id];
           
-          // Extract user profile data safely - user_profiles returns an array
-          const userProfiles = item.user_profiles;
-          let userProfile: UserProfile | null = null;
-          
-          if (Array.isArray(userProfiles) && userProfiles.length > 0) {
-            userProfile = userProfiles[0];
-          }
-          
+          // Get user profile info
+          const userProfile = item.changed_by ? userProfileMap[item.changed_by] : null;
           const changedByName = userProfile?.full_name || userProfile?.email || 'Sistema';
           
           return {
-            collaborator_name: item.oni_agencia_content_schedules?.oni_agencia_collaborators?.name || 'Sem colaborador',
-            schedule_title: item.oni_agencia_content_schedules?.title || 'Sem título',
+            collaborator_name: schedule?.oni_agencia_collaborators?.name || 'Sem colaborador',
+            schedule_title: schedule?.title || 'Sem título',
             old_status: isStatusChange 
               ? (item.old_value ? statusMap[item.old_value] || 'Desconhecido' : '') 
               : (item.old_value ? collaboratorMap[item.old_value] || 'Desconhecido' : ''),
@@ -131,12 +171,12 @@ export function useCollaboratorStatusChanges() {
               ? (statusMap[item.new_value] || 'Desconhecido') 
               : (collaboratorMap[item.new_value] || 'Desconhecido'),
             changed_at: item.created_at,
-            scheduled_date: item.oni_agencia_content_schedules?.scheduled_date || '',
+            scheduled_date: schedule?.scheduled_date || '',
             schedule_id: item.schedule_id,
             previous_collaborator_name: item.field_name === 'collaborator_id' && item.old_value 
               ? collaboratorMap[item.old_value] || 'Desconhecido'
               : null,
-            client_name: item.oni_agencia_content_schedules?.oni_agencia_clients?.name || 'Cliente desconhecido',
+            client_name: schedule?.oni_agencia_clients?.name || 'Cliente desconhecido',
             field_type: isStatusChange ? 'status' : 'collaborator',
             changed_by_name: changedByName
           };

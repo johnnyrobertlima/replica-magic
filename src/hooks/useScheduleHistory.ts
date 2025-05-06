@@ -22,7 +22,7 @@ export function useScheduleHistory(scheduleId: string) {
   return useQuery({
     queryKey: ['scheduleHistory', scheduleId],
     queryFn: async () => {
-      // Fetch history entries with correct join syntax for user profiles
+      // Fetch history entries without join
       const { data: historyData, error: historyError } = await supabase
         .from('oni_agencia_schedule_history')
         .select(`
@@ -31,8 +31,7 @@ export function useScheduleHistory(scheduleId: string) {
           old_value,
           new_value,
           changed_by,
-          created_at,
-          user_profiles(full_name, email)
+          created_at
         `)
         .eq('schedule_id', scheduleId)
         .order('created_at', { ascending: false });
@@ -45,6 +44,7 @@ export function useScheduleHistory(scheduleId: string) {
       // Fetch status and collaborator information for resolving IDs to names
       const statusIds = new Set<string>();
       const collaboratorIds = new Set<string>();
+      const userIds = new Set<string>();
       
       historyData.forEach(entry => {
         if (entry.field_name === 'status_id') {
@@ -54,11 +54,17 @@ export function useScheduleHistory(scheduleId: string) {
           if (entry.old_value) collaboratorIds.add(entry.old_value);
           if (entry.new_value) collaboratorIds.add(entry.new_value);
         }
+        
+        // Collect user IDs for fetching user profiles
+        if (entry.changed_by) {
+          userIds.add(entry.changed_by);
+        }
       });
       
       // Convert to arrays safely for the IN query
       const statusIdsArray = Array.from(statusIds);
       const collaboratorIdsArray = Array.from(collaboratorIds);
+      const userIdsArray = Array.from(userIds);
       
       // Fetch status names
       const statusMap: Record<string, string> = {};
@@ -90,15 +96,27 @@ export function useScheduleHistory(scheduleId: string) {
         }
       }
       
+      // Fetch user profiles separately
+      const userProfileMap: Record<string, UserProfile> = {};
+      if (userIdsArray.length > 0) {
+        const { data: userProfiles } = await supabase
+          .from('user_profiles')
+          .select('id, full_name, email')
+          .in('id', userIdsArray);
+          
+        if (userProfiles) {
+          userProfiles.forEach(profile => {
+            userProfileMap[profile.id] = {
+              full_name: profile.full_name,
+              email: profile.email
+            };
+          });
+        }
+      }
+      
       // Map and enhance history entries with resolved names
       const enhancedHistory = historyData.map(entry => {
-        // Extract user profile data safely - the user_profiles returns an array
-        const userProfiles = entry.user_profiles;
-        let userProfile: UserProfile | null = null;
-        
-        if (Array.isArray(userProfiles) && userProfiles.length > 0) {
-          userProfile = userProfiles[0];
-        }
+        const userProfile = entry.changed_by ? userProfileMap[entry.changed_by] : null;
         
         const formattedEntry: ScheduleHistory = {
           id: entry.id,
@@ -121,6 +139,9 @@ export function useScheduleHistory(scheduleId: string) {
           formattedEntry.new_value = collaboratorMap[entry.new_value] || 'Desconhecido';
         } else if (entry.field_name === 'creation') {
           formattedEntry.new_value = 'Agendamento criado';
+        } else {
+          formattedEntry.old_value = entry.old_value;
+          formattedEntry.new_value = entry.new_value;
         }
         
         return formattedEntry;
