@@ -4,6 +4,7 @@ import { CalendarEvent } from "@/types/oni-agencia";
 import { EventsList } from "./EventsList";
 import { useDroppable } from "@dnd-kit/core";
 import { useDragAndDrop } from "../hooks/useDragAndDrop";
+import React from "react";
 
 interface CalendarDayProps {
   date: Date;
@@ -46,6 +47,12 @@ export function CalendarDay({
     onSelect(date);
   };
   
+  // Create an event click handler that adapts the parameters
+  const handleEventClick = (e: React.MouseEvent, event: CalendarEvent) => {
+    e.stopPropagation();
+    onEventClick(event, date);
+  };
+  
   return (
     <div 
       ref={setNodeRef}
@@ -55,7 +62,7 @@ export function CalendarDay({
       <EventsList 
         events={filteredEvents} 
         date={date} 
-        onEventClick={onEventClick}
+        onEventClick={handleEventClick}
       />
     </div>
   );

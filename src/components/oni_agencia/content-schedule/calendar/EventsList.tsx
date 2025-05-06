@@ -3,14 +3,16 @@ import { CalendarEvent } from "@/types/oni-agencia";
 import { EventItem } from "../EventItem";
 import { DraggableEventItem } from "../DraggableEventItem";
 import { EventTooltip } from "./EventTooltip";
+import React from "react";
 
 interface EventsListProps {
   events: CalendarEvent[];
+  date: Date;
   onEventClick: (e: React.MouseEvent, event: CalendarEvent) => void;
   isDraggable?: boolean;
 }
 
-export function EventsList({ events, onEventClick, isDraggable = true }: EventsListProps) {
+export function EventsList({ events, date, onEventClick, isDraggable = true }: EventsListProps) {
   if (!events || events.length === 0) return null;
 
   return (
