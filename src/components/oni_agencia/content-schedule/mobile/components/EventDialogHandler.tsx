@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { CalendarEvent } from "@/types/oni-agencia";
-import { ScheduleEventDialog } from "../../ScheduleEventDialog";
+import { MobileScheduleEventDialog } from "../MobileScheduleEventDialog";
 
 interface EventDialogHandlerProps {
   isOpen: boolean;
@@ -25,7 +25,7 @@ export function EventDialogHandler({
   if (!selectedDate) return null;
   
   return (
-    <ScheduleEventDialog
+    <MobileScheduleEventDialog
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       clientId={clientId}
@@ -33,6 +33,7 @@ export function EventDialogHandler({
       events={filteredEvents.filter(e => e.scheduled_date === selectedDate.toISOString().split('T')[0])}
       onClose={onClose}
       selectedEvent={selectedEvent}
+      initialStatusTabActive={true} // This will open the status tab by default
     />
   );
 }
