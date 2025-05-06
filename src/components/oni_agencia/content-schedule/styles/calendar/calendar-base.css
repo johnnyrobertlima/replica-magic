@@ -1,0 +1,64 @@
+
+/* Base Calendar Layout Styles */
+
+/* Fixed heights for calendar cells and rows */
+.calendar-day-cell {
+  min-height: 120px;
+  max-height: 120px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease;
+}
+
+/* Mobile adjustments */
+@media (max-width: 640px) {
+  .calendar-day-cell {
+    min-height: 80px;
+    max-height: 80px;
+  }
+}
+
+/* Week view styles */
+.week-view-container {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border-left: 1px solid var(--border);
+  height: calc(100vh - 300px);
+  min-height: 500px;
+}
+
+.week-view-day {
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 8px;
+  overflow-y: auto;
+}
+
+/* Day view styles */
+.day-view-container {
+  height: calc(100vh - 300px);
+  min-height: 500px;
+  border: 1px solid var(--border);
+  padding: 12px;
+  overflow-y: auto;
+}
+
+.day-view-hour {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  padding: 8px 0;
+}
+
+.day-view-hour-label {
+  width: 50px;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  text-align: center;
+  padding-top: 4px;
+}
+
+.day-view-hour-content {
+  flex: 1;
+  padding-left: 8px;
+}

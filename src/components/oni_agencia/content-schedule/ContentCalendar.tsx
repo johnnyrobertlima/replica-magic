@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { CalendarHeader } from "./calendar/CalendarHeader";
@@ -14,6 +13,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Calendar, LayoutGrid, Rows } from "lucide-react";
 import { WeekView } from "./calendar/WeekView";
 import { DayView } from "./calendar/DayView";
+import "./styles/index.css"; // Updated import
 
 interface ContentCalendarProps {
   events: CalendarEvent[];

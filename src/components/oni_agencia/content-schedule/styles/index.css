@@ -1,0 +1,8 @@
+
+/* Main CSS import file that consolidates all styles */
+
+@import './calendar/calendar-base.css';
+@import './calendar/events.css';
+@import './calendar/cards.css';
+@import './calendar/tooltips.css';
+@import './calendar/service-select.css';
