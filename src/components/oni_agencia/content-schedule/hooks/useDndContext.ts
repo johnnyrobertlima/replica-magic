@@ -52,34 +52,58 @@ export function useDndContext({ clientId, month, year, onManualRefetch }: UseDnd
   const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     const { active, over } = event;
     
-    if (!over || !active) return;
+    if (!over || !active) {
+      console.log("No valid over or active data for drag operation");
+      return;
+    }
 
-    const eventId = active.id;
-    const scheduleEvent = active.data.current as CalendarEvent;
+    // Extract event ID directly from active.id
+    const eventId = active.id as string;
+    
+    // Get the event data and target date
+    const draggedEvent = active.data.current?.event as CalendarEvent;
     const targetDateObj = over.data.current?.date as Date;
     
-    if (!scheduleEvent || !targetDateObj) {
-      console.log("Missing data for drag operation", { eventId, scheduleEvent, targetDateObj });
+    if (!draggedEvent || !targetDateObj) {
+      console.log("Missing data for drag operation", { eventId, draggedEvent, targetDateObj });
       return;
     }
     
-    const oldDate = scheduleEvent.scheduled_date;
+    // Validate that we have a proper event ID
+    if (!eventId || eventId === 'undefined') {
+      console.error("Invalid event ID for drag operation:", eventId);
+      toast({
+        variant: "destructive",
+        title: "Erro ao mover evento",
+        description: "ID do evento inválido."
+      });
+      return;
+    }
+    
+    const oldDate = draggedEvent.scheduled_date;
     const newDate = format(targetDateObj, 'yyyy-MM-dd');
     
     if (oldDate === newDate) {
       // No change in date, no need to update
+      console.log("No date change detected, skipping update");
       return;
     }
     
     try {
       console.log(`Moving event ${eventId} from ${oldDate} to ${newDate}`);
       
+      // Update with the full event data to prevent data loss
       await updateMutation.mutateAsync({
-        id: scheduleEvent.id,
+        id: eventId,
         data: {
-          ...scheduleEvent,
+          ...draggedEvent,
           scheduled_date: newDate
         }
+      });
+      
+      toast({
+        title: "Evento movido",
+        description: `Evento movido para ${format(targetDateObj, 'dd/MM/yyyy')}`
       });
       
       // Use the provided manual refetch function to update data

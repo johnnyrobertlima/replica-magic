@@ -10,11 +10,14 @@ interface DraggableEventItemProps {
 }
 
 export function DraggableEventItem({ event, onClick }: DraggableEventItemProps) {
-  // Garantimos que o ID do evento está definido
-  const eventId = event.id || 'temp-' + Math.random().toString(36);
+  // Make sure we have a valid ID for the draggable item
+  if (!event.id) {
+    console.error("Attempted to render draggable event with no ID:", event);
+    return <EventItem event={event} onClick={onClick} />;
+  }
   
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: eventId,
+    id: event.id,
     data: {
       event
     }
