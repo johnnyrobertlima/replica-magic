@@ -61,8 +61,8 @@ export function useInfiniteContentSchedules(
             product_id: item.product_id || null,
             status_id: item.status_id || null,
             creators: item.creators || null,
-            created_at: item.created_at || now, // Add required properties with fallback
-            updated_at: item.updated_at || now, // Add required properties with fallback
+            created_at: item.created_at || now, // Add fallback value
+            updated_at: item.updated_at || now, // Add fallback value
             // Add nested objects if available
             service: item.service_name ? {
               id: item.service_id || '',

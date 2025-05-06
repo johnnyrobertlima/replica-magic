@@ -13,9 +13,8 @@ export interface OniAgenciaContentSchedule {
   product_id: string | null;
   status_id: string | null;
   creators: string[] | null;
-  // Removida a referência a capture_date
-  created_at: string;
-  updated_at: string;
+  created_at: string;  // Add this property
+  updated_at: string;  // Add this property
 }
 
 // Update ContentScheduleFormData accordingly
