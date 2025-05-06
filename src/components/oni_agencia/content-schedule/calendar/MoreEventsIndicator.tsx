@@ -29,6 +29,7 @@ export function MoreEventsIndicator({
       <PopoverTrigger asChild>
         <button
           className="text-xs text-primary font-medium px-1 py-0.5 hover:bg-gray-100 rounded flex items-center justify-between events-overflow-indicator"
+          type="button"
         >
           <span>+ {count} mais agendamento{count > 1 ? 's' : ''}</span>
           <ChevronDown className="h-3 w-3" />

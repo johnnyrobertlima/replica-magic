@@ -11,6 +11,8 @@ interface EventsListProps {
 }
 
 export function EventsList({ events, onEventClick, isDraggable = true }: EventsListProps) {
+  if (!events || events.length === 0) return null;
+
   return (
     <div className="flex flex-col gap-[2px] pr-2">
       {events.map((event) => (
