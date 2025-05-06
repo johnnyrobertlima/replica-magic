@@ -75,7 +75,55 @@ export function useDragAndDrop() {
         description: "O agendamento foi movido para outra data com sucesso.",
       });
       
-      // Force data refresh
+      // Update local state to reflect the change immediately - before server refetch
+      // This provides immediate feedback to the user
+      const eventsCacheKey = ['content-schedules'];
+      const cachedEvents = queryClient.getQueryData<CalendarEvent[]>(eventsCacheKey);
+      
+      if (cachedEvents) {
+        // Update the cache with the modified event
+        const updatedEvents = cachedEvents.map(event => {
+          if (event.id === activeDragEvent.id) {
+            return {
+              ...event,
+              scheduled_date: formattedDate
+            };
+          }
+          return event;
+        });
+        
+        // Update the query cache with our modified data
+        queryClient.setQueryData(eventsCacheKey, updatedEvents);
+      }
+      
+      // Patch infinite query cache if it exists
+      const infiniteCacheKey = ['infinite-content-schedules'];
+      const infiniteData = queryClient.getQueryData<any>(infiniteCacheKey);
+      
+      if (infiniteData && infiniteData.pages) {
+        const updatedPages = infiniteData.pages.map((page: any) => {
+          if (page.data) {
+            const updatedData = page.data.map((event: CalendarEvent) => {
+              if (event.id === activeDragEvent.id) {
+                return {
+                  ...event,
+                  scheduled_date: formattedDate
+                };
+              }
+              return event;
+            });
+            return { ...page, data: updatedData };
+          }
+          return page;
+        });
+        
+        queryClient.setQueryData(infiniteCacheKey, {
+          ...infiniteData,
+          pages: updatedPages
+        });
+      }
+      
+      // Force data refresh after our optimistic update
       queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
       queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
       queryClient.invalidateQueries({ queryKey: ['scheduleHistory'] });
