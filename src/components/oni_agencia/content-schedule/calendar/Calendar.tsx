@@ -3,7 +3,7 @@ import { useState, useCallback, useEffect } from "react";
 import { CalendarHeader } from "./CalendarHeader";
 import { CalendarContainer } from "./CalendarContainer";
 import { ScheduleEventDialog } from "../ScheduleEventDialog";
-import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { CalendarEvent } from "@/types/oni-agencia";
 
 interface CalendarProps {
@@ -20,7 +20,7 @@ interface CalendarProps {
   isDialogOpen: boolean;
   onDialogOpenChange: (open: boolean) => void;
   onDialogClose: () => void;
-  onManualRefetch?: () => void; // Ensure this prop is passed to child components
+  onManualRefetch?: () => void;
 }
 
 export function Calendar({
@@ -78,8 +78,9 @@ export function Calendar({
   return (
     <div className="bg-white rounded-md border shadow-sm w-full h-full">
       <CalendarHeader 
-        currentDate={currentDate} 
-        onMonthChange={handleMonthChange}
+        currentDate={currentDate}
+        onPrevMonth={() => handleMonthChange(-1)}
+        onNextMonth={() => handleMonthChange(1)}
       />
       
       <CalendarContainer
@@ -100,7 +101,7 @@ export function Calendar({
           events={filteredEvents.filter(e => e.scheduled_date === selectedDate.toISOString().split('T')[0])}
           onClose={onDialogClose}
           selectedEvent={selectedEvent}
-          onManualRefetch={onManualRefetch} // Pass the refetch function to the dialog
+          onManualRefetch={onManualRefetch}
         />
       )}
     </div>

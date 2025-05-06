@@ -4,7 +4,7 @@ import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
 
-interface CalendarHeaderProps {
+export interface CalendarHeaderProps {
   currentDate: Date;
   onPrevMonth: () => void;
   onNextMonth: () => void;
