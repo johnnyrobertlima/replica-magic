@@ -55,7 +55,9 @@ const VisualizacaoEmCampo = () => {
     handleServicesChange,
     handleManualRefetch,
     isRefetching,
-    isFetchingNextPage
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage
   } = useContentFiltering(
     selectedClient,
     selectedMonth,
@@ -121,10 +123,10 @@ const VisualizacaoEmCampo = () => {
                 events={filteredSchedules}
                 clientId={selectedClient || "all"}
                 selectedCollaborator={selectedCollaborator}
-                isLoading={false} // We're handling loading state at this level now
-                hasMore={false} // Auto-fetching will handle this so no manual loading needed
-                onLoadMore={() => {}} // No need for manual load more now
-                isLoadingMore={false}
+                isLoading={false}
+                hasMore={!!hasNextPage}
+                onLoadMore={() => fetchNextPage()}
+                isLoadingMore={isFetchingNextPage}
               />
             </Suspense>
           )}

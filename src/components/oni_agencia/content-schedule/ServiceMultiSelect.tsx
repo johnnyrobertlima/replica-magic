@@ -26,7 +26,7 @@ export function ServiceMultiSelect({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-10 border rounded-md bg-white px-3">
-        <span className="text-sm text-gray-500">Loading services...</span>
+        <span className="text-sm text-gray-500">Carregando serviços...</span>
       </div>
     );
   }
@@ -41,7 +41,7 @@ export function ServiceMultiSelect({
       options={serviceOptions}
       value={value}
       onChange={onChange}
-      placeholder="Select services"
+      placeholder="Selecionar serviços"
       className={className}
     />
   );

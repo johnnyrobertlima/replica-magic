@@ -74,7 +74,7 @@ export function ContentArea({
               selectedCollaborator={selectedCollaborator}
               hasNextPage={!!hasNextPage}
               isFetchingNextPage={isFetchingNextPage}
-              fetchNextPage={() => fetchNextPage()}
+              fetchNextPage={fetchNextPage}
             />
           )}
         </Suspense>

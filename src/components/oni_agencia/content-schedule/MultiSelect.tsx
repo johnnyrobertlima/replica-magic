@@ -40,11 +40,14 @@ export function MultiSelect({
       }
     }
 
-    document.addEventListener("mousedown", handleClickOutside);
+    if (open) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []);
+  }, [open]);
 
   const handleToggleOption = (optionValue: string) => {
     let newSelectedOptions: string[];
@@ -96,7 +99,7 @@ export function MultiSelect({
       </button>
       
       {open && (
-        <div className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border bg-white shadow-lg">
+        <div className="absolute z-[100] mt-1 max-h-60 w-full overflow-auto rounded-md border bg-white shadow-lg">
           <div className="p-1">
             <div
               className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-100 cursor-pointer"
