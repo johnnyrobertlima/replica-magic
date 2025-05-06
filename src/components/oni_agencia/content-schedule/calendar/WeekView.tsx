@@ -4,7 +4,7 @@ import { ptBR } from "date-fns/locale";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { DraggableEventItem } from "../DraggableEventItem";
 import { useState } from "react";
-import { DndContext, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
+import { DndContext, useSensor, useSensors, PointerSensor, useDroppable } from '@dnd-kit/core';
 import { useDragAndDrop } from "../hooks/useDragAndDrop";
 import { useCurrentUser } from "../hooks/useCurrentUser";
 import {
@@ -68,13 +68,20 @@ export function WeekView({
                 return isCollaborator || isCreator;
               })
             : dayEvents;
+          
+          // Set up droppable for this day column
+          const { setNodeRef, isOver } = useDroppable({
+            id: `week-day-${dateStr}`,
+            data: { date }
+          });
 
           return (
             <div 
               key={dateStr}
+              ref={setNodeRef}
               className={`week-view-day ${
                 selectedDate && format(selectedDate, 'yyyy-MM-dd') === dateStr ? 'bg-blue-50' : ''
-              }`}
+              } ${isOver ? 'bg-blue-100' : ''}`}
               onClick={() => onSelect(date)}
             >
               <div className="flex flex-col items-center mb-2 pb-1 border-b">
@@ -104,7 +111,7 @@ export function WeekView({
                           <div className="text-xs space-y-1">
                             <p className="font-bold">{event.title}</p>
                             {event.client && <p><strong>Cliente:</strong> {event.client.name}</p>}
-                            <p><strong>Serviço:</strong> {event.service?.name}</p>
+                            <p><strong>Serviço:</strong> {event.service?.name}</p>}
                             {event.product && <p><strong>Produto:</strong> {event.product.name}</p>}
                             {event.collaborator && <p><strong>Responsável:</strong> {event.collaborator.name}</p>}
                             {event.status && <p><strong>Status:</strong> {event.status.name}</p>}

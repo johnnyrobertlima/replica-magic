@@ -1,62 +1,99 @@
 
-/* Event items styling */
+.calendar-day {
+  @apply h-full flex flex-col relative border border-gray-200 hover:bg-gray-50;
+  min-height: 120px;
+}
+
+.calendar-day.drop-active {
+  @apply bg-blue-50;
+}
+
+.calendar-day-header {
+  @apply flex justify-center items-center p-1;
+}
+
+.calendar-day-number {
+  @apply h-7 w-7 flex items-center justify-center rounded-full text-sm;
+}
+
+.calendar-day-number.today {
+  @apply bg-primary text-white;
+}
+
+.calendar-day-number.selected-day {
+  @apply bg-secondary text-white;
+}
+
+.calendar-day-content {
+  @apply flex-1 p-1 overflow-hidden;
+}
+
+.event-item {
+  @apply cursor-pointer rounded-sm p-1 mb-1 text-xs overflow-hidden whitespace-nowrap text-ellipsis border-l-4;
+  max-width: 100%;
+  min-height: 22px;
+}
+
 .event-item-wrapper {
-  width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-height: 24px;
-  margin-bottom: 2px;
+  @apply w-full cursor-grab;
 }
 
-/* Limit the height of event items list */
-.day-events-container {
-  max-height: calc(100% - 24px);
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+.event-item.dragging {
+  @apply opacity-50;
 }
 
-/* Enhanced scrolling behavior when hovering */
-.day-events-container::-webkit-scrollbar {
-  width: 4px;
+.more-events-indicator {
+  @apply text-xs text-center text-gray-500 mt-1 cursor-pointer;
 }
 
-.day-events-container::-webkit-scrollbar-track {
-  background: transparent;
+/* Week view styles */
+.week-view-container {
+  @apply grid grid-cols-7 h-full;
 }
 
-.day-events-container::-webkit-scrollbar-thumb {
-  background-color: rgba(156, 163, 175, 0.5);
-  border-radius: 4px;
+.week-view-day {
+  @apply border-r border-b p-2 flex flex-col overflow-hidden;
+  min-height: 150px;
 }
 
-/* Make scrollbar visible on hover */
-.scrollable-container::-webkit-scrollbar {
-  width: 4px;
-  opacity: 1;
+.week-view-day:last-child {
+  @apply border-r-0;
 }
 
-.scrollable-container::-webkit-scrollbar-thumb {
-  background-color: rgba(156, 163, 175, 0.8);
+/* Day view styles */
+.day-view-container {
+  @apply p-4 h-full overflow-y-auto;
 }
 
-/* Styling for overflow indicator */
-.events-overflow-indicator {
-  font-size: 0.7rem;
-  color: var(--primary);
-  padding: 2px 4px;
-  cursor: pointer;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 1px;
+.day-view-hour {
+  @apply flex border-b py-2 items-center cursor-pointer hover:bg-gray-50;
+  height: 60px;
 }
 
-.events-overflow-indicator:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+.day-view-hour-label {
+  @apply w-16 text-sm font-medium text-gray-500;
+}
+
+.day-view-hour-content {
+  @apply flex-1;
+}
+
+/* Dragging styles */
+.dragging {
+  @apply opacity-70;
+}
+
+.drop-indicator {
+  @apply border-2 border-dashed border-blue-400 bg-blue-50 rounded-md;
+}
+
+/* Animation for drag */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.event-item-wrapper:active {
+  animation: pulse 0.3s ease-in-out;
 }

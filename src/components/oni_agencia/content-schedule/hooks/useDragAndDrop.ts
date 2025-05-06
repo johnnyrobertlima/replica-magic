@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { updateContentSchedule } from "@/services/oniAgenciaContentScheduleServices";
 import { format } from "date-fns";
-import { DragStartEvent, DragEndEvent } from "@dnd-kit/core";
+import { DragStartEvent, DragEndEvent, DragOverEvent } from "@dnd-kit/core";
 
 export function useDragAndDrop() {
   const [isDragging, setIsDragging] = useState(false);
@@ -23,6 +23,14 @@ export function useDragAndDrop() {
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
+    if (activeDragEvent && event.over) {
+      // Get the date from the droppable area's data
+      const dropDate = event.over.data.current?.date as Date;
+      if (dropDate) {
+        handleDrop(dropDate);
+      }
+    }
+    
     setIsDragging(false);
     setActiveDragEvent(null);
   };
