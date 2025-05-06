@@ -11,7 +11,7 @@ interface ServiceMultiSelectProps {
 }
 
 export function ServiceMultiSelect({ 
-  value = [], // Set default to empty array
+  value = [], 
   onChange, 
   placeholder = "Selecionar serviços...",
   className
@@ -21,12 +21,11 @@ export function ServiceMultiSelect({
   
   useEffect(() => {
     if (services && Array.isArray(services) && services.length > 0) {
-      setOptions(
-        services.map((service) => ({
-          value: service.id,
-          label: service.name
-        }))
-      );
+      const mappedOptions = services.map((service) => ({
+        value: service.id,
+        label: service.name
+      }));
+      setOptions(mappedOptions);
     } else {
       // Ensure options is always an array even if services data isn't available
       setOptions([]);

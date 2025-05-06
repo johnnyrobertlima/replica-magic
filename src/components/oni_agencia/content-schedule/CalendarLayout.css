@@ -45,3 +45,17 @@
   background-color: #FFFFFF !important;
   z-index: 50;
 }
+
+/* Additional styles to ensure white background on command menu components */
+.cmdk-root,
+.cmdk-input,
+.cmdk-item,
+.cmdk-list,
+.cmdk-group,
+.cmdk-empty {
+  background-color: #FFFFFF !important;
+}
+
+.cmdk-input::placeholder {
+  color: #6b7280;
+}
