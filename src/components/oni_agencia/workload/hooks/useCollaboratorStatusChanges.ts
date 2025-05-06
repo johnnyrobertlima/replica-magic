@@ -14,6 +14,7 @@ interface StatusChange {
   previous_collaborator_name: string | null;
   client_name: string;
   field_type: 'status' | 'collaborator';
+  changed_by_name: string;
 }
 
 export function useCollaboratorStatusChanges() {
@@ -29,6 +30,7 @@ export function useCollaboratorStatusChanges() {
         setError(null);
 
         // Fetch both status and collaborator changes from oni_agencia_schedule_history table
+        // Now including user_profiles join to get the name of who made the change
         const { data, error: fetchError } = await supabase
           .from('oni_agencia_schedule_history')
           .select(`
@@ -38,6 +40,8 @@ export function useCollaboratorStatusChanges() {
             new_value,
             created_at,
             schedule_id,
+            changed_by,
+            user_profiles:changed_by (full_name, email),
             oni_agencia_content_schedules:schedule_id (
               title, 
               collaborator_id,
@@ -100,6 +104,9 @@ export function useCollaboratorStatusChanges() {
         // Transform data for the grid
         const formattedChanges: StatusChange[] = data.map(item => {
           const isStatusChange = item.field_name === 'status_id';
+          const changedByName = item.user_profiles?.full_name || 
+                               item.user_profiles?.email || 
+                               'Sistema';
           
           return {
             collaborator_name: item.oni_agencia_content_schedules?.oni_agencia_collaborators?.name || 'Sem colaborador',
@@ -117,7 +124,8 @@ export function useCollaboratorStatusChanges() {
               ? collaboratorMap[item.old_value] || 'Desconhecido'
               : null,
             client_name: item.oni_agencia_content_schedules?.oni_agencia_clients?.name || 'Cliente desconhecido',
-            field_type: isStatusChange ? 'status' : 'collaborator'
+            field_type: isStatusChange ? 'status' : 'collaborator',
+            changed_by_name: changedByName
           };
         });
 

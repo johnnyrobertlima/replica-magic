@@ -4,6 +4,7 @@ import { ptBR } from "date-fns/locale";
 import { useScheduleHistory } from "@/hooks/useScheduleHistory";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CalendarEvent } from "@/types/oni-agencia";
+import { User } from "lucide-react";
 
 interface ScheduleHistoryProps {
   event: CalendarEvent;
@@ -25,17 +26,22 @@ export function ScheduleHistory({ event }: ScheduleHistoryProps) {
       <div className="space-y-4">
         {history.map((entry) => (
           <div key={entry.id} className="text-sm border-l-2 border-primary pl-4 py-1">
-            <p className="text-muted-foreground text-xs">
-              {format(new Date(entry.created_at), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })}
-            </p>
+            <div className="flex items-center text-muted-foreground text-xs gap-1 mb-1">
+              <User className="h-3 w-3" />
+              <span className="font-medium">{entry.changed_by_name}</span> - 
+              {format(new Date(entry.created_at), " dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })}
+            </div>
+            
             <p>
               <span className="font-medium">Campo alterado:</span> {entry.field_name}
             </p>
+            
             {entry.old_value && (
               <p className="text-muted-foreground">
                 <span className="font-medium">De:</span> {entry.old_value}
               </p>
             )}
+            
             <p className="text-primary">
               <span className="font-medium">Para:</span> {entry.new_value}
             </p>

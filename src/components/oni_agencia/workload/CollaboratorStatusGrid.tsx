@@ -7,6 +7,7 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { useCollaboratorStatusChanges } from "./hooks/useCollaboratorStatusChanges";
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
+import { User } from "lucide-react";
 
 interface StatusChange {
   collaborator_name: string;
@@ -19,6 +20,7 @@ interface StatusChange {
   previous_collaborator_name: string | null;
   client_name: string;
   field_type: 'status' | 'collaborator';
+  changed_by_name: string;
 }
 
 export function CollaboratorStatusGrid() {
@@ -43,6 +45,7 @@ export function CollaboratorStatusGrid() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Alterado por</TableHead>
                   <TableHead>Colaborador</TableHead>
                   <TableHead>Agendamento</TableHead>
                   <TableHead>Cliente</TableHead>
@@ -56,6 +59,7 @@ export function CollaboratorStatusGrid() {
               <TableBody>
                 {Array.from({ length: 5 }).map((_, index) => (
                   <TableRow key={index}>
+                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-24" /></TableCell>
@@ -104,6 +108,7 @@ export function CollaboratorStatusGrid() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Alterado por</TableHead>
                   <TableHead>Colaborador</TableHead>
                   <TableHead>Agendamento</TableHead>
                   <TableHead>Cliente</TableHead>
@@ -117,6 +122,10 @@ export function CollaboratorStatusGrid() {
               <TableBody>
                 {statusChanges.map((change, index) => (
                   <TableRow key={index}>
+                    <TableCell className="flex items-center gap-1">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <span>{change.changed_by_name}</span>
+                    </TableCell>
                     <TableCell className="font-medium">{change.collaborator_name}</TableCell>
                     <TableCell>{change.schedule_title}</TableCell>
                     <TableCell>{change.client_name}</TableCell>
