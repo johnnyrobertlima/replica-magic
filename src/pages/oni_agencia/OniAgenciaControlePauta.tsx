@@ -13,6 +13,7 @@ import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useInfiniteContentSchedules } from "@/hooks/oni_agencia/useInfiniteContentSchedules";
 import { CalendarEvent } from "@/types/oni-agencia";
+import { useServices } from "@/hooks/useOniAgenciaContentSchedules";
 import "@/components/oni_agencia/content-schedule/styles/CalendarLayout.css";
 
 // Lazy load components for better initial loading
@@ -32,11 +33,20 @@ const OniAgenciaControlePauta = () => {
   const [selectedMonth, setSelectedMonth] = useState<number>(currentDate.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
   const [selectedCollaborator, setSelectedCollaborator] = useState<string | null>(null);
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
   const { isCollapsed, toggle: toggleFilters } = useCollapsible(false);
   const [isFullyLoaded, setIsFullyLoaded] = useState(false);
   
   const { data: clients = [], isLoading: isLoadingClients } = useClients();
+  const { data: services = [], isLoading: isLoadingServices } = useServices();
+  
+  // Initialize selected services with all services when they load
+  useEffect(() => {
+    if (services.length > 0 && selectedServiceIds.length === 0) {
+      setSelectedServiceIds(services.map(service => service.id));
+    }
+  }, [services, selectedServiceIds.length]);
   
   // UseCallback for better performance
   const handleClientChange = useCallback((clientId: string) => {
@@ -47,6 +57,11 @@ const OniAgenciaControlePauta = () => {
   const handleCollaboratorChange = useCallback((collaboratorId: string | null) => {
     setSelectedCollaborator(collaboratorId);
     setIsFullyLoaded(false); // Reset loading state when collaborator changes
+  }, []);
+  
+  const handleServicesChange = useCallback((serviceIds: string[]) => {
+    setSelectedServiceIds(serviceIds);
+    setIsFullyLoaded(false); // Reset loading state when services change
   }, []);
   
   // Use the enhanced infinite query hook with auto-fetching enabled
@@ -84,6 +99,17 @@ const OniAgenciaControlePauta = () => {
     if (!infiniteSchedules?.pages) return [] as CalendarEvent[];
     return infiniteSchedules.pages.flatMap(page => page.data) as CalendarEvent[];
   }, [infiniteSchedules]);
+  
+  // Filter events by selected services
+  const filteredSchedules = useMemo(() => {
+    if (selectedServiceIds.length === 0 || selectedServiceIds.length === services.length) {
+      return flattenedSchedules;
+    }
+    
+    return flattenedSchedules.filter(event => 
+      selectedServiceIds.includes(event.service_id)
+    );
+  }, [flattenedSchedules, selectedServiceIds, services.length]);
   
   // Refetch when month/year/client changes
   const handleMonthYearChange = useCallback((month: number, year: number) => {
@@ -133,8 +159,8 @@ const OniAgenciaControlePauta = () => {
                 <List className="h-4 w-4" />
               </ToggleGroupItem>
             </ToggleGroup>
-            <EditorialLinePopover events={flattenedSchedules} />
-            <ProductsPopover events={flattenedSchedules} />
+            <EditorialLinePopover events={filteredSchedules} />
+            <ProductsPopover events={filteredSchedules} />
             <Button 
               variant="outline" 
               size="sm" 
@@ -153,10 +179,12 @@ const OniAgenciaControlePauta = () => {
           selectedMonth={selectedMonth}
           selectedYear={selectedYear}
           selectedCollaborator={selectedCollaborator}
+          selectedServiceIds={selectedServiceIds}
           onClientChange={handleClientChange}
           onMonthChange={setSelectedMonth}
           onYearChange={setSelectedYear}
           onCollaboratorChange={handleCollaboratorChange}
+          onServicesChange={handleServicesChange}
           isCollapsed={isCollapsed}
           onToggleCollapse={toggleFilters}
         />
@@ -168,7 +196,7 @@ const OniAgenciaControlePauta = () => {
             <Suspense fallback={<LoadingFallback />}>
               {viewMode === "calendar" ? (
                 <ContentCalendar
-                  events={flattenedSchedules}
+                  events={filteredSchedules}
                   clientId={selectedClient || "all"} 
                   month={selectedMonth}
                   year={selectedYear}
@@ -177,7 +205,7 @@ const OniAgenciaControlePauta = () => {
                 />
               ) : (
                 <OptimizedContentScheduleList
-                  events={flattenedSchedules}
+                  events={filteredSchedules}
                   clientId={selectedClient || "all"}
                   selectedCollaborator={selectedCollaborator}
                   hasNextPage={!!hasNextPage}
