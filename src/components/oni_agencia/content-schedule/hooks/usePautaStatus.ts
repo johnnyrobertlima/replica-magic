@@ -1,62 +1,30 @@
 
-import { useEffect, useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { CalendarEvent } from "@/types/oni-agencia";
 import { supabase } from "@/integrations/supabase/client";
 
-type ClientScope = {
-  id: string;
-  client_id: string;
-  service_id: string;
-  quantity: number;
-  service_name?: string;
-};
-
-export function usePautaStatus(clientId: string, month: number, year: number, events: CalendarEvent[]) {
-  // Buscar os escopos do cliente com cache
-  const { data: clientScopes = [] } = useQuery({
-    queryKey: ['oniAgenciaClientScopes', clientId],
+export function useClientScopes(clientId: string | null) {
+  return useQuery({
+    queryKey: ['clientScopes', clientId],
     queryFn: async () => {
-      if (!clientId) return [];
-
-      // Buscamos os escopos junto com os dados do serviço para evitar uma segunda consulta
-      const { data, error } = await supabase
+      let query = supabase
         .from('oni_agencia_client_scopes')
-        .select(`
-          id,
-          client_id,
-          service_id,
-          quantity,
-          service:service_id(id, name)
-        `)
-        .eq('client_id', clientId);
-
+        .select('id, client_id, service_id, quantity, service:service_id(id, name)');
+      
+      // Only apply filtering if clientId is a valid UUID
+      if (clientId && clientId !== "all" && clientId !== "") {
+        query = query.eq('client_id', clientId);
+      }
+      
+      const { data, error } = await query;
+      
       if (error) {
         console.error('Error fetching client scopes:', error);
         throw error;
       }
-
-      // Transformar os dados para o formato esperado
-      return data.map(scope => ({
-        id: scope.id,
-        client_id: scope.client_id,
-        service_id: scope.service_id,
-        quantity: scope.quantity,
-        service_name: scope.service?.name || 'Serviço desconhecido'
-      })) as ClientScope[];
+      
+      return data || [];
     },
-    staleTime: 5 * 60 * 1000, // 5 minutos de cache
-    enabled: !!clientId,
+    // Only run if clientId is not "all"
+    enabled: clientId !== "all" && clientId !== "",
   });
-
-  // Calcular os escopos enriquecidos usando useMemo
-  const enrichedScopes = useMemo(() => {
-    return clientScopes.map(scope => ({
-      service_id: scope.service_id,
-      service_name: scope.service_name || 'Serviço desconhecido',
-      quantity: scope.quantity
-    }));
-  }, [clientScopes]);
-
-  return { clientScopes: enrichedScopes };
 }
