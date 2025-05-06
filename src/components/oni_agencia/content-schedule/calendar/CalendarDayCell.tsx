@@ -48,6 +48,11 @@ export function CalendarDayCell({
   const visibleEvents = dayEvents.slice(0, MAX_VISIBLE_EVENTS);
   const hiddenEventsCount = Math.max(0, dayEvents.length - MAX_VISIBLE_EVENTS);
   
+  // Generate the tooltip text for the day number if there are hidden events
+  const dayTooltip = hiddenEventsCount > 0 
+    ? `Existem +${hiddenEventsCount} agendamentos neste dia` 
+    : undefined;
+  
   const handleCellClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     const isEventClick = 
@@ -94,6 +99,7 @@ export function CalendarDayCell({
           className={`h-5 w-5 p-0 text-xs font-normal flex items-center justify-center rounded-full ${
             isSelected ? 'bg-primary text-primary-foreground' : ''
           }`}
+          title={dayTooltip}
         >
           {format(date, 'd')}
         </button>
