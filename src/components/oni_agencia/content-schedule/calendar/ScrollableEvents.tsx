@@ -9,6 +9,8 @@ interface ScrollableEventsProps {
 }
 
 export function ScrollableEvents({ events, onEventClick }: ScrollableEventsProps) {
+  if (!events || events.length === 0) return null;
+  
   return (
     <ScrollArea className="h-[calc(100%-20px)]">
       <EventsList events={events} onEventClick={onEventClick} />

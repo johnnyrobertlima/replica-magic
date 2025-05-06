@@ -109,12 +109,14 @@ export function CalendarDayCell({
               />
               
               {hiddenEventsCount > 0 && (
-                <MoreEventsIndicator 
-                  count={hiddenEventsCount}
-                  date={date}
-                  events={dayEvents}
-                  onEventClick={handleEventClick}
-                />
+                <div className="mt-1">
+                  <MoreEventsIndicator 
+                    count={hiddenEventsCount}
+                    date={date}
+                    events={dayEvents.slice(MAX_VISIBLE_EVENTS)}
+                    onEventClick={handleEventClick}
+                  />
+                </div>
               )}
             </div>
           ) : (

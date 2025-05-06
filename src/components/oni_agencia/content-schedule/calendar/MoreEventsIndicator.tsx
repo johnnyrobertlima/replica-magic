@@ -24,12 +24,18 @@ export function MoreEventsIndicator({
 }: MoreEventsIndicatorProps) {
   if (count <= 0) return null;
   
+  const handleButtonClick = (e: React.MouseEvent) => {
+    // Stop propagation to prevent the day cell click handler from firing
+    e.stopPropagation();
+  };
+  
   return (
     <Popover>
       <PopoverTrigger asChild>
         <button
-          className="text-xs text-primary font-medium px-1 py-0.5 hover:bg-gray-100 rounded flex items-center justify-between events-overflow-indicator"
+          className="text-xs text-primary font-medium px-1 py-0.5 hover:bg-gray-100 rounded flex items-center justify-between events-overflow-indicator w-full"
           type="button"
+          onClick={handleButtonClick}
         >
           <span>+ {count} mais agendamento{count > 1 ? 's' : ''}</span>
           <ChevronDown className="h-3 w-3" />

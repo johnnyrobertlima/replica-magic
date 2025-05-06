@@ -14,7 +14,7 @@ export function EventsList({ events, onEventClick, isDraggable = true }: EventsL
   if (!events || events.length === 0) return null;
 
   return (
-    <div className="flex flex-col gap-[2px] pr-2">
+    <div className="flex flex-col gap-[2px] pr-2 w-full">
       {events.map((event) => (
         <EventTooltip key={event.id} event={event}>
           <div className="event-item-wrapper">
