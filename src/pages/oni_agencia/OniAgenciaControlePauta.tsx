@@ -13,7 +13,7 @@ import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useInfiniteContentSchedules } from "@/hooks/oni_agencia/useInfiniteContentSchedules";
 import { CalendarEvent } from "@/types/oni-agencia";
-import "../components/oni_agencia/content-schedule/styles/CalendarLayout.css";
+import "@/components/oni_agencia/content-schedule/styles/CalendarLayout.css";
 
 // Lazy load components for better initial loading
 const ContentCalendar = lazy(() => import("@/components/oni_agencia/content-schedule/ContentCalendar").then(module => ({ default: module.ContentCalendar })));
