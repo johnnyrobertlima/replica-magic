@@ -10,10 +10,6 @@ import { DragStartEvent, DragEndEvent } from "@dnd-kit/core";
 // Tipo para callback de atualização
 type UpdateCallback = (success: boolean, eventId?: string) => void;
 
-// Timeout tracker para evitar atualizações muito frequentes
-let lastUpdateTime = 0;
-const UPDATE_THROTTLE_MS = 500;
-
 export function useDragAndDrop(onUpdateCallback?: UpdateCallback) {
   const [isDragging, setIsDragging] = useState(false);
   const [activeDragEvent, setActiveDragEvent] = useState<CalendarEvent | null>(null);
@@ -69,16 +65,6 @@ export function useDragAndDrop(onUpdateCallback?: UpdateCallback) {
       if (onUpdateCallback) onUpdateCallback(false);
       return;
     }
-    
-    // Verificar throttling para evitar múltiplas atualizações muito rápidas
-    const now = Date.now();
-    if (now - lastUpdateTime < UPDATE_THROTTLE_MS) {
-      console.log("Atualizações muito frequentes, ignorando esta operação de arrastar");
-      if (onUpdateCallback) onUpdateCallback(false);
-      return;
-    }
-    
-    lastUpdateTime = now;
     
     try {
       console.log(`Moving event ${activeDragEvent.id} from ${activeDragEvent.scheduled_date} to ${formattedDate}`);
@@ -167,15 +153,10 @@ export function useDragAndDrop(onUpdateCallback?: UpdateCallback) {
         queryClient.invalidateQueries({ queryKey: ['scheduleHistory'] })
       ]);
       
-      // SEMPRE chamar o callback com sucesso após atualização bem-sucedida
+      // Chamar o callback IMEDIATAMENTE para atualização da UI
       if (onUpdateCallback) {
         console.log("Chamando callback após drag and drop bem sucedido");
         onUpdateCallback(true, eventId);
-        
-        // Chamar mais uma vez após um breve período para garantir que atualizações subsequentes sejam processadas
-        setTimeout(() => {
-          onUpdateCallback(true, eventId);
-        }, 300);
       }
     } catch (error) {
       console.error("Error moving event:", error);

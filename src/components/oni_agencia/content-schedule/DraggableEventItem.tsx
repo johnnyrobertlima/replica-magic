@@ -49,6 +49,7 @@ export const DraggableEventItem = memo(function DraggableEventItem({
       {...attributes}
       className="cursor-grab active:cursor-grabbing"
       data-event-id={event.id}
+      data-test-draggable="true"
     >
       <EventItem 
         event={event} 
