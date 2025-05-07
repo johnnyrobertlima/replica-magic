@@ -14,7 +14,7 @@ interface ContentScheduleListProps {
   events: CalendarEvent[];
   clientId: string;
   selectedCollaborator?: string | null;
-  onManualRefetch?: () => void; // Make sure we have this prop
+  onManualRefetch?: () => void;
 }
 
 export function ContentScheduleList({ 
@@ -155,7 +155,7 @@ export function ContentScheduleList({
           events={filteredEvents.filter(e => e.scheduled_date === selectedDate.toISOString().split('T')[0])}
           onClose={handleDialogClose}
           selectedEvent={selectedEvent}
-          onManualRefetch={onManualRefetch} // Make sure to pass onManualRefetch to the dialog
+          onManualRefetch={onManualRefetch} // Pass the manual refetch function
         />
       )}
     </div>

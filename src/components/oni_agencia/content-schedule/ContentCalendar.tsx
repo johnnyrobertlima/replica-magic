@@ -14,7 +14,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Calendar, LayoutGrid, Rows } from "lucide-react";
 import { WeekView } from "./calendar/WeekView";
 import { DayView } from "./calendar/DayView";
-import "./styles/index.css"; // Updated import
+import "./styles/index.css";
 
 interface ContentCalendarProps {
   events: CalendarEvent[];
@@ -23,7 +23,7 @@ interface ContentCalendarProps {
   year: number;
   onMonthChange: (month: number, year: number) => void;
   selectedCollaborator?: string | null;
-  onManualRefetch?: () => void; // Adicionado prop para atualização manual
+  onManualRefetch?: () => void;
 }
 
 export function ContentCalendar({ 
@@ -33,7 +33,7 @@ export function ContentCalendar({
   year, 
   onMonthChange,
   selectedCollaborator,
-  onManualRefetch // Recebe a função de atualização manual
+  onManualRefetch
 }: ContentCalendarProps) {
   const [view, setView] = useState<"month" | "week" | "day">("month");
   
@@ -113,7 +113,7 @@ export function ContentCalendar({
             selectedCollaborator={selectedCollaborator}
             onSelect={handleDateSelect}
             onEventClick={handleEventClick}
-            onManualRefetch={onManualRefetch} // Passar a função de atualização manual
+            onManualRefetch={onManualRefetch} // Pass the manual refetch function
           />
         </>
       )}
@@ -150,7 +150,7 @@ export function ContentCalendar({
           events={currentEvents}
           onClose={handleDialogClose}
           selectedEvent={selectedEvent}
-          onManualRefetch={onManualRefetch} // Passar a função de atualização manual
+          onManualRefetch={onManualRefetch} // Pass the manual refetch function
         />
       )}
     </div>

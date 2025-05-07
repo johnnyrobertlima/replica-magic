@@ -129,7 +129,7 @@ export function useDragAndDrop(onManualRefetch?: () => void) {
         };
       });
       
-      // Certifique-se que o ID do evento existe e está sendo passado corretamente
+      // Ensure the event ID exists and is being passed correctly
       if (!activeDragEvent.id) {
         throw new Error("ID do evento não definido");
       }
@@ -148,10 +148,10 @@ export function useDragAndDrop(onManualRefetch?: () => void) {
       queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
       queryClient.invalidateQueries({ queryKey: ['scheduleHistory'] });
       
-      // Execute manual refetch if provided
+      // Execute manual refetch if provided - IMMEDIATELY
       if (onManualRefetch) {
         console.log("Executando atualização manual após drag and drop");
-        onManualRefetch(); // Removido o setTimeout para executar imediatamente
+        onManualRefetch();
       }
       
     } catch (error) {
