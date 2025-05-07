@@ -32,7 +32,7 @@ export function EventsList({ events, date, onEventClick, isDraggable = true }: E
   console.log(`EventsList - Rendering ${uniqueEvents.length} events for date ${date.toISOString().split('T')[0]}`);
 
   return (
-    <div className="flex flex-col gap-[2px] pr-2 w-full">
+    <div className="flex flex-col gap-[1px] pr-2 w-full">
       {uniqueEvents.map((event) => {
         const eventClickHandler = (e: React.MouseEvent) => {
           console.log(`EventsList - Event clicked: ${event.id}`);

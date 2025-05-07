@@ -60,23 +60,23 @@ export function EventItem({ event, onClick }: EventItemProps) {
   return (
     <div
       onClick={handleClick}
-      className="h-6 text-[10px] rounded-sm hover:brightness-90 transition-all cursor-pointer w-full flex items-center overflow-hidden event-item"
+      className="h-5 text-[10px] rounded-sm hover:brightness-90 transition-all cursor-pointer w-full flex items-center overflow-hidden event-item"
       title={`${title || "Sem título"}${product ? ` - ${product.name}` : ""}${service ? ` (${service.name})` : ''}${status ? ` [${status.name}]` : ''}`}
     >
       {/* Service color block - no text */}
       <div 
-        className="h-full w-6 flex-shrink-0" 
+        className="h-full w-5 flex-shrink-0" 
         style={{ backgroundColor: serviceColor }}
       />
       
       {/* Editorial line with color only - no icon/symbol */}
       <div 
-        className="flex-shrink-0 w-6 h-full"
+        className="flex-shrink-0 w-5 h-full"
         style={{ backgroundColor: editorial_line?.color || '#fff' }}
       />
       
       {/* Collaborator photo or icon */}
-      <div className="h-5 w-5 flex-shrink-0 border border-gray-200 rounded-full overflow-hidden">
+      <div className="h-4 w-4 flex-shrink-0 border border-gray-200 rounded-full overflow-hidden">
         {collaborator?.photo_url ? (
           <img 
             src={collaborator.photo_url} 
@@ -86,7 +86,7 @@ export function EventItem({ event, onClick }: EventItemProps) {
           />
         ) : (
           <div 
-            className="bg-gray-300 h-full w-full flex items-center justify-center text-[8px] font-medium text-gray-700"
+            className="bg-gray-300 h-full w-full flex items-center justify-center text-[7px] font-medium text-gray-700"
             title={collaborator?.name || "Sem responsável"}
           >
             {collaborator?.name ? collaborator.name.charAt(0) : "?"}
@@ -102,7 +102,7 @@ export function EventItem({ event, onClick }: EventItemProps) {
           color: textColor
         }}
       >
-        <span className="font-medium truncate text-[9px]">
+        <span className="font-medium truncate text-[8px]">
           {displayText}
         </span>
       </div>

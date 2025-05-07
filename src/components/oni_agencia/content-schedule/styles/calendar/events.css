@@ -29,13 +29,14 @@
 }
 
 .event-item {
-  @apply cursor-pointer rounded-sm p-1 mb-1 text-xs overflow-hidden whitespace-nowrap text-ellipsis border-l-4;
+  @apply cursor-pointer rounded-sm p-1 mb-0.5 text-xs overflow-hidden whitespace-nowrap text-ellipsis border-l-4;
   max-width: 100%;
-  min-height: 22px;
+  min-height: 20px; /* Reduced from 22px */
 }
 
 .event-item-wrapper {
   @apply w-full cursor-grab;
+  margin-bottom: 1px; /* Reduced from default spacing */
 }
 
 .event-item.dragging {
@@ -43,7 +44,7 @@
 }
 
 .more-events-indicator {
-  @apply text-xs text-center text-gray-500 mt-1 cursor-pointer;
+  @apply text-xs text-center text-gray-500 mt-0.5 cursor-pointer;
 }
 
 /* Week view styles */
