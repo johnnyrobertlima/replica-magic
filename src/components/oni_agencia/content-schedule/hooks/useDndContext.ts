@@ -30,7 +30,9 @@ export function useDndContext({
   
   // Mutation for updating event date (drag-and-drop)
   const updateEventMutation = useMutation({
-    mutationFn: updateContentSchedule,
+    mutationFn: async (data: { id: string, scheduled_date: string }) => {
+      return updateContentSchedule(data.id, { scheduled_date: data.scheduled_date });
+    },
     onSuccess: async (data, variables) => {
       console.log('Evento atualizado com sucesso:', data);
       toast({

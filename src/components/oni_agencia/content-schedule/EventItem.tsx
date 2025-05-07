@@ -25,7 +25,7 @@ export function EventItem({ event, onClick, isDragging }: EventItemProps) {
       data-event-id={event.id}
     >
       <div className="flex items-center space-x-1">
-        {event.status && <StatusBadge status={event.status} size="xs" />}
+        {event.status && <StatusBadge status={event.status} className="scale-90" />}
         <span className="truncate">
           {event.title || "Sem título"}
         </span>

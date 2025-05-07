@@ -46,8 +46,8 @@ export function Calendar({
     currentMonth,
     currentYear,
     currentDate,
-    navigateToNext,
-    navigateToPrevious
+    handleNextMonth,
+    handlePrevMonth
   } = useMonthNavigation(month, year, onMonthYearChange);
   
   // Filter events for the selected date
@@ -68,10 +68,9 @@ export function Calendar({
   return (
     <div className="bg-white rounded-md border shadow-sm">
       <CalendarHeader 
-        month={currentMonth}
-        year={currentYear}
-        onNext={navigateToNext}
-        onPrevious={navigateToPrevious}
+        currentDate={currentDate}
+        onPrevMonth={handlePrevMonth}
+        onNextMonth={handleNextMonth}
       />
       
       <div className="p-0 md:p-2 overflow-auto">
