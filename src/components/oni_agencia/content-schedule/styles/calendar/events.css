@@ -1,4 +1,5 @@
 
+
 .calendar-day {
   @apply h-full flex flex-col relative border border-gray-200 hover:bg-gray-50;
   min-height: 120px;
@@ -29,14 +30,14 @@
 }
 
 .event-item {
-  @apply cursor-pointer rounded-sm p-1 mb-0.5 text-xs overflow-hidden whitespace-nowrap text-ellipsis border-l-4;
+  @apply cursor-pointer rounded-sm p-1 text-xs overflow-hidden whitespace-nowrap text-ellipsis border-l-4;
   max-width: 100%;
-  min-height: 20px; /* Reduced from 22px */
+  min-height: 7px;
 }
 
 .event-item-wrapper {
   @apply w-full cursor-grab;
-  margin-bottom: 1px; /* Reduced from default spacing */
+  margin-bottom: 0; /* Removed spacing between events */
 }
 
 .event-item.dragging {
@@ -98,3 +99,4 @@
 .event-item-wrapper:active {
   animation: pulse 0.3s ease-in-out;
 }
+
