@@ -1,136 +1,144 @@
 
-import { useState } from "react";
-import { DragEndEvent } from "@dnd-kit/core";
-import { CalendarEvent } from "@/types/oni-agencia";
-import { useToast } from "@/hooks/use-toast";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updateContentSchedule } from "@/services/oniAgenciaContentScheduleServices";
+import { useState, useCallback } from "react";
+import { DndContext, DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import { format } from "date-fns";
+import { CalendarEvent } from "@/types/oni-agencia";
+import { useUpdateContentSchedule } from "@/hooks/useOniAgenciaContentSchedules";
+import { useToast } from "@/hooks/use-toast";
 
 interface UseDndContextProps {
   clientId: string;
   month: number;
   year: number;
   onManualRefetch?: () => void;
-  forceImmediateRefresh?: () => Promise<any>;
 }
 
-export function useDndContext({ 
-  clientId, 
-  month, 
-  year, 
-  onManualRefetch,
-  forceImmediateRefresh
-}: UseDndContextProps) {
+export function useDndContext({ clientId, month, year, onManualRefetch }: UseDndContextProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | undefined>();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   
-  // Mutation for updating event date (drag-and-drop)
-  const updateEventMutation = useMutation({
-    mutationFn: (data: { id: string, scheduled_date: string }) => {
-      console.log("Mutation called with:", data);
-      return updateContentSchedule(data.id, { scheduled_date: data.scheduled_date });
-    },
-    onSuccess: async (data, variables) => {
-      console.log('Evento atualizado com sucesso:', data);
-      toast({
-        title: 'Evento atualizado',
-        description: `Data do evento alterada para ${format(new Date(data.scheduled_date), 'dd/MM/yyyy')}`,
-      });
-      
-      // Force immediate refresh after successful drag-and-drop
-      if (forceImmediateRefresh) {
-        console.log("Forçando refresh imediato após drag-and-drop bem sucedido");
-        await forceImmediateRefresh();
-      } else if (onManualRefetch) {
-        console.log("Usando manual refetch após drag-and-drop");
-        onManualRefetch();
-      }
-    },
-    onError: (error: any) => {
-      console.error('Erro ao atualizar evento:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Erro na operação',
-        description: 'Não foi possível atualizar a data do evento.',
-      });
-    }
-  });
-  
-  function handleEventClick(event: CalendarEvent, date: Date) {
-    console.log(`Evento clicado: ${event.id} em ${date}`);
-    setSelectedEvent(event);
-    setSelectedDate(date);
-    setIsDialogOpen(true);
-  }
-  
-  function handleDateSelect(date: Date | undefined) {
-    if (!date) return;
-    console.log(`Data selecionada: ${date}`);
-    
+  const updateMutation = useUpdateContentSchedule();
+
+  const handleDateSelect = useCallback((date: Date) => {
     setSelectedDate(date);
     setSelectedEvent(undefined);
     setIsDialogOpen(true);
-  }
-  
-  function handleDragEnd(event: DragEndEvent) {
+  }, []);
+
+  const handleEventClick = useCallback((event: CalendarEvent, date: Date) => {
+    setSelectedDate(date);
+    setSelectedEvent(event);
+    setIsDialogOpen(true);
+  }, []);
+
+  const handleDialogOpenChange = useCallback((open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      // Reset state when dialog is closed
+      setSelectedEvent(undefined);
+      setSelectedDate(undefined);
+    }
+  }, []);
+
+  const handleDialogClose = useCallback(() => {
+    setIsDialogOpen(false);
+    setSelectedEvent(undefined);
+    setSelectedDate(undefined);
+  }, []);
+
+  // Function to handle drag and drop of events
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     const { active, over } = event;
     
-    if (!active || !over) {
-      console.log("Drag incompleto: active ou over são indefinidos");
+    if (!over || !active) {
+      console.log("No valid over or active data for drag operation");
+      return;
+    }
+
+    // Extract event ID directly from active.id
+    const eventId = active.id as string;
+    
+    // Get the event data and target date
+    const draggedEvent = active.data.current?.event as CalendarEvent;
+    const targetDateObj = over.data.current?.date as Date;
+    
+    if (!draggedEvent || !targetDateObj) {
+      console.log("Missing data for drag operation", { eventId, draggedEvent, targetDateObj });
       return;
     }
     
-    const eventId = active.id as string;
-    const eventData = active.data?.current?.event as CalendarEvent;
-    const newDate = over.id as string;
-    
-    console.log("Drag end info:", { 
-      eventId, 
-      eventData: eventData?.title, 
-      newDate, 
-      currentDate: eventData?.scheduled_date 
-    });
-    
-    // Check if we have valid data and a date change occurred
-    if (eventData && eventId && newDate && eventData.scheduled_date !== newDate) {
-      console.log(`Movendo evento ${eventId} para ${newDate}`);
-      
-      // Update the event date
-      updateEventMutation.mutate({
-        id: eventId,
-        scheduled_date: newDate
+    // Validate that we have a proper event ID
+    if (!eventId || eventId === 'undefined') {
+      console.error("Invalid event ID for drag operation:", eventId);
+      toast({
+        variant: "destructive",
+        title: "Erro ao mover evento",
+        description: "ID do evento inválido."
       });
-    } else {
-      console.log('Drag cancelado - sem alteração de data ou dados incompletos');
+      return;
     }
-  }
-  
-  function handleDialogOpenChange(open: boolean) {
-    setIsDialogOpen(open);
-    if (!open) {
-      // When dialog closes, clear the selection
-      setSelectedEvent(undefined);
+    
+    const oldDate = draggedEvent.scheduled_date;
+    const newDate = format(targetDateObj, 'yyyy-MM-dd');
+    
+    if (oldDate === newDate) {
+      // No change in date, no need to update
+      console.log("No date change detected, skipping update");
+      return;
     }
-  }
-  
-  function handleDialogClose() {
-    setSelectedDate(undefined);
-    setSelectedEvent(undefined);
-    setIsDialogOpen(false);
-  }
+    
+    try {
+      console.log(`Moving event ${eventId} from ${oldDate} to ${newDate}`);
+      
+      // Create a clean update object with only the fields we want to update
+      // This avoids sending nested objects that don't exist in the database schema
+      const updateData = {
+        scheduled_date: newDate
+      };
+      
+      // Update the database with the new date
+      await updateMutation.mutateAsync({
+        id: eventId,
+        data: updateData
+      });
+      
+      toast({
+        title: "Evento movido",
+        description: `Evento movido para ${format(targetDateObj, 'dd/MM/yyyy')}`
+      });
+      
+      // Use the provided manual refetch function to update data
+      if (onManualRefetch) {
+        setTimeout(() => {
+          console.log("Executando atualização manual após drag and drop");
+          onManualRefetch();
+        }, 300);
+      }
+    } catch (error) {
+      console.error("Failed to update event date:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao mover evento",
+        description: "Não foi possível alterar a data do evento."
+      });
+    }
+  }, [updateMutation, toast, onManualRefetch]);
+
+  const dndContext = {
+    DndContext
+  };
 
   return {
     selectedDate,
     selectedEvent,
     isDialogOpen,
-    handleEventClick,
+    dndContext,
     handleDateSelect,
+    handleEventClick,
     handleDragEnd,
     handleDialogOpenChange,
-    handleDialogClose,
+    handleDialogClose
   };
 }

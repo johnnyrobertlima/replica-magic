@@ -11,10 +11,9 @@ export interface StatusBadgeProps {
   color?: string | null;
   className?: string;
   children?: React.ReactNode;
-  size?: 'xs' | 'sm' | 'md' | 'lg';
 }
 
-export function StatusBadge({ status, color, className, children, size = 'md' }: StatusBadgeProps) {
+export function StatusBadge({ status, color, className, children }: StatusBadgeProps) {
   // Função para determinar a cor do text baseada na cor de fundo
   const getTextColor = (bgColor: string | null | undefined) => {
     if (!bgColor) return "text-foreground";
@@ -40,15 +39,10 @@ export function StatusBadge({ status, color, className, children, size = 'md' }:
     backgroundColor: badgeColor,
     borderColor: badgeColor 
   } : {};
-  
-  // Apply size classes
-  const sizeClasses = size === 'xs' ? 'text-[0.65rem] px-1 py-0' :
-                     size === 'sm' ? 'text-xs px-1.5 py-0' :
-                     size === 'lg' ? 'text-sm px-3 py-1' : '';
 
   return (
     <Badge 
-      className={cn("font-medium whitespace-nowrap", textColor, sizeClasses, className)}
+      className={cn("font-medium whitespace-nowrap", textColor, className)}
       style={style}
     >
       {children || status?.name}

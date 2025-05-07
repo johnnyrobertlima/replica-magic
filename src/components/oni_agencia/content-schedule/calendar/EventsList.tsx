@@ -3,7 +3,7 @@ import { CalendarEvent } from "@/types/oni-agencia";
 import { EventItem } from "../EventItem";
 import { DraggableEventItem } from "../DraggableEventItem";
 import { EventTooltip } from "./EventTooltip";
-import React, { useMemo, memo } from "react";
+import React, { useMemo } from "react";
 
 interface EventsListProps {
   events: CalendarEvent[];
@@ -12,12 +12,7 @@ interface EventsListProps {
   isDraggable?: boolean;
 }
 
-export const EventsList = memo(function EventsList({ 
-  events, 
-  date, 
-  onEventClick, 
-  isDraggable = true 
-}: EventsListProps) {
+export function EventsList({ events, date, onEventClick, isDraggable = true }: EventsListProps) {
   // Utilize useMemo para computações caras como filtragem de eventos
   const uniqueEvents = useMemo(() => {
     if (!events || events.length === 0) return [];
@@ -34,39 +29,32 @@ export const EventsList = memo(function EventsList({
   
   if (uniqueEvents.length === 0) return null;
 
-  console.log(`EventsList - Rendering ${uniqueEvents.length} events for date ${date.toISOString().split('T')[0]}`);
+  // FIXED: Adicionar logs para debugging
+  console.log(`Rendering ${uniqueEvents.length} events for date ${date.toISOString().split('T')[0]}`);
 
   return (
-    <div className="flex flex-col gap-0 pr-2 w-full">
-      {uniqueEvents.map((event) => {
-        const eventClickHandler = (e: React.MouseEvent) => {
-          console.log(`EventsList - Event clicked: ${event.id}`);
-          onEventClick(e, event);
-        };
-        
-        const key = `event-${event.id}-${date.toISOString()}`;
-        
-        return (
-          <EventTooltip 
-            key={key} 
-            event={event}
-          >
-            <div className="event-item-wrapper">
-              {isDraggable ? (
-                <DraggableEventItem 
-                  event={event}
-                  onClick={eventClickHandler}
-                />
-              ) : (
-                <EventItem 
-                  event={event}
-                  onClick={eventClickHandler}
-                />
-              )}
-            </div>
-          </EventTooltip>
-        );
-      })}
+    <div className="flex flex-col gap-[2px] pr-2 w-full">
+      {uniqueEvents.map((event) => (
+        // Usar uma key verdadeiramente única combinando ID do evento e a data ISO
+        <EventTooltip 
+          key={`event-${event.id}-${date.toISOString()}`} 
+          event={event}
+        >
+          <div className="event-item-wrapper">
+            {isDraggable ? (
+              <DraggableEventItem 
+                event={event}
+                onClick={(e) => onEventClick(e, event)}
+              />
+            ) : (
+              <EventItem 
+                event={event}
+                onClick={(e) => onEventClick(e, event)}
+              />
+            )}
+          </div>
+        </EventTooltip>
+      ))}
     </div>
   );
-});
+}

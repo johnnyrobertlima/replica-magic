@@ -1,30 +1,29 @@
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { useScheduleFormState } from "./useScheduleFormState";
 import { useScheduleMutations } from "./useScheduleMutations";
 import { useQueryClient } from "@tanstack/react-query";
+
+interface UseScheduleEventDialogProps {
+  clientId: string;
+  selectedDate: Date;
+  events: CalendarEvent[];
+  selectedEvent?: CalendarEvent;
+  onClose: () => void;
+  onManualRefetch?: () => void; // Adicionamos essa prop
+}
 
 export function useScheduleEventDialog({
   clientId,
   selectedDate,
   events,
   selectedEvent,
-  onManualRefetch,
-  onClose
-}: {
-  clientId: string;
-  selectedDate: Date;
-  events: CalendarEvent[];
-  selectedEvent?: CalendarEvent;
-  onManualRefetch?: () => void;
-  onClose: () => void;
-}) {
-  // Add a ref to prevent multiple selections
+  onClose,
+  onManualRefetch
+}: UseScheduleEventDialogProps) {
   const hasSelectedEventRef = useRef(false);
-  const [activeTab, setActiveTab] = useState<"details" | "status" | "history">("details");
   const queryClient = useQueryClient();
-  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const {
     currentSelectedEvent,
@@ -40,48 +39,6 @@ export function useScheduleEventDialog({
     selectedEvent
   });
 
-  // Função para atualização forçada com throttling
-  const forceRefresh = useCallback(() => {
-    if (!onManualRefetch) return;
-    
-    // Clear any pending timeouts
-    if (updateTimeoutRef.current) {
-      clearTimeout(updateTimeoutRef.current);
-      updateTimeoutRef.current = null;
-    }
-    
-    console.log("Forçando atualização de dados após operação");
-    
-    // Invalidate queries first
-    queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
-    queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
-    
-    // Primeira chamada imediata
-    onManualRefetch();
-    
-    // Schedule additional calls with increasing delays
-    updateTimeoutRef.current = setTimeout(() => {
-      console.log("Executando atualização extra após (300ms)");
-      onManualRefetch();
-      
-      // Final refresh after more delay
-      updateTimeoutRef.current = setTimeout(() => {
-        console.log("Executando atualização extra após (800ms)");
-        onManualRefetch();
-        updateTimeoutRef.current = null;
-      }, 500);
-    }, 300);
-  }, [onManualRefetch, queryClient]);
-
-  // Cleanup timeouts on unmount
-  useEffect(() => {
-    return () => {
-      if (updateTimeoutRef.current) {
-        clearTimeout(updateTimeoutRef.current);
-      }
-    };
-  }, []);
-
   const {
     isSubmitting,
     isDeleting,
@@ -89,19 +46,13 @@ export function useScheduleEventDialog({
     handleStatusUpdate,
     handleDelete
   } = useScheduleMutations({
-    onClose: () => {
-      // Primeiro executamos o callback de fechamento
-      onClose();
-      
-      // Depois forçamos o refresh dos dados
-      forceRefresh();
-    },
+    onClose,
     clientId,
     selectedDate,
-    onManualRefetch: forceRefresh // Pass our enhanced forceRefresh function
+    onManualRefetch // Passamos a função de atualização manual
   });
 
-  // Only set the selectedEvent when it comes from props and not already selected
+  // Configura o evento selecionado apenas quando ele vem das props e ainda não foi selecionado
   useEffect(() => {
     if (selectedEvent && !hasSelectedEventRef.current) {
       console.log('Setting explicitly selected event:', selectedEvent.id);
@@ -110,7 +61,25 @@ export function useScheduleEventDialog({
     }
   }, [selectedEvent, handleSelectEvent]);
 
-  // Enhanced reset form function
+  // Wrapper para o submit que passa o evento selecionado e os dados do formulário
+  const submitForm = (e: React.FormEvent) => {
+    console.log("Submitting form:", formData);
+    return handleSubmit(e, currentSelectedEvent, formData);
+  };
+  
+  // Wrapper para atualizar status
+  const updateStatus = (e: React.FormEvent) => {
+    console.log("Updating status:", formData.status_id);
+    return handleStatusUpdate(e, currentSelectedEvent, formData);
+  };
+  
+  // Wrapper para excluir evento
+  const deleteEvent = () => {
+    console.log("Deleting event:", currentSelectedEvent?.id);
+    return handleDelete(currentSelectedEvent);
+  };
+  
+  // Função aprimorada para resetar o formulário
   const handleResetForm = () => {
     console.log("Enhanced reset form called");
     hasSelectedEventRef.current = false;
@@ -120,16 +89,14 @@ export function useScheduleEventDialog({
   return {
     currentSelectedEvent,
     formData,
-    activeTab,
-    setActiveTab,
     isSubmitting,
     isDeleting,
     handleInputChange,
     handleSelectChange,
     handleDateChange,
-    handleSubmit,
-    handleStatusUpdate,
-    handleDelete,
+    handleSubmit: submitForm,
+    handleStatusUpdate: updateStatus,
+    handleDelete: deleteEvent,
     handleSelectEvent,
     resetForm: handleResetForm
   };

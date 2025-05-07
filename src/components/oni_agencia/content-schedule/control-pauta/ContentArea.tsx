@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { DndContext } from "@dnd-kit/core";
 import { Calendar } from "@/components/oni_agencia/content-schedule/calendar/Calendar";
 import { ContentScheduleList } from "@/components/oni_agencia/content-schedule/ContentScheduleList";
 import { CalendarEvent } from "@/types/oni-agencia";
@@ -21,7 +20,6 @@ interface ContentAreaProps {
   showLoadingState: boolean;
   isCollapsed: boolean;
   onManualRefetch?: () => void;
-  forceImmediateRefresh?: () => Promise<any>;
 }
 
 export function ContentArea({ 
@@ -37,13 +35,14 @@ export function ContentArea({
   fetchNextPage,
   showLoadingState,
   isCollapsed,
-  onManualRefetch,
-  forceImmediateRefresh
+  onManualRefetch
 }: ContentAreaProps) {
+  const [dialogOpen, setDialogOpen] = useState(false);
   const {
     selectedEvent,
     selectedDate,
     isDialogOpen,
+    dndContext,
     handleEventClick,
     handleDateSelect,
     handleDragEnd,
@@ -53,12 +52,11 @@ export function ContentArea({
     clientId,
     month,
     year,
-    onManualRefetch,
-    forceImmediateRefresh
+    onManualRefetch
   });
   
   // Debug logs to track events count
-  console.log(`ContentArea - Received ${filteredSchedules.length} events, showLoadingState=${showLoadingState}`);
+  console.log(`ContentArea received ${filteredSchedules.length} events, showLoadingState=${showLoadingState}`);
   
   // Caso esteja carregando, mostra um loader
   if (showLoadingState) {
@@ -68,7 +66,7 @@ export function ContentArea({
   if (viewMode === "calendar") {
     return (
       <div className={`pt-4 ${isCollapsed ? 'mt-0' : 'mt-4'}`}>
-        <DndContext onDragEnd={handleDragEnd}>
+        <dndContext.DndContext onDragEnd={handleDragEnd}>
           <Calendar 
             events={filteredSchedules}
             month={month}
@@ -84,9 +82,8 @@ export function ContentArea({
             onDialogOpenChange={handleDialogOpenChange}
             onDialogClose={handleDialogClose}
             onManualRefetch={onManualRefetch}
-            forceImmediateRefresh={forceImmediateRefresh}
           />
-        </DndContext>
+        </dndContext.DndContext>
       </div>
     );
   }

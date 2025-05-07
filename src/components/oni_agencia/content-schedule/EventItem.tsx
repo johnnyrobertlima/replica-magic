@@ -1,58 +1,98 @@
 
 import { CalendarEvent } from "@/types/oni-agencia";
-import { StatusBadge } from "./status-badge/StatusBadge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface EventItemProps {
   event: CalendarEvent;
   onClick: (e: React.MouseEvent) => void;
-  isDragging?: boolean;
 }
 
-export function EventItem({ event, onClick, isDragging }: EventItemProps) {
-  // Determine color based on service color or default to blue
-  const serviceColor = event.service?.color || '#3490dc';
+export function EventItem({ event, onClick }: EventItemProps) {
+  // Extract all the data we need from the event with proper null checks
+  const { service, editorial_line, collaborator, status, product, title = "" } = event;
   
-  // Get collaborator initials for avatar fallback
-  const getInitials = (name: string | null | undefined) => {
-    if (!name) return '?';
-    return name
-      .split(' ')
-      .map(part => part[0])
-      .slice(0, 2)
-      .join('')
-      .toUpperCase();
+  // Safely handle title
+  const truncatedTitle = title && title.length > 18 ? `${title.substring(0, 18)}...` : title || "Sem título";
+  
+  // Safely handle product name
+  const productName = product?.name || "";
+  
+  // Create display text - now prioritizing showing product name when available
+  let displayText = truncatedTitle;
+  
+  // If product exists, combine product name with title
+  if (product && productName) {
+    displayText = `${productName} - ${truncatedTitle}`;
+  }
+  
+  // Calculate text color based on background color brightness
+  const calculateTextColor = (bgColor: string | null | undefined): string => {
+    if (!bgColor) return "#fff";
+    
+    // Convert hex to RGB
+    const hex = bgColor.replace("#", "");
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    
+    // Calculate perceived brightness
+    const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    
+    // If brightness is greater than 0.5, use black text, otherwise use white
+    return brightness > 0.5 ? "#000" : "#fff";
   };
   
-  const collaboratorInitials = getInitials(event.collaborator?.name);
+  const textColor = status?.color ? calculateTextColor(status.color) : "#000";
+  
+  // Safe service color
+  const serviceColor = service?.color || '#ccc';
   
   return (
-    <div 
-      className={`
-        py-1 px-2 mb-1 rounded-sm text-xs text-white 
-        cursor-pointer hover:opacity-90 transition-opacity
-        ${isDragging ? 'shadow-lg border border-white' : ''}
-      `}
-      style={{ backgroundColor: serviceColor }}
+    <div
       onClick={onClick}
-      title={event.title || 'Sem título'}
-      data-event-id={event.id}
+      className="h-6 text-[10px] rounded-sm hover:brightness-90 transition-all cursor-pointer w-full flex items-center overflow-hidden"
+      title={`${title || "Sem título"}${product ? ` - ${product.name}` : ""}${service ? ` (${service.name})` : ''}${status ? ` [${status.name}]` : ''}`}
     >
-      <div className="flex items-center gap-1">
-        {event.status && <StatusBadge status={event.status} size="xs" className="scale-90" />}
-        
-        {event.collaborator && (
-          <Avatar className="h-4 w-4 mr-1">
-            <AvatarImage 
-              src={event.collaborator.photo_url || ''} 
-              alt={event.collaborator.name || 'Colaborador'} 
-            />
-            <AvatarFallback className="text-[8px]">{collaboratorInitials}</AvatarFallback>
-          </Avatar>
+      {/* Service color block - no text */}
+      <div 
+        className="h-full w-6 flex-shrink-0" 
+        style={{ backgroundColor: serviceColor }}
+      />
+      
+      {/* Editorial line with color only - no icon/symbol */}
+      <div 
+        className="flex-shrink-0 w-6 h-full"
+        style={{ backgroundColor: editorial_line?.color || '#fff' }}
+      />
+      
+      {/* Collaborator photo or icon */}
+      <div className="h-5 w-5 flex-shrink-0 border border-gray-200 rounded-full overflow-hidden">
+        {collaborator?.photo_url ? (
+          <img 
+            src={collaborator.photo_url} 
+            alt={collaborator.name} 
+            title={collaborator.name}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div 
+            className="bg-gray-300 h-full w-full flex items-center justify-center text-[8px] font-medium text-gray-700"
+            title={collaborator?.name || "Sem responsável"}
+          >
+            {collaborator?.name ? collaborator.name.charAt(0) : "?"}
+          </div>
         )}
-        
-        <span className="truncate flex-1">
-          {event.title || "Sem título"}
+      </div>
+      
+      {/* Main content: Status color, Product + Title */}
+      <div 
+        className="flex-grow overflow-hidden whitespace-nowrap pl-1 h-full flex items-center" 
+        style={{ 
+          backgroundColor: status?.color || '#FEF7CD',
+          color: textColor
+        }}
+      >
+        <span className="font-medium truncate text-[9px]">
+          {displayText}
         </span>
       </div>
     </div>

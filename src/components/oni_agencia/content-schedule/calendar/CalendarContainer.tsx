@@ -6,8 +6,6 @@ import { CalendarEvent } from "@/types/oni-agencia";
 import { ptBR } from "date-fns/locale";
 import { useDragAndDrop } from "../hooks/useDragAndDrop";
 import { useCurrentUser } from "../hooks/useCurrentUser";
-import { useState, useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 
 interface CalendarContainerProps {
   events: CalendarEvent[];
@@ -16,7 +14,6 @@ interface CalendarContainerProps {
   selectedCollaborator?: string | null;
   onSelect: (date: Date) => void;
   onEventClick: (event: CalendarEvent, date: Date) => void;
-  onDragSuccess?: (success: boolean, eventId?: string) => void;
 }
 
 export function CalendarContainer({
@@ -25,51 +22,22 @@ export function CalendarContainer({
   currentDate,
   selectedCollaborator,
   onSelect,
-  onEventClick,
-  onDragSuccess
+  onEventClick
 }: CalendarContainerProps) {
-  // Estado para forçar renderização após drag-and-drop
-  const [refreshKey, setRefreshKey] = useState<number>(0);
-  const [localEvents, setLocalEvents] = useState<CalendarEvent[]>(events);
-  
   // Get username first - maintain hook order
   const userName = useCurrentUser();
-  const queryClient = useQueryClient();
   
-  // Update localEvents when events prop changes
-  useEffect(() => {
-    console.log(`CalendarContainer: Recebendo ${events.length} eventos`);
-    setLocalEvents(events);
-  }, [events]);
-  
-  // Configure sensors for drag and drop with reduced activation constraint
+  // Configure sensors for drag and drop
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 5, // Reduced distance for easier activation
-        tolerance: 5, // Added tolerance
-        delay: 150, // Short delay to avoid accidental drags
+        distance: 8, // Min drag distance before activation
       },
     })
   );
   
-  // Handler for immediate UI update after drag-and-drop
-  const handleDragComplete = async (success: boolean, eventId?: string) => {
-    if (success) {
-      console.log(`Drag bem sucedido para evento ${eventId}, atualizando calendário`);
-      
-      // Force UI update by incrementing key to remount calendar
-      setRefreshKey(prev => prev + 1);
-      
-      // Call external callback
-      if (onDragSuccess) {
-        onDragSuccess(success, eventId);
-      }
-    }
-  };
-  
-  // Get drag-and-drop handlers with custom callback
-  const { isDragging, handleDragStart, handleDragEnd } = useDragAndDrop(handleDragComplete);
+  // Get drag-and-drop handlers
+  const { isDragging, handleDragStart, handleDragEnd } = useDragAndDrop();
 
   return (
     <DndContext 
@@ -77,9 +45,8 @@ export function CalendarContainer({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="w-full p-0 calendar-grid">
+      <div className="w-full p-0">
         <Calendar
-          key={`calendar-${refreshKey}-${localEvents.length}`}
           mode="single"
           selected={selectedDate}
           onSelect={onSelect}
@@ -91,7 +58,7 @@ export function CalendarContainer({
               <CalendarDay
                 date={date}
                 selectedDate={selectedDate}
-                events={localEvents}
+                events={events}
                 selectedCollaborator={selectedCollaborator}
                 onSelect={onSelect}
                 onEventClick={onEventClick}

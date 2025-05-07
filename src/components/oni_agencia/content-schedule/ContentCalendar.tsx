@@ -1,5 +1,4 @@
-
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState } from "react";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { CalendarHeader } from "./calendar/CalendarHeader";
 import { WeekDaysHeader } from "./calendar/WeekDaysHeader";
@@ -14,8 +13,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Calendar, LayoutGrid, Rows } from "lucide-react";
 import { WeekView } from "./calendar/WeekView";
 import { DayView } from "./calendar/DayView";
-import { useQueryClient } from "@tanstack/react-query";
-import "./styles/index.css";
+import "./styles/index.css"; // Updated import
 
 interface ContentCalendarProps {
   events: CalendarEvent[];
@@ -24,7 +22,6 @@ interface ContentCalendarProps {
   year: number;
   onMonthChange: (month: number, year: number) => void;
   selectedCollaborator?: string | null;
-  onManualRefetch?: () => void;
 }
 
 export function ContentCalendar({ 
@@ -33,12 +30,9 @@ export function ContentCalendar({
   month, 
   year, 
   onMonthChange,
-  selectedCollaborator,
-  onManualRefetch
+  selectedCollaborator
 }: ContentCalendarProps) {
   const [view, setView] = useState<"month" | "week" | "day">("month");
-  const [refreshKey, setRefreshKey] = useState<number>(Date.now());
-  const queryClient = useQueryClient();
   
   const { 
     selectedDate, 
@@ -58,65 +52,18 @@ export function ContentCalendar({
   const { currentEvents } = useCalendarEvents(events, selectedDate, isDialogOpen, setIsDialogOpen, selectedCollaborator);
 
   const weekDays = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-  
-  // Função para forçar remontagem do componente com uma nova chave
-  const forceRerender = useCallback(() => {
-    console.log("Forçando remontagem do calendário");
-    setRefreshKey(Date.now());
-    
-    // Invalidar consultas
-    queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
-    queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
-    
-    // Chamar callback de atualização manual se existir
-    if (onManualRefetch) {
-      console.log("Executando atualização manual após mudança de dados");
-      onManualRefetch();
-    }
-  }, [queryClient, onManualRefetch]);
 
-  // Função mais especializada para tratar atualizações após drag-and-drop
-  const handleDragSuccess = useCallback((success: boolean, eventId?: string) => {
-    if (!success) return;
-    
-    console.log(`Evento ${eventId} foi movido com sucesso, atualizando UI`);
-    
-    // Forçar remontagem do componente para refletir os novos dados
-    forceRerender();
-    
-    // Executar callback de atualização manual se fornecido
-    if (onManualRefetch) {
-      setTimeout(() => {
-        console.log("Executando atualização adicional (300ms)");
-        onManualRefetch();
-      }, 300);
-      
-      setTimeout(() => {
-        console.log("Executando atualização adicional (600ms)");
-        onManualRefetch();
-      }, 600);
-    }
-  }, [forceRerender, onManualRefetch]);
-  
-  const handleViewChange = useCallback((value: string) => {
-    if (value === "month" || value === "week" || value === "day") {
-      setView(value as "month" | "week" | "day");
-    }
-  }, []);
-  
-  const handleDialogClose = useCallback(() => {
+  const handleDialogClose = () => {
     setSelectedDate(undefined);
     setSelectedEvent(undefined);
     setIsDialogOpen(false);
-    
-    // Forçar atualização quando o diálogo é fechado
-    forceRerender();
-  }, [setSelectedDate, setSelectedEvent, setIsDialogOpen, forceRerender]);
-  
-  // Efeito para verificar alterações nos eventos e forçar atualização
-  useEffect(() => {
-    console.log(`Calendar - Displaying ${events.length} events for ${month}/${year} (key: ${refreshKey})`);
-  }, [events, month, year, refreshKey]);
+  };
+
+  const handleViewChange = (value: string) => {
+    if (value === "month" || value === "week" || value === "day") {
+      setView(value);
+    }
+  };
 
   return (
     <div className="bg-white rounded-md border shadow-sm w-full h-full">
@@ -157,21 +104,18 @@ export function ContentCalendar({
           <WeekDaysHeader weekDays={weekDays} />
           
           <CalendarContainer
-            key={`calendar-container-${refreshKey}`}
             events={events}
             selectedDate={selectedDate}
             currentDate={currentDate}
             selectedCollaborator={selectedCollaborator}
             onSelect={handleDateSelect}
             onEventClick={handleEventClick}
-            onDragSuccess={handleDragSuccess}
           />
         </>
       )}
       
       {view === "week" && (
         <WeekView
-          key={`week-view-${refreshKey}`}
           events={events}
           selectedDate={selectedDate}
           currentDate={currentDate}
@@ -184,7 +128,6 @@ export function ContentCalendar({
       
       {view === "day" && (
         <DayView
-          key={`day-view-${refreshKey}`}
           events={events}
           selectedDate={selectedDate || currentDate}
           currentDate={currentDate}
@@ -203,7 +146,6 @@ export function ContentCalendar({
           events={currentEvents}
           onClose={handleDialogClose}
           selectedEvent={selectedEvent}
-          onManualRefetch={forceRerender}
         />
       )}
     </div>

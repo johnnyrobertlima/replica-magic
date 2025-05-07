@@ -1,5 +1,4 @@
 
-/* Base calendar styles */
 .calendar-day {
   @apply h-full flex flex-col relative border border-gray-200 hover:bg-gray-50;
   min-height: 120px;
@@ -30,14 +29,13 @@
 }
 
 .event-item {
-  @apply cursor-pointer rounded-sm p-1 text-xs overflow-hidden whitespace-nowrap text-ellipsis border-l-4;
+  @apply cursor-pointer rounded-sm p-1 mb-1 text-xs overflow-hidden whitespace-nowrap text-ellipsis border-l-4;
   max-width: 100%;
-  min-height: 7px;
+  min-height: 22px;
 }
 
 .event-item-wrapper {
   @apply w-full cursor-grab;
-  margin-bottom: 2px;
 }
 
 .event-item.dragging {
@@ -45,13 +43,12 @@
 }
 
 .more-events-indicator {
-  @apply text-xs text-center text-gray-500 mt-0.5 cursor-pointer;
+  @apply text-xs text-center text-gray-500 mt-1 cursor-pointer;
 }
 
-/* Week view styles with improved grid layout */
+/* Week view styles */
 .week-view-container {
   @apply grid grid-cols-7 h-full;
-  grid-template-rows: repeat(auto-fill, minmax(150px, 1fr));
 }
 
 .week-view-day {
@@ -81,7 +78,7 @@
   @apply flex-1;
 }
 
-/* Improved dragging styles */
+/* Dragging styles */
 .dragging {
   @apply opacity-70;
 }
@@ -90,20 +87,13 @@
   @apply border-2 border-dashed border-blue-400 bg-blue-50 rounded-md;
 }
 
-/* Animation for drag with increased visibility */
+/* Animation for drag */
 @keyframes pulse {
-  0% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.05); opacity: 0.9; }
-  100% { transform: scale(1); opacity: 1; }
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
 }
 
 .event-item-wrapper:active {
   animation: pulse 0.3s ease-in-out;
-}
-
-/* Fix calendar grid layout */
-.calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr); 
-  grid-auto-rows: minmax(120px, 1fr);
 }

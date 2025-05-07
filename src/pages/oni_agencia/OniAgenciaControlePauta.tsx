@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { OniAgenciaMenu } from "@/components/oni_agencia/OniAgenciaMenu";
 import { ContentScheduleFilters } from "@/components/oni_agencia/content-schedule/ContentScheduleFilters";
 import { useCollapsible } from "@/components/oni_agencia/content-schedule/hooks/useCollapsible";
@@ -11,14 +11,11 @@ import { useQueryClient } from "@tanstack/react-query";
 const OniAgenciaControlePauta = () => {
   const currentDate = new Date();
   const queryClient = useQueryClient();
-  const updateCounterRef = useRef<number>(0);
-  const lastUpdateTimeRef = useRef<number>(Date.now());
   const [selectedClient, setSelectedClient] = useState<string>("");
   const [selectedMonth, setSelectedMonth] = useState<number>(currentDate.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
   const [selectedCollaborator, setSelectedCollaborator] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
-  const [refreshKey, setRefreshKey] = useState<number>(0);
   const { isCollapsed, toggle: toggleFilters } = useCollapsible(false);
   
   // UseCallback para better performance
@@ -42,28 +39,6 @@ const OniAgenciaControlePauta = () => {
     }
   }, []);
   
-  // Enhanced manual refresh - agora sem throttling
-  const handleManualRefetch = useCallback(async () => {
-    updateCounterRef.current += 1;
-    lastUpdateTimeRef.current = Date.now();
-    
-    console.log("Executando atualização manual completa sem throttling");
-    
-    // Invalidate all relevant queries and wait for completion
-    await queryClient.invalidateQueries({ 
-      queryKey: ['content-schedules'],
-      refetchType: 'all' 
-    });
-    
-    await queryClient.invalidateQueries({ 
-      queryKey: ['infinite-content-schedules'],
-      refetchType: 'all'
-    });
-    
-    // Force UI re-render
-    setRefreshKey(prev => prev + 1);
-  }, [queryClient]);
-  
   // Use the custom hook for content filtering and loading
   const {
     selectedServiceIds,
@@ -75,8 +50,7 @@ const OniAgenciaControlePauta = () => {
     isRefetching,
     showLoadingState,
     handleServicesChange,
-    handleManualRefetch: hookRefetch,
-    forceImmediateRefresh
+    handleManualRefetch
   } = useContentFiltering(
     selectedClient,
     selectedMonth,
@@ -84,27 +58,18 @@ const OniAgenciaControlePauta = () => {
     selectedCollaborator
   );
   
-  // Force refresh when key changes to ensure render after operations
-  useEffect(() => {
-    if (refreshKey > 0) {
-      console.log(`Renderização forçada do controle de pauta (${refreshKey})`);
-      // Forçar refetch através do hook quando a key mudar
-      hookRefetch();
-    }
-  }, [refreshKey, hookRefetch]);
-  
   // Polling para atualização automática periodicamente
   useEffect(() => {
     // Refetch data every 30 seconds
     const intervalId = setInterval(() => {
       if (selectedClient) {
         console.log("Executando atualização automática periódica");
-        hookRefetch();
+        handleManualRefetch();
       }
     }, 30000); // 30 segundos
     
     return () => clearInterval(intervalId);
-  }, [selectedClient, hookRefetch]);
+  }, [queryClient, selectedClient, handleManualRefetch]);
   
   return (
     <main className="container-fluid p-0 max-w-full">
@@ -117,7 +82,7 @@ const OniAgenciaControlePauta = () => {
           isRefetching={isRefetching}
           isLoadingSchedules={isLoadingSchedules}
           isFetchingNextPage={isFetchingNextPage}
-          onManualRefetch={hookRefetch}
+          onManualRefetch={handleManualRefetch}
         />
         
         <ContentScheduleFilters
@@ -136,7 +101,6 @@ const OniAgenciaControlePauta = () => {
         />
         
         <ContentArea 
-          key={`content-area-${refreshKey}`}
           viewMode={viewMode}
           filteredSchedules={filteredSchedules}
           clientId={selectedClient}
@@ -149,8 +113,7 @@ const OniAgenciaControlePauta = () => {
           fetchNextPage={fetchNextPage}
           showLoadingState={showLoadingState}
           isCollapsed={isCollapsed}
-          onManualRefetch={hookRefetch}
-          forceImmediateRefresh={forceImmediateRefresh}
+          onManualRefetch={handleManualRefetch} // Passamos a função de atualização manual
         />
       </div>
     </main>
