@@ -9,7 +9,8 @@ export function useContentFiltering(
   selectedClient: string, 
   selectedMonth: number, 
   selectedYear: number, 
-  selectedCollaborator: string | null
+  selectedCollaborator: string | null,
+  directRefresh: boolean = false
 ) {
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
   const [isFullyLoaded, setIsFullyLoaded] = useState(false);
@@ -87,7 +88,7 @@ export function useContentFiltering(
   const handleManualRefetch = useCallback(() => {
     const now = Date.now();
     // Evita múltiplas atualizações em um curto período de tempo (limite de 2 segundos)
-    if (now - lastRefetchTime < 2000) {
+    if (now - lastRefetchTime < 2000 && !directRefresh) {
       console.log("Ignorando atualização manual (muito próxima da última atualização)");
       return;
     }
@@ -109,7 +110,20 @@ export function useContentFiltering(
         description: "Não foi possível atualizar os agendamentos.",
       });
     });
-  }, [refetchSchedules, lastRefetchTime, toast]);
+  }, [refetchSchedules, lastRefetchTime, toast, directRefresh]);
+  
+  // Função para forçar a atualização imediata, sem throttling
+  const directRefetch = useCallback(() => {
+    console.log("Forçando atualização imediata sem throttling");
+    setLastRefetchTime(Date.now());
+    setIsFullyLoaded(false);
+    
+    return refetchSchedules().then(() => {
+      console.log("Atualização forçada concluída com sucesso");
+    }).catch(error => {
+      console.error("Erro na atualização forçada:", error);
+    });
+  }, [refetchSchedules]);
 
   // Show loading state until all data is loaded
   const showLoadingState = isLoadingSchedules || isFetchingNextPage || !isFullyLoaded;
@@ -126,6 +140,7 @@ export function useContentFiltering(
     isFullyLoaded,
     showLoadingState,
     handleServicesChange,
-    handleManualRefetch
+    handleManualRefetch,
+    directRefetch
   };
 }

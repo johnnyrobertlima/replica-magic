@@ -84,6 +84,7 @@ const OniAgenciaControlePauta = () => {
     isRefetching,
     showLoadingState,
     handleServicesChange,
+    handleManualRefetch: hookRefetch,
     directRefetch
   } = useContentFiltering(
     selectedClient,
