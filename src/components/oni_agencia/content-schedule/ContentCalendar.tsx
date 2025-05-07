@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { CalendarHeader } from "./calendar/CalendarHeader";
 import { WeekDaysHeader } from "./calendar/WeekDaysHeader";
@@ -38,6 +38,7 @@ export function ContentCalendar({
 }: ContentCalendarProps) {
   const [view, setView] = useState<"month" | "week" | "day">("month");
   const [lastRefreshTime, setLastRefreshTime] = useState<number>(Date.now());
+  const lastRefetchTimeRef = useRef<number>(0);
   const queryClient = useQueryClient();
   
   const { 
@@ -59,23 +60,15 @@ export function ContentCalendar({
 
   const weekDays = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
-  const handleDialogClose = () => {
-    setSelectedDate(undefined);
-    setSelectedEvent(undefined);
-    setIsDialogOpen(false);
-    
-    // Força atualização quando o diálogo é fechado
-    forceRefresh();
-  };
-
-  const handleViewChange = (value: string) => {
-    if (value === "month" || value === "week" || value === "day") {
-      setView(value);
+  // Função aprimorada para forçar atualização
+  const forceRefresh = useCallback(() => {
+    const now = Date.now();
+    if (now - lastRefetchTimeRef.current < 500) {
+      console.log("Ignorando refetch muito próximo do anterior");
+      return;
     }
-  };
-  
-  // Wrapper para forçar atualização quando necessário
-  const forceRefresh = () => {
+    
+    lastRefetchTimeRef.current = now;
     console.log("Forçando atualização do calendário");
     
     // Invalidar consultas
@@ -83,23 +76,34 @@ export function ContentCalendar({
     queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
     
     // Atualizar timestamp para forçar re-renderização
-    setLastRefreshTime(Date.now());
+    setLastRefreshTime(now);
     
     // Chamar callback de atualização manual se existir
     if (onManualRefetch) {
       console.log("Executando atualização manual dos dados");
       onManualRefetch();
       
-      // Chamadas adicionais com atraso
-      setTimeout(() => {
-        onManualRefetch();
-      }, 200);
-      
-      setTimeout(() => {
-        onManualRefetch();
-      }, 500);
+      // Chamadas adicionais com atraso para garantir atualização completa
+      setTimeout(() => onManualRefetch(), 200);
+      setTimeout(() => onManualRefetch(), 500);
+      setTimeout(() => onManualRefetch(), 1000);
     }
-  };
+  }, [queryClient, onManualRefetch]);
+  
+  const handleDialogClose = useCallback(() => {
+    setSelectedDate(undefined);
+    setSelectedEvent(undefined);
+    setIsDialogOpen(false);
+    
+    // Força atualização quando o diálogo é fechado
+    forceRefresh();
+  }, [setSelectedDate, setSelectedEvent, setIsDialogOpen, forceRefresh]);
+
+  const handleViewChange = useCallback((value: string) => {
+    if (value === "month" || value === "week" || value === "day") {
+      setView(value as "month" | "week" | "day");
+    }
+  }, []);
   
   // Efeito para verificar alterações nos eventos e forçar atualização
   useEffect(() => {

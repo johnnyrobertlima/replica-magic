@@ -141,22 +141,24 @@ export function useDragAndDrop(onUpdateCallback?: UpdateCallback) {
         queryClient.invalidateQueries({ queryKey: ['scheduleHistory'] })
       ]);
       
-      // Chamar o callback se fornecido
+      // SEMPRE chamar o callback após qualquer operação bem-sucedida
       if (onUpdateCallback) {
-        console.log("Chamando callback após drag and drop bem sucedido");
+        console.log("Executando atualização manual após drag and drop bem sucedido");
         onUpdateCallback(true);
         
-        // Adicionar chamadas com delay para garantir atualização
+        // Garantir que a atualização seja feita várias vezes com delays 
+        // para lidar com problemas de timing
         setTimeout(() => {
-          console.log("Forçando atualização adicional após 150ms");
           onUpdateCallback(true);
-          queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
-        }, 150);
+        }, 100);
         
         setTimeout(() => {
-          console.log("Forçando atualização adicional após 500ms");
           onUpdateCallback(true);
-        }, 500);
+        }, 300);
+        
+        setTimeout(() => {
+          onUpdateCallback(true);
+        }, 600);
       }
       
     } catch (error) {
