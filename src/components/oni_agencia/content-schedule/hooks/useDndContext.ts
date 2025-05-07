@@ -1,6 +1,6 @@
 
 import { useState, useCallback } from "react";
-import { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
+import { DndContext as DndContextComponent, DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import { format } from "date-fns";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { useUpdateContentSchedule } from "@/hooks/useOniAgenciaContentSchedules";

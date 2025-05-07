@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { DndContext } from "@dnd-kit/core";
 import { Calendar } from "@/components/oni_agencia/content-schedule/calendar/Calendar";
 import { ContentScheduleList } from "@/components/oni_agencia/content-schedule/ContentScheduleList";
 import { CalendarEvent } from "@/types/oni-agencia";
@@ -41,7 +42,6 @@ export function ContentArea({
     selectedEvent,
     selectedDate,
     isDialogOpen,
-    dndContext,
     handleEventClick,
     handleDateSelect,
     handleDragEnd,
@@ -51,7 +51,7 @@ export function ContentArea({
     clientId,
     month,
     year,
-    onManualRefetch // Make sure we pass this down to useDndContext
+    onManualRefetch
   });
   
   // Debug logs to track events count
@@ -65,7 +65,7 @@ export function ContentArea({
   if (viewMode === "calendar") {
     return (
       <div className={`pt-4 ${isCollapsed ? 'mt-0' : 'mt-4'}`}>
-        <dndContext.DndContext onDragEnd={handleDragEnd}>
+        <DndContext onDragEnd={handleDragEnd}>
           <Calendar 
             events={filteredSchedules}
             month={month}
@@ -82,7 +82,7 @@ export function ContentArea({
             onDialogClose={handleDialogClose}
             onManualRefetch={onManualRefetch} // Pass it to Calendar
           />
-        </dndContext.DndContext>
+        </DndContext>
       </div>
     );
   }
