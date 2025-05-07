@@ -19,7 +19,6 @@ const OniAgenciaControlePauta = () => {
   const [selectedCollaborator, setSelectedCollaborator] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
   const [refreshKey, setRefreshKey] = useState<number>(0);
-  const [directRefresh, setDirectRefresh] = useState<boolean>(false);
   const { isCollapsed, toggle: toggleFilters } = useCollapsible(false);
   
   // UseCallback para better performance
@@ -50,9 +49,6 @@ const OniAgenciaControlePauta = () => {
     
     console.log("Executando atualização manual completa sem throttling");
     
-    // Mark as direct refresh to bypass throttling
-    setDirectRefresh(true);
-    
     // Invalidate all relevant queries and wait for completion
     await queryClient.invalidateQueries({ 
       queryKey: ['content-schedules'],
@@ -66,11 +62,6 @@ const OniAgenciaControlePauta = () => {
     
     // Force UI re-render
     setRefreshKey(prev => prev + 1);
-    
-    // Reset direct refresh flag
-    setTimeout(() => {
-      setDirectRefresh(false);
-    }, 300);
   }, [queryClient]);
   
   // Use the custom hook for content filtering and loading
@@ -84,14 +75,12 @@ const OniAgenciaControlePauta = () => {
     isRefetching,
     showLoadingState,
     handleServicesChange,
-    handleManualRefetch: hookRefetch,
-    directRefetch
+    handleManualRefetch: hookRefetch
   } = useContentFiltering(
     selectedClient,
     selectedMonth,
     selectedYear,
-    selectedCollaborator,
-    directRefresh
+    selectedCollaborator
   );
   
   // Force refresh when key changes to ensure render after operations
