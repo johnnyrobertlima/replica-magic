@@ -59,17 +59,17 @@ export function ScheduleEventDialog({
     }
   });
 
-  // Wrapper functions para garantir que os argumentos corretos sejam passados
-  const handleSubmit = (e: React.FormEvent) => {
-    submitHandler(e, currentSelectedEvent, formData);
+  // Wrapper functions para garantir que os argumentos corretos sejam passados e retornem Promise<void>
+  const handleSubmit = (e: React.FormEvent): Promise<void> => {
+    return submitHandler(e, currentSelectedEvent, formData);
   };
 
-  const handleStatusUpdate = (e: React.FormEvent) => {
-    statusUpdateHandler(e, currentSelectedEvent, formData);
+  const handleStatusUpdate = (e: React.FormEvent): Promise<void> => {
+    return statusUpdateHandler(e, currentSelectedEvent, formData);
   };
 
-  const handleDelete = () => {
-    deleteHandler(currentSelectedEvent);
+  const handleDelete = (): Promise<void> => {
+    return deleteHandler(currentSelectedEvent);
   };
 
   const { data: services = [], isLoading: isLoadingServices } = useServices();
