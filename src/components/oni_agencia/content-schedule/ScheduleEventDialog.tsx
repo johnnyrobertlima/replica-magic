@@ -13,7 +13,7 @@ import { DialogContainer } from "./schedule-dialog/DialogContainer";
 import { DialogContent } from "./schedule-dialog/DialogContent";
 import { useScheduleEventDialog } from "./hooks/useScheduleEventDialog";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useRef } from "react";
+import { useCallback } from "react";
 
 interface ScheduleEventDialogProps {
   isOpen: boolean;
@@ -37,32 +37,34 @@ export function ScheduleEventDialog({
   onManualRefetch
 }: ScheduleEventDialogProps) {
   const queryClient = useQueryClient();
-  const lastRefetchTimeRef = useRef<number>(0);
   
-  // Função aprimorada para forçar atualização
+  // Função para disparar atualização completa
   const forceRefresh = useCallback(() => {
-    const now = Date.now();
-    if (now - lastRefetchTimeRef.current < 500) {
-      console.log("Ignorando refetch muito próximo do anterior");
-      return;
-    }
-    
-    lastRefetchTimeRef.current = now;
     console.log("Forçando atualização a partir do diálogo");
     
     // Invalidar caches
     queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
     queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
     
-    // Executar refetch manual se disponível com múltiplos delays
+    // Executar refetch manual se disponível
     if (onManualRefetch) {
       console.log("Executando atualização manual a partir do diálogo");
       onManualRefetch();
+      
+      // Chamadas adicionais para garantir sincronização
       setTimeout(() => onManualRefetch(), 200);
       setTimeout(() => onManualRefetch(), 500);
-      setTimeout(() => onManualRefetch(), 1000);
     }
   }, [queryClient, onManualRefetch]);
+  
+  // Função aprimorada para fechar o diálogo e forçar atualização
+  const handleDialogClose = useCallback(() => {
+    // Fechar diálogo
+    onClose();
+    
+    // Forçar atualização após fechar
+    forceRefresh();
+  }, [onClose, forceRefresh]);
   
   const {
     currentSelectedEvent,
@@ -83,20 +85,16 @@ export function ScheduleEventDialog({
     events,
     selectedEvent,
     onManualRefetch: forceRefresh,
-    onClose: () => {
-      onOpenChange(false);
-      onClose();
-      forceRefresh();
-    }
+    onClose: handleDialogClose
   });
 
-  // Wrapper functions para garantir que os argumentos corretos sejam passados e retornem Promise<void>
+  // Wrapper para submit que garante atualização
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     try {
-      // Executar o submit
+      // Executar o submit original
       await submitHandler(e, currentSelectedEvent, formData);
       
-      // Após o submit bem sucedido, forçar atualização imediata
+      // Forçar atualização após submit bem-sucedido
       console.log("Executando atualização manual após submit");
       forceRefresh();
       
@@ -107,12 +105,13 @@ export function ScheduleEventDialog({
     }
   };
 
+  // Wrapper para atualização de status que garante atualização
   const handleStatusUpdate = async (e: React.FormEvent): Promise<void> => {
     try {
-      // Executar a atualização de status
+      // Executar a atualização original
       await statusUpdateHandler(e, currentSelectedEvent, formData);
       
-      // Após a atualização bem sucedida, forçar atualização imediata
+      // Forçar atualização após atualização bem-sucedida
       console.log("Executando atualização manual após status update");
       forceRefresh();
       
@@ -123,12 +122,13 @@ export function ScheduleEventDialog({
     }
   };
 
+  // Wrapper para exclusão que garante atualização
   const handleDelete = async (): Promise<void> => {
     try {
-      // Executar a exclusão
+      // Executar a exclusão original
       await deleteHandler(currentSelectedEvent);
       
-      // Após a exclusão bem sucedida, forçar atualização imediata
+      // Forçar atualização após exclusão bem-sucedida
       console.log("Executando atualização manual após delete");
       forceRefresh();
       
@@ -139,6 +139,7 @@ export function ScheduleEventDialog({
     }
   };
 
+  // Carregar dados necessários
   const { data: services = [], isLoading: isLoadingServices } = useServices();
   const { data: collaborators = [], isLoading: isLoadingCollaborators } = useCollaborators();
   const { data: editorialLines = [], isLoading: isLoadingEditorialLines } = useEditorialLines();
@@ -154,16 +155,12 @@ export function ScheduleEventDialog({
       onOpenChange={(open) => {
         onOpenChange(open);
         if (!open) {
-          // Executar atualização manual quando o diálogo for fechado através do botão X
-          console.log("Executando atualização manual ao fechar diálogo pelo X");
+          // Atualizar ao fechar via X
           forceRefresh();
         }
       }} 
       selectedDate={selectedDate} 
-      onClose={() => {
-        onClose();
-        forceRefresh();
-      }}
+      onClose={handleDialogClose}
       title={dialogTitle}
     >
       <DialogContent
@@ -194,11 +191,7 @@ export function ScheduleEventDialog({
         onDelete={handleDelete}
         onCancel={() => {
           onOpenChange(false);
-          onClose();
-          
-          // Atualização manual ao cancelar
-          console.log("Executando atualização manual ao cancelar diálogo");
-          forceRefresh();
+          handleDialogClose();
         }}
         onInputChange={handleInputChange}
         onSelectChange={handleSelectChange}

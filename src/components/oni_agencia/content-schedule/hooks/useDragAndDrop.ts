@@ -7,8 +7,8 @@ import { updateContentSchedule } from "@/services/oniAgenciaContentScheduleServi
 import { format } from "date-fns";
 import { DragStartEvent, DragEndEvent } from "@dnd-kit/core";
 
-// Novo tipo para callback de atualização
-type UpdateCallback = (success: boolean) => void;
+// Tipo para callback de atualização
+type UpdateCallback = (success: boolean, eventId?: string) => void;
 
 export function useDragAndDrop(onUpdateCallback?: UpdateCallback) {
   const [isDragging, setIsDragging] = useState(false);
@@ -69,13 +69,17 @@ export function useDragAndDrop(onUpdateCallback?: UpdateCallback) {
     try {
       console.log(`Moving event ${activeDragEvent.id} from ${activeDragEvent.scheduled_date} to ${formattedDate}`);
       
-      // Create update data
+      // Salvar o evento atual para referência
+      const eventId = activeDragEvent.id;
+      const oldDate = activeDragEvent.scheduled_date;
+      
+      // Criar objeto de atualização
       const updateData = {
         ...activeDragEvent,
         scheduled_date: formattedDate
       };
       
-      // Remove unnecessary fields
+      // Remover campos não necessários
       delete (updateData as any).id;
       delete (updateData as any).service;
       delete (updateData as any).collaborator;
@@ -86,15 +90,15 @@ export function useDragAndDrop(onUpdateCallback?: UpdateCallback) {
       delete (updateData as any).created_at;
       delete (updateData as any).updated_at;
       
-      // Aplicar atualização otimista antes mesmo da chamada à API
+      // Aplicar atualização otimista
       const contentSchedulesKey = ['content-schedules'];
       const infiniteContentSchedulesKey = ['infinite-content-schedules'];
       
-      // Atualiza a visualização imediatamente - Otimista
+      // Atualizar cache padrão
       const cachedEvents = queryClient.getQueryData<CalendarEvent[]>(contentSchedulesKey);
       if (cachedEvents) {
         const updatedEvents = cachedEvents.map(event => {
-          if (event.id === activeDragEvent.id) {
+          if (event.id === eventId) {
             return { ...event, scheduled_date: formattedDate };
           }
           return event;
@@ -102,7 +106,7 @@ export function useDragAndDrop(onUpdateCallback?: UpdateCallback) {
         queryClient.setQueryData(contentSchedulesKey, updatedEvents);
       }
       
-      // Atualiza dados infinitos também - Otimista
+      // Atualizar cache de dados infinitos
       const infiniteData = queryClient.getQueryData<any>(infiniteContentSchedulesKey);
       if (infiniteData?.pages) {
         const updatedInfiniteData = {
@@ -112,7 +116,7 @@ export function useDragAndDrop(onUpdateCallback?: UpdateCallback) {
               return {
                 ...page,
                 data: page.data.map((event: CalendarEvent) => {
-                  if (event.id === activeDragEvent.id) {
+                  if (event.id === eventId) {
                     return { ...event, scheduled_date: formattedDate };
                   }
                   return event;
@@ -125,42 +129,36 @@ export function useDragAndDrop(onUpdateCallback?: UpdateCallback) {
         queryClient.setQueryData(infiniteContentSchedulesKey, updatedInfiniteData);
       }
       
-      // Update the event in the API
-      await updateContentSchedule(activeDragEvent.id, updateData);
+      // Executar chamada à API
+      await updateContentSchedule(eventId, updateData);
       
-      // Show success toast
+      // Registrar histórico da mudança se necessário
+      console.log("Recording history for scheduled_date change:", {
+        old: oldDate,
+        new: formattedDate
+      });
+      
+      // Exibir toast de sucesso
       toast({
         title: "Agendamento movido",
         description: `O agendamento foi movido para ${format(date, 'dd/MM/yyyy')} com sucesso.`,
       });
       
-      // Force a refetch to ensure data consistency
+      console.log("Updated content schedule:", eventId);
+      
+      // Forçar invalidação dos dados
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['content-schedules'] }),
         queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] }),
         queryClient.invalidateQueries({ queryKey: ['scheduleHistory'] })
       ]);
       
+      console.log("Chamando callback após drag and drop bem sucedido");
+      
       // SEMPRE chamar o callback após qualquer operação bem-sucedida
       if (onUpdateCallback) {
-        console.log("Executando atualização manual após drag and drop bem sucedido");
-        onUpdateCallback(true);
-        
-        // Garantir que a atualização seja feita várias vezes com delays 
-        // para lidar com problemas de timing
-        setTimeout(() => {
-          onUpdateCallback(true);
-        }, 100);
-        
-        setTimeout(() => {
-          onUpdateCallback(true);
-        }, 300);
-        
-        setTimeout(() => {
-          onUpdateCallback(true);
-        }, 600);
+        onUpdateCallback(true, eventId);
       }
-      
     } catch (error) {
       console.error("Error moving event:", error);
       toast({
@@ -169,7 +167,7 @@ export function useDragAndDrop(onUpdateCallback?: UpdateCallback) {
         description: "Não foi possível mover o agendamento para a nova data.",
       });
       
-      // If there's an error, refetch to restore the correct data
+      // Se houver erro, fazer refetch para restaurar os dados corretos
       queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
       queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
       
@@ -177,9 +175,6 @@ export function useDragAndDrop(onUpdateCallback?: UpdateCallback) {
       if (onUpdateCallback) {
         onUpdateCallback(false);
       }
-    } finally {
-      setIsDragging(false);
-      setActiveDragEvent(null);
     }
   };
 

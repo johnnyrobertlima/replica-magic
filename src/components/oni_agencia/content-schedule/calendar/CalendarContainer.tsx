@@ -6,8 +6,7 @@ import { CalendarEvent } from "@/types/oni-agencia";
 import { ptBR } from "date-fns/locale";
 import { useDragAndDrop } from "../hooks/useDragAndDrop";
 import { useCurrentUser } from "../hooks/useCurrentUser";
-import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState, useRef } from "react";
+import { useState } from "react";
 
 interface CalendarContainerProps {
   events: CalendarEvent[];
@@ -16,7 +15,7 @@ interface CalendarContainerProps {
   selectedCollaborator?: string | null;
   onSelect: (date: Date) => void;
   onEventClick: (event: CalendarEvent, date: Date) => void;
-  onManualRefetch?: () => void;
+  onDragSuccess?: (success: boolean, eventId?: string) => void;
 }
 
 export function CalendarContainer({
@@ -26,47 +25,13 @@ export function CalendarContainer({
   selectedCollaborator,
   onSelect,
   onEventClick,
-  onManualRefetch
+  onDragSuccess
 }: CalendarContainerProps) {
   // Estado para forçar renderização após drag-and-drop
-  const [dragCompleted, setDragCompleted] = useState(0);
-  const lastRefetchTimeRef = useRef<number>(0);
-  
-  // Get queryClient for forceful updates
-  const queryClient = useQueryClient();
+  const [refreshSignal, setRefreshSignal] = useState(0);
   
   // Get username first - maintain hook order
   const userName = useCurrentUser();
-  
-  // Função para garantir que não ocorram múltiplas atualizações em curto período
-  const executeRefetch = () => {
-    const now = Date.now();
-    if (now - lastRefetchTimeRef.current < 300) {
-      console.log("Ignorando refetch muito próximo do anterior");
-      return;
-    }
-    
-    lastRefetchTimeRef.current = now;
-    console.log("Executando atualização manual forçada do calendário");
-    
-    // Invalidar caches
-    queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
-    queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
-    
-    // Executar refetch manual se disponível
-    if (onManualRefetch) {
-      onManualRefetch();
-      
-      // Executa múltiplas vezes com delays para garantir que os dados sejam atualizados
-      setTimeout(() => onManualRefetch(), 100);
-      setTimeout(() => onManualRefetch(), 300);
-      setTimeout(() => onManualRefetch(), 600);
-      setTimeout(() => onManualRefetch(), 1000);
-    }
-    
-    // Força re-renderização do componente
-    setDragCompleted(prev => prev + 1);
-  };
   
   // Configure sensors for drag and drop
   const sensors = useSensors(
@@ -77,23 +42,23 @@ export function CalendarContainer({
     })
   );
   
-  // Get drag-and-drop handlers with custom refetch function
-  const { isDragging, handleDragStart, handleDragEnd } = useDragAndDrop((success: boolean) => {
+  // Atualização do callback para disparar o sinal de atualização local
+  const handleDragComplete = (success: boolean, eventId?: string) => {
     if (success) {
-      console.log("Atualizando calendário após drag-and-drop bem sucedido");
-      executeRefetch();
-    }
-  });
-
-  // Efeito para garantir a atualização após drag-and-drop
-  useEffect(() => {
-    if (dragCompleted > 0) {
-      console.log(`Renderização forçada após drag-and-drop completado (${dragCompleted})`);
-      if (onManualRefetch) {
-        onManualRefetch();
+      console.log(`Drag bem sucedido para evento ${eventId}, atualizando calendário`);
+      
+      // Incrementar o sinal de atualização para forçar re-renderização
+      setRefreshSignal(prev => prev + 1);
+      
+      // Chamar o callback externo
+      if (onDragSuccess) {
+        onDragSuccess(success, eventId);
       }
     }
-  }, [dragCompleted, onManualRefetch]);
+  };
+  
+  // Get drag-and-drop handlers with custom callback
+  const { isDragging, handleDragStart, handleDragEnd } = useDragAndDrop(handleDragComplete);
 
   return (
     <DndContext 
@@ -103,6 +68,7 @@ export function CalendarContainer({
     >
       <div className="w-full p-0">
         <Calendar
+          key={`calendar-${refreshSignal}`}
           mode="single"
           selected={selectedDate}
           onSelect={onSelect}

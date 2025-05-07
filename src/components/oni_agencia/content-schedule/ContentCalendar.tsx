@@ -37,8 +37,7 @@ export function ContentCalendar({
   onManualRefetch
 }: ContentCalendarProps) {
   const [view, setView] = useState<"month" | "week" | "day">("month");
-  const [lastRefreshTime, setLastRefreshTime] = useState<number>(Date.now());
-  const lastRefetchTimeRef = useRef<number>(0);
+  const [refreshKey, setRefreshKey] = useState<number>(Date.now());
   const queryClient = useQueryClient();
   
   const { 
@@ -59,56 +58,65 @@ export function ContentCalendar({
   const { currentEvents } = useCalendarEvents(events, selectedDate, isDialogOpen, setIsDialogOpen, selectedCollaborator);
 
   const weekDays = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-
-  // Função aprimorada para forçar atualização
-  const forceRefresh = useCallback(() => {
-    const now = Date.now();
-    if (now - lastRefetchTimeRef.current < 500) {
-      console.log("Ignorando refetch muito próximo do anterior");
-      return;
-    }
-    
-    lastRefetchTimeRef.current = now;
-    console.log("Forçando atualização do calendário");
+  
+  // Função para forçar remontagem do componente com uma nova chave
+  const forceRerender = useCallback(() => {
+    console.log("Forçando remontagem do calendário");
+    setRefreshKey(Date.now());
     
     // Invalidar consultas
     queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
     queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
     
-    // Atualizar timestamp para forçar re-renderização
-    setLastRefreshTime(now);
-    
     // Chamar callback de atualização manual se existir
     if (onManualRefetch) {
-      console.log("Executando atualização manual dos dados");
+      console.log("Executando atualização manual após mudança de dados");
       onManualRefetch();
-      
-      // Chamadas adicionais com atraso para garantir atualização completa
-      setTimeout(() => onManualRefetch(), 200);
-      setTimeout(() => onManualRefetch(), 500);
-      setTimeout(() => onManualRefetch(), 1000);
     }
   }, [queryClient, onManualRefetch]);
-  
-  const handleDialogClose = useCallback(() => {
-    setSelectedDate(undefined);
-    setSelectedEvent(undefined);
-    setIsDialogOpen(false);
-    
-    // Força atualização quando o diálogo é fechado
-    forceRefresh();
-  }, [setSelectedDate, setSelectedEvent, setIsDialogOpen, forceRefresh]);
 
+  // Função mais especializada para tratar atualizações após drag-and-drop
+  const handleDragSuccess = useCallback((success: boolean, eventId?: string) => {
+    if (!success) return;
+    
+    console.log(`Evento ${eventId} foi movido com sucesso, atualizando UI`);
+    
+    // Forçar remontagem do componente para refletir os novos dados
+    forceRerender();
+    
+    // Executar callback de atualização manual se fornecido
+    if (onManualRefetch) {
+      setTimeout(() => {
+        console.log("Executando atualização adicional (300ms)");
+        onManualRefetch();
+      }, 300);
+      
+      setTimeout(() => {
+        console.log("Executando atualização adicional (600ms)");
+        onManualRefetch();
+      }, 600);
+    }
+  }, [forceRerender, onManualRefetch]);
+  
   const handleViewChange = useCallback((value: string) => {
     if (value === "month" || value === "week" || value === "day") {
       setView(value as "month" | "week" | "day");
     }
   }, []);
   
+  const handleDialogClose = useCallback(() => {
+    setSelectedDate(undefined);
+    setSelectedEvent(undefined);
+    setIsDialogOpen(false);
+    
+    // Forçar atualização quando o diálogo é fechado
+    forceRerender();
+  }, [setSelectedDate, setSelectedEvent, setIsDialogOpen, forceRerender]);
+  
   // Efeito para verificar alterações nos eventos e forçar atualização
   useEffect(() => {
-    console.log(`Calendar - Displaying ${events.length} events for ${month}/${year}`);
-  }, [events, month, year, lastRefreshTime]);
+    console.log(`Calendar - Displaying ${events.length} events for ${month}/${year} (key: ${refreshKey})`);
+  }, [events, month, year, refreshKey]);
 
   return (
     <div className="bg-white rounded-md border shadow-sm w-full h-full">
@@ -149,21 +157,21 @@ export function ContentCalendar({
           <WeekDaysHeader weekDays={weekDays} />
           
           <CalendarContainer
-            key={`calendar-container-${lastRefreshTime}`}
+            key={`calendar-container-${refreshKey}`}
             events={events}
             selectedDate={selectedDate}
             currentDate={currentDate}
             selectedCollaborator={selectedCollaborator}
             onSelect={handleDateSelect}
             onEventClick={handleEventClick}
-            onManualRefetch={forceRefresh}
+            onDragSuccess={handleDragSuccess}
           />
         </>
       )}
       
       {view === "week" && (
         <WeekView
-          key={`week-view-${lastRefreshTime}`}
+          key={`week-view-${refreshKey}`}
           events={events}
           selectedDate={selectedDate}
           currentDate={currentDate}
@@ -176,7 +184,7 @@ export function ContentCalendar({
       
       {view === "day" && (
         <DayView
-          key={`day-view-${lastRefreshTime}`}
+          key={`day-view-${refreshKey}`}
           events={events}
           selectedDate={selectedDate || currentDate}
           currentDate={currentDate}
@@ -195,7 +203,7 @@ export function ContentCalendar({
           events={currentEvents}
           onClose={handleDialogClose}
           selectedEvent={selectedEvent}
-          onManualRefetch={forceRefresh} 
+          onManualRefetch={forceRerender}
         />
       )}
     </div>

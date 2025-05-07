@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
 import { useCreateContentSchedule, useUpdateContentSchedule, useDeleteContentSchedule } from "@/hooks/useOniAgenciaContentSchedules";
@@ -52,27 +51,6 @@ export function useScheduleMutations({
     if (sanitized.collaborator_id === "") sanitized.collaborator_id = null;
     
     return sanitized;
-  };
-
-  // Função utilitária para executar atualização manual da UI
-  const executeManualRefetch = () => {
-    if (!onManualRefetch) return;
-    
-    console.log("Executando atualização manual da UI");
-    
-    // Executa múltiplas vezes com pequenos atrasos para garantir atualização
-    // Chamada imediata
-    onManualRefetch();
-    
-    // Segunda chamada com pequeno atraso
-    setTimeout(() => {
-      onManualRefetch();
-    }, 100);
-    
-    // Terceira chamada com atraso maior para segurança
-    setTimeout(() => {
-      onManualRefetch();
-    }, 300);
   };
 
   const handleSubmit = async (
@@ -180,14 +158,17 @@ export function useScheduleMutations({
         });
       }
       
-      // Invalidate queries to force refresh
+      // Forçar refetch para garantir dados atualizados
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['content-schedules'] }),
         queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] })
       ]);
       
-      // Execute manual refetch immediately
-      executeManualRefetch();
+      // Chamar refetch manual imediatamente se fornecido
+      if (onManualRefetch) {
+        console.log("Executando refetch manual após salvar");
+        onManualRefetch();
+      }
       
       onClose();
     } catch (error) {
@@ -197,9 +178,6 @@ export function useScheduleMutations({
         description: "Ocorreu um erro ao salvar o agendamento.",
         variant: "destructive"
       });
-      
-      // Ainda assim tentar atualizar a UI em caso de erro
-      executeManualRefetch();
     }
   };
 
@@ -291,14 +269,17 @@ export function useScheduleMutations({
         description: "Status do agendamento atualizado com sucesso."
       });
       
-      // Invalidate queries to force refresh
+      // Forçar refetch para garantir dados atualizados
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['content-schedules'] }),
         queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] })
       ]);
       
-      // Execute manual refetch immediately
-      executeManualRefetch();
+      // Chamar refetch manual se fornecido
+      if (onManualRefetch) {
+        console.log("Executando refetch manual após atualizar status");
+        onManualRefetch();
+      }
       
       onClose();
     } catch (error) {
@@ -308,9 +289,6 @@ export function useScheduleMutations({
         title: "Erro",
         description: "Ocorreu um erro ao atualizar o status.",
       });
-      
-      // Ainda assim tentar atualizar a UI em caso de erro
-      executeManualRefetch();
     }
   };
 
@@ -359,14 +337,17 @@ export function useScheduleMutations({
           description: "Agendamento excluído com sucesso."
         });
         
-        // Invalidate queries to force refresh
+        // Forçar refetch para garantir dados atualizados
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: ['content-schedules'] }),
           queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] })
         ]);
         
-        // Execute manual refetch immediately
-        executeManualRefetch();
+        // Chamar refetch manual se fornecido
+        if (onManualRefetch) {
+          console.log("Executando refetch manual após exclusão");
+          onManualRefetch();
+        }
         
         onClose();
       }
@@ -377,9 +358,6 @@ export function useScheduleMutations({
         title: "Erro",
         description: "Ocorreu um erro ao excluir o agendamento.",
       });
-      
-      // Ainda assim tentar atualizar a UI em caso de erro
-      executeManualRefetch();
     }
   };
 
