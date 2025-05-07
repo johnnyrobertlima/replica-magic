@@ -7,6 +7,7 @@ import { ptBR } from "date-fns/locale";
 import { useDragAndDrop } from "../hooks/useDragAndDrop";
 import { useCurrentUser } from "../hooks/useCurrentUser";
 import { useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 
 interface CalendarContainerProps {
   events: CalendarEvent[];
@@ -27,6 +28,9 @@ export function CalendarContainer({
   onEventClick,
   onManualRefetch
 }: CalendarContainerProps) {
+  // Estado para forçar renderização após drag-and-drop
+  const [dragCompleted, setDragCompleted] = useState(0);
+  
   // Get queryClient for forceful updates
   const queryClient = useQueryClient();
   
@@ -44,20 +48,35 @@ export function CalendarContainer({
   
   // Get drag-and-drop handlers with custom refetch function
   const { isDragging, handleDragStart, handleDragEnd } = useDragAndDrop((success: boolean) => {
-    if (success && onManualRefetch) {
+    if (success) {
       console.log("Executando atualização forçada após drop bem sucedido");
       
       // Primeiro invalidamos o cache
       queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
       queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
       
+      // Forçar nova renderização do componente
+      setDragCompleted(prev => prev + 1);
+      
       // Executamos a atualização manual várias vezes com delays diferentes
-      onManualRefetch();
-      setTimeout(() => onManualRefetch(), 100);
-      setTimeout(() => onManualRefetch(), 300);
-      setTimeout(() => onManualRefetch(), 600);
+      if (onManualRefetch) {
+        onManualRefetch();
+        setTimeout(() => onManualRefetch(), 100);
+        setTimeout(() => onManualRefetch(), 300);
+        setTimeout(() => onManualRefetch(), 600);
+      }
     }
   });
+
+  // Efeito para garantir a atualização após drag-and-drop
+  useEffect(() => {
+    if (dragCompleted > 0) {
+      console.log(`Renderização forçada após drag-and-drop completado (${dragCompleted})`);
+      if (onManualRefetch) {
+        onManualRefetch();
+      }
+    }
+  }, [dragCompleted, onManualRefetch]);
 
   return (
     <DndContext 

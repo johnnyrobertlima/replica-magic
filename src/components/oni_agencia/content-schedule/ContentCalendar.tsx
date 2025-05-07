@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { CalendarHeader } from "./calendar/CalendarHeader";
 import { WeekDaysHeader } from "./calendar/WeekDaysHeader";
@@ -14,6 +14,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Calendar, LayoutGrid, Rows } from "lucide-react";
 import { WeekView } from "./calendar/WeekView";
 import { DayView } from "./calendar/DayView";
+import { useQueryClient } from "@tanstack/react-query";
 import "./styles/index.css";
 
 interface ContentCalendarProps {
@@ -36,6 +37,8 @@ export function ContentCalendar({
   onManualRefetch
 }: ContentCalendarProps) {
   const [view, setView] = useState<"month" | "week" | "day">("month");
+  const [lastRefreshTime, setLastRefreshTime] = useState<number>(Date.now());
+  const queryClient = useQueryClient();
   
   const { 
     selectedDate, 
@@ -60,6 +63,9 @@ export function ContentCalendar({
     setSelectedDate(undefined);
     setSelectedEvent(undefined);
     setIsDialogOpen(false);
+    
+    // Força atualização quando o diálogo é fechado
+    forceRefresh();
   };
 
   const handleViewChange = (value: string) => {
@@ -67,6 +73,38 @@ export function ContentCalendar({
       setView(value);
     }
   };
+  
+  // Wrapper para forçar atualização quando necessário
+  const forceRefresh = () => {
+    console.log("Forçando atualização do calendário");
+    
+    // Invalidar consultas
+    queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
+    queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
+    
+    // Atualizar timestamp para forçar re-renderização
+    setLastRefreshTime(Date.now());
+    
+    // Chamar callback de atualização manual se existir
+    if (onManualRefetch) {
+      console.log("Executando atualização manual dos dados");
+      onManualRefetch();
+      
+      // Chamadas adicionais com atraso
+      setTimeout(() => {
+        onManualRefetch();
+      }, 200);
+      
+      setTimeout(() => {
+        onManualRefetch();
+      }, 500);
+    }
+  };
+  
+  // Efeito para verificar alterações nos eventos e forçar atualização
+  useEffect(() => {
+    console.log(`Calendar - Displaying ${events.length} events for ${month}/${year}`);
+  }, [events, month, year, lastRefreshTime]);
 
   return (
     <div className="bg-white rounded-md border shadow-sm w-full h-full">
@@ -107,19 +145,21 @@ export function ContentCalendar({
           <WeekDaysHeader weekDays={weekDays} />
           
           <CalendarContainer
+            key={`calendar-container-${lastRefreshTime}`}
             events={events}
             selectedDate={selectedDate}
             currentDate={currentDate}
             selectedCollaborator={selectedCollaborator}
             onSelect={handleDateSelect}
             onEventClick={handleEventClick}
-            onManualRefetch={onManualRefetch} // Pass the manual refetch function
+            onManualRefetch={forceRefresh}
           />
         </>
       )}
       
       {view === "week" && (
         <WeekView
+          key={`week-view-${lastRefreshTime}`}
           events={events}
           selectedDate={selectedDate}
           currentDate={currentDate}
@@ -132,6 +172,7 @@ export function ContentCalendar({
       
       {view === "day" && (
         <DayView
+          key={`day-view-${lastRefreshTime}`}
           events={events}
           selectedDate={selectedDate || currentDate}
           currentDate={currentDate}
@@ -150,7 +191,7 @@ export function ContentCalendar({
           events={currentEvents}
           onClose={handleDialogClose}
           selectedEvent={selectedEvent}
-          onManualRefetch={onManualRefetch} // Pass the manual refetch function
+          onManualRefetch={forceRefresh} 
         />
       )}
     </div>

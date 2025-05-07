@@ -86,13 +86,52 @@ export function useDragAndDrop(onUpdateCallback?: UpdateCallback) {
       delete (updateData as any).created_at;
       delete (updateData as any).updated_at;
       
+      // Aplicar atualização otimista antes mesmo da chamada à API
+      const contentSchedulesKey = ['content-schedules'];
+      const infiniteContentSchedulesKey = ['infinite-content-schedules'];
+      
+      // Atualiza a visualização imediatamente - Otimista
+      const cachedEvents = queryClient.getQueryData<CalendarEvent[]>(contentSchedulesKey);
+      if (cachedEvents) {
+        const updatedEvents = cachedEvents.map(event => {
+          if (event.id === activeDragEvent.id) {
+            return { ...event, scheduled_date: formattedDate };
+          }
+          return event;
+        });
+        queryClient.setQueryData(contentSchedulesKey, updatedEvents);
+      }
+      
+      // Atualiza dados infinitos também - Otimista
+      const infiniteData = queryClient.getQueryData<any>(infiniteContentSchedulesKey);
+      if (infiniteData?.pages) {
+        const updatedInfiniteData = {
+          ...infiniteData,
+          pages: infiniteData.pages.map((page: any) => {
+            if (page.data) {
+              return {
+                ...page,
+                data: page.data.map((event: CalendarEvent) => {
+                  if (event.id === activeDragEvent.id) {
+                    return { ...event, scheduled_date: formattedDate };
+                  }
+                  return event;
+                })
+              };
+            }
+            return page;
+          })
+        };
+        queryClient.setQueryData(infiniteContentSchedulesKey, updatedInfiniteData);
+      }
+      
       // Update the event in the API
       await updateContentSchedule(activeDragEvent.id, updateData);
       
       // Show success toast
       toast({
         title: "Agendamento movido",
-        description: "O agendamento foi movido para outra data com sucesso.",
+        description: `O agendamento foi movido para ${format(date, 'dd/MM/yyyy')} com sucesso.`,
       });
       
       // Force a refetch to ensure data consistency
@@ -106,6 +145,18 @@ export function useDragAndDrop(onUpdateCallback?: UpdateCallback) {
       if (onUpdateCallback) {
         console.log("Chamando callback após drag and drop bem sucedido");
         onUpdateCallback(true);
+        
+        // Adicionar chamadas com delay para garantir atualização
+        setTimeout(() => {
+          console.log("Forçando atualização adicional após 150ms");
+          onUpdateCallback(true);
+          queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
+        }, 150);
+        
+        setTimeout(() => {
+          console.log("Forçando atualização adicional após 500ms");
+          onUpdateCallback(true);
+        }, 500);
       }
       
     } catch (error) {
