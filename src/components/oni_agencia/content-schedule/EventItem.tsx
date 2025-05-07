@@ -1,109 +1,33 @@
 
 import { CalendarEvent } from "@/types/oni-agencia";
+import { StatusBadge } from "./status-badge/StatusBadge";
 
 interface EventItemProps {
   event: CalendarEvent;
   onClick: (e: React.MouseEvent) => void;
+  isDragging?: boolean;
 }
 
-export function EventItem({ event, onClick }: EventItemProps) {
-  // Extract all the data we need from the event with proper null checks
-  const { service, editorial_line, collaborator, status, product, title = "" } = event;
-  
-  // Safely handle title
-  const truncatedTitle = title && title.length > 18 ? `${title.substring(0, 18)}...` : title || "Sem título";
-  
-  // Safely handle product name
-  const productName = product?.name || "";
-  
-  // Create display text - now prioritizing showing product name when available
-  let displayText = truncatedTitle;
-  
-  // If product exists, combine product name with title
-  if (product && productName) {
-    displayText = `${productName} - ${truncatedTitle}`;
-  }
-  
-  // Calculate text color based on background color brightness
-  const calculateTextColor = (bgColor: string | null | undefined): string => {
-    if (!bgColor) return "#fff";
-    
-    // Convert hex to RGB
-    const hex = bgColor.replace("#", "");
-    const r = parseInt(hex.substr(0, 2), 16);
-    const g = parseInt(hex.substr(2, 2), 16);
-    const b = parseInt(hex.substr(4, 2), 16);
-    
-    // Calculate perceived brightness
-    const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    
-    // If brightness is greater than 0.5, use black text, otherwise use white
-    return brightness > 0.5 ? "#000" : "#fff";
-  };
-  
-  const textColor = status?.color ? calculateTextColor(status.color) : "#000";
-  
-  // Safe service color
-  const serviceColor = service?.color || '#ccc';
-  
-  const handleClick = (e: React.MouseEvent) => {
-    // Add specific logging to track when an event is clicked
-    console.log("EventItem clicked:", event.id, event.title);
-    
-    // Call the onClick handler, this should propagate to parent components
-    onClick(e);
-    
-    // Ensure the event is captured and doesn't propagate further if needed
-    e.stopPropagation();
-  };
+export function EventItem({ event, onClick, isDragging }: EventItemProps) {
+  // Determine color based on service color or default to blue
+  const serviceColor = event.service?.color || '#3490dc';
   
   return (
-    <div
-      onClick={handleClick}
-      className="h-7 text-[10px] rounded-sm hover:brightness-90 transition-all cursor-pointer w-full flex items-center overflow-hidden event-item"
-      title={`${title || "Sem título"}${product ? ` - ${product.name}` : ""}${service ? ` (${service.name})` : ''}${status ? ` [${status.name}]` : ''}`}
+    <div 
+      className={`
+        py-1 px-2 mb-1 rounded-sm text-xs text-white truncate 
+        cursor-pointer hover:opacity-90 transition-opacity
+        ${isDragging ? 'shadow-lg border border-white' : ''}
+      `}
+      style={{ backgroundColor: serviceColor }}
+      onClick={onClick}
+      title={event.title || 'Sem título'}
+      data-event-id={event.id}
     >
-      {/* Service color block - 4x2 */}
-      <div 
-        className="h-full w-4 flex-shrink-0" 
-        style={{ backgroundColor: serviceColor }}
-      />
-      
-      {/* Editorial line with color only - 4x2 */}
-      <div 
-        className="flex-shrink-0 w-4 h-full"
-        style={{ backgroundColor: editorial_line?.color || '#fff' }}
-      />
-      
-      {/* Collaborator photo or icon */}
-      <div className="h-4 w-4 flex-shrink-0 border border-gray-200 rounded-full overflow-hidden">
-        {collaborator?.photo_url ? (
-          <img 
-            src={collaborator.photo_url} 
-            alt={collaborator.name} 
-            title={collaborator.name}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div 
-            className="bg-gray-300 h-full w-full flex items-center justify-center text-[7px] font-medium text-gray-700"
-            title={collaborator?.name || "Sem responsável"}
-          >
-            {collaborator?.name ? collaborator.name.charAt(0) : "?"}
-          </div>
-        )}
-      </div>
-      
-      {/* Main content: Status color, Product + Title */}
-      <div 
-        className="flex-grow overflow-hidden whitespace-nowrap pl-1 h-full flex items-center" 
-        style={{ 
-          backgroundColor: status?.color || '#FEF7CD',
-          color: textColor
-        }}
-      >
-        <span className="font-medium truncate text-[8px]">
-          {displayText}
+      <div className="flex items-center space-x-1">
+        {event.status && <StatusBadge status={event.status} size="xs" />}
+        <span className="truncate">
+          {event.title || "Sem título"}
         </span>
       </div>
     </div>

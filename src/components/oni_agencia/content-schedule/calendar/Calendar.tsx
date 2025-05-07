@@ -1,10 +1,10 @@
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useMemo } from "react";
 import { CalendarHeader } from "./CalendarHeader";
 import { CalendarContainer } from "./CalendarContainer";
-import { ScheduleEventDialog } from "../ScheduleEventDialog";
-import { useMediaQuery } from "@/hooks/use-media-query";
+import { ScheduleEventDialog } from "@/components/oni_agencia/content-schedule/ScheduleEventDialog";
 import { CalendarEvent } from "@/types/oni-agencia";
+import { useMonthNavigation } from "@/components/oni_agencia/content-schedule/hooks/useMonthNavigation";
 
 interface CalendarProps {
   events: CalendarEvent[];
@@ -12,115 +12,79 @@ interface CalendarProps {
   year: number;
   clientId: string;
   selectedCollaborator?: string | null;
-  onMonthYearChange: (month: number, year: number) => void;
-  onDateSelect: (date: Date) => void;
-  onEventClick: (event: CalendarEvent, date: Date) => void;
   selectedDate?: Date;
   selectedEvent?: CalendarEvent;
   isDialogOpen: boolean;
+  onMonthYearChange: (month: number, year: number) => void;
+  onDateSelect: (date: Date) => void;
+  onEventClick: (event: CalendarEvent, date: Date) => void;
   onDialogOpenChange: (open: boolean) => void;
   onDialogClose: () => void;
   onManualRefetch?: () => void;
+  forceImmediateRefresh?: () => Promise<any>;
 }
 
-export function Calendar({
+export function Calendar({ 
   events,
   month,
   year,
   clientId,
   selectedCollaborator,
-  onMonthYearChange,
-  onDateSelect,
-  onEventClick,
   selectedDate,
   selectedEvent,
   isDialogOpen,
+  onMonthYearChange,
+  onDateSelect,
+  onEventClick,
   onDialogOpenChange,
   onDialogClose,
-  onManualRefetch
+  onManualRefetch,
+  forceImmediateRefresh
 }: CalendarProps) {
-  const [currentDate, setCurrentDate] = useState(new Date(year, month - 1, 1));
-  const [calendarKey, setCalendarKey] = useState<number>(0);
-  const isMobile = useMediaQuery("(max-width: 767px)");
-  const lastEventsLength = useRef<number>(0);
+  // Use the hook for month navigation
+  const { 
+    currentMonth,
+    currentYear,
+    currentDate,
+    navigateToNext,
+    navigateToPrevious
+  } = useMonthNavigation(month, year, onMonthYearChange);
   
-  // When events change or events length changes, force a re-render
-  useEffect(() => {
-    if (events.length !== lastEventsLength.current) {
-      lastEventsLength.current = events.length;
-      // Force re-render by incrementing the key
-      setCalendarKey(prev => prev + 1);
+  // Filter events for the selected date
+  const dateEvents = useMemo(() => {
+    if (!selectedDate) return [];
+    const dateString = selectedDate.toISOString().split('T')[0];
+    return events.filter(event => event.scheduled_date === dateString);
+  }, [events, selectedDate]);
+  
+  // Handle drag-and-drop success - immediately refresh
+  const handleDragSuccess = async (success: boolean, eventId?: string) => {
+    if (success && forceImmediateRefresh) {
+      console.log(`Calendar: Evento arrastado com sucesso (${eventId}), atualizando...`);
+      await forceImmediateRefresh();
     }
-  }, [events]);
-  
-  const handleMonthChange = useCallback((increment: number) => {
-    const newDate = new Date(currentDate);
-    newDate.setMonth(newDate.getMonth() + increment);
-    setCurrentDate(newDate);
-    
-    const newMonth = newDate.getMonth() + 1;
-    const newYear = newDate.getFullYear();
-    onMonthYearChange(newMonth, newYear);
-  }, [currentDate, onMonthYearChange]);
-  
-  // Make sure currentDate is updated when month/year props change
-  useEffect(() => {
-    const propsDate = new Date(year, month - 1, 1);
-    if (propsDate.getMonth() !== currentDate.getMonth() || propsDate.getFullYear() !== currentDate.getFullYear()) {
-      setCurrentDate(propsDate);
-    }
-  }, [month, year]);
-  
-  // Filter events that fall within the displayed month
-  const filteredEvents = events.filter(event => {
-    if (!event.scheduled_date) return false;
-    
-    const eventDate = new Date(event.scheduled_date);
-    return eventDate.getMonth() === currentDate.getMonth() && eventDate.getFullYear() === currentDate.getFullYear();
-  });
-  
-  // Handler para atualização após drag-and-drop
-  const handleDragSuccess = useCallback((success: boolean, eventId?: string) => {
-    if (!success) return;
-    
-    console.log(`Atualizando calendário após drag-and-drop bem sucedido`);
-    
-    // Force component re-render by updating the key
-    setCalendarKey(prev => prev + 1);
-    
-    // Call manual refetch if provided
-    if (onManualRefetch) {
-      console.log("Executando atualização manual forçada do calendário");
-      onManualRefetch();
-    }
-    
-    // Delayed additional refresh for eventual consistency
-    setTimeout(() => {
-      setCalendarKey(prev => prev + 1);
-    }, 250);
-  }, [onManualRefetch]);
-  
-  // Log the number of events being displayed for debugging
-  console.log(`Calendar - Displaying ${filteredEvents.length} events for ${month}/${year} (key: ${calendarKey})`);
-  
+  };
+
   return (
-    <div className="bg-white rounded-md border shadow-sm w-full h-full">
+    <div className="bg-white rounded-md border shadow-sm">
       <CalendarHeader 
-        currentDate={currentDate}
-        onPrevMonth={() => handleMonthChange(-1)}
-        onNextMonth={() => handleMonthChange(1)}
+        month={currentMonth}
+        year={currentYear}
+        onNext={navigateToNext}
+        onPrevious={navigateToPrevious}
       />
       
-      <CalendarContainer
-        key={`calendar-container-${calendarKey}-${events.length}`}
-        events={filteredEvents}
-        selectedDate={selectedDate}
-        currentDate={currentDate}
-        selectedCollaborator={selectedCollaborator}
-        onSelect={onDateSelect}
-        onEventClick={onEventClick}
-        onDragSuccess={handleDragSuccess}
-      />
+      <div className="p-0 md:p-2 overflow-auto">
+        <CalendarContainer 
+          events={events}
+          selectedDate={selectedDate}
+          currentDate={currentDate}
+          selectedCollaborator={selectedCollaborator}
+          onSelect={onDateSelect}
+          onEventClick={onEventClick}
+          onDragSuccess={handleDragSuccess}
+        />
+      </div>
       
       {selectedDate && (
         <ScheduleEventDialog
@@ -128,7 +92,7 @@ export function Calendar({
           onOpenChange={onDialogOpenChange}
           clientId={clientId}
           selectedDate={selectedDate}
-          events={filteredEvents.filter(e => e.scheduled_date === selectedDate.toISOString().split('T')[0])}
+          events={dateEvents}
           onClose={onDialogClose}
           selectedEvent={selectedEvent}
           onManualRefetch={onManualRefetch}

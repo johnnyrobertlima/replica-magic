@@ -4,18 +4,19 @@ import { CalendarEvent } from "@/types/oni-agencia";
 import { useInfiniteContentSchedules } from "@/hooks/oni_agencia/useInfiniteContentSchedules";
 import { useServices } from "@/hooks/useOniAgenciaContentSchedules";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function useContentFiltering(
   selectedClient: string, 
   selectedMonth: number, 
   selectedYear: number, 
-  selectedCollaborator: string | null,
-  directRefresh: boolean = false
+  selectedCollaborator: string | null
 ) {
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
   const [isFullyLoaded, setIsFullyLoaded] = useState(false);
   const [lastRefetchTime, setLastRefetchTime] = useState<number>(Date.now());
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   // Get services
   const { data: services = [], isLoading: isLoadingServices } = useServices();
@@ -84,20 +85,25 @@ export function useContentFiltering(
     console.log("Services filter changed:", serviceIds);
   }, []);
 
-  // Função para atualização manual com debounce para evitar múltiplas chamadas
-  const handleManualRefetch = useCallback(() => {
-    const now = Date.now();
-    // Evita múltiplas atualizações em um curto período de tempo (limite de 2 segundos)
-    if (now - lastRefetchTime < 2000 && !directRefresh) {
-      console.log("Ignorando atualização manual (muito próxima da última atualização)");
-      return;
-    }
-    
-    setLastRefetchTime(now);
-    setIsFullyLoaded(false); // Reset loading state on manual refresh
+  // Função para atualização manual - corrigida para sempre fazer refresh
+  const handleManualRefetch = useCallback(async () => {
     console.log("Executando atualização manual dos dados");
+    setLastRefetchTime(Date.now());
+    setIsFullyLoaded(false); // Reset loading state on manual refresh
     
-    refetchSchedules().then(() => {
+    // Invalidate all relevant queries first
+    await queryClient.invalidateQueries({ 
+      queryKey: ['content-schedules'],
+      refetchType: 'all' 
+    });
+    
+    await queryClient.invalidateQueries({ 
+      queryKey: ['infinite-content-schedules'],
+      refetchType: 'all'
+    });
+    
+    // Then force a refetch
+    return refetchSchedules().then(() => {
       toast({
         title: "Dados atualizados",
         description: "Os agendamentos foram atualizados com sucesso.",
@@ -110,20 +116,26 @@ export function useContentFiltering(
         description: "Não foi possível atualizar os agendamentos.",
       });
     });
-  }, [refetchSchedules, lastRefetchTime, toast, directRefresh]);
+  }, [refetchSchedules, queryClient, toast]);
   
-  // Função para forçar a atualização imediata, sem throttling
-  const directRefetch = useCallback(() => {
-    console.log("Forçando atualização imediata sem throttling");
-    setLastRefetchTime(Date.now());
-    setIsFullyLoaded(false);
+  // Função para força a atualização imediata após o drag-and-drop
+  const forceImmediateRefresh = useCallback(async () => {
+    console.log("Forçando atualização imediata após drag-and-drop");
     
-    return refetchSchedules().then(() => {
-      console.log("Atualização forçada concluída com sucesso");
-    }).catch(error => {
-      console.error("Erro na atualização forçada:", error);
+    // Invalidate all relevant queries
+    await queryClient.invalidateQueries({ 
+      queryKey: ['content-schedules'],
+      refetchType: 'all' 
     });
-  }, [refetchSchedules]);
+    
+    await queryClient.invalidateQueries({ 
+      queryKey: ['infinite-content-schedules'],
+      refetchType: 'all'
+    });
+    
+    // Force refetch
+    return refetchSchedules();
+  }, [queryClient, refetchSchedules]);
 
   // Show loading state until all data is loaded
   const showLoadingState = isLoadingSchedules || isFetchingNextPage || !isFullyLoaded;
@@ -141,6 +153,6 @@ export function useContentFiltering(
     showLoadingState,
     handleServicesChange,
     handleManualRefetch,
-    directRefetch
+    forceImmediateRefresh
   };
 }

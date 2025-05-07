@@ -1,5 +1,5 @@
 
-import React, { memo } from 'react';
+import React, { memo, useEffect } from 'react';
 import { CalendarEvent } from "@/types/oni-agencia";
 import { EventItem } from "./EventItem";
 import { useDraggable } from '@dnd-kit/core';
@@ -33,6 +33,13 @@ export const DraggableEventItem = memo(function DraggableEventItem({
     position: isDragging ? 'absolute' : 'relative' as any
   } : undefined;
   
+  // Log dragging state for debugging
+  useEffect(() => {
+    if (isDragging) {
+      console.log(`Dragging event: ${event.id} - ${event.title}`);
+    }
+  }, [isDragging, event]);
+  
   const handleClick = (e: React.MouseEvent) => {
     // Prevent click handling during drag operations
     if (!isDragging) {
@@ -55,6 +62,7 @@ export const DraggableEventItem = memo(function DraggableEventItem({
       <EventItem 
         event={event} 
         onClick={handleClick} 
+        isDragging={isDragging}
       />
     </div>
   );

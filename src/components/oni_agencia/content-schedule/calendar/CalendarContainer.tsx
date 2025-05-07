@@ -36,6 +36,12 @@ export function CalendarContainer({
   const userName = useCurrentUser();
   const queryClient = useQueryClient();
   
+  // Update localEvents when events prop changes
+  useEffect(() => {
+    console.log(`CalendarContainer: Recebendo ${events.length} eventos`);
+    setLocalEvents(events);
+  }, [events]);
+  
   // Configure sensors for drag and drop
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -45,42 +51,15 @@ export function CalendarContainer({
     })
   );
   
-  // Update localEvents when events prop changes
-  useEffect(() => {
-    setLocalEvents(events);
-  }, [events]);
-  
-  // Direct refresh function - no throttling
-  const refreshEvents = async () => {
-    console.log("Forcing immediate events refresh without throttling");
-    
-    // Force invalidation of all relevant queries
-    await queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
-    await queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
-    
-    // Get fresh data directly from the cache
-    const freshData = queryClient.getQueryData<CalendarEvent[]>(['content-schedules']);
-    if (freshData) {
-      console.log(`RefetchEvents: Got ${freshData.length} events`);
-      setLocalEvents(freshData);
-      
-      // Force component remount with key change
-      setRefreshKey(prev => prev + 1);
-    }
-  };
-  
   // Handler for immediate UI update after drag-and-drop
   const handleDragComplete = async (success: boolean, eventId?: string) => {
     if (success) {
       console.log(`Drag bem sucedido para evento ${eventId}, atualizando calendário`);
       
-      // Step 1: Immediate refresh of data
-      await refreshEvents();
-      
-      // Step 2: Force UI update by remounting calendar
+      // Force UI update by incrementing key to remount calendar
       setRefreshKey(prev => prev + 1);
       
-      // Step 3: Call external callback
+      // Call external callback
       if (onDragSuccess) {
         onDragSuccess(success, eventId);
       }

@@ -42,7 +42,7 @@ const OniAgenciaControlePauta = () => {
     }
   }, []);
   
-  // Enhanced manual refresh - immediate, no throttling
+  // Enhanced manual refresh - agora sem throttling
   const handleManualRefetch = useCallback(async () => {
     updateCounterRef.current += 1;
     lastUpdateTimeRef.current = Date.now();
@@ -75,7 +75,8 @@ const OniAgenciaControlePauta = () => {
     isRefetching,
     showLoadingState,
     handleServicesChange,
-    handleManualRefetch: hookRefetch
+    handleManualRefetch: hookRefetch,
+    forceImmediateRefresh
   } = useContentFiltering(
     selectedClient,
     selectedMonth,
@@ -87,8 +88,10 @@ const OniAgenciaControlePauta = () => {
   useEffect(() => {
     if (refreshKey > 0) {
       console.log(`Renderização forçada do controle de pauta (${refreshKey})`);
+      // Forçar refetch através do hook quando a key mudar
+      hookRefetch();
     }
-  }, [refreshKey]);
+  }, [refreshKey, hookRefetch]);
   
   // Polling para atualização automática periodicamente
   useEffect(() => {
@@ -96,12 +99,12 @@ const OniAgenciaControlePauta = () => {
     const intervalId = setInterval(() => {
       if (selectedClient) {
         console.log("Executando atualização automática periódica");
-        handleManualRefetch();
+        hookRefetch();
       }
     }, 30000); // 30 segundos
     
     return () => clearInterval(intervalId);
-  }, [queryClient, selectedClient, handleManualRefetch]);
+  }, [selectedClient, hookRefetch]);
   
   return (
     <main className="container-fluid p-0 max-w-full">
@@ -114,7 +117,7 @@ const OniAgenciaControlePauta = () => {
           isRefetching={isRefetching}
           isLoadingSchedules={isLoadingSchedules}
           isFetchingNextPage={isFetchingNextPage}
-          onManualRefetch={handleManualRefetch}
+          onManualRefetch={hookRefetch}
         />
         
         <ContentScheduleFilters
@@ -146,7 +149,8 @@ const OniAgenciaControlePauta = () => {
           fetchNextPage={fetchNextPage}
           showLoadingState={showLoadingState}
           isCollapsed={isCollapsed}
-          onManualRefetch={handleManualRefetch}
+          onManualRefetch={hookRefetch}
+          forceImmediateRefresh={forceImmediateRefresh}
         />
       </div>
     </main>

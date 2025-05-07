@@ -21,6 +21,7 @@ interface ContentAreaProps {
   showLoadingState: boolean;
   isCollapsed: boolean;
   onManualRefetch?: () => void;
+  forceImmediateRefresh?: () => Promise<any>;
 }
 
 export function ContentArea({ 
@@ -36,7 +37,8 @@ export function ContentArea({
   fetchNextPage,
   showLoadingState,
   isCollapsed,
-  onManualRefetch
+  onManualRefetch,
+  forceImmediateRefresh
 }: ContentAreaProps) {
   const {
     selectedEvent,
@@ -51,7 +53,8 @@ export function ContentArea({
     clientId,
     month,
     year,
-    onManualRefetch
+    onManualRefetch,
+    forceImmediateRefresh
   });
   
   // Debug logs to track events count
@@ -80,7 +83,8 @@ export function ContentArea({
             isDialogOpen={isDialogOpen}
             onDialogOpenChange={handleDialogOpenChange}
             onDialogClose={handleDialogClose}
-            onManualRefetch={onManualRefetch} // Pass it to Calendar
+            onManualRefetch={onManualRefetch}
+            forceImmediateRefresh={forceImmediateRefresh}
           />
         </DndContext>
       </div>
@@ -93,7 +97,7 @@ export function ContentArea({
         events={filteredSchedules} 
         clientId={clientId} 
         selectedCollaborator={selectedCollaborator}
-        onManualRefetch={onManualRefetch} // Pass it to ContentScheduleList
+        onManualRefetch={onManualRefetch}
       />
     </div>
   );
