@@ -63,15 +63,15 @@ export function EventItem({ event, onClick }: EventItemProps) {
       className="h-5 text-[10px] rounded-sm hover:brightness-90 transition-all cursor-pointer w-full flex items-center overflow-hidden event-item"
       title={`${title || "Sem título"}${product ? ` - ${product.name}` : ""}${service ? ` (${service.name})` : ''}${status ? ` [${status.name}]` : ''}`}
     >
-      {/* Service color block - no text */}
+      {/* Service color block - ajustado para 4x2 */}
       <div 
-        className="h-full w-5 flex-shrink-0" 
+        className="h-full w-4 flex-shrink-0" 
         style={{ backgroundColor: serviceColor }}
       />
       
-      {/* Editorial line with color only - no icon/symbol */}
+      {/* Editorial line with color only - ajustado para 4x2 */}
       <div 
-        className="flex-shrink-0 w-5 h-full"
+        className="flex-shrink-0 w-2 h-full"
         style={{ backgroundColor: editorial_line?.color || '#fff' }}
       />
       
