@@ -80,61 +80,7 @@ export function useDragAndDrop(onManualRefetch?: () => void) {
       delete (updateData as any).created_at;
       delete (updateData as any).updated_at;
       
-      // Backup of the original event for use in case of error
-      const originalEvent = { ...activeDragEvent };
-      
-      // Update the event in local state immediately
-      const updatedEvent = {
-        ...activeDragEvent,
-        scheduled_date: formattedDate
-      };
-      
-      // Immediately update all queries to reflect the change
-      
-      // 1. For standard query cache
-      queryClient.setQueriesData({ queryKey: ['content-schedules'] }, (old: any) => {
-        if (!old || !Array.isArray(old)) return old;
-        
-        // Remove the old event and add the new one
-        const filteredEvents = old.filter((event: CalendarEvent) => event.id !== activeDragEvent.id);
-        return [...filteredEvents, updatedEvent];
-      });
-      
-      // 2. For infinite query cache
-      queryClient.setQueriesData({ queryKey: ['infinite-content-schedules'] }, (old: any) => {
-        if (!old || !old.pages) return old;
-        
-        const updatedPages = old.pages.map((page: any) => {
-          if (!page.data) return page;
-          
-          // Remove the old event
-          const filteredData = page.data.filter((event: CalendarEvent) => 
-            event.id !== activeDragEvent.id
-          );
-          
-          // Add the updated event to the page if it matches the date range
-          const updatedData = [...filteredData];
-          if (page.data.some((event: CalendarEvent) => 
-            event.scheduled_date.substring(0, 7) === formattedDate.substring(0, 7)
-          )) {
-            updatedData.push(updatedEvent);
-          }
-          
-          return { ...page, data: updatedData };
-        });
-        
-        return {
-          ...old,
-          pages: updatedPages
-        };
-      });
-      
-      // Ensure the event ID exists and is being passed correctly
-      if (!activeDragEvent.id) {
-        throw new Error("ID do evento não definido");
-      }
-      
-      // Make the update API call with the correct event ID
+      // Update the event in the API
       await updateContentSchedule(activeDragEvent.id, updateData);
       
       // Show success toast
@@ -144,14 +90,21 @@ export function useDragAndDrop(onManualRefetch?: () => void) {
       });
       
       // Force a refetch to ensure data consistency
-      queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
-      queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
-      queryClient.invalidateQueries({ queryKey: ['scheduleHistory'] });
+      await queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
+      await queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
+      await queryClient.invalidateQueries({ queryKey: ['scheduleHistory'] });
       
       // Execute manual refetch if provided - IMMEDIATELY
       if (onManualRefetch) {
         console.log("Executando atualização manual após drag and drop");
-        onManualRefetch();
+        // Tornando a execução síncrona para garantir a atualização
+        setTimeout(() => {
+          onManualRefetch();
+          // Após a primeira atualização, tente mais uma vez para garantir
+          setTimeout(() => {
+            onManualRefetch();
+          }, 100);
+        }, 0);
       }
       
     } catch (error) {

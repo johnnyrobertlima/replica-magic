@@ -117,10 +117,20 @@ export function useScheduleMutations({
         });
       }
       
+      // Invalidate queries to force refresh
+      await queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
+      await queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
+      
       // Execute manual refetch immediately if the function was provided
       if (onManualRefetch) {
         console.log("Executando atualização manual após salvar");
-        onManualRefetch();
+        // Execute twice with a small delay to ensure UI refresh
+        setTimeout(() => {
+          onManualRefetch();
+          setTimeout(() => {
+            onManualRefetch();
+          }, 100);
+        }, 0);
       }
       
       onClose();
@@ -131,6 +141,13 @@ export function useScheduleMutations({
         description: "Ocorreu um erro ao salvar o agendamento.",
         variant: "destructive"
       });
+      
+      // Ainda assim tentar atualizar a UI em caso de erro
+      if (onManualRefetch) {
+        setTimeout(() => {
+          onManualRefetch();
+        }, 0);
+      }
     }
   };
 
@@ -172,10 +189,20 @@ export function useScheduleMutations({
         description: "Status do agendamento atualizado com sucesso."
       });
       
+      // Invalidate queries to force refresh
+      await queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
+      await queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
+      
       // Execute manual refetch immediately if the function was provided
       if (onManualRefetch) {
         console.log("Executando atualização manual após atualizar status");
-        onManualRefetch();
+        // Execute twice with a small delay to ensure UI refresh
+        setTimeout(() => {
+          onManualRefetch();
+          setTimeout(() => {
+            onManualRefetch();
+          }, 100);
+        }, 0);
       }
       
       onClose();
@@ -186,6 +213,13 @@ export function useScheduleMutations({
         title: "Erro",
         description: "Ocorreu um erro ao atualizar o status.",
       });
+      
+      // Ainda assim tentar atualizar a UI em caso de erro
+      if (onManualRefetch) {
+        setTimeout(() => {
+          onManualRefetch();
+        }, 0);
+      }
     }
   };
 
@@ -202,10 +236,20 @@ export function useScheduleMutations({
           description: "Agendamento excluído com sucesso."
         });
         
+        // Invalidate queries to force refresh
+        await queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
+        await queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
+        
         // Execute manual refetch immediately if the function was provided
         if (onManualRefetch) {
           console.log("Executando atualização manual após excluir");
-          onManualRefetch();
+          // Execute twice with a small delay to ensure UI refresh
+          setTimeout(() => {
+            onManualRefetch();
+            setTimeout(() => {
+              onManualRefetch();
+            }, 100);
+          }, 0);
         }
         
         onClose();
@@ -217,6 +261,13 @@ export function useScheduleMutations({
         title: "Erro",
         description: "Ocorreu um erro ao excluir o agendamento.",
       });
+      
+      // Ainda assim tentar atualizar a UI em caso de erro
+      if (onManualRefetch) {
+        setTimeout(() => {
+          onManualRefetch();
+        }, 0);
+      }
     }
   };
 

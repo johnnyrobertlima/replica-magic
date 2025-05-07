@@ -1,10 +1,11 @@
 
 import { useState, useCallback } from "react";
-import { DndContext, DragEndEvent, DragStartEvent } from "@dnd-kit/core";
+import { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import { format } from "date-fns";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { useUpdateContentSchedule } from "@/hooks/useOniAgenciaContentSchedules";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface UseDndContextProps {
   clientId: string;
@@ -18,6 +19,7 @@ export function useDndContext({ clientId, month, year, onManualRefetch }: UseDnd
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | undefined>();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const updateMutation = useUpdateContentSchedule();
 
@@ -39,14 +41,28 @@ export function useDndContext({ clientId, month, year, onManualRefetch }: UseDnd
       // Reset state when dialog is closed
       setSelectedEvent(undefined);
       setSelectedDate(undefined);
+      
+      // Trigger a manual refetch when dialog closes
+      if (onManualRefetch) {
+        setTimeout(() => {
+          onManualRefetch();
+        }, 0);
+      }
     }
-  }, []);
+  }, [onManualRefetch]);
 
   const handleDialogClose = useCallback(() => {
     setIsDialogOpen(false);
     setSelectedEvent(undefined);
     setSelectedDate(undefined);
-  }, []);
+    
+    // Trigger a manual refetch when dialog closes
+    if (onManualRefetch) {
+      setTimeout(() => {
+        onManualRefetch();
+      }, 0);
+    }
+  }, [onManualRefetch]);
 
   // Function to handle drag and drop of events
   const handleDragEnd = useCallback(async (event: DragEndEvent) => {
@@ -118,10 +134,20 @@ export function useDndContext({ clientId, month, year, onManualRefetch }: UseDnd
         description: `Evento movido para ${format(targetDateObj, 'dd/MM/yyyy')}`
       });
       
+      // Invalidate queries to force refresh
+      await queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
+      await queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
+      
       // Use the provided manual refetch function to update data immediately
       if (onManualRefetch) {
         console.log("Executando atualização manual após drag and drop");
-        onManualRefetch(); // Removido o setTimeout para executar imediatamente
+        // Execute twice with a small delay to ensure UI refresh
+        setTimeout(() => {
+          onManualRefetch();
+          setTimeout(() => {
+            onManualRefetch();
+          }, 100);
+        }, 0);
       }
     } catch (error) {
       console.error("Failed to update event date:", error);
@@ -130,18 +156,20 @@ export function useDndContext({ clientId, month, year, onManualRefetch }: UseDnd
         title: "Erro ao mover evento",
         description: "Não foi possível alterar a data do evento."
       });
+      
+      // Force a refresh on error to maintain consistent state
+      if (onManualRefetch) {
+        setTimeout(() => {
+          onManualRefetch();
+        }, 0);
+      }
     }
-  }, [updateMutation, toast, onManualRefetch]);
-
-  const dndContext = {
-    DndContext
-  };
+  }, [updateMutation, toast, onManualRefetch, queryClient]);
 
   return {
     selectedDate,
     selectedEvent,
     isDialogOpen,
-    dndContext,
     handleDateSelect,
     handleEventClick,
     handleDragEnd,
