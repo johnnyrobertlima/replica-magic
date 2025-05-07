@@ -32,8 +32,20 @@ export function CalendarDay({
   });
   
   // Melhoria de performance utilizando useCallback para funções de evento
-  const handleDayClick = useCallback(() => {
-    onSelect(date);
+  const handleDayClick = useCallback((e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    
+    // Check if the click is on an event or event-related element
+    const isEventClick = 
+      target.closest('.event-item') || 
+      target.closest('.event-item-wrapper') ||
+      target.classList.contains('event-item') ||
+      target.classList.contains('event-item-wrapper');
+    
+    // Only select the day if we're not clicking on an event
+    if (!isEventClick) {
+      onSelect(date);
+    }
   }, [date, onSelect]);
   
   // Create an event click handler that adapts the parameters
@@ -106,6 +118,7 @@ export function CalendarDay({
             events={filteredEvents}
             date={date}
             onEventClick={handleEventClick}
+            isDraggable={true}
           />
         </div>
       )}

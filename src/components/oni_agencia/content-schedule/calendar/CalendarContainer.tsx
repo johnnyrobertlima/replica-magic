@@ -27,11 +27,12 @@ export function CalendarContainer({
   // Get username first - maintain hook order
   const userName = useCurrentUser();
   
-  // Configure sensors for drag and drop
+  // Configure sensors for drag and drop with activation constraints
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8, // Min drag distance before activation
+        delay: 250, // 250ms delay helps differentiate between click and drag
+        tolerance: 5, // Slight movement tolerance
       },
     })
   );

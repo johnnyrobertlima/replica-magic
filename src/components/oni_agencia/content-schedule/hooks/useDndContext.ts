@@ -93,9 +93,18 @@ export function useDndContext({ clientId, month, year, onManualRefetch }: UseDnd
       console.log(`Moving event ${eventId} from ${oldDate} to ${newDate}`);
       
       // Create a clean update object with only the fields we want to update
-      // This avoids sending nested objects that don't exist in the database schema
       const updateData = {
-        scheduled_date: newDate
+        client_id: draggedEvent.client_id,
+        service_id: draggedEvent.service_id,
+        collaborator_id: draggedEvent.collaborator_id,
+        title: draggedEvent.title,
+        description: draggedEvent.description,
+        scheduled_date: newDate,
+        execution_phase: draggedEvent.execution_phase,
+        editorial_line_id: draggedEvent.editorial_line_id,
+        product_id: draggedEvent.product_id,
+        status_id: draggedEvent.status_id,
+        creators: draggedEvent.creators
       };
       
       // Update the database with the new date

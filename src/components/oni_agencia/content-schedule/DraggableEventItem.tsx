@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { CalendarEvent } from "@/types/oni-agencia";
 import { EventItem } from "./EventItem";
 import { useDraggable } from '@dnd-kit/core';
@@ -10,6 +10,9 @@ interface DraggableEventItemProps {
 }
 
 export function DraggableEventItem({ event, onClick }: DraggableEventItemProps) {
+  const [longPressTriggered, setLongPressTriggered] = useState(false);
+  const pressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
   // Make sure we have a valid ID for the draggable item
   if (!event.id) {
     console.error("Attempted to render draggable event with no ID:", event);
@@ -29,15 +32,54 @@ export function DraggableEventItem({ event, onClick }: DraggableEventItemProps) 
     opacity: isDragging ? 0.8 : 1,
     position: isDragging ? 'absolute' : 'relative' as any
   } : undefined;
-  
-  const handleClick = (e: React.MouseEvent) => {
-    // Only trigger click if not dragging
-    if (!isDragging) {
-      e.stopPropagation(); // Stop propagation to prevent calendar day click
-      onClick(e);
+
+  // Handle mouse/touch down - start a timer for long press
+  const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    setLongPressTriggered(false);
+    
+    // Clear any existing timeout
+    if (pressTimeoutRef.current) {
+      clearTimeout(pressTimeoutRef.current);
+    }
+    
+    // Set a timeout for long press (300ms)
+    pressTimeoutRef.current = setTimeout(() => {
+      setLongPressTriggered(true);
+      console.log("Long press detected, enabling drag");
+    }, 300);
+  };
+
+  // Handle mouse/touch up - clear the timer if it exists
+  const handleMouseUp = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    
+    // Clear the timeout
+    if (pressTimeoutRef.current) {
+      clearTimeout(pressTimeoutRef.current);
+      pressTimeoutRef.current = null;
+    }
+    
+    // If it wasn't a long press, treat as a click
+    if (!longPressTriggered && !isDragging) {
+      if ('button' in e && e.button === 0) { // Left mouse click
+        onClick(e as React.MouseEvent);
+      } else {
+        // For touch events
+        onClick(e as unknown as React.MouseEvent);
+      }
     }
   };
   
+  // Handle click separately to avoid conflicts
+  const handleClick = (e: React.MouseEvent) => {
+    // Only trigger if not dragging and not long-pressed
+    if (!isDragging && !longPressTriggered) {
+      e.stopPropagation();
+      onClick(e);
+    }
+  };
+
   return (
     <div 
       ref={setNodeRef} 
@@ -45,10 +87,18 @@ export function DraggableEventItem({ event, onClick }: DraggableEventItemProps) 
       {...listeners} 
       {...attributes}
       className="cursor-grab active:cursor-grabbing"
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onTouchStart={handleMouseDown}
+      onTouchEnd={handleMouseUp}
+      onClick={handleClick}
     >
       <EventItem 
         event={event} 
-        onClick={handleClick} 
+        onClick={(e) => {
+          // The click will be handled by the parent div
+          e.stopPropagation();
+        }} 
       />
     </div>
   );
