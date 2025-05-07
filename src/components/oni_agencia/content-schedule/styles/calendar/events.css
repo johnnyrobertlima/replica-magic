@@ -29,14 +29,15 @@
 }
 
 .event-item {
-  @apply cursor-pointer rounded-sm p-1 mb-0.5 text-xs overflow-hidden whitespace-nowrap text-ellipsis border-l-4;
-  max-width: 100%;
-  min-height: 20px; /* Reduced from 22px */
+  @apply cursor-pointer rounded-sm overflow-hidden whitespace-nowrap text-ellipsis;
+  width: 28px; /* 7x7 format */
+  height: 28px; /* 7x7 format */
+  min-height: 28px;
 }
 
 .event-item-wrapper {
-  @apply w-full cursor-grab;
-  margin-bottom: 1px; /* Reduced from default spacing */
+  @apply cursor-grab inline-block;
+  margin: 2px;
 }
 
 .event-item.dragging {

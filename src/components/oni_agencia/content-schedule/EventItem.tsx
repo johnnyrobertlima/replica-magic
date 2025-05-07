@@ -60,51 +60,56 @@ export function EventItem({ event, onClick }: EventItemProps) {
   return (
     <div
       onClick={handleClick}
-      className="h-5 text-[10px] rounded-sm hover:brightness-90 transition-all cursor-pointer w-full flex items-center overflow-hidden event-item"
+      className="w-7 h-7 text-[9px] rounded-sm hover:brightness-90 transition-all cursor-pointer flex flex-col overflow-hidden event-item"
       title={`${title || "Sem título"}${product ? ` - ${product.name}` : ""}${service ? ` (${service.name})` : ''}${status ? ` [${status.name}]` : ''}`}
     >
-      {/* Service color block - no text */}
-      <div 
-        className="h-full w-5 flex-shrink-0" 
-        style={{ backgroundColor: serviceColor }}
-      />
-      
-      {/* Editorial line with color only - no icon/symbol */}
-      <div 
-        className="flex-shrink-0 w-5 h-full"
-        style={{ backgroundColor: editorial_line?.color || '#fff' }}
-      />
-      
-      {/* Collaborator photo or icon */}
-      <div className="h-4 w-4 flex-shrink-0 border border-gray-200 rounded-full overflow-hidden">
-        {collaborator?.photo_url ? (
-          <img 
-            src={collaborator.photo_url} 
-            alt={collaborator.name} 
-            title={collaborator.name}
-            className="h-full w-full object-cover"
-          />
-        ) : (
+      <div className="flex h-full">
+        {/* Left column with service color and editorial line */}
+        <div className="h-full flex flex-col flex-shrink-0 w-1.5">
+          {/* Service color block - top half */}
           <div 
-            className="bg-gray-300 h-full w-full flex items-center justify-center text-[7px] font-medium text-gray-700"
-            title={collaborator?.name || "Sem responsável"}
-          >
-            {collaborator?.name ? collaborator.name.charAt(0) : "?"}
+            className="h-1/2 w-full" 
+            style={{ backgroundColor: serviceColor }}
+          />
+          
+          {/* Editorial line color - bottom half */}
+          <div 
+            className="h-1/2 w-full"
+            style={{ backgroundColor: editorial_line?.color || '#fff' }}
+          />
+        </div>
+        
+        {/* Main content area */}
+        <div 
+          className="flex-grow h-full overflow-hidden flex flex-col items-center justify-center p-0.5" 
+          style={{ 
+            backgroundColor: status?.color || '#FEF7CD',
+            color: textColor
+          }}
+        >
+          {/* Collaborator initial or photo - small and centered */}
+          <div className="h-3 w-3 flex-shrink-0 rounded-full overflow-hidden mb-0.5 border border-gray-200">
+            {collaborator?.photo_url ? (
+              <img 
+                src={collaborator.photo_url} 
+                alt={collaborator.name} 
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div 
+                className="bg-gray-300 h-full w-full flex items-center justify-center text-[6px] font-medium text-gray-700"
+                title={collaborator?.name || "Sem responsável"}
+              >
+                {collaborator?.name ? collaborator.name.charAt(0) : "?"}
+              </div>
+            )}
           </div>
-        )}
-      </div>
-      
-      {/* Main content: Status color, Product + Title */}
-      <div 
-        className="flex-grow overflow-hidden whitespace-nowrap pl-1 h-full flex items-center" 
-        style={{ 
-          backgroundColor: status?.color || '#FEF7CD',
-          color: textColor
-        }}
-      >
-        <span className="font-medium truncate text-[8px]">
-          {displayText}
-        </span>
+          
+          {/* Title text - very compact */}
+          <span className="font-medium truncate text-[6px] leading-tight max-w-full text-center">
+            {displayText}
+          </span>
+        </div>
       </div>
     </div>
   );
