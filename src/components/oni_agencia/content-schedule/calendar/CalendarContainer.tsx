@@ -6,7 +6,7 @@ import { CalendarEvent } from "@/types/oni-agencia";
 import { ptBR } from "date-fns/locale";
 import { useDragAndDrop } from "../hooks/useDragAndDrop";
 import { useCurrentUser } from "../hooks/useCurrentUser";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface CalendarContainerProps {
   events: CalendarEvent[];
@@ -28,7 +28,7 @@ export function CalendarContainer({
   onDragSuccess
 }: CalendarContainerProps) {
   // Estado para forçar renderização após drag-and-drop
-  const [refreshSignal, setRefreshSignal] = useState(0);
+  const [refreshKey, setRefreshKey] = useState<number>(0);
   
   // Get username first - maintain hook order
   const userName = useCurrentUser();
@@ -42,13 +42,24 @@ export function CalendarContainer({
     })
   );
   
-  // Atualização do callback para disparar o sinal de atualização local
+  // Add a more reliable refresh mechanism
+  useEffect(() => {
+    // When events array changes, increment refresh key
+    setRefreshKey(prev => prev + 1);
+  }, [events]);
+  
+  // Handler para garantir que a UI seja atualizada após drag-and-drop
   const handleDragComplete = (success: boolean, eventId?: string) => {
     if (success) {
-      console.log(`Drag bem sucedido para evento ${eventId}, atualizando calendário`);
+      console.log(`Drag bem sucedido para evento ${eventId}, forçando remontagem do calendário`);
       
-      // Incrementar o sinal de atualização para forçar re-renderização
-      setRefreshSignal(prev => prev + 1);
+      // Incrementar o refresh key para força a remontagem completa
+      setRefreshKey(prev => prev + 1);
+      
+      // Esperar um tempo curto e forçar mais uma atualização
+      setTimeout(() => {
+        setRefreshKey(prev => prev + 1);
+      }, 100);
       
       // Chamar o callback externo
       if (onDragSuccess) {
@@ -68,7 +79,7 @@ export function CalendarContainer({
     >
       <div className="w-full p-0">
         <Calendar
-          key={`calendar-${refreshSignal}`}
+          key={`calendar-${refreshKey}-${events.length}`}
           mode="single"
           selected={selectedDate}
           onSelect={onSelect}

@@ -3,7 +3,7 @@ import { CalendarEvent } from "@/types/oni-agencia";
 import { EventItem } from "../EventItem";
 import { DraggableEventItem } from "../DraggableEventItem";
 import { EventTooltip } from "./EventTooltip";
-import React, { useMemo } from "react";
+import React, { useMemo, memo } from "react";
 
 interface EventsListProps {
   events: CalendarEvent[];
@@ -12,7 +12,12 @@ interface EventsListProps {
   isDraggable?: boolean;
 }
 
-export function EventsList({ events, date, onEventClick, isDraggable = true }: EventsListProps) {
+export const EventsList = memo(function EventsList({ 
+  events, 
+  date, 
+  onEventClick, 
+  isDraggable = true 
+}: EventsListProps) {
   // Utilize useMemo para computações caras como filtragem de eventos
   const uniqueEvents = useMemo(() => {
     if (!events || events.length === 0) return [];
@@ -39,9 +44,11 @@ export function EventsList({ events, date, onEventClick, isDraggable = true }: E
           onEventClick(e, event);
         };
         
+        const key = `event-${event.id}-${date.toISOString()}`;
+        
         return (
           <EventTooltip 
-            key={`event-${event.id}-${date.toISOString()}`} 
+            key={key} 
             event={event}
           >
             <div className="event-item-wrapper">
@@ -62,4 +69,4 @@ export function EventsList({ events, date, onEventClick, isDraggable = true }: E
       })}
     </div>
   );
-}
+});

@@ -24,6 +24,7 @@ export function useScheduleEventDialog({
   const hasSelectedEventRef = useRef(false);
   const [activeTab, setActiveTab] = useState<"details" | "status" | "history">("details");
   const queryClient = useQueryClient();
+  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const {
     currentSelectedEvent,
@@ -39,19 +40,47 @@ export function useScheduleEventDialog({
     selectedEvent
   });
 
-  // Função para atualização forçada com múltiplas chamadas
+  // Função para atualização forçada com throttling
   const forceRefresh = useCallback(() => {
     if (!onManualRefetch) return;
     
+    // Clear any pending timeouts
+    if (updateTimeoutRef.current) {
+      clearTimeout(updateTimeoutRef.current);
+      updateTimeoutRef.current = null;
+    }
+    
     console.log("Forçando atualização de dados após operação");
+    
+    // Invalidate queries first
+    queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
+    queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
+    
     // Primeira chamada imediata
     onManualRefetch();
     
-    // Chamadas adicionais com intervalos crescentes
-    setTimeout(() => onManualRefetch(), 150);
-    setTimeout(() => onManualRefetch(), 400);
-    setTimeout(() => onManualRefetch(), 800);
-  }, [onManualRefetch]);
+    // Schedule additional calls with increasing delays
+    updateTimeoutRef.current = setTimeout(() => {
+      console.log("Executando atualização extra após (300ms)");
+      onManualRefetch();
+      
+      // Final refresh after more delay
+      updateTimeoutRef.current = setTimeout(() => {
+        console.log("Executando atualização extra após (800ms)");
+        onManualRefetch();
+        updateTimeoutRef.current = null;
+      }, 500);
+    }, 300);
+  }, [onManualRefetch, queryClient]);
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const {
     isSubmitting,

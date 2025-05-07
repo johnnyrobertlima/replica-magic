@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { EventsList } from "./EventsList";
 import { useDroppable } from "@dnd-kit/core";
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, memo } from "react";
 
 interface CalendarDayProps {
   date: Date;
@@ -14,7 +14,7 @@ interface CalendarDayProps {
   onEventClick: (event: CalendarEvent, date: Date) => void;
 }
 
-export function CalendarDay({
+export const CalendarDay = memo(function CalendarDay({
   date,
   selectedDate,
   events,
@@ -35,14 +35,14 @@ export function CalendarDay({
   const handleDayClick = useCallback(() => {
     console.log("Day clicked:", dateStr);
     onSelect(date);
-  }, [date, onSelect]);
+  }, [date, onSelect, dateStr]);
   
   // Create an event click handler that adapts the parameters
   const handleEventClick = useCallback((e: React.MouseEvent, event: CalendarEvent) => {
     console.log("CalendarDay - Event clicked:", event.id, "for date:", dateStr);
     e.stopPropagation(); // Prevent day click when clicking on an event
     onEventClick(event, date);
-  }, [date, onEventClick]);
+  }, [date, onEventClick, dateStr]);
   
   // Filtra eventos para esse dia específico usando useMemo para otimização
   const filteredEvents = useMemo(() => {
@@ -70,7 +70,7 @@ export function CalendarDay({
     });
   }, [events, dateStr, selectedCollaborator]);
   
-  // Log filtered events for debugging
+  // Log filtered events count for debugging
   if (filteredEvents.length > 0) {
     console.log(`CalendarDay - Rendering ${filteredEvents.length} events for date ${dateStr}`);
   }
@@ -113,4 +113,4 @@ export function CalendarDay({
       )}
     </div>
   );
-}
+});

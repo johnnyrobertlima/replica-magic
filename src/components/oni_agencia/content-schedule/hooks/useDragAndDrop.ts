@@ -10,6 +10,10 @@ import { DragStartEvent, DragEndEvent } from "@dnd-kit/core";
 // Tipo para callback de atualização
 type UpdateCallback = (success: boolean, eventId?: string) => void;
 
+// Timeout tracker para evitar atualizações muito frequentes
+let lastUpdateTime = 0;
+const UPDATE_THROTTLE_MS = 500;
+
 export function useDragAndDrop(onUpdateCallback?: UpdateCallback) {
   const [isDragging, setIsDragging] = useState(false);
   const [activeDragEvent, setActiveDragEvent] = useState<CalendarEvent | null>(null);
@@ -66,6 +70,16 @@ export function useDragAndDrop(onUpdateCallback?: UpdateCallback) {
       return;
     }
     
+    // Verificar throttling para evitar múltiplas atualizações muito rápidas
+    const now = Date.now();
+    if (now - lastUpdateTime < UPDATE_THROTTLE_MS) {
+      console.log("Atualizações muito frequentes, ignorando esta operação de arrastar");
+      if (onUpdateCallback) onUpdateCallback(false);
+      return;
+    }
+    
+    lastUpdateTime = now;
+    
     try {
       console.log(`Moving event ${activeDragEvent.id} from ${activeDragEvent.scheduled_date} to ${formattedDate}`);
       
@@ -90,11 +104,11 @@ export function useDragAndDrop(onUpdateCallback?: UpdateCallback) {
       delete (updateData as any).created_at;
       delete (updateData as any).updated_at;
       
-      // Aplicar atualização otimista
+      // Aplicar atualização otimista ao cache do React Query
       const contentSchedulesKey = ['content-schedules'];
       const infiniteContentSchedulesKey = ['infinite-content-schedules'];
       
-      // Atualizar cache padrão
+      // Aplicar atualização imediata no cache
       const cachedEvents = queryClient.getQueryData<CalendarEvent[]>(contentSchedulesKey);
       if (cachedEvents) {
         const updatedEvents = cachedEvents.map(event => {
@@ -132,7 +146,7 @@ export function useDragAndDrop(onUpdateCallback?: UpdateCallback) {
       // Executar chamada à API
       await updateContentSchedule(eventId, updateData);
       
-      // Registrar histórico da mudança se necessário
+      // Registrar histórico da mudança
       console.log("Recording history for scheduled_date change:", {
         old: oldDate,
         new: formattedDate
@@ -146,18 +160,22 @@ export function useDragAndDrop(onUpdateCallback?: UpdateCallback) {
       
       console.log("Updated content schedule:", eventId);
       
-      // Forçar invalidação dos dados
+      // Forçar invalidação completa dos dados
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['content-schedules'] }),
         queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] }),
         queryClient.invalidateQueries({ queryKey: ['scheduleHistory'] })
       ]);
       
-      console.log("Chamando callback após drag and drop bem sucedido");
-      
-      // SEMPRE chamar o callback após qualquer operação bem-sucedida
+      // SEMPRE chamar o callback com sucesso após atualização bem-sucedida
       if (onUpdateCallback) {
+        console.log("Chamando callback após drag and drop bem sucedido");
         onUpdateCallback(true, eventId);
+        
+        // Chamar mais uma vez após um breve período para garantir que atualizações subsequentes sejam processadas
+        setTimeout(() => {
+          onUpdateCallback(true, eventId);
+        }, 300);
       }
     } catch (error) {
       console.error("Error moving event:", error);

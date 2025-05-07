@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { memo } from 'react';
 import { CalendarEvent } from "@/types/oni-agencia";
 import { EventItem } from "./EventItem";
 import { useDraggable } from '@dnd-kit/core';
@@ -9,7 +9,10 @@ interface DraggableEventItemProps {
   onClick: (e: React.MouseEvent) => void;
 }
 
-export function DraggableEventItem({ event, onClick }: DraggableEventItemProps) {
+export const DraggableEventItem = memo(function DraggableEventItem({ 
+  event, 
+  onClick 
+}: DraggableEventItemProps) {
   // Make sure we have a valid ID for the draggable item
   if (!event.id) {
     console.error("Attempted to render draggable event with no ID:", event);
@@ -45,6 +48,7 @@ export function DraggableEventItem({ event, onClick }: DraggableEventItemProps) 
       {...listeners} 
       {...attributes}
       className="cursor-grab active:cursor-grabbing"
+      data-event-id={event.id}
     >
       <EventItem 
         event={event} 
@@ -52,4 +56,4 @@ export function DraggableEventItem({ event, onClick }: DraggableEventItemProps) 
       />
     </div>
   );
-}
+});
