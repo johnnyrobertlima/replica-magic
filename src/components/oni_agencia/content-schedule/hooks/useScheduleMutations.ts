@@ -54,6 +54,27 @@ export function useScheduleMutations({
     return sanitized;
   };
 
+  // Função utilitária para executar atualização manual da UI
+  const executeManualRefetch = () => {
+    if (!onManualRefetch) return;
+    
+    console.log("Executando atualização manual da UI");
+    
+    // Executa múltiplas vezes com pequenos atrasos para garantir atualização
+    // Chamada imediata
+    onManualRefetch();
+    
+    // Segunda chamada com pequeno atraso
+    setTimeout(() => {
+      onManualRefetch();
+    }, 100);
+    
+    // Terceira chamada com atraso maior para segurança
+    setTimeout(() => {
+      onManualRefetch();
+    }, 300);
+  };
+
   const handleSubmit = async (
     e: React.FormEvent, 
     currentSelectedEvent: CalendarEvent | null,
@@ -66,6 +87,48 @@ export function useScheduleMutations({
 
       // Log sanitized data for debugging
       console.log("Sanitized form data:", sanitizedData);
+      
+      // Apply optimistic update first
+      if (currentSelectedEvent) {
+        console.log("Aplicando atualização otimista para UI");
+        const contentSchedulesKey = ['content-schedules'];
+        const infiniteContentSchedulesKey = ['infinite-content-schedules'];
+        
+        // Update standard queries
+        const currentData = queryClient.getQueryData(contentSchedulesKey) as CalendarEvent[] | undefined;
+        if (currentData) {
+          const updatedData = currentData.map(event => {
+            if (event.id === currentSelectedEvent.id) {
+              return { ...event, ...sanitizedData };
+            }
+            return event;
+          });
+          queryClient.setQueryData(contentSchedulesKey, updatedData);
+        }
+        
+        // Update infinite queries
+        const infiniteData = queryClient.getQueryData(infiniteContentSchedulesKey) as any;
+        if (infiniteData?.pages) {
+          const updatedInfiniteData = {
+            ...infiniteData,
+            pages: infiniteData.pages.map((page: any) => {
+              if (page.data) {
+                return {
+                  ...page,
+                  data: page.data.map((event: CalendarEvent) => {
+                    if (event.id === currentSelectedEvent.id) {
+                      return { ...event, ...sanitizedData };
+                    }
+                    return event;
+                  })
+                };
+              }
+              return page;
+            })
+          };
+          queryClient.setQueryData(infiniteContentSchedulesKey, updatedInfiniteData);
+        }
+      }
       
       if (currentSelectedEvent) {
         // If updating an existing event
@@ -118,20 +181,13 @@ export function useScheduleMutations({
       }
       
       // Invalidate queries to force refresh
-      await queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
-      await queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['content-schedules'] }),
+        queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] })
+      ]);
       
-      // Execute manual refetch immediately if the function was provided
-      if (onManualRefetch) {
-        console.log("Executando atualização manual após salvar");
-        // Execute twice with a small delay to ensure UI refresh
-        setTimeout(() => {
-          onManualRefetch();
-          setTimeout(() => {
-            onManualRefetch();
-          }, 100);
-        }, 0);
-      }
+      // Execute manual refetch immediately
+      executeManualRefetch();
       
       onClose();
     } catch (error) {
@@ -143,11 +199,7 @@ export function useScheduleMutations({
       });
       
       // Ainda assim tentar atualizar a UI em caso de erro
-      if (onManualRefetch) {
-        setTimeout(() => {
-          onManualRefetch();
-        }, 0);
-      }
+      executeManualRefetch();
     }
   };
 
@@ -161,6 +213,56 @@ export function useScheduleMutations({
     if (!currentSelectedEvent) return;
     
     try {
+      // Apply optimistic update for status change
+      console.log("Aplicando atualização otimista de status para UI");
+      const contentSchedulesKey = ['content-schedules'];
+      const infiniteContentSchedulesKey = ['infinite-content-schedules'];
+      
+      // Update standard queries
+      const currentData = queryClient.getQueryData(contentSchedulesKey) as CalendarEvent[] | undefined;
+      if (currentData) {
+        const updatedData = currentData.map(event => {
+          if (event.id === currentSelectedEvent.id) {
+            return { 
+              ...event, 
+              status_id: formData.status_id,
+              collaborator_id: formData.collaborator_id,
+              description: formData.description 
+            };
+          }
+          return event;
+        });
+        queryClient.setQueryData(contentSchedulesKey, updatedData);
+      }
+      
+      // Update infinite queries
+      const infiniteData = queryClient.getQueryData(infiniteContentSchedulesKey) as any;
+      if (infiniteData?.pages) {
+        const updatedInfiniteData = {
+          ...infiniteData,
+          pages: infiniteData.pages.map((page: any) => {
+            if (page.data) {
+              return {
+                ...page,
+                data: page.data.map((event: CalendarEvent) => {
+                  if (event.id === currentSelectedEvent.id) {
+                    return { 
+                      ...event, 
+                      status_id: formData.status_id,
+                      collaborator_id: formData.collaborator_id,
+                      description: formData.description 
+                    };
+                  }
+                  return event;
+                })
+              };
+            }
+            return page;
+          })
+        };
+        queryClient.setQueryData(infiniteContentSchedulesKey, updatedInfiniteData);
+      }
+      
       // Create a complete update object with all required fields from the current event
       const updateData: ContentScheduleFormData = {
         client_id: currentSelectedEvent.client_id,
@@ -190,20 +292,13 @@ export function useScheduleMutations({
       });
       
       // Invalidate queries to force refresh
-      await queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
-      await queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['content-schedules'] }),
+        queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] })
+      ]);
       
-      // Execute manual refetch immediately if the function was provided
-      if (onManualRefetch) {
-        console.log("Executando atualização manual após atualizar status");
-        // Execute twice with a small delay to ensure UI refresh
-        setTimeout(() => {
-          onManualRefetch();
-          setTimeout(() => {
-            onManualRefetch();
-          }, 100);
-        }, 0);
-      }
+      // Execute manual refetch immediately
+      executeManualRefetch();
       
       onClose();
     } catch (error) {
@@ -215,11 +310,7 @@ export function useScheduleMutations({
       });
       
       // Ainda assim tentar atualizar a UI em caso de erro
-      if (onManualRefetch) {
-        setTimeout(() => {
-          onManualRefetch();
-        }, 0);
-      }
+      executeManualRefetch();
     }
   };
 
@@ -229,6 +320,38 @@ export function useScheduleMutations({
     try {
       if (confirm("Tem certeza que deseja excluir este agendamento?")) {
         console.log("Deleting event:", currentSelectedEvent.id);
+        
+        // Apply optimistic deletion
+        console.log("Aplicando deleção otimista para UI");
+        const contentSchedulesKey = ['content-schedules'];
+        const infiniteContentSchedulesKey = ['infinite-content-schedules'];
+        
+        // Update standard queries
+        const currentData = queryClient.getQueryData(contentSchedulesKey) as CalendarEvent[] | undefined;
+        if (currentData) {
+          const updatedData = currentData.filter(event => event.id !== currentSelectedEvent.id);
+          queryClient.setQueryData(contentSchedulesKey, updatedData);
+        }
+        
+        // Update infinite queries
+        const infiniteData = queryClient.getQueryData(infiniteContentSchedulesKey) as any;
+        if (infiniteData?.pages) {
+          const updatedInfiniteData = {
+            ...infiniteData,
+            pages: infiniteData.pages.map((page: any) => {
+              if (page.data) {
+                return {
+                  ...page,
+                  data: page.data.filter((event: CalendarEvent) => event.id !== currentSelectedEvent.id)
+                };
+              }
+              return page;
+            })
+          };
+          queryClient.setQueryData(infiniteContentSchedulesKey, updatedInfiniteData);
+        }
+        
+        // Execute actual deletion
         await deleteMutation.mutateAsync(currentSelectedEvent.id);
         
         toast({
@@ -237,20 +360,13 @@ export function useScheduleMutations({
         });
         
         // Invalidate queries to force refresh
-        await queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
-        await queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['content-schedules'] }),
+          queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] })
+        ]);
         
-        // Execute manual refetch immediately if the function was provided
-        if (onManualRefetch) {
-          console.log("Executando atualização manual após excluir");
-          // Execute twice with a small delay to ensure UI refresh
-          setTimeout(() => {
-            onManualRefetch();
-            setTimeout(() => {
-              onManualRefetch();
-            }, 100);
-          }, 0);
-        }
+        // Execute manual refetch immediately
+        executeManualRefetch();
         
         onClose();
       }
@@ -263,11 +379,7 @@ export function useScheduleMutations({
       });
       
       // Ainda assim tentar atualizar a UI em caso de erro
-      if (onManualRefetch) {
-        setTimeout(() => {
-          onManualRefetch();
-        }, 0);
-      }
+      executeManualRefetch();
     }
   };
 

@@ -42,11 +42,21 @@ export function useDndContext({ clientId, month, year, onManualRefetch }: UseDnd
       setSelectedEvent(undefined);
       setSelectedDate(undefined);
       
-      // Trigger a manual refetch when dialog closes
+      // Trigger a manual refetch when dialog closes - IMMEDIATELY with multiple calls
       if (onManualRefetch) {
+        console.log("Executando atualização manual ao fechar diálogo");
+        // First call
+        onManualRefetch();
+        
+        // Second call with delay to ensure state updates are processed
         setTimeout(() => {
           onManualRefetch();
-        }, 0);
+        }, 100);
+        
+        // Third call with longer delay for safety
+        setTimeout(() => {
+          onManualRefetch();
+        }, 300);
       }
     }
   }, [onManualRefetch]);
@@ -56,11 +66,21 @@ export function useDndContext({ clientId, month, year, onManualRefetch }: UseDnd
     setSelectedEvent(undefined);
     setSelectedDate(undefined);
     
-    // Trigger a manual refetch when dialog closes
+    // Trigger a manual refetch when dialog closes - IMMEDIATELY with multiple calls
     if (onManualRefetch) {
+      console.log("Executando atualização manual ao fechar diálogo manualmente");
+      // First call
+      onManualRefetch();
+      
+      // Second call with delay to ensure state updates are processed
       setTimeout(() => {
         onManualRefetch();
-      }, 0);
+      }, 100);
+      
+      // Third call with longer delay for safety
+      setTimeout(() => {
+        onManualRefetch();
+      }, 300);
     }
   }, [onManualRefetch]);
 
@@ -134,20 +154,66 @@ export function useDndContext({ clientId, month, year, onManualRefetch }: UseDnd
         description: `Evento movido para ${format(targetDateObj, 'dd/MM/yyyy')}`
       });
       
-      // Invalidate queries to force refresh
-      await queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
-      await queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
+      // Apply optimistic update to UI
+      const contentSchedulesKey = ['content-schedules'];
+      const infiniteContentSchedulesKey = ['infinite-content-schedules'];
       
-      // Use the provided manual refetch function to update data immediately
+      // Get current data, update it, and set it back
+      const currentData = queryClient.getQueryData(contentSchedulesKey) as CalendarEvent[] | undefined;
+      if (currentData) {
+        const updatedData = currentData.map(event => {
+          if (event.id === eventId) {
+            return { ...event, scheduled_date: newDate };
+          }
+          return event;
+        });
+        queryClient.setQueryData(contentSchedulesKey, updatedData);
+      }
+      
+      // Update infinite queries too
+      const infiniteData = queryClient.getQueryData(infiniteContentSchedulesKey) as any;
+      if (infiniteData?.pages) {
+        const updatedInfiniteData = {
+          ...infiniteData,
+          pages: infiniteData.pages.map((page: any) => {
+            if (page.data) {
+              return {
+                ...page,
+                data: page.data.map((event: CalendarEvent) => {
+                  if (event.id === eventId) {
+                    return { ...event, scheduled_date: newDate };
+                  }
+                  return event;
+                })
+              };
+            }
+            return page;
+          })
+        };
+        queryClient.setQueryData(infiniteContentSchedulesKey, updatedInfiniteData);
+      }
+      
+      // Invalidate queries to force refresh
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: contentSchedulesKey }),
+        queryClient.invalidateQueries({ queryKey: infiniteContentSchedulesKey })
+      ]);
+      
+      // Use the provided manual refetch function to update data immediately with multiple calls
       if (onManualRefetch) {
         console.log("Executando atualização manual após drag and drop");
-        // Execute twice with a small delay to ensure UI refresh
+        // First immediate call
+        onManualRefetch();
+        
+        // Second call with delay to ensure state updates are processed
         setTimeout(() => {
           onManualRefetch();
-          setTimeout(() => {
-            onManualRefetch();
-          }, 100);
-        }, 0);
+        }, 100);
+        
+        // Third call with longer delay for safety
+        setTimeout(() => {
+          onManualRefetch();
+        }, 300);
       }
     } catch (error) {
       console.error("Failed to update event date:", error);
@@ -159,9 +225,11 @@ export function useDndContext({ clientId, month, year, onManualRefetch }: UseDnd
       
       // Force a refresh on error to maintain consistent state
       if (onManualRefetch) {
+        // Multiple calls to ensure refresh
+        onManualRefetch();
         setTimeout(() => {
           onManualRefetch();
-        }, 0);
+        }, 100);
       }
     }
   }, [updateMutation, toast, onManualRefetch, queryClient]);
