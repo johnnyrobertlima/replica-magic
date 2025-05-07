@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
 import { useCreateContentSchedule, useUpdateContentSchedule, useDeleteContentSchedule } from "@/hooks/useOniAgenciaContentSchedules";
@@ -9,7 +8,7 @@ export function useScheduleMutations({
   onClose,
   clientId,
   selectedDate,
-  onManualRefetch // Adicionamos esse parâmetro para permitir atualização manual após operações
+  onManualRefetch // Parâmetro para permitir atualização manual após operações
 }: {
   onClose: () => void;
   clientId: string;
@@ -117,12 +116,10 @@ export function useScheduleMutations({
         });
       }
       
-      // Executar atualização manual se a função foi fornecida
+      // Executar atualização manual imediatamente se a função foi fornecida
       if (onManualRefetch) {
-        setTimeout(() => {
-          console.log("Executando atualização manual após salvar");
-          onManualRefetch();
-        }, 300);
+        console.log("Executando atualização manual após salvar");
+        onManualRefetch(); // Removido o setTimeout para executar imediatamente
       }
       
       onClose();
@@ -174,12 +171,10 @@ export function useScheduleMutations({
         description: "Status do agendamento atualizado com sucesso."
       });
       
-      // Executar atualização manual se a função foi fornecida
+      // Executar atualização manual imediatamente se a função foi fornecida
       if (onManualRefetch) {
-        setTimeout(() => {
-          console.log("Executando atualização manual após atualizar status");
-          onManualRefetch();
-        }, 300);
+        console.log("Executando atualização manual após atualizar status");
+        onManualRefetch(); // Removido o setTimeout para executar imediatamente
       }
       
       onClose();
@@ -206,12 +201,10 @@ export function useScheduleMutations({
           description: "Agendamento excluído com sucesso."
         });
         
-        // Executar atualização manual se a função foi fornecida
+        // Executar atualização manual imediatamente se a função foi fornecida
         if (onManualRefetch) {
-          setTimeout(() => {
-            console.log("Executando atualização manual após excluir");
-            onManualRefetch();
-          }, 300);
+          console.log("Executando atualização manual após excluir");
+          onManualRefetch(); // Removido o setTimeout para executar imediatamente
         }
         
         onClose();

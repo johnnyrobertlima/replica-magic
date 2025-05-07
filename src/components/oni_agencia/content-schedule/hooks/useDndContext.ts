@@ -93,7 +93,6 @@ export function useDndContext({ clientId, month, year, onManualRefetch }: UseDnd
       console.log(`Moving event ${eventId} from ${oldDate} to ${newDate}`);
       
       // Create a complete update object with all required fields from the current event
-      // This resolves the TypeScript error by including all required fields
       const updateData = {
         client_id: draggedEvent.client_id,
         service_id: draggedEvent.service_id,
@@ -119,12 +118,10 @@ export function useDndContext({ clientId, month, year, onManualRefetch }: UseDnd
         description: `Evento movido para ${format(targetDateObj, 'dd/MM/yyyy')}`
       });
       
-      // Use the provided manual refetch function to update data
+      // Use the provided manual refetch function to update data immediately
       if (onManualRefetch) {
-        setTimeout(() => {
-          console.log("Executando atualização manual após drag and drop");
-          onManualRefetch();
-        }, 300);
+        console.log("Executando atualização manual após drag and drop");
+        onManualRefetch(); // Removido o setTimeout para executar imediatamente
       }
     } catch (error) {
       console.error("Failed to update event date:", error);

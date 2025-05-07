@@ -14,6 +14,7 @@ interface CalendarContainerProps {
   selectedCollaborator?: string | null;
   onSelect: (date: Date) => void;
   onEventClick: (event: CalendarEvent, date: Date) => void;
+  onManualRefetch?: () => void; // Adicionado prop para atualização manual
 }
 
 export function CalendarContainer({
@@ -22,7 +23,8 @@ export function CalendarContainer({
   currentDate,
   selectedCollaborator,
   onSelect,
-  onEventClick
+  onEventClick,
+  onManualRefetch // Recebe a função de atualização manual
 }: CalendarContainerProps) {
   // Get username first - maintain hook order
   const userName = useCurrentUser();
@@ -36,8 +38,8 @@ export function CalendarContainer({
     })
   );
   
-  // Get drag-and-drop handlers
-  const { isDragging, handleDragStart, handleDragEnd } = useDragAndDrop();
+  // Get drag-and-drop handlers and pass onManualRefetch
+  const { isDragging, handleDragStart, handleDragEnd } = useDragAndDrop(onManualRefetch);
 
   return (
     <DndContext 

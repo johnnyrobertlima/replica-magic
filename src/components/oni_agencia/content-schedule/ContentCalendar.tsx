@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { CalendarHeader } from "./calendar/CalendarHeader";
@@ -22,6 +23,7 @@ interface ContentCalendarProps {
   year: number;
   onMonthChange: (month: number, year: number) => void;
   selectedCollaborator?: string | null;
+  onManualRefetch?: () => void; // Adicionado prop para atualização manual
 }
 
 export function ContentCalendar({ 
@@ -30,7 +32,8 @@ export function ContentCalendar({
   month, 
   year, 
   onMonthChange,
-  selectedCollaborator
+  selectedCollaborator,
+  onManualRefetch // Recebe a função de atualização manual
 }: ContentCalendarProps) {
   const [view, setView] = useState<"month" | "week" | "day">("month");
   
@@ -110,6 +113,7 @@ export function ContentCalendar({
             selectedCollaborator={selectedCollaborator}
             onSelect={handleDateSelect}
             onEventClick={handleEventClick}
+            onManualRefetch={onManualRefetch} // Passar a função de atualização manual
           />
         </>
       )}
@@ -146,6 +150,7 @@ export function ContentCalendar({
           events={currentEvents}
           onClose={handleDialogClose}
           selectedEvent={selectedEvent}
+          onManualRefetch={onManualRefetch} // Passar a função de atualização manual
         />
       )}
     </div>

@@ -7,7 +7,7 @@ import { updateContentSchedule } from "@/services/oniAgenciaContentScheduleServi
 import { format } from "date-fns";
 import { DragStartEvent, DragEndEvent } from "@dnd-kit/core";
 
-export function useDragAndDrop() {
+export function useDragAndDrop(onManualRefetch?: () => void) {
   const [isDragging, setIsDragging] = useState(false);
   const [activeDragEvent, setActiveDragEvent] = useState<CalendarEvent | null>(null);
   const queryClient = useQueryClient();
@@ -147,6 +147,12 @@ export function useDragAndDrop() {
       queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
       queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
       queryClient.invalidateQueries({ queryKey: ['scheduleHistory'] });
+      
+      // Execute manual refetch if provided
+      if (onManualRefetch) {
+        console.log("Executando atualização manual após drag and drop");
+        onManualRefetch(); // Removido o setTimeout para executar imediatamente
+      }
       
     } catch (error) {
       console.error("Error moving event:", error);
