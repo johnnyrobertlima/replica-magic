@@ -14,7 +14,7 @@ export interface StatusBadgeProps {
   size?: 'xs' | 'sm' | 'md' | 'lg';
 }
 
-export function StatusBadge({ status, color, className, children, size }: StatusBadgeProps) {
+export function StatusBadge({ status, color, className, children, size = 'md' }: StatusBadgeProps) {
   // Função para determinar a cor do text baseada na cor de fundo
   const getTextColor = (bgColor: string | null | undefined) => {
     if (!bgColor) return "text-foreground";

@@ -42,11 +42,13 @@ export function CalendarContainer({
     setLocalEvents(events);
   }, [events]);
   
-  // Configure sensors for drag and drop
+  // Configure sensors for drag and drop with reduced activation constraint
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8, // Min drag distance before activation
+        distance: 5, // Reduced distance for easier activation
+        tolerance: 5, // Added tolerance
+        delay: 150, // Short delay to avoid accidental drags
       },
     })
   );
@@ -75,7 +77,7 @@ export function CalendarContainer({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="w-full p-0">
+      <div className="w-full p-0 calendar-grid">
         <Calendar
           key={`calendar-${refreshKey}-${localEvents.length}`}
           mode="single"

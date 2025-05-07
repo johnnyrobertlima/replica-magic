@@ -21,7 +21,7 @@ export function useDragAndDrop(onDragComplete?: DragCompleteCallback) {
     const eventData = active.data?.current?.event as CalendarEvent;
     if (eventData) {
       setDraggedEvent(eventData);
-      console.log('Evento sendo arrastado:', eventData.title);
+      console.log('Evento sendo arrastado:', eventData.title, eventData);
     }
   }, []);
 
@@ -37,26 +37,33 @@ export function useDragAndDrop(onDragComplete?: DragCompleteCallback) {
     
     const eventId = active.id as string;
     const eventData = active.data?.current?.event as CalendarEvent;
-    const newDate = over.id as string;
+    const newDateString = String(over.id);
     
     // Debug logs
     console.log(`Fim do drag - Evento: ${eventId}`);
-    console.log(`Destino: ${newDate}`);
+    console.log(`Destino: ${newDateString}`);
+    console.log('Active data:', active.data?.current);
+    console.log('Over data:', over.data?.current);
     
     // Check if we have valid data
-    if (!eventData || !newDate) {
+    if (!eventData || !newDateString) {
       console.log('Dados inválidos para processamento de drag');
       return;
     }
     
     // Check if the date actually changed
-    if (eventData.scheduled_date === newDate) {
+    if (eventData.scheduled_date === newDateString) {
       console.log('Data não alterada, ignorando drag');
       return;
     }
     
     // Log success and call the callback
-    console.log(`Drag bem sucedido: ${eventData.title} movido para ${newDate}`);
+    console.log(`Drag bem sucedido: ${eventData.title} movido para ${newDateString}`);
+    
+    toast({
+      title: 'Evento movido',
+      description: `O evento está sendo atualizado para a nova data.`,
+    });
     
     // Notify the onDragComplete callback
     if (onDragComplete) {
@@ -65,7 +72,7 @@ export function useDragAndDrop(onDragComplete?: DragCompleteCallback) {
     
     // Reset state
     setDraggedEvent(null);
-  }, [onDragComplete]);
+  }, [onDragComplete, toast]);
 
   return {
     isDragging,

@@ -30,8 +30,9 @@ export const DraggableEventItem = memo(function DraggableEventItem({
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
     zIndex: isDragging ? 999 : 'auto',
     opacity: isDragging ? 0.8 : 1,
-    position: isDragging ? 'absolute' : 'relative' as any
-  } : undefined;
+    position: isDragging ? 'absolute' : 'relative' as any,
+    width: isDragging ? 'auto' : '100%'
+  } : { width: '100%' };
   
   // Log dragging state for debugging
   useEffect(() => {
@@ -54,7 +55,7 @@ export const DraggableEventItem = memo(function DraggableEventItem({
       style={style} 
       {...listeners} 
       {...attributes}
-      className="cursor-grab active:cursor-grabbing"
+      className="cursor-grab active:cursor-grabbing w-full"
       data-event-id={event.id}
       data-test-draggable="true"
       data-drag-item-id={event.id}

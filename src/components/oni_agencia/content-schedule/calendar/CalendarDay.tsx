@@ -1,116 +1,128 @@
 
-import { format } from "date-fns";
+import React, { useMemo } from "react";
+import { format, isSameMonth, isToday } from "date-fns";
+import { ptBR } from 'date-fns/locale';
 import { CalendarEvent } from "@/types/oni-agencia";
 import { EventsList } from "./EventsList";
-import { useDroppable } from "@dnd-kit/core";
-import React, { useCallback, useMemo, memo } from "react";
+import { cn } from "@/lib/utils";
+import { useDroppable } from '@dnd-kit/core';
 
 interface CalendarDayProps {
   date: Date;
-  selectedDate?: Date;
   events: CalendarEvent[];
+  selectedDate?: Date;
   selectedCollaborator?: string | null;
-  onSelect: (date: Date) => void;
-  onEventClick: (event: CalendarEvent, date: Date) => void;
+  onSelect?: (date: Date) => void;
+  onEventClick?: (event: CalendarEvent, date: Date) => void;
 }
 
-export const CalendarDay = memo(function CalendarDay({
+export function CalendarDay({
   date,
-  selectedDate,
   events,
+  selectedDate,
   selectedCollaborator,
   onSelect,
   onEventClick
 }: CalendarDayProps) {
-  // Set up the droppable area for this day with a stable ID
-  const dateStr = format(date, 'yyyy-MM-dd');
-  const dropId = `day-${dateStr}`;
+  // Format date as ISO string for comparison
+  const dateString = date.toISOString().split('T')[0];
   
+  // Set up droppable area for this date
   const { setNodeRef, isOver } = useDroppable({
-    id: dropId,
-    data: { date }
+    id: dateString,
+    data: {
+      date: dateString,
+      type: 'date'
+    }
   });
   
-  // Melhoria de performance utilizando useCallback para funções de evento
-  const handleDayClick = useCallback(() => {
-    console.log("Day clicked:", dateStr);
-    onSelect(date);
-  }, [date, onSelect, dateStr]);
-  
-  // Create an event click handler that adapts the parameters
-  const handleEventClick = useCallback((e: React.MouseEvent, event: CalendarEvent) => {
-    console.log("CalendarDay - Event clicked:", event.id, "for date:", dateStr);
-    e.stopPropagation(); // Prevent day click when clicking on an event
-    onEventClick(event, date);
-  }, [date, onEventClick, dateStr]);
-  
-  // Filtra eventos para esse dia específico usando useMemo para otimização
-  const filteredEvents = useMemo(() => {
-    // First filter events for this specific day
-    const dayEvents = events.filter(event => event.scheduled_date === dateStr);
+  // Filter events for this date
+  const dayEvents = useMemo(() => {
+    // First filter by date
+    const dateEvents = events.filter(
+      (event) => event.scheduled_date === dateString
+    );
     
-    // Then apply collaborator filter if needed
-    if (!selectedCollaborator) return dayEvents;
+    // Then filter by collaborator if one is selected
+    if (selectedCollaborator) {
+      return dateEvents.filter(event => {
+        const isCollaborator = event.collaborator_id === selectedCollaborator;
+        const isCreator = event.creators?.includes(selectedCollaborator) || false;
+        return isCollaborator || isCreator;
+      });
+    }
     
-    return dayEvents.filter(event => {
-      // Check if person is main collaborator
-      const isCollaborator = event.collaborator_id === selectedCollaborator;
-      
-      // Check if person is in creators array
-      let isCreator = false;
-      if (event.creators) {
-        // Ensure creators is always treated as an array
-        const creatorsArray = Array.isArray(event.creators) ? event.creators : 
-                            (typeof event.creators === 'string' ? [event.creators] : []);
-        
-        isCreator = creatorsArray.includes(selectedCollaborator);
-      }
-      
-      return isCollaborator || isCreator;
-    });
-  }, [events, dateStr, selectedCollaborator]);
+    return dateEvents;
+  }, [events, dateString, selectedCollaborator]);
   
-  // Log filtered events count for debugging
-  if (filteredEvents.length > 0) {
-    console.log(`CalendarDay - Rendering ${filteredEvents.length} events for date ${dateStr}`);
-  }
+  // Handle click on the day
+  const handleClick = () => {
+    if (onSelect) {
+      onSelect(date);
+    }
+  };
+
+  // Handle click on an event
+  const handleEventClick = (e: React.MouseEvent, event: CalendarEvent) => {
+    e.stopPropagation();
+    if (onEventClick) {
+      onEventClick(event, date);
+    }
+  };
+
+  // Day styles
+  const isCurrentMonth = isSameMonth(date, new Date(date.getFullYear(), date.getMonth(), 1));
+  const isSelectedDate = selectedDate && format(selectedDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd');
+  const isDifferentMonth = !isCurrentMonth;
   
-  const isActive = selectedDate && format(selectedDate, 'yyyy-MM-dd') === dateStr;
-  const today = new Date();
-  const isToday = format(today, 'yyyy-MM-dd') === dateStr;
-  const isCurrentMonth = date.getMonth() === new Date().getMonth();
-  
-  // Determinar se é de outro mês em relação ao mês selecionado (não ao mês atual)
-  const selectedMonth = selectedDate ? selectedDate.getMonth() : new Date().getMonth();
-  const isOtherMonth = date.getMonth() !== selectedMonth;
-  
+  const dayClasses = cn(
+    "calendar-day",
+    {
+      "bg-gray-50": isDifferentMonth,
+      "selected": isSelectedDate,
+      "drop-active": isOver
+    }
+  );
+
+  const dayNumberClasses = cn(
+    "calendar-day-number",
+    {
+      "today": isToday(date),
+      "selected-day": isSelectedDate,
+      "text-gray-400": isDifferentMonth
+    }
+  );
+
   return (
-    <div 
+    <div
       ref={setNodeRef}
-      className={`calendar-day relative ${
-        isToday ? 'today' : ''
-      } ${
-        isActive ? 'selected' : ''
-      } ${
-        isOtherMonth ? 'other-month' : ''
-      } ${
-        isOver ? 'drop-active' : ''
-      } ${
-        filteredEvents.length > 0 ? 'has-events' : ''
-      }`} 
-      onClick={handleDayClick}
+      className={dayClasses}
+      onClick={handleClick}
+      data-date={dateString}
     >
-      <span className="day-number">{date.getDate()}</span>
-      
-      {filteredEvents.length > 0 && (
-        <div className="mt-5">
-          <EventsList 
-            events={filteredEvents}
+      <div className="calendar-day-header">
+        <span className={dayNumberClasses}>
+          {format(date, 'd')}
+        </span>
+      </div>
+      <div className="calendar-day-content">
+        {dayEvents.length > 0 ? (
+          <EventsList
+            events={dayEvents}
             date={date}
-            onEventClick={handleEventClick}
+            onEventClick={(e, event) => handleEventClick(e, event)}
+            isDraggable={true}
           />
-        </div>
-      )}
+        ) : (
+          <div className="h-full">
+            {isOver && (
+              <div className="text-center p-2 text-blue-500 text-xs">
+                Soltar aqui
+              </div>  
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
-});
+}

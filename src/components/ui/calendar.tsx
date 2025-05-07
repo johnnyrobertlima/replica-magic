@@ -20,7 +20,7 @@ function Calendar({
       className={cn("w-full p-0", className)}
       classNames={{
         months: "flex flex-col w-full bg-white",
-        month: "w-full bg-white",
+        month: "w-full bg-white space-y-1",
         caption: "flex justify-center pt-1 relative items-center bg-white",
         caption_label: "text-sm font-medium",
         nav: "space-x-1 flex items-center bg-white",
@@ -30,11 +30,11 @@ function Calendar({
         ),
         nav_button_previous: "absolute left-1",
         nav_button_next: "absolute right-1",
-        table: "w-full border-collapse bg-white",
-        head_row: "flex w-full bg-white",
+        table: "w-full border-collapse space-y-1 bg-white",
+        head_row: "flex w-full mb-1 bg-white",
         head_cell:
-          "text-muted-foreground rounded-md w-full font-normal text-[0.8rem] bg-white",
-        row: "flex w-full bg-white",
+          "text-muted-foreground rounded-md w-full font-normal text-[0.8rem] bg-white py-2",
+        row: "flex w-full mt-0 bg-white",
         cell: "relative w-full p-0 text-center text-sm focus-within:relative focus-within:z-20 bg-white",
         day: cn(
           buttonVariants({ variant: "ghost" }),

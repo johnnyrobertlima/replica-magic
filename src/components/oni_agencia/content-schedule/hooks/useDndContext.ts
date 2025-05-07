@@ -30,7 +30,8 @@ export function useDndContext({
   
   // Mutation for updating event date (drag-and-drop)
   const updateEventMutation = useMutation({
-    mutationFn: async (data: { id: string, scheduled_date: string }) => {
+    mutationFn: (data: { id: string, scheduled_date: string }) => {
+      console.log("Mutation called with:", data);
       return updateContentSchedule(data.id, { scheduled_date: data.scheduled_date });
     },
     onSuccess: async (data, variables) => {
@@ -78,11 +79,21 @@ export function useDndContext({
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     
-    if (!active || !over) return;
+    if (!active || !over) {
+      console.log("Drag incompleto: active ou over são indefinidos");
+      return;
+    }
     
     const eventId = active.id as string;
     const eventData = active.data?.current?.event as CalendarEvent;
     const newDate = over.id as string;
+    
+    console.log("Drag end info:", { 
+      eventId, 
+      eventData: eventData?.title, 
+      newDate, 
+      currentDate: eventData?.scheduled_date 
+    });
     
     // Check if we have valid data and a date change occurred
     if (eventData && eventId && newDate && eventData.scheduled_date !== newDate) {
