@@ -70,7 +70,17 @@ export function DialogContent({
   onDateChange,
   defaultTab
 }: DialogContentProps) {
+  // If there's a selectedEvent passed from props, don't show the event list
   const [showEventList, setShowEventList] = useState(!selectedEvent && events.length > 0);
+  
+  // If a selectedEvent is provided, select it right away
+  useEffect(() => {
+    if (selectedEvent && !currentSelectedEvent) {
+      console.log("Auto-selecting event from props:", selectedEvent.id);
+      onSelectEvent(selectedEvent);
+      setShowEventList(false);
+    }
+  }, [selectedEvent, currentSelectedEvent, onSelectEvent]);
   
   // Use defaultTab if provided
   useEffect(() => {

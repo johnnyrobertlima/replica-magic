@@ -31,7 +31,9 @@ export function DraggableEventItem({ event, onClick }: DraggableEventItemProps) 
   } : undefined;
   
   const handleClick = (e: React.MouseEvent) => {
+    // Only trigger click if not dragging
     if (!isDragging) {
+      e.stopPropagation(); // Stop propagation to prevent calendar day click
       onClick(e);
     }
   };
