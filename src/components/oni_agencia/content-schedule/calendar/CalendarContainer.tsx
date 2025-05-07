@@ -6,6 +6,7 @@ import { CalendarEvent } from "@/types/oni-agencia";
 import { ptBR } from "date-fns/locale";
 import { useDragAndDrop } from "../hooks/useDragAndDrop";
 import { useCurrentUser } from "../hooks/useCurrentUser";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface CalendarContainerProps {
   events: CalendarEvent[];
@@ -26,6 +27,9 @@ export function CalendarContainer({
   onEventClick,
   onManualRefetch
 }: CalendarContainerProps) {
+  // Get queryClient for forceful updates
+  const queryClient = useQueryClient();
+  
   // Get username first - maintain hook order
   const userName = useCurrentUser();
   
@@ -38,8 +42,22 @@ export function CalendarContainer({
     })
   );
   
-  // Get drag-and-drop handlers and ensure onManualRefetch is passed
-  const { isDragging, handleDragStart, handleDragEnd } = useDragAndDrop(onManualRefetch);
+  // Get drag-and-drop handlers with custom refetch function
+  const { isDragging, handleDragStart, handleDragEnd } = useDragAndDrop((success: boolean) => {
+    if (success && onManualRefetch) {
+      console.log("Executando atualização forçada após drop bem sucedido");
+      
+      // Primeiro invalidamos o cache
+      queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
+      queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
+      
+      // Executamos a atualização manual várias vezes com delays diferentes
+      onManualRefetch();
+      setTimeout(() => onManualRefetch(), 100);
+      setTimeout(() => onManualRefetch(), 300);
+      setTimeout(() => onManualRefetch(), 600);
+    }
+  });
 
   return (
     <DndContext 

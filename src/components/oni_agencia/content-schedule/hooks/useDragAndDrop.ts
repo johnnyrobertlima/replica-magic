@@ -7,7 +7,10 @@ import { updateContentSchedule } from "@/services/oniAgenciaContentScheduleServi
 import { format } from "date-fns";
 import { DragStartEvent, DragEndEvent } from "@dnd-kit/core";
 
-export function useDragAndDrop(onManualRefetch?: () => void) {
+// Novo tipo para callback de atualização
+type UpdateCallback = (success: boolean) => void;
+
+export function useDragAndDrop(onUpdateCallback?: UpdateCallback) {
   const [isDragging, setIsDragging] = useState(false);
   const [activeDragEvent, setActiveDragEvent] = useState<CalendarEvent | null>(null);
   const queryClient = useQueryClient();
@@ -39,6 +42,7 @@ export function useDragAndDrop(onManualRefetch?: () => void) {
   const handleDrop = async (date: Date) => {
     if (!activeDragEvent) {
       console.error("Nenhum evento ativo para arrastar");
+      if (onUpdateCallback) onUpdateCallback(false);
       return;
     }
     
@@ -49,6 +53,7 @@ export function useDragAndDrop(onManualRefetch?: () => void) {
         title: "Erro ao mover agendamento",
         description: "O evento não possui um ID válido.",
       });
+      if (onUpdateCallback) onUpdateCallback(false);
       return;
     }
     
@@ -57,6 +62,7 @@ export function useDragAndDrop(onManualRefetch?: () => void) {
     if (formattedDate === activeDragEvent.scheduled_date) {
       setIsDragging(false);
       setActiveDragEvent(null);
+      if (onUpdateCallback) onUpdateCallback(false);
       return;
     }
     
@@ -90,21 +96,16 @@ export function useDragAndDrop(onManualRefetch?: () => void) {
       });
       
       // Force a refetch to ensure data consistency
-      await queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
-      await queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
-      await queryClient.invalidateQueries({ queryKey: ['scheduleHistory'] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['content-schedules'] }),
+        queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] }),
+        queryClient.invalidateQueries({ queryKey: ['scheduleHistory'] })
+      ]);
       
-      // Execute manual refetch if provided - IMMEDIATELY
-      if (onManualRefetch) {
-        console.log("Executando atualização manual após drag and drop");
-        // Tornando a execução síncrona para garantir a atualização
-        setTimeout(() => {
-          onManualRefetch();
-          // Após a primeira atualização, tente mais uma vez para garantir
-          setTimeout(() => {
-            onManualRefetch();
-          }, 100);
-        }, 0);
+      // Chamar o callback se fornecido
+      if (onUpdateCallback) {
+        console.log("Chamando callback após drag and drop bem sucedido");
+        onUpdateCallback(true);
       }
       
     } catch (error) {
@@ -118,6 +119,11 @@ export function useDragAndDrop(onManualRefetch?: () => void) {
       // If there's an error, refetch to restore the correct data
       queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
       queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
+      
+      // Chamar o callback com falha
+      if (onUpdateCallback) {
+        onUpdateCallback(false);
+      }
     } finally {
       setIsDragging(false);
       setActiveDragEvent(null);

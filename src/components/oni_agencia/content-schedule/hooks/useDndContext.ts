@@ -35,6 +35,36 @@ export function useDndContext({ clientId, month, year, onManualRefetch }: UseDnd
     setIsDialogOpen(true);
   }, []);
 
+  const forceDataRefresh = useCallback(() => {
+    if (!onManualRefetch) return;
+    
+    console.log("Executando atualização forçada de dados com múltiplas chamadas");
+    
+    // Primeiro invalidamos o cache
+    queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
+    queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
+    
+    // Depois executamos a atualização manual múltiplas vezes
+    onManualRefetch();
+    
+    // Chamadas adicionais com delay crescente
+    setTimeout(() => {
+      console.log("Atualização forçada: chamada 2 (100ms)");
+      onManualRefetch();
+    }, 100);
+    
+    setTimeout(() => {
+      console.log("Atualização forçada: chamada 3 (300ms)");
+      onManualRefetch();
+    }, 300);
+    
+    // Uma última chamada para garantir
+    setTimeout(() => {
+      console.log("Atualização forçada: chamada 4 (700ms)");
+      onManualRefetch();
+    }, 700);
+  }, [onManualRefetch, queryClient]);
+
   const handleDialogOpenChange = useCallback((open: boolean) => {
     setIsDialogOpen(open);
     if (!open) {
@@ -42,47 +72,19 @@ export function useDndContext({ clientId, month, year, onManualRefetch }: UseDnd
       setSelectedEvent(undefined);
       setSelectedDate(undefined);
       
-      // Trigger a manual refetch when dialog closes - IMMEDIATELY with multiple calls
-      if (onManualRefetch) {
-        console.log("Executando atualização manual ao fechar diálogo");
-        // First call
-        onManualRefetch();
-        
-        // Second call with delay to ensure state updates are processed
-        setTimeout(() => {
-          onManualRefetch();
-        }, 100);
-        
-        // Third call with longer delay for safety
-        setTimeout(() => {
-          onManualRefetch();
-        }, 300);
-      }
+      // Trigger data refresh when dialog closes
+      forceDataRefresh();
     }
-  }, [onManualRefetch]);
+  }, [forceDataRefresh]);
 
   const handleDialogClose = useCallback(() => {
     setIsDialogOpen(false);
     setSelectedEvent(undefined);
     setSelectedDate(undefined);
     
-    // Trigger a manual refetch when dialog closes - IMMEDIATELY with multiple calls
-    if (onManualRefetch) {
-      console.log("Executando atualização manual ao fechar diálogo manualmente");
-      // First call
-      onManualRefetch();
-      
-      // Second call with delay to ensure state updates are processed
-      setTimeout(() => {
-        onManualRefetch();
-      }, 100);
-      
-      // Third call with longer delay for safety
-      setTimeout(() => {
-        onManualRefetch();
-      }, 300);
-    }
-  }, [onManualRefetch]);
+    // Trigger data refresh when dialog is manually closed
+    forceDataRefresh();
+  }, [forceDataRefresh]);
 
   // Function to handle drag and drop of events
   const handleDragEnd = useCallback(async (event: DragEndEvent) => {
@@ -154,7 +156,7 @@ export function useDndContext({ clientId, month, year, onManualRefetch }: UseDnd
         description: `Evento movido para ${format(targetDateObj, 'dd/MM/yyyy')}`
       });
       
-      // Apply optimistic update to UI
+      // Apply optimistic update to UI immediately
       const contentSchedulesKey = ['content-schedules'];
       const infiniteContentSchedulesKey = ['infinite-content-schedules'];
       
@@ -193,28 +195,10 @@ export function useDndContext({ clientId, month, year, onManualRefetch }: UseDnd
         queryClient.setQueryData(infiniteContentSchedulesKey, updatedInfiniteData);
       }
       
-      // Invalidate queries to force refresh
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: contentSchedulesKey }),
-        queryClient.invalidateQueries({ queryKey: infiniteContentSchedulesKey })
-      ]);
+      // Forçar atualização dos dados após drag-and-drop usando nossa função aprimorada
+      console.log("Executando atualização manual após drag and drop");
+      forceDataRefresh();
       
-      // Use the provided manual refetch function to update data immediately with multiple calls
-      if (onManualRefetch) {
-        console.log("Executando atualização manual após drag and drop");
-        // First immediate call
-        onManualRefetch();
-        
-        // Second call with delay to ensure state updates are processed
-        setTimeout(() => {
-          onManualRefetch();
-        }, 100);
-        
-        // Third call with longer delay for safety
-        setTimeout(() => {
-          onManualRefetch();
-        }, 300);
-      }
     } catch (error) {
       console.error("Failed to update event date:", error);
       toast({
@@ -224,15 +208,9 @@ export function useDndContext({ clientId, month, year, onManualRefetch }: UseDnd
       });
       
       // Force a refresh on error to maintain consistent state
-      if (onManualRefetch) {
-        // Multiple calls to ensure refresh
-        onManualRefetch();
-        setTimeout(() => {
-          onManualRefetch();
-        }, 100);
-      }
+      forceDataRefresh();
     }
-  }, [updateMutation, toast, onManualRefetch, queryClient]);
+  }, [updateMutation, toast, forceDataRefresh, queryClient]);
 
   return {
     selectedDate,

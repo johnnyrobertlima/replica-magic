@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { useScheduleFormState } from "./useScheduleFormState";
 import { useScheduleMutations } from "./useScheduleMutations";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function useScheduleEventDialog({
   clientId,
@@ -22,6 +23,7 @@ export function useScheduleEventDialog({
   // Add a ref to prevent multiple selections
   const hasSelectedEventRef = useRef(false);
   const [activeTab, setActiveTab] = useState<"details" | "status" | "history">("details");
+  const queryClient = useQueryClient();
   
   const {
     currentSelectedEvent,
@@ -37,6 +39,20 @@ export function useScheduleEventDialog({
     selectedEvent
   });
 
+  // Função para atualização forçada com múltiplas chamadas
+  const forceRefresh = useCallback(() => {
+    if (!onManualRefetch) return;
+    
+    console.log("Forçando atualização de dados após operação");
+    // Primeira chamada imediata
+    onManualRefetch();
+    
+    // Chamadas adicionais com intervalos crescentes
+    setTimeout(() => onManualRefetch(), 150);
+    setTimeout(() => onManualRefetch(), 400);
+    setTimeout(() => onManualRefetch(), 800);
+  }, [onManualRefetch]);
+
   const {
     isSubmitting,
     isDeleting,
@@ -44,10 +60,16 @@ export function useScheduleEventDialog({
     handleStatusUpdate,
     handleDelete
   } = useScheduleMutations({
-    onClose,
+    onClose: () => {
+      // Primeiro executamos o callback de fechamento
+      onClose();
+      
+      // Depois forçamos o refresh dos dados
+      forceRefresh();
+    },
     clientId,
     selectedDate,
-    onManualRefetch, // Pass onManualRefetch down to useScheduleMutations
+    onManualRefetch: forceRefresh // Pass our enhanced forceRefresh function
   });
 
   // Only set the selectedEvent when it comes from props and not already selected

@@ -12,6 +12,7 @@ import { useClients } from "@/hooks/useOniAgenciaClients";
 import { DialogContainer } from "./schedule-dialog/DialogContainer";
 import { DialogContent } from "./schedule-dialog/DialogContent";
 import { useScheduleEventDialog } from "./hooks/useScheduleEventDialog";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ScheduleEventDialogProps {
   isOpen: boolean;
@@ -34,6 +35,8 @@ export function ScheduleEventDialog({
   selectedEvent,
   onManualRefetch
 }: ScheduleEventDialogProps) {
+  const queryClient = useQueryClient();
+  
   const {
     currentSelectedEvent,
     formData,
@@ -54,22 +57,86 @@ export function ScheduleEventDialog({
     selectedEvent,
     onManualRefetch, // Pass the function for manual refresh
     onClose: () => {
+      // Primeiro fecha o diálogo
       onOpenChange(false);
       onClose();
+      
+      // Depois força uma atualização imediata
+      if (onManualRefetch) {
+        console.log("Executando atualização manual ao fechar diálogo (componente principal)");
+        
+        // Primeiro invalidamos os caches
+        queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
+        queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
+        
+        // Depois chamamos a refetch manual várias vezes com delays diferentes
+        onManualRefetch();
+        setTimeout(() => {
+          onManualRefetch();
+        }, 100);
+        setTimeout(() => {
+          onManualRefetch();
+        }, 300);
+      }
     }
   });
 
   // Wrapper functions para garantir que os argumentos corretos sejam passados e retornem Promise<void>
-  const handleSubmit = (e: React.FormEvent): Promise<void> => {
-    return submitHandler(e, currentSelectedEvent, formData);
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
+    try {
+      // Executar o submit
+      await submitHandler(e, currentSelectedEvent, formData);
+      
+      // Após o submit bem sucedido, forçar atualização imediata
+      if (onManualRefetch) {
+        console.log("Executando atualização manual após submit");
+        onManualRefetch();
+        setTimeout(() => {
+          onManualRefetch();
+        }, 200);
+      }
+    } catch (error) {
+      console.error("Erro ao enviar formulário:", error);
+      throw error;
+    }
   };
 
-  const handleStatusUpdate = (e: React.FormEvent): Promise<void> => {
-    return statusUpdateHandler(e, currentSelectedEvent, formData);
+  const handleStatusUpdate = async (e: React.FormEvent): Promise<void> => {
+    try {
+      // Executar a atualização de status
+      await statusUpdateHandler(e, currentSelectedEvent, formData);
+      
+      // Após a atualização bem sucedida, forçar atualização imediata
+      if (onManualRefetch) {
+        console.log("Executando atualização manual após status update");
+        onManualRefetch();
+        setTimeout(() => {
+          onManualRefetch();
+        }, 200);
+      }
+    } catch (error) {
+      console.error("Erro ao atualizar status:", error);
+      throw error;
+    }
   };
 
-  const handleDelete = (): Promise<void> => {
-    return deleteHandler(currentSelectedEvent);
+  const handleDelete = async (): Promise<void> => {
+    try {
+      // Executar a exclusão
+      await deleteHandler(currentSelectedEvent);
+      
+      // Após a exclusão bem sucedida, forçar atualização imediata
+      if (onManualRefetch) {
+        console.log("Executando atualização manual após delete");
+        onManualRefetch();
+        setTimeout(() => {
+          onManualRefetch();
+        }, 200);
+      }
+    } catch (error) {
+      console.error("Erro ao excluir evento:", error);
+      throw error;
+    }
   };
 
   const { data: services = [], isLoading: isLoadingServices } = useServices();
@@ -84,7 +151,17 @@ export function ScheduleEventDialog({
   return (
     <DialogContainer 
       isOpen={isOpen} 
-      onOpenChange={onOpenChange} 
+      onOpenChange={(open) => {
+        onOpenChange(open);
+        if (!open && onManualRefetch) {
+          // Executar atualização manual quando o diálogo for fechado através do botão X
+          console.log("Executando atualização manual ao fechar diálogo pelo X");
+          onManualRefetch();
+          setTimeout(() => {
+            onManualRefetch();
+          }, 200);
+        }
+      }} 
       selectedDate={selectedDate} 
       onClose={onClose}
       title={dialogTitle}
@@ -118,6 +195,15 @@ export function ScheduleEventDialog({
         onCancel={() => {
           onOpenChange(false);
           onClose();
+          
+          // Atualização manual ao cancelar
+          if (onManualRefetch) {
+            console.log("Executando atualização manual ao cancelar diálogo");
+            onManualRefetch();
+            setTimeout(() => {
+              onManualRefetch();
+            }, 200);
+          }
         }}
         onInputChange={handleInputChange}
         onSelectChange={handleSelectChange}
