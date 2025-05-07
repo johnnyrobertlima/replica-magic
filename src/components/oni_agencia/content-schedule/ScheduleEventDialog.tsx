@@ -42,9 +42,9 @@ export function ScheduleEventDialog({
     handleInputChange,
     handleSelectChange,
     handleDateChange,
-    handleSubmit,
-    handleStatusUpdate,
-    handleDelete,
+    handleSubmit: submitHandler,
+    handleStatusUpdate: statusUpdateHandler,
+    handleDelete: deleteHandler,
     handleSelectEvent,
     resetForm
   } = useScheduleEventDialog({
@@ -58,6 +58,19 @@ export function ScheduleEventDialog({
       onClose();
     }
   });
+
+  // Wrapper functions para garantir que os argumentos corretos sejam passados
+  const handleSubmit = (e: React.FormEvent) => {
+    submitHandler(e, currentSelectedEvent, formData);
+  };
+
+  const handleStatusUpdate = (e: React.FormEvent) => {
+    statusUpdateHandler(e, currentSelectedEvent, formData);
+  };
+
+  const handleDelete = () => {
+    deleteHandler(currentSelectedEvent);
+  };
 
   const { data: services = [], isLoading: isLoadingServices } = useServices();
   const { data: collaborators = [], isLoading: isLoadingCollaborators } = useCollaborators();
