@@ -10,6 +10,7 @@ import { StatusSelect } from "./StatusSelect";
 import { CreatorsSelectMultiple } from "./CreatorsSelectMultiple";
 import { ContentScheduleFormData, OniAgenciaService, OniAgenciaCollaborator, OniAgenciaClient } from "@/types/oni-agencia";
 import { EditorialLine, Product, Status } from "@/pages/admin/sub-themes/types";
+import { linkifyText } from "@/utils/linkUtils";
 
 interface EventFormProps {
   formData: ContentScheduleFormData;
@@ -60,6 +61,9 @@ export function EventForm({
   const client = clients?.find(c => c.id === formData.client_id);
   const clientName = client ? client.name : 'Cliente não encontrado';
   
+  // Create a safe description with clickable links
+  const descriptionWithLinks = linkifyText(formData.description || "");
+
   return (
     <div className="grid gap-4 py-4">
       {/* Display client name */}
@@ -85,6 +89,7 @@ export function EventForm({
       
       <div className="grid gap-2">
         <Label htmlFor="description">Descrição</Label>
+        {/* Render textarea for editing */}
         <Textarea
           id="description"
           name="description"
@@ -93,6 +98,16 @@ export function EventForm({
           rows={3}
           placeholder="Descrição detalhada do agendamento"
         />
+        {/* Render clickable links below if there are any in the description */}
+        {formData.description && formData.description.match(/(https?:\/\/[^\s]+)/g) && (
+          <div className="mt-2 text-sm">
+            <p className="font-medium mb-1">Links detectados:</p>
+            <div 
+              className="p-2 bg-muted rounded-md" 
+              dangerouslySetInnerHTML={{ __html: descriptionWithLinks }} 
+            />
+          </div>
+        )}
       </div>
       
       <ServiceSelect

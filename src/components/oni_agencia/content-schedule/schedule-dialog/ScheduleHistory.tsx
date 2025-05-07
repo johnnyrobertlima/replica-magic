@@ -5,6 +5,7 @@ import { useScheduleHistory } from "@/hooks/useScheduleHistory";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { User, Clock, AlertTriangle } from "lucide-react";
+import { linkifyText } from "@/utils/linkUtils";
 
 interface ScheduleHistoryProps {
   event: CalendarEvent;
@@ -39,6 +40,12 @@ export function ScheduleHistory({ event }: ScheduleHistoryProps) {
     );
   }
 
+  // Function to process field values and convert URLs to links
+  const processFieldValue = (value: string | null) => {
+    if (!value) return "";
+    return linkifyText(value);
+  };
+
   return (
     <ScrollArea className="h-[400px] pr-4">
       <div className="space-y-4">
@@ -56,12 +63,14 @@ export function ScheduleHistory({ event }: ScheduleHistoryProps) {
             
             {entry.old_value && (
               <p className="text-muted-foreground">
-                <span className="font-medium">De:</span> {entry.old_value}
+                <span className="font-medium">De:</span> 
+                <span dangerouslySetInnerHTML={{ __html: processFieldValue(entry.old_value) }} />
               </p>
             )}
             
             <p className="text-primary">
-              <span className="font-medium">Para:</span> {entry.new_value}
+              <span className="font-medium">Para:</span> 
+              <span dangerouslySetInnerHTML={{ __html: processFieldValue(entry.new_value) }} />
             </p>
           </div>
         ))}

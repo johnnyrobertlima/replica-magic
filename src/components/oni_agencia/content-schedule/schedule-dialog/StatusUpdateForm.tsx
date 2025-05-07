@@ -1,9 +1,11 @@
 
-import { Textarea } from "@/components/ui/textarea";
+import { useState } from "react";
 import { Label } from "@/components/ui/label";
-import { CalendarEvent } from "@/types/oni-agencia";
+import { Textarea } from "@/components/ui/textarea";
 import { StatusSelect } from "./StatusSelect";
 import { CollaboratorSelect } from "./CollaboratorSelect";
+import { CalendarEvent } from "@/types/oni-agencia";
+import { linkifyText } from "@/utils/linkUtils";
 
 interface StatusUpdateFormProps {
   event: CalendarEvent;
@@ -11,8 +13,8 @@ interface StatusUpdateFormProps {
   collaborators: any[];
   isLoadingStatuses: boolean;
   isLoadingCollaborators: boolean;
-  selectedStatus: string | null;
-  selectedCollaborator: string | null;
+  selectedStatus: string;
+  selectedCollaborator: string;
   note: string;
   onStatusChange: (value: string) => void;
   onCollaboratorChange: (value: string) => void;
@@ -32,15 +34,16 @@ export function StatusUpdateForm({
   onCollaboratorChange,
   onNoteChange
 }: StatusUpdateFormProps) {
-  const handleNoteChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    onNoteChange(e.target.value);
-  };
+  // Process links in the note
+  const noteWithLinks = linkifyText(note);
 
   return (
     <div className="grid gap-4 py-4">
-      <div className="bg-muted/20 p-4 rounded-md mb-2">
-        <h3 className="font-semibold text-md mb-1">{event.title || "Agendamento sem título"}</h3>
-        <p className="text-sm text-muted-foreground">{event.service?.name}</p>
+      <div className="grid gap-2">
+        <Label htmlFor="event-title">Título</Label>
+        <div className="p-2 bg-muted rounded-md">
+          {event.title || "Sem título"}
+        </div>
       </div>
       
       <StatusSelect
@@ -55,18 +58,28 @@ export function StatusUpdateForm({
         isLoading={isLoadingCollaborators}
         value={selectedCollaborator}
         onValueChange={onCollaboratorChange}
-        label="Responsável"
       />
       
       <div className="grid gap-2">
-        <Label htmlFor="note">Observações</Label>
+        <Label htmlFor="status-note">Observação</Label>
         <Textarea
-          id="note"
-          value={note || ""}
-          onChange={handleNoteChange}
+          id="status-note"
+          placeholder="Adicione uma observação sobre esta atualização de status (opcional)"
+          value={note}
+          onChange={(e) => onNoteChange(e.target.value)}
           rows={4}
-          placeholder="Adicione observações sobre a mudança de status"
         />
+        
+        {/* Render clickable links if there are any in the note */}
+        {note && note.match(/(https?:\/\/[^\s]+)/g) && (
+          <div className="mt-2 text-sm">
+            <p className="font-medium mb-1">Links detectados:</p>
+            <div 
+              className="p-2 bg-muted rounded-md"
+              dangerouslySetInnerHTML={{ __html: noteWithLinks }}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
