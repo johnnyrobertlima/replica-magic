@@ -1,8 +1,11 @@
 
-import { CalendarEvent, OniAgenciaService, OniAgenciaCollaborator, ContentScheduleFormData, OniAgenciaClient } from "@/types/oni-agencia";
-import { EventList } from "./EventList";
-import { NewEventForm } from "./NewEventForm";
-import { EventEditor } from "./EventEditor";
+import { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
+import { DetailsForm } from "./DetailsForm";
+import { StatusForm } from "./StatusForm";
+import { HistoryView } from "./HistoryView";
+import { CaptureForm } from "./CaptureForm";
 
 interface DialogContentProps {
   selectedEvent?: CalendarEvent;
@@ -10,12 +13,12 @@ interface DialogContentProps {
   currentSelectedEvent: CalendarEvent | null;
   clientId: string;
   selectedDate: Date;
-  services: OniAgenciaService[];
-  collaborators: OniAgenciaCollaborator[];
+  services: any[];
+  collaborators: any[];
   editorialLines: any[];
   products: any[];
   statuses: any[];
-  clients: OniAgenciaClient[];
+  clients: any[];
   isLoadingServices: boolean;
   isLoadingCollaborators: boolean;
   isLoadingEditorialLines: boolean;
@@ -27,16 +30,17 @@ interface DialogContentProps {
   formData: ContentScheduleFormData;
   onSelectEvent: (event: CalendarEvent) => void;
   onResetForm: () => void;
-  onSubmit: (e: React.FormEvent) => Promise<void>;
-  onStatusUpdate: (e: React.FormEvent) => Promise<void>;
-  onDelete: () => Promise<void>;
+  onSubmit: (e: React.FormEvent) => void;
+  onStatusUpdate: (e: React.FormEvent) => void;
+  onDelete: () => void;
   onCancel: () => void;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onSelectChange: (name: string, value: string) => void;
   onDateChange: (name: string, value: Date | null) => void;
-  onDateTimeChange?: (name: string, value: Date | null) => void;
-  onAllDayChange?: (value: boolean) => void;
+  onDateTimeChange: (name: string, value: Date | null) => void;
+  onAllDayChange: (value: boolean) => void;
   defaultTab?: "details" | "status" | "history" | "capture";
+  prioritizeCaptureDate?: boolean;
 }
 
 export function DialogContent({
@@ -71,79 +75,148 @@ export function DialogContent({
   onDateChange,
   onDateTimeChange,
   onAllDayChange,
-  defaultTab
+  defaultTab = "details",
+  prioritizeCaptureDate = false
 }: DialogContentProps) {
-  // Check if there are other events for this date
-  const hasOtherEvents = events && events.length > 0;
-  
-  // Return different content based on whether we're editing or creating
+  const [activeTab, setActiveTab] = useState<string>(defaultTab);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(e);
+  };
+
+  const handleStatusUpdate = (e: React.FormEvent) => {
+    e.preventDefault();
+    onStatusUpdate(e);
+  };
+
   return (
-    <>
-      {currentSelectedEvent ? (
-        <EventEditor 
-          event={currentSelectedEvent}
-          clientId={clientId}
-          selectedDate={selectedDate}
-          services={services}
-          collaborators={collaborators}
-          editorialLines={editorialLines}
-          products={products}
-          statuses={statuses}
-          clients={clients}
-          isLoadingServices={isLoadingServices}
-          isLoadingCollaborators={isLoadingCollaborators}
-          isLoadingEditorialLines={isLoadingEditorialLines}
-          isLoadingProducts={isLoadingProducts}
-          isLoadingStatuses={isLoadingStatuses}
-          isLoadingClients={isLoadingClients}
-          isSubmitting={isSubmitting}
-          isDeleting={isDeleting}
-          onSubmit={onSubmit}
-          onStatusUpdate={onStatusUpdate}
-          onDelete={onDelete}
-          onCancel={onCancel}
-          formData={formData}
-          onInputChange={onInputChange}
-          onSelectChange={onSelectChange}
-          onDateChange={onDateChange}
-          onDateTimeChange={onDateTimeChange}
-          onAllDayChange={onAllDayChange}
-          defaultActiveTab={defaultTab}
-        />
-      ) : (
-        <>
-          {hasOtherEvents && (
-            <EventList 
-              events={events} 
-              onSelectEvent={onSelectEvent}
-              onCreateNew={onResetForm}
-              clientId={clientId}
-            />
-          )}
-          <NewEventForm 
-            formData={formData}
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <TabsList className="grid grid-cols-4 mb-4">
+        <TabsTrigger value="details">Detalhes</TabsTrigger>
+        <TabsTrigger value="status">Status</TabsTrigger>
+        <TabsTrigger value="capture">Captura</TabsTrigger>
+        <TabsTrigger value="history">Histórico</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="details" className="space-y-4">
+        <form onSubmit={handleSubmit}>
+          <DetailsForm
+            clientId={clientId}
+            selectedDate={selectedDate}
             services={services}
-            collaborators={collaborators}
             editorialLines={editorialLines}
             products={products}
-            statuses={statuses}
             clients={clients}
             isLoadingServices={isLoadingServices}
-            isLoadingCollaborators={isLoadingCollaborators}
             isLoadingEditorialLines={isLoadingEditorialLines}
             isLoadingProducts={isLoadingProducts}
-            isLoadingStatuses={isLoadingStatuses}
             isLoadingClients={isLoadingClients}
-            isSubmitting={isSubmitting}
-            isDeleting={isDeleting}
-            onSubmit={onSubmit}
-            onCancel={onCancel}
+            formData={formData}
             onInputChange={onInputChange}
             onSelectChange={onSelectChange}
             onDateChange={onDateChange}
+            prioritizeCaptureDate={prioritizeCaptureDate} // Passamos o parâmetro para o formulário de detalhes
           />
-        </>
-      )}
-    </>
+          
+          <div className="flex justify-end gap-2 mt-4">
+            <button
+              type="button"
+              className="px-4 py-2 border rounded hover:bg-gray-100"
+              onClick={onCancel}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              className="px-4 py-2 border rounded text-red-600 hover:bg-red-50"
+              onClick={onDelete}
+              disabled={!currentSelectedEvent || isDeleting}
+            >
+              {isDeleting ? "Excluindo..." : "Excluir"}
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Salvando..." : "Salvar"}
+            </button>
+          </div>
+        </form>
+      </TabsContent>
+
+      <TabsContent value="status" className="space-y-4">
+        <form onSubmit={handleStatusUpdate}>
+          <StatusForm
+            collaborators={collaborators}
+            statuses={statuses}
+            isLoadingCollaborators={isLoadingCollaborators}
+            isLoadingStatuses={isLoadingStatuses}
+            formData={formData}
+            onInputChange={onInputChange}
+            onSelectChange={onSelectChange}
+          />
+          
+          <div className="flex justify-end gap-2 mt-4">
+            <button
+              type="button"
+              className="px-4 py-2 border rounded hover:bg-gray-100"
+              onClick={onCancel}
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Atualizando..." : "Atualizar Status"}
+            </button>
+          </div>
+        </form>
+      </TabsContent>
+
+      <TabsContent value="capture" className="space-y-4">
+        <form onSubmit={handleSubmit}>
+          <CaptureForm
+            captureDate={formData.capture_date}
+            captureEndDate={formData.capture_end_date}
+            isAllDay={formData.is_all_day !== null ? formData.is_all_day : true}
+            location={formData.location}
+            onCaptureChange={onDateTimeChange}
+            onLocationChange={onInputChange}
+            onAllDayChange={onAllDayChange}
+          />
+          
+          <div className="flex justify-end gap-2 mt-4">
+            <button
+              type="button"
+              className="px-4 py-2 border rounded hover:bg-gray-100"
+              onClick={onCancel}
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Salvando..." : "Salvar"}
+            </button>
+          </div>
+        </form>
+      </TabsContent>
+
+      <TabsContent value="history" className="space-y-4">
+        {currentSelectedEvent ? (
+          <HistoryView scheduleId={currentSelectedEvent.id} />
+        ) : (
+          <p className="text-center text-gray-500 py-4">
+            Histórico disponível apenas para eventos existentes.
+          </p>
+        )}
+      </TabsContent>
+    </Tabs>
   );
 }

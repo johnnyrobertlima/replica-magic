@@ -23,6 +23,7 @@ interface ContentCalendarProps {
   useCaptureDate?: boolean;
   selectedCollaborator?: string | null;
   defaultTab?: "details" | "status" | "capture" | "history";
+  prioritizeCaptureDate?: boolean; // Novo parâmetro para priorizar a data de captura
 }
 
 export function ContentCalendar({
@@ -35,7 +36,8 @@ export function ContentCalendar({
   onManualRefetch,
   useCaptureDate = false,
   selectedCollaborator = null,
-  defaultTab = "details"
+  defaultTab = "details",
+  prioritizeCaptureDate = false // Valor padrão é false
 }: ContentCalendarProps) {
   const [date, setDate] = useState(new Date(year, month - 1, 1));
   const {
@@ -202,6 +204,7 @@ export function ContentCalendar({
           selectedEvent={selectedEvent}
           onManualRefetch={onManualRefetch}
           defaultTab={defaultTab}
+          prioritizeCaptureDate={prioritizeCaptureDate} // Passamos o novo parâmetro para o diálogo
         />
       )}
     </div>

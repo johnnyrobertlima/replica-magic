@@ -6,11 +6,13 @@ import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
 export function useScheduleFormState({
   clientId,
   selectedDate,
-  selectedEvent
+  selectedEvent,
+  prioritizeCaptureDate = false // Novo parâmetro
 }: {
   clientId: string;
   selectedDate: Date;
   selectedEvent?: CalendarEvent;
+  prioritizeCaptureDate?: boolean; // Definição do tipo do novo parâmetro
 }) {
   const [currentSelectedEvent, setCurrentSelectedEvent] = useState<CalendarEvent | null>(selectedEvent || null);
   const [formData, setFormData] = useState<ContentScheduleFormData>({
@@ -25,7 +27,7 @@ export function useScheduleFormState({
     product_id: null,
     status_id: null,
     creators: [],
-    capture_date: null,
+    capture_date: prioritizeCaptureDate ? format(selectedDate, 'yyyy-MM-dd') : null, // Define a data de captura se priorizada
     capture_end_date: null,
     is_all_day: true,
     location: null
@@ -50,13 +52,13 @@ export function useScheduleFormState({
       collaborator_id: null,
       title: "",
       description: null,
-      scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
+      scheduled_date: prioritizeCaptureDate ? null : format(selectedDate, 'yyyy-MM-dd'), // Se priorizando captura, deixa scheduled_date como null
       execution_phase: null,
       editorial_line_id: null,
       product_id: null,
       status_id: null,
       creators: [],
-      capture_date: null,
+      capture_date: prioritizeCaptureDate ? format(selectedDate, 'yyyy-MM-dd') : null, // Define a data de captura se priorizada
       capture_end_date: null,
       is_all_day: true,
       location: null

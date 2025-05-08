@@ -8,8 +8,13 @@ export async function createContentSchedule(schedule: ContentScheduleFormData): 
   try {
     const processedSchedule = sanitizeScheduleData(schedule);
     
-    if (!processedSchedule.client_id || !processedSchedule.scheduled_date || processedSchedule.title === undefined) {
+    if (!processedSchedule.client_id || processedSchedule.title === undefined) {
       throw new Error('Missing required fields for content schedule creation');
+    }
+    
+    // Verifica se pelo menos scheduled_date OU capture_date está presente
+    if (!processedSchedule.scheduled_date && !processedSchedule.capture_date) {
+      throw new Error('Either scheduled_date or capture_date is required for content schedule creation');
     }
     
     if (!processedSchedule.service_id) {
@@ -20,7 +25,11 @@ export async function createContentSchedule(schedule: ContentScheduleFormData): 
       client_id: processedSchedule.client_id,
       service_id: processedSchedule.service_id,
       title: processedSchedule.title || " ",
-      scheduled_date: processedSchedule.scheduled_date,
+      scheduled_date: processedSchedule.scheduled_date || null, // Permitimos que seja nulo se capture_date estiver presente
+      capture_date: processedSchedule.capture_date || null,
+      capture_end_date: processedSchedule.capture_end_date || null,
+      is_all_day: processedSchedule.is_all_day !== null ? processedSchedule.is_all_day : true,
+      location: processedSchedule.location || null,
       collaborator_id: processedSchedule.collaborator_id,
       description: processedSchedule.description,
       execution_phase: processedSchedule.execution_phase,

@@ -1,13 +1,13 @@
 
-// Modify the OniAgenciaContentSchedule interface to make title optional
+// Modify the OniAgenciaContentSchedule interface to make scheduled_date optional when capture_date is present
 export interface OniAgenciaContentSchedule {
   id: string;
   client_id: string;
   service_id: string;
   collaborator_id: string | null;
-  title: string | null; // Change from string to string | null
+  title: string | null; 
   description: string | null;
-  scheduled_date: string;
+  scheduled_date: string | null; // Agora pode ser null quando capture_date estiver presente
   execution_phase: string | null;
   editorial_line_id: string | null;
   product_id: string | null;
@@ -15,10 +15,10 @@ export interface OniAgenciaContentSchedule {
   creators: string[] | null;
   created_at: string;
   updated_at: string;
-  capture_date: string | null; // Add this new property
-  capture_end_date: string | null; // Add this for the end time
-  is_all_day: boolean | null; // Add this to determine if it's an all-day event
-  location: string | null; // Add this for the location field
+  capture_date: string | null;
+  capture_end_date: string | null;
+  is_all_day: boolean | null;
+  location: string | null;
 }
 
 // Update ContentScheduleFormData accordingly

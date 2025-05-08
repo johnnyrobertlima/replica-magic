@@ -54,6 +54,8 @@ export function CapturasContent({
           isCollapsed={isCollapsed}
           onManualRefetch={onManualRefetch}
           useCaptureDate={true} // Flag para usar data de captura no calendário
+          defaultTab="capture" // Abre na aba de captura por padrão
+          prioritizeCaptureDate={true} // Prioritiza a data de captura
         />
       ) : (
         <CaptureEventsList
