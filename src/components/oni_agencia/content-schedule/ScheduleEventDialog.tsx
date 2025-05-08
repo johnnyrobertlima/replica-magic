@@ -80,6 +80,10 @@ export const ScheduleEventDialog: React.FC<ScheduleEventDialogProps> = ({
   const handleSubmitWrapper = (e: React.FormEvent) => submitForm(e);
   const handleStatusUpdateWrapper = (e: React.FormEvent) => updateStatus(e);
   const handleDeleteWrapper = () => deleteEvent();
+  
+  // Create wrapper functions for the problematic handlers
+  const handleInputChangeWrapper = (field: string, value: string) => handleInputChange(field, value);
+  const handleAllDayChangeWrapper = (field: string, value: boolean) => handleAllDayChange(field, value);
 
   const formattedDate = format(selectedDate, 'dd MMMM yyyy', { locale: ptBR });
   const dialogTitle = currentSelectedEvent ? "Editar Agendamento" : `Novo Agendamento - ${formattedDate}`;
@@ -120,11 +124,11 @@ export const ScheduleEventDialog: React.FC<ScheduleEventDialogProps> = ({
             onOpenChange(false);
             onClose();
           }}
-          onInputChange={handleInputChange}
+          onInputChange={handleInputChangeWrapper}
           onSelectChange={handleSelectChange}
           onDateChange={handleDateChange}
           onDateTimeChange={handleDateTimeChange}
-          onAllDayChange={handleAllDayChange}
+          onAllDayChange={handleAllDayChangeWrapper}
         />
       </DialogContent>
     </Dialog>

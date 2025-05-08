@@ -1,5 +1,5 @@
 
-import { format } from "date-fns";
+import React from 'react';
 import { CalendarEvent } from "@/types/oni-agencia";
 import { 
   useServices,
@@ -65,6 +65,10 @@ export function MobileScheduleEventDialog({
   const handleSubmitWrapper = (e: React.FormEvent) => submitForm(e);
   const handleStatusUpdateWrapper = (e: React.FormEvent) => updateStatus(e);
   const handleDeleteWrapper = () => deleteEvent();
+  
+  // Create wrapper functions for the problematic handlers
+  const handleInputChangeWrapper = (field: string, value: string) => handleInputChange(field, value);
+  const handleAllDayChangeWrapper = (field: string, value: boolean) => handleAllDayChange(field, value);
 
   const { data: services = [], isLoading: isLoadingServices } = useServices();
   const { data: collaborators = [], isLoading: isLoadingCollaborators } = useCollaborators();
@@ -112,11 +116,11 @@ export function MobileScheduleEventDialog({
           onOpenChange(false);
           onClose();
         }}
-        onInputChange={handleInputChange}
+        onInputChange={handleInputChangeWrapper}
         onSelectChange={handleSelectChange}
         onDateChange={handleDateChange}
         onDateTimeChange={handleDateTimeChange}
-        onAllDayChange={handleAllDayChange}
+        onAllDayChange={handleAllDayChangeWrapper}
       />
     </MobileDialogContainer>
   );

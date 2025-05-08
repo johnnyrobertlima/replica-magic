@@ -36,13 +36,17 @@ export const getCalendarEvents = async (
     }
 
     // Make sure all required properties are present
-    const eventsWithDefaults = (data || []).map(item => ({
-      ...item,
-      capture_date: item.capture_date || null,
-      capture_end_date: item.capture_end_date || null,
-      is_all_day: item.is_all_day !== undefined ? item.is_all_day : true,
-      location: item.location || null
-    })) as CalendarEvent[];
+    const eventsWithDefaults = (data || []).map(item => {
+      // Create a new object with all the properties from item
+      return {
+        ...item,
+        // Add missing properties with default values
+        capture_date: "capture_date" in item ? item.capture_date : null,
+        capture_end_date: "capture_end_date" in item ? item.capture_end_date : null,
+        is_all_day: "is_all_day" in item ? item.is_all_day : true,
+        location: "location" in item ? item.location : null
+      } as CalendarEvent;
+    });
 
     return eventsWithDefaults;
   } catch (error) {

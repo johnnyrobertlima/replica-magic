@@ -42,7 +42,7 @@ interface ExecutionPhaseSelectProps {
 
 interface CreatorsMultiSelectProps {
   value: string[];
-  onChange: (creators: string[]) => void;
+  onValueChange: (creators: string[]) => void;
   collaborators: any[];
   isLoading: boolean;
 }
@@ -170,7 +170,7 @@ export const NewEventForm = ({
         <label htmlFor="creators-select" className="block text-sm font-medium">Creators</label>
         <CreatorsMultiSelect 
           value={formData.creators || []}
-          onChange={onCreatorsChange}
+          onValueChange={onCreatorsChange}
           collaborators={collaborators}
           isLoading={isLoadingCollaborators}
         />
