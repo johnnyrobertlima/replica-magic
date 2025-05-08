@@ -62,12 +62,13 @@ export const GroupSelector = ({ selectedGroupId, onGroupChange }: GroupSelectorP
       console.log("Fetching groups for GroupSelector");
       const fetchGroups = async () => {
         try {
-          // Tentar buscar os grupos diretamente da database
-          const { data, error } = await supabase
-            .from("groups")
-            .select("id, name, description, homepage");
+          // Tentar usar a função RPC diretamente
+          const { data, error } = await supabase.rpc('get_all_groups');
           
-          if (error) throw error;
+          if (error) {
+            console.error("Error in backup group fetch:", error);
+            return;
+          }
           setLocalGroups(data as Group[]);
         } catch (err) {
           console.error("Error in backup group fetch:", err);

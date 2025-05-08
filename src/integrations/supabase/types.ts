@@ -2520,6 +2520,21 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_user_permission_for_groups: {
+        Args: { user_id: string }
+        Returns: boolean
+      }
+      get_all_groups: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_at: string | null
+          description: string | null
+          homepage: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }[]
+      }
       get_bk_faturamento: {
         Args: { start_date?: string; end_date?: string }
         Returns: {
