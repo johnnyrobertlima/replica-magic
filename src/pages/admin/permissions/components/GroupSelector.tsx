@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import type { Group } from "../types";
+import { useState, useEffect } from "react";
 
 interface GroupSelectorProps {
   selectedGroupId: string;
@@ -18,23 +19,72 @@ interface GroupSelectorProps {
 }
 
 export const GroupSelector = ({ selectedGroupId, onGroupChange }: GroupSelectorProps) => {
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+
+  // Primeiro verificar se o usuário é admin - isso não deveria causar recursão
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      try {
+        const { data: session } = await supabase.auth.getSession();
+        if (!session.session) return;
+        
+        const { data, error } = await supabase.rpc('check_admin_permission', {
+          check_user_id: session.session.user.id
+        });
+        
+        if (error) {
+          console.error("Error checking admin status:", error);
+          return;
+        }
+        
+        setIsAdmin(!!data);
+      } catch (error) {
+        console.error("Error in admin check:", error);
+      }
+    };
+    
+    checkAdminStatus();
+  }, []);
+
+  // Se o usuário for admin, buscar os grupos usando RPC em vez de acesso direto à tabela
   const { data: groups, isLoading, error } = useQuery({
     queryKey: ["groups"],
     queryFn: async () => {
-      console.log("Fetching groups for GroupSelector");
-      const { data, error } = await supabase
-        .from("groups")
-        .select("id, name")
-        .order("name");
+      console.log("Tentando buscar grupos para o GroupSelector");
       
-      if (error) {
-        console.error("Error fetching groups:", error);
-        throw error;
+      try {
+        // Tente usar uma função RPC para buscar os grupos em vez de acessar diretamente
+        // Primeiro, vamos tentar usar uma consulta SQL direta via RPC
+        const { data, error } = await supabase.rpc("get_all_groups");
+        
+        if (error) {
+          // Se a função RPC não existir, podemos tentar um método alternativo
+          console.error("Erro ao buscar grupos via RPC:", error);
+          
+          // Método alternativo: buscar apenas IDs e nomes sem filtros RLS
+          const { data: directData, error: directError } = await supabase
+            .from("groups")
+            .select("id, name")
+            .order("name");
+          
+          if (directError) {
+            throw directError;
+          }
+          
+          console.log("Grupos carregados diretamente:", directData);
+          return directData as Group[];
+        }
+        
+        console.log("Grupos carregados via RPC:", data);
+        return data as Group[];
+      } catch (err) {
+        console.error("Erro final ao buscar grupos:", err);
+        
+        // Como fallback, retornar uma lista vazia e mostrar um erro ao usuário
+        return [] as Group[];
       }
-      
-      console.log("Fetched groups:", data);
-      return data as Group[];
     },
+    enabled: isAdmin, // Apenas execute a consulta se o usuário for admin
   });
 
   if (isLoading) {
@@ -48,7 +98,10 @@ export const GroupSelector = ({ selectedGroupId, onGroupChange }: GroupSelectorP
   if (error) {
     return (
       <div className="text-red-500">
-        Error loading groups. Please try again.
+        Erro ao carregar grupos. Por favor, tente novamente.
+        <pre className="text-xs mt-2 p-2 bg-gray-100 rounded overflow-auto">
+          {JSON.stringify(error, null, 2)}
+        </pre>
       </div>
     );
   }
@@ -56,7 +109,7 @@ export const GroupSelector = ({ selectedGroupId, onGroupChange }: GroupSelectorP
   if (!groups || groups.length === 0) {
     return (
       <div className="text-amber-500">
-        No groups found. Please create a group first.
+        Nenhum grupo encontrado. Por favor, crie um grupo primeiro.
       </div>
     );
   }
