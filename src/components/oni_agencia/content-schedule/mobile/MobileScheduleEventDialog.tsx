@@ -11,7 +11,7 @@ import {
 import { useClients } from "@/hooks/useOniAgenciaClients";
 import { MobileDialogContainer } from "./MobileDialogContainer";
 import { DialogContent } from "../schedule-dialog/DialogContent";
-import { useScheduleEventDialog } from "./hooks/useMobileScheduleEventDialog";
+import { useScheduleEventDialog } from "../hooks/useScheduleEventDialog";
 
 interface MobileScheduleEventDialogProps {
   isOpen: boolean;
@@ -22,6 +22,7 @@ interface MobileScheduleEventDialogProps {
   onClose: () => void;
   selectedEvent?: CalendarEvent;
   initialStatusTabActive?: boolean;
+  onManualRefetch?: () => void;
 }
 
 export function MobileScheduleEventDialog({
@@ -32,20 +33,21 @@ export function MobileScheduleEventDialog({
   events,
   onClose,
   selectedEvent,
-  initialStatusTabActive = false
+  initialStatusTabActive = false,
+  onManualRefetch
 }: MobileScheduleEventDialogProps) {
+  const initialTabActive = initialStatusTabActive ? "status" : "details";
+  
   const {
     currentSelectedEvent,
     formData,
-    activeTab,
     isSubmitting,
     isDeleting,
-    setActiveTab,
     handleInputChange,
     handleSelectChange,
     handleDateChange,
-    handleDateTimeChange,  // New handler
-    handleAllDayChange,    // New handler
+    handleDateTimeChange,
+    handleAllDayChange,
     handleSubmit,
     handleStatusUpdate,
     handleDelete,
@@ -56,19 +58,12 @@ export function MobileScheduleEventDialog({
     selectedDate,
     events,
     selectedEvent,
-    initialTabActive: initialStatusTabActive ? "status" : "details",
     onClose: () => {
       onOpenChange(false);
       onClose();
-    }
+    },
+    onManualRefetch
   });
-
-  // Set active tab when initialStatusTabActive changes
-  useEffect(() => {
-    if (initialStatusTabActive) {
-      setActiveTab("status");
-    }
-  }, [initialStatusTabActive, setActiveTab]);
 
   const { data: services = [], isLoading: isLoadingServices } = useServices();
   const { data: collaborators = [], isLoading: isLoadingCollaborators } = useCollaborators();
@@ -120,9 +115,9 @@ export function MobileScheduleEventDialog({
         onInputChange={handleInputChange}
         onSelectChange={handleSelectChange}
         onDateChange={handleDateChange}
-        onDateTimeChange={handleDateTimeChange}  // Pass new handler
-        onAllDayChange={handleAllDayChange}      // Pass new handler
-        defaultTab={activeTab}
+        onDateTimeChange={handleDateTimeChange}
+        onAllDayChange={handleAllDayChange}
+        defaultTab={initialTabActive}
       />
     </MobileDialogContainer>
   );

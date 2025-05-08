@@ -43,6 +43,7 @@ interface DialogContentProps {
   onResetForm: () => void;
   onDelete: () => void;
   onCancel: () => void;
+  defaultTab?: string;
 }
 
 export function DialogContent({
@@ -76,9 +77,10 @@ export function DialogContent({
   onStatusUpdate,
   onResetForm,
   onDelete,
-  onCancel
+  onCancel,
+  defaultTab = "details"
 }: DialogContentProps) {
-  const [activeTab, setActiveTab] = useState("details");
+  const [activeTab, setActiveTab] = useState(defaultTab);
 
   return (
     <div className="max-h-[80vh] overflow-hidden flex flex-col">
@@ -107,7 +109,6 @@ export function DialogContent({
             <TabsContent value="details" className="mt-2">
               {currentSelectedEvent ? (
                 <EventForm
-                  event={currentSelectedEvent}
                   formData={formData}
                   onInputChange={onInputChange}
                   onSelectChange={onSelectChange}
@@ -131,10 +132,14 @@ export function DialogContent({
                   collaborators={collaborators}
                   editorialLines={editorialLines}
                   products={products}
+                  statuses={statuses}
+                  clients={clients}
                   isLoadingServices={isLoadingServices}
                   isLoadingCollaborators={isLoadingCollaborators}
                   isLoadingEditorialLines={isLoadingEditorialLines}
                   isLoadingProducts={isLoadingProducts}
+                  isLoadingStatuses={isLoadingStatuses}
+                  isLoadingClients={isLoadingClients}
                 />
               )}
             </TabsContent>
@@ -143,7 +148,6 @@ export function DialogContent({
               <>
                 <TabsContent value="status" className="mt-2">
                   <StatusUpdateForm
-                    event={currentSelectedEvent}
                     formData={formData}
                     onSelectChange={onSelectChange}
                     statuses={statuses}
@@ -151,7 +155,9 @@ export function DialogContent({
                   />
                 </TabsContent>
                 <TabsContent value="history" className="mt-2">
-                  <ScheduleHistory scheduleId={currentSelectedEvent.id} />
+                  <ScheduleHistory
+                    eventId={currentSelectedEvent.id}
+                  />
                 </TabsContent>
                 <TabsContent value="capture" className="mt-2">
                   <CaptureForm

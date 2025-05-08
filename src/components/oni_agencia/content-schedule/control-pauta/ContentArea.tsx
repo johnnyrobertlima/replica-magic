@@ -39,6 +39,8 @@ export function ContentArea({
   onManualRefetch
 }: ContentAreaProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
+  
+  // Use the updated useDndContext hook
   const {
     selectedEvent,
     selectedDate,
@@ -86,7 +88,7 @@ export function ContentArea({
             year={year}
             clientId={clientId}
             selectedCollaborator={selectedCollaborator}
-            onMonthYearChange={onMonthYearChange}
+            onMonthChange={onMonthYearChange}
             onDateSelect={handleDateSelect}
             onEventClick={handleEventClick}
             selectedDate={selectedDate}

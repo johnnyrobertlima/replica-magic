@@ -11,7 +11,7 @@ import {
   CameraIcon
 } from "lucide-react";
 
-export const menuItems = [
+const menuItems = [
   {
     title: "Home",
     icon: <LayoutDashboardIcon className="w-5 h-5" />,
@@ -59,7 +59,7 @@ export const menuItems = [
   },
 ];
 
-export const adminSubmenuItems = [
+const adminSubmenuItems = [
   {
     title: "Administradores",
     href: "/admin/users",
@@ -69,3 +69,14 @@ export const adminSubmenuItems = [
     href: "/admin/permissions",
   },
 ];
+
+// Add functions to get menu items
+export function getMainMenuItems() {
+  return menuItems;
+}
+
+export function getAdminMenuItems() {
+  return adminSubmenuItems;
+}
+
+export { menuItems, adminSubmenuItems };

@@ -1,14 +1,53 @@
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { format, parse } from 'date-fns';
 import { CalendarEvent, ContentScheduleFormData } from '@/types/oni-agencia';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { updateContentSchedule } from '@/services/oniAgenciaContentScheduleServices';
 import { useToast } from '@/hooks/use-toast';
+import { useDragAndDrop } from './useDragAndDrop';
+import { useDateSelection } from './useDateSelection';
 
-export function useDndContext(clientId: string, events: CalendarEvent[]) {
+interface UseDndContextProps {
+  clientId: string;
+  month?: number;
+  year?: number;
+  onManualRefetch?: () => void;
+}
+
+export function useDndContext({ clientId, month, year, onManualRefetch }: UseDndContextProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const dndContext = useDragAndDrop();
+  
+  // Use the date selection hook
+  const { 
+    selectedDate, 
+    selectedEvent, 
+    isDialogOpen, 
+    setSelectedDate, 
+    setSelectedEvent, 
+    setIsDialogOpen, 
+    handleDateSelect, 
+    handleEventClick 
+  } = useDateSelection();
+  
+  // Handle dialog open change
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      // Clean up selection when dialog closes
+      setSelectedDate(undefined);
+      setSelectedEvent(undefined);
+    }
+  };
+  
+  // Handle dialog close
+  const handleDialogClose = () => {
+    setIsDialogOpen(false);
+    setSelectedDate(undefined);
+    setSelectedEvent(undefined);
+  };
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: ContentScheduleFormData }) => {
@@ -21,6 +60,11 @@ export function useDndContext(clientId: string, events: CalendarEvent[]) {
       // Invalidate relevant queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
       queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
+      
+      // Call the manual refetch if provided
+      if (onManualRefetch) {
+        onManualRefetch();
+      }
       
       toast({
         title: "Event updated",
@@ -42,7 +86,8 @@ export function useDndContext(clientId: string, events: CalendarEvent[]) {
     console.log('Dropping event on date:', eventId, targetDate);
     
     // Find the event in the provided events array
-    const eventToUpdate = events.find(event => event.id === eventId);
+    const existingEvents = queryClient.getQueryData<CalendarEvent[]>(['content-schedules', clientId]) || [];
+    const eventToUpdate = existingEvents.find(event => event.id === eventId);
     
     if (!eventToUpdate) {
       console.error('Event not found:', eventId);
@@ -64,7 +109,7 @@ export function useDndContext(clientId: string, events: CalendarEvent[]) {
       collaborator_id: eventToUpdate.collaborator_id,
       title: eventToUpdate.title || '',
       description: eventToUpdate.description,
-      scheduled_date: formattedTargetDate, // Update with new date
+      scheduled_date: formattedTargetDate,
       execution_phase: eventToUpdate.execution_phase,
       editorial_line_id: eventToUpdate.editorial_line_id,
       product_id: eventToUpdate.product_id,
@@ -81,7 +126,25 @@ export function useDndContext(clientId: string, events: CalendarEvent[]) {
       id: eventId, 
       data: updateData 
     });
-  }, [events, updateMutation, toast]);
+  }, [clientId, queryClient, updateMutation, toast, onManualRefetch]);
+  
+  // Handle drag end from DnD context
+  const handleDragEnd = (event) => {
+    if (dndContext && dndContext.handleDragEnd) {
+      dndContext.handleDragEnd(event, handleDropOnDate);
+    }
+  };
 
-  return { handleDropOnDate };
+  return { 
+    handleDropOnDate,
+    selectedEvent,
+    selectedDate,
+    isDialogOpen,
+    dndContext,
+    handleEventClick,
+    handleDateSelect,
+    handleDragEnd,
+    handleDialogOpenChange,
+    handleDialogClose
+  };
 }

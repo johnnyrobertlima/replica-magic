@@ -2,7 +2,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { getMainMenuItems, getAdminMenuItems } from "./menu/menuItems";
+import { menuItems, adminSubmenuItems } from "./menu/menuItems";
 import { DesktopMenu } from "./menu/DesktopMenu";
 import { MobileMenu } from "./menu/MobileMenu";
 
@@ -10,10 +10,6 @@ export const OniAgenciaMenu = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const location = useLocation();
-
-  // Get menu items
-  const mainMenuItems = getMainMenuItems();
-  const adminMenuItems = getAdminMenuItems();
 
   const handleLogout = async () => {
     try {
@@ -43,23 +39,23 @@ export const OniAgenciaMenu = () => {
 
   // Check if any admin route is active
   const isAnyAdminRouteActive = () => {
-    return adminMenuItems.some(item => isActiveRoute(item.path));
+    return adminSubmenuItems.some(item => isActiveRoute(item.href));
   };
 
   return (
     <div className="sticky top-0 z-50 w-full bg-primary shadow-md">
       <div className="container mx-auto px-4">
         <DesktopMenu 
-          mainMenuItems={mainMenuItems}
-          adminMenuItems={adminMenuItems}
+          mainMenuItems={menuItems}
+          adminMenuItems={adminSubmenuItems}
           isActiveRoute={isActiveRoute}
-          isAnyAdminRouteActive={isAnyAdminRouteActive()} // Execute a função aqui
+          isAnyAdminRouteActive={isAnyAdminRouteActive()} 
           onLogout={handleLogout}
         />
 
         <MobileMenu 
-          mainMenuItems={mainMenuItems}
-          adminMenuItems={adminMenuItems}
+          mainMenuItems={menuItems}
+          adminMenuItems={adminSubmenuItems}
           isActiveRoute={isActiveRoute}
           onLogout={handleLogout}
         />
