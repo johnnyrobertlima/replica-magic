@@ -12,6 +12,7 @@ import {
 import { Loader2 } from "lucide-react";
 import type { Group } from "../types";
 import { useState, useEffect } from "react";
+import { useGetGroups } from "../useGetGroups";
 
 interface GroupSelectorProps {
   selectedGroupId: string;
@@ -21,7 +22,7 @@ interface GroupSelectorProps {
 export const GroupSelector = ({ selectedGroupId, onGroupChange }: GroupSelectorProps) => {
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
-  // Primeiro verificar se o usuário é admin - isso não deveria causar recursão
+  // First check if user is admin
   useEffect(() => {
     const checkAdminStatus = async () => {
       try {
@@ -46,46 +47,8 @@ export const GroupSelector = ({ selectedGroupId, onGroupChange }: GroupSelectorP
     checkAdminStatus();
   }, []);
 
-  // Se o usuário for admin, buscar os grupos usando RPC em vez de acesso direto à tabela
-  const { data: groups, isLoading, error } = useQuery({
-    queryKey: ["groups"],
-    queryFn: async () => {
-      console.log("Tentando buscar grupos para o GroupSelector");
-      
-      try {
-        // Tente usar uma função RPC para buscar os grupos em vez de acessar diretamente
-        // Primeiro, vamos tentar usar uma consulta SQL direta via RPC
-        const { data, error } = await supabase.rpc("get_all_groups");
-        
-        if (error) {
-          // Se a função RPC não existir, podemos tentar um método alternativo
-          console.error("Erro ao buscar grupos via RPC:", error);
-          
-          // Método alternativo: buscar apenas IDs e nomes sem filtros RLS
-          const { data: directData, error: directError } = await supabase
-            .from("groups")
-            .select("id, name")
-            .order("name");
-          
-          if (directError) {
-            throw directError;
-          }
-          
-          console.log("Grupos carregados diretamente:", directData);
-          return directData as Group[];
-        }
-        
-        console.log("Grupos carregados via RPC:", data);
-        return data as Group[];
-      } catch (err) {
-        console.error("Erro final ao buscar grupos:", err);
-        
-        // Como fallback, retornar uma lista vazia e mostrar um erro ao usuário
-        return [] as Group[];
-      }
-    },
-    enabled: isAdmin, // Apenas execute a consulta se o usuário for admin
-  });
+  // Use the dedicated hook to fetch groups
+  const { data: groups, isLoading, error } = useGetGroups();
 
   if (isLoading) {
     return (
@@ -98,7 +61,7 @@ export const GroupSelector = ({ selectedGroupId, onGroupChange }: GroupSelectorP
   if (error) {
     return (
       <div className="text-red-500">
-        Erro ao carregar grupos. Por favor, tente novamente.
+        Error loading groups. Please try again.
         <pre className="text-xs mt-2 p-2 bg-gray-100 rounded overflow-auto">
           {JSON.stringify(error, null, 2)}
         </pre>
@@ -109,20 +72,20 @@ export const GroupSelector = ({ selectedGroupId, onGroupChange }: GroupSelectorP
   if (!groups || groups.length === 0) {
     return (
       <div className="text-amber-500">
-        Nenhum grupo encontrado. Por favor, crie um grupo primeiro.
+        No groups found. Please create a group first.
       </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-2">
-      <Label htmlFor="group">Selecione um grupo</Label>
+      <Label htmlFor="group">Select a group</Label>
       <Select
         value={selectedGroupId}
         onValueChange={(value) => onGroupChange(value)}
       >
         <SelectTrigger>
-          <SelectValue placeholder="Selecione um grupo" />
+          <SelectValue placeholder="Select a group" />
         </SelectTrigger>
         <SelectContent>
           {groups?.map((group) => (
