@@ -21,6 +21,9 @@ export function usePautaStatus(clientId: string, month: number, year: number, ev
   const { data: rawClientScopes = [], error } = useQuery({
     queryKey: ['clientScopes', clientId, month, year],
     queryFn: async () => {
+      // Log query parameters for debugging
+      console.log(`Fetching client scopes for clientId: ${clientId}, month: ${month}, year: ${year}`);
+      
       let query = supabase
         .from('oni_agencia_client_scopes')
         .select('id, client_id, service_id, quantity, service:service_id(id, name)');
@@ -37,10 +40,11 @@ export function usePautaStatus(clientId: string, month: number, year: number, ev
         throw error;
       }
       
+      console.log(`Found ${data?.length || 0} client scopes for clientId: ${clientId}`);
       return data || [];
     },
-    // Enable the query only when we have a valid clientId (not "all")
-    enabled: clientId !== "all" && clientId !== "" && !!clientId,
+    // Enable the query only when we have a valid clientId (not "all" or empty)
+    enabled: !!clientId && clientId !== "all" && clientId !== "",
   });
 
   // Process client scopes to have a consistent format
@@ -83,7 +87,7 @@ export function useClientScopes(clientId: string | null) {
       
       return data || [];
     },
-    // Only run if clientId is not "all"
-    enabled: clientId !== "all" && clientId !== "",
+    // Only run if clientId is not "all" and not empty
+    enabled: !!clientId && clientId !== "all" && clientId !== "",
   });
 }

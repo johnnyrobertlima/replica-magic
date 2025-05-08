@@ -26,6 +26,8 @@ export function PautaStatusIndicator({
 }: PautaStatusIndicatorProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const { clientScopes } = usePautaStatus(clientId, month, year, events);
+  
+  console.log(`PautaStatusIndicator - clientId: ${clientId}, scopes: ${clientScopes.length}`);
 
   // Get the service counts from the events for the current month/year
   const serviceCounts: Record<string, number> = {};
@@ -52,6 +54,7 @@ export function PautaStatusIndicator({
 
   // If there are no client scopes, don't render anything
   if (!clientScopes || clientScopes.length === 0) {
+    console.log("No client scopes found, not rendering PautaStatusIndicator");
     return null;
   }
 
