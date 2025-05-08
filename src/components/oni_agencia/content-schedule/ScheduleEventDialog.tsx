@@ -90,8 +90,6 @@ export function ScheduleEventDialog({
     handleStatusUpdate: updateStatus
   } = useScheduleMutations({
     clientId,
-    currentSelectedEvent,
-    formData,
     onSuccess: () => {
       if (onManualRefetch) {
         onManualRefetch();
@@ -102,15 +100,15 @@ export function ScheduleEventDialog({
   
   // Wrap handlers to match expected function signatures
   const handleSubmit = async (e: React.FormEvent) => {
-    await submitEvent(e);
+    await submitEvent(e, currentSelectedEvent, formData);
   };
   
   const handleStatusUpdate = async (e: React.FormEvent) => {
-    await updateStatus(e);
+    await updateStatus(e, currentSelectedEvent, formData);
   };
   
   const handleDelete = async () => {
-    await deleteEvent();
+    await deleteEvent(currentSelectedEvent);
   };
 
   // Dialog title

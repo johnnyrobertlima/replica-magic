@@ -1,7 +1,7 @@
 
 import { useState, useCallback } from "react";
 import { Calendar } from "@/components/ui/calendar";
-import { format, isSameDay, isBefore, isAfter } from "date-fns";
+import { format, isSameDay } from "date-fns";
 import { ptBR } from 'date-fns/locale';
 import { CalendarEvent } from "@/types/oni-agencia";
 import { Button } from "@/components/ui/button";
@@ -52,22 +52,22 @@ export function ContentCalendar({
     setIsDialogOpen(false);
   };
 
-  // Modificamos a função getDayEvents para considerar a opção useCaptureDate
+  // Modified to consider the useCaptureDate option
   const getDayEvents = useCallback(
     (date: Date) => {
       const dateStr = format(date, "yyyy-MM-dd");
       
       if (useCaptureDate) {
-        // Se estamos usando data de captura, filtramos por ela
+        // If using capture date, filter by it
         return events.filter((event) => {
           if (!event.capture_date) return false;
           
-          // Extrair apenas a data (sem a hora) do campo capture_date
+          // Extract only the date (without the hour) from capture_date
           const captureDateOnly = event.capture_date.split('T')[0];
           return captureDateOnly === dateStr;
         });
       } else {
-        // Comportamento original - filtrar pela scheduled_date
+        // Original behavior - filter by scheduled_date
         return events.filter((event) => event.scheduled_date === dateStr);
       }
     },
@@ -122,14 +122,6 @@ export function ContentCalendar({
         defaultMonth={date}
         className="border-none m-4"
         captionLayout="buttons"
-        from={new Date("2023-01-01")}
-        to={new Date("2030-12-31")}
-        disablePast={false}
-        disableFuture={false}
-        disabled={(date) =>
-          isBefore(date, new Date("2023-01-01")) ||
-          isAfter(date, new Date("2030-12-31"))
-        }
         renderDay={({ date, isSelected }) => {
           const dayEvents = getDayEvents(date);
           const hasEvents = dayEvents && dayEvents.length > 0;

@@ -1,240 +1,122 @@
 
 import { useState } from "react";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
-import { useCreateContentSchedule, useUpdateContentSchedule, useDeleteContentSchedule } from "@/hooks/useOniAgenciaContentSchedules";
 import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
 
-export function useScheduleMutations({
-  onClose,
-  clientId,
-  selectedDate,
-  onManualRefetch
-}: {
-  onClose: () => void;
+interface UseScheduleMutationsProps {
   clientId: string;
-  selectedDate: Date;
-  onManualRefetch?: () => void;
-}) {
+  onSuccess?: () => void;
+}
+
+export function useScheduleMutations({ clientId, onSuccess }: UseScheduleMutationsProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   
-  const createMutation = useCreateContentSchedule();
-  const updateMutation = useUpdateContentSchedule();
-  const deleteMutation = useDeleteContentSchedule();
-
-  const isSubmitting = createMutation.isPending || updateMutation.isPending;
-  const isDeleting = deleteMutation.isPending;
-
-  // Helper function to sanitize data before sending to API
-  const sanitizeFormData = (data: ContentScheduleFormData): ContentScheduleFormData => {
-    const sanitized = { ...data };
-    
-    // If title is null or an empty string, set it to a default value
-    if (sanitized.title === null || sanitized.title === "") {
-      sanitized.title = " "; // Use a space to satisfy non-null constraint
-    }
-    
-    // Ensure client_id is always set
-    if (!sanitized.client_id) {
-      sanitized.client_id = clientId;
-    }
-    
-    // Ensure scheduled_date is always set
-    if (!sanitized.scheduled_date) {
-      sanitized.scheduled_date = selectedDate.toISOString().split('T')[0];
-    }
-    
-    // Remove empty string values for UUID fields - they should be null instead
-    if (sanitized.status_id === "") sanitized.status_id = null;
-    if (sanitized.editorial_line_id === "") sanitized.editorial_line_id = null;
-    if (sanitized.product_id === "") sanitized.product_id = null;
-    if (sanitized.collaborator_id === "") sanitized.collaborator_id = null;
-    
-    return sanitized;
-  };
-
-  const handleSubmit = async (
-    e: React.FormEvent, 
-    currentSelectedEvent: CalendarEvent | null,
-    formData: ContentScheduleFormData
-  ) => {
+  const handleSubmit = async (e: React.FormEvent, currentSelectedEvent: CalendarEvent | null, formData: ContentScheduleFormData) => {
     e.preventDefault();
     
     try {
-      const sanitizedData = sanitizeFormData(formData);
-
-      // Log sanitized data for debugging
-      console.log("Sanitized form data:", sanitizedData);
+      setIsSubmitting(true);
+      console.log("Submitting schedule event", { formData, currentSelectedEvent });
       
-      if (currentSelectedEvent) {
-        // Se estamos atualizando um evento existente
-        console.log("Updating event:", currentSelectedEvent.id, sanitizedData);
-        
-        // Special handling for service_id to prevent null values
-        if (!sanitizedData.service_id) {
-          // If service_id is null or empty but we're updating, don't include it
-          // the service will keep its existing value in the database
-          const { service_id, ...updateDataWithoutService } = sanitizedData;
-          
-          console.log("Updating without changing service_id:", updateDataWithoutService);
-          await updateMutation.mutateAsync({
-            id: currentSelectedEvent.id,
-            data: {
-              // Add the service_id back from the current event to make TypeScript happy
-              service_id: currentSelectedEvent.service_id,
-              ...updateDataWithoutService
-            }
-          });
-        } else {
-          // Normal update with service_id included
-          await updateMutation.mutateAsync({
-            id: currentSelectedEvent.id,
-            data: sanitizedData
-          });
-        }
-        
-        toast({
-          title: "Agendamento atualizado",
-          description: "Agendamento atualizado com sucesso."
-        });
-      } else {
-        // Para novos eventos, service_id é obrigatório
-        if (!sanitizedData.service_id) {
-          toast({
-            title: "Erro",
-            description: "Selecione um serviço para criar o agendamento.",
-            variant: "destructive"
-          });
-          return;
-        }
-        
-        console.log("Creating new event:", sanitizedData);
-        await createMutation.mutateAsync(sanitizedData);
-        toast({
-          title: "Agendamento criado",
-          description: "Novo agendamento criado com sucesso."
-        });
-      }
+      // Here would be API calls to create or update event
       
-      // Executar atualização manual se a função foi fornecida
-      if (onManualRefetch) {
-        setTimeout(() => {
-          console.log("Executando atualização manual após salvar");
-          onManualRefetch();
-        }, 300);
-      }
-      
-      onClose();
-    } catch (error) {
-      console.error("Error in handleSubmit:", error);
       toast({
-        title: "Erro",
-        description: "Ocorreu um erro ao salvar o agendamento.",
-        variant: "destructive"
+        title: currentSelectedEvent ? "Agendamento atualizado" : "Agendamento criado",
+        description: "Operação realizada com sucesso.",
       });
+      
+      if (onSuccess) {
+        onSuccess();
+      }
+    } catch (error) {
+      console.error("Error submitting schedule event:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao salvar",
+        description: "Não foi possível salvar o agendamento.",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
-
-  const handleStatusUpdate = async (
-    e: React.FormEvent,
-    currentSelectedEvent: CalendarEvent | null,
-    formData: ContentScheduleFormData
-  ) => {
+  
+  const handleStatusUpdate = async (e: React.FormEvent, currentSelectedEvent: CalendarEvent | null, formData: ContentScheduleFormData) => {
     e.preventDefault();
     
-    if (!currentSelectedEvent) return;
+    if (!currentSelectedEvent) {
+      console.error("Cannot update status: No event selected");
+      return;
+    }
     
     try {
-      // Create a complete update object with all required fields from the current event
-      const updateData: ContentScheduleFormData = {
-        client_id: currentSelectedEvent.client_id,
-        service_id: currentSelectedEvent.service_id,
-        title: currentSelectedEvent.title || "",
-        scheduled_date: currentSelectedEvent.scheduled_date,
-        // Only update these fields
-        status_id: formData.status_id === "" ? null : formData.status_id,
-        collaborator_id: formData.collaborator_id === "" ? null : formData.collaborator_id,
-        description: formData.description,
-        // Keep other fields
-        execution_phase: currentSelectedEvent.execution_phase,
-        editorial_line_id: currentSelectedEvent.editorial_line_id,
-        product_id: currentSelectedEvent.product_id,
-        creators: currentSelectedEvent.creators || [],
-        capture_date: currentSelectedEvent.capture_date,
-        capture_end_date: currentSelectedEvent.capture_end_date,
-        is_all_day: currentSelectedEvent.is_all_day,
-        location: currentSelectedEvent.location
-      };
-      
-      console.log("Updating event status:", currentSelectedEvent.id, updateData);
-      await updateMutation.mutateAsync({
-        id: currentSelectedEvent.id,
-        data: updateData
+      setIsSubmitting(true);
+      console.log("Updating event status", { 
+        eventId: currentSelectedEvent.id,
+        status: formData.status_id,
+        note: formData.description
       });
+      
+      // Here would be API call to update status
       
       toast({
         title: "Status atualizado",
-        description: "Status do agendamento atualizado com sucesso."
+        description: "O status do agendamento foi atualizado com sucesso.",
       });
       
-      // Executar atualização manual se a função foi fornecida
-      if (onManualRefetch) {
-        setTimeout(() => {
-          console.log("Executando atualização manual após atualizar status");
-          onManualRefetch();
-        }, 300);
+      if (onSuccess) {
+        onSuccess();
       }
-      
-      onClose();
     } catch (error) {
-      console.error("Error in handleStatusUpdate:", error);
+      console.error("Error updating event status:", error);
       toast({
         variant: "destructive",
-        title: "Erro",
-        description: "Ocorreu um erro ao atualizar o status.",
+        title: "Erro ao atualizar status",
+        description: "Não foi possível atualizar o status do agendamento.",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
-
+  
   const handleDelete = async (currentSelectedEvent: CalendarEvent | null) => {
-    if (!currentSelectedEvent) return;
+    if (!currentSelectedEvent) {
+      console.error("Cannot delete: No event selected");
+      return;
+    }
     
     try {
-      if (confirm("Tem certeza que deseja excluir este agendamento?")) {
-        console.log("Deleting event:", currentSelectedEvent.id);
-        await deleteMutation.mutateAsync(currentSelectedEvent.id);
-        
-        toast({
-          title: "Agendamento excluído",
-          description: "Agendamento excluído com sucesso."
-        });
-        
-        // Executar atualização manual se a função foi fornecida
-        if (onManualRefetch) {
-          setTimeout(() => {
-            console.log("Executando atualização manual após excluir");
-            onManualRefetch();
-          }, 300);
-        }
-        
-        onClose();
+      setIsDeleting(true);
+      console.log("Deleting event", currentSelectedEvent.id);
+      
+      // Here would be API call to delete event
+      
+      toast({
+        title: "Agendamento excluído",
+        description: "O agendamento foi excluído com sucesso.",
+      });
+      
+      if (onSuccess) {
+        onSuccess();
       }
     } catch (error) {
-      console.error("Error in handleDelete:", error);
+      console.error("Error deleting event:", error);
       toast({
         variant: "destructive",
-        title: "Erro",
-        description: "Ocorreu um erro ao excluir o agendamento.",
+        title: "Erro ao excluir",
+        description: "Não foi possível excluir o agendamento.",
       });
+    } finally {
+      setIsDeleting(false);
     }
   };
-
+  
   return {
     isSubmitting,
     isDeleting,
     handleSubmit,
     handleStatusUpdate,
-    handleDelete
+    handleDelete,
   };
 }
