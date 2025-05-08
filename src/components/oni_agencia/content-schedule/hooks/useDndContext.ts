@@ -1,7 +1,8 @@
+
 import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { CalendarEvent } from "@/types/oni-agencia";
-import { updateEventDate as updateEventDateService } from "@/services/oniAgenciaContentScheduleServices";
+import { updateEventDate } from "@/services/oniAgenciaCalendarEventServices";
 
 interface UseDndContextProps {
   onEventUpdate?: () => void;
@@ -17,7 +18,7 @@ export const useDndContext = ({ onEventUpdate }: UseDndContextProps = {}) => {
 
   const updateEventDate = async (eventId: string, newDate: Date): Promise<boolean> => {
     try {
-      await updateEventDateService(eventId, newDate);
+      await updateEventDate(eventId, newDate);
       toast({
         title: "Data atualizada",
         description: "A data do evento foi atualizada com sucesso.",
@@ -34,19 +35,26 @@ export const useDndContext = ({ onEventUpdate }: UseDndContextProps = {}) => {
   };
 
   const handleDragEnd = useCallback(
-    (event: any) => {
+    async (event: any) => {
       const { over } = event;
 
       if (over) {
         const date = over.data.current as Date;
-        if (date) {
-          handleDrop(date);
+        if (date && activeDragEvent) {
+          try {
+            const success = await updateEventDate(activeDragEvent.id, date);
+            if (success && onEventUpdate) {
+              onEventUpdate();
+            }
+          } catch (error) {
+            console.error("Error updating event date:", error);
+          }
         }
       }
 
       setActiveDragEvent(null);
     },
-    [updateEventDate, toast, activeDragEvent, onEventUpdate]
+    [activeDragEvent, onEventUpdate]
   );
 
   const handleDrop = async (date: Date): Promise<void> => {

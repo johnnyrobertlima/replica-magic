@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { format } from "date-fns";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { 
   useServices,
@@ -21,7 +21,6 @@ interface MobileScheduleEventDialogProps {
   events: CalendarEvent[];
   onClose: () => void;
   selectedEvent?: CalendarEvent;
-  initialStatusTabActive?: boolean;
   onManualRefetch?: () => void;
 }
 
@@ -33,11 +32,8 @@ export function MobileScheduleEventDialog({
   events,
   onClose,
   selectedEvent,
-  initialStatusTabActive = false,
   onManualRefetch
 }: MobileScheduleEventDialogProps) {
-  const initialTabActive = initialStatusTabActive ? "status" : "details";
-  
   const {
     currentSelectedEvent,
     formData,
@@ -58,11 +54,11 @@ export function MobileScheduleEventDialog({
     selectedDate,
     events,
     selectedEvent,
+    onManualRefetch,
     onClose: () => {
       onOpenChange(false);
       onClose();
-    },
-    onManualRefetch
+    }
   });
 
   const { data: services = [], isLoading: isLoadingServices } = useServices();
@@ -117,7 +113,6 @@ export function MobileScheduleEventDialog({
         onDateChange={handleDateChange}
         onDateTimeChange={handleDateTimeChange}
         onAllDayChange={handleAllDayChange}
-        defaultTab={initialTabActive}
       />
     </MobileDialogContainer>
   );

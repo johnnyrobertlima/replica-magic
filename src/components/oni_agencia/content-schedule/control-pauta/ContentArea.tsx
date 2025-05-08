@@ -8,8 +8,8 @@ import { DndContext } from "@dnd-kit/core";
 import { useDndContext } from "../hooks/useDndContext";
 
 interface ContentAreaProps {
-  events: CalendarEvent[];
-  collaborators: OniAgenciaCollaborator[];
+  events: CalendarEvent[] | undefined;
+  collaborators: OniAgenciaCollaborator[] | undefined;
   isLoading: boolean;
   onManualRefetch?: () => void;
 }
@@ -25,7 +25,7 @@ export const ContentArea = ({
   const [selectedCollaboratorId, setSelectedCollaboratorId] = useState<string | null>(null);
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
 
-  const dndContext = useDndContext();
+  const dndContext = useDndContext({ onEventUpdate: onManualRefetch });
   
   const filteredEvents = useMemo(() => {
     if (!events) return [];
@@ -36,7 +36,7 @@ export const ContentArea = ({
         !searchTerm || 
         event.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         event.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.collaborator_name?.toLowerCase().includes(searchTerm.toLowerCase());
+        event.collaborator?.name?.toLowerCase().includes(searchTerm.toLowerCase());
       
       // Filter by status
       const matchesStatus = !selectedStatusId || event.status_id === selectedStatusId;
@@ -74,15 +74,14 @@ export const ContentArea = ({
     >
       <div className="space-y-4 p-4">
         <ContentScheduleFilters 
-          searchTerm={searchTerm}
-          onSearchChange={handleSearchChange}
           selectedStatusId={selectedStatusId}
           onStatusChange={handleStatusChange}
           selectedCollaboratorId={selectedCollaboratorId}
           onCollaboratorChange={handleCollaboratorChange}
           selectedServiceId={selectedServiceId}
           onServiceChange={handleServiceChange}
-          collaborators={collaborators}
+          collaborators={collaborators ?? []}
+          onSearchChange={handleSearchChange}
         />
         
         {isLoading ? (
@@ -93,6 +92,7 @@ export const ContentArea = ({
           <ContentScheduleList 
             events={filteredEvents} 
             onManualRefetch={onManualRefetch}
+            clientId="feirinha-da-concordia"
           />
         )}
       </div>

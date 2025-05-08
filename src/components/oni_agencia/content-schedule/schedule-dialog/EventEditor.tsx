@@ -1,230 +1,79 @@
 
-import { useState, useEffect } from "react";
+import { CalendarEvent } from "@/types/oni-agencia";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
-import { CalendarEvent, ContentScheduleFormData, OniAgenciaClient } from "@/types/oni-agencia";
-import { DialogFooter } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { EventForm } from "./EventForm";
-import { DialogActions } from "./DialogActions";
-import { StatusUpdateForm } from "./StatusUpdateForm";
-import { ScheduleHistory } from "./ScheduleHistory";
-import { CaptureForm } from "./CaptureForm";
-import { ArrowDown, History, Camera } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { StatusSelect } from "./StatusSelect";
+import { Loader2, Trash2 } from "lucide-react";
 
 interface EventEditorProps {
   event: CalendarEvent;
-  clientId: string;
-  selectedDate: Date;
-  services: any[];
-  collaborators: any[];
-  editorialLines: any[];
-  products: any[];
   statuses: any[];
-  clients: OniAgenciaClient[];
-  isLoadingServices: boolean;
-  isLoadingCollaborators: boolean;
-  isLoadingEditorialLines: boolean;
-  isLoadingProducts: boolean;
   isLoadingStatuses: boolean;
-  isLoadingClients: boolean;
-  isSubmitting: boolean;
+  onStatusUpdate: (statusId: string) => void;
+  onDelete: () => void;
   isDeleting: boolean;
-  onSubmit: (e: React.FormEvent) => Promise<void>;
-  onStatusUpdate: (e: React.FormEvent) => Promise<void>;
-  onDelete: () => Promise<void>;
-  onCancel: () => void;
-  formData: ContentScheduleFormData;
-  onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  onSelectChange: (name: string, value: string) => void;
-  onDateChange: (name: string, value: Date | null) => void;
-  onDateTimeChange?: (name: string, value: Date | null) => void;
-  onAllDayChange?: (value: boolean) => void;
-  defaultActiveTab?: "details" | "status" | "history" | "capture";
 }
 
-export function EventEditor({
-  event,
-  clientId,
-  selectedDate,
-  services,
-  collaborators,
-  editorialLines,
-  products,
+export function EventEditor({ 
+  event, 
   statuses,
-  clients,
-  isLoadingServices,
-  isLoadingCollaborators,
-  isLoadingEditorialLines,
-  isLoadingProducts,
   isLoadingStatuses,
-  isLoadingClients,
-  isSubmitting,
-  isDeleting,
-  onSubmit,
   onStatusUpdate,
   onDelete,
-  onCancel,
-  formData,
-  onInputChange,
-  onSelectChange,
-  onDateChange,
-  onDateTimeChange,
-  onAllDayChange,
-  defaultActiveTab = "details"
+  isDeleting
 }: EventEditorProps) {
-  const [activeTab, setActiveTab] = useState<"details" | "status" | "history" | "capture">(defaultActiveTab);
-  const [note, setNote] = useState<string>(formData.description || "");
-  
-  // Update activeTab when defaultActiveTab changes
-  useEffect(() => {
-    setActiveTab(defaultActiveTab);
-  }, [defaultActiveTab]);
-  
-  const handleNoteChange = (value: string) => {
-    setNote(value);
-    onSelectChange("description", value);
-  };
-
-  // Determine the tab content height based on active tab
-  const getContentHeight = () => {
-    return activeTab === "history" ? "h-[60vh]" : "h-[60vh]";
-  };
-
-  // Handle date changes for the capture tab
-  const handleCaptureDateTime = (name: string, value: Date | null) => {
-    if (onDateTimeChange) {
-      onDateTimeChange(name, value);
-    } else {
-      // Fallback to standard date handling if not provided
-      onDateChange(name, value);
-    }
-  };
-
   return (
-    <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "details" | "status" | "history" | "capture")} className="flex flex-col h-full">
-      <TabsList className="grid w-full grid-cols-4">
-        <TabsTrigger value="details">Detalhes</TabsTrigger>
-        <TabsTrigger 
-          value="status" 
-          className={`relative ${activeTab === "status" ? "bg-purple-100 hover:bg-purple-200 text-purple-800" : ""}`}
-        >
-          {activeTab === "status" && (
-            <ArrowDown className="h-4 w-4 absolute -top-3 left-1/2 transform -translate-x-1/2 text-purple-500" />
+    <Card>
+      <CardHeader>
+        <CardTitle>{event.title || "Evento sem título"}</CardTitle>
+        <CardDescription>
+          {event.service?.name} • {format(new Date(event.scheduled_date), "dd/MM/yyyy")}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {event.description && (
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Descrição</p>
+              <p className="mt-1">{event.description}</p>
+            </div>
           )}
-          Atualizar Status
-        </TabsTrigger>
-        <TabsTrigger 
-          value="history"
-          className="flex items-center gap-2"
-        >
-          <History className="h-4 w-4" />
-          Histórico
-        </TabsTrigger>
-        <TabsTrigger 
-          value="capture"
-          className="flex items-center gap-2"
-        >
-          <Camera className="h-4 w-4" />
-          Captura
-        </TabsTrigger>
-      </TabsList>
-      
-      <div className="flex-grow">
-        <TabsContent value="details" className="mt-2 h-full">
-          <ScrollArea className={getContentHeight()}>
-            <form onSubmit={onSubmit}>
-              <EventForm
-                formData={formData}
-                services={services}
-                collaborators={collaborators}
-                editorialLines={editorialLines}
-                products={products}
+
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">Status</p>
+            <div className="mt-2">
+              <StatusSelect
+                value={event.status_id || ""}
+                onChange={onStatusUpdate}
                 statuses={statuses}
-                clients={clients}
-                isLoadingServices={isLoadingServices}
-                isLoadingCollaborators={isLoadingCollaborators}
-                isLoadingEditorialLines={isLoadingEditorialLines}
-                isLoadingProducts={isLoadingProducts}
-                isLoadingStatuses={isLoadingStatuses}
-                isLoadingClients={isLoadingClients}
-                onInputChange={onInputChange}
-                onSelectChange={onSelectChange}
-                onDateChange={onDateChange}
+                isLoading={isLoadingStatuses}
               />
-              
-              <DialogFooter>
-                <DialogActions
-                  isSubmitting={isSubmitting}
-                  isDeleting={isDeleting}
-                  onCancel={onCancel}
-                  onDelete={onDelete}
-                  isEditing={true}
-                />
-              </DialogFooter>
-            </form>
-          </ScrollArea>
-        </TabsContent>
-        
-        <TabsContent value="status" className="mt-2 h-full">
-          <ScrollArea className={getContentHeight()}>
-            <form onSubmit={onStatusUpdate}>
-              <StatusUpdateForm
-                event={event}
-                statuses={statuses}
-                collaborators={collaborators}
-                isLoadingStatuses={isLoadingStatuses}
-                isLoadingCollaborators={isLoadingCollaborators}
-                selectedStatus={formData.status_id}
-                selectedCollaborator={formData.collaborator_id}
-                note={note}
-                onStatusChange={(value) => onSelectChange("status_id", value)}
-                onCollaboratorChange={(value) => onSelectChange("collaborator_id", value)}
-                onNoteChange={handleNoteChange}
-              />
-              
-              <DialogFooter>
-                <DialogActions
-                  isSubmitting={isSubmitting}
-                  isDeleting={false}
-                  onCancel={onCancel}
-                  isEditing={true}
-                  saveLabel="Atualizar Status"
-                />
-              </DialogFooter>
-            </form>
-          </ScrollArea>
-        </TabsContent>
-        
-        <TabsContent value="history" className="mt-2 h-full">
-          <div className="h-[60vh]">
-            <ScheduleHistory eventId={event.id} />
+            </div>
           </div>
-        </TabsContent>
-        
-        <TabsContent value="capture" className="mt-2 h-full">
-          <ScrollArea className={getContentHeight()}>
-            <form onSubmit={onSubmit}>
-              <CaptureForm
-                formData={formData}
-                onDateTimeChange={handleCaptureDateTime}
-                onAllDayChange={onAllDayChange || (() => {})}
-                onInputChange={onInputChange}
-              />
-              
-              <DialogFooter>
-                <DialogActions
-                  isSubmitting={isSubmitting}
-                  isDeleting={false}
-                  onCancel={onCancel}
-                  isEditing={true}
-                  saveLabel="Salvar"
-                />
-              </DialogFooter>
-            </form>
-          </ScrollArea>
-        </TabsContent>
-      </div>
-    </Tabs>
+
+          <div className="flex justify-end">
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={onDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Excluindo...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Excluir
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
