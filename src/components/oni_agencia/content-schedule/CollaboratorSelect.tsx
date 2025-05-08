@@ -8,23 +8,23 @@ import {
 } from "@/components/ui/select";
 import { Loader2 } from 'lucide-react';
 
-export interface ProductSelectProps {
+export interface CollaboratorSelectProps {
   value: string;
   onValueChange: (value: string) => void;
-  products: any[];
+  collaborators: any[];
   isLoading: boolean;
 }
 
-export const ProductSelect = ({ 
+export const CollaboratorSelect = ({ 
   value, 
   onValueChange, 
-  products, 
+  collaborators, 
   isLoading 
-}: ProductSelectProps) => {
+}: CollaboratorSelectProps) => {
   return (
     <Select value={value} onValueChange={onValueChange}>
       <SelectTrigger className="w-full bg-white">
-        <SelectValue placeholder="Selecione o produto" />
+        <SelectValue placeholder="Selecione o colaborador" />
       </SelectTrigger>
       <SelectContent>
         {isLoading ? (
@@ -33,13 +33,12 @@ export const ProductSelect = ({
             <span className="ml-2">Carregando...</span>
           </div>
         ) : (
-          products.map((product) => (
+          collaborators.map((collaborator) => (
             <SelectItem 
-              key={product.id} 
-              value={product.id}
-              style={{ color: product.color || 'inherit' }}
+              key={collaborator.id} 
+              value={collaborator.id}
             >
-              {product.name}
+              {collaborator.name}
             </SelectItem>
           ))
         )}

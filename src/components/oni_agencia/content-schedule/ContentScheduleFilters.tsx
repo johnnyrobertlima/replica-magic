@@ -32,7 +32,9 @@ interface ContentScheduleFiltersProps {
   onServicesChange?: (serviceIds: string[]) => void;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
-  hideClientFilter?: boolean; // Optional prop
+  hideClientFilter?: boolean;
+  selectedStatusId?: string | null;
+  onStatusChange?: (value: string) => void;
 }
 
 export function ContentScheduleFilters({
@@ -41,18 +43,20 @@ export function ContentScheduleFilters({
   selectedYear,
   selectedCollaborator,
   selectedServiceIds = [],
+  selectedStatusId,
   onClientChange,
   onMonthChange,
   onYearChange,
   onCollaboratorChange,
   onServicesChange,
+  onStatusChange,
   isCollapsed = false,
   onToggleCollapse,
   hideClientFilter = false
 }: ContentScheduleFiltersProps) {
   const { data: clients = [], isLoading: isLoadingClients } = useClients();
   const { data: collaborators = [], isLoading: isLoadingCollaborators } = useCollaborators();
-  const { data: services = [] } = useServices();
+  const { data: services = [], isLoading: isLoadingServices } = useServices();
   
   const getMonthOptions = () => {
     const months = [];
@@ -89,6 +93,12 @@ export function ContentScheduleFilters({
   const handleServiceChange = (serviceIds: string[]) => {
     if (onServicesChange) {
       onServicesChange(serviceIds);
+    }
+  };
+
+  const handleStatusChange = (value: string) => {
+    if (onStatusChange) {
+      onStatusChange(value === "all" ? null : value);
     }
   };
   
@@ -164,6 +174,28 @@ export function ContentScheduleFilters({
               </SelectContent>
             </Select>
           </div>
+
+          {onStatusChange && (
+            <div className="space-y-2">
+              <Label htmlFor="status-select">Status</Label>
+              <Select
+                value={selectedStatusId || "all"}
+                onValueChange={handleStatusChange}
+              >
+                <SelectTrigger id="status-select" className="w-full bg-white">
+                  <SelectValue placeholder="Todos os status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os status</SelectItem>
+                  <SelectItem value="5b218de6-0e4a-483c-bba8-7f8d5d4e8797">Planejado</SelectItem>
+                  <SelectItem value="9c211dc6-0b87-4a56-954c-77736fc902aa">Em Produção</SelectItem>
+                  <SelectItem value="d9fa447f-f10d-44df-b869-b5b4e7d31e5b">Pronto</SelectItem>
+                  <SelectItem value="25fa447f-f10d-44df-b869-b5b4e7d31e5c">Publicado</SelectItem>
+                  <SelectItem value="e5fa447f-f10d-44df-b869-b5b4e7d31e5d">Cancelado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           
           <div className="space-y-2">
             <Label htmlFor="service-select">Serviços</Label>
@@ -194,7 +226,7 @@ export function ContentScheduleFilters({
             <div className="space-y-2">
               <Label htmlFor="month-select">Mês</Label>
               <Select
-                value={selectedMonth.toString()}
+                value={selectedMonth ? selectedMonth.toString() : ""}
                 onValueChange={(value) => onMonthChange(parseInt(value))}
               >
                 <SelectTrigger id="month-select" className="w-full bg-white">
@@ -213,7 +245,7 @@ export function ContentScheduleFilters({
             <div className="space-y-2">
               <Label htmlFor="year-select">Ano</Label>
               <Select
-                value={selectedYear.toString()}
+                value={selectedYear ? selectedYear.toString() : ""}
                 onValueChange={(value) => onYearChange(parseInt(value))}
               >
                 <SelectTrigger id="year-select" className="w-full bg-white">

@@ -1,22 +1,56 @@
 
-import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
-import { ServiceSelect } from "./ServiceSelect";
-import { CollaboratorSelect } from "./CollaboratorSelect";
-import { EditorialLineSelect } from "./EditorialLineSelect";
-import { ProductSelect } from "./ProductSelect";
-import { StatusSelect } from "./StatusSelect";
-import { ExecutionPhaseSelect } from "./ExecutionPhaseSelect";
-import { CreatorsMultiSelect } from "./CreatorsMultiSelect";
-import { CaptureForm } from "./CaptureForm";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { format } from "date-fns";
+import { ServiceSelect } from './ServiceSelect';
+import { CollaboratorSelect } from './CollaboratorSelect';
+import { StatusSelect } from './StatusSelect';
+import { EditorialLineSelect } from './EditorialLineSelect';
+import { ProductSelect } from './ProductSelect';
+import { ExecutionPhaseSelect } from './ExecutionPhaseSelect';
+import { CreatorsMultiSelect } from '../CreatorsMultiSelect';
+
+interface ServiceSelectProps {
+  value: string;
+  onValueChange: (value: string) => void;
+  services: any[];
+  isLoading: boolean;
+}
+
+interface CollaboratorSelectProps {
+  value: string;
+  onValueChange: (value: string) => void;
+  collaborators: any[];
+  isLoading: boolean;
+}
+
+interface EditorialLineSelectProps {
+  value: string;
+  onValueChange: (value: string) => void;
+  editorialLines: any[];
+  isLoading: boolean;
+}
+
+interface ProductSelectProps {
+  value: string;
+  onValueChange: (value: string) => void;
+  products: any[];
+  isLoading: boolean;
+}
+
+interface ExecutionPhaseSelectProps {
+  value: string;
+  onValueChange: (value: string) => void;
+}
+
+interface CreatorsMultiSelectProps {
+  value: string[];
+  onChange: (creators: string[]) => void;
+  collaborators: any[];
+  isLoading: boolean;
+}
 
 interface NewEventFormProps {
-  clientId: string;
-  selectedDate: Date;
+  formData: any;
+  onInputChange: (field: string, value: string) => void;
+  onSelectChange: (field: string, value: string) => void;
   services: any[];
   collaborators: any[];
   editorialLines: any[];
@@ -27,21 +61,14 @@ interface NewEventFormProps {
   isLoadingEditorialLines: boolean;
   isLoadingProducts: boolean;
   isLoadingStatuses: boolean;
-  isSubmitting: boolean;
-  formData: ContentScheduleFormData;
-  isEditMode?: boolean;
-  onSubmit: () => void;
-  onCancel: () => void;
-  onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  onSelectChange: (field: keyof ContentScheduleFormData, value: string) => void;
-  onDateChange: (field: keyof ContentScheduleFormData, value: string) => void;
-  onDateTimeChange?: (field: string, value: Date | null) => void;
-  onAllDayChange?: (checked: boolean) => void;
+  clientId: string;
+  onCreatorsChange: (creators: string[]) => void;
 }
 
-export function NewEventForm({
-  clientId,
-  selectedDate,
+export const NewEventForm = ({
+  formData,
+  onInputChange,
+  onSelectChange,
   services,
   collaborators,
   editorialLines,
@@ -52,115 +79,102 @@ export function NewEventForm({
   isLoadingEditorialLines,
   isLoadingProducts,
   isLoadingStatuses,
-  isSubmitting,
-  formData,
-  isEditMode = false,
-  onSubmit,
-  onCancel,
-  onInputChange,
-  onSelectChange,
-  onDateChange,
-  onDateTimeChange,
-  onAllDayChange
-}: NewEventFormProps) {
-  const dateString = format(selectedDate, "yyyy-MM-dd");
-  
+  clientId,
+  onCreatorsChange
+}: NewEventFormProps) => {
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="title">Título</Label>
-          <Input
-            id="title"
-            name="title"
-            placeholder="Título do agendamento"
-            value={formData.title || ""}
-            onChange={onInputChange}
-          />
-        </div>
-        
-        <ServiceSelect
-          value={formData.service_id}
-          onChange={(value) => onSelectChange("service_id", value)}
+    <div className="grid grid-cols-1 gap-4">
+      <div className="space-y-2">
+        <label htmlFor="title" className="block text-sm font-medium">Título</label>
+        <input
+          type="text"
+          id="title"
+          value={formData.title || ''}
+          onChange={(e) => onInputChange('title', e.target.value)}
+          className="w-full p-2 border rounded"
+          placeholder="Título da pauta"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <label htmlFor="service-select" className="block text-sm font-medium">Serviço</label>
+        <ServiceSelect 
+          value={formData.service_id || ''} 
+          onValueChange={(value) => onSelectChange('service_id', value)}
           services={services}
           isLoading={isLoadingServices}
         />
       </div>
 
-      <div>
-        <Label htmlFor="description">Descrição</Label>
-        <Textarea
-          id="description"
-          name="description"
-          placeholder="Descrição do agendamento"
-          value={formData.description || ""}
-          onChange={onInputChange}
-          rows={3}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <CollaboratorSelect
-          value={formData.collaborator_id || ""}
-          onChange={(value) => onSelectChange("collaborator_id", value)}
+      <div className="space-y-2">
+        <label htmlFor="collaborator-select" className="block text-sm font-medium">Colaborador Responsável</label>
+        <CollaboratorSelect 
+          value={formData.collaborator_id || ''} 
+          onValueChange={(value) => onSelectChange('collaborator_id', value)}
           collaborators={collaborators}
           isLoading={isLoadingCollaborators}
         />
-        
-        <StatusSelect
-          value={formData.status_id || ""}
-          onChange={(value) => onSelectChange("status_id", value)}
+      </div>
+
+      <div className="space-y-2">
+        <label htmlFor="status-select" className="block text-sm font-medium">Status</label>
+        <StatusSelect 
+          value={formData.status_id || ''} 
+          onValueChange={(value) => onSelectChange('status_id', value)}
           statuses={statuses}
           isLoading={isLoadingStatuses}
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <EditorialLineSelect
-          value={formData.editorial_line_id || ""}
-          onChange={(value) => onSelectChange("editorial_line_id", value)}
+      <div className="space-y-2">
+        <label htmlFor="editorial-line-select" className="block text-sm font-medium">Linha Editorial</label>
+        <EditorialLineSelect 
+          value={formData.editorial_line_id || ''} 
+          onValueChange={(value) => onSelectChange('editorial_line_id', value)}
           editorialLines={editorialLines}
           isLoading={isLoadingEditorialLines}
         />
-        
-        <ProductSelect
-          value={formData.product_id || ""}
-          onChange={(value) => onSelectChange("product_id", value)}
+      </div>
+
+      <div className="space-y-2">
+        <label htmlFor="product-select" className="block text-sm font-medium">Produto</label>
+        <ProductSelect 
+          value={formData.product_id || ''} 
+          onValueChange={(value) => onSelectChange('product_id', value)}
           products={products}
           isLoading={isLoadingProducts}
         />
       </div>
 
-      <ExecutionPhaseSelect
-        value={formData.execution_phase || ""}
-        onChange={(value) => onSelectChange("execution_phase", value)}
-      />
+      <div className="space-y-2">
+        <label htmlFor="execution-phase-select" className="block text-sm font-medium">Fase de Execução</label>
+        <ExecutionPhaseSelect 
+          value={formData.execution_phase || ''} 
+          onValueChange={(value) => onSelectChange('execution_phase', value)}
+        />
+      </div>
 
-      <CaptureForm
-        captureDate={formData.capture_date ? new Date(formData.capture_date) : null}
-        captureEndDate={formData.capture_end_date ? new Date(formData.capture_end_date) : null}
-        location={formData.location || ""}
-        isAllDay={formData.is_all_day || false}
-        onDateChange={onDateTimeChange}
-        onLocationChange={(e) => onInputChange(e)}
-        onAllDayChange={onAllDayChange}
-      />
+      <div className="space-y-2">
+        <label htmlFor="description" className="block text-sm font-medium">Descrição</label>
+        <textarea
+          id="description"
+          value={formData.description || ''}
+          onChange={(e) => onInputChange('description', e.target.value)}
+          className="w-full p-2 border rounded"
+          rows={3}
+          placeholder="Descrição da pauta"
+        />
+      </div>
 
-      <CreatorsMultiSelect
-        selectedCreators={formData.creators || []}
-        onChange={(creators) => onSelectChange("creators", creators as unknown as string)}
-        collaborators={collaborators}
-        isLoading={isLoadingCollaborators}
-      />
-
-      <div className="flex justify-end space-x-2">
-        <Button variant="outline" onClick={onCancel}>
-          Cancelar
-        </Button>
-        <Button onClick={onSubmit} disabled={isSubmitting}>
-          {isSubmitting ? "Salvando..." : isEditMode ? "Atualizar" : "Criar"}
-        </Button>
+      <div className="space-y-2">
+        <label htmlFor="creators-select" className="block text-sm font-medium">Creators</label>
+        <CreatorsMultiSelect 
+          value={formData.creators || []}
+          onChange={onCreatorsChange}
+          collaborators={collaborators}
+          isLoading={isLoadingCollaborators}
+        />
       </div>
     </div>
   );
-}
+};

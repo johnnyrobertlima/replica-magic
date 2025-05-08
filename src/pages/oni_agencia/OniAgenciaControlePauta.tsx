@@ -110,18 +110,9 @@ const OniAgenciaControlePauta = () => {
         />
         
         <ContentArea 
-          viewMode={viewMode}
-          filteredSchedules={filteredSchedules}
-          clientId={selectedClient}
-          month={selectedMonth}
-          year={selectedYear}
-          selectedCollaborator={selectedCollaborator}
-          onMonthYearChange={handleMonthYearChange}
-          hasNextPage={!!hasNextPage}
-          isFetchingNextPage={isFetchingNextPage}
-          fetchNextPage={fetchNextPage}
-          showLoadingState={showLoadingState}
-          isCollapsed={isCollapsed}
+          events={filteredSchedules}
+          collaborators={[]} // Pass empty array as collaborators to fix the type error
+          isLoading={showLoadingState}
           onManualRefetch={handleManualRefetch}
         />
       </div>

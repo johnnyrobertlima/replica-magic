@@ -24,6 +24,9 @@ export const ContentArea = ({
   const [selectedStatusId, setSelectedStatusId] = useState<string | null>(null);
   const [selectedCollaboratorId, setSelectedCollaboratorId] = useState<string | null>(null);
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
+  const [selectedMonth] = useState<number>(new Date().getMonth() + 1);
+  const [selectedYear] = useState<number>(new Date().getFullYear());
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
 
   const dndContext = useDndContext({ onEventUpdate: onManualRefetch });
   
@@ -67,6 +70,10 @@ export const ContentArea = ({
     setSelectedServiceId(value === "all" ? null : value);
   };
 
+  const handleServiceIdsChange = (serviceIds: string[]) => {
+    setSelectedServiceIds(serviceIds);
+  };
+
   return (
     <DndContext
       onDragStart={dndContext.handleDragStart}
@@ -74,14 +81,19 @@ export const ContentArea = ({
     >
       <div className="space-y-4 p-4">
         <ContentScheduleFilters 
+          selectedClient=""
+          selectedMonth={selectedMonth}
+          selectedYear={selectedYear}
+          selectedCollaborator={selectedCollaboratorId}
+          onCollaboratorChange={handleCollaboratorChange}
+          selectedServiceIds={selectedServiceIds}
+          onServicesChange={handleServiceIdsChange}
           selectedStatusId={selectedStatusId}
           onStatusChange={handleStatusChange}
-          selectedCollaboratorId={selectedCollaboratorId}
-          onCollaboratorChange={handleCollaboratorChange}
-          selectedServiceId={selectedServiceId}
-          onServiceChange={handleServiceChange}
-          collaborators={collaborators ?? []}
-          onSearchChange={handleSearchChange}
+          onClientChange={() => {}}
+          onMonthChange={() => {}}
+          onYearChange={() => {}}
+          hideClientFilter={true}
         />
         
         {isLoading ? (

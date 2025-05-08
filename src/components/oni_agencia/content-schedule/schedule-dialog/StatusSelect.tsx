@@ -6,49 +6,44 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Status } from "@/pages/admin/sub-themes/types";
-import { Loader2 } from "lucide-react";
+import { Loader2 } from 'lucide-react';
 
-interface StatusSelectProps {
-  statuses: Status[];
+export interface StatusSelectProps {
+  value: string;
+  onValueChange: (statusId: string) => void;
+  statuses: any[];
   isLoading: boolean;
-  value: string | null;
-  onValueChange: (value: string) => void;
 }
 
-export function StatusSelect({ 
-  statuses, 
-  isLoading, 
+export const StatusSelect = ({ 
   value, 
-  onValueChange 
-}: StatusSelectProps) {
+  onValueChange, 
+  statuses, 
+  isLoading 
+}: StatusSelectProps) => {
   return (
-    <div className="grid gap-2">
-      <Label htmlFor="status_id">Status</Label>
-      <Select
-        value={value || "null"}
-        onValueChange={onValueChange}
-      >
-        <SelectTrigger id="status_id" className="w-full">
-          <SelectValue placeholder="Selecione o status" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="null">Nenhum</SelectItem>
-          {isLoading ? (
-            <div className="flex items-center justify-center py-2">
-              <Loader2 className="h-4 w-4 animate-spin text-primary mr-2" />
-              <span>Carregando...</span>
-            </div>
-          ) : (
-            statuses.map((status) => (
-              <SelectItem key={status.id} value={status.id}>
-                {status.name}
-              </SelectItem>
-            ))
-          )}
-        </SelectContent>
-      </Select>
-    </div>
+    <Select value={value} onValueChange={onValueChange}>
+      <SelectTrigger className="w-full bg-white">
+        <SelectValue placeholder="Selecione o status" />
+      </SelectTrigger>
+      <SelectContent>
+        {isLoading ? (
+          <div className="flex items-center justify-center p-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span className="ml-2">Carregando...</span>
+          </div>
+        ) : (
+          statuses.map((status) => (
+            <SelectItem 
+              key={status.id} 
+              value={status.id}
+              style={{ color: status.color || 'inherit' }}
+            >
+              {status.name}
+            </SelectItem>
+          ))
+        )}
+      </SelectContent>
+    </Select>
   );
-}
+};

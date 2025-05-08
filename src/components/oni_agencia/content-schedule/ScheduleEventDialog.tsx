@@ -1,5 +1,13 @@
 
-import { format } from "date-fns";
+import React from 'react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle 
+} from "@/components/ui/dialog";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { 
   useServices,
@@ -9,9 +17,8 @@ import {
   useStatuses
 } from "@/hooks/useOniAgenciaContentSchedules";
 import { useClients } from "@/hooks/useOniAgenciaClients";
-import { DialogContainer } from "./schedule-dialog/DialogContainer";
-import { DialogContent } from "./schedule-dialog/DialogContent";
-import { useScheduleEventDialog } from "./hooks/useScheduleEventDialog";
+import { DialogContent as ScheduleDialogContent } from './schedule-dialog/DialogContent';
+import { useScheduleEventDialog } from './hooks/useScheduleEventDialog';
 
 interface ScheduleEventDialogProps {
   isOpen: boolean;
@@ -24,7 +31,7 @@ interface ScheduleEventDialogProps {
   onManualRefetch?: () => void;
 }
 
-export function ScheduleEventDialog({
+export const ScheduleEventDialog: React.FC<ScheduleEventDialogProps> = ({
   isOpen,
   onOpenChange,
   clientId,
@@ -33,7 +40,7 @@ export function ScheduleEventDialog({
   onClose,
   selectedEvent,
   onManualRefetch
-}: ScheduleEventDialogProps) {
+}) => {
   const {
     currentSelectedEvent,
     formData,
@@ -44,9 +51,9 @@ export function ScheduleEventDialog({
     handleDateChange,
     handleDateTimeChange,
     handleAllDayChange,
-    handleSubmit,
-    handleStatusUpdate,
-    handleDelete,
+    handleSubmit: submitForm,
+    handleStatusUpdate: updateStatus,
+    handleDelete: deleteEvent,
     handleSelectEvent,
     resetForm
   } = useScheduleEventDialog({
@@ -54,13 +61,14 @@ export function ScheduleEventDialog({
     selectedDate,
     events,
     selectedEvent,
-    onManualRefetch,
     onClose: () => {
       onOpenChange(false);
       onClose();
-    }
+    },
+    onManualRefetch
   });
 
+  // Fetching necessary data
   const { data: services = [], isLoading: isLoadingServices } = useServices();
   const { data: collaborators = [], isLoading: isLoadingCollaborators } = useCollaborators();
   const { data: editorialLines = [], isLoading: isLoadingEditorialLines } = useEditorialLines();
@@ -68,52 +76,57 @@ export function ScheduleEventDialog({
   const { data: statuses = [], isLoading: isLoadingStatuses } = useStatuses();
   const { data: clients = [], isLoading: isLoadingClients } = useClients();
 
-  const dialogTitle = currentSelectedEvent ? "Editar Agendamento" : "Novo Agendamento";
+  // Wrapper functions to handle type compatibility issues
+  const handleSubmitWrapper = (e: React.FormEvent) => submitForm(e);
+  const handleStatusUpdateWrapper = (e: React.FormEvent) => updateStatus(e);
+  const handleDeleteWrapper = () => deleteEvent();
+
+  const formattedDate = format(selectedDate, 'dd MMMM yyyy', { locale: ptBR });
+  const dialogTitle = currentSelectedEvent ? "Editar Agendamento" : `Novo Agendamento - ${formattedDate}`;
 
   return (
-    <DialogContainer 
-      isOpen={isOpen} 
-      onOpenChange={onOpenChange} 
-      selectedDate={selectedDate} 
-      onClose={onClose}
-      title={dialogTitle}
-    >
-      <DialogContent
-        selectedEvent={selectedEvent}
-        events={events}
-        currentSelectedEvent={currentSelectedEvent}
-        clientId={clientId}
-        selectedDate={selectedDate}
-        services={services}
-        collaborators={collaborators}
-        editorialLines={editorialLines}
-        products={products}
-        statuses={statuses}
-        clients={clients}
-        isLoadingServices={isLoadingServices}
-        isLoadingCollaborators={isLoadingCollaborators}
-        isLoadingEditorialLines={isLoadingEditorialLines}
-        isLoadingProducts={isLoadingProducts}
-        isLoadingStatuses={isLoadingStatuses}
-        isLoadingClients={isLoadingClients}
-        isSubmitting={isSubmitting}
-        isDeleting={isDeleting}
-        formData={formData}
-        onSelectEvent={handleSelectEvent}
-        onResetForm={resetForm}
-        onSubmit={handleSubmit}
-        onStatusUpdate={handleStatusUpdate}
-        onDelete={handleDelete}
-        onCancel={() => {
-          onOpenChange(false);
-          onClose();
-        }}
-        onInputChange={handleInputChange}
-        onSelectChange={handleSelectChange}
-        onDateChange={handleDateChange}
-        onDateTimeChange={handleDateTimeChange}
-        onAllDayChange={handleAllDayChange}
-      />
-    </DialogContainer>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[800px] p-0">
+        <DialogHeader className="p-6 pb-2">
+          <DialogTitle>{dialogTitle}</DialogTitle>
+        </DialogHeader>
+        
+        <ScheduleDialogContent
+          events={events}
+          currentSelectedEvent={currentSelectedEvent}
+          clientId={clientId}
+          selectedDate={selectedDate}
+          services={services}
+          collaborators={collaborators}
+          editorialLines={editorialLines}
+          products={products}
+          statuses={statuses}
+          clients={clients}
+          isLoadingServices={isLoadingServices}
+          isLoadingCollaborators={isLoadingCollaborators}
+          isLoadingEditorialLines={isLoadingEditorialLines}
+          isLoadingProducts={isLoadingProducts}
+          isLoadingStatuses={isLoadingStatuses}
+          isLoadingClients={isLoadingClients}
+          isSubmitting={isSubmitting}
+          isDeleting={isDeleting}
+          formData={formData}
+          onSelectEvent={handleSelectEvent}
+          onResetForm={resetForm}
+          onSubmit={handleSubmitWrapper}
+          onStatusUpdate={handleStatusUpdateWrapper}
+          onDelete={handleDeleteWrapper}
+          onCancel={() => {
+            onOpenChange(false);
+            onClose();
+          }}
+          onInputChange={handleInputChange}
+          onSelectChange={handleSelectChange}
+          onDateChange={handleDateChange}
+          onDateTimeChange={handleDateTimeChange}
+          onAllDayChange={handleAllDayChange}
+        />
+      </DialogContent>
+    </Dialog>
   );
-}
+};

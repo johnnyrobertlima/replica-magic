@@ -35,7 +35,16 @@ export const getCalendarEvents = async (
       throw error;
     }
 
-    return data || [];
+    // Make sure all required properties are present
+    const eventsWithDefaults = (data || []).map(item => ({
+      ...item,
+      capture_date: item.capture_date || null,
+      capture_end_date: item.capture_end_date || null,
+      is_all_day: item.is_all_day !== undefined ? item.is_all_day : true,
+      location: item.location || null
+    })) as CalendarEvent[];
+
+    return eventsWithDefaults;
   } catch (error) {
     console.error("Error in getCalendarEvents:", error);
     return [];

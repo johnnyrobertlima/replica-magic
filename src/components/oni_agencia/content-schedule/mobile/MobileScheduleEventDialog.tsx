@@ -44,9 +44,9 @@ export function MobileScheduleEventDialog({
     handleDateChange,
     handleDateTimeChange,
     handleAllDayChange,
-    handleSubmit,
-    handleStatusUpdate,
-    handleDelete,
+    handleSubmit: submitForm,
+    handleStatusUpdate: updateStatus,
+    handleDelete: deleteEvent,
     handleSelectEvent,
     resetForm
   } = useScheduleEventDialog({
@@ -60,6 +60,11 @@ export function MobileScheduleEventDialog({
       onClose();
     }
   });
+
+  // Wrapper functions to handle type compatibility issues
+  const handleSubmitWrapper = (e: React.FormEvent) => submitForm(e);
+  const handleStatusUpdateWrapper = (e: React.FormEvent) => updateStatus(e);
+  const handleDeleteWrapper = () => deleteEvent();
 
   const { data: services = [], isLoading: isLoadingServices } = useServices();
   const { data: collaborators = [], isLoading: isLoadingCollaborators } = useCollaborators();
@@ -79,7 +84,6 @@ export function MobileScheduleEventDialog({
       title={dialogTitle}
     >
       <DialogContent
-        selectedEvent={selectedEvent}
         events={events}
         currentSelectedEvent={currentSelectedEvent}
         clientId={clientId}
@@ -101,9 +105,9 @@ export function MobileScheduleEventDialog({
         formData={formData}
         onSelectEvent={handleSelectEvent}
         onResetForm={resetForm}
-        onSubmit={handleSubmit}
-        onStatusUpdate={handleStatusUpdate}
-        onDelete={handleDelete}
+        onSubmit={handleSubmitWrapper}
+        onStatusUpdate={handleStatusUpdateWrapper}
+        onDelete={handleDeleteWrapper}
         onCancel={() => {
           onOpenChange(false);
           onClose();

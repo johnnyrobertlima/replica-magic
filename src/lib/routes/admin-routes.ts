@@ -1,29 +1,39 @@
 
-import UserGroupManagement from "@/pages/admin/users/UserGroupManagement";
-import { AdminBanners } from "@/pages/admin/banners";
-import AdminRequests from "@/pages/admin/requests";
-import AdminSubThemes from "@/pages/admin/sub-themes";
-import AdminPermissions from "@/pages/admin/permissions";
+import AdminDashboard from "@/pages/admin/AdminDashboard";
+import ServiceManagement from "@/pages/admin/ServiceManagement";
+import ClientManagement from "@/pages/admin/ClientManagement";
+import UserManagement from "@/pages/admin/UserManagement";
+import AdminSEO from "@/pages/admin/AdminSEO";
+import SettingsPage from "@/pages/admin/settings";
+import { AdminPermissions } from "@/pages/admin/permissions"; // Import as a named export
 
 export const adminRoutes = [
   {
+    path: "/admin",
+    element: AdminDashboard,
+  },
+  {
+    path: "/admin/services",
+    element: ServiceManagement,
+  },
+  {
+    path: "/admin/clients",
+    element: ClientManagement,
+  },
+  {
     path: "/admin/users",
-    element: UserGroupManagement,
+    element: UserManagement,
   },
   {
-    path: "/admin/banners",
-    element: AdminBanners,
+    path: "/admin/seo",
+    element: AdminSEO,
   },
   {
-    path: "/admin/requests",
-    element: AdminRequests,
-  },
-  {
-    path: "/admin/sub-themes",
-    element: AdminSubThemes,
+    path: "/admin/settings",
+    element: SettingsPage,
   },
   {
     path: "/admin/permissions",
-    element: AdminPermissions,
+    element: AdminPermissions, // Use the named export
   },
 ] as const;
