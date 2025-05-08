@@ -1566,6 +1566,8 @@ export type Database = {
       }
       oni_agencia_content_schedules: {
         Row: {
+          capture_date: string | null
+          capture_end_date: string | null
           client_id: string
           collaborator_id: string | null
           created_at: string
@@ -1574,6 +1576,8 @@ export type Database = {
           editorial_line_id: string | null
           execution_phase: string | null
           id: string
+          is_all_day: boolean | null
+          location: string | null
           product_id: string | null
           scheduled_date: string
           service_id: string
@@ -1582,6 +1586,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          capture_date?: string | null
+          capture_end_date?: string | null
           client_id: string
           collaborator_id?: string | null
           created_at?: string
@@ -1590,6 +1596,8 @@ export type Database = {
           editorial_line_id?: string | null
           execution_phase?: string | null
           id?: string
+          is_all_day?: boolean | null
+          location?: string | null
           product_id?: string | null
           scheduled_date: string
           service_id: string
@@ -1598,6 +1606,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          capture_date?: string | null
+          capture_end_date?: string | null
           client_id?: string
           collaborator_id?: string | null
           created_at?: string
@@ -1606,6 +1616,8 @@ export type Database = {
           editorial_line_id?: string | null
           execution_phase?: string | null
           id?: string
+          is_all_day?: boolean | null
+          location?: string | null
           product_id?: string | null
           scheduled_date?: string
           service_id?: string

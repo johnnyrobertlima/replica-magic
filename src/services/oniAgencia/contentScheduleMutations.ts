@@ -177,6 +177,10 @@ export async function updateContentSchedule(id: string, schedule: Partial<Conten
       { field: 'title', name: 'title' },
       { field: 'description', name: 'description' },
       { field: 'scheduled_date', name: 'scheduled_date' },
+      { field: 'capture_date', name: 'capture_date' },
+      { field: 'capture_end_date', name: 'capture_end_date' },
+      { field: 'is_all_day', name: 'is_all_day' },
+      { field: 'location', name: 'location' },
       { field: 'editorial_line_id', name: 'editorial_line_id' },
       { field: 'product_id', name: 'product_id' }
     ];

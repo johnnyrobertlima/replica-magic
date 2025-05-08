@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { format, addMinutes } from "date-fns";
+import { format, addMinutes, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
@@ -83,6 +83,10 @@ export function CaptureForm({
           description: "O horário final foi ajustado para manter um intervalo mínimo de 30 minutos.",
         });
       }
+    } else if (date && !captureEndDate && !isAllDay) {
+      // If setting a start date and no end date exists, automatically create an end date 30 minutes later
+      const defaultEndDate = addMinutes(date, 30);
+      onCaptureChange("capture_end_date", defaultEndDate);
     }
   };
 
