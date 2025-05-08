@@ -1,19 +1,22 @@
 
-import { useServices, useCollaborators } from "@/hooks/oni_agencia/useBasicResources";
+import { useServices, useCollaborators } from "@/hooks/useOniAgenciaContentSchedules";
 import { useOniAgenciaThemes } from "@/hooks/useOniAgenciaThemes";
 import { useClients } from "@/hooks/useOniAgenciaClients";
 
 export function useScheduleResources(clientId: string) {
   const { data: services = [], isLoading: isLoadingServices } = useServices();
   const { data: collaborators = [], isLoading: isLoadingCollaborators } = useCollaborators();
+  
+  // Get the data from useOniAgenciaThemes hook
   const { 
-    data: editorialLines = [], 
-    isLoading: isLoadingEditorialLines,
-    data: products = [],
-    isLoading: isLoadingProducts,
-    data: statuses = [],
-    isLoading: isLoadingStatuses
+    editorialLines,
+    isLoadingEditorialLines,
+    products,
+    isLoadingProducts,
+    statuses,
+    isLoadingStatuses
   } = useOniAgenciaThemes();
+  
   const { data: clients = [], isLoading: isLoadingClients } = useClients();
 
   return {

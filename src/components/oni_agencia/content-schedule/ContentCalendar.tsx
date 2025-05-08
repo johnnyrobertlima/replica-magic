@@ -10,6 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Badge } from "@/components/ui/badge";
 import { ScheduleEventDialog } from "./ScheduleEventDialog";
 import { useDateSelection } from "./hooks/useDateSelection";
+import { DayProps } from "react-day-picker";
 
 interface ContentCalendarProps {
   events: CalendarEvent[];
@@ -21,6 +22,7 @@ interface ContentCalendarProps {
   onManualRefetch?: () => void;
   useCaptureDate?: boolean;
   selectedCollaborator?: string | null;
+  defaultTab?: "details" | "status" | "capture" | "history";
 }
 
 export function ContentCalendar({
@@ -32,7 +34,8 @@ export function ContentCalendar({
   isCollapsed = false,
   onManualRefetch,
   useCaptureDate = false,
-  selectedCollaborator = null
+  selectedCollaborator = null,
+  defaultTab = "details"
 }: ContentCalendarProps) {
   const [date, setDate] = useState(new Date(year, month - 1, 1));
   const {
@@ -74,8 +77,9 @@ export function ContentCalendar({
     [events, useCaptureDate]
   );
 
-  // Custom day cell renderer function
-  const renderDayContents = ({ date, isSelected }: { date: Date; isSelected: boolean }) => {
+  // Custom day cell renderer function - updated to use DayProps
+  const renderDayContents = (dayProps: DayProps) => {
+    const { date, selected } = dayProps;
     const dayEvents = getDayEvents(date);
     const hasEvents = dayEvents && dayEvents.length > 0;
     
@@ -86,7 +90,7 @@ export function ContentCalendar({
             variant="ghost"
             className="h-9 w-9 p-0 font-normal text-muted-foreground"
             onClick={() => {
-              if (!isSelected) {
+              if (!selected) {
                 handleDateSelect(date);
               }
             }}
@@ -196,7 +200,7 @@ export function ContentCalendar({
           onClose={handleDialogClose}
           selectedEvent={selectedEvent}
           onManualRefetch={onManualRefetch}
-          defaultTab="capture"
+          defaultTab={defaultTab}
         />
       )}
     </div>

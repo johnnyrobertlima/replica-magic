@@ -1,218 +1,136 @@
 
-import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useState, useCallback } from "react";
+import { useCreateContentSchedule, useUpdateContentSchedule, useDeleteContentSchedule } from "@/hooks/useOniAgenciaContentSchedules";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
-import { createContentSchedule, updateContentSchedule, deleteContentSchedule } from "@/services/oniAgenciaContentScheduleServices";
-import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
-export interface UseScheduleMutationsProps {
+// Add onClose to the interface
+interface UseScheduleMutationsProps {
   clientId: string;
-  selectedDate?: Date;
-  onSuccess?: () => void;
-  onManualRefetch?: () => void;
+  selectedDate: Date;
   onClose?: () => void;
 }
 
 export function useScheduleMutations({
   clientId,
   selectedDate,
-  onSuccess,
-  onManualRefetch,
   onClose
 }: UseScheduleMutationsProps) {
+  // Local state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
   
-  // Submit handler for creating/updating events
-  const handleSubmit = async (
-    e: React.FormEvent,
-    currentSelectedEvent: CalendarEvent | null,
-    formData: ContentScheduleFormData
-  ) => {
-    e.preventDefault();
-    
-    try {
-      setIsSubmitting(true);
-      
-      if (currentSelectedEvent) {
-        // Update existing event
-        await updateContentSchedule(currentSelectedEvent.id, formData);
-        toast({
-          title: "Atualizado com sucesso!",
-          description: "O agendamento foi atualizado.",
-        });
-      } else {
-        // Create new event
-        await createContentSchedule(formData);
-        toast({
-          title: "Criado com sucesso!",
-          description: "O agendamento foi criado.",
-        });
-      }
-      
-      // Invalidate queries to refresh data
-      if (selectedDate) {
-        queryClient.invalidateQueries({
-          queryKey: ['events', clientId, format(selectedDate, 'yyyy-MM-dd')]
-        });
-      }
-      
-      queryClient.invalidateQueries({
-        queryKey: ['contentSchedules', clientId]
-      });
-      
-      // Trigger specific refetch if provided
-      if (onManualRefetch) {
-        onManualRefetch();
-      }
-      
-      // Call onSuccess callback if provided
-      if (onSuccess) {
-        onSuccess();
-      }
-      
-      // Close the dialog if onClose is provided
-      if (onClose) {
-        onClose();
-      }
-    } catch (error) {
-      console.error('Error submitting event:', error);
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Houve um erro ao salvar o agendamento."
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-  
-  // Handler for updating just the status
-  const handleStatusUpdate = async (
-    e: React.FormEvent,
-    currentSelectedEvent: CalendarEvent | null,
-    formData: ContentScheduleFormData
-  ) => {
-    e.preventDefault();
-    
-    if (!currentSelectedEvent) {
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Nenhum agendamento selecionado."
-      });
-      return;
-    }
-    
-    try {
-      setIsSubmitting(true);
-      
-      // Update only the status
-      await updateContentSchedule(currentSelectedEvent.id, {
-        status_id: formData.status_id
-      });
-      
-      toast({
-        title: "Status atualizado!",
-        description: "O status do agendamento foi atualizado."
-      });
-      
-      // Invalidate relevant queries
-      if (selectedDate) {
-        queryClient.invalidateQueries({
-          queryKey: ['events', clientId, format(selectedDate, 'yyyy-MM-dd')]
-        });
-      }
-      
-      queryClient.invalidateQueries({
-        queryKey: ['contentSchedules', clientId]
-      });
-      
-      if (onManualRefetch) {
-        onManualRefetch();
-      }
-      
-      if (onSuccess) {
-        onSuccess();
-      }
-      
-      if (onClose) {
-        onClose();
-      }
-    } catch (error) {
-      console.error('Error updating status:', error);
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Houve um erro ao atualizar o status."
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-  
-  // Handler for deleting events
-  const handleDelete = async (currentSelectedEvent: CalendarEvent | null) => {
-    if (!currentSelectedEvent) {
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Nenhum agendamento selecionado para exclusão."
-      });
-      return;
-    }
-    
-    if (!confirm("Tem certeza que deseja excluir este agendamento?")) {
-      return;
-    }
-    
-    try {
-      setIsDeleting(true);
-      
-      await deleteContentSchedule(currentSelectedEvent.id);
-      
-      toast({
-        title: "Excluído com sucesso!",
-        description: "O agendamento foi excluído."
-      });
-      
-      // Invalidate relevant queries
-      if (selectedDate) {
-        queryClient.invalidateQueries({
-          queryKey: ['events', clientId, format(selectedDate, 'yyyy-MM-dd')]
-        });
-      }
-      
-      queryClient.invalidateQueries({
-        queryKey: ['contentSchedules', clientId]
-      });
-      
-      if (onManualRefetch) {
-        onManualRefetch();
-      }
-      
-      if (onSuccess) {
-        onSuccess();
-      }
-      
-      if (onClose) {
-        onClose();
-      }
-    } catch (error) {
-      console.error('Error deleting event:', error);
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Houve um erro ao excluir o agendamento."
-      });
-    } finally {
-      setIsDeleting(false);
-    }
-  };
+  // Get mutation hooks
+  const createMutation = useCreateContentSchedule();
+  const updateMutation = useUpdateContentSchedule();
+  const deleteMutation = useDeleteContentSchedule();
 
+  // Handle form submission (create or update)
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent, currentSelectedEvent: CalendarEvent | null, formData: ContentScheduleFormData) => {
+      e.preventDefault();
+      
+      try {
+        setIsSubmitting(true);
+        
+        // Format the date as YYYY-MM-DD
+        const scheduledDate = format(selectedDate, "yyyy-MM-dd");
+        
+        // Create the final data to submit
+        const dataToSubmit: ContentScheduleFormData = {
+          ...formData,
+          scheduled_date: scheduledDate
+        };
+        
+        // Determine if we're creating or updating
+        if (currentSelectedEvent) {
+          // Update existing schedule
+          await updateMutation.mutateAsync({ 
+            id: currentSelectedEvent.id,
+            data: dataToSubmit
+          });
+        } else {
+          // Create new schedule
+          await createMutation.mutateAsync(dataToSubmit);
+        }
+        
+        // Close the dialog after successful submission
+        if (onClose) onClose();
+        
+      } catch (error) {
+        console.error("Error submitting content schedule:", error);
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [clientId, selectedDate, createMutation, updateMutation, onClose]
+  );
+  
+  // Handle status update
+  const handleStatusUpdate = useCallback(
+    async (e: React.FormEvent, currentSelectedEvent: CalendarEvent | null, formData: ContentScheduleFormData) => {
+      e.preventDefault();
+      
+      try {
+        if (!currentSelectedEvent) {
+          console.error("No event selected");
+          return;
+        }
+        
+        setIsSubmitting(true);
+        
+        // Only update the status and collaborator
+        const dataToUpdate = {
+          ...currentSelectedEvent,
+          status_id: formData.status_id,
+          collaborator_id: formData.collaborator_id,
+          description: formData.description
+        };
+        
+        // Update the status
+        await updateMutation.mutateAsync({
+          id: currentSelectedEvent.id,
+          data: dataToUpdate
+        });
+        
+        // Close the dialog after successful submission
+        if (onClose) onClose();
+        
+      } catch (error) {
+        console.error("Error updating status:", error);
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [updateMutation, onClose]
+  );
+  
+  // Handle delete
+  const handleDelete = useCallback(
+    async (currentSelectedEvent: CalendarEvent | null) => {
+      if (!currentSelectedEvent) {
+        console.error("No event selected to delete");
+        return;
+      }
+      
+      try {
+        setIsDeleting(true);
+        
+        // Delete the schedule
+        await deleteMutation.mutateAsync(currentSelectedEvent.id);
+        
+        // Close the dialog after successful deletion
+        if (onClose) onClose();
+        
+      } catch (error) {
+        console.error("Error deleting schedule:", error);
+      } finally {
+        setIsDeleting(false);
+      }
+    },
+    [deleteMutation, onClose]
+  );
+  
   return {
     isSubmitting,
     isDeleting,

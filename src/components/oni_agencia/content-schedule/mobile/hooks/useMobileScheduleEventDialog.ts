@@ -9,7 +9,7 @@ interface UseMobileScheduleEventDialogProps {
   selectedDate: Date;
   events: CalendarEvent[];
   selectedEvent?: CalendarEvent;
-  initialTabActive?: "details" | "events" | "status";
+  initialTabActive?: "details" | "status" | "history" | "capture";
   onClose: () => void;
 }
 
@@ -21,7 +21,7 @@ export function useScheduleEventDialog({
   initialTabActive = "details",
   onClose
 }: UseMobileScheduleEventDialogProps) {
-  const [activeTab, setActiveTab] = useState<"details" | "events" | "status">(initialTabActive);
+  const [activeTab, setActiveTab] = useState<"details" | "status" | "history" | "capture">(initialTabActive);
   
   const {
     currentSelectedEvent,
@@ -48,7 +48,7 @@ export function useScheduleEventDialog({
   } = useScheduleMutations({
     clientId, 
     selectedDate,
-    onClose  // Now passing onClose properly
+    onClose
   });
   
   // Effect to select the event when it changes
