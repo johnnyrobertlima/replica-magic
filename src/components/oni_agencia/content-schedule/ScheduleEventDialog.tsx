@@ -1,9 +1,9 @@
 
 import { useMemo } from "react";
 import { useScheduleFormState } from "@/hooks/oni_agencia/useScheduleFormState";
-import { useScheduleResources } from "../content-schedule/hooks/useScheduleResources";
-import { useScheduleMutations } from "../content-schedule/hooks/useScheduleMutations";
-import { useEventsByDate } from "../content-schedule/hooks/useEventsByDate";
+import { useScheduleResources } from "./hooks/useScheduleResources";
+import { useScheduleMutations } from "./hooks/useScheduleMutations";
+import { useEventsByDate } from "./hooks/useEventsByDate";
 import { DialogContainer } from "./schedule-dialog/DialogContainer";
 import { DialogContent } from "./schedule-dialog/DialogContent";
 import { CalendarEvent } from "@/types/oni-agencia";
@@ -83,11 +83,11 @@ export function ScheduleEventDialog({
   } = useScheduleResources(clientId);
 
   const {
-    handleSubmit,
-    handleDelete,
+    handleSubmit: submitEvent,
+    handleDelete: deleteEvent,
     isSubmitting,
     isDeleting,
-    handleStatusUpdate
+    handleStatusUpdate: updateStatus
   } = useScheduleMutations({
     clientId,
     currentSelectedEvent,
@@ -99,6 +99,19 @@ export function ScheduleEventDialog({
       onClose();
     }
   });
+  
+  // Wrap handlers to match expected function signatures
+  const handleSubmit = async (e: React.FormEvent) => {
+    await submitEvent(e);
+  };
+  
+  const handleStatusUpdate = async (e: React.FormEvent) => {
+    await updateStatus(e);
+  };
+  
+  const handleDelete = async () => {
+    await deleteEvent();
+  };
 
   // Dialog title
   const dialogTitle = currentSelectedEvent ? "Editar Agendamento" : "Novo Agendamento";

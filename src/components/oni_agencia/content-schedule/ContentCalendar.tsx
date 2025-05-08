@@ -19,7 +19,8 @@ interface ContentCalendarProps {
   onMonthYearChange: (month: number, year: number) => void;
   isCollapsed?: boolean;
   onManualRefetch?: () => void;
-  useCaptureDate?: boolean; // Nova propriedade para indicar se deve usar a data de captura
+  useCaptureDate?: boolean;
+  selectedCollaborator?: string | null;
 }
 
 export function ContentCalendar({
@@ -30,7 +31,8 @@ export function ContentCalendar({
   onMonthYearChange,
   isCollapsed = false,
   onManualRefetch,
-  useCaptureDate = false // Valor padrão é false para manter comportamento existente
+  useCaptureDate = false,
+  selectedCollaborator = null
 }: ContentCalendarProps) {
   const [date, setDate] = useState(new Date(year, month - 1, 1));
   const {
@@ -119,7 +121,6 @@ export function ContentCalendar({
         pagedNavigation
         defaultMonth={date}
         className="border-none m-4"
-        weekdayClassName="text-muted-foreground"
         captionLayout="buttons"
         from={new Date("2023-01-01")}
         to={new Date("2030-12-31")}
@@ -198,6 +199,7 @@ export function ContentCalendar({
           onClose={handleDialogClose}
           selectedEvent={selectedEvent}
           onManualRefetch={onManualRefetch}
+          defaultTab="capture"
         />
       )}
     </div>

@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { OniAgenciaMenu } from "@/components/oni_agencia/OniAgenciaMenu";
 import { ContentCalendar } from "@/components/oni_agencia/content-schedule/ContentCalendar";
@@ -17,8 +18,7 @@ const FeirinhaDaConcordiaAgenda = () => {
   const { data: fetchedEvents, isLoading } = useContentSchedules(
     "feirinha_da_concordia",
     selectedYear,
-    selectedMonth,
-    selectedCollaborator
+    selectedMonth
   );
   
   // Update events when fetchedEvents changes
