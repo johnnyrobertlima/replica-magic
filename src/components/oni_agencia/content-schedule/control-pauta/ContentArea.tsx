@@ -5,6 +5,7 @@ import { ContentScheduleList } from "@/components/oni_agencia/content-schedule/C
 import { CalendarEvent } from "@/types/oni-agencia";
 import { useDndContext } from "@/components/oni_agencia/content-schedule/hooks/useDndContext";
 import { ContentScheduleLoading } from "@/components/oni_agencia/content-schedule/ContentScheduleLoading";
+import { PautaStatusIndicator } from "@/components/oni_agencia/content-schedule/PautaStatusIndicator";
 
 interface ContentAreaProps {
   viewMode: "calendar" | "list";
@@ -58,14 +59,26 @@ export function ContentArea({
   // Debug logs to track events count
   console.log(`ContentArea received ${filteredSchedules.length} events, showLoadingState=${showLoadingState}`);
   
+  // Show status indicator when we have a valid clientId and data is loaded
+  const showStatusIndicator = !!clientId && clientId !== "" && clientId !== "all" && !showLoadingState;
+  
   // Caso esteja carregando, mostra um loader
   if (showLoadingState) {
     return <ContentScheduleLoading isCollapsed={isCollapsed} />;
   }
   
-  if (viewMode === "calendar") {
-    return (
-      <div className={`pt-4 ${isCollapsed ? 'mt-0' : 'mt-4'}`}>
+  return (
+    <div className={`pt-4 ${isCollapsed ? 'mt-0' : 'mt-4'}`}>
+      {showStatusIndicator && (
+        <PautaStatusIndicator 
+          events={filteredSchedules}
+          clientId={clientId}
+          month={month}
+          year={year}
+        />
+      )}
+      
+      {viewMode === "calendar" ? (
         <dndContext.DndContext onDragEnd={handleDragEnd}>
           <Calendar 
             events={filteredSchedules}
@@ -84,18 +97,14 @@ export function ContentArea({
             onManualRefetch={onManualRefetch}
           />
         </dndContext.DndContext>
-      </div>
-    );
-  }
-  
-  return (
-    <div className={`pt-4 ${isCollapsed ? 'mt-0' : 'mt-4'}`}>
-      <ContentScheduleList 
-        events={filteredSchedules} 
-        clientId={clientId} 
-        selectedCollaborator={selectedCollaborator}
-        onManualRefetch={onManualRefetch}
-      />
+      ) : (
+        <ContentScheduleList 
+          events={filteredSchedules} 
+          clientId={clientId} 
+          selectedCollaborator={selectedCollaborator}
+          onManualRefetch={onManualRefetch}
+        />
+      )}
     </div>
   );
 }

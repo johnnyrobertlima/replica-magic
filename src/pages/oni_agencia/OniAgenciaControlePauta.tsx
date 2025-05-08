@@ -12,22 +12,29 @@ const OniAgenciaControlePauta = () => {
   const currentDate = new Date();
   const queryClient = useQueryClient();
   const [selectedClient, setSelectedClient] = useState<string>("");
-  const [selectedMonth, setSelectedMonth] = useState<number>(currentDate.getMonth() + 1);
-  const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState<number>(currentDate.getMonth() + 1); // Current month
+  const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear()); // Current year
   const [selectedCollaborator, setSelectedCollaborator] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
   const { isCollapsed, toggle: toggleFilters } = useCollapsible(false);
   
-  // UseCallback para better performance
+  // UseCallback for better performance
   const handleClientChange = useCallback((clientId: string) => {
+    console.log("Client changed to:", clientId);
+    
+    // Invalidate client scopes query when client changes
+    if (clientId && clientId !== "") {
+      queryClient.invalidateQueries(['clientScopes', clientId]);
+    }
+    
     setSelectedClient(clientId);
-  }, []);
+  }, [queryClient]);
 
   const handleCollaboratorChange = useCallback((collaboratorId: string | null) => {
     setSelectedCollaborator(collaboratorId);
   }, []);
   
-  // Refetch quando mês/ano/cliente mudarem
+  // Refetch when month/year/client change
   const handleMonthYearChange = useCallback((month: number, year: number) => {
     setSelectedMonth(month);
     setSelectedYear(year);
@@ -58,7 +65,7 @@ const OniAgenciaControlePauta = () => {
     selectedCollaborator
   );
   
-  // Polling para atualização automática periodicamente
+  // Polling for automatic periodic updates
   useEffect(() => {
     // Refetch data every 30 seconds
     const intervalId = setInterval(() => {
@@ -66,7 +73,7 @@ const OniAgenciaControlePauta = () => {
         console.log("Executando atualização automática periódica");
         handleManualRefetch();
       }
-    }, 30000); // 30 segundos
+    }, 30000); // 30 seconds
     
     return () => clearInterval(intervalId);
   }, [queryClient, selectedClient, handleManualRefetch]);
@@ -113,7 +120,7 @@ const OniAgenciaControlePauta = () => {
           fetchNextPage={fetchNextPage}
           showLoadingState={showLoadingState}
           isCollapsed={isCollapsed}
-          onManualRefetch={handleManualRefetch} // Passamos a função de atualização manual
+          onManualRefetch={handleManualRefetch}
         />
       </div>
     </main>

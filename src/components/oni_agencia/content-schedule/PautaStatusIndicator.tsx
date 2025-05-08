@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePautaStatus } from "./hooks/usePautaStatus";
+import { useToast } from "@/hooks/use-toast";
 
 interface PautaStatusIndicatorProps {
   events: CalendarEvent[];
@@ -25,19 +26,34 @@ export function PautaStatusIndicator({
   year
 }: PautaStatusIndicatorProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const { clientScopes } = usePautaStatus(clientId, month, year, events);
+  const { toast } = useToast();
+  const { clientScopes, error } = usePautaStatus(clientId, month, year, events);
   
-  console.log(`PautaStatusIndicator - clientId: ${clientId}, scopes: ${clientScopes.length}`);
+  console.log(`PautaStatusIndicator - clientId: ${clientId}, month: ${month}, year: ${year}, scopes: ${clientScopes?.length || 0}`);
 
+  // Show error toast if there was a problem fetching scopes
+  if (error) {
+    console.error("Error fetching client scopes:", error);
+    toast({
+      title: "Erro ao carregar escopo do cliente",
+      description: "Não foi possível obter informações sobre o escopo do cliente.",
+      variant: "destructive",
+    });
+  }
+  
   // Get the service counts from the events for the current month/year
   const serviceCounts: Record<string, number> = {};
-  events.forEach(event => {
-    if (serviceCounts[event.service_id]) {
-      serviceCounts[event.service_id]++;
-    } else {
-      serviceCounts[event.service_id] = 1;
-    }
-  });
+  if (events && events.length > 0) {
+    events.forEach(event => {
+      if (event.service_id) {
+        if (serviceCounts[event.service_id]) {
+          serviceCounts[event.service_id]++;
+        } else {
+          serviceCounts[event.service_id] = 1;
+        }
+      }
+    });
+  }
 
   // Calculate if all services are complete according to the scope
   const incompleteScopes = clientScopes.filter(scope => {
@@ -54,7 +70,7 @@ export function PautaStatusIndicator({
 
   // If there are no client scopes, don't render anything
   if (!clientScopes || clientScopes.length === 0) {
-    console.log("No client scopes found, not rendering PautaStatusIndicator");
+    console.log("No client scopes found, not rendering PautaStatusIndicator for client:", clientId);
     return null;
   }
 
@@ -96,7 +112,7 @@ export function PautaStatusIndicator({
             
             return (
               <div 
-                key={scope.service_id}
+                key={scope.id}
                 className={cn(
                   "flex items-center justify-between px-3 py-2 rounded-md",
                   isComplete 
