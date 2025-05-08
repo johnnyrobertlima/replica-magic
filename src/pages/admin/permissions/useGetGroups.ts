@@ -29,14 +29,16 @@ export const useGetGroups = () => {
           throw new Error("Only administrators can view groups");
         }
 
-        // Usar a função RPC get_all_groups que contorna o problema de RLS
-        const { data, error } = await supabase.rpc('get_all_groups');
+        // Usar uma consulta direta à tabela de grupos em vez da função RPC
+        const { data, error } = await supabase
+          .from("groups")
+          .select("id, name, description, homepage")
+          .order("name");
 
         if (error) {
-          console.error("Error fetching groups with RPC:", error);
+          console.error("Error fetching groups:", error);
           
-          // Fallback: Tentar obter dados diretamente da view (se existir)
-          // ou usar uma abordagem alternativa que não dependa de RLS nas tabelas relacionadas
+          // Fallback: Use uma abordagem alternativa para evitar problemas de RLS
           console.log("Trying alternative approach to fetch groups...");
           
           // Verificar primeiro se o usuário tem algum grupo via user_groups

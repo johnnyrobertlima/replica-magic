@@ -62,8 +62,10 @@ export const GroupSelector = ({ selectedGroupId, onGroupChange }: GroupSelectorP
       console.log("Fetching groups for GroupSelector");
       const fetchGroups = async () => {
         try {
-          // Tentar buscar os grupos diretamente da database usando outro método
-          const { data, error } = await supabase.rpc('get_all_groups');
+          // Tentar buscar os grupos diretamente da database
+          const { data, error } = await supabase
+            .from("groups")
+            .select("id, name, description, homepage");
           
           if (error) throw error;
           setLocalGroups(data as Group[]);
