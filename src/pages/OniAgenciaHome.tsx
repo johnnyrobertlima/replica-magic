@@ -10,7 +10,8 @@ import {
   Briefcase,
   BarChart2,
   Smartphone,
-  Settings
+  Settings,
+  Camera
 } from "lucide-react";
 import { OniAgenciaMenu } from "@/components/oni_agencia/OniAgenciaMenu";
 import { ServiceCard } from "@/components/oni_agencia/ServiceCard";
@@ -42,6 +43,14 @@ const OniAgenciaHome = () => {
             icon={CalendarDays}
             iconColor="bg-blue-100 text-blue-600"
             path="/client-area/oniagencia/controle-pauta"
+          />
+
+          <ServiceCard
+            title="Agenda de Capturas"
+            description="Visualize e organize agendamentos com base nas datas de captura."
+            icon={Camera}
+            iconColor="bg-green-100 text-green-600"
+            path="/client-area/oniagencia/capturas"
           />
 
           <ServiceCard

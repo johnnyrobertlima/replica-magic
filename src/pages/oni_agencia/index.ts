@@ -5,6 +5,7 @@ import OniAgenciaServicos from "./OniAgenciaServicos";
 import OniAgenciaColaboradores from "./OniAgenciaColaboradores";
 import OniAgenciaRelatorios from "./OniAgenciaRelatorios";
 import OniAgenciaClientScopes from "./OniAgenciaClientScopes";
+import OniAgenciaCapturas from "./OniAgenciaCapturas";
 
 export {
   OniAgenciaControlePauta,
@@ -12,5 +13,6 @@ export {
   OniAgenciaServicos,
   OniAgenciaColaboradores,
   OniAgenciaRelatorios,
-  OniAgenciaClientScopes
+  OniAgenciaClientScopes,
+  OniAgenciaCapturas
 };

@@ -1,152 +1,202 @@
-
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { Calendar } from "@/components/ui/calendar";
+import { format, isSameDay, isBefore, isAfter } from "date-fns";
+import { ptBR } from 'date-fns/locale';
 import { CalendarEvent } from "@/types/oni-agencia";
-import { CalendarHeader } from "./calendar/CalendarHeader";
-import { WeekDaysHeader } from "./calendar/WeekDaysHeader";
-import { CalendarContainer } from "./calendar/CalendarContainer";
-import { useCalendarEvents } from "./hooks/useCalendarEvents";
-import { usePautaStatus } from "./hooks/usePautaStatus";
-import { PautaStatusIndicator } from "./PautaStatusIndicator";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
 import { ScheduleEventDialog } from "./ScheduleEventDialog";
 import { useDateSelection } from "./hooks/useDateSelection";
-import { useMonthNavigation } from "./hooks/useMonthNavigation";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Calendar, LayoutGrid, Rows } from "lucide-react";
-import { WeekView } from "./calendar/WeekView";
-import { DayView } from "./calendar/DayView";
-import "./styles/index.css"; // Updated import
 
 interface ContentCalendarProps {
   events: CalendarEvent[];
-  clientId: string;
   month: number;
   year: number;
-  onMonthChange: (month: number, year: number) => void;
-  selectedCollaborator?: string | null;
+  clientId: string;
+  onMonthYearChange: (month: number, year: number) => void;
+  isCollapsed?: boolean;
+  onManualRefetch?: () => void;
+  useCaptureDate?: boolean; // Nova propriedade para indicar se deve usar a data de captura
 }
 
-export function ContentCalendar({ 
-  events, 
-  clientId, 
-  month, 
-  year, 
-  onMonthChange,
-  selectedCollaborator
+export function ContentCalendar({
+  events,
+  month,
+  year,
+  clientId,
+  onMonthYearChange,
+  isCollapsed = false,
+  onManualRefetch,
+  useCaptureDate = false // Valor padrão é false para manter comportamento existente
 }: ContentCalendarProps) {
-  const [view, setView] = useState<"month" | "week" | "day">("month");
-  
-  const { 
-    selectedDate, 
-    selectedEvent, 
+  const [date, setDate] = useState(new Date(year, month - 1, 1));
+  const {
+    selectedDate,
+    selectedEvent,
     isDialogOpen,
     setIsDialogOpen,
-    handleDateSelect, 
+    handleDateSelect,
     handleEventClick,
-    setSelectedDate,
-    setSelectedEvent
+    setSelectedDate: setSelectedDateContext,
+    setSelectedEvent: setSelectedEventContext
   } = useDateSelection();
-  
-  const { handlePrevMonth, handleNextMonth } = useMonthNavigation(month, year, onMonthChange);
-  
-  const currentDate = new Date(year, month - 1, 1);
-  
-  const { currentEvents } = useCalendarEvents(events, selectedDate, isDialogOpen, setIsDialogOpen, selectedCollaborator);
-
-  const weekDays = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
   const handleDialogClose = () => {
-    setSelectedDate(undefined);
-    setSelectedEvent(undefined);
+    setSelectedDateContext(undefined);
+    setSelectedEventContext(undefined);
     setIsDialogOpen(false);
   };
 
-  const handleViewChange = (value: string) => {
-    if (value === "month" || value === "week" || value === "day") {
-      setView(value);
-    }
-  };
+  // Modificamos a função getDayEvents para considerar a opção useCaptureDate
+  const getDayEvents = useCallback(
+    (date: Date) => {
+      const dateStr = format(date, "yyyy-MM-dd");
+      
+      if (useCaptureDate) {
+        // Se estamos usando data de captura, filtramos por ela
+        return events.filter((event) => {
+          if (!event.capture_date) return false;
+          
+          // Extrair apenas a data (sem a hora) do campo capture_date
+          const captureDateOnly = event.capture_date.split('T')[0];
+          return captureDateOnly === dateStr;
+        });
+      } else {
+        // Comportamento original - filtrar pela scheduled_date
+        return events.filter((event) => event.scheduled_date === dateStr);
+      }
+    },
+    [events, useCaptureDate]
+  );
 
   return (
-    <div className="bg-white rounded-md border shadow-sm w-full h-full">
-      <div className="px-4 pt-4">
-        <PautaStatusIndicator 
-          events={events} 
-          clientId={clientId} 
-          month={month} 
-          year={year} 
-        />
+    <div className="rounded-md border bg-white">
+      <div className="flex items-center justify-between p-4">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => {
+              const newMonth = date.getMonth() - 1;
+              const newYear = date.getFullYear();
+              setDate(new Date(newYear, newMonth, 1));
+              onMonthYearChange(newMonth + 1, newYear);
+            }}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => {
+              const newMonth = date.getMonth() + 1;
+              const newYear = date.getFullYear();
+              setDate(new Date(newYear, newMonth, 1));
+              onMonthYearChange(newMonth + 1, newYear);
+            }}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <h2 className="text-lg font-semibold">
+            {format(date, "MMMM yyyy", { locale: ptBR })}
+          </h2>
+        </div>
       </div>
-      
-      <div className="flex justify-between items-center p-4 border-b">
-        <CalendarHeader 
-          currentDate={currentDate}
-          onPrevMonth={handlePrevMonth}
-          onNextMonth={handleNextMonth}
-        />
-        
-        <ToggleGroup type="single" value={view} onValueChange={handleViewChange} className="ml-auto">
-          <ToggleGroupItem value="month" aria-label="Visualização por mês">
-            <Calendar className="h-4 w-4 mr-1" />
-            <span className="sr-md:inline hidden">Mês</span>
-          </ToggleGroupItem>
-          <ToggleGroupItem value="week" aria-label="Visualização por semana">
-            <Rows className="h-4 w-4 mr-1" />
-            <span className="sr-md:inline hidden">Semana</span>
-          </ToggleGroupItem>
-          <ToggleGroupItem value="day" aria-label="Visualização por dia">
-            <LayoutGrid className="h-4 w-4 mr-1" />
-            <span className="sr-md:inline hidden">Dia</span>
-          </ToggleGroupItem>
-        </ToggleGroup>
-      </div>
-      
-      {view === "month" && (
-        <>
-          <WeekDaysHeader weekDays={weekDays} />
+      <Calendar
+        mode="single"
+        locale={ptBR}
+        selected={selectedDate}
+        onSelect={(newDate) => {
+          if (newDate) {
+            handleDateSelect(newDate);
+            setDate(newDate);
+          }
+        }}
+        initialFocus
+        pagedNavigation
+        defaultMonth={date}
+        className="border-none m-4"
+        weekdayClassName="text-muted-foreground"
+        captionLayout="hidden"
+        from={new Date("2023-01-01")}
+        to={new Date("2030-12-31")}
+        disablePast={false}
+        disableFuture={false}
+        disabled={(date) =>
+          isBefore(date, new Date("2023-01-01")) ||
+          isAfter(date, new Date("2030-12-31"))
+        }
+        renderDay={({ date, isSelected }) => {
+          const dayEvents = getDayEvents(date);
+          const hasEvents = dayEvents && dayEvents.length > 0;
           
-          <CalendarContainer
-            events={events}
-            selectedDate={selectedDate}
-            currentDate={currentDate}
-            selectedCollaborator={selectedCollaborator}
-            onSelect={handleDateSelect}
-            onEventClick={handleEventClick}
-          />
-        </>
-      )}
-      
-      {view === "week" && (
-        <WeekView
-          events={events}
-          selectedDate={selectedDate}
-          currentDate={currentDate}
-          selectedCollaborator={selectedCollaborator}
-          onSelect={handleDateSelect}
-          onEventClick={handleEventClick}
-          weekDays={weekDays}
-        />
-      )}
-      
-      {view === "day" && (
-        <DayView
-          events={events}
-          selectedDate={selectedDate || currentDate}
-          currentDate={currentDate}
-          selectedCollaborator={selectedCollaborator}
-          onSelect={handleDateSelect}
-          onEventClick={handleEventClick}
-        />
-      )}
-      
+          return (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="h-9 w-9 p-0 font-normal text-muted-foreground"
+                  onClick={() => {
+                    if (!isSelected) {
+                      handleDateSelect(date);
+                    }
+                  }}
+                >
+                  <div className="w-full h-full relative">
+                    {format(date, "d")}
+                    {hasEvents && (
+                      <Badge
+                        variant="secondary"
+                        className="absolute bottom-1 right-1 rounded-sm px-1.5 py-0 text-xs"
+                      >
+                        {dayEvents.length}
+                      </Badge>
+                    )}
+                  </div>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80">
+                {hasEvents ? (
+                  <div className="grid gap-2">
+                    {dayEvents.map((event) => (
+                      <Button
+                        key={event.id}
+                        variant="outline"
+                        className="justify-start h-auto py-2 px-3 text-left"
+                        style={{ borderLeftColor: event.service?.color, borderLeftWidth: '4px' }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleEventClick(event, date);
+                        }}
+                      >
+                        <div>
+                          <div className="font-medium">{event.title}</div>
+                          <div className="text-sm text-muted-foreground">{event.service?.name}</div>
+                        </div>
+                      </Button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Nenhum agendamento para este dia.</p>
+                )}
+              </PopoverContent>
+            </Popover>
+          );
+        }}
+      />
       {selectedDate && (
         <ScheduleEventDialog
           isOpen={isDialogOpen}
           onOpenChange={setIsDialogOpen}
           clientId={clientId}
           selectedDate={selectedDate}
-          events={currentEvents}
+          events={[]}
           onClose={handleDialogClose}
           selectedEvent={selectedEvent}
+          onManualRefetch={onManualRefetch}
         />
       )}
     </div>

@@ -8,6 +8,7 @@ import OniAgenciaRelatorios from "@/pages/oni_agencia/OniAgenciaRelatorios";
 import OniAgenciaClientScopes from "@/pages/oni_agencia/OniAgenciaClientScopes";
 import OniAgenciaWorkload from "@/pages/oni_agencia/OniAgenciaWorkload";
 import VisualizacaoEmCampo from "@/pages/oni_agencia/VisualizacaoEmCampo";
+import OniAgenciaCapturas from "@/pages/oni_agencia/OniAgenciaCapturas";
 
 export const oniAgenciaRoutes = [
   {
@@ -21,6 +22,10 @@ export const oniAgenciaRoutes = [
   {
     path: "/client-area/oniagencia/controle-pauta/visualizacaoemcampo",
     element: VisualizacaoEmCampo,
+  },
+  {
+    path: "/client-area/oniagencia/capturas",
+    element: OniAgenciaCapturas,
   },
   {
     path: "/client-area/oniagencia/cargacolab",

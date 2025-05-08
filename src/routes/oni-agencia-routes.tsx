@@ -17,6 +17,7 @@ import PromobrasAgenda from "@/pages/oni_agencia/PromobrasAgenda";
 import PorDentroDaFeirinhaAgenda from "@/pages/oni_agencia/PorDentroDaFeirinhaAgenda";
 import ClienteVabHome from "@/pages/oni_agencia/ClienteVabHome";
 import VisualizacaoEmCampo from "@/pages/oni_agencia/VisualizacaoEmCampo";
+import OniAgenciaCapturas from "@/pages/oni_agencia/OniAgenciaCapturas";
 
 export const oniAgenciaRoutes = (
   <>
@@ -33,6 +34,11 @@ export const oniAgenciaRoutes = (
     <Route path="/client-area/oniagencia/controle-pauta/visualizacaoemcampo" element={
       <PermissionGuard resourcePath="/client-area/oniagencia/controle-pauta">
         <VisualizacaoEmCampo />
+      </PermissionGuard>
+    } />
+    <Route path="/client-area/oniagencia/capturas" element={
+      <PermissionGuard resourcePath="/client-area/oniagencia/controle-pauta">
+        <OniAgenciaCapturas />
       </PermissionGuard>
     } />
     <Route path="/client-area/oniagencia/cargacolab" element={
