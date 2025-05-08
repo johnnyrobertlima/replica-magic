@@ -74,6 +74,66 @@ export function ContentCalendar({
     [events, useCaptureDate]
   );
 
+  // Custom day cell renderer function
+  const renderDayContents = ({ date, isSelected }: { date: Date; isSelected: boolean }) => {
+    const dayEvents = getDayEvents(date);
+    const hasEvents = dayEvents && dayEvents.length > 0;
+    
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="ghost"
+            className="h-9 w-9 p-0 font-normal text-muted-foreground"
+            onClick={() => {
+              if (!isSelected) {
+                handleDateSelect(date);
+              }
+            }}
+          >
+            <div className="w-full h-full relative">
+              {format(date, "d")}
+              {hasEvents && (
+                <Badge
+                  variant="secondary"
+                  className="absolute bottom-1 right-1 rounded-sm px-1.5 py-0 text-xs"
+                >
+                  {dayEvents.length}
+                </Badge>
+              )}
+            </div>
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-80">
+          {hasEvents ? (
+            <div className="grid gap-2">
+              {dayEvents.map((event) => (
+                <Button
+                  key={event.id}
+                  variant="outline"
+                  className="justify-start h-auto py-2 px-3 text-left"
+                  style={{ borderLeftColor: event.service?.color, borderLeftWidth: '4px' }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleEventClick(event, date);
+                  }}
+                >
+                  <div>
+                    <div className="font-medium">{event.title}</div>
+                    <div className="text-sm text-muted-foreground">{event.service?.name}</div>
+                  </div>
+                </Button>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Nenhum agendamento para este dia.</p>
+          )}
+        </PopoverContent>
+      </Popover>
+    );
+  };
+
   return (
     <div className="rounded-md border bg-white">
       <div className="flex items-center justify-between p-4">
@@ -122,63 +182,8 @@ export function ContentCalendar({
         defaultMonth={date}
         className="border-none m-4"
         captionLayout="buttons"
-        renderDay={({ date, isSelected }) => {
-          const dayEvents = getDayEvents(date);
-          const hasEvents = dayEvents && dayEvents.length > 0;
-          
-          return (
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="h-9 w-9 p-0 font-normal text-muted-foreground"
-                  onClick={() => {
-                    if (!isSelected) {
-                      handleDateSelect(date);
-                    }
-                  }}
-                >
-                  <div className="w-full h-full relative">
-                    {format(date, "d")}
-                    {hasEvents && (
-                      <Badge
-                        variant="secondary"
-                        className="absolute bottom-1 right-1 rounded-sm px-1.5 py-0 text-xs"
-                      >
-                        {dayEvents.length}
-                      </Badge>
-                    )}
-                  </div>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80">
-                {hasEvents ? (
-                  <div className="grid gap-2">
-                    {dayEvents.map((event) => (
-                      <Button
-                        key={event.id}
-                        variant="outline"
-                        className="justify-start h-auto py-2 px-3 text-left"
-                        style={{ borderLeftColor: event.service?.color, borderLeftWidth: '4px' }}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleEventClick(event, date);
-                        }}
-                      >
-                        <div>
-                          <div className="font-medium">{event.title}</div>
-                          <div className="text-sm text-muted-foreground">{event.service?.name}</div>
-                        </div>
-                      </Button>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">Nenhum agendamento para este dia.</p>
-                )}
-              </PopoverContent>
-            </Popover>
-          );
+        components={{
+          Day: renderDayContents
         }}
       />
       {selectedDate && (

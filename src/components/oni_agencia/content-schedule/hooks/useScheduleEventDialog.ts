@@ -11,7 +11,7 @@ interface UseScheduleEventDialogProps {
   events: CalendarEvent[];
   selectedEvent?: CalendarEvent;
   onClose: () => void;
-  onManualRefetch?: () => void; // Adicionamos essa prop
+  onManualRefetch?: () => void;
 }
 
 export function useScheduleEventDialog({
@@ -33,8 +33,8 @@ export function useScheduleEventDialog({
     handleInputChange,
     handleSelectChange,
     handleDateChange,
-    handleDateTimeChange,  // New handler for date-time fields
-    handleAllDayChange     // New handler for all-day toggle
+    handleDateTimeChange,
+    handleAllDayChange
   } = useScheduleFormState({
     clientId,
     selectedDate,
@@ -48,13 +48,13 @@ export function useScheduleEventDialog({
     handleStatusUpdate,
     handleDelete
   } = useScheduleMutations({
-    onClose,
     clientId,
     selectedDate,
-    onManualRefetch // Passamos a função de atualização manual
+    onManualRefetch,
+    onClose  // Now passing onClose properly
   });
 
-  // Configura o evento selecionado apenas quando ele vem das props e ainda não foi selecionado
+  // Configure the selected event only when it comes from props and hasn't been selected yet
   useEffect(() => {
     if (selectedEvent && !hasSelectedEventRef.current) {
       console.log('Setting explicitly selected event:', selectedEvent.id);
@@ -63,25 +63,25 @@ export function useScheduleEventDialog({
     }
   }, [selectedEvent, handleSelectEvent]);
 
-  // Wrapper para o submit que passa o evento selecionado e os dados do formulário
+  // Wrapper for the submit that passes the event selected and the form data
   const submitForm = (e: React.FormEvent) => {
     console.log("Submitting form:", formData);
     return handleSubmit(e, currentSelectedEvent, formData);
   };
   
-  // Wrapper para atualizar status
+  // Wrapper to update status
   const updateStatus = (e: React.FormEvent) => {
     console.log("Updating status:", formData.status_id);
     return handleStatusUpdate(e, currentSelectedEvent, formData);
   };
   
-  // Wrapper para excluir evento
+  // Wrapper to delete event
   const deleteEvent = () => {
     console.log("Deleting event:", currentSelectedEvent?.id);
     return handleDelete(currentSelectedEvent);
   };
   
-  // Função aprimorada para resetar o formulário
+  // Enhanced function to reset the form
   const handleResetForm = () => {
     console.log("Enhanced reset form called");
     hasSelectedEventRef.current = false;
@@ -96,8 +96,8 @@ export function useScheduleEventDialog({
     handleInputChange,
     handleSelectChange,
     handleDateChange,
-    handleDateTimeChange,  // Include new handlers in return
-    handleAllDayChange,    // Include new handlers in return
+    handleDateTimeChange,
+    handleAllDayChange,
     handleSubmit: submitForm,
     handleStatusUpdate: updateStatus,
     handleDelete: deleteEvent,

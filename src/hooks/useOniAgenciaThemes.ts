@@ -3,8 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { EditorialLine, Product, Status } from "@/pages/admin/sub-themes/types";
 
+// Main hook function that combines all theme-related queries
 export function useOniAgenciaThemes() {
-  // Query for editorial lines
   const editorialLinesQuery = useQuery({
     queryKey: ['oniAgenciaEditorialLines'],
     queryFn: async () => {
@@ -18,7 +18,6 @@ export function useOniAgenciaThemes() {
     },
   });
 
-  // Query for products
   const productsQuery = useQuery({
     queryKey: ['oniAgenciaProducts'],
     queryFn: async () => {
@@ -32,7 +31,6 @@ export function useOniAgenciaThemes() {
     },
   });
 
-  // Query for statuses
   const statusesQuery = useQuery({
     queryKey: ['oniAgenciaStatuses'],
     queryFn: async () => {
@@ -47,17 +45,53 @@ export function useOniAgenciaThemes() {
   });
 
   return {
-    data: editorialLinesQuery.data || [],
-    isLoading: editorialLinesQuery.isLoading,
-    isError: editorialLinesQuery.isError,
-    error: editorialLinesQuery.error,
-    data: productsQuery.data || [],
-    isLoading: productsQuery.isLoading,
-    isError: productsQuery.isError,
-    error: productsQuery.error,
-    data: statusesQuery.data || [],
-    isLoading: statusesQuery.isLoading,
-    isError: statusesQuery.isError,
-    error: statusesQuery.error,
+    // Editorial lines data
+    editorialLines: editorialLinesQuery.data || [],
+    isLoadingEditorialLines: editorialLinesQuery.isLoading,
+    isErrorEditorialLines: editorialLinesQuery.isError,
+    errorEditorialLines: editorialLinesQuery.error,
+    
+    // Products data
+    products: productsQuery.data || [],
+    isLoadingProducts: productsQuery.isLoading,
+    isErrorProducts: productsQuery.isError,
+    errorProducts: productsQuery.error,
+    
+    // Statuses data
+    statuses: statusesQuery.data || [],
+    isLoadingStatuses: statusesQuery.isLoading,
+    isErrorStatuses: statusesQuery.isError,
+    errorStatuses: statusesQuery.error,
+  };
+}
+
+// Individual hook functions for consumers that need focused data
+export function useEditorialLines() {
+  const { editorialLines, isLoadingEditorialLines, isErrorEditorialLines, errorEditorialLines } = useOniAgenciaThemes();
+  return {
+    data: editorialLines,
+    isLoading: isLoadingEditorialLines,
+    isError: isErrorEditorialLines,
+    error: errorEditorialLines
+  };
+}
+
+export function useProducts() {
+  const { products, isLoadingProducts, isErrorProducts, errorProducts } = useOniAgenciaThemes();
+  return {
+    data: products,
+    isLoading: isLoadingProducts,
+    isError: isErrorProducts,
+    error: errorProducts
+  };
+}
+
+export function useStatuses() {
+  const { statuses, isLoadingStatuses, isErrorStatuses, errorStatuses } = useOniAgenciaThemes();
+  return {
+    data: statuses,
+    isLoading: isLoadingStatuses,
+    isError: isErrorStatuses,
+    error: errorStatuses
   };
 }

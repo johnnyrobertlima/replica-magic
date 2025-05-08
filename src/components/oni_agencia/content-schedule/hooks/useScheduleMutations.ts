@@ -1,122 +1,223 @@
 
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
+import { createContentSchedule, updateContentSchedule, deleteContentSchedule } from "@/services/oniAgenciaContentScheduleServices";
 import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
 
-interface UseScheduleMutationsProps {
+export interface UseScheduleMutationsProps {
   clientId: string;
+  selectedDate?: Date;
   onSuccess?: () => void;
+  onManualRefetch?: () => void;
+  onClose?: () => void;
 }
 
-export function useScheduleMutations({ clientId, onSuccess }: UseScheduleMutationsProps) {
+export function useScheduleMutations({
+  clientId,
+  selectedDate,
+  onSuccess,
+  onManualRefetch,
+  onClose
+}: UseScheduleMutationsProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const queryClient = useQueryClient();
   const { toast } = useToast();
   
-  const handleSubmit = async (e: React.FormEvent, currentSelectedEvent: CalendarEvent | null, formData: ContentScheduleFormData) => {
+  // Submit handler for creating/updating events
+  const handleSubmit = async (
+    e: React.FormEvent,
+    currentSelectedEvent: CalendarEvent | null,
+    formData: ContentScheduleFormData
+  ) => {
     e.preventDefault();
     
     try {
       setIsSubmitting(true);
-      console.log("Submitting schedule event", { formData, currentSelectedEvent });
       
-      // Here would be API calls to create or update event
+      if (currentSelectedEvent) {
+        // Update existing event
+        await updateContentSchedule(currentSelectedEvent.id, formData);
+        toast({
+          title: "Atualizado com sucesso!",
+          description: "O agendamento foi atualizado.",
+        });
+      } else {
+        // Create new event
+        await createContentSchedule(formData);
+        toast({
+          title: "Criado com sucesso!",
+          description: "O agendamento foi criado.",
+        });
+      }
       
-      toast({
-        title: currentSelectedEvent ? "Agendamento atualizado" : "Agendamento criado",
-        description: "Operação realizada com sucesso.",
+      // Invalidate queries to refresh data
+      if (selectedDate) {
+        queryClient.invalidateQueries({
+          queryKey: ['events', clientId, format(selectedDate, 'yyyy-MM-dd')]
+        });
+      }
+      
+      queryClient.invalidateQueries({
+        queryKey: ['contentSchedules', clientId]
       });
       
+      // Trigger specific refetch if provided
+      if (onManualRefetch) {
+        onManualRefetch();
+      }
+      
+      // Call onSuccess callback if provided
       if (onSuccess) {
         onSuccess();
       }
+      
+      // Close the dialog if onClose is provided
+      if (onClose) {
+        onClose();
+      }
     } catch (error) {
-      console.error("Error submitting schedule event:", error);
+      console.error('Error submitting event:', error);
       toast({
         variant: "destructive",
-        title: "Erro ao salvar",
-        description: "Não foi possível salvar o agendamento.",
+        title: "Erro",
+        description: "Houve um erro ao salvar o agendamento."
       });
     } finally {
       setIsSubmitting(false);
     }
   };
   
-  const handleStatusUpdate = async (e: React.FormEvent, currentSelectedEvent: CalendarEvent | null, formData: ContentScheduleFormData) => {
+  // Handler for updating just the status
+  const handleStatusUpdate = async (
+    e: React.FormEvent,
+    currentSelectedEvent: CalendarEvent | null,
+    formData: ContentScheduleFormData
+  ) => {
     e.preventDefault();
     
     if (!currentSelectedEvent) {
-      console.error("Cannot update status: No event selected");
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Nenhum agendamento selecionado."
+      });
       return;
     }
     
     try {
       setIsSubmitting(true);
-      console.log("Updating event status", { 
-        eventId: currentSelectedEvent.id,
-        status: formData.status_id,
-        note: formData.description
-      });
       
-      // Here would be API call to update status
+      // Update only the status
+      await updateContentSchedule(currentSelectedEvent.id, {
+        status_id: formData.status_id
+      });
       
       toast({
-        title: "Status atualizado",
-        description: "O status do agendamento foi atualizado com sucesso.",
+        title: "Status atualizado!",
+        description: "O status do agendamento foi atualizado."
       });
+      
+      // Invalidate relevant queries
+      if (selectedDate) {
+        queryClient.invalidateQueries({
+          queryKey: ['events', clientId, format(selectedDate, 'yyyy-MM-dd')]
+        });
+      }
+      
+      queryClient.invalidateQueries({
+        queryKey: ['contentSchedules', clientId]
+      });
+      
+      if (onManualRefetch) {
+        onManualRefetch();
+      }
       
       if (onSuccess) {
         onSuccess();
       }
+      
+      if (onClose) {
+        onClose();
+      }
     } catch (error) {
-      console.error("Error updating event status:", error);
+      console.error('Error updating status:', error);
       toast({
         variant: "destructive",
-        title: "Erro ao atualizar status",
-        description: "Não foi possível atualizar o status do agendamento.",
+        title: "Erro",
+        description: "Houve um erro ao atualizar o status."
       });
     } finally {
       setIsSubmitting(false);
     }
   };
   
+  // Handler for deleting events
   const handleDelete = async (currentSelectedEvent: CalendarEvent | null) => {
     if (!currentSelectedEvent) {
-      console.error("Cannot delete: No event selected");
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Nenhum agendamento selecionado para exclusão."
+      });
+      return;
+    }
+    
+    if (!confirm("Tem certeza que deseja excluir este agendamento?")) {
       return;
     }
     
     try {
       setIsDeleting(true);
-      console.log("Deleting event", currentSelectedEvent.id);
       
-      // Here would be API call to delete event
+      await deleteContentSchedule(currentSelectedEvent.id);
       
       toast({
-        title: "Agendamento excluído",
-        description: "O agendamento foi excluído com sucesso.",
+        title: "Excluído com sucesso!",
+        description: "O agendamento foi excluído."
       });
+      
+      // Invalidate relevant queries
+      if (selectedDate) {
+        queryClient.invalidateQueries({
+          queryKey: ['events', clientId, format(selectedDate, 'yyyy-MM-dd')]
+        });
+      }
+      
+      queryClient.invalidateQueries({
+        queryKey: ['contentSchedules', clientId]
+      });
+      
+      if (onManualRefetch) {
+        onManualRefetch();
+      }
       
       if (onSuccess) {
         onSuccess();
       }
+      
+      if (onClose) {
+        onClose();
+      }
     } catch (error) {
-      console.error("Error deleting event:", error);
+      console.error('Error deleting event:', error);
       toast({
         variant: "destructive",
-        title: "Erro ao excluir",
-        description: "Não foi possível excluir o agendamento.",
+        title: "Erro",
+        description: "Houve um erro ao excluir o agendamento."
       });
     } finally {
       setIsDeleting(false);
     }
   };
-  
+
   return {
     isSubmitting,
     isDeleting,
     handleSubmit,
     handleStatusUpdate,
-    handleDelete,
+    handleDelete
   };
 }
