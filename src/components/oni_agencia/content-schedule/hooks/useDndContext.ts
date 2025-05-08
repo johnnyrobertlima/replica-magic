@@ -104,7 +104,11 @@ export function useDndContext({ clientId, month, year, onManualRefetch }: UseDnd
         editorial_line_id: draggedEvent.editorial_line_id,
         product_id: draggedEvent.product_id,
         status_id: draggedEvent.status_id,
-        creators: draggedEvent.creators
+        creators: draggedEvent.creators,
+        capture_date: draggedEvent.capture_date,
+        capture_end_date: draggedEvent.capture_end_date,
+        is_all_day: draggedEvent.is_all_day,
+        location: draggedEvent.location
       };
       
       // Update the database with the new date

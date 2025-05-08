@@ -6,9 +6,10 @@ interface EventListProps {
   events: CalendarEvent[];
   onSelectEvent: (event: CalendarEvent) => void;
   onCreateNew: () => void;
+  clientId?: string;
 }
 
-export function EventList({ events, onSelectEvent, onCreateNew }: EventListProps) {
+export function EventList({ events, onSelectEvent, onCreateNew, clientId }: EventListProps) {
   if (events.length === 0) {
     return null;
   }
@@ -22,12 +23,12 @@ export function EventList({ events, onSelectEvent, onCreateNew }: EventListProps
             key={event.id}
             variant="outline"
             className="justify-start h-auto py-2 px-3 text-left"
-            style={{ borderLeftColor: event.service.color, borderLeftWidth: '4px' }}
+            style={{ borderLeftColor: event.service?.color, borderLeftWidth: '4px' }}
             onClick={() => onSelectEvent(event)}
           >
             <div>
               <div className="font-medium">{event.title}</div>
-              <div className="text-sm text-muted-foreground">{event.service.name}</div>
+              <div className="text-sm text-muted-foreground">{event.service?.name}</div>
             </div>
           </Button>
         ))}

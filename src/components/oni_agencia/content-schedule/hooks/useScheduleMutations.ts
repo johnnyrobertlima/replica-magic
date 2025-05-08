@@ -9,7 +9,7 @@ export function useScheduleMutations({
   onClose,
   clientId,
   selectedDate,
-  onManualRefetch // Adicionamos esse parâmetro para permitir atualização manual após operações
+  onManualRefetch
 }: {
   onClose: () => void;
   clientId: string;
@@ -160,7 +160,11 @@ export function useScheduleMutations({
         execution_phase: currentSelectedEvent.execution_phase,
         editorial_line_id: currentSelectedEvent.editorial_line_id,
         product_id: currentSelectedEvent.product_id,
-        creators: currentSelectedEvent.creators || []
+        creators: currentSelectedEvent.creators || [],
+        capture_date: currentSelectedEvent.capture_date,
+        capture_end_date: currentSelectedEvent.capture_end_date,
+        is_all_day: currentSelectedEvent.is_all_day,
+        location: currentSelectedEvent.location
       };
       
       console.log("Updating event status:", currentSelectedEvent.id, updateData);

@@ -1,3 +1,4 @@
+
 import { CalendarEvent, OniAgenciaService, OniAgenciaCollaborator, ContentScheduleFormData, OniAgenciaClient } from "@/types/oni-agencia";
 import { EventList } from "./EventList";
 import { NewEventForm } from "./NewEventForm";
@@ -115,6 +116,7 @@ export function DialogContent({
             <EventList 
               events={events} 
               onSelectEvent={onSelectEvent}
+              onCreateNew={onResetForm}
               clientId={clientId}
             />
           )}

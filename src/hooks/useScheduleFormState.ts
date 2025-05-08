@@ -24,9 +24,14 @@ export function useScheduleFormState({
     editorial_line_id: null,
     product_id: null,
     status_id: null,
-    creators: [] // Initialize as empty array
+    creators: [],
+    capture_date: null,
+    capture_end_date: null,
+    is_all_day: true,
+    location: null
   });
   
+  // Use a ref to track when we're in the middle of user input
   const isUserEditing = useRef(false);
 
   // Set the selectedEvent when it comes from props
@@ -51,7 +56,11 @@ export function useScheduleFormState({
       editorial_line_id: null,
       product_id: null,
       status_id: null,
-      creators: [] // Reset to empty array
+      creators: [],
+      capture_date: null,
+      capture_end_date: null,
+      is_all_day: true,
+      location: null
     });
   };
 
@@ -68,7 +77,7 @@ export function useScheduleFormState({
       } else if (typeof event.creators === 'string') {
         try {
           // Tenta parsear como JSON se for string
-          const parsed = JSON.parse(event.creators);
+          const parsed = JSON.parse(event.creators as string);
           creatorsArray = Array.isArray(parsed) ? parsed : [String(parsed)];
         } catch {
           // Se falhar no parse, trata como um único item
@@ -91,7 +100,11 @@ export function useScheduleFormState({
       editorial_line_id: event.editorial_line_id,
       product_id: event.product_id,
       status_id: event.status_id,
-      creators: creatorsArray // Sempre um array válido
+      creators: creatorsArray,
+      capture_date: event.capture_date,
+      capture_end_date: event.capture_end_date,
+      is_all_day: event.is_all_day !== null ? event.is_all_day : true,
+      location: event.location
     });
   };
 
