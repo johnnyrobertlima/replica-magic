@@ -154,14 +154,14 @@ export function DetailsForm({
             <Skeleton className="w-full h-10" />
           ) : (
             <Select
-              value={formData.editorial_line_id || ""}
+              value={formData.editorial_line_id || "null"}
               onValueChange={(value) => onSelectChange("editorial_line_id", value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione uma linha editorial" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Nenhum</SelectItem>
+                <SelectItem value="null">Nenhum</SelectItem>
                 {editorialLines.map((line) => (
                   <SelectItem key={line.id} value={line.id}>
                     {line.name}
@@ -178,14 +178,14 @@ export function DetailsForm({
             <Skeleton className="w-full h-10" />
           ) : (
             <Select
-              value={formData.product_id || ""}
+              value={formData.product_id || "null"}
               onValueChange={(value) => onSelectChange("product_id", value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione um produto" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Nenhum</SelectItem>
+                <SelectItem value="null">Nenhum</SelectItem>
                 {products.map((product) => (
                   <SelectItem key={product.id} value={product.id}>
                     {product.name}
@@ -203,8 +203,8 @@ export function DetailsForm({
           name="description"
           value={formData.description || ""}
           onChange={onInputChange}
-          placeholder="Descreva o agendamento"
-          rows={4}
+          placeholder="Descrição do agendamento"
+          rows={3}
         />
       </div>
     </div>

@@ -29,13 +29,14 @@ export function CollaboratorSelect({
     <div className="grid gap-2">
       <Label htmlFor="collaborator_id">{label}</Label>
       <Select
-        value={value || ""}
+        value={value || "null"}
         onValueChange={onValueChange}
       >
         <SelectTrigger id="collaborator_id" className="w-full">
           <SelectValue placeholder="Selecione um colaborador" />
         </SelectTrigger>
         <SelectContent>
+          <SelectItem value="null">Nenhum</SelectItem>
           {isLoading ? (
             <div className="flex items-center justify-center p-2">
               <Loader2 className="h-4 w-4 animate-spin" />

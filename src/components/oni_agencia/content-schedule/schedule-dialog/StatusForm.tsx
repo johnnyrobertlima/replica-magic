@@ -31,14 +31,14 @@ export function StatusForm({
           <Skeleton className="w-full h-10" />
         ) : (
           <Select
-            value={formData.collaborator_id || ""}
+            value={formData.collaborator_id || "null"}
             onValueChange={(value) => onSelectChange("collaborator_id", value)}
           >
             <SelectTrigger>
               <SelectValue placeholder="Selecione um responsável" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Nenhum</SelectItem>
+              <SelectItem value="null">Nenhum</SelectItem>
               {collaborators.map((collaborator) => (
                 <SelectItem key={collaborator.id} value={collaborator.id}>
                   {collaborator.name}
@@ -55,14 +55,14 @@ export function StatusForm({
           <Skeleton className="w-full h-10" />
         ) : (
           <Select
-            value={formData.status_id || ""}
+            value={formData.status_id || "null"}
             onValueChange={(value) => onSelectChange("status_id", value)}
           >
             <SelectTrigger>
               <SelectValue placeholder="Selecione um status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Pendente</SelectItem>
+              <SelectItem value="null">Pendente</SelectItem>
               {statuses.map((status) => (
                 <SelectItem 
                   key={status.id} 

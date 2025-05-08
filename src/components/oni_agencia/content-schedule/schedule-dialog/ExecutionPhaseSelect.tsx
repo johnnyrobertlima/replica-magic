@@ -27,13 +27,14 @@ export function ExecutionPhaseSelect({ value, onValueChange }: ExecutionPhaseSel
     <div className="grid gap-2">
       <Label htmlFor="execution_phase">Fase de Execução</Label>
       <Select
-        value={value || ""}
+        value={value || "null"}
         onValueChange={onValueChange}
       >
         <SelectTrigger id="execution_phase" className="w-full">
           <SelectValue placeholder="Selecione a fase" />
         </SelectTrigger>
         <SelectContent>
+          <SelectItem value="null">Selecione uma fase</SelectItem>
           {getExecutionPhaseOptions().map((option) => (
             <SelectItem key={option.value} value={option.value}>
               {option.label}
