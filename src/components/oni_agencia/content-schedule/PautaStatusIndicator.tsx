@@ -50,6 +50,7 @@ export function PautaStatusIndicator({
     setIsExpanded(!isExpanded);
   };
 
+  // If there are no client scopes, don't render anything
   if (!clientScopes || clientScopes.length === 0) {
     return null;
   }
