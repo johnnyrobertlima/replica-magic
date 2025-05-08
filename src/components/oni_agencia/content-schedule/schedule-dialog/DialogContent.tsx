@@ -1,9 +1,7 @@
-
-import { useState, useEffect } from "react";
-import { CalendarEvent } from "@/types/oni-agencia";
+import { CalendarEvent, OniAgenciaService, OniAgenciaCollaborator, ContentScheduleFormData, OniAgenciaClient } from "@/types/oni-agencia";
 import { EventList } from "./EventList";
+import { NewEventForm } from "./NewEventForm";
 import { EventEditor } from "./EventEditor";
-import { ContentScheduleFormData } from "@/types/oni-agencia";
 
 interface DialogContentProps {
   selectedEvent?: CalendarEvent;
@@ -11,12 +9,12 @@ interface DialogContentProps {
   currentSelectedEvent: CalendarEvent | null;
   clientId: string;
   selectedDate: Date;
-  services: any[];
-  collaborators: any[];
+  services: OniAgenciaService[];
+  collaborators: OniAgenciaCollaborator[];
   editorialLines: any[];
   products: any[];
   statuses: any[];
-  clients: any[];
+  clients: OniAgenciaClient[];
   isLoadingServices: boolean;
   isLoadingCollaborators: boolean;
   isLoadingEditorialLines: boolean;
@@ -35,7 +33,9 @@ interface DialogContentProps {
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onSelectChange: (name: string, value: string) => void;
   onDateChange: (name: string, value: Date | null) => void;
-  defaultTab?: "details" | "status" | "history";
+  onDateTimeChange?: (name: string, value: Date | null) => void;
+  onAllDayChange?: (value: boolean) => void;
+  defaultTab?: "details" | "status" | "history" | "capture";
 }
 
 export function DialogContent({
@@ -68,79 +68,80 @@ export function DialogContent({
   onInputChange,
   onSelectChange,
   onDateChange,
+  onDateTimeChange,
+  onAllDayChange,
   defaultTab
 }: DialogContentProps) {
-  // If there's a selectedEvent passed from props, don't show the event list
-  const [showEventList, setShowEventList] = useState(!selectedEvent && events.length > 0);
+  // Check if there are other events for this date
+  const hasOtherEvents = events && events.length > 0;
   
-  // If a selectedEvent is provided, select it right away
-  useEffect(() => {
-    if (selectedEvent && !currentSelectedEvent) {
-      console.log("Auto-selecting event from props:", selectedEvent.id);
-      onSelectEvent(selectedEvent);
-      setShowEventList(false);
-    }
-  }, [selectedEvent, currentSelectedEvent, onSelectEvent]);
-  
-  // Use defaultTab if provided
-  useEffect(() => {
-    if (currentSelectedEvent && defaultTab) {
-      // The EventEditor component will handle setting this tab when rendering
-      console.log("Setting default tab to:", defaultTab);
-    }
-  }, [currentSelectedEvent, defaultTab]);
-
-  const resetAndShowList = () => {
-    onResetForm();
-    setShowEventList(events.length > 0);
-  };
-  
-  const handleExplicitCreateNew = () => {
-    onResetForm();
-    setShowEventList(false);
-  };
-
-  if (showEventList) {
-    return (
-      <EventList 
-        events={events}
-        onSelectEvent={(event) => {
-          onSelectEvent(event);
-          setShowEventList(false);
-        }}
-        onCreateNew={handleExplicitCreateNew}
-      />
-    );
-  }
-
+  // Return different content based on whether we're editing or creating
   return (
-    <EventEditor
-      event={currentSelectedEvent!}
-      clientId={clientId}
-      selectedDate={selectedDate}
-      services={services}
-      collaborators={collaborators}
-      editorialLines={editorialLines}
-      products={products}
-      statuses={statuses}
-      clients={clients}
-      isLoadingServices={isLoadingServices}
-      isLoadingCollaborators={isLoadingCollaborators}
-      isLoadingEditorialLines={isLoadingEditorialLines}
-      isLoadingProducts={isLoadingProducts}
-      isLoadingStatuses={isLoadingStatuses}
-      isLoadingClients={isLoadingClients}
-      isSubmitting={isSubmitting}
-      isDeleting={isDeleting}
-      onSubmit={onSubmit}
-      onStatusUpdate={onStatusUpdate}
-      onDelete={onDelete}
-      onCancel={onCancel}
-      formData={formData}
-      onInputChange={onInputChange}
-      onSelectChange={onSelectChange}
-      onDateChange={onDateChange}
-      defaultActiveTab={defaultTab}
-    />
+    <>
+      {currentSelectedEvent ? (
+        <EventEditor 
+          event={currentSelectedEvent}
+          clientId={clientId}
+          selectedDate={selectedDate}
+          services={services}
+          collaborators={collaborators}
+          editorialLines={editorialLines}
+          products={products}
+          statuses={statuses}
+          clients={clients}
+          isLoadingServices={isLoadingServices}
+          isLoadingCollaborators={isLoadingCollaborators}
+          isLoadingEditorialLines={isLoadingEditorialLines}
+          isLoadingProducts={isLoadingProducts}
+          isLoadingStatuses={isLoadingStatuses}
+          isLoadingClients={isLoadingClients}
+          isSubmitting={isSubmitting}
+          isDeleting={isDeleting}
+          onSubmit={onSubmit}
+          onStatusUpdate={onStatusUpdate}
+          onDelete={onDelete}
+          onCancel={onCancel}
+          formData={formData}
+          onInputChange={onInputChange}
+          onSelectChange={onSelectChange}
+          onDateChange={onDateChange}
+          onDateTimeChange={onDateTimeChange}
+          onAllDayChange={onAllDayChange}
+          defaultActiveTab={defaultTab}
+        />
+      ) : (
+        <>
+          {hasOtherEvents && (
+            <EventList 
+              events={events} 
+              onSelectEvent={onSelectEvent}
+              clientId={clientId}
+            />
+          )}
+          <NewEventForm 
+            formData={formData}
+            services={services}
+            collaborators={collaborators}
+            editorialLines={editorialLines}
+            products={products}
+            statuses={statuses}
+            clients={clients}
+            isLoadingServices={isLoadingServices}
+            isLoadingCollaborators={isLoadingCollaborators}
+            isLoadingEditorialLines={isLoadingEditorialLines}
+            isLoadingProducts={isLoadingProducts}
+            isLoadingStatuses={isLoadingStatuses}
+            isLoadingClients={isLoadingClients}
+            isSubmitting={isSubmitting}
+            isDeleting={isDeleting}
+            onSubmit={onSubmit}
+            onCancel={onCancel}
+            onInputChange={onInputChange}
+            onSelectChange={onSelectChange}
+            onDateChange={onDateChange}
+          />
+        </>
+      )}
+    </>
   );
 }

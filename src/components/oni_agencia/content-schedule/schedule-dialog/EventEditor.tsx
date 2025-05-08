@@ -8,7 +8,8 @@ import { EventForm } from "./EventForm";
 import { DialogActions } from "./DialogActions";
 import { StatusUpdateForm } from "./StatusUpdateForm";
 import { ScheduleHistory } from "./ScheduleHistory";
-import { ArrowDown, History } from "lucide-react";
+import { CaptureForm } from "./CaptureForm";
+import { ArrowDown, History, Camera } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface EventEditorProps {
@@ -37,7 +38,9 @@ interface EventEditorProps {
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onSelectChange: (name: string, value: string) => void;
   onDateChange: (name: string, value: Date | null) => void;
-  defaultActiveTab?: "details" | "status" | "history";
+  onDateTimeChange?: (name: string, value: Date | null) => void;
+  onAllDayChange?: (value: boolean) => void;
+  defaultActiveTab?: "details" | "status" | "history" | "capture";
 }
 
 export function EventEditor({
@@ -66,9 +69,11 @@ export function EventEditor({
   onInputChange,
   onSelectChange,
   onDateChange,
+  onDateTimeChange,
+  onAllDayChange,
   defaultActiveTab = "details"
 }: EventEditorProps) {
-  const [activeTab, setActiveTab] = useState<"details" | "status" | "history">(defaultActiveTab);
+  const [activeTab, setActiveTab] = useState<"details" | "status" | "history" | "capture">(defaultActiveTab);
   const [note, setNote] = useState<string>(formData.description || "");
   
   // Update activeTab when defaultActiveTab changes
@@ -86,9 +91,19 @@ export function EventEditor({
     return activeTab === "history" ? "h-[60vh]" : "h-[60vh]";
   };
 
+  // Handle date changes for the capture tab
+  const handleCaptureDateTime = (name: string, value: Date | null) => {
+    if (onDateTimeChange) {
+      onDateTimeChange(name, value);
+    } else {
+      // Fallback to standard date handling if not provided
+      onDateChange(name, value);
+    }
+  };
+
   return (
-    <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "details" | "status" | "history")} className="flex flex-col h-full">
-      <TabsList className="grid w-full grid-cols-3">
+    <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "details" | "status" | "history" | "capture")} className="flex flex-col h-full">
+      <TabsList className="grid w-full grid-cols-4">
         <TabsTrigger value="details">Detalhes</TabsTrigger>
         <TabsTrigger 
           value="status" 
@@ -105,6 +120,13 @@ export function EventEditor({
         >
           <History className="h-4 w-4" />
           Histórico
+        </TabsTrigger>
+        <TabsTrigger 
+          value="capture"
+          className="flex items-center gap-2"
+        >
+          <Camera className="h-4 w-4" />
+          Captura
         </TabsTrigger>
       </TabsList>
       
@@ -178,6 +200,32 @@ export function EventEditor({
           <div className="h-[60vh]">
             <ScheduleHistory event={event} />
           </div>
+        </TabsContent>
+        
+        <TabsContent value="capture" className="mt-2 h-full">
+          <ScrollArea className={getContentHeight()}>
+            <form onSubmit={onSubmit}>
+              <CaptureForm
+                captureDate={formData.capture_date}
+                captureEndDate={formData.capture_end_date}
+                isAllDay={formData.is_all_day === true}
+                location={formData.location}
+                onCaptureChange={handleCaptureDateTime}
+                onLocationChange={onInputChange}
+                onAllDayChange={onAllDayChange || (() => {})}
+              />
+              
+              <DialogFooter>
+                <DialogActions
+                  isSubmitting={isSubmitting}
+                  isDeleting={false}
+                  onCancel={onCancel}
+                  isEditing={true}
+                  saveLabel="Salvar"
+                />
+              </DialogFooter>
+            </form>
+          </ScrollArea>
         </TabsContent>
       </div>
     </Tabs>

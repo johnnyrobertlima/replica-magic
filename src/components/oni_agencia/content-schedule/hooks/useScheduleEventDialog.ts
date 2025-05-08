@@ -32,7 +32,9 @@ export function useScheduleEventDialog({
     handleSelectEvent,
     handleInputChange,
     handleSelectChange,
-    handleDateChange
+    handleDateChange,
+    handleDateTimeChange,  // New handler for date-time fields
+    handleAllDayChange     // New handler for all-day toggle
   } = useScheduleFormState({
     clientId,
     selectedDate,
@@ -94,6 +96,8 @@ export function useScheduleEventDialog({
     handleInputChange,
     handleSelectChange,
     handleDateChange,
+    handleDateTimeChange,  // Include new handlers in return
+    handleAllDayChange,    // Include new handlers in return
     handleSubmit: submitForm,
     handleStatusUpdate: updateStatus,
     handleDelete: deleteEvent,

@@ -42,6 +42,8 @@ export function ScheduleEventDialog({
     handleInputChange,
     handleSelectChange,
     handleDateChange,
+    handleDateTimeChange,  // New handler
+    handleAllDayChange,    // New handler
     handleSubmit,
     handleStatusUpdate,
     handleDelete,
@@ -109,6 +111,8 @@ export function ScheduleEventDialog({
         onInputChange={handleInputChange}
         onSelectChange={handleSelectChange}
         onDateChange={handleDateChange}
+        onDateTimeChange={handleDateTimeChange}  // Pass new handler
+        onAllDayChange={handleAllDayChange}      // Pass new handler
       />
     </DialogContainer>
   );

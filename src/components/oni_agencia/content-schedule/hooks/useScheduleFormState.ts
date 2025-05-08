@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
@@ -24,7 +23,11 @@ export function useScheduleFormState({
     editorial_line_id: null,
     product_id: null,
     status_id: null,
-    creators: []
+    creators: [],
+    capture_date: null,
+    capture_end_date: null,
+    is_all_day: true,
+    location: null
   });
   
   // Use a ref to track when we're in the middle of user input
@@ -52,7 +55,11 @@ export function useScheduleFormState({
       editorial_line_id: null,
       product_id: null,
       status_id: null,
-      creators: []
+      creators: [],
+      capture_date: null,
+      capture_end_date: null,
+      is_all_day: true,
+      location: null
     });
   };
 
@@ -92,7 +99,11 @@ export function useScheduleFormState({
       editorial_line_id: event.editorial_line_id,
       product_id: event.product_id,
       status_id: event.status_id,
-      creators: creatorsArray // Sempre um array válido
+      creators: creatorsArray, // Sempre um array válido
+      capture_date: event.capture_date || null,
+      capture_end_date: event.capture_end_date || null,
+      is_all_day: event.is_all_day !== undefined ? event.is_all_day : true,
+      location: event.location || null
     });
   };
 
@@ -161,7 +172,7 @@ export function useScheduleFormState({
     }, 100);
   };
   
-  // Modificar handleDateChange para não usar campo capture_date
+  // Modify handleDateChange to handle capture_date and capture_end_date fields
   const handleDateChange = (name: string, value: Date | null) => {
     console.log("Date changed:", name, value);
     
@@ -179,6 +190,45 @@ export function useScheduleFormState({
     }, 100);
   };
 
+  // Add a new handler for dateTime fields (with time)
+  const handleDateTimeChange = (name: string, value: Date | null) => {
+    console.log("DateTime changed:", name, value);
+    
+    isUserEditing.current = true;
+    
+    if (value) {
+      const formattedDateTime = format(value, "yyyy-MM-dd'T'HH:mm:ss");
+      setFormData(prev => ({ ...prev, [name]: formattedDateTime }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: null }));
+    }
+    
+    setTimeout(() => {
+      isUserEditing.current = false;
+    }, 100);
+  };
+
+  // Add a handler for the all-day checkbox
+  const handleAllDayChange = (isAllDay: boolean) => {
+    console.log("All day changed:", isAllDay);
+    
+    isUserEditing.current = true;
+    
+    setFormData(prev => ({ 
+      ...prev, 
+      is_all_day: isAllDay,
+      // If switching to all-day, remove time component from dates
+      ...(isAllDay && prev.capture_date ? { 
+        capture_date: prev.capture_date.split('T')[0],
+        capture_end_date: prev.capture_end_date?.split('T')[0] || null
+      } : {})
+    }));
+    
+    setTimeout(() => {
+      isUserEditing.current = false;
+    }, 100);
+  };
+
   return {
     currentSelectedEvent,
     formData,
@@ -186,6 +236,8 @@ export function useScheduleFormState({
     handleSelectEvent,
     handleInputChange,
     handleSelectChange,
-    handleDateChange
+    handleDateChange,
+    handleDateTimeChange,
+    handleAllDayChange
   };
 }

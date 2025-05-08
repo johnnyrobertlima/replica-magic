@@ -17,12 +17,12 @@ export function useScheduleEventDialog({
   selectedDate: Date;
   events: CalendarEvent[];
   selectedEvent?: CalendarEvent;
-  initialTabActive?: "details" | "status" | "history";
+  initialTabActive?: "details" | "status" | "history" | "capture";
   onClose: () => void;
 }) {
   // Add a ref to prevent multiple selections
   const hasSelectedEventRef = useRef(false);
-  const [activeTab, setActiveTab] = useState<"details" | "status" | "history">(initialTabActive);
+  const [activeTab, setActiveTab] = useState<"details" | "status" | "history" | "capture">(initialTabActive);
   const queryClient = useQueryClient();
   
   const {
@@ -32,7 +32,9 @@ export function useScheduleEventDialog({
     handleSelectEvent,
     handleInputChange,
     handleSelectChange,
-    handleDateChange
+    handleDateChange,
+    handleDateTimeChange,  // New handler
+    handleAllDayChange     // New handler
   } = useScheduleFormState({
     clientId,
     selectedDate,
@@ -262,6 +264,8 @@ export function useScheduleEventDialog({
     handleInputChange,
     handleSelectChange,
     handleDateChange,
+    handleDateTimeChange,  // Include in return
+    handleAllDayChange,    // Include in return
     handleSubmit: submitForm,
     handleStatusUpdate: updateStatus,
     handleDelete: deleteEvent,

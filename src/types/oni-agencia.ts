@@ -13,8 +13,12 @@ export interface OniAgenciaContentSchedule {
   product_id: string | null;
   status_id: string | null;
   creators: string[] | null;
-  created_at: string;  // Add this property
-  updated_at: string;  // Add this property
+  created_at: string;
+  updated_at: string;
+  capture_date: string | null; // Add this new property
+  capture_end_date: string | null; // Add this for the end time
+  is_all_day: boolean | null; // Add this to determine if it's an all-day event
+  location: string | null; // Add this for the location field
 }
 
 // Update ContentScheduleFormData accordingly
