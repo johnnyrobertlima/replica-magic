@@ -1,112 +1,101 @@
 
-import { useState } from "react";
-import { Calendar } from "@/components/oni_agencia/content-schedule/calendar/Calendar";
-import { ContentScheduleList } from "@/components/oni_agencia/content-schedule/ContentScheduleList";
-import { CalendarEvent } from "@/types/oni-agencia";
-import { useDndContext } from "@/components/oni_agencia/content-schedule/hooks/useDndContext";
-import { ContentScheduleLoading } from "@/components/oni_agencia/content-schedule/ContentScheduleLoading";
-import { PautaStatusIndicator } from "@/components/oni_agencia/content-schedule/PautaStatusIndicator";
+import { useState, useMemo } from "react";
+import { ContentScheduleList } from "../ContentScheduleList";
+import { ContentScheduleFilters } from "../ContentScheduleFilters";
+import { CalendarEvent, OniAgenciaCollaborator } from "@/types/oni-agencia";
+import { Loader2 } from "lucide-react";
+import { DndContext } from "@dnd-kit/core";
+import { useDndContext } from "../hooks/useDndContext";
 
 interface ContentAreaProps {
-  viewMode: "calendar" | "list";
-  filteredSchedules: CalendarEvent[];
-  clientId: string;
-  month: number;
-  year: number;
-  selectedCollaborator?: string | null;
-  onMonthYearChange: (month: number, year: number) => void;
-  hasNextPage: boolean;
-  isFetchingNextPage: boolean;
-  fetchNextPage: () => void;
-  showLoadingState: boolean;
-  isCollapsed: boolean;
+  events: CalendarEvent[];
+  collaborators: OniAgenciaCollaborator[];
+  isLoading: boolean;
   onManualRefetch?: () => void;
 }
 
-export function ContentArea({ 
-  viewMode,
-  filteredSchedules,
-  clientId,
-  month,
-  year,
-  selectedCollaborator,
-  onMonthYearChange,
-  hasNextPage,
-  isFetchingNextPage,
-  fetchNextPage,
-  showLoadingState,
-  isCollapsed,
+export const ContentArea = ({ 
+  events,
+  collaborators,
+  isLoading,
   onManualRefetch
-}: ContentAreaProps) {
-  const [dialogOpen, setDialogOpen] = useState(false);
+}: ContentAreaProps) => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedStatusId, setSelectedStatusId] = useState<string | null>(null);
+  const [selectedCollaboratorId, setSelectedCollaboratorId] = useState<string | null>(null);
+  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
+
+  const dndContext = useDndContext();
   
-  // Use the updated useDndContext hook
-  const {
-    selectedEvent,
-    selectedDate,
-    isDialogOpen,
-    dndContext,
-    handleEventClick,
-    handleDateSelect,
-    handleDragEnd,
-    handleDialogOpenChange,
-    handleDialogClose
-  } = useDndContext({
-    clientId,
-    month,
-    year,
-    onManualRefetch
-  });
-  
-  // Debug logs to track events count
-  console.log(`ContentArea received ${filteredSchedules.length} events, showLoadingState=${showLoadingState}`);
-  
-  // Show status indicator when we have a valid clientId and data is loaded
-  const showStatusIndicator = !!clientId && clientId !== "" && clientId !== "all" && !showLoadingState;
-  
-  // Caso esteja carregando, mostra um loader
-  if (showLoadingState) {
-    return <ContentScheduleLoading isCollapsed={isCollapsed} />;
-  }
-  
-  return (
-    <div className={`pt-4 ${isCollapsed ? 'mt-0' : 'mt-4'}`}>
-      {showStatusIndicator && (
-        <PautaStatusIndicator 
-          events={filteredSchedules}
-          clientId={clientId}
-          month={month}
-          year={year}
-        />
-      )}
+  const filteredEvents = useMemo(() => {
+    if (!events) return [];
+    
+    return events.filter(event => {
+      // Filter by search term
+      const matchesSearch = 
+        !searchTerm || 
+        event.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        event.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        event.collaborator_name?.toLowerCase().includes(searchTerm.toLowerCase());
       
-      {viewMode === "calendar" ? (
-        <dndContext.DndContext onDragEnd={handleDragEnd}>
-          <Calendar 
-            events={filteredSchedules}
-            month={month}
-            year={year}
-            clientId={clientId}
-            selectedCollaborator={selectedCollaborator}
-            onMonthYearChange={onMonthYearChange}
-            onDateSelect={handleDateSelect}
-            onEventClick={handleEventClick}
-            selectedDate={selectedDate}
-            selectedEvent={selectedEvent}
-            isDialogOpen={isDialogOpen}
-            onDialogOpenChange={handleDialogOpenChange}
-            onDialogClose={handleDialogClose}
+      // Filter by status
+      const matchesStatus = !selectedStatusId || event.status_id === selectedStatusId;
+      
+      // Filter by collaborator
+      const matchesCollaborator = !selectedCollaboratorId || event.collaborator_id === selectedCollaboratorId;
+      
+      // Filter by service
+      const matchesService = !selectedServiceId || event.service_id === selectedServiceId;
+      
+      return matchesSearch && matchesStatus && matchesCollaborator && matchesService;
+    });
+  }, [events, searchTerm, selectedStatusId, selectedCollaboratorId, selectedServiceId]);
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+  };
+
+  const handleStatusChange = (value: string) => {
+    setSelectedStatusId(value === "all" ? null : value);
+  };
+
+  const handleCollaboratorChange = (value: string) => {
+    setSelectedCollaboratorId(value === "all" ? null : value);
+  };
+
+  const handleServiceChange = (value: string) => {
+    setSelectedServiceId(value === "all" ? null : value);
+  };
+
+  return (
+    <DndContext
+      onDragStart={dndContext.handleDragStart}
+      onDragEnd={dndContext.handleDragEnd}
+    >
+      <div className="space-y-4 p-4">
+        <ContentScheduleFilters 
+          searchTerm={searchTerm}
+          onSearchChange={handleSearchChange}
+          selectedStatusId={selectedStatusId}
+          onStatusChange={handleStatusChange}
+          selectedCollaboratorId={selectedCollaboratorId}
+          onCollaboratorChange={handleCollaboratorChange}
+          selectedServiceId={selectedServiceId}
+          onServiceChange={handleServiceChange}
+          collaborators={collaborators}
+        />
+        
+        {isLoading ? (
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <ContentScheduleList 
+            events={filteredEvents} 
             onManualRefetch={onManualRefetch}
           />
-        </dndContext.DndContext>
-      ) : (
-        <ContentScheduleList 
-          events={filteredSchedules} 
-          clientId={clientId} 
-          selectedCollaborator={selectedCollaborator}
-          onManualRefetch={onManualRefetch}
-        />
-      )}
-    </div>
+        )}
+      </div>
+    </DndContext>
   );
-}
+};

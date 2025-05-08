@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getMainMenuItems, getAdminMenuItems } from "./menu/menuItems";
 import { DesktopMenu } from "./menu/DesktopMenu";
 import { MobileMenu } from "./menu/MobileMenu";
+import { MenuItemType } from "./menu/types";
 
 export const OniAgenciaMenu = () => {
   const navigate = useNavigate();
@@ -39,7 +40,7 @@ export const OniAgenciaMenu = () => {
 
   // Check if any admin route is active
   const isAnyAdminRouteActive = () => {
-    return getAdminMenuItems().some(item => isActiveRoute(item.href));
+    return getAdminMenuItems().some(item => isActiveRoute(item.path));
   };
 
   return (

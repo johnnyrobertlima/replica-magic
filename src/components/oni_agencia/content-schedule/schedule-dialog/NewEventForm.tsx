@@ -76,7 +76,6 @@ export function NewEventForm({
           isDeleting={isDeleting}
           onCancel={onCancel}
           isEditing={false}
-          onSubmit={onSubmit}
         />
       </DialogFooter>
     </form>

@@ -7,14 +7,21 @@ import { ResourcePathSelector } from "./components/ResourcePathSelector";
 import { PermissionTypeSelector } from "./components/PermissionTypeSelector";
 import { SubmitButton } from "./components/SubmitButton";
 import { RESOURCE_PATHS } from "./constants/routes";
+import { Loader2 } from "lucide-react";
 
 interface PermissionFormProps {
   selectedGroupId: string;
   existingPaths?: string[];
+  isLoadingPaths?: boolean;
   onSuccess: () => void;
 }
 
-export const PermissionForm = ({ selectedGroupId, existingPaths, onSuccess }: PermissionFormProps) => {
+export const PermissionForm = ({ 
+  selectedGroupId, 
+  existingPaths, 
+  isLoadingPaths = false,
+  onSuccess 
+}: PermissionFormProps) => {
   const [formData, setFormData] = useState<PermissionFormData>({
     resource_path: "",
     permission_type: "read",
@@ -62,12 +69,19 @@ export const PermissionForm = ({ selectedGroupId, existingPaths, onSuccess }: Pe
     <form onSubmit={handleSubmit} className="grid gap-4 p-4 border rounded-lg">
       <h2 className="text-lg font-semibold">Adicionar Nova Permissão</h2>
       
-      <ResourcePathSelector 
-        resourcePath={formData.resource_path}
-        onResourcePathChange={handleResourcePathChange}
-        availablePaths={allPaths}
-        selectedGroupId={selectedGroupId}
-      />
+      {isLoadingPaths ? (
+        <div className="flex justify-center items-center p-4">
+          <Loader2 className="h-5 w-5 animate-spin mr-2" />
+          <span>Carregando caminhos...</span>
+        </div>
+      ) : (
+        <ResourcePathSelector 
+          resourcePath={formData.resource_path}
+          onResourcePathChange={handleResourcePathChange}
+          availablePaths={allPaths}
+          selectedGroupId={selectedGroupId}
+        />
+      )}
       
       <PermissionTypeSelector 
         permissionType={formData.permission_type}

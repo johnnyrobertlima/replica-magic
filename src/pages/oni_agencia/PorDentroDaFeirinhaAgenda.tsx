@@ -43,7 +43,7 @@ const PorDentroDaFeirinhaAgenda = () => {
   }, [clients]);
 
   const { 
-    data: filteredSchedules = [], 
+    data: filteredEvents = [], 
     isLoading: isLoadingSchedules,
     refetch: refetchSchedules,
     isRefetching
@@ -96,8 +96,8 @@ const PorDentroDaFeirinhaAgenda = () => {
                 <List className="h-4 w-4" />
               </ToggleGroupItem>
             </ToggleGroup>
-            <EditorialLinePopover events={filteredSchedules} />
-            <ProductsPopover events={filteredSchedules} />
+            <EditorialLinePopover events={filteredEvents} />
+            <ProductsPopover events={filteredEvents} />
             <Button 
               variant="outline" 
               size="sm" 
@@ -127,17 +127,18 @@ const PorDentroDaFeirinhaAgenda = () => {
         <div className={`w-full overflow-x-auto ${isCollapsed ? 'h-[calc(100vh-150px)]' : 'h-[calc(100vh-250px)]'} transition-all duration-300`}>
           {viewMode === "calendar" ? (
             <ContentCalendar
-              events={filteredSchedules}
-              clientId={clientId || ""}
+              events={filteredEvents}
+              clientId={clientId}
               month={selectedMonth}
               year={selectedYear}
-              onMonthChange={handleMonthYearChange}
+              onMonthYearChange={handleMonthYearChange}
               selectedCollaborator={selectedCollaborator}
+              onManualRefetch={refetch}
             />
           ) : (
             <ContentScheduleList
-              events={filteredSchedules}
-              clientId={clientId || ""}
+              events={filteredEvents}
+              clientId={clientId}
               selectedCollaborator={selectedCollaborator}
             />
           )}

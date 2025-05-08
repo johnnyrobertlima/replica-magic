@@ -1,213 +1,420 @@
-
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
+import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarEvent } from "@/types/oni-agencia";
+import { Button } from "@/components/ui/button";
+import { DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ContentScheduleFormData, OniAgenciaService, OniAgenciaCollaborator, OniAgenciaClient } from "@/types/oni-agencia";
 import { NewEventForm } from "./NewEventForm";
-import { EventForm } from "./EventForm";
-import { DialogActions } from "./DialogActions";
-import { EventList } from "./EventList";
-import { ContentScheduleFormData } from "@/types/oni-agencia";
-import { StatusUpdateForm } from "./StatusUpdateForm";
-import { ScheduleHistory } from "./ScheduleHistory";
-import { CaptureForm } from "./CaptureForm";
+import { EditEventForm } from "./EditEventForm";
+import { OniAgenciaService as Service } from "@/types/oni-agencia";
+import { OniAgenciaCollaborator as Collaborator } from "@/types/oni-agencia";
+import { OniAgenciaClient as Client } from "@/types/oni-agencia";
+import { EditorialLine, Product, Status } from "@/pages/admin/sub-themes/types";
 
-interface DialogContentProps {
-  events: CalendarEvent[];
-  currentSelectedEvent: CalendarEvent | null;
-  selectedEvent?: CalendarEvent;
+interface ScheduleEventDialogProps {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
   clientId: string;
-  selectedDate: Date;
-  formData: ContentScheduleFormData;
-  isSubmitting: boolean;
-  isDeleting: boolean;
-  isLoadingServices: boolean;
-  isLoadingCollaborators: boolean;
-  isLoadingEditorialLines: boolean;
-  isLoadingProducts: boolean;
-  isLoadingStatuses: boolean;
-  isLoadingClients: boolean;
-  services: any[];
-  collaborators: any[];
-  editorialLines: any[];
-  products: any[];
-  statuses: any[];
-  clients: any[];
-  onSelectEvent: (event: CalendarEvent) => void;
-  onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  onSelectChange: (name: string, value: string) => void;
-  onDateChange: (name: string, value: Date | null) => void;
-  onDateTimeChange: (name: string, value: Date | null) => void;
-  onAllDayChange: (value: boolean) => void;
-  onSubmit: (e: React.FormEvent) => void;
-  onStatusUpdate: (e: React.FormEvent) => void;
-  onResetForm: () => void;
-  onDelete: () => void;
-  onCancel: () => void;
-  defaultTab?: string;
+  selectedDate: Date | undefined;
+  events: any[];
+  onClose: () => void;
+  selectedEvent: any;
+  onManualRefetch?: () => void;
 }
 
-export function DialogContent({
-  events,
-  currentSelectedEvent,
-  selectedEvent,
+export function ScheduleEventDialog({
+  isOpen,
+  onOpenChange,
   clientId,
   selectedDate,
-  formData,
-  isSubmitting,
-  isDeleting,
-  isLoadingServices,
-  isLoadingCollaborators,
-  isLoadingEditorialLines,
-  isLoadingProducts,
-  isLoadingStatuses,
-  isLoadingClients,
-  services,
-  collaborators,
-  editorialLines,
-  products,
-  statuses,
-  clients,
-  onSelectEvent,
-  onInputChange,
-  onSelectChange,
-  onDateChange,
-  onDateTimeChange,
-  onAllDayChange,
-  onSubmit,
-  onStatusUpdate,
-  onResetForm,
-  onDelete,
-  onCancel,
-  defaultTab = "details"
-}: DialogContentProps) {
-  const [activeTab, setActiveTab] = useState(defaultTab);
+  events,
+  onClose,
+  selectedEvent,
+  onManualRefetch
+}: ScheduleEventDialogProps) {
+  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState<"info" | "edit">("info");
+  const [formData, setFormData] = useState<ContentScheduleFormData>({
+    client_id: clientId,
+    date: selectedDate || new Date(),
+    title: "",
+    description: "",
+    service_id: "",
+    collaborator_id: "",
+    editorial_line_id: null,
+    product_id: null,
+    status_id: "",
+    creators: [],
+  });
+  const [services, setServices] = useState<Service[]>([]);
+  const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
+  const [editorialLines, setEditorialLines] = useState<EditorialLine[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [statuses, setStatuses] = useState<Status[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [isLoadingServices, setIsLoadingServices] = useState(true);
+  const [isLoadingCollaborators, setIsLoadingCollaborators] = useState(true);
+  const [isLoadingEditorialLines, setIsLoadingEditorialLines] = useState(true);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+  const [isLoadingStatuses, setIsLoadingStatuses] = useState(true);
+  const [isLoadingClients, setIsLoadingClients] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    // Fetch services
+    const fetchServices = async () => {
+      setIsLoadingServices(true);
+      try {
+        const response = await fetch(`/api/oni-agencia/services?clientId=${clientId}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        setServices(data);
+      } catch (error) {
+        toast({
+          title: "Erro ao carregar serviços",
+          description: "Ocorreu um erro ao carregar a lista de serviços.",
+          variant: "destructive",
+        });
+        console.error("Erro ao carregar serviços:", error);
+      } finally {
+        setIsLoadingServices(false);
+      }
+    };
+
+    // Fetch collaborators
+    const fetchCollaborators = async () => {
+      setIsLoadingCollaborators(true);
+      try {
+        const response = await fetch(`/api/oni-agencia/collaborators?clientId=${clientId}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        setCollaborators(data);
+      } catch (error) {
+        toast({
+          title: "Erro ao carregar colaboradores",
+          description: "Ocorreu um erro ao carregar a lista de colaboradores.",
+          variant: "destructive",
+        });
+        console.error("Erro ao carregar colaboradores:", error);
+      } finally {
+        setIsLoadingCollaborators(false);
+      }
+    };
+
+    // Fetch editorial lines
+    const fetchEditorialLines = async () => {
+      setIsLoadingEditorialLines(true);
+      try {
+        const response = await fetch(`/api/admin/editorial-lines`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        setEditorialLines(data);
+      } catch (error) {
+        toast({
+          title: "Erro ao carregar linhas editoriais",
+          description: "Ocorreu um erro ao carregar a lista de linhas editoriais.",
+          variant: "destructive",
+        });
+        console.error("Erro ao carregar linhas editoriais:", error);
+      } finally {
+        setIsLoadingEditorialLines(false);
+      }
+    };
+
+    // Fetch products
+    const fetchProducts = async () => {
+      setIsLoadingProducts(true);
+      try {
+        const response = await fetch(`/api/admin/products`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        setProducts(data);
+      } catch (error) {
+        toast({
+          title: "Erro ao carregar produtos",
+          description: "Ocorreu um erro ao carregar a lista de produtos.",
+          variant: "destructive",
+        });
+        console.error("Erro ao carregar produtos:", error);
+      } finally {
+        setIsLoadingProducts(false);
+      }
+    };
+
+    // Fetch statuses
+    const fetchStatuses = async () => {
+      setIsLoadingStatuses(true);
+      try {
+        const response = await fetch(`/api/admin/statuses`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        setStatuses(data);
+      } catch (error) {
+        toast({
+          title: "Erro ao carregar status",
+          description: "Ocorreu um erro ao carregar a lista de status.",
+          variant: "destructive",
+        });
+        console.error("Erro ao carregar status:", error);
+      } finally {
+        setIsLoadingStatuses(false);
+      }
+    };
+
+    // Fetch clients
+    const fetchClients = async () => {
+      setIsLoadingClients(true);
+      try {
+        const response = await fetch(`/api/oni-agencia/clients`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        setClients(data);
+      } catch (error) {
+        toast({
+          title: "Erro ao carregar clientes",
+          description: "Ocorreu um erro ao carregar a lista de clientes.",
+          variant: "destructive",
+        });
+        console.error("Erro ao carregar clientes:", error);
+      } finally {
+        setIsLoadingClients(false);
+      }
+    };
+
+    fetchServices();
+    fetchCollaborators();
+    fetchEditorialLines();
+    fetchProducts();
+    fetchStatuses();
+    fetchClients();
+  }, [clientId, toast]);
+
+  useEffect(() => {
+    if (selectedEvent) {
+      setActiveTab("edit");
+      setFormData({
+        id: selectedEvent.id,
+        client_id: selectedEvent.client_id,
+        date: new Date(selectedEvent.date),
+        title: selectedEvent.title,
+        description: selectedEvent.description,
+        service_id: selectedEvent.service_id,
+        collaborator_id: selectedEvent.collaborator_id,
+        editorial_line_id: selectedEvent.editorial_line_id || null,
+        product_id: selectedEvent.product_id || null,
+        status_id: selectedEvent.status_id,
+        creators: selectedEvent.creators || [],
+      });
+    } else {
+      setActiveTab("info");
+      setFormData({
+        client_id: clientId,
+        date: selectedDate || new Date(),
+        title: "",
+        description: "",
+        service_id: "",
+        collaborator_id: "",
+        editorial_line_id: null,
+        product_id: null,
+        status_id: "",
+        creators: [],
+      });
+    }
+  }, [selectedEvent, clientId, selectedDate]);
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const payload = {
+        ...formData,
+        date: formData.date ? formData.date.toISOString() : new Date().toISOString(),
+      };
+
+      const method = selectedEvent ? "PUT" : "POST";
+      const url = selectedEvent
+        ? `/api/oni-agencia/events/${selectedEvent.id}`
+        : `/api/oni-agencia/events`;
+
+      const response = await fetch(url, {
+        method: method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      toast({
+        title: selectedEvent ? "Pauta atualizada" : "Pauta criada",
+        description: selectedEvent
+          ? "Pauta atualizada com sucesso."
+          : "Pauta criada com sucesso.",
+      });
+      onManualRefetch && onManualRefetch();
+      handleClose();
+    } catch (error) {
+      toast({
+        title: `Erro ao ${selectedEvent ? "atualizar" : "criar"} pauta`,
+        description: `Ocorreu um erro ao ${
+          selectedEvent ? "atualizar" : "criar"
+        } a pauta.`,
+        variant: "destructive",
+      });
+      console.error(`Erro ao ${selectedEvent ? "atualizar" : "criar"} pauta:`, error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const onDelete = async () => {
+    setIsDeleting(true);
+    try {
+      if (!selectedEvent) {
+        throw new Error("Nenhum evento selecionado para deletar.");
+      }
+
+      const response = await fetch(`/api/oni-agencia/events/${selectedEvent.id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      toast({
+        title: "Pauta excluída",
+        description: "Pauta excluída com sucesso.",
+      });
+      onManualRefetch && onManualRefetch();
+      handleClose();
+    } catch (error) {
+      toast({
+        title: "Erro ao excluir pauta",
+        description: "Ocorreu um erro ao excluir a pauta.",
+        variant: "destructive",
+      });
+      console.error("Erro ao excluir pauta:", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const onInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const onSelectChange = (name: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value === "null" ? null : value,
+    }));
+  };
+
+  const onDateChange = (name: string, value: Date | null) => {
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleClose = async (): Promise<void> => {
+    setActiveTab('info');
+    onClose();
+    return Promise.resolve();
+  };
 
   return (
-    <div className="max-h-[80vh] overflow-hidden flex flex-col">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="w-full">
-              <TabsTrigger value="details" className="flex-1">
-                Detalhes
-              </TabsTrigger>
-              {currentSelectedEvent && (
-                <>
-                  <TabsTrigger value="status" className="flex-1">
-                    Atualizar Status
-                  </TabsTrigger>
-                  <TabsTrigger value="history" className="flex-1">
-                    Histórico
-                  </TabsTrigger>
-                  <TabsTrigger value="capture" className="flex-1">
-                    Captura
-                  </TabsTrigger>
-                </>
-              )}
-            </TabsList>
-
-            <TabsContent value="details" className="mt-2">
-              {currentSelectedEvent ? (
-                <EventForm
-                  formData={formData}
-                  onInputChange={onInputChange}
-                  onSelectChange={onSelectChange}
-                  onDateChange={onDateChange}
-                  services={services}
-                  collaborators={collaborators}
-                  editorialLines={editorialLines}
-                  products={products}
-                  statuses={statuses}
-                  clients={clients}
-                  isLoadingServices={isLoadingServices}
-                  isLoadingCollaborators={isLoadingCollaborators}
-                  isLoadingEditorialLines={isLoadingEditorialLines}
-                  isLoadingProducts={isLoadingProducts}
-                  isLoadingStatuses={isLoadingStatuses}
-                  isLoadingClients={isLoadingClients}
-                />
-              ) : (
-                <NewEventForm
-                  formData={formData}
-                  onInputChange={onInputChange}
-                  onSelectChange={onSelectChange}
-                  onDateChange={onDateChange}
-                  services={services}
-                  collaborators={collaborators}
-                  editorialLines={editorialLines}
-                  products={products}
-                  statuses={statuses}
-                  clients={clients}
-                  isLoadingServices={isLoadingServices}
-                  isLoadingCollaborators={isLoadingCollaborators}
-                  isLoadingEditorialLines={isLoadingEditorialLines}
-                  isLoadingProducts={isLoadingProducts}
-                  isLoadingStatuses={isLoadingStatuses}
-                  isLoadingClients={isLoadingClients}
-                  isSubmitting={isSubmitting}
-                  isDeleting={isDeleting}
-                  onSubmit={onSubmit}
-                  onCancel={onCancel}
-                />
-              )}
-            </TabsContent>
-
-            {currentSelectedEvent && (
-              <>
-                <TabsContent value="status" className="mt-2">
-                  <StatusUpdateForm
-                    event={currentSelectedEvent}
-                    statuses={statuses}
-                    collaborators={collaborators}
-                    isLoadingStatuses={isLoadingStatuses}
-                    isLoadingCollaborators={isLoadingCollaborators}
-                    selectedStatus={formData.status_id}
-                    selectedCollaborator={formData.collaborator_id}
-                    note={formData.description || ''}
-                    onStatusChange={(value) => onSelectChange("status_id", value)}
-                    onCollaboratorChange={(value) => onSelectChange("collaborator_id", value)}
-                    onNoteChange={(value) => onSelectChange("description", value)}
-                  />
-                </TabsContent>
-                <TabsContent value="history" className="mt-2">
-                  <ScheduleHistory
-                    eventId={currentSelectedEvent.id}
-                  />
-                </TabsContent>
-                <TabsContent value="capture" className="mt-2">
-                  <CaptureForm
-                    formData={formData}
-                    onDateTimeChange={onDateTimeChange}
-                    onAllDayChange={onAllDayChange}
-                    onInputChange={onInputChange}
-                  />
-                </TabsContent>
-              </>
-            )}
-          </Tabs>
-        </div>
-
-        <div className="lg:col-span-1 border rounded-md">
-          <div className="p-2">
-            <h3 className="font-medium mb-2">Eventos do dia</h3>
-            <EventList
-              events={events}
-              onSelectEvent={onSelectEvent}
+    <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+      <DialogHeader>
+        <DialogTitle>{selectedEvent ? "Editar Pauta" : "Nova Pauta"}</DialogTitle>
+        <p className="text-sm text-muted-foreground">
+          {selectedDate ? selectedDate.toLocaleDateString() : "Selecione uma data"}
+        </p>
+      </DialogHeader>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="info">Informações</TabsTrigger>
+          {selectedEvent && <TabsTrigger value="edit">Editar</TabsTrigger>}
+        </TabsList>
+        <TabsContent value="info" className="space-y-4">
+          <NewEventForm
+            formData={formData}
+            services={services}
+            collaborators={collaborators}
+            editorialLines={editorialLines}
+            products={products}
+            statuses={statuses}
+            clients={clients}
+            isLoadingServices={isLoadingServices}
+            isLoadingCollaborators={isLoadingCollaborators}
+            isLoadingEditorialLines={isLoadingEditorialLines}
+            isLoadingProducts={isLoadingProducts}
+            isLoadingStatuses={isLoadingStatuses}
+            isLoadingClients={isLoadingClients}
+            isSubmitting={isSubmitting}
+            isDeleting={isDeleting}
+            onSubmit={onSubmit}
+            onCancel={handleClose}
+            onInputChange={onInputChange}
+            onSelectChange={onSelectChange}
+            onDateChange={onDateChange}
+          />
+        </TabsContent>
+        {selectedEvent && (
+          <TabsContent value="edit" className="space-y-4">
+            <EditEventForm
+              formData={formData}
+              services={services}
+              collaborators={collaborators}
+              editorialLines={editorialLines}
+              products={products}
+              statuses={statuses}
+              clients={clients}
+              isLoadingServices={isLoadingServices}
+              isLoadingCollaborators={isLoadingCollaborators}
+              isLoadingEditorialLines={isLoadingEditorialLines}
+              isLoadingProducts={isLoadingProducts}
+              isLoadingStatuses={isLoadingStatuses}
+              isLoadingClients={isLoadingClients}
+              isSubmitting={isSubmitting}
+              isDeleting={isDeleting}
+              onSubmit={onSubmit}
+              onDelete={onDelete}
+              onCancel={handleClose}
+              onInputChange={onInputChange}
+              onSelectChange={onSelectChange}
+              onDateChange={onDateChange}
             />
-          </div>
-        </div>
-      </div>
-
-      <DialogActions
-        isEditMode={!!currentSelectedEvent}
-        isSubmitting={isSubmitting}
-        isDeleting={isDeleting}
-        onSubmit={activeTab === "status" ? onStatusUpdate : onSubmit}
-        onDelete={onDelete}
-        onCancel={onCancel}
-        onNewEvent={onResetForm}
-        activeTab={activeTab}
-      />
-    </div>
+          </TabsContent>
+        )}
+      </Tabs>
+      <DialogFooter>
+        <Button type="button" variant="secondary" onClick={handleClose}>
+          Fechar
+        </Button>
+      </DialogFooter>
+    </DialogContent>
   );
 }
