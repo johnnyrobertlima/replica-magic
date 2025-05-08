@@ -50,8 +50,8 @@ export function useScheduleEventDialog({
   } = useScheduleMutations({
     clientId,
     selectedDate,
-    onManualRefetch,
-    onClose  // Now passing onClose properly
+    onClose,
+    onManualRefetch
   });
 
   // Configure the selected event only when it comes from props and hasn't been selected yet

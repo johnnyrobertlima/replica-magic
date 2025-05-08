@@ -4,17 +4,21 @@ import { useCreateContentSchedule, useUpdateContentSchedule, useDeleteContentSch
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
 import { format } from "date-fns";
 
-// Add onClose to the interface
+// Update the interface to include onSuccess and onManualRefetch
 interface UseScheduleMutationsProps {
   clientId: string;
   selectedDate: Date;
   onClose?: () => void;
+  onSuccess?: () => void;
+  onManualRefetch?: () => void;
 }
 
 export function useScheduleMutations({
   clientId,
   selectedDate,
-  onClose
+  onClose,
+  onSuccess,
+  onManualRefetch
 }: UseScheduleMutationsProps) {
   // Local state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -54,6 +58,12 @@ export function useScheduleMutations({
           await createMutation.mutateAsync(dataToSubmit);
         }
         
+        // Call the onSuccess callback if provided
+        if (onSuccess) onSuccess();
+        
+        // Call the onManualRefetch callback if provided
+        if (onManualRefetch) onManualRefetch();
+        
         // Close the dialog after successful submission
         if (onClose) onClose();
         
@@ -63,7 +73,7 @@ export function useScheduleMutations({
         setIsSubmitting(false);
       }
     },
-    [clientId, selectedDate, createMutation, updateMutation, onClose]
+    [clientId, selectedDate, createMutation, updateMutation, onClose, onSuccess, onManualRefetch]
   );
   
   // Handle status update
@@ -93,6 +103,12 @@ export function useScheduleMutations({
           data: dataToUpdate
         });
         
+        // Call the onSuccess callback if provided
+        if (onSuccess) onSuccess();
+        
+        // Call the onManualRefetch callback if provided
+        if (onManualRefetch) onManualRefetch();
+        
         // Close the dialog after successful submission
         if (onClose) onClose();
         
@@ -102,7 +118,7 @@ export function useScheduleMutations({
         setIsSubmitting(false);
       }
     },
-    [updateMutation, onClose]
+    [updateMutation, onClose, onSuccess, onManualRefetch]
   );
   
   // Handle delete
@@ -119,6 +135,12 @@ export function useScheduleMutations({
         // Delete the schedule
         await deleteMutation.mutateAsync(currentSelectedEvent.id);
         
+        // Call the onSuccess callback if provided
+        if (onSuccess) onSuccess();
+        
+        // Call the onManualRefetch callback if provided
+        if (onManualRefetch) onManualRefetch();
+        
         // Close the dialog after successful deletion
         if (onClose) onClose();
         
@@ -128,7 +150,7 @@ export function useScheduleMutations({
         setIsDeleting(false);
       }
     },
-    [deleteMutation, onClose]
+    [deleteMutation, onClose, onSuccess, onManualRefetch]
   );
   
   return {

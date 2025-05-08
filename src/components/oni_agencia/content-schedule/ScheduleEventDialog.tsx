@@ -90,12 +90,9 @@ export function ScheduleEventDialog({
     handleStatusUpdate: updateStatus
   } = useScheduleMutations({
     clientId,
-    onSuccess: () => {
-      if (onManualRefetch) {
-        onManualRefetch();
-      }
-      onClose();
-    }
+    selectedDate,
+    onClose,
+    onManualRefetch
   });
   
   // Wrap handlers to match expected function signatures

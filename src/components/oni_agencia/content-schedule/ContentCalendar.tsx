@@ -77,9 +77,10 @@ export function ContentCalendar({
     [events, useCaptureDate]
   );
 
-  // Custom day cell renderer function - updated to use DayProps
+  // Custom day cell renderer function - updated to use DayProps correctly
   const renderDayContents = (dayProps: DayProps) => {
-    const { date, selected } = dayProps;
+    const { date } = dayProps;
+    const isSelected = selectedDate ? isSameDay(date, selectedDate) : false;
     const dayEvents = getDayEvents(date);
     const hasEvents = dayEvents && dayEvents.length > 0;
     
@@ -90,7 +91,7 @@ export function ContentCalendar({
             variant="ghost"
             className="h-9 w-9 p-0 font-normal text-muted-foreground"
             onClick={() => {
-              if (!selected) {
+              if (!isSelected) {
                 handleDateSelect(date);
               }
             }}
