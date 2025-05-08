@@ -21,7 +21,7 @@ interface NewEventFormProps {
   isLoadingClients: boolean;
   isSubmitting: boolean;
   isDeleting: boolean;
-  onSubmit: (e: React.FormEvent) => Promise<void>;
+  onSubmit: (e: React.FormEvent) => Promise<void> | void;
   onCancel: () => void;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onSelectChange: (name: string, value: string) => void;
@@ -76,6 +76,7 @@ export function NewEventForm({
           isDeleting={isDeleting}
           onCancel={onCancel}
           isEditing={false}
+          onSubmit={onSubmit}
         />
       </DialogFooter>
     </form>

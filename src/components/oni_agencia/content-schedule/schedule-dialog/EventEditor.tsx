@@ -198,7 +198,7 @@ export function EventEditor({
         
         <TabsContent value="history" className="mt-2 h-full">
           <div className="h-[60vh]">
-            <ScheduleHistory event={event} />
+            <ScheduleHistory eventId={event.id} />
           </div>
         </TabsContent>
         
@@ -206,13 +206,10 @@ export function EventEditor({
           <ScrollArea className={getContentHeight()}>
             <form onSubmit={onSubmit}>
               <CaptureForm
-                captureDate={formData.capture_date}
-                captureEndDate={formData.capture_end_date}
-                isAllDay={formData.is_all_day === true}
-                location={formData.location}
-                onCaptureChange={handleCaptureDateTime}
-                onLocationChange={onInputChange}
+                formData={formData}
+                onDateTimeChange={handleCaptureDateTime}
                 onAllDayChange={onAllDayChange || (() => {})}
+                onInputChange={onInputChange}
               />
               
               <DialogFooter>

@@ -88,7 +88,7 @@ export function ContentArea({
             year={year}
             clientId={clientId}
             selectedCollaborator={selectedCollaborator}
-            onMonthChange={onMonthYearChange}
+            onMonthYearChange={onMonthYearChange}
             onDateSelect={handleDateSelect}
             onEventClick={handleEventClick}
             selectedDate={selectedDate}

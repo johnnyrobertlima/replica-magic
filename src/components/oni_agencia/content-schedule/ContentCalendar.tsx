@@ -13,7 +13,7 @@ interface ContentCalendarProps {
   clientId: string;
   month: number;
   year: number;
-  onMonthChange: (month: number, year: number) => void;
+  onMonthYearChange: (month: number, year: number) => void;
   selectedCollaborator?: string | null;
   onManualRefetch?: () => void;
 }
@@ -23,7 +23,7 @@ export function ContentCalendar({
   clientId,
   month,
   year,
-  onMonthChange,
+  onMonthYearChange,
   selectedCollaborator,
   onManualRefetch
 }: ContentCalendarProps) {
@@ -86,7 +86,7 @@ export function ContentCalendar({
         year={year}
         clientId={clientId}
         selectedCollaborator={selectedCollaborator}
-        onMonthChange={onMonthChange}
+        onMonthYearChange={onMonthYearChange}
         onDateSelect={handleDateSelect}
         onEventClick={handleEventClick}
         selectedDate={selectedDate}

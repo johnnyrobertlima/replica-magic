@@ -94,6 +94,7 @@ function ContentArea({
           year={year}
           onMonthYearChange={onMonthYearChange}
           onManualRefetch={onManualRefetch}
+          selectedCollaborator={selectedCollaborator}
         />
       ) : (
         <ContentScheduleList

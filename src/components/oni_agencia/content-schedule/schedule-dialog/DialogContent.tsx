@@ -117,10 +117,14 @@ export function DialogContent({
                   collaborators={collaborators}
                   editorialLines={editorialLines}
                   products={products}
+                  statuses={statuses}
+                  clients={clients}
                   isLoadingServices={isLoadingServices}
                   isLoadingCollaborators={isLoadingCollaborators}
                   isLoadingEditorialLines={isLoadingEditorialLines}
                   isLoadingProducts={isLoadingProducts}
+                  isLoadingStatuses={isLoadingStatuses}
+                  isLoadingClients={isLoadingClients}
                 />
               ) : (
                 <NewEventForm
@@ -140,6 +144,10 @@ export function DialogContent({
                   isLoadingProducts={isLoadingProducts}
                   isLoadingStatuses={isLoadingStatuses}
                   isLoadingClients={isLoadingClients}
+                  isSubmitting={isSubmitting}
+                  isDeleting={isDeleting}
+                  onSubmit={onSubmit}
+                  onCancel={onCancel}
                 />
               )}
             </TabsContent>
@@ -148,10 +156,17 @@ export function DialogContent({
               <>
                 <TabsContent value="status" className="mt-2">
                   <StatusUpdateForm
-                    formData={formData}
-                    onSelectChange={onSelectChange}
+                    event={currentSelectedEvent}
                     statuses={statuses}
+                    collaborators={collaborators}
                     isLoadingStatuses={isLoadingStatuses}
+                    isLoadingCollaborators={isLoadingCollaborators}
+                    selectedStatus={formData.status_id}
+                    selectedCollaborator={formData.collaborator_id}
+                    note={formData.description || ''}
+                    onStatusChange={(value) => onSelectChange("status_id", value)}
+                    onCollaboratorChange={(value) => onSelectChange("collaborator_id", value)}
+                    onNoteChange={(value) => onSelectChange("description", value)}
                   />
                 </TabsContent>
                 <TabsContent value="history" className="mt-2">
