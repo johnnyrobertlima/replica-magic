@@ -182,7 +182,7 @@ export function CaptureEventsList({
           onClose={handleDialogClose}
           selectedEvent={selectedEvent}
           onManualRefetch={onManualRefetch}
-          defaultTab="capture" // Abre na aba de capturas por padrão
+          defaultTab="capture"
         />
       )}
     </div>

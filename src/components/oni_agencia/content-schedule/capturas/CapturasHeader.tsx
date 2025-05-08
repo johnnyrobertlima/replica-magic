@@ -1,5 +1,5 @@
 
-import { Refresh } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CalendarEvent } from "@/types/oni-agencia";
@@ -55,7 +55,7 @@ export function CapturasHeader({
           onClick={onManualRefetch}
           disabled={isRefetching || isLoadingSchedules || isFetchingNextPage}
         >
-          <Refresh className={`h-4 w-4 ${isRefetching ? "animate-spin" : ""}`} />
+          <RefreshCw className={`h-4 w-4 ${isRefetching ? "animate-spin" : ""}`} />
         </Button>
       </div>
     </div>

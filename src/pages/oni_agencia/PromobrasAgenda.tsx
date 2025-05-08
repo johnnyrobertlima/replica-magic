@@ -42,7 +42,7 @@ const PromobrasAgenda = () => {
   }, [clients]);
 
   const { 
-    data: filteredSchedules = [], 
+    data: filteredEvents = [], 
     isLoading: isLoadingSchedules,
     refetch: refetchSchedules,
     isRefetching
@@ -95,8 +95,8 @@ const PromobrasAgenda = () => {
                 <List className="h-4 w-4" />
               </ToggleGroupItem>
             </ToggleGroup>
-            <EditorialLinePopover events={filteredSchedules} />
-            <ProductsPopover events={filteredSchedules} />
+            <EditorialLinePopover events={filteredEvents} />
+            <ProductsPopover events={filteredEvents} />
             <Button 
               variant="outline" 
               size="sm" 
@@ -126,16 +126,16 @@ const PromobrasAgenda = () => {
         <div className={`w-full overflow-x-auto ${isCollapsed ? 'h-[calc(100vh-150px)]' : 'h-[calc(100vh-250px)]'} transition-all duration-300`}>
           {viewMode === "calendar" ? (
             <ContentCalendar
-              events={filteredSchedules}
-              clientId={clientId || ""}
+              events={filteredEvents}
+              clientId="promobras"
               month={selectedMonth}
               year={selectedYear}
-              onMonthChange={handleMonthYearChange}
+              onMonthYearChange={handleMonthYearChange}
               selectedCollaborator={selectedCollaborator}
             />
           ) : (
             <ContentScheduleList
-              events={filteredSchedules}
+              events={filteredEvents}
               clientId={clientId || ""}
               selectedCollaborator={selectedCollaborator}
             />

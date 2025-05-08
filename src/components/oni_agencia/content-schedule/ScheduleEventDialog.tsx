@@ -1,19 +1,14 @@
 
-import { format } from "date-fns";
-import { CalendarEvent } from "@/types/oni-agencia";
-import { 
-  useServices,
-  useCollaborators,
-  useEditorialLines,
-  useProducts,
-  useStatuses
-} from "@/hooks/useOniAgenciaContentSchedules";
-import { useClients } from "@/hooks/useOniAgenciaClients";
+import { useMemo } from "react";
+import { useScheduleFormState } from "@/hooks/oni_agencia/useScheduleFormState";
+import { useScheduleResources } from "../content-schedule/hooks/useScheduleResources";
+import { useScheduleMutations } from "../content-schedule/hooks/useScheduleMutations";
+import { useEventsByDate } from "../content-schedule/hooks/useEventsByDate";
 import { DialogContainer } from "./schedule-dialog/DialogContainer";
 import { DialogContent } from "./schedule-dialog/DialogContent";
-import { useScheduleEventDialog } from "./hooks/useScheduleEventDialog";
+import { CalendarEvent } from "@/types/oni-agencia";
 
-interface ScheduleEventDialogProps {
+export interface ScheduleEventDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   clientId: string;
@@ -21,7 +16,8 @@ interface ScheduleEventDialogProps {
   events: CalendarEvent[];
   onClose: () => void;
   selectedEvent?: CalendarEvent;
-  onManualRefetch?: () => void; // Adicionamos essa prop para receber a função de atualização
+  onManualRefetch?: () => void;
+  defaultTab?: "details" | "status" | "history" | "capture";
 }
 
 export function ScheduleEventDialog({
@@ -29,52 +25,89 @@ export function ScheduleEventDialog({
   onOpenChange,
   clientId,
   selectedDate,
-  events,
+  events: propEvents,
   onClose,
   selectedEvent,
-  onManualRefetch
+  onManualRefetch,
+  defaultTab
 }: ScheduleEventDialogProps) {
+  // Get events for the selected date
+  const { events: dateEvents, isLoading: isLoadingEvents } = useEventsByDate(clientId, selectedDate, !!isOpen);
+  
+  // Combine events from props and from the date query, removing duplicates
+  const events = useMemo(() => {
+    const allEvents = [...(propEvents || []), ...(dateEvents || [])];
+    // Remove duplicates based on event ID
+    const uniqueEvents = allEvents.reduce((acc, current) => {
+      const eventExists = acc.find(item => item.id === current.id);
+      if (!eventExists) {
+        acc.push(current);
+      }
+      return acc;
+    }, [] as CalendarEvent[]);
+    
+    return uniqueEvents;
+  }, [propEvents, dateEvents]);
+  
+  // Form state management
   const {
     currentSelectedEvent,
     formData,
-    isSubmitting,
-    isDeleting,
+    resetForm,
+    handleSelectEvent,
     handleInputChange,
     handleSelectChange,
     handleDateChange,
-    handleDateTimeChange,  // New handler
-    handleAllDayChange,    // New handler
-    handleSubmit,
-    handleStatusUpdate,
-    handleDelete,
-    handleSelectEvent,
-    resetForm
-  } = useScheduleEventDialog({
+    handleDateTimeChange,
+    handleAllDayChange
+  } = useScheduleFormState({
     clientId,
     selectedDate,
-    events,
     selectedEvent,
-    onManualRefetch, // Passamos a função de atualização manual
-    onClose: () => {
-      onOpenChange(false);
+  });
+
+  // Use schedule resources and mutations hooks
+  const {
+    services,
+    collaborators,
+    editorialLines,
+    products,
+    statuses,
+    clients,
+    isLoadingServices,
+    isLoadingCollaborators,
+    isLoadingEditorialLines,
+    isLoadingProducts,
+    isLoadingStatuses,
+    isLoadingClients
+  } = useScheduleResources(clientId);
+
+  const {
+    handleSubmit,
+    handleDelete,
+    isSubmitting,
+    isDeleting,
+    handleStatusUpdate
+  } = useScheduleMutations({
+    clientId,
+    currentSelectedEvent,
+    formData,
+    onSuccess: () => {
+      if (onManualRefetch) {
+        onManualRefetch();
+      }
       onClose();
     }
   });
 
-  const { data: services = [], isLoading: isLoadingServices } = useServices();
-  const { data: collaborators = [], isLoading: isLoadingCollaborators } = useCollaborators();
-  const { data: editorialLines = [], isLoading: isLoadingEditorialLines } = useEditorialLines();
-  const { data: products = [], isLoading: isLoadingProducts } = useProducts();
-  const { data: statuses = [], isLoading: isLoadingStatuses } = useStatuses();
-  const { data: clients = [], isLoading: isLoadingClients } = useClients();
-
+  // Dialog title
   const dialogTitle = currentSelectedEvent ? "Editar Agendamento" : "Novo Agendamento";
 
   return (
-    <DialogContainer 
-      isOpen={isOpen} 
-      onOpenChange={onOpenChange} 
-      selectedDate={selectedDate} 
+    <DialogContainer
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+      selectedDate={selectedDate}
       onClose={onClose}
       title={dialogTitle}
     >
@@ -104,15 +137,13 @@ export function ScheduleEventDialog({
         onSubmit={handleSubmit}
         onStatusUpdate={handleStatusUpdate}
         onDelete={handleDelete}
-        onCancel={() => {
-          onOpenChange(false);
-          onClose();
-        }}
+        onCancel={onClose}
         onInputChange={handleInputChange}
         onSelectChange={handleSelectChange}
         onDateChange={handleDateChange}
-        onDateTimeChange={handleDateTimeChange}  // Pass new handler
-        onAllDayChange={handleAllDayChange}      // Pass new handler
+        onDateTimeChange={handleDateTimeChange}
+        onAllDayChange={handleAllDayChange}
+        defaultTab={defaultTab}
       />
     </DialogContainer>
   );

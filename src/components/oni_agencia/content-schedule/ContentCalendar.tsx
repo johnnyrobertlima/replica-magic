@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { format, isSameDay, isBefore, isAfter } from "date-fns";
@@ -119,7 +120,7 @@ export function ContentCalendar({
         defaultMonth={date}
         className="border-none m-4"
         weekdayClassName="text-muted-foreground"
-        captionLayout="hidden"
+        captionLayout="buttons"
         from={new Date("2023-01-01")}
         to={new Date("2030-12-31")}
         disablePast={false}
