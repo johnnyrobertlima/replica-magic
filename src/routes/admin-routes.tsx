@@ -1,3 +1,4 @@
+
 import { Route } from "react-router-dom";
 import { Outlet } from "react-router-dom";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
@@ -11,7 +12,7 @@ import { AdminSEO } from "@/pages/admin/seo";
 import { AdminServices } from "@/pages/admin/services";
 import { AdminSocial } from "@/pages/admin/social";
 import { AdminGroups } from "@/pages/admin/groups";
-import { AdminPermissions } from "@/pages/admin/permissions";
+import { AdminPermissions } from "@/pages/admin/permissions"; // Correct import
 import { AdminLogin } from "@/pages/admin/login";
 import { UserGroupManagement } from "@/pages/admin/users/UserGroupManagement";
 import AdminRequests from "@/pages/admin/requests";
@@ -37,9 +38,6 @@ export const adminRoutes = (
           <AdminGroups />
         </PermissionGuard>
       } />
-      
-import { AdminPermissions } from "@/pages/admin/permissions";
-
       
       <Route path="permissions" element={
         <PermissionGuard resourcePath="/admin" requiredPermission="admin">
