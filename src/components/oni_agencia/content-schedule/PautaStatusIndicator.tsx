@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { Button } from "@/components/ui/button";
 import { 
@@ -29,17 +29,19 @@ export function PautaStatusIndicator({
   const { toast } = useToast();
   const { clientScopes, error } = usePautaStatus(clientId, month, year, events);
   
-  console.log(`PautaStatusIndicator - clientId: ${clientId}, month: ${month}, year: ${year}, scopes: ${clientScopes?.length || 0}`);
+  console.log(`PautaStatusIndicator - clientId: ${clientId}, month: ${month}, year: ${year}, scopes: ${clientScopes?.length || 0}, events: ${events?.length || 0}`);
 
   // Show error toast if there was a problem fetching scopes
-  if (error) {
-    console.error("Error fetching client scopes:", error);
-    toast({
-      title: "Erro ao carregar escopo do cliente",
-      description: "Não foi possível obter informações sobre o escopo do cliente.",
-      variant: "destructive",
-    });
-  }
+  useEffect(() => {
+    if (error) {
+      console.error("Error fetching client scopes:", error);
+      toast({
+        title: "Erro ao carregar escopo do cliente",
+        description: "Não foi possível obter informações sobre o escopo do cliente.",
+        variant: "destructive",
+      });
+    }
+  }, [error, toast]);
   
   // Get the service counts from the events for the current month/year
   const serviceCounts: Record<string, number> = {};

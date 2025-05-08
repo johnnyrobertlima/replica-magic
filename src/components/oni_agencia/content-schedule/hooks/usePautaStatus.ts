@@ -1,93 +1,80 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { CalendarEvent } from "@/types/oni-agencia";
+import { CalendarEvent, ClientScope } from "@/types/oni-agencia";
+import { useToast } from "@/hooks/use-toast";
 
-// Type definition for client scope
-interface ClientScope {
-  id: string;
-  client_id: string;
-  service_id: string;
-  quantity: number;
+interface ClientScopeWithServiceName extends ClientScope {
   service_name: string;
 }
 
-/**
- * Custom hook to check the status of client pauta (content schedule)
- * based on service scopes and calendar events
- */
-export function usePautaStatus(clientId: string, month: number, year: number, events: CalendarEvent[]) {
-  // Query to get client scopes
-  const { data: rawClientScopes = [], error } = useQuery({
+export function usePautaStatus(
+  clientId: string,
+  month: number,
+  year: number,
+  events: CalendarEvent[]
+) {
+  const { toast } = useToast();
+  
+  // Fetch client scopes for this client
+  const { data: clientScopes = [], error } = useQuery({
     queryKey: ['clientScopes', clientId, month, year],
     queryFn: async () => {
-      // Log query parameters for debugging
-      console.log(`Fetching client scopes for clientId: ${clientId}, month: ${month}, year: ${year}`);
+      console.log(`Fetching client scopes for client ${clientId}, month: ${month}, year: ${year}`);
       
-      let query = supabase
-        .from('oni_agencia_client_scopes')
-        .select('id, client_id, service_id, quantity, service:service_id(id, name)');
-      
-      // Only apply filtering if clientId is valid and not "all"
-      if (clientId && clientId !== "all" && clientId !== "") {
-        query = query.eq('client_id', clientId);
+      if (!clientId || clientId === "" || clientId === "all") {
+        console.log("Invalid client ID, not fetching scopes");
+        return [];
       }
       
-      const { data, error } = await query;
-      
-      if (error) {
-        console.error('Error fetching client scopes:', error);
-        throw error;
+      try {
+        // Get scopes with service names for better display
+        const { data, error } = await supabase
+          .from('oni_agencia_client_scopes')
+          .select(`
+            id, 
+            client_id, 
+            service_id, 
+            quantity,
+            services:service_id (
+              id,
+              name
+            )
+          `)
+          .eq('client_id', clientId);
+        
+        if (error) {
+          console.error('Error fetching client scopes:', error);
+          throw error;
+        }
+        
+        // Transform the data to include service_name
+        const transformedData = data?.map(scope => ({
+          id: scope.id,
+          client_id: scope.client_id,
+          service_id: scope.service_id,
+          quantity: scope.quantity,
+          service_name: scope.services?.name || 'Unknown service'
+        })) || [];
+        
+        console.log(`Found ${transformedData.length} scopes for client ${clientId}`);
+        return transformedData;
+      } catch (err) {
+        console.error('Error in usePautaStatus:', err);
+        toast({
+          title: "Erro ao carregar escopo do cliente",
+          description: "Não foi possível obter informações sobre o escopo do cliente.",
+          variant: "destructive",
+        });
+        return [];
       }
-      
-      console.log(`Found ${data?.length || 0} client scopes for clientId: ${clientId}`);
-      return data || [];
     },
-    // Enable the query only when we have a valid clientId (not "all" or empty)
-    enabled: !!clientId && clientId !== "all" && clientId !== "",
+    enabled: !!clientId && clientId !== "" && clientId !== "all",
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Process client scopes to have a consistent format
-  const clientScopes = (rawClientScopes || []).map(scope => ({
-    id: scope.id,
-    client_id: scope.client_id,
-    service_id: scope.service_id,
-    quantity: scope.quantity,
-    // Handle different possible shapes of the service data
-    service_name: scope.service?.name || scope.service || ''
-  })) as ClientScope[];
-
-  // Return client scopes and any error that occurred
   return {
-    clientScopes,
+    clientScopes: clientScopes || [],
     error
   };
-}
-
-// Export the useClientScopes function to maintain backward compatibility
-export function useClientScopes(clientId: string | null) {
-  return useQuery({
-    queryKey: ['clientScopes', clientId],
-    queryFn: async () => {
-      let query = supabase
-        .from('oni_agencia_client_scopes')
-        .select('id, client_id, service_id, quantity, service:service_id(id, name)');
-      
-      // Only apply filtering if clientId is a valid UUID
-      if (clientId && clientId !== "all" && clientId !== "") {
-        query = query.eq('client_id', clientId);
-      }
-      
-      const { data, error } = await query;
-      
-      if (error) {
-        console.error('Error fetching client scopes:', error);
-        throw error;
-      }
-      
-      return data || [];
-    },
-    // Only run if clientId is not "all" and not empty
-    enabled: !!clientId && clientId !== "all" && clientId !== "",
-  });
 }

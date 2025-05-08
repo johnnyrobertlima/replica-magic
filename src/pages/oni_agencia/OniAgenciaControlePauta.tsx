@@ -24,7 +24,9 @@ const OniAgenciaControlePauta = () => {
     
     // Invalidate client scopes query when client changes
     if (clientId && clientId !== "") {
-      queryClient.invalidateQueries(['clientScopes', clientId]);
+      queryClient.invalidateQueries({
+        queryKey: ['clientScopes', clientId]
+      });
     }
     
     setSelectedClient(clientId);
