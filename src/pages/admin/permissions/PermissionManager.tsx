@@ -14,14 +14,19 @@ export const PermissionManager = ({ selectedGroupId }: PermissionManagerProps) =
   const { data: existingPaths } = useQuery({
     queryKey: ["existing-paths"],
     queryFn: async () => {
+      console.log("Fetching existing paths");
       const { data, error } = await supabase
         .from("group_permissions")
         .select("resource_path")
         .order("resource_path");
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching existing paths:", error);
+        throw error;
+      }
       
       const paths = [...new Set(data.map(p => p.resource_path))];
+      console.log("Fetched paths:", paths);
       return paths;
     },
   });
@@ -30,6 +35,8 @@ export const PermissionManager = ({ selectedGroupId }: PermissionManagerProps) =
     queryKey: ["permissions", selectedGroupId],
     queryFn: async () => {
       if (!selectedGroupId) return [];
+      
+      console.log("Fetching permissions for group:", selectedGroupId);
       const { data, error } = await supabase
         .from("group_permissions")
         .select(`
@@ -41,8 +48,12 @@ export const PermissionManager = ({ selectedGroupId }: PermissionManagerProps) =
         .eq("group_id", selectedGroupId)
         .order("resource_path");
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching permissions:", error);
+        throw error;
+      }
       
+      console.log("Fetched permissions:", data);
       return data.map(permission => ({
         ...permission,
         group_name: permission.groups.name
@@ -55,7 +66,11 @@ export const PermissionManager = ({ selectedGroupId }: PermissionManagerProps) =
 
   const handleDelete = (id: string) => {
     if (window.confirm("Tem certeza que deseja remover esta permissão?")) {
-      deleteMutation.mutate(id);
+      deleteMutation.mutate(id, {
+        onSuccess: () => {
+          refetchPermissions();
+        }
+      });
     }
   };
 

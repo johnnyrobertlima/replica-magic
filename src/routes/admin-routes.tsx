@@ -1,4 +1,3 @@
-
 import { Route } from "react-router-dom";
 import { Outlet } from "react-router-dom";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
@@ -38,11 +37,16 @@ export const adminRoutes = (
           <AdminGroups />
         </PermissionGuard>
       } />
+      
+import { AdminPermissions } from "@/pages/admin/permissions";
+
+      
       <Route path="permissions" element={
         <PermissionGuard resourcePath="/admin" requiredPermission="admin">
           <AdminPermissions />
         </PermissionGuard>
       } />
+      
       <Route path="users" element={
         <PermissionGuard resourcePath="/admin" requiredPermission="admin">
           <UserGroupManagement />

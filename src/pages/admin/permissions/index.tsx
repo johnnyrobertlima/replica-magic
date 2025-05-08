@@ -1,11 +1,17 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Shield } from "lucide-react";
+import { toast } from "sonner";
 import { GroupSelector } from "./components/GroupSelector";
 import { PermissionManager } from "./PermissionManager";
 
 export const AdminPermissions = () => {
   const [selectedGroupId, setSelectedGroupId] = useState<string>("");
+
+  // Log the state changes for debugging
+  useEffect(() => {
+    console.log("Selected group ID changed:", selectedGroupId);
+  }, [selectedGroupId]);
 
   return (
     <div className="container mx-auto py-8">

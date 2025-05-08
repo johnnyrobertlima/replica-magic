@@ -1,4 +1,5 @@
 
-import AdminPermissions from './permissions/index';
+import AdminPermissions from "./permissions/index";
 
+export default AdminPermissions;
 export { AdminPermissions };
