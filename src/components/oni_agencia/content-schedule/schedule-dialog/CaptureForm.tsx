@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { format } from "date-fns";
+import { format, addMinutes } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { CalendarIcon, Clock } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
 
 interface CaptureFormProps {
   captureDate: string | null;
@@ -41,6 +42,47 @@ export function CaptureForm({
     } catch (e) {
       console.error("Error formatting date:", e);
       return "";
+    }
+  };
+
+  // Handle capture end date selection with validation for minimum 30 minutes difference
+  const handleCaptureEndDateChange = (name: string, date: Date | null) => {
+    if (date && captureDate) {
+      const startDate = new Date(captureDate);
+      const minEndDate = addMinutes(startDate, 30);
+      
+      // If the selected end date is before minEndDate
+      if (date < minEndDate) {
+        // Set the end date to be 30 minutes after start date
+        onCaptureChange(name, minEndDate);
+        toast({
+          title: "Ajuste de horário",
+          description: "O tempo final deve ser pelo menos 30 minutos após o tempo inicial. Ajustamos automaticamente.",
+        });
+        return;
+      }
+    }
+    
+    onCaptureChange(name, date);
+  };
+  
+  // Handle capture start date changes with end date adjustment
+  const handleCaptureStartDateChange = (name: string, date: Date | null) => {
+    onCaptureChange(name, date);
+    
+    if (date && captureEndDate) {
+      const newStartDate = new Date(date);
+      const currentEndDate = new Date(captureEndDate);
+      const minEndDate = addMinutes(newStartDate, 30);
+      
+      // If current end date is less than 30 minutes after new start date
+      if (currentEndDate < minEndDate) {
+        onCaptureChange("capture_end_date", minEndDate);
+        toast({
+          title: "Ajuste de horário",
+          description: "O horário final foi ajustado para manter um intervalo mínimo de 30 minutos.",
+        });
+      }
     }
   };
 
@@ -83,8 +125,9 @@ export function CaptureForm({
               <Calendar
                 mode="single"
                 selected={captureDate ? new Date(captureDate) : undefined}
-                onSelect={(date) => onCaptureChange("capture_date", date)}
+                onSelect={(date) => handleCaptureStartDateChange("capture_date", date)}
                 initialFocus
+                className="pointer-events-auto"
               />
               {!isAllDay && captureDate && (
                 <div className="p-3 border-t border-border">
@@ -98,7 +141,7 @@ export function CaptureForm({
                         const [hours, minutes] = e.target.value.split(':').map(Number);
                         const date = new Date(captureDate);
                         date.setHours(hours, minutes);
-                        onCaptureChange("capture_date", date);
+                        handleCaptureStartDateChange("capture_date", date);
                       }}
                     />
                   </div>
@@ -129,12 +172,13 @@ export function CaptureForm({
                 <Calendar
                   mode="single"
                   selected={captureEndDate ? new Date(captureEndDate) : undefined}
-                  onSelect={(date) => onCaptureChange("capture_end_date", date)}
+                  onSelect={(date) => handleCaptureEndDateChange("capture_end_date", date)}
                   disabled={(date) => {
                     if (!captureDate) return false;
                     return date < new Date(captureDate);
                   }}
                   initialFocus
+                  className="pointer-events-auto"
                 />
                 {captureEndDate && (
                   <div className="p-3 border-t border-border">
@@ -148,7 +192,27 @@ export function CaptureForm({
                           const [hours, minutes] = e.target.value.split(':').map(Number);
                           const date = new Date(captureEndDate);
                           date.setHours(hours, minutes);
-                          onCaptureChange("capture_end_date", date);
+                          
+                          // Check if the new time maintains the 30-minute minimum difference
+                          if (captureDate) {
+                            const startDate = new Date(captureDate);
+                            const endDate = new Date(date);
+                            const diffMs = endDate.getTime() - startDate.getTime();
+                            const diffMinutes = diffMs / (1000 * 60);
+                            
+                            if (diffMinutes < 30) {
+                              // Set to 30 minutes after start time
+                              const adjustedDate = addMinutes(startDate, 30);
+                              handleCaptureEndDateChange("capture_end_date", adjustedDate);
+                              toast({
+                                title: "Tempo mínimo requerido",
+                                description: "O término deve ser pelo menos 30 minutos após o início da captura.",
+                              });
+                              return;
+                            }
+                          }
+                          
+                          handleCaptureEndDateChange("capture_end_date", date);
                         }}
                       />
                     </div>

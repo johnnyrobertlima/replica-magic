@@ -1,18 +1,17 @@
-
 import { useState, useEffect, useRef } from "react";
-import { format } from "date-fns";
+import { format, addMinutes } from "date-fns";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
 
 export function useScheduleFormState({
   clientId,
   selectedDate,
   selectedEvent,
-  prioritizeCaptureDate = false // Novo parâmetro
+  prioritizeCaptureDate = false // Parâmetro para priorizar a data de captura
 }: {
   clientId: string;
   selectedDate: Date;
   selectedEvent?: CalendarEvent;
-  prioritizeCaptureDate?: boolean; // Definição do tipo do novo parâmetro
+  prioritizeCaptureDate?: boolean;
 }) {
   const [currentSelectedEvent, setCurrentSelectedEvent] = useState<CalendarEvent | null>(selectedEvent || null);
   const [formData, setFormData] = useState<ContentScheduleFormData>({
@@ -21,7 +20,7 @@ export function useScheduleFormState({
     collaborator_id: null,
     title: "",
     description: null,
-    scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
+    scheduled_date: prioritizeCaptureDate ? null : format(selectedDate, 'yyyy-MM-dd'),
     execution_phase: null,
     editorial_line_id: null,
     product_id: null,
@@ -45,6 +44,19 @@ export function useScheduleFormState({
 
   const resetForm = () => {
     console.log("resetting form in useScheduleFormState");
+    
+    // Prepare end date if not all day and capture date is set
+    let captureEndDateValue = null;
+    if (prioritizeCaptureDate) {
+      const captureDate = format(selectedDate, 'yyyy-MM-dd');
+      if (!formData.is_all_day) {
+        // If not all day, set default end time to 30 minutes after start
+        const date = new Date(selectedDate);
+        const endDate = addMinutes(date, 30);
+        captureEndDateValue = format(endDate, 'yyyy-MM-dd\'T\'HH:mm:ss');
+      }
+    }
+    
     setCurrentSelectedEvent(null);
     setFormData({
       client_id: clientId,
@@ -52,14 +64,14 @@ export function useScheduleFormState({
       collaborator_id: null,
       title: "",
       description: null,
-      scheduled_date: prioritizeCaptureDate ? null : format(selectedDate, 'yyyy-MM-dd'), // Se priorizando captura, deixa scheduled_date como null
+      scheduled_date: prioritizeCaptureDate ? null : format(selectedDate, 'yyyy-MM-dd'),
       execution_phase: null,
       editorial_line_id: null,
       product_id: null,
       status_id: null,
       creators: [],
-      capture_date: prioritizeCaptureDate ? format(selectedDate, 'yyyy-MM-dd') : null, // Define a data de captura se priorizada
-      capture_end_date: null,
+      capture_date: prioritizeCaptureDate ? format(selectedDate, 'yyyy-MM-dd') : null,
+      capture_end_date: captureEndDateValue,
       is_all_day: true,
       location: null
     });
@@ -174,7 +186,7 @@ export function useScheduleFormState({
     }, 100);
   };
   
-  // Add handleDateChange function
+  // Update the handleDateChange function
   const handleDateChange = (name: string, value: Date | null) => {
     console.log("Date changed:", name, value);
     
@@ -182,7 +194,29 @@ export function useScheduleFormState({
     
     if (value) {
       const formattedDate = format(value, "yyyy-MM-dd");
-      setFormData(prev => ({ ...prev, [name]: formattedDate }));
+      
+      if (name === "capture_date" && !formData.is_all_day) {
+        // If updating capture start date and not all day, check if we need to adjust end date
+        setFormData(prev => {
+          const updatedValues: Partial<ContentScheduleFormData> = { [name]: formattedDate };
+          
+          // If there's an end date, make sure it's at least 30 minutes after the new start date
+          if (prev.capture_end_date) {
+            const newStartDate = new Date(formattedDate);
+            const currentEndDate = new Date(prev.capture_end_date);
+            
+            // If the end date is now less than 30 min after start, adjust it
+            if (currentEndDate < addMinutes(newStartDate, 30)) {
+              const adjustedEndDate = addMinutes(newStartDate, 30);
+              updatedValues.capture_end_date = format(adjustedEndDate, "yyyy-MM-dd'T'HH:mm:ss");
+            }
+          }
+          
+          return { ...prev, ...updatedValues };
+        });
+      } else {
+        setFormData(prev => ({ ...prev, [name]: formattedDate }));
+      }
     } else {
       setFormData(prev => ({ ...prev, [name]: null }));
     }
@@ -192,7 +226,7 @@ export function useScheduleFormState({
     }, 100);
   };
 
-  // Add a new handler for dateTime fields (with time)
+  // Updated handleDateTimeChange to enforce the 30-minute minimum difference
   const handleDateTimeChange = (name: string, value: Date | null) => {
     console.log("DateTime changed:", name, value);
     
@@ -200,7 +234,55 @@ export function useScheduleFormState({
     
     if (value) {
       const formattedDateTime = format(value, "yyyy-MM-dd'T'HH:mm:ss");
-      setFormData(prev => ({ ...prev, [name]: formattedDateTime }));
+      
+      // Special handling for capture dates to enforce minimum time difference
+      if (name === "capture_date" && !formData.is_all_day) {
+        // Updating start date - may need to adjust end date
+        setFormData(prev => {
+          const updatedValues: Partial<ContentScheduleFormData> = { [name]: formattedDateTime };
+          
+          // If there's an end date, ensure it's still at least 30 minutes after the new start
+          if (prev.capture_end_date) {
+            const newStartDate = new Date(value);
+            const currentEndDate = new Date(prev.capture_end_date);
+            
+            // If the end date is now less than 30 min after start, adjust it
+            if (currentEndDate < addMinutes(newStartDate, 30)) {
+              const adjustedEndDate = addMinutes(newStartDate, 30);
+              updatedValues.capture_end_date = format(adjustedEndDate, "yyyy-MM-dd'T'HH:mm:ss");
+            }
+          } else if (!formData.is_all_day) {
+            // If there's no end date yet and not all-day, create one 30 minutes after start
+            const endDate = addMinutes(value, 30);
+            updatedValues.capture_end_date = format(endDate, "yyyy-MM-dd'T'HH:mm:ss");
+          }
+          
+          return { ...prev, ...updatedValues };
+        });
+      } 
+      else if (name === "capture_end_date" && formData.capture_date && !formData.is_all_day) {
+        // When updating end date, ensure it's at least 30 minutes after start date
+        const startDate = new Date(formData.capture_date);
+        const endDate = new Date(value);
+        const diffMs = endDate.getTime() - startDate.getTime();
+        const diffMinutes = diffMs / (1000 * 60);
+        
+        if (diffMinutes < 30) {
+          // If less than 30 minutes difference, set to 30 minutes after start
+          const adjustedDate = addMinutes(startDate, 30);
+          setFormData(prev => ({ 
+            ...prev, 
+            [name]: format(adjustedDate, "yyyy-MM-dd'T'HH:mm:ss")
+          }));
+        } else {
+          // Otherwise, use the selected date
+          setFormData(prev => ({ ...prev, [name]: formattedDateTime }));
+        }
+      }
+      else {
+        // Regular case for any other date-time field
+        setFormData(prev => ({ ...prev, [name]: formattedDateTime }));
+      }
     } else {
       setFormData(prev => ({ ...prev, [name]: null }));
     }
@@ -216,15 +298,33 @@ export function useScheduleFormState({
     
     isUserEditing.current = true;
     
-    setFormData(prev => ({ 
-      ...prev, 
-      is_all_day: isAllDay,
+    setFormData(prev => {
+      const updates: Partial<ContentScheduleFormData> = { is_all_day: isAllDay };
+      
       // If switching to all-day, remove time component from dates
-      ...(isAllDay && prev.capture_date ? { 
-        capture_date: prev.capture_date.split('T')[0],
-        capture_end_date: prev.capture_end_date?.split('T')[0] || null
-      } : {})
-    }));
+      if (isAllDay) {
+        if (prev.capture_date) {
+          updates.capture_date = prev.capture_date.split('T')[0];
+        }
+        if (prev.capture_end_date) {
+          updates.capture_end_date = prev.capture_end_date.split('T')[0];
+        }
+      } 
+      // If switching from all-day to time-specific, add default times
+      else if (prev.capture_date) {
+        // Add default time for start (current time)
+        const startDate = new Date(prev.capture_date);
+        const now = new Date();
+        startDate.setHours(now.getHours(), now.getMinutes());
+        updates.capture_date = format(startDate, "yyyy-MM-dd'T'HH:mm:ss");
+        
+        // Add default time for end (30 minutes after start)
+        const endDate = addMinutes(startDate, 30);
+        updates.capture_end_date = format(endDate, "yyyy-MM-dd'T'HH:mm:ss");
+      }
+      
+      return { ...prev, ...updates };
+    });
     
     setTimeout(() => {
       isUserEditing.current = false;
