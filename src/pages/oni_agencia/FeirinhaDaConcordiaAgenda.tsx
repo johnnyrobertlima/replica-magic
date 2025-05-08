@@ -1,141 +1,202 @@
 
-import { useState, useEffect, useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-
+import React, { useState, useEffect } from 'react';
+import { useAllContentSchedules } from '@/hooks/useOniAgenciaContentSchedules';
+import { OniAgenciaMenu } from "@/components/oni_agencia/OniAgenciaMenu";
 import { ContentCalendar } from "@/components/oni_agencia/content-schedule/ContentCalendar";
-import { ContentArea } from "@/components/oni_agencia/content-schedule/control-pauta/ContentArea";
-import { OniAgenciaService, OniAgenciaCollaborator, CalendarEvent } from "@/types/oni-agencia";
-import { getServices } from "@/services/oniAgenciaServices";
-import { getCollaborators } from "@/services/oniAgenciaCollaboratorServices";
-import { getCalendarEvents } from "@/services/oniAgenciaCalendarEventServices";
-import { Separator } from "@/components/ui/separator";
-import { ClientAreaHeader } from "@/components/oni_agencia/shared/ClientAreaHeader";
-import { Select } from "@/components/ui/select";
-import {
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
+import { ContentScheduleFilters } from "@/components/oni_agencia/content-schedule/ContentScheduleFilters";
+import { ContentScheduleList } from "@/components/oni_agencia/content-schedule/ContentScheduleList";
+import { useCollapsible } from "@/components/oni_agencia/content-schedule/hooks/useCollapsible";
+import { CalendarDays, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { useNavigate } from 'react-router-dom';
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { EditorialLinePopover } from "@/components/oni_agencia/content-schedule/EditorialLinePopover";
+import { ProductsPopover } from "@/components/oni_agencia/content-schedule/ProductsPopover";
+import { useToast } from "@/hooks/use-toast";
+import { useClients } from '@/hooks/useOniAgenciaClients';
 
-const clientId = "feirinha-da-concordia";
-
-export default function FeirinhaDaConcordiaAgenda() {
-  const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const initialMonth = searchParams.get("month");
-  const initialYear = searchParams.get("year");
-  const initialCollaborator = searchParams.get("collaborator");
-
-  const [month, setMonth] = useState(initialMonth ? parseInt(initialMonth) : new Date().getMonth() + 1);
-  const [year, setYear] = useState(initialYear ? parseInt(initialYear) : new Date().getFullYear());
-  const [selectedCollaborator, setSelectedCollaborator] = useState<string | null>(initialCollaborator || null);
+const FeirinhaDaConcordiaAgenda = () => {
+  const { toast } = useToast();
+  const currentDate = new Date();
+  const [selectedMonth, setSelectedMonth] = useState<number>(currentDate.getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
+  const [selectedCollaborator, setSelectedCollaborator] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
+  const { isCollapsed, toggle: toggleFilters } = useCollapsible(false);
+  const [feirinhaClientId, setFeirinhaClientId] = useState<string | null>(null);
   
-  const { 
-    data: events, 
-    isLoading, 
-    refetch 
-  } = useQuery({
-    queryKey: ["calendarEvents", clientId, month, year],
-    queryFn: () => getCalendarEvents(clientId, month, year),
-  });
-  
-  const { data: services, isLoading: isLoadingServices } = useQuery({
-    queryKey: ["oniAgenciaServices"],
-    queryFn: getServices,
-  });
-  
-  const { data: collaborators, isLoading: isLoadingCollaborators } = useQuery({
-    queryKey: ["oniAgenciaCollaborators"],
-    queryFn: getCollaborators,
-  });
+  // Buscar a lista de clientes para encontrar o ID da Feirinha da Concórdia
+  const { data: clients, isLoading: isLoadingClients } = useClients();
 
+  // Encontrar o ID do cliente Feirinha da Concórdia
   useEffect(() => {
-    // Update URL when month or year changes
-    setSearchParams({
-      month: month.toString(),
-      year: year.toString(),
-      collaborator: selectedCollaborator || '',
-    });
-  }, [month, year, selectedCollaborator, setSearchParams]);
+    if (clients && clients.length > 0) {
+      const feirinha = clients.find(client => 
+        client.name.toLowerCase().includes('feirinha') && 
+        client.name.toLowerCase().includes('concórdia')
+      );
+      
+      if (feirinha) {
+        console.log("Encontrado cliente Feirinha da Concórdia:", feirinha);
+        setFeirinhaClientId(feirinha.id);
+      } else {
+        console.error("Cliente Feirinha da Concórdia não encontrado na lista de clientes");
+        
+        // Exibir todos os clientes no console para debug
+        console.log("Lista de clientes disponíveis:", clients.map(c => ({ id: c.id, nome: c.name })));
+        
+        // Usar ID fixo como fallback
+        setFeirinhaClientId("3f75b33c-2c10-4a3d-91f2-e4fd5ac37357");
+      }
+    }
+  }, [clients]);
+
+  const { 
+    data: allSchedules = [], 
+    isLoading: isLoadingSchedules,
+    refetch: refetchSchedules,
+    isRefetching
+  } = useAllContentSchedules(selectedYear, selectedMonth);
+
+  // Filter schedules for Feirinha da Concórdia only when we have the client ID
+  const feirinhaSchedules = React.useMemo(() => {
+    if (!feirinhaClientId) return [];
+    
+    console.log(`Filtrando ${allSchedules.length} agendamentos para o cliente ID: ${feirinhaClientId}`);
+    
+    const filtered = allSchedules.filter(schedule => 
+      schedule.client_id === feirinhaClientId
+    );
+    
+    console.log(`Encontrados ${filtered.length} agendamentos para Feirinha da Concórdia`);
+    
+    return filtered;
+  }, [allSchedules, feirinhaClientId]);
 
   const handleMonthYearChange = (month: number, year: number) => {
-    setMonth(month);
-    setYear(year);
+    setSelectedMonth(month);
+    setSelectedYear(year);
   };
 
-  const handleCollaboratorChange = (collaboratorId: string) => {
-    setSelectedCollaborator(collaboratorId === "all" ? null : collaboratorId);
+  const handleViewChange = (value: string) => {
+    if (value === "calendar" || value === "list") {
+      setViewMode(value);
+    }
   };
 
-  const filteredEvents = events ? events.filter(event => event.client_id === clientId) : [];
+  const handleCollaboratorChange = (collaboratorId: string | null) => {
+    setSelectedCollaborator(collaboratorId);
+  };
 
-  const currentDate = new Date(year, month - 1, 1);
-  const formattedDate = format(currentDate, 'MMMM yyyy', { locale: ptBR });
+  const handleRefetch = async () => {
+    try {
+      await refetchSchedules();
+      toast({
+        title: "Agenda atualizada",
+        description: "Os dados da agenda foram atualizados com sucesso.",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao atualizar",
+        description: "Ocorreu um erro ao atualizar os dados da agenda.",
+      });
+    }
+  };
 
-  return (
-    <div className="container relative pt-6">
-      <ClientAreaHeader 
-        title="Feirinha da Concórdia" 
-        description={`Acompanhe a agenda de conteúdo da Feirinha da Concórdia - ${formattedDate}`} 
-      />
-
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        <div className="lg:col-span-3">
-          <ContentCalendar
-            events={filteredEvents}
-            clientId={clientId}
-            month={month}
-            year={year}
-            onMonthYearChange={handleMonthYearChange}
-            selectedCollaborator={selectedCollaborator}
-            onManualRefetch={refetch}
-          />
-        </div>
-
-        <div>
-          <div className="bg-white rounded-md border shadow-sm p-4">
-            <Label htmlFor="collaborator">Filtrar por Colaborador</Label>
-            <Select value={selectedCollaborator || "all"} onValueChange={handleCollaboratorChange}>
-              <SelectTrigger id="collaborator" className="w-full">
-                <SelectValue placeholder="Todos os Colaboradores" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os Colaboradores</SelectItem>
-                {collaborators?.map((collaborator) => (
-                  <SelectItem key={collaborator.id} value={collaborator.id}>
-                    {collaborator.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+  if (isLoadingClients) {
+    return (
+      <main className="container-fluid p-0 max-w-full">
+        <OniAgenciaMenu />
+        <div className="container mx-auto p-4 max-w-full">
+          <div className="flex items-center justify-center h-[70vh]">
+            <CalendarDays className="h-8 w-8 animate-spin mr-3" />
+            <span className="text-xl">Carregando informações do cliente...</span>
           </div>
         </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="container-fluid p-0 max-w-full">
+      <OniAgenciaMenu />
+      <div className="container mx-auto p-4 max-w-full">
+        <div className="flex items-center gap-2 mb-6">
+          <CalendarDays className="h-6 w-6 text-primary" />
+          <h1 className="text-2xl font-semibold tracking-tight">Agenda - Feirinha da Concórdia</h1>
+          <div className="ml-auto flex items-center gap-2">
+            <ToggleGroup type="single" value={viewMode} onValueChange={handleViewChange}>
+              <ToggleGroupItem value="calendar" aria-label="Visualização em calendário">
+                <CalendarDays className="h-4 w-4" />
+              </ToggleGroupItem>
+              <ToggleGroupItem value="list" aria-label="Visualização em lista">
+                <List className="h-4 w-4" />
+              </ToggleGroupItem>
+            </ToggleGroup>
+            <EditorialLinePopover events={feirinhaSchedules} />
+            <ProductsPopover events={feirinhaSchedules} />
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleRefetch}
+              disabled={isRefetching || isLoadingSchedules}
+            >
+              <CalendarDays className={`h-4 w-4 mr-2 ${isRefetching ? 'animate-spin' : ''}`} />
+              <span>Atualizar</span>
+            </Button>
+          </div>
+        </div>
+        
+        <ContentScheduleFilters
+          selectedClient={feirinhaClientId || ""}
+          selectedMonth={selectedMonth}
+          selectedYear={selectedYear}
+          selectedCollaborator={selectedCollaborator}
+          onClientChange={() => {}} // Disabled since we're showing only Feirinha da Concórdia
+          onMonthChange={setSelectedMonth}
+          onYearChange={setSelectedYear}
+          onCollaboratorChange={handleCollaboratorChange}
+          isCollapsed={isCollapsed}
+          onToggleCollapse={toggleFilters}
+          hideClientFilter={true} // New prop to hide client selector
+        />
+        
+        <div className={`w-full overflow-x-auto ${isCollapsed ? 'h-[calc(100vh-150px)]' : 'h-[calc(100vh-250px)]'} transition-all duration-300`}>
+          {isLoadingSchedules || !feirinhaClientId ? (
+            <div className="flex items-center justify-center h-full">
+              <CalendarDays className="h-6 w-6 animate-spin mr-2" />
+              <span>Carregando agendamentos...</span>
+            </div>
+          ) : feirinhaSchedules.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full">
+              <CalendarDays className="h-12 w-12 mb-4 text-gray-400" />
+              <h3 className="text-xl font-medium mb-2">Nenhum agendamento encontrado</h3>
+              <p className="text-gray-500 text-center">
+                Não há agendamentos para a Feirinha da Concórdia no período selecionado.
+              </p>
+            </div>
+          ) : (
+            viewMode === "calendar" ? (
+              <ContentCalendar
+                events={feirinhaSchedules}
+                clientId={feirinhaClientId}
+                month={selectedMonth}
+                year={selectedYear}
+                onMonthChange={handleMonthYearChange}
+                selectedCollaborator={selectedCollaborator}
+              />
+            ) : (
+              <ContentScheduleList
+                events={feirinhaSchedules}
+                clientId={feirinhaClientId}
+                selectedCollaborator={selectedCollaborator}
+              />
+            )
+          )}
+        </div>
       </div>
-
-      <Separator className="my-6" />
-
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Controle de Pauta</h2>
-        <Button onClick={() => navigate('/client-area/feirinha-da-concordia/controle-de-pauta/novo')}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nova Pauta
-        </Button>
-      </div>
-
-      <ContentArea 
-        events={events}
-        collaborators={collaborators}
-        isLoading={isLoading}
-        onManualRefetch={refetch}
-      />
-    </div>
+    </main>
   );
-}
+};
+
+export default FeirinhaDaConcordiaAgenda;

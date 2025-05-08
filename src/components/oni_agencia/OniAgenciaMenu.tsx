@@ -5,12 +5,15 @@ import { useToast } from "@/hooks/use-toast";
 import { getMainMenuItems, getAdminMenuItems } from "./menu/menuItems";
 import { DesktopMenu } from "./menu/DesktopMenu";
 import { MobileMenu } from "./menu/MobileMenu";
-import { MenuItemType } from "./menu/types";
 
 export const OniAgenciaMenu = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const location = useLocation();
+
+  // Get menu items
+  const mainMenuItems = getMainMenuItems();
+  const adminMenuItems = getAdminMenuItems();
 
   const handleLogout = async () => {
     try {
@@ -31,20 +34,17 @@ export const OniAgenciaMenu = () => {
   };
 
   // Função para verificar se a rota atual é ou está dentro de um caminho pai
-  const isActiveRoute = (href: string) => {
-    if (href === "/client-area/oniagencia" && location.pathname === "/client-area/oniagencia") {
+  const isActiveRoute = (path: string) => {
+    if (path === "/client-area/oniagencia" && location.pathname === "/client-area/oniagencia") {
       return true;
     }
-    return location.pathname.startsWith(href) && href !== "/client-area/oniagencia";
+    return location.pathname.startsWith(path) && path !== "/client-area/oniagencia";
   };
 
   // Check if any admin route is active
   const isAnyAdminRouteActive = () => {
-    return getAdminMenuItems().some(item => isActiveRoute(item.href));
+    return adminMenuItems.some(item => isActiveRoute(item.path));
   };
-
-  const mainMenuItems = getMainMenuItems();
-  const adminMenuItems = getAdminMenuItems();
 
   return (
     <div className="sticky top-0 z-50 w-full bg-primary shadow-md">
@@ -53,7 +53,7 @@ export const OniAgenciaMenu = () => {
           mainMenuItems={mainMenuItems}
           adminMenuItems={adminMenuItems}
           isActiveRoute={isActiveRoute}
-          isAnyAdminRouteActive={isAnyAdminRouteActive()} 
+          isAnyAdminRouteActive={isAnyAdminRouteActive()} // Execute a função aqui
           onLogout={handleLogout}
         />
 

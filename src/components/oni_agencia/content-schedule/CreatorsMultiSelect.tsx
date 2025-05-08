@@ -1,6 +1,6 @@
-import React from 'react';
-import { Check, ChevronsUpDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+
+import React, { useState, useEffect } from "react";
+import { OniAgenciaCollaborator } from "@/types/oni-agencia";
 import {
   Command,
   CommandEmpty,
@@ -13,125 +13,137 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { X, Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-export interface CreatorsMultiSelectProps {
-  value: string[];
-  onValueChange: (creators: string[]) => void; // Updated prop name to match usage in NewEventForm
-  collaborators: any[];
+interface CreatorsMultiSelectProps {
+  collaborators: OniAgenciaCollaborator[];
   isLoading: boolean;
-  disabled?: boolean;
+  value: string[];
+  onValueChange: (value: string[]) => void;
 }
 
-export function CreatorsMultiSelect({
-  value = [],
-  onValueChange,
-  collaborators = [],
+export function CreatorsMultiSelect({ 
+  collaborators,
   isLoading,
-  disabled = false
+  value = [],
+  onValueChange
 }: CreatorsMultiSelectProps) {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
   
-  // Ensure value is always an array
-  const selectedValues = Array.isArray(value) ? value : (value ? [value] : []);
+  // Ensure value is always a valid array, this fixes the "undefined is not iterable" error
+  const safeValue = Array.isArray(value) ? value : [];
   
-  const handleSelect = (currentValue: string) => {
-    setOpen(true);
+  // Make sure collaborators is always an array
+  const safeCollaborators = Array.isArray(collaborators) ? collaborators : [];
+  
+  // Using useEffect to log values for debugging
+  useEffect(() => {
+    console.log("CreatorsMultiSelect - value:", value);
+    console.log("CreatorsMultiSelect - collaborators:", collaborators);
+  }, [value, collaborators]);
+  
+  // Find selected collaborators with safeguards against undefined values
+  const selectedCollaborators = safeCollaborators.filter(c => 
+    c && c.id && safeValue.includes(c.id)
+  );
+
+  const handleSelect = (collaboratorId: string) => {
+    if (!collaboratorId) return;
     
-    // If already selected, remove it
-    if (selectedValues.includes(currentValue)) {
-      const newValues = selectedValues.filter(val => val !== currentValue);
-      onValueChange(newValues);
+    if (safeValue.includes(collaboratorId)) {
+      onValueChange(safeValue.filter(id => id !== collaboratorId));
     } else {
-      // Otherwise add to selection
-      onValueChange([...selectedValues, currentValue]);
+      onValueChange([...safeValue, collaboratorId]);
     }
   };
-  
-  const selectedLabels = selectedValues
-    .map(id => {
-      const collaborator = collaborators.find(c => c.id === id);
-      return collaborator ? collaborator.name : id;
-    })
-    .filter(Boolean);
-  
-  const handleRemove = (valueToRemove: string) => {
-    onValueChange(selectedValues.filter(val => {
-      const collaborator = collaborators.find(c => c.name === valueToRemove);
-      return collaborator ? val !== collaborator.id : true;
-    }));
+
+  const handleRemove = (collaboratorId: string) => {
+    if (!collaboratorId) return;
+    onValueChange(safeValue.filter(id => id !== collaboratorId));
   };
-  
+
   return (
-    <div className="space-y-2">
+    <div className="grid gap-2">
+      <Label htmlFor="creators">Creators</Label>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className={cn(
-              "w-full justify-between",
-              !selectedValues.length && "text-muted-foreground"
-            )}
-            disabled={disabled}
+            className="justify-between"
+            disabled={isLoading}
+            data-testid="creators-select"
           >
             <span className="truncate">
-              {selectedLabels.length > 0
-                ? `${selectedLabels.length} selecionados`
-                : "Selecione os creators..."}
+              {safeValue.length === 0
+                ? "Selecione os creators..."
+                : `${safeValue.length} creator${safeValue.length === 1 ? "" : "s"} selecionado${safeValue.length === 1 ? "" : "s"}`}
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0">
+        <PopoverContent className="w-[300px] p-0">
           <Command>
-            <CommandInput placeholder="Procurar creators..." />
+            <CommandInput placeholder="Buscar creators..." />
             <CommandEmpty>Nenhum creator encontrado.</CommandEmpty>
-            <ScrollArea className="h-72">
-              <CommandGroup>
-                {isLoading ? (
-                  <CommandItem>Carregando...</CommandItem>
-                ) : (
-                  collaborators.map((collaborator) => (
-                    <CommandItem
-                      key={collaborator.id}
-                      value={collaborator.name}
-                      onSelect={() => handleSelect(collaborator.id)}
-                    >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          selectedValues.includes(collaborator.id)
-                            ? "opacity-100"
-                            : "opacity-0"
-                        )}
-                      />
-                      {collaborator.name}
-                    </CommandItem>
+            <CommandGroup>
+              <ScrollArea className="h-64">
+                {safeCollaborators.length > 0 ? (
+                  safeCollaborators.map((collaborator) => (
+                    collaborator && collaborator.id ? (
+                      <CommandItem
+                        key={collaborator.id}
+                        value={collaborator.id}
+                        onSelect={() => handleSelect(collaborator.id)}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            safeValue.includes(collaborator.id) 
+                              ? "opacity-100"
+                              : "opacity-0"
+                          )}
+                        />
+                        {collaborator.name}
+                      </CommandItem>
+                    ) : null
                   ))
+                ) : (
+                  <div className="p-2 text-sm text-muted-foreground">
+                    Nenhum colaborador disponível.
+                  </div>
                 )}
-              </CommandGroup>
-            </ScrollArea>
+              </ScrollArea>
+            </CommandGroup>
           </Command>
         </PopoverContent>
       </Popover>
-
-      {selectedLabels.length > 0 && (
-        <div className="flex flex-wrap gap-1 mt-1">
-          {selectedLabels.map((label) => (
-            <Badge key={label} variant="secondary">
-              {label}
-              <button
-                type="button"
-                className="ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                onClick={() => handleRemove(label)}
+      
+      {selectedCollaborators.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-2">
+          {selectedCollaborators.map((collaborator) => (
+            collaborator && collaborator.id ? (
+              <Badge
+                key={collaborator.id}
+                variant="secondary"
+                className="flex items-center gap-1"
               >
-                ×
-              </button>
-            </Badge>
+                {collaborator.name}
+                <button
+                  type="button"
+                  className="rounded-full outline-none focus:outline-none"
+                  onClick={() => handleRemove(collaborator.id)}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            ) : null
           ))}
         </div>
       )}

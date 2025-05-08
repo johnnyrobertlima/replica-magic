@@ -6,44 +6,68 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Loader2 } from 'lucide-react';
+import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
+import { OniAgenciaService } from "@/types/oni-agencia";
 
-export interface ServiceSelectProps {
+interface ServiceSelectProps {
+  services: OniAgenciaService[];
+  isLoading: boolean;
   value: string;
   onValueChange: (value: string) => void;
-  services: any[];
-  isLoading: boolean;
 }
 
-export const ServiceSelect = ({ 
-  value, 
-  onValueChange, 
+export function ServiceSelect({ 
   services, 
-  isLoading 
-}: ServiceSelectProps) => {
+  isLoading, 
+  value, 
+  onValueChange 
+}: ServiceSelectProps) {
+  const getServiceColor = (serviceId: string) => {
+    const service = services.find(s => s.id === serviceId);
+    return service ? service.color : "#9b87f5";
+  };
+
   return (
-    <Select value={value} onValueChange={onValueChange}>
-      <SelectTrigger className="w-full bg-white">
-        <SelectValue placeholder="Selecione o serviço" />
-      </SelectTrigger>
-      <SelectContent>
-        {isLoading ? (
-          <div className="flex items-center justify-center p-2">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span className="ml-2">Carregando...</span>
-          </div>
-        ) : (
-          services.map((service) => (
-            <SelectItem 
-              key={service.id} 
-              value={service.id}
-              style={{ color: service.color || 'inherit' }}
-            >
-              {service.name}
-            </SelectItem>
-          ))
-        )}
-      </SelectContent>
-    </Select>
+    <div className="grid gap-2">
+      <Label htmlFor="service_id">Serviço</Label>
+      <Select
+        value={value}
+        onValueChange={onValueChange}
+        required
+      >
+        <SelectTrigger 
+          id="service_id"
+          className="w-full"
+          style={value ? { borderLeftColor: getServiceColor(value), borderLeftWidth: '4px' } : {}}
+        >
+          <SelectValue placeholder="Selecione um serviço" />
+        </SelectTrigger>
+        <SelectContent>
+          {isLoading ? (
+            <div className="flex items-center justify-center p-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span className="ml-2">Carregando...</span>
+            </div>
+          ) : (
+            services.map((service) => (
+              <SelectItem 
+                key={service.id} 
+                value={service.id}
+                className="flex items-center"
+              >
+                <div className="flex items-center">
+                  <div 
+                    className="w-3 h-3 rounded-full mr-2" 
+                    style={{ backgroundColor: service.color }}
+                  ></div>
+                  {service.name}
+                </div>
+              </SelectItem>
+            ))
+          )}
+        </SelectContent>
+      </Select>
+    </div>
   );
-};
+}

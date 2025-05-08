@@ -1,40 +1,43 @@
 
+import { Button } from "@/components/ui/button";
 import { CalendarEvent } from "@/types/oni-agencia";
 
-export interface EventListProps {
+interface EventListProps {
   events: CalendarEvent[];
   onSelectEvent: (event: CalendarEvent) => void;
+  onCreateNew: () => void;
 }
 
-export const EventList: React.FC<EventListProps> = ({ events, onSelectEvent }) => {
+export function EventList({ events, onSelectEvent, onCreateNew }: EventListProps) {
+  if (events.length === 0) {
+    return null;
+  }
+  
   return (
-    <div className="space-y-2">
-      {events.map((event) => (
-        <button
-          key={event.id}
-          onClick={() => onSelectEvent(event)}
-          className="w-full text-left p-3 bg-gray-50 hover:bg-gray-100 rounded border flex justify-between items-center"
-        >
-          <div>
-            <div className="font-medium">{event.title || "Sem título"}</div>
-            <div className="text-sm text-gray-500">
-              {event.service?.name}
-              {event.collaborator && ` • ${event.collaborator.name}`}
+    <div className="mb-4">
+      <div className="font-medium mb-2">Selecionar agendamento existente</div>
+      <div className="grid gap-2 mt-2">
+        {events.map(event => (
+          <Button
+            key={event.id}
+            variant="outline"
+            className="justify-start h-auto py-2 px-3 text-left"
+            style={{ borderLeftColor: event.service.color, borderLeftWidth: '4px' }}
+            onClick={() => onSelectEvent(event)}
+          >
+            <div>
+              <div className="font-medium">{event.title}</div>
+              <div className="text-sm text-muted-foreground">{event.service.name}</div>
             </div>
-          </div>
-          {event.status && (
-            <span 
-              className="px-2 py-1 text-xs rounded" 
-              style={{ 
-                backgroundColor: event.status.color ? `${event.status.color}20` : '#f3f4f6', 
-                color: event.status.color || 'inherit'
-              }}
-            >
-              {event.status.name}
-            </span>
-          )}
-        </button>
-      ))}
+          </Button>
+        ))}
+      </div>
+      <div className="flex justify-center mt-4">
+        <Button variant="outline" onClick={() => {
+          console.log("Criar Novo button clicked");
+          onCreateNew();
+        }}>Criar Novo</Button>
+      </div>
     </div>
   );
-};
+}

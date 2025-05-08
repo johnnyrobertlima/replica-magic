@@ -13,7 +13,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { Loader2 } from "lucide-react";
 
 interface ResourcePathSelectorProps {
   resourcePath: string;
@@ -30,37 +29,31 @@ export const ResourcePathSelector = ({
 }: ResourcePathSelectorProps) => {
   const [customPath, setCustomPath] = useState<boolean>(false);
   const [existingPermissionPaths, setExistingPermissionPaths] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
 
-  // Manually fetch existing permissions for the selected group
-  useEffect(() => {
-    const fetchPermissions = async () => {
-      if (!selectedGroupId) {
-        setExistingPermissionPaths([]);
-        return;
-      }
+  // Fetch existing permissions for the selected group
+  const { data: groupPermissions } = useQuery({
+    queryKey: ["group-permissions", selectedGroupId],
+    queryFn: async () => {
+      if (!selectedGroupId) return [];
       
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from("group_permissions")
-          .select("resource_path, permission_type")
-          .eq("group_id", selectedGroupId);
-        
-        if (error) {
-          console.error("Error fetching group permissions:", error);
-        } else {
-          setExistingPermissionPaths(data.map(p => p.resource_path));
-        }
-      } catch (err) {
-        console.error("Exception fetching group permissions:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      const { data, error } = await supabase
+        .from("group_permissions")
+        .select("resource_path, permission_type")
+        .eq("group_id", selectedGroupId);
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedGroupId,
+  });
 
-    fetchPermissions();
-  }, [selectedGroupId]);
+  // Update existing permission paths when group permissions change
+  useEffect(() => {
+    if (groupPermissions) {
+      const paths = groupPermissions.map(p => p.resource_path);
+      setExistingPermissionPaths(paths);
+    }
+  }, [groupPermissions]);
 
   const handleResourcePathChange = (value: string) => {
     if (value === "other") {
@@ -86,28 +79,19 @@ export const ResourcePathSelector = ({
           <SelectTrigger>
             <SelectValue placeholder="Selecione um caminho" />
           </SelectTrigger>
-          <SelectContent className="bg-white">
-            {isLoading ? (
-              <div className="flex items-center justify-center p-2">
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                <span>Carregando...</span>
-              </div>
-            ) : (
-              <>
-                {availablePaths.map((path) => (
-                  <SelectItem 
-                    key={path} 
-                    value={path}
-                    className={cn(
-                      hasPermission(path) && "bg-amber-100 font-medium"
-                    )}
-                  >
-                    {path} {hasPermission(path) && "(já possui permissão)"}
-                  </SelectItem>
-                ))}
-                <SelectItem value="other">Outro (personalizado)</SelectItem>
-              </>
-            )}
+          <SelectContent>
+            {availablePaths.map((path) => (
+              <SelectItem 
+                key={path} 
+                value={path}
+                className={cn(
+                  hasPermission(path) && "bg-soft-yellow font-medium"
+                )}
+              >
+                {path} {hasPermission(path) && "(já possui permissão)"}
+              </SelectItem>
+            ))}
+            <SelectItem value="other">Outro (personalizado)</SelectItem>
           </SelectContent>
         </Select>
       ) : (

@@ -1,35 +1,39 @@
 
-import { useMemo } from "react";
-import { Calendar } from "./calendar/Calendar";
-import { useDateSelection } from "./hooks/useDateSelection";
-import { ScheduleEventDialog } from "./ScheduleEventDialog";
+import { useState } from "react";
 import { CalendarEvent } from "@/types/oni-agencia";
-import { useDragAndDrop } from "./hooks/useDragAndDrop";
-import { useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import { CalendarHeader } from "./calendar/CalendarHeader";
+import { WeekDaysHeader } from "./calendar/WeekDaysHeader";
+import { CalendarContainer } from "./calendar/CalendarContainer";
+import { useCalendarEvents } from "./hooks/useCalendarEvents";
+import { usePautaStatus } from "./hooks/usePautaStatus";
+import { PautaStatusIndicator } from "./PautaStatusIndicator";
+import { ScheduleEventDialog } from "./ScheduleEventDialog";
+import { useDateSelection } from "./hooks/useDateSelection";
+import { useMonthNavigation } from "./hooks/useMonthNavigation";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Calendar, LayoutGrid, Rows } from "lucide-react";
+import { WeekView } from "./calendar/WeekView";
+import { DayView } from "./calendar/DayView";
+import "./styles/index.css"; // Updated import
 
 interface ContentCalendarProps {
   events: CalendarEvent[];
   clientId: string;
   month: number;
   year: number;
-  onMonthYearChange: (month: number, year: number) => void;
+  onMonthChange: (month: number, year: number) => void;
   selectedCollaborator?: string | null;
-  onManualRefetch?: () => void;
 }
 
 export function ContentCalendar({ 
   events, 
-  clientId,
-  month,
-  year,
-  onMonthYearChange,
-  selectedCollaborator,
-  onManualRefetch
+  clientId, 
+  month, 
+  year, 
+  onMonthChange,
+  selectedCollaborator
 }: ContentCalendarProps) {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const dndContext = useDragAndDrop();
+  const [view, setView] = useState<"month" | "week" | "day">("month");
   
   const { 
     selectedDate, 
@@ -42,71 +46,107 @@ export function ContentCalendar({
     setSelectedEvent
   } = useDateSelection();
   
-  const handleDialogOpenChange = (open: boolean) => {
-    setIsDialogOpen(open);
-    if (!open) {
-      setSelectedDate(undefined);
-      setSelectedEvent(undefined);
-    }
-  };
+  const { handlePrevMonth, handleNextMonth } = useMonthNavigation(month, year, onMonthChange);
   
+  const currentDate = new Date(year, month - 1, 1);
+  
+  const { currentEvents } = useCalendarEvents(events, selectedDate, isDialogOpen, setIsDialogOpen, selectedCollaborator);
+
+  const weekDays = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+
   const handleDialogClose = () => {
     setSelectedDate(undefined);
     setSelectedEvent(undefined);
     setIsDialogOpen(false);
   };
 
-  // Filter events based on selectedCollaborator
-  const filteredEvents = useMemo(() => {
-    if (!selectedCollaborator) return events;
-    
-    return events.filter(event => {
-      // Check if the person is a collaborator
-      const isCollaborator = event.collaborator_id === selectedCollaborator;
-      
-      // Check if the person is in the creators array
-      let isCreator = false;
-      
-      if (event.creators) {
-        const creatorsArray = Array.isArray(event.creators) ? event.creators : 
-                            (typeof event.creators === 'string' ? [event.creators] : []);
-        
-        isCreator = creatorsArray.includes(selectedCollaborator);
-      }
-      
-      return isCollaborator || isCreator;
-    });
-  }, [events, selectedCollaborator]);
-  
+  const handleViewChange = (value: string) => {
+    if (value === "month" || value === "week" || value === "day") {
+      setView(value);
+    }
+  };
+
   return (
-    <div className="bg-white rounded-md border shadow-sm">
-      <Calendar
-        events={filteredEvents}
-        month={month}
-        year={year}
-        clientId={clientId}
-        selectedCollaborator={selectedCollaborator}
-        onMonthYearChange={onMonthYearChange}
-        onDateSelect={handleDateSelect}
-        onEventClick={handleEventClick}
-        selectedDate={selectedDate}
-        selectedEvent={selectedEvent}
-        isDialogOpen={isDialogOpen}
-        onDialogOpenChange={handleDialogOpenChange}
-        onDialogClose={handleDialogClose}
-        onManualRefetch={onManualRefetch}
-      />
+    <div className="bg-white rounded-md border shadow-sm w-full h-full">
+      <div className="px-4 pt-4">
+        <PautaStatusIndicator 
+          events={events} 
+          clientId={clientId} 
+          month={month} 
+          year={year} 
+        />
+      </div>
+      
+      <div className="flex justify-between items-center p-4 border-b">
+        <CalendarHeader 
+          currentDate={currentDate}
+          onPrevMonth={handlePrevMonth}
+          onNextMonth={handleNextMonth}
+        />
+        
+        <ToggleGroup type="single" value={view} onValueChange={handleViewChange} className="ml-auto">
+          <ToggleGroupItem value="month" aria-label="Visualização por mês">
+            <Calendar className="h-4 w-4 mr-1" />
+            <span className="sr-md:inline hidden">Mês</span>
+          </ToggleGroupItem>
+          <ToggleGroupItem value="week" aria-label="Visualização por semana">
+            <Rows className="h-4 w-4 mr-1" />
+            <span className="sr-md:inline hidden">Semana</span>
+          </ToggleGroupItem>
+          <ToggleGroupItem value="day" aria-label="Visualização por dia">
+            <LayoutGrid className="h-4 w-4 mr-1" />
+            <span className="sr-md:inline hidden">Dia</span>
+          </ToggleGroupItem>
+        </ToggleGroup>
+      </div>
+      
+      {view === "month" && (
+        <>
+          <WeekDaysHeader weekDays={weekDays} />
+          
+          <CalendarContainer
+            events={events}
+            selectedDate={selectedDate}
+            currentDate={currentDate}
+            selectedCollaborator={selectedCollaborator}
+            onSelect={handleDateSelect}
+            onEventClick={handleEventClick}
+          />
+        </>
+      )}
+      
+      {view === "week" && (
+        <WeekView
+          events={events}
+          selectedDate={selectedDate}
+          currentDate={currentDate}
+          selectedCollaborator={selectedCollaborator}
+          onSelect={handleDateSelect}
+          onEventClick={handleEventClick}
+          weekDays={weekDays}
+        />
+      )}
+      
+      {view === "day" && (
+        <DayView
+          events={events}
+          selectedDate={selectedDate || currentDate}
+          currentDate={currentDate}
+          selectedCollaborator={selectedCollaborator}
+          onSelect={handleDateSelect}
+          onEventClick={handleEventClick}
+        />
+      )}
       
       {selectedDate && (
         <ScheduleEventDialog
           isOpen={isDialogOpen}
-          onOpenChange={handleDialogOpenChange}
+          onOpenChange={setIsDialogOpen}
           clientId={clientId}
           selectedDate={selectedDate}
-          events={[]}
+          events={currentEvents}
           onClose={handleDialogClose}
           selectedEvent={selectedEvent}
-          onManualRefetch={onManualRefetch}
         />
       )}
     </div>

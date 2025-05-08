@@ -1,29 +1,20 @@
-
-import { useState } from 'react';
-import { Separator } from '@/components/ui/separator';
-import { EventEditor } from './EventEditor';
-import { NewEventForm } from './NewEventForm';
-import { CalendarEvent } from "@/types/oni-agencia";
-import { EventList } from './EventList';
-import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
-
-interface EventListProps {
-  events: CalendarEvent[];
-  onSelectEvent: (event: CalendarEvent) => void;
-}
+import { CalendarEvent, OniAgenciaService, OniAgenciaCollaborator, ContentScheduleFormData, OniAgenciaClient } from "@/types/oni-agencia";
+import { EventList } from "./EventList";
+import { NewEventForm } from "./NewEventForm";
+import { EventEditor } from "./EventEditor";
 
 interface DialogContentProps {
+  selectedEvent?: CalendarEvent;
   events: CalendarEvent[];
-  currentSelectedEvent?: CalendarEvent;
+  currentSelectedEvent: CalendarEvent | null;
   clientId: string;
   selectedDate: Date;
-  services: any[];
-  collaborators: any[];
+  services: OniAgenciaService[];
+  collaborators: OniAgenciaCollaborator[];
   editorialLines: any[];
   products: any[];
   statuses: any[];
-  clients: any[];
+  clients: OniAgenciaClient[];
   isLoadingServices: boolean;
   isLoadingCollaborators: boolean;
   isLoadingEditorialLines: boolean;
@@ -32,21 +23,23 @@ interface DialogContentProps {
   isLoadingClients: boolean;
   isSubmitting: boolean;
   isDeleting: boolean;
-  formData: any;
+  formData: ContentScheduleFormData;
   onSelectEvent: (event: CalendarEvent) => void;
   onResetForm: () => void;
-  onSubmit: (e: React.FormEvent) => void;
-  onStatusUpdate: (e: React.FormEvent) => void;
-  onDelete: () => void;
+  onSubmit: (e: React.FormEvent) => Promise<void>;
+  onStatusUpdate: (e: React.FormEvent) => Promise<void>;
+  onDelete: () => Promise<void>;
   onCancel: () => void;
-  onInputChange: (field: string, value: string) => void;
-  onSelectChange: (field: string, value: string) => void;
-  onDateChange: (field: string, value: Date | null) => void;
-  onDateTimeChange: (field: string, value: Date | null) => void;
-  onAllDayChange: (field: string, value: boolean) => void;
+  onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onSelectChange: (name: string, value: string) => void;
+  onDateChange: (name: string, value: Date | null) => void;
+  onDateTimeChange?: (name: string, value: Date | null) => void;
+  onAllDayChange?: (value: boolean) => void;
+  defaultTab?: "details" | "status" | "history" | "capture";
 }
 
-export const DialogContent = ({
+export function DialogContent({
+  selectedEvent,
   events,
   currentSelectedEvent,
   clientId,
@@ -76,129 +69,79 @@ export const DialogContent = ({
   onSelectChange,
   onDateChange,
   onDateTimeChange,
-  onAllDayChange
-}: DialogContentProps) => {
-  const [showNewEventForm, setShowNewEventForm] = useState(!currentSelectedEvent);
-
-  const handleCreatorsChange = (creators: string[]) => {
-    // This function will be called when the creators selection changes
-    onSelectChange('creators', creators.join(','));
-  };
+  onAllDayChange,
+  defaultTab
+}: DialogContentProps) {
+  // Check if there are other events for this date
+  const hasOtherEvents = events && events.length > 0;
   
-  const filteredEvents = events.filter(event => 
-    event.scheduled_date === selectedDate.toISOString().split('T')[0]
-  );
-
+  // Return different content based on whether we're editing or creating
   return (
-    <div className="px-4 pb-4 pt-2">
-      {filteredEvents.length > 0 && !showNewEventForm && !currentSelectedEvent && (
-        <div className="mb-4">
-          <h3 className="font-medium mb-2">Eventos neste dia:</h3>
-          <EventList 
-            events={filteredEvents}
-            onSelectEvent={onSelectEvent}
-          />
-          <div className="mt-4 flex justify-between">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onCancel}
-            >
-              Fechar
-            </Button>
-            <Button
-              type="button"
-              onClick={() => setShowNewEventForm(true)}
-            >
-              Novo Evento
-            </Button>
-          </div>
-        </div>
-      )}
-      
-      {(showNewEventForm || currentSelectedEvent) && (
-        <div>
-          {currentSelectedEvent ? (
-            <EventEditor
-              currentSelectedEvent={currentSelectedEvent}
-              isSubmitting={isSubmitting}
-              onCancelEdit={() => {
-                onResetForm();
-                setShowNewEventForm(false);
-              }}
-              onSubmit={onSubmit}
-              formData={formData}
-              onInputChange={onInputChange}
-              onSelectChange={onSelectChange}
-              services={services}
-              collaborators={collaborators}
-              editorialLines={editorialLines}
-              products={products}
-              statuses={statuses}
-              isLoadingServices={isLoadingServices}
-              isLoadingCollaborators={isLoadingCollaborators}
-              isLoadingEditorialLines={isLoadingEditorialLines}
-              isLoadingProducts={isLoadingProducts}
-              isLoadingStatuses={isLoadingStatuses}
-              onStatusUpdate={onStatusUpdate}
-              onDelete={onDelete}
+    <>
+      {currentSelectedEvent ? (
+        <EventEditor 
+          event={currentSelectedEvent}
+          clientId={clientId}
+          selectedDate={selectedDate}
+          services={services}
+          collaborators={collaborators}
+          editorialLines={editorialLines}
+          products={products}
+          statuses={statuses}
+          clients={clients}
+          isLoadingServices={isLoadingServices}
+          isLoadingCollaborators={isLoadingCollaborators}
+          isLoadingEditorialLines={isLoadingEditorialLines}
+          isLoadingProducts={isLoadingProducts}
+          isLoadingStatuses={isLoadingStatuses}
+          isLoadingClients={isLoadingClients}
+          isSubmitting={isSubmitting}
+          isDeleting={isDeleting}
+          onSubmit={onSubmit}
+          onStatusUpdate={onStatusUpdate}
+          onDelete={onDelete}
+          onCancel={onCancel}
+          formData={formData}
+          onInputChange={onInputChange}
+          onSelectChange={onSelectChange}
+          onDateChange={onDateChange}
+          onDateTimeChange={onDateTimeChange}
+          onAllDayChange={onAllDayChange}
+          defaultActiveTab={defaultTab}
+        />
+      ) : (
+        <>
+          {hasOtherEvents && (
+            <EventList 
+              events={events} 
+              onSelectEvent={onSelectEvent}
+              clientId={clientId}
             />
-          ) : (
-            <>
-              <NewEventForm 
-                formData={formData}
-                onInputChange={onInputChange}
-                onSelectChange={onSelectChange}
-                services={services}
-                collaborators={collaborators}
-                editorialLines={editorialLines}
-                products={products}
-                statuses={statuses}
-                isLoadingServices={isLoadingServices}
-                isLoadingCollaborators={isLoadingCollaborators}
-                isLoadingEditorialLines={isLoadingEditorialLines}
-                isLoadingProducts={isLoadingProducts}
-                isLoadingStatuses={isLoadingStatuses}
-                clientId={clientId}
-                onCreatorsChange={handleCreatorsChange}
-              />
-
-              <Separator className="my-4" />
-              
-              <div className="flex justify-end gap-2">
-                {filteredEvents.length > 0 && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setShowNewEventForm(false)}
-                  >
-                    Voltar para eventos
-                  </Button>
-                )}
-                
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onCancel}
-                >
-                  Cancelar
-                </Button>
-                
-                <Button
-                  type="submit"
-                  onClick={onSubmit}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : null}
-                  Salvar
-                </Button>
-              </div>
-            </>
           )}
-        </div>
+          <NewEventForm 
+            formData={formData}
+            services={services}
+            collaborators={collaborators}
+            editorialLines={editorialLines}
+            products={products}
+            statuses={statuses}
+            clients={clients}
+            isLoadingServices={isLoadingServices}
+            isLoadingCollaborators={isLoadingCollaborators}
+            isLoadingEditorialLines={isLoadingEditorialLines}
+            isLoadingProducts={isLoadingProducts}
+            isLoadingStatuses={isLoadingStatuses}
+            isLoadingClients={isLoadingClients}
+            isSubmitting={isSubmitting}
+            isDeleting={isDeleting}
+            onSubmit={onSubmit}
+            onCancel={onCancel}
+            onInputChange={onInputChange}
+            onSelectChange={onSelectChange}
+            onDateChange={onDateChange}
+          />
+        </>
       )}
-    </div>
+    </>
   );
-};
+}

@@ -6,30 +6,41 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
-export interface ExecutionPhaseSelectProps {
-  value: string;
+interface ExecutionPhaseSelectProps {
+  value: string | null;
   onValueChange: (value: string) => void;
 }
 
-export const ExecutionPhaseSelect = ({ 
-  value, 
-  onValueChange
-}: ExecutionPhaseSelectProps) => {
+export function ExecutionPhaseSelect({ value, onValueChange }: ExecutionPhaseSelectProps) {
+  const getExecutionPhaseOptions = () => [
+    { value: "planning", label: "Planejamento" },
+    { value: "creation", label: "Criação" },
+    { value: "review", label: "Revisão" },
+    { value: "approval", label: "Aprovação" },
+    { value: "scheduled", label: "Agendado" },
+    { value: "published", label: "Publicado" }
+  ];
+
   return (
-    <Select value={value} onValueChange={onValueChange}>
-      <SelectTrigger className="w-full bg-white">
-        <SelectValue placeholder="Selecione a fase de execução" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="briefing">Briefing</SelectItem>
-        <SelectItem value="planejamento">Planejamento</SelectItem>
-        <SelectItem value="producao">Produção</SelectItem>
-        <SelectItem value="revisao">Revisão</SelectItem>
-        <SelectItem value="aprovacao">Aprovação</SelectItem>
-        <SelectItem value="publicacao">Publicação</SelectItem>
-        <SelectItem value="analise">Análise</SelectItem>
-      </SelectContent>
-    </Select>
+    <div className="grid gap-2">
+      <Label htmlFor="execution_phase">Fase de Execução</Label>
+      <Select
+        value={value || ""}
+        onValueChange={onValueChange}
+      >
+        <SelectTrigger id="execution_phase" className="w-full">
+          <SelectValue placeholder="Selecione a fase" />
+        </SelectTrigger>
+        <SelectContent>
+          {getExecutionPhaseOptions().map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   );
-};
+}

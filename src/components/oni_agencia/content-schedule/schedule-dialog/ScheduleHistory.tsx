@@ -1,66 +1,77 @@
 
-import React, { useEffect } from 'react';
-import { useScheduleHistory } from '@/hooks/useScheduleHistory';
-import { Skeleton } from '@/components/ui/skeleton';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { useScheduleHistory } from "@/hooks/useScheduleHistory";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { CalendarEvent } from "@/types/oni-agencia";
+import { User, Clock, AlertTriangle } from "lucide-react";
+import { linkifyText } from "@/utils/linkUtils";
 
 interface ScheduleHistoryProps {
-  eventId: string;
+  event: CalendarEvent;
 }
 
-export function ScheduleHistory({ eventId }: ScheduleHistoryProps) {
-  const { data, isLoading, error, refetch } = useScheduleHistory(eventId);
-  
-  useEffect(() => {
-    if (eventId) {
-      refetch();
-    }
-  }, [eventId, refetch]);
+export function ScheduleHistory({ event }: ScheduleHistoryProps) {
+  const { data: history = [], isLoading, isError, error } = useScheduleHistory(event.id);
 
   if (isLoading) {
     return (
-      <div className="space-y-2">
-        <Skeleton className="h-8 w-full" />
-        <Skeleton className="h-8 w-full" />
-        <Skeleton className="h-8 w-full" />
+      <div className="text-sm text-muted-foreground flex items-center justify-center p-4 space-x-2 h-[400px]">
+        <Clock className="animate-spin h-4 w-4" />
+        <span>Carregando histórico...</span>
       </div>
     );
   }
 
-  if (error) {
+  if (isError) {
     return (
-      <div className="text-red-500 p-2">
-        Erro ao carregar histórico. Tente novamente.
+      <div className="text-sm text-red-500 flex items-center justify-center p-4 space-x-2 h-[400px]">
+        <AlertTriangle className="h-4 w-4" />
+        <span>Erro ao carregar histórico: {error instanceof Error ? error.message : 'Erro desconhecido'}</span>
       </div>
     );
   }
 
-  if (!data || data.length === 0) {
+  if (history.length === 0) {
     return (
-      <div className="text-center p-4 text-gray-500">
-        Nenhum registro de histórico encontrado.
+      <div className="text-sm text-muted-foreground flex items-center justify-center p-4 h-[400px]">
+        <span>Nenhuma alteração registrada para este agendamento.</span>
       </div>
     );
   }
+
+  // Function to process field values and convert URLs to links
+  const processFieldValue = (value: string | null) => {
+    if (!value) return "";
+    return linkifyText(value);
+  };
 
   return (
-    <ScrollArea className="h-[300px] border rounded-md">
-      <div className="p-2 space-y-2">
-        {data.map((history: any) => (
-          <div key={history.id} className="border-b pb-2">
-            <div className="flex justify-between text-sm">
-              <span className="font-medium">{history.user?.name || 'Usuário'}</span>
-              <span className="text-gray-500">{new Date(history.created_at).toLocaleString()}</span>
+    <ScrollArea className="h-[400px] pr-4">
+      <div className="space-y-4">
+        {history.map((entry) => (
+          <div key={entry.id} className="text-sm border-l-2 border-primary pl-4 py-1">
+            <div className="flex items-center text-muted-foreground text-xs gap-1 mb-1">
+              <User className="h-3 w-3" />
+              <span className="font-medium">{entry.changed_by_name}</span> - 
+              {format(new Date(entry.created_at), " dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })}
             </div>
-            <div className="mt-1">
-              <span>{history.action}</span>
-            </div>
-            {history.old_values && (
-              <div className="mt-1 text-xs text-gray-500">
-                <div>Valores anteriores: {JSON.stringify(history.old_values)}</div>
-                <div>Novos valores: {JSON.stringify(history.new_values)}</div>
-              </div>
+            
+            <p>
+              <span className="font-medium">Campo alterado:</span> {entry.field_name}
+            </p>
+            
+            {entry.old_value && (
+              <p className="text-muted-foreground">
+                <span className="font-medium">De:</span> 
+                <span dangerouslySetInnerHTML={{ __html: processFieldValue(entry.old_value) }} />
+              </p>
             )}
+            
+            <p className="text-primary">
+              <span className="font-medium">Para:</span> 
+              <span dangerouslySetInnerHTML={{ __html: processFieldValue(entry.new_value) }} />
+            </p>
           </div>
         ))}
       </div>

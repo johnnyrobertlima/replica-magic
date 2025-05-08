@@ -6,44 +6,49 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Loader2 } from 'lucide-react';
+import { Label } from "@/components/ui/label";
+import { Product } from "@/pages/admin/sub-themes/types";
+import { Loader2 } from "lucide-react";
 
-export interface ProductSelectProps {
-  value: string;
-  onValueChange: (value: string) => void;
-  products: any[];
+interface ProductSelectProps {
+  products: Product[];
   isLoading: boolean;
+  value: string | null;
+  onValueChange: (value: string) => void;
 }
 
-export const ProductSelect = ({ 
-  value, 
-  onValueChange, 
+export function ProductSelect({ 
   products, 
-  isLoading 
-}: ProductSelectProps) => {
+  isLoading, 
+  value, 
+  onValueChange 
+}: ProductSelectProps) {
   return (
-    <Select value={value} onValueChange={onValueChange}>
-      <SelectTrigger className="w-full bg-white">
-        <SelectValue placeholder="Selecione o produto" />
-      </SelectTrigger>
-      <SelectContent>
-        {isLoading ? (
-          <div className="flex items-center justify-center p-2">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span className="ml-2">Carregando...</span>
-          </div>
-        ) : (
-          products.map((product) => (
-            <SelectItem 
-              key={product.id} 
-              value={product.id}
-              style={{ color: product.color || 'inherit' }}
-            >
-              {product.name}
-            </SelectItem>
-          ))
-        )}
-      </SelectContent>
-    </Select>
+    <div className="grid gap-2">
+      <Label htmlFor="product_id">Produto</Label>
+      <Select
+        value={value || "null"}
+        onValueChange={onValueChange}
+      >
+        <SelectTrigger id="product_id" className="w-full">
+          <SelectValue placeholder="Selecione o produto" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="null">Nenhum</SelectItem>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-2">
+              <Loader2 className="h-4 w-4 animate-spin text-primary mr-2" />
+              <span>Carregando...</span>
+            </div>
+          ) : (
+            products.map((product) => (
+              <SelectItem key={product.id} value={product.id}>
+                {product.name}
+              </SelectItem>
+            ))
+          )}
+        </SelectContent>
+      </Select>
+    </div>
   );
-};
+}

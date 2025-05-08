@@ -24,11 +24,7 @@ export function useScheduleFormState({
     editorial_line_id: null,
     product_id: null,
     status_id: null,
-    creators: [], // Initialize as empty array
-    capture_date: null,
-    capture_end_date: null,
-    is_all_day: true,
-    location: null
+    creators: [] // Initialize as empty array
   });
   
   const isUserEditing = useRef(false);
@@ -55,11 +51,7 @@ export function useScheduleFormState({
       editorial_line_id: null,
       product_id: null,
       status_id: null,
-      creators: [], // Reset to empty array
-      capture_date: null,
-      capture_end_date: null,
-      is_all_day: true,
-      location: null
+      creators: [] // Reset to empty array
     });
   };
 
@@ -99,11 +91,7 @@ export function useScheduleFormState({
       editorial_line_id: event.editorial_line_id,
       product_id: event.product_id,
       status_id: event.status_id,
-      creators: creatorsArray, // Sempre um array válido
-      capture_date: event.capture_date || null,
-      capture_end_date: event.capture_end_date || null,
-      is_all_day: event.is_all_day !== null ? event.is_all_day : true,
-      location: event.location || null
+      creators: creatorsArray // Sempre um array válido
     });
   };
 
@@ -190,36 +178,6 @@ export function useScheduleFormState({
     }, 100);
   };
 
-  // New handler for date-time fields
-  const handleDateTimeChange = (name: string, value: Date | null) => {
-    console.log("DateTime changed:", name, value);
-    
-    isUserEditing.current = true;
-    
-    if (value) {
-      const formattedDateTime = format(value, "yyyy-MM-dd'T'HH:mm:ss");
-      setFormData(prev => ({ ...prev, [name]: formattedDateTime }));
-    } else {
-      setFormData(prev => ({ ...prev, [name]: null }));
-    }
-    
-    setTimeout(() => {
-      isUserEditing.current = false;
-    }, 100);
-  };
-
-  // New handler for all-day toggle
-  const handleAllDayChange = (value: boolean) => {
-    console.log("AllDay changed:", value);
-    
-    isUserEditing.current = true;
-    setFormData(prev => ({ ...prev, is_all_day: value }));
-    
-    setTimeout(() => {
-      isUserEditing.current = false;
-    }, 100);
-  };
-
   return {
     currentSelectedEvent,
     formData,
@@ -227,8 +185,6 @@ export function useScheduleFormState({
     handleSelectEvent,
     handleInputChange,
     handleSelectChange,
-    handleDateChange,
-    handleDateTimeChange,
-    handleAllDayChange
+    handleDateChange
   };
 }

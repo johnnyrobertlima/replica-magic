@@ -12,7 +12,6 @@ import {
   OniAgenciaClientScopes
 } from "@/pages/oni_agencia";
 import OniAgenciaWorkload from "@/pages/oni_agencia/OniAgenciaWorkload";
-import OniAgenciaCapturas from "@/pages/oni_agencia/OniAgenciaCapturas";
 import FeirinhaDaConcordiaAgenda from "@/pages/oni_agencia/FeirinhaDaConcordiaAgenda";
 import PromobrasAgenda from "@/pages/oni_agencia/PromobrasAgenda";
 import PorDentroDaFeirinhaAgenda from "@/pages/oni_agencia/PorDentroDaFeirinhaAgenda";
@@ -64,11 +63,6 @@ export const oniAgenciaRoutes = (
     <Route path="/client-area/oniagencia/escopos" element={
       <PermissionGuard resourcePath="/client-area/oniagencia/escopos">
         <OniAgenciaClientScopes />
-      </PermissionGuard>
-    } />
-    <Route path="/client-area/oniagencia/capturas" element={
-      <PermissionGuard resourcePath="/client-area/oniagencia/capturas">
-        <OniAgenciaCapturas />
       </PermissionGuard>
     } />
     <Route path="/client-area/oniagencia/controle-pauta/feirinhadaconcordia" element={

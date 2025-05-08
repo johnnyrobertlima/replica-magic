@@ -33,6 +33,7 @@ export function EventDialogHandler({
       events={filteredEvents.filter(e => e.scheduled_date === selectedDate.toISOString().split('T')[0])}
       onClose={onClose}
       selectedEvent={selectedEvent}
+      initialStatusTabActive={true} // This will open the status tab by default
     />
   );
 }

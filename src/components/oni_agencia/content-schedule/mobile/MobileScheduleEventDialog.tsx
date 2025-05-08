@@ -1,5 +1,5 @@
 
-import React from 'react';
+import { useEffect } from "react";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { 
   useServices,
@@ -11,7 +11,7 @@ import {
 import { useClients } from "@/hooks/useOniAgenciaClients";
 import { MobileDialogContainer } from "./MobileDialogContainer";
 import { DialogContent } from "../schedule-dialog/DialogContent";
-import { useScheduleEventDialog } from "../hooks/useScheduleEventDialog";
+import { useScheduleEventDialog } from "./hooks/useMobileScheduleEventDialog";
 
 interface MobileScheduleEventDialogProps {
   isOpen: boolean;
@@ -21,7 +21,7 @@ interface MobileScheduleEventDialogProps {
   events: CalendarEvent[];
   onClose: () => void;
   selectedEvent?: CalendarEvent;
-  onManualRefetch?: () => void;
+  initialStatusTabActive?: boolean;
 }
 
 export function MobileScheduleEventDialog({
@@ -32,21 +32,23 @@ export function MobileScheduleEventDialog({
   events,
   onClose,
   selectedEvent,
-  onManualRefetch
+  initialStatusTabActive = false
 }: MobileScheduleEventDialogProps) {
   const {
     currentSelectedEvent,
     formData,
+    activeTab,
     isSubmitting,
     isDeleting,
+    setActiveTab,
     handleInputChange,
     handleSelectChange,
     handleDateChange,
-    handleDateTimeChange,
-    handleAllDayChange,
-    handleSubmit: submitForm,
-    handleStatusUpdate: updateStatus,
-    handleDelete: deleteEvent,
+    handleDateTimeChange,  // New handler
+    handleAllDayChange,    // New handler
+    handleSubmit,
+    handleStatusUpdate,
+    handleDelete,
     handleSelectEvent,
     resetForm
   } = useScheduleEventDialog({
@@ -54,21 +56,19 @@ export function MobileScheduleEventDialog({
     selectedDate,
     events,
     selectedEvent,
-    onManualRefetch,
+    initialTabActive: initialStatusTabActive ? "status" : "details",
     onClose: () => {
       onOpenChange(false);
       onClose();
     }
   });
 
-  // Wrapper functions to handle type compatibility issues
-  const handleSubmitWrapper = (e: React.FormEvent) => submitForm(e);
-  const handleStatusUpdateWrapper = (e: React.FormEvent) => updateStatus(e);
-  const handleDeleteWrapper = () => deleteEvent();
-  
-  // Create wrapper functions for the problematic handlers
-  const handleInputChangeWrapper = (field: string, value: string) => handleInputChange(field, value);
-  const handleAllDayChangeWrapper = (field: string, value: boolean) => handleAllDayChange(field, value);
+  // Set active tab when initialStatusTabActive changes
+  useEffect(() => {
+    if (initialStatusTabActive) {
+      setActiveTab("status");
+    }
+  }, [initialStatusTabActive, setActiveTab]);
 
   const { data: services = [], isLoading: isLoadingServices } = useServices();
   const { data: collaborators = [], isLoading: isLoadingCollaborators } = useCollaborators();
@@ -88,6 +88,7 @@ export function MobileScheduleEventDialog({
       title={dialogTitle}
     >
       <DialogContent
+        selectedEvent={selectedEvent}
         events={events}
         currentSelectedEvent={currentSelectedEvent}
         clientId={clientId}
@@ -109,18 +110,19 @@ export function MobileScheduleEventDialog({
         formData={formData}
         onSelectEvent={handleSelectEvent}
         onResetForm={resetForm}
-        onSubmit={handleSubmitWrapper}
-        onStatusUpdate={handleStatusUpdateWrapper}
-        onDelete={handleDeleteWrapper}
+        onSubmit={handleSubmit}
+        onStatusUpdate={handleStatusUpdate}
+        onDelete={handleDelete}
         onCancel={() => {
           onOpenChange(false);
           onClose();
         }}
-        onInputChange={handleInputChangeWrapper}
+        onInputChange={handleInputChange}
         onSelectChange={handleSelectChange}
         onDateChange={handleDateChange}
-        onDateTimeChange={handleDateTimeChange}
-        onAllDayChange={handleAllDayChangeWrapper}
+        onDateTimeChange={handleDateTimeChange}  // Pass new handler
+        onAllDayChange={handleAllDayChange}      // Pass new handler
+        defaultTab={activeTab}
       />
     </MobileDialogContainer>
   );

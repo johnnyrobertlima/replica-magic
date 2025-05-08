@@ -42,9 +42,9 @@ const PromobrasAgenda = () => {
   }, [clients]);
 
   const { 
-    data: filteredEvents = [], 
+    data: filteredSchedules = [], 
     isLoading: isLoadingSchedules,
-    refetch: refetch,
+    refetch: refetchSchedules,
     isRefetching
   } = useAllContentSchedules(selectedYear, selectedMonth);
 
@@ -65,7 +65,7 @@ const PromobrasAgenda = () => {
 
   const handleRefetch = async () => {
     try {
-      await refetch();
+      await refetchSchedules();
       toast({
         title: "Agenda atualizada",
         description: "Os dados da agenda foram atualizados com sucesso.",
@@ -95,8 +95,8 @@ const PromobrasAgenda = () => {
                 <List className="h-4 w-4" />
               </ToggleGroupItem>
             </ToggleGroup>
-            <EditorialLinePopover events={filteredEvents} />
-            <ProductsPopover events={filteredEvents} />
+            <EditorialLinePopover events={filteredSchedules} />
+            <ProductsPopover events={filteredSchedules} />
             <Button 
               variant="outline" 
               size="sm" 
@@ -126,18 +126,17 @@ const PromobrasAgenda = () => {
         <div className={`w-full overflow-x-auto ${isCollapsed ? 'h-[calc(100vh-150px)]' : 'h-[calc(100vh-250px)]'} transition-all duration-300`}>
           {viewMode === "calendar" ? (
             <ContentCalendar
-              events={filteredEvents}
-              clientId={clientId}
+              events={filteredSchedules}
+              clientId={clientId || ""}
               month={selectedMonth}
               year={selectedYear}
-              onMonthYearChange={handleMonthYearChange}
+              onMonthChange={handleMonthYearChange}
               selectedCollaborator={selectedCollaborator}
-              onManualRefetch={refetch}
             />
           ) : (
             <ContentScheduleList
-              events={filteredEvents}
-              clientId={clientId}
+              events={filteredSchedules}
+              clientId={clientId || ""}
               selectedCollaborator={selectedCollaborator}
             />
           )}
