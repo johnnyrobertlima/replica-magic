@@ -1,5 +1,5 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
 import {
@@ -9,9 +9,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
 import type { Group } from "../types";
-import { useState, useEffect } from "react";
 import { useGetGroups } from "../useGetGroups";
 
 interface GroupSelectorProps {
@@ -21,13 +21,17 @@ interface GroupSelectorProps {
 
 export const GroupSelector = ({ selectedGroupId, onGroupChange }: GroupSelectorProps) => {
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [localGroups, setLocalGroups] = useState<Group[]>([]);
 
-  // First check if user is admin
+  // Verificar se o usuário é admin
   useEffect(() => {
     const checkAdminStatus = async () => {
       try {
         const { data: session } = await supabase.auth.getSession();
-        if (!session.session) return;
+        if (!session.session) {
+          toast.error("Você precisa estar logado para acessar esta página");
+          return;
+        }
         
         const { data, error } = await supabase.rpc('check_admin_permission', {
           check_user_id: session.session.user.id
@@ -35,21 +39,44 @@ export const GroupSelector = ({ selectedGroupId, onGroupChange }: GroupSelectorP
         
         if (error) {
           console.error("Error checking admin status:", error);
+          toast.error("Erro ao verificar permissões de administrador");
           return;
         }
         
         setIsAdmin(!!data);
       } catch (error) {
         console.error("Error in admin check:", error);
+        toast.error("Erro ao verificar status de administrador");
       }
     };
     
     checkAdminStatus();
   }, []);
 
-  // Use the dedicated hook to fetch groups
+  // Usar o hook para buscar grupos
   const { data: groups, isLoading, error } = useGetGroups();
 
+  // Backup: Se o hook principal falhar, tentar uma abordagem alternativa direta
+  useEffect(() => {
+    if (error && isAdmin) {
+      console.log("Fetching groups for GroupSelector");
+      const fetchGroups = async () => {
+        try {
+          // Tentar buscar os grupos diretamente da database usando outro método
+          const { data, error } = await supabase.rpc('get_all_groups');
+          
+          if (error) throw error;
+          setLocalGroups(data as Group[]);
+        } catch (err) {
+          console.error("Error in backup group fetch:", err);
+        }
+      };
+      
+      fetchGroups();
+    }
+  }, [error, isAdmin]);
+
+  // Mostrar estado de carregamento
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-12">
@@ -58,37 +85,56 @@ export const GroupSelector = ({ selectedGroupId, onGroupChange }: GroupSelectorP
     );
   }
   
-  if (error) {
+  // Se não for admin, mostrar mensagem apropriada
+  if (!isAdmin) {
+    return (
+      <div className="text-amber-500 flex items-center gap-2">
+        <AlertCircle className="h-5 w-5" />
+        <span>Apenas administradores podem gerenciar permissões.</span>
+      </div>
+    );
+  }
+  
+  // Mostrar erro se ocorrer
+  if (error && !localGroups.length) {
     return (
       <div className="text-red-500">
-        Error loading groups. Please try again.
-        <pre className="text-xs mt-2 p-2 bg-gray-100 rounded overflow-auto">
-          {JSON.stringify(error, null, 2)}
-        </pre>
+        <div className="flex items-center gap-2 mb-2">
+          <AlertCircle className="h-5 w-5" />
+          <span>Erro ao carregar grupos. Por favor, tente novamente.</span>
+        </div>
+        <p className="text-sm text-gray-500 mb-4">
+          Há um problema com as políticas de segurança no banco de dados. 
+          Contate o administrador do sistema.
+        </p>
       </div>
     );
   }
 
-  if (!groups || groups.length === 0) {
+  // Usar grupos do hook principal ou do backup
+  const displayGroups = groups?.length ? groups : localGroups;
+
+  if (!displayGroups || displayGroups.length === 0) {
     return (
-      <div className="text-amber-500">
-        No groups found. Please create a group first.
+      <div className="text-amber-500 flex items-center gap-2">
+        <AlertCircle className="h-5 w-5" />
+        <span>Nenhum grupo encontrado. Crie um grupo primeiro.</span>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-2">
-      <Label htmlFor="group">Select a group</Label>
+      <Label htmlFor="group">Selecione um grupo</Label>
       <Select
         value={selectedGroupId}
         onValueChange={(value) => onGroupChange(value)}
       >
-        <SelectTrigger>
-          <SelectValue placeholder="Select a group" />
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder="Selecione um grupo" />
         </SelectTrigger>
         <SelectContent>
-          {groups?.map((group) => (
+          {displayGroups.map((group) => (
             <SelectItem key={group.id} value={group.id}>
               {group.name}
             </SelectItem>
