@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { format, isSameDay } from "date-fns";
 import { ptBR } from 'date-fns/locale';
@@ -23,7 +23,7 @@ interface ContentCalendarProps {
   useCaptureDate?: boolean;
   selectedCollaborator?: string | null;
   defaultTab?: "details" | "status" | "capture" | "history";
-  prioritizeCaptureDate?: boolean; // Novo parâmetro para priorizar a data de captura
+  prioritizeCaptureDate?: boolean;
 }
 
 export function ContentCalendar({
@@ -37,7 +37,7 @@ export function ContentCalendar({
   useCaptureDate = false,
   selectedCollaborator = null,
   defaultTab = "details",
-  prioritizeCaptureDate = false // Valor padrão é false
+  prioritizeCaptureDate = false
 }: ContentCalendarProps) {
   const [date, setDate] = useState(new Date(year, month - 1, 1));
   const {
@@ -187,7 +187,7 @@ export function ContentCalendar({
         initialFocus
         pagedNavigation
         defaultMonth={date}
-        className="border-none m-4"
+        className="border-none m-4 pointer-events-auto"
         captionLayout="buttons"
         components={{
           Day: renderDayContents
@@ -204,7 +204,7 @@ export function ContentCalendar({
           selectedEvent={selectedEvent}
           onManualRefetch={onManualRefetch}
           defaultTab={defaultTab}
-          prioritizeCaptureDate={prioritizeCaptureDate} // Passamos o novo parâmetro para o diálogo
+          prioritizeCaptureDate={prioritizeCaptureDate}
         />
       )}
     </div>

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { format, addMinutes } from "date-fns";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
@@ -16,19 +17,23 @@ export function useScheduleFormState({
   prioritizeCaptureDate = false
 }: UseScheduleFormStateProps) {
   const [currentSelectedEvent, setCurrentSelectedEvent] = useState<CalendarEvent | null>(selectedEvent || null);
+  
+  // Clone the selectedDate to avoid timezone issues
+  const localSelectedDate = new Date(selectedDate);
+  
   const [formData, setFormData] = useState<ContentScheduleFormData>({
     client_id: clientId,
     service_id: "",
     collaborator_id: null,
     title: "",
     description: null,
-    scheduled_date: prioritizeCaptureDate ? null : format(selectedDate, 'yyyy-MM-dd'),
+    scheduled_date: prioritizeCaptureDate ? null : format(localSelectedDate, 'yyyy-MM-dd'),
     execution_phase: null,
     editorial_line_id: null,
     product_id: null,
     status_id: null,
     creators: [],
-    capture_date: prioritizeCaptureDate ? format(selectedDate, 'yyyy-MM-dd') : null,
+    capture_date: prioritizeCaptureDate ? format(localSelectedDate, 'yyyy-MM-dd') : null,
     capture_end_date: null,
     is_all_day: true,
     location: null
@@ -45,6 +50,24 @@ export function useScheduleFormState({
     }
   }, [selectedEvent]);
 
+  // Update form when selectedDate changes
+  useEffect(() => {
+    if (!currentSelectedEvent && !isUserEditing.current) {
+      // Only update if there's no selected event and user is not editing
+      if (prioritizeCaptureDate) {
+        setFormData(prev => ({
+          ...prev,
+          capture_date: format(localSelectedDate, 'yyyy-MM-dd')
+        }));
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          scheduled_date: format(localSelectedDate, 'yyyy-MM-dd')
+        }));
+      }
+    }
+  }, [localSelectedDate, currentSelectedEvent, prioritizeCaptureDate]);
+
   const resetForm = () => {
     console.log("resetting form in useScheduleFormState");
     setCurrentSelectedEvent(null);
@@ -54,13 +77,13 @@ export function useScheduleFormState({
       collaborator_id: null,
       title: "",
       description: null,
-      scheduled_date: prioritizeCaptureDate ? null : format(selectedDate, 'yyyy-MM-dd'),
+      scheduled_date: prioritizeCaptureDate ? null : format(localSelectedDate, 'yyyy-MM-dd'),
       execution_phase: null,
       editorial_line_id: null,
       product_id: null,
       status_id: null,
       creators: [],
-      capture_date: prioritizeCaptureDate ? format(selectedDate, 'yyyy-MM-dd') : null,
+      capture_date: prioritizeCaptureDate ? format(localSelectedDate, 'yyyy-MM-dd') : null,
       capture_end_date: null,
       is_all_day: true,
       location: null
@@ -183,7 +206,9 @@ export function useScheduleFormState({
     isUserEditing.current = true;
     
     if (value) {
+      // Preserve the original date without timezone adjustments
       const formattedDate = format(value, "yyyy-MM-dd");
+      console.log(`Formatted date for ${name}:`, formattedDate);
       setFormData(prev => ({ ...prev, [name]: formattedDate }));
     } else {
       setFormData(prev => ({ ...prev, [name]: null }));
@@ -201,7 +226,9 @@ export function useScheduleFormState({
     isUserEditing.current = true;
     
     if (value) {
+      // Fix: Use a consistent format that preserves the exact date and time
       const formattedDateTime = format(value, "yyyy-MM-dd'T'HH:mm:ss");
+      console.log(`Formatted dateTime for ${name}:`, formattedDateTime);
       
       if (name === "capture_date" && !formData.capture_end_date && !formData.is_all_day) {
         // If setting a start date with specific time and no end date exists, 

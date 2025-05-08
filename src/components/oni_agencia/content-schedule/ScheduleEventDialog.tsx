@@ -18,7 +18,7 @@ export interface ScheduleEventDialogProps {
   selectedEvent?: CalendarEvent;
   onManualRefetch?: () => void;
   defaultTab?: "details" | "status" | "history" | "capture";
-  prioritizeCaptureDate?: boolean; // Novo parâmetro
+  prioritizeCaptureDate?: boolean;
 }
 
 export function ScheduleEventDialog({
@@ -31,10 +31,15 @@ export function ScheduleEventDialog({
   selectedEvent,
   onManualRefetch,
   defaultTab,
-  prioritizeCaptureDate = false // Valor padrão é false
+  prioritizeCaptureDate = false
 }: ScheduleEventDialogProps) {
-  // Get events for the selected date
-  const { events: dateEvents, isLoading: isLoadingEvents } = useEventsByDate(clientId, selectedDate, !!isOpen);
+  // Get events for the selected date - pass prioritizeCaptureDate to determine which date field to use
+  const { events: dateEvents, isLoading: isLoadingEvents } = useEventsByDate(
+    clientId, 
+    selectedDate, 
+    !!isOpen,
+    prioritizeCaptureDate // Pass this flag to useEventsByDate
+  );
   
   // Combine events from props and from the date query, removing duplicates
   const events = useMemo(() => {
@@ -66,7 +71,7 @@ export function ScheduleEventDialog({
     clientId,
     selectedDate,
     selectedEvent,
-    prioritizeCaptureDate, // Passamos o parâmetro para o hook de estado do formulário
+    prioritizeCaptureDate,
   });
 
   // Use schedule resources and mutations hooks
@@ -155,7 +160,7 @@ export function ScheduleEventDialog({
         onDateTimeChange={handleDateTimeChange}
         onAllDayChange={handleAllDayChange}
         defaultTab={defaultTab}
-        prioritizeCaptureDate={prioritizeCaptureDate} // Passa o parâmetro para o conteúdo do diálogo
+        prioritizeCaptureDate={prioritizeCaptureDate}
       />
     </DialogContainer>
   );
