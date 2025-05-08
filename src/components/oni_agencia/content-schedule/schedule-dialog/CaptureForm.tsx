@@ -1,177 +1,211 @@
 
-import React from 'react';
+import React from "react";
+import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { CalendarIcon, Clock } from "lucide-react";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
-import { 
-  Popover, 
-  PopoverContent, 
-  PopoverTrigger 
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { CalendarIcon, Clock } from "lucide-react";
+import { ContentScheduleFormData } from "@/types/oni-agencia";
 
 interface CaptureFormProps {
-  captureDate: string | null;
-  captureEndDate: string | null;
-  isAllDay: boolean;
-  location: string | null;
-  onCaptureChange: (name: string, value: Date | null) => void;
-  onLocationChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  onAllDayChange: (value: boolean) => void;
+  formData: ContentScheduleFormData;
+  onDateTimeChange: (name: string, date: Date | null) => void;
+  onAllDayChange: (isAllDay: boolean) => void;
+  onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  isReadOnly?: boolean;
 }
 
 export function CaptureForm({
-  captureDate,
-  captureEndDate,
-  isAllDay,
-  location,
-  onCaptureChange,
-  onLocationChange,
-  onAllDayChange
+  formData,
+  onDateTimeChange,
+  onAllDayChange,
+  onInputChange,
+  isReadOnly = false
 }: CaptureFormProps) {
-  // Helper function to parse dates safely
-  const parseDate = (dateStr: string | null): Date | undefined => {
-    if (!dateStr) return undefined;
-    
-    try {
-      const date = new Date(dateStr);
-      return isNaN(date.getTime()) ? undefined : date;
-    } catch (e) {
-      console.error('Error parsing date:', e);
-      return undefined;
-    }
-  };
-  
-  const captureDateTime = parseDate(captureDate);
-  const captureEndDateTime = parseDate(captureEndDate);
+  const captureDate = formData.capture_date ? new Date(formData.capture_date) : null;
+  const captureEndDate = formData.capture_end_date ? new Date(formData.capture_end_date) : null;
   
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <Label htmlFor="all_day" className="text-base font-medium">Dia Inteiro</Label>
-        <Switch 
-          id="all_day"
-          checked={isAllDay === true}
-          onCheckedChange={onAllDayChange}
-        />
-      </div>
-      
-      <div className="grid gap-2">
-        <Label htmlFor="capture_date">Data de Captura</Label>
-        <div className="flex gap-2">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                id="capture_date"
-                variant={"outline"}
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !captureDateTime && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {captureDateTime ? (
-                  isAllDay ? 
-                    format(captureDateTime, "dd/MM/yyyy") : 
-                    format(captureDateTime, "dd/MM/yyyy HH:mm")
-                ) : (
-                  <span>Selecionar data{isAllDay ? "" : " e hora"}</span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={captureDateTime}
-                onSelect={(date) => onCaptureChange("capture_date", date)}
-                initialFocus
-                className="p-3 pointer-events-auto"
-              />
-              {!isAllDay && captureDateTime && (
-                <div className="border-t p-3">
-                  <Input
-                    type="time"
-                    onChange={(e) => {
-                      const [hours, minutes] = e.target.value.split(':');
-                      const newDate = new Date(captureDateTime);
-                      newDate.setHours(parseInt(hours, 10), parseInt(minutes, 10));
-                      onCaptureChange("capture_date", newDate);
-                    }}
-                    defaultValue={captureDateTime ? format(captureDateTime, "HH:mm") : "09:00"}
-                    className="w-full"
+    <div className="space-y-4 p-2">
+      <div className="flex flex-col space-y-2">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="is_all_day" className="text-sm font-medium">
+            Dia inteiro
+          </Label>
+          <Switch
+            id="is_all_day"
+            checked={formData.is_all_day}
+            onCheckedChange={onAllDayChange}
+            disabled={isReadOnly}
+          />
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {formData.is_all_day ? (
+            // Date picker for all-day events
+            <div className="space-y-2">
+              <Label htmlFor="capture_date" className="text-sm font-medium">
+                Data de Captura
+              </Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    id="capture_date"
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !captureDate && "text-muted-foreground"
+                    )}
+                    disabled={isReadOnly}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {captureDate ? format(captureDate, "PPP") : "Selecione uma data"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={captureDate || undefined}
+                    onSelect={(date) => onDateTimeChange("capture_date", date)}
+                    disabled={isReadOnly}
                   />
-                </div>
-              )}
-            </PopoverContent>
-          </Popover>
+                </PopoverContent>
+              </Popover>
+            </div>
+          ) : (
+            // Start and end time pickers for time-specific events
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="capture_date" className="text-sm font-medium">
+                  Início da Captura
+                </Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      id="capture_date"
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !captureDate && "text-muted-foreground"
+                      )}
+                      disabled={isReadOnly}
+                    >
+                      <Clock className="mr-2 h-4 w-4" />
+                      {captureDate ? format(captureDate, "PPP HH:mm") : "Selecione data e hora"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <div className="p-4">
+                      <Calendar
+                        mode="single"
+                        selected={captureDate || undefined}
+                        onSelect={(date) => {
+                          if (date) {
+                            const currentTime = captureDate || new Date();
+                            date.setHours(currentTime.getHours(), currentTime.getMinutes());
+                            onDateTimeChange("capture_date", date);
+                          } else {
+                            onDateTimeChange("capture_date", null);
+                          }
+                        }}
+                        disabled={isReadOnly}
+                      />
+                      <div className="mt-4">
+                        <Label htmlFor="time">Hora</Label>
+                        <Input
+                          id="time"
+                          type="time"
+                          className="mt-1"
+                          value={captureDate ? format(captureDate, "HH:mm") : ""}
+                          onChange={(e) => {
+                            const [hours, minutes] = e.target.value.split(':').map(Number);
+                            const newDate = captureDate ? new Date(captureDate) : new Date();
+                            newDate.setHours(hours, minutes);
+                            onDateTimeChange("capture_date", newDate);
+                          }}
+                          disabled={isReadOnly}
+                        />
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="capture_end_date" className="text-sm font-medium">
+                  Fim da Captura
+                </Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      id="capture_end_date"
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !captureEndDate && "text-muted-foreground"
+                      )}
+                      disabled={isReadOnly}
+                    >
+                      <Clock className="mr-2 h-4 w-4" />
+                      {captureEndDate ? format(captureEndDate, "PPP HH:mm") : "Selecione data e hora"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <div className="p-4">
+                      <Calendar
+                        mode="single"
+                        selected={captureEndDate || undefined}
+                        onSelect={(date) => {
+                          if (date) {
+                            const currentTime = captureEndDate || new Date();
+                            date.setHours(currentTime.getHours(), currentTime.getMinutes());
+                            onDateTimeChange("capture_end_date", date);
+                          } else {
+                            onDateTimeChange("capture_end_date", null);
+                          }
+                        }}
+                        disabled={isReadOnly}
+                      />
+                      <div className="mt-4">
+                        <Label htmlFor="end-time">Hora</Label>
+                        <Input
+                          id="end-time"
+                          type="time"
+                          className="mt-1"
+                          value={captureEndDate ? format(captureEndDate, "HH:mm") : ""}
+                          onChange={(e) => {
+                            const [hours, minutes] = e.target.value.split(':').map(Number);
+                            const newDate = captureEndDate ? new Date(captureEndDate) : new Date();
+                            newDate.setHours(hours, minutes);
+                            onDateTimeChange("capture_end_date", newDate);
+                          }}
+                          disabled={isReadOnly}
+                        />
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </>
+          )}
         </div>
       </div>
       
-      {!isAllDay && (
-        <div className="grid gap-2">
-          <Label htmlFor="capture_end_date">Fim da Captura</Label>
-          <div className="flex gap-2">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  id="capture_end_date"
-                  variant={"outline"}
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !captureEndDateTime && "text-muted-foreground"
-                  )}
-                >
-                  <Clock className="mr-2 h-4 w-4" />
-                  {captureEndDateTime ? (
-                    format(captureEndDateTime, "dd/MM/yyyy HH:mm")
-                  ) : (
-                    <span>Selecionar fim da captura</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={captureEndDateTime}
-                  onSelect={(date) => onCaptureChange("capture_end_date", date)}
-                  initialFocus
-                  className="p-3 pointer-events-auto"
-                />
-                {captureEndDateTime && (
-                  <div className="border-t p-3">
-                    <Input
-                      type="time"
-                      onChange={(e) => {
-                        const [hours, minutes] = e.target.value.split(':');
-                        const newDate = new Date(captureEndDateTime);
-                        newDate.setHours(parseInt(hours, 10), parseInt(minutes, 10));
-                        onCaptureChange("capture_end_date", newDate);
-                      }}
-                      defaultValue={captureEndDateTime ? format(captureEndDateTime, "HH:mm") : "18:00"}
-                      className="w-full"
-                    />
-                  </div>
-                )}
-              </PopoverContent>
-            </Popover>
-          </div>
-        </div>
-      )}
-      
-      <div className="grid gap-2">
-        <Label htmlFor="location">Local</Label>
+      <div className="space-y-2">
+        <Label htmlFor="location" className="text-sm font-medium">
+          Local
+        </Label>
         <Input
           id="location"
           name="location"
-          value={location || ""}
-          onChange={onLocationChange}
-          placeholder="Digite o local da captura"
-          className="border-input"
+          placeholder="Local da captura"
+          value={formData.location || ""}
+          onChange={onInputChange}
+          disabled={isReadOnly}
         />
       </div>
     </div>

@@ -1,43 +1,33 @@
 
-import { Button } from "@/components/ui/button";
+import React from "react";
 import { CalendarEvent } from "@/types/oni-agencia";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface EventListProps {
   events: CalendarEvent[];
   onSelectEvent: (event: CalendarEvent) => void;
-  onCreateNew: () => void;
 }
 
-export function EventList({ events, onSelectEvent, onCreateNew }: EventListProps) {
-  if (events.length === 0) {
-    return null;
+export function EventList({ events, onSelectEvent }: EventListProps) {
+  if (!events || events.length === 0) {
+    return <div className="p-4 text-center text-gray-500">No events for this day</div>;
   }
-  
+
   return (
-    <div className="mb-4">
-      <div className="font-medium mb-2">Selecionar agendamento existente</div>
-      <div className="grid gap-2 mt-2">
-        {events.map(event => (
+    <ScrollArea className="h-64">
+      <div className="px-4 space-y-2">
+        {events.map((event) => (
           <Button
             key={event.id}
             variant="outline"
-            className="justify-start h-auto py-2 px-3 text-left"
-            style={{ borderLeftColor: event.service.color, borderLeftWidth: '4px' }}
+            className="w-full flex justify-start text-left overflow-hidden"
             onClick={() => onSelectEvent(event)}
           >
-            <div>
-              <div className="font-medium">{event.title}</div>
-              <div className="text-sm text-muted-foreground">{event.service.name}</div>
-            </div>
+            <span className="truncate">{event.title || "Unnamed event"}</span>
           </Button>
         ))}
       </div>
-      <div className="flex justify-center mt-4">
-        <Button variant="outline" onClick={() => {
-          console.log("Criar Novo button clicked");
-          onCreateNew();
-        }}>Criar Novo</Button>
-      </div>
-    </div>
+    </ScrollArea>
   );
 }

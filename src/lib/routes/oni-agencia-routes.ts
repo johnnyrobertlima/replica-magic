@@ -7,6 +7,7 @@ import OniAgenciaColaboradores from "@/pages/oni_agencia/OniAgenciaColaboradores
 import OniAgenciaRelatorios from "@/pages/oni_agencia/OniAgenciaRelatorios";
 import OniAgenciaClientScopes from "@/pages/oni_agencia/OniAgenciaClientScopes";
 import OniAgenciaWorkload from "@/pages/oni_agencia/OniAgenciaWorkload";
+import OniAgenciaCapturas from "@/pages/oni_agencia/OniAgenciaCapturas"; // Import the new page
 import VisualizacaoEmCampo from "@/pages/oni_agencia/VisualizacaoEmCampo";
 
 export const oniAgenciaRoutes = [
@@ -45,5 +46,9 @@ export const oniAgenciaRoutes = [
   {
     path: "/client-area/oniagencia/escopos",
     element: OniAgenciaClientScopes,
+  },
+  {
+    path: "/client-area/oniagencia/capturas", // Add the new route for captures page
+    element: OniAgenciaCapturas,
   },
 ] as const;

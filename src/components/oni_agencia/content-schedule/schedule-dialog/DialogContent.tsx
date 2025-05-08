@@ -1,147 +1,192 @@
-import { CalendarEvent, OniAgenciaService, OniAgenciaCollaborator, ContentScheduleFormData, OniAgenciaClient } from "@/types/oni-agencia";
-import { EventList } from "./EventList";
+
+import React, { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CalendarEvent } from "@/types/oni-agencia";
 import { NewEventForm } from "./NewEventForm";
-import { EventEditor } from "./EventEditor";
+import { EventForm } from "./EventForm";
+import { DialogActions } from "./DialogActions";
+import { EventList } from "./EventList";
+import { ContentScheduleFormData } from "@/types/oni-agencia";
+import { StatusUpdateForm } from "./StatusUpdateForm";
+import { ScheduleHistory } from "./ScheduleHistory";
+import { CaptureForm } from "./CaptureForm";
 
 interface DialogContentProps {
-  selectedEvent?: CalendarEvent;
   events: CalendarEvent[];
   currentSelectedEvent: CalendarEvent | null;
+  selectedEvent?: CalendarEvent;
   clientId: string;
   selectedDate: Date;
-  services: OniAgenciaService[];
-  collaborators: OniAgenciaCollaborator[];
-  editorialLines: any[];
-  products: any[];
-  statuses: any[];
-  clients: OniAgenciaClient[];
+  formData: ContentScheduleFormData;
+  isSubmitting: boolean;
+  isDeleting: boolean;
   isLoadingServices: boolean;
   isLoadingCollaborators: boolean;
   isLoadingEditorialLines: boolean;
   isLoadingProducts: boolean;
   isLoadingStatuses: boolean;
   isLoadingClients: boolean;
-  isSubmitting: boolean;
-  isDeleting: boolean;
-  formData: ContentScheduleFormData;
+  services: any[];
+  collaborators: any[];
+  editorialLines: any[];
+  products: any[];
+  statuses: any[];
+  clients: any[];
   onSelectEvent: (event: CalendarEvent) => void;
-  onResetForm: () => void;
-  onSubmit: (e: React.FormEvent) => Promise<void>;
-  onStatusUpdate: (e: React.FormEvent) => Promise<void>;
-  onDelete: () => Promise<void>;
-  onCancel: () => void;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onSelectChange: (name: string, value: string) => void;
   onDateChange: (name: string, value: Date | null) => void;
-  onDateTimeChange?: (name: string, value: Date | null) => void;
-  onAllDayChange?: (value: boolean) => void;
-  defaultTab?: "details" | "status" | "history" | "capture";
+  onDateTimeChange: (name: string, value: Date | null) => void;
+  onAllDayChange: (value: boolean) => void;
+  onSubmit: (e: React.FormEvent) => void;
+  onStatusUpdate: (e: React.FormEvent) => void;
+  onResetForm: () => void;
+  onDelete: () => void;
+  onCancel: () => void;
 }
 
 export function DialogContent({
-  selectedEvent,
   events,
   currentSelectedEvent,
+  selectedEvent,
   clientId,
   selectedDate,
-  services,
-  collaborators,
-  editorialLines,
-  products,
-  statuses,
-  clients,
+  formData,
+  isSubmitting,
+  isDeleting,
   isLoadingServices,
   isLoadingCollaborators,
   isLoadingEditorialLines,
   isLoadingProducts,
   isLoadingStatuses,
   isLoadingClients,
-  isSubmitting,
-  isDeleting,
-  formData,
+  services,
+  collaborators,
+  editorialLines,
+  products,
+  statuses,
+  clients,
   onSelectEvent,
-  onResetForm,
-  onSubmit,
-  onStatusUpdate,
-  onDelete,
-  onCancel,
   onInputChange,
   onSelectChange,
   onDateChange,
   onDateTimeChange,
   onAllDayChange,
-  defaultTab
+  onSubmit,
+  onStatusUpdate,
+  onResetForm,
+  onDelete,
+  onCancel
 }: DialogContentProps) {
-  // Check if there are other events for this date
-  const hasOtherEvents = events && events.length > 0;
-  
-  // Return different content based on whether we're editing or creating
+  const [activeTab, setActiveTab] = useState("details");
+
   return (
-    <>
-      {currentSelectedEvent ? (
-        <EventEditor 
-          event={currentSelectedEvent}
-          clientId={clientId}
-          selectedDate={selectedDate}
-          services={services}
-          collaborators={collaborators}
-          editorialLines={editorialLines}
-          products={products}
-          statuses={statuses}
-          clients={clients}
-          isLoadingServices={isLoadingServices}
-          isLoadingCollaborators={isLoadingCollaborators}
-          isLoadingEditorialLines={isLoadingEditorialLines}
-          isLoadingProducts={isLoadingProducts}
-          isLoadingStatuses={isLoadingStatuses}
-          isLoadingClients={isLoadingClients}
-          isSubmitting={isSubmitting}
-          isDeleting={isDeleting}
-          onSubmit={onSubmit}
-          onStatusUpdate={onStatusUpdate}
-          onDelete={onDelete}
-          onCancel={onCancel}
-          formData={formData}
-          onInputChange={onInputChange}
-          onSelectChange={onSelectChange}
-          onDateChange={onDateChange}
-          onDateTimeChange={onDateTimeChange}
-          onAllDayChange={onAllDayChange}
-          defaultActiveTab={defaultTab}
-        />
-      ) : (
-        <>
-          {hasOtherEvents && (
-            <EventList 
-              events={events} 
+    <div className="max-h-[80vh] overflow-hidden flex flex-col">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="w-full">
+              <TabsTrigger value="details" className="flex-1">
+                Detalhes
+              </TabsTrigger>
+              {currentSelectedEvent && (
+                <>
+                  <TabsTrigger value="status" className="flex-1">
+                    Atualizar Status
+                  </TabsTrigger>
+                  <TabsTrigger value="history" className="flex-1">
+                    Histórico
+                  </TabsTrigger>
+                  <TabsTrigger value="capture" className="flex-1">
+                    Captura
+                  </TabsTrigger>
+                </>
+              )}
+            </TabsList>
+
+            <TabsContent value="details" className="mt-2">
+              {currentSelectedEvent ? (
+                <EventForm
+                  event={currentSelectedEvent}
+                  formData={formData}
+                  onInputChange={onInputChange}
+                  onSelectChange={onSelectChange}
+                  onDateChange={onDateChange}
+                  services={services}
+                  collaborators={collaborators}
+                  editorialLines={editorialLines}
+                  products={products}
+                  isLoadingServices={isLoadingServices}
+                  isLoadingCollaborators={isLoadingCollaborators}
+                  isLoadingEditorialLines={isLoadingEditorialLines}
+                  isLoadingProducts={isLoadingProducts}
+                />
+              ) : (
+                <NewEventForm
+                  formData={formData}
+                  onInputChange={onInputChange}
+                  onSelectChange={onSelectChange}
+                  onDateChange={onDateChange}
+                  services={services}
+                  collaborators={collaborators}
+                  editorialLines={editorialLines}
+                  products={products}
+                  isLoadingServices={isLoadingServices}
+                  isLoadingCollaborators={isLoadingCollaborators}
+                  isLoadingEditorialLines={isLoadingEditorialLines}
+                  isLoadingProducts={isLoadingProducts}
+                />
+              )}
+            </TabsContent>
+
+            {currentSelectedEvent && (
+              <>
+                <TabsContent value="status" className="mt-2">
+                  <StatusUpdateForm
+                    event={currentSelectedEvent}
+                    formData={formData}
+                    onSelectChange={onSelectChange}
+                    statuses={statuses}
+                    isLoadingStatuses={isLoadingStatuses}
+                  />
+                </TabsContent>
+                <TabsContent value="history" className="mt-2">
+                  <ScheduleHistory scheduleId={currentSelectedEvent.id} />
+                </TabsContent>
+                <TabsContent value="capture" className="mt-2">
+                  <CaptureForm
+                    formData={formData}
+                    onDateTimeChange={onDateTimeChange}
+                    onAllDayChange={onAllDayChange}
+                    onInputChange={onInputChange}
+                  />
+                </TabsContent>
+              </>
+            )}
+          </Tabs>
+        </div>
+
+        <div className="lg:col-span-1 border rounded-md">
+          <div className="p-2">
+            <h3 className="font-medium mb-2">Eventos do dia</h3>
+            <EventList
+              events={events}
               onSelectEvent={onSelectEvent}
-              clientId={clientId}
             />
-          )}
-          <NewEventForm 
-            formData={formData}
-            services={services}
-            collaborators={collaborators}
-            editorialLines={editorialLines}
-            products={products}
-            statuses={statuses}
-            clients={clients}
-            isLoadingServices={isLoadingServices}
-            isLoadingCollaborators={isLoadingCollaborators}
-            isLoadingEditorialLines={isLoadingEditorialLines}
-            isLoadingProducts={isLoadingProducts}
-            isLoadingStatuses={isLoadingStatuses}
-            isLoadingClients={isLoadingClients}
-            isSubmitting={isSubmitting}
-            isDeleting={isDeleting}
-            onSubmit={onSubmit}
-            onCancel={onCancel}
-            onInputChange={onInputChange}
-            onSelectChange={onSelectChange}
-            onDateChange={onDateChange}
-          />
-        </>
-      )}
-    </>
+          </div>
+        </div>
+      </div>
+
+      <DialogActions
+        isEditMode={!!currentSelectedEvent}
+        isSubmitting={isSubmitting}
+        isDeleting={isDeleting}
+        onSubmit={activeTab === "status" ? onStatusUpdate : onSubmit}
+        onDelete={onDelete}
+        onCancel={onCancel}
+        onNewEvent={onResetForm}
+        activeTab={activeTab}
+      />
+    </div>
   );
 }

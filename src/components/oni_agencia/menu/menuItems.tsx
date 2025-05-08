@@ -1,30 +1,71 @@
 
-import { 
-  BarChart2, 
-  Smartphone, 
-  CalendarDays, 
-  CheckSquare, 
-  Users, 
-  FileSpreadsheet, 
-  UserPlus, 
-  Briefcase, 
-  BookText 
+import {
+  BarChartIcon,
+  CalendarIcon,
+  ClipboardListIcon,
+  UsersIcon,
+  TruckIcon,
+  SettingsIcon,
+  LayoutDashboardIcon,
+  GalleryThumbnailsIcon,
+  CameraIcon
 } from "lucide-react";
-import { MenuItemType } from "./types";
 
-// Main menu items (non-admin)
-export const getMainMenuItems = (): MenuItemType[] => [
-  { name: "Home Oni Agência", path: "/client-area/oniagencia", icon: <BarChart2 className="h-4 w-4 mr-2" /> },
-  { name: "Visualização em Campo", path: "/client-area/oniagencia/controle-pauta/visualizacaoemcampo", icon: <Smartphone className="h-4 w-4 mr-2" /> },
-  { name: "Controle de Pauta", path: "/client-area/oniagencia/controle-pauta", icon: <CalendarDays className="h-4 w-4 mr-2" /> },
-  { name: "Relatórios", path: "/client-area/oniagencia/relatorios", icon: <CheckSquare className="h-4 w-4 mr-2" /> },
+export const menuItems = [
+  {
+    title: "Home",
+    icon: <LayoutDashboardIcon className="w-5 h-5" />,
+    href: "/client-area/oniagencia",
+  },
+  {
+    title: "Controle de Pauta",
+    icon: <CalendarIcon className="w-5 h-5" />,
+    href: "/client-area/oniagencia/controle-pauta",
+  },
+  {
+    title: "Agenda de Capturas",
+    icon: <CameraIcon className="w-5 h-5" />,
+    href: "/client-area/oniagencia/capturas",
+  },
+  {
+    title: "Clientes",
+    icon: <UsersIcon className="w-5 h-5" />,
+    href: "/client-area/oniagencia/clientes",
+  },
+  {
+    title: "Serviços",
+    icon: <ClipboardListIcon className="w-5 h-5" />,
+    href: "/client-area/oniagencia/servicos",
+  },
+  {
+    title: "Colaboradores",
+    icon: <TruckIcon className="w-5 h-5" />,
+    href: "/client-area/oniagencia/colaboradores",
+  },
+  {
+    title: "Relatórios",
+    icon: <BarChartIcon className="w-5 h-5" />,
+    href: "/client-area/oniagencia/relatorios",
+  },
+  {
+    title: "Escopos",
+    icon: <GalleryThumbnailsIcon className="w-5 h-5" />,
+    href: "/client-area/oniagencia/escopos",
+  },
+  {
+    title: "Carga de Colaboradores",
+    icon: <SettingsIcon className="w-5 h-5" />,
+    href: "/client-area/oniagencia/cargacolab",
+  },
 ];
 
-// Admin submenu items
-export const getAdminMenuItems = (): MenuItemType[] => [
-  { name: "Clientes", path: "/client-area/oniagencia/clientes", icon: <Users className="h-4 w-4 mr-2" /> },
-  { name: "Serviços", path: "/client-area/oniagencia/servicos", icon: <FileSpreadsheet className="h-4 w-4 mr-2" /> },
-  { name: "Colaboradores", path: "/client-area/oniagencia/colaboradores", icon: <UserPlus className="h-4 w-4 mr-2" /> },
-  { name: "Escopo por Cliente", path: "/client-area/oniagencia/escopos", icon: <Briefcase className="h-4 w-4 mr-2" /> },
-  { name: "Gerenciar Conteúdo", path: "/admin/sub-themes", icon: <BookText className="h-4 w-4 mr-2" /> },
+export const adminSubmenuItems = [
+  {
+    title: "Administradores",
+    href: "/admin/users",
+  },
+  {
+    title: "Permissões",
+    href: "/admin/permissions",
+  },
 ];
