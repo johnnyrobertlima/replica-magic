@@ -16,6 +16,7 @@ import { GroupForm } from "./groups/GroupForm";
 import { GroupsTable } from "./groups/GroupsTable";
 import { useGroupMutations } from "./groups/useGroupMutations";
 import type { Group, GroupFormData } from "./groups/types";
+import { useToast } from "@/hooks/use-toast";
 
 export const AdminGroups = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -23,46 +24,60 @@ export const AdminGroups = () => {
   const [formData, setFormData] = useState<GroupFormData>({
     name: "",
     description: "",
-    homepage: "", // Adicionando o campo homepage
+    homepage: "",
   });
-
+  const { toast } = useToast();
   const { createMutation, updateMutation, deleteMutation } = useGroupMutations();
 
   const { data: groups, isLoading } = useQuery({
     queryKey: ["groups"],
     queryFn: async () => {
-      const { data: session } = await supabase.auth.getSession();
-      if (!session) throw new Error("No session");
+      try {
+        const { data: session } = await supabase.auth.getSession();
+        if (!session) throw new Error("No session");
 
-      const { data, error } = await supabase
-        .from("groups")
-        .select("*")
-        .order("name");
-      
-      if (error) throw error;
-      return data as Group[];
+        const { data, error } = await supabase
+          .from("groups")
+          .select("*")
+          .order("name");
+        
+        if (error) throw error;
+        return data as Group[];
+      } catch (error: any) {
+        console.error("Error fetching groups:", error);
+        toast({
+          title: "Erro ao carregar grupos",
+          description: error.message || "Ocorreu um erro ao carregar os grupos",
+          variant: "destructive",
+        });
+        return [];
+      }
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingGroup) {
-      updateMutation.mutate(
-        { id: editingGroup.id, data: formData },
-        {
+    try {
+      if (editingGroup) {
+        await updateMutation.mutateAsync(
+          { id: editingGroup.id, data: formData },
+          {
+            onSuccess: () => {
+              setIsOpen(false);
+              resetForm();
+            },
+          }
+        );
+      } else {
+        await createMutation.mutateAsync(formData, {
           onSuccess: () => {
             setIsOpen(false);
             resetForm();
           },
-        }
-      );
-    } else {
-      createMutation.mutate(formData, {
-        onSuccess: () => {
-          setIsOpen(false);
-          resetForm();
-        },
-      });
+        });
+      }
+    } catch (error: any) {
+      console.error("Error in handleSubmit:", error);
     }
   };
 
@@ -71,14 +86,18 @@ export const AdminGroups = () => {
     setFormData({
       name: group.name,
       description: group.description || "",
-      homepage: group.homepage || "", // Adicionando o campo homepage
+      homepage: group.homepage || "",
     });
     setIsOpen(true);
   };
 
   const handleDelete = async (id: string) => {
     if (window.confirm("Tem certeza que deseja excluir este grupo?")) {
-      deleteMutation.mutate(id);
+      try {
+        await deleteMutation.mutateAsync(id);
+      } catch (error) {
+        console.error("Error in handleDelete:", error);
+      }
     }
   };
 
@@ -86,7 +105,7 @@ export const AdminGroups = () => {
     setFormData({
       name: "",
       description: "",
-      homepage: "", // Adicionando o campo homepage
+      homepage: "",
     });
     setEditingGroup(null);
   };
