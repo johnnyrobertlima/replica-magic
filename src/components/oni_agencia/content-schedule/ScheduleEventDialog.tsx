@@ -1,4 +1,5 @@
-import { useMemo, useEffect } from "react";
+
+import { useMemo, useEffect, useState } from "react";
 import { useScheduleFormState } from "@/hooks/oni_agencia/useScheduleFormState";
 import { useScheduleResources } from "./hooks/useScheduleResources";
 import { useScheduleMutations } from "./hooks/useScheduleMutations";
@@ -33,21 +34,33 @@ export function ScheduleEventDialog({
   defaultTab,
   prioritizeCaptureDate = false
 }: ScheduleEventDialogProps) {
+  // Add state to track loading and prevent loops
+  const [isInitialized, setIsInitialized] = useState(false);
+  
   // Log dialog state for debugging
   useEffect(() => {
-    console.log(`ScheduleEventDialog - isOpen: ${isOpen}, clientId: ${clientId}, selectedDate: ${format(selectedDate, 'yyyy-MM-dd')}`);
-  }, [isOpen, clientId, selectedDate]);
+    console.log(`ScheduleEventDialog - isOpen: ${isOpen}, clientId: ${clientId}, selectedDate: ${selectedDate ? format(selectedDate, 'yyyy-MM-dd') : 'undefined'}`);
+    
+    // Mark as initialized once component mounts
+    if (!isInitialized) {
+      setIsInitialized(true);
+    }
+  }, [isOpen, clientId, selectedDate, isInitialized]);
 
   // Get events for the selected date - pass prioritizeCaptureDate to determine which date field to use
+  // Only enable query when dialog is open and we have clientId and selectedDate
   const { events: dateEvents, isLoading: isLoadingEvents } = useEventsByDate(
     clientId, 
     selectedDate, 
-    !!isOpen,
-    prioritizeCaptureDate // Pass this flag to useEventsByDate
+    !!isOpen && !!clientId && !!selectedDate,
+    prioritizeCaptureDate
   );
   
   // Combine events from props and from the date query, removing duplicates
+  // Use useMemo to prevent unnecessary re-renders
   const events = useMemo(() => {
+    if (!propEvents && !dateEvents) return [];
+    
     const allEvents = [...(propEvents || []), ...(dateEvents || [])];
     // Remove duplicates based on event ID
     const uniqueEvents = allEvents.reduce((acc, current) => {
@@ -74,7 +87,7 @@ export function ScheduleEventDialog({
     handleAllDayChange
   } = useScheduleFormState({
     clientId,
-    selectedDate: new Date(selectedDate),
+    selectedDate: selectedDate ? new Date(selectedDate) : new Date(),
     selectedEvent,
     prioritizeCaptureDate,
   });
@@ -142,7 +155,12 @@ export function ScheduleEventDialog({
       selectedDate={selectedDate}
       onClose={onClose}
       title={dialogTitle}
+      aria-describedby="schedule-dialog-description"
     >
+      <div id="schedule-dialog-description" className="sr-only">
+        Formulário de criação ou edição de agendamento de conteúdo.
+      </div>
+      
       <DialogContent
         selectedEvent={selectedEvent}
         events={events}

@@ -1,6 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { format, parse, isValid } from "date-fns";
-import { addMinutes, parseISO } from "date-fns";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { format, parse, isValid, addMinutes } from "date-fns";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
 
 interface UseScheduleFormStateProps {
@@ -11,14 +10,13 @@ interface UseScheduleFormStateProps {
 }
 
 // Função de utilidade para converter string de data para objeto Date
-// sem o problema de UTC/timezone
 function parseLocalDate(dateString: string | null): Date | null {
   if (!dateString) return null;
   
   try {
     // Se a string já tem formato ISO com hora (T)
     if (dateString.includes('T')) {
-      const date = parseISO(dateString);
+      const date = new Date(dateString);
       return isValid(date) ? date : null;
     }
     
@@ -43,29 +41,35 @@ export function useScheduleFormState({
 }: UseScheduleFormStateProps) {
   const [currentSelectedEvent, setCurrentSelectedEvent] = useState<CalendarEvent | null>(selectedEvent || null);
   
-  // Clone the selectedDate to avoid timezone issues
-  const localSelectedDate = new Date(selectedDate);
+  // Create a stable reference to the selected date to avoid recreation on each render
+  const localSelectedDate = useMemo(() => new Date(selectedDate), [selectedDate]);
   
-  const [formData, setFormData] = useState<ContentScheduleFormData>({
-    client_id: clientId,
-    service_id: "",
-    collaborator_id: null,
-    title: "",
-    description: null,
-    scheduled_date: prioritizeCaptureDate ? null : localSelectedDate,
-    execution_phase: null,
-    editorial_line_id: null,
-    product_id: null,
-    status_id: null,
-    creators: [],
-    capture_date: prioritizeCaptureDate ? localSelectedDate : null,
-    capture_end_date: null,
-    is_all_day: true,
-    location: null
+  const [formData, setFormData] = useState<ContentScheduleFormData>(() => {
+    // Initialize form data with proper date values to avoid unnecessary updates
+    return {
+      client_id: clientId,
+      service_id: "",
+      collaborator_id: null,
+      title: "",
+      description: null,
+      scheduled_date: prioritizeCaptureDate ? null : localSelectedDate,
+      execution_phase: null,
+      editorial_line_id: null,
+      product_id: null,
+      status_id: null,
+      creators: [],
+      capture_date: prioritizeCaptureDate ? localSelectedDate : null,
+      capture_end_date: null,
+      is_all_day: true,
+      location: null
+    };
   });
   
   // Use a ref to track when we're in the middle of user input
   const isUserEditing = useRef(false);
+  
+  // Flag to prevent infinite loops on date updates
+  const hasUpdatedRef = useRef(false);
 
   // Set the selectedEvent when it comes from props
   useEffect(() => {
@@ -75,30 +79,31 @@ export function useScheduleFormState({
     }
   }, [selectedEvent]);
 
-  // Update form when selectedDate changes to keep dates in sync
+  // Update form when selectedDate changes - with proper dependency array
   useEffect(() => {
-    if (!currentSelectedEvent && !isUserEditing.current) {
-      // Only update if there's no selected event and user is not editing
+    // Only update if there's no selected event, user is not editing, and we haven't updated yet
+    if (!currentSelectedEvent && !isUserEditing.current && !hasUpdatedRef.current) {
       console.log("Updating form with selected date:", localSelectedDate);
       
-      const updatedState: Partial<ContentScheduleFormData> = {};
-      
-      if (prioritizeCaptureDate) {
-        updatedState.capture_date = localSelectedDate;
-      } else {
-        updatedState.scheduled_date = localSelectedDate;
-      }
+      // Set the flag to true to prevent multiple updates
+      hasUpdatedRef.current = true;
       
       setFormData(prev => ({
         ...prev,
-        ...updatedState
+        [prioritizeCaptureDate ? 'capture_date' : 'scheduled_date']: localSelectedDate
       }));
+      
+      // Reset the flag after a while to allow future updates if needed
+      setTimeout(() => {
+        hasUpdatedRef.current = false;
+      }, 500);
     }
   }, [localSelectedDate, currentSelectedEvent, prioritizeCaptureDate]);
 
   const resetForm = () => {
     console.log("resetting form in useScheduleFormState");
     setCurrentSelectedEvent(null);
+    hasUpdatedRef.current = false;
     
     const initialData: ContentScheduleFormData = {
       client_id: clientId,
@@ -118,7 +123,7 @@ export function useScheduleFormState({
       location: null
     };
     
-    // Mantenha como objeto Date, não string
+    // Set the appropriate date field based on prioritizeCaptureDate
     if (prioritizeCaptureDate) {
       initialData.capture_date = localSelectedDate;
     } else {
