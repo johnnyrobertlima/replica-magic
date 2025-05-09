@@ -13,6 +13,34 @@ interface UseScheduleMutationsProps {
   onManualRefetch?: () => void;
 }
 
+// Helper function to convert Date objects to strings for API
+const convertDatesToStrings = (data: ContentScheduleFormData) => {
+  const result: Record<string, any> = { ...data };
+  
+  // Convert Date objects to string format expected by API
+  if (data.scheduled_date instanceof Date) {
+    result.scheduled_date = format(data.scheduled_date, 'yyyy-MM-dd');
+  }
+  
+  if (data.capture_date instanceof Date) {
+    if (data.is_all_day) {
+      result.capture_date = format(data.capture_date, 'yyyy-MM-dd');
+    } else {
+      result.capture_date = format(data.capture_date, "yyyy-MM-dd'T'HH:mm:ss");
+    }
+  }
+  
+  if (data.capture_end_date instanceof Date) {
+    if (data.is_all_day) {
+      result.capture_end_date = format(data.capture_end_date, 'yyyy-MM-dd');
+    } else {
+      result.capture_end_date = format(data.capture_end_date, "yyyy-MM-dd'T'HH:mm:ss");
+    }
+  }
+  
+  return result;
+};
+
 export function useScheduleMutations({
   clientId,
   selectedDate,
@@ -37,25 +65,19 @@ export function useScheduleMutations({
       try {
         setIsSubmitting(true);
         
-        // Format the date as YYYY-MM-DD
-        const scheduledDate = format(selectedDate, "yyyy-MM-dd");
-        
-        // Create the final data to submit
-        const dataToSubmit: ContentScheduleFormData = {
-          ...formData,
-          scheduled_date: scheduledDate
-        };
+        // Convert all Date objects to strings for API
+        const apiData = convertDatesToStrings(formData);
         
         // Determine if we're creating or updating
         if (currentSelectedEvent) {
           // Update existing schedule
           await updateMutation.mutateAsync({ 
             id: currentSelectedEvent.id,
-            data: dataToSubmit
+            data: apiData
           });
         } else {
           // Create new schedule
-          await createMutation.mutateAsync(dataToSubmit);
+          await createMutation.mutateAsync(apiData);
         }
         
         // Call the onSuccess callback if provided
@@ -89,18 +111,19 @@ export function useScheduleMutations({
         
         setIsSubmitting(true);
         
-        // Only update the status and collaborator
-        const dataToUpdate = {
+        // Only update the status, collaborator and description
+        // We need to ensure these are properly formatted for the API
+        const apiData = convertDatesToStrings({
           ...currentSelectedEvent,
           status_id: formData.status_id,
           collaborator_id: formData.collaborator_id,
           description: formData.description
-        };
+        } as ContentScheduleFormData);
         
         // Update the status
         await updateMutation.mutateAsync({
           id: currentSelectedEvent.id,
-          data: dataToUpdate
+          data: apiData
         });
         
         // Call the onSuccess callback if provided

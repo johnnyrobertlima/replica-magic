@@ -1,3 +1,4 @@
+
 // Modify the OniAgenciaContentSchedule interface to make scheduled_date optional when capture_date is present
 export interface OniAgenciaContentSchedule {
   id: string;
@@ -6,7 +7,7 @@ export interface OniAgenciaContentSchedule {
   collaborator_id: string | null;
   title: string | null; 
   description: string | null;
-  scheduled_date: string | null; // Permanece como string no modelo de dados
+  scheduled_date: string | null; // Permanece como string no modelo de dados da API
   execution_phase: string | null;
   editorial_line_id: string | null;
   product_id: string | null;

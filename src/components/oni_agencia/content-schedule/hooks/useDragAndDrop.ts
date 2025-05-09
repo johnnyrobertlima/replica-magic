@@ -2,10 +2,20 @@
 import { useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { CalendarEvent } from "@/types/oni-agencia";
+import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
 import { updateContentSchedule } from "@/services/oniAgenciaContentScheduleServices";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 import { DragStartEvent, DragEndEvent } from "@dnd-kit/core";
+
+// Helper function to convert string date to Date object
+const parseStringToDate = (dateString: string): Date => {
+  if (dateString.includes('T')) {
+    return new Date(dateString);
+  }
+  // Parse YYYY-MM-DD format to Date object
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
 
 export function useDragAndDrop() {
   const [isDragging, setIsDragging] = useState(false);
@@ -63,13 +73,15 @@ export function useDragAndDrop() {
     try {
       console.log(`Moving event ${activeDragEvent.id} from ${activeDragEvent.scheduled_date} to ${formattedDate}`);
       
-      // Create update data
-      const updateData = {
+      // Convert string dates to Date objects for ContentScheduleFormData
+      const updateData: Partial<ContentScheduleFormData> = {
         ...activeDragEvent,
-        scheduled_date: formattedDate
+        scheduled_date: date, // Use Date object for scheduled_date
+        capture_date: activeDragEvent.capture_date ? parseStringToDate(activeDragEvent.capture_date) : null,
+        capture_end_date: activeDragEvent.capture_end_date ? parseStringToDate(activeDragEvent.capture_end_date) : null
       };
       
-      // Remove unnecessary fields
+      // Remove unnecessary fields for API call
       delete (updateData as any).id;
       delete (updateData as any).service;
       delete (updateData as any).collaborator;
@@ -79,6 +91,14 @@ export function useDragAndDrop() {
       delete (updateData as any).client;
       delete (updateData as any).created_at;
       delete (updateData as any).updated_at;
+      
+      // Convert back to API format (strings)
+      const apiData = {
+        ...updateData,
+        scheduled_date: formattedDate,
+        capture_date: updateData.capture_date ? format(updateData.capture_date, 'yyyy-MM-dd') : null,
+        capture_end_date: updateData.capture_end_date ? format(updateData.capture_end_date, 'yyyy-MM-dd') : null
+      };
       
       // Backup of the original event for use in case of error
       const originalEvent = { ...activeDragEvent };
@@ -135,7 +155,7 @@ export function useDragAndDrop() {
       }
       
       // Make the update API call with the correct event ID
-      await updateContentSchedule(activeDragEvent.id, updateData);
+      await updateContentSchedule(activeDragEvent.id, apiData);
       
       // Show success toast
       toast({

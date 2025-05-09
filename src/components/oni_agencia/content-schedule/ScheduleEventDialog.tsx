@@ -1,4 +1,3 @@
-
 import { useMemo } from "react";
 import { useScheduleFormState } from "@/hooks/oni_agencia/useScheduleFormState";
 import { useScheduleResources } from "./hooks/useScheduleResources";
@@ -92,30 +91,12 @@ export function ScheduleEventDialog({
   } = useScheduleResources(clientId);
 
   // Função auxiliar para formatar a data ao enviar para a API
-  const prepareDataForAPI = (data: ContentScheduleFormData) => {
+  const prepareDataForAPI = (data: ContentScheduleFormData): ContentScheduleFormData => {
     // Clone o objeto para não modificar o original
-    const preparedData = { ...data } as Record<string, any>;
+    const preparedData: ContentScheduleFormData = { ...data };
     
-    // Converter objetos Date para o formato esperado pela API
-    if (preparedData.scheduled_date instanceof Date) {
-      preparedData.scheduled_date = format(preparedData.scheduled_date, 'yyyy-MM-dd');
-    }
-    
-    if (preparedData.capture_date instanceof Date) {
-      if (preparedData.is_all_day) {
-        preparedData.capture_date = format(preparedData.capture_date, 'yyyy-MM-dd');
-      } else {
-        preparedData.capture_date = format(preparedData.capture_date, "yyyy-MM-dd'T'HH:mm:ss");
-      }
-    }
-    
-    if (preparedData.capture_end_date instanceof Date) {
-      if (preparedData.is_all_day) {
-        preparedData.capture_end_date = format(preparedData.capture_end_date, 'yyyy-MM-dd');
-      } else {
-        preparedData.capture_end_date = format(preparedData.capture_end_date, "yyyy-MM-dd'T'HH:mm:ss");
-      }
-    }
+    // Manter os campos do tipo Date como Date objects
+    // A conversão para string acontecerá somente na camada de serviço antes do envio à API
     
     return preparedData;
   };
@@ -135,13 +116,13 @@ export function ScheduleEventDialog({
   
   // Wrap handlers to match expected function signatures
   const handleSubmit = async (e: React.FormEvent) => {
-    // Converter os objetos Date para strings no formato esperado pela API
+    // Prepare data but keep Date objects
     const preparedData = prepareDataForAPI(formData);
     await submitEvent(e, currentSelectedEvent, preparedData);
   };
   
   const handleStatusUpdate = async (e: React.FormEvent) => {
-    // Converter os objetos Date para strings no formato esperado pela API
+    // Prepare data but keep Date objects
     const preparedData = prepareDataForAPI(formData);
     await updateStatus(e, currentSelectedEvent, preparedData);
   };

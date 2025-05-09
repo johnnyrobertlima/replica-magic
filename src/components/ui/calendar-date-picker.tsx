@@ -1,6 +1,6 @@
 
 import * as React from "react";
-import { format, parse } from "date-fns";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -28,7 +28,6 @@ export function CalendarDatePicker({
   disabled = false,
 }: CalendarDatePickerProps) {
   // Garantir que o valor seja um objeto Date válido
-  // Não criamos uma nova Date com new Date() para evitar conversões UTC implícitas
   const dateValue = value instanceof Date && !isNaN(value.getTime()) 
     ? value 
     : null;
