@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { format, addMinutes, parseISO, parse } from "date-fns";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
@@ -8,13 +7,15 @@ interface UseScheduleFormStateProps {
   selectedDate: Date;
   selectedEvent?: CalendarEvent;
   prioritizeCaptureDate?: boolean;
+  isOpen?: boolean; // Add isOpen parameter
 }
 
 export function useScheduleFormState({
   clientId,
   selectedDate,
   selectedEvent,
-  prioritizeCaptureDate = false
+  prioritizeCaptureDate = false,
+  isOpen = false // Default to false if not provided
 }: UseScheduleFormStateProps) {
   const [currentSelectedEvent, setCurrentSelectedEvent] = useState<CalendarEvent | null>(selectedEvent || null);
   
@@ -42,35 +43,41 @@ export function useScheduleFormState({
   
   // Use a ref to track when we're in the middle of user input
   const isUserEditing = useRef(false);
+  
+  // Flag to prevent infinite loops on date updates
+  const hasUpdatedRef = useRef(false);
 
   // Set the selectedEvent when it comes from props
   useEffect(() => {
-    if (selectedEvent && !isUserEditing.current) {
+    if (selectedEvent) {
       console.log("useScheduleFormState selectedEvent effect:", selectedEvent.id);
       handleSelectEvent(selectedEvent);
+    } else {
+      // Clear currentSelectedEvent when selectedEvent becomes undefined
+      setCurrentSelectedEvent(null);
     }
   }, [selectedEvent]);
 
   // Update form when selectedDate changes to keep dates in sync
   useEffect(() => {
-    if (!currentSelectedEvent && !isUserEditing.current) {
-      // Only update if there's no selected event and user is not editing
+    // Only update if there's no selected event, user is not editing, we haven't updated yet, and dialog is open
+    if (isOpen && !currentSelectedEvent && !isUserEditing.current && !hasUpdatedRef.current) {
       console.log("Updating form with selected date:", localSelectedDate);
       
-      const updatedState: Partial<ContentScheduleFormData> = {};
-      
-      if (prioritizeCaptureDate) {
-        updatedState.capture_date = localSelectedDate;
-      } else {
-        updatedState.scheduled_date = localSelectedDate;
-      }
+      // Set the flag to true to prevent multiple updates
+      hasUpdatedRef.current = true;
       
       setFormData(prev => ({
         ...prev,
-        ...updatedState
+        [prioritizeCaptureDate ? 'capture_date' : 'scheduled_date']: localSelectedDate
       }));
+      
+      // Reset the flag after a while to allow future updates if needed
+      setTimeout(() => {
+        hasUpdatedRef.current = false;
+      }, 500);
     }
-  }, [localSelectedDate, currentSelectedEvent, prioritizeCaptureDate]);
+  }, [localSelectedDate, currentSelectedEvent, prioritizeCaptureDate, isOpen]);
 
   const resetForm = () => {
     console.log("resetting form in useScheduleFormState");
