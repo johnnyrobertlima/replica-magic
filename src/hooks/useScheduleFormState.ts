@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useRef } from "react";
-import { format } from "date-fns";
+import { format, addMinutes } from "date-fns";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
 
 export function useScheduleFormState({
@@ -19,7 +19,7 @@ export function useScheduleFormState({
     collaborator_id: null,
     title: "",
     description: null,
-    scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
+    scheduled_date: selectedDate, // Use Date object directly
     execution_phase: null,
     editorial_line_id: null,
     product_id: null,
@@ -51,7 +51,7 @@ export function useScheduleFormState({
       collaborator_id: null,
       title: "",
       description: null,
-      scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
+      scheduled_date: selectedDate, // Use Date object directly
       execution_phase: null,
       editorial_line_id: null,
       product_id: null,
@@ -62,6 +62,25 @@ export function useScheduleFormState({
       is_all_day: true,
       location: null
     });
+  };
+
+  // Helper function to parse string dates to Date objects
+  const parseStringToDate = (dateString: string | null): Date | null => {
+    if (!dateString) return null;
+    
+    try {
+      // For ISO format with time
+      if (dateString.includes('T')) {
+        return new Date(dateString);
+      }
+      
+      // For YYYY-MM-DD format
+      const [year, month, day] = dateString.split('-').map(Number);
+      return new Date(year, month - 1, day);
+    } catch (e) {
+      console.error("Error parsing date string:", dateString, e);
+      return null;
+    }
   };
 
   const handleSelectEvent = (event: CalendarEvent) => {
@@ -95,14 +114,14 @@ export function useScheduleFormState({
       collaborator_id: event.collaborator_id,
       title: event.title || "", // Garantir que nunca seja null
       description: event.description,
-      scheduled_date: event.scheduled_date,
+      scheduled_date: parseStringToDate(event.scheduled_date), // Convert to Date
       execution_phase: event.execution_phase,
       editorial_line_id: event.editorial_line_id,
       product_id: event.product_id,
       status_id: event.status_id,
       creators: creatorsArray,
-      capture_date: event.capture_date,
-      capture_end_date: event.capture_end_date,
+      capture_date: parseStringToDate(event.capture_date), // Convert to Date
+      capture_end_date: parseStringToDate(event.capture_end_date), // Convert to Date
       is_all_day: event.is_all_day !== null ? event.is_all_day : true,
       location: event.location
     });
@@ -173,19 +192,12 @@ export function useScheduleFormState({
     }, 100);
   };
   
-  // Add handleDateChange function
+  // Add handleDateChange function that now works with Date objects directly
   const handleDateChange = (name: string, value: Date | null) => {
     console.log("Date changed:", name, value);
     
     isUserEditing.current = true;
-    
-    if (value) {
-      const formattedDate = format(value, "yyyy-MM-dd");
-      setFormData(prev => ({ ...prev, [name]: formattedDate }));
-    } else {
-      setFormData(prev => ({ ...prev, [name]: null }));
-    }
-    
+    setFormData(prev => ({ ...prev, [name]: value }));
     setTimeout(() => {
       isUserEditing.current = false;
     }, 100);

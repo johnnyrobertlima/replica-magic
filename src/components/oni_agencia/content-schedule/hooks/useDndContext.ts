@@ -100,7 +100,7 @@ export function useDndContext({ clientId, month, year, onManualRefetch }: UseDnd
       console.log(`Moving event ${eventId} from ${oldDate} to ${newDateStr}`);
       
       // Create update data with proper Date objects for form data
-      const updateData = {
+      const updateData: Partial<ContentScheduleFormData> = {
         client_id: draggedEvent.client_id,
         service_id: draggedEvent.service_id,
         collaborator_id: draggedEvent.collaborator_id,
@@ -117,7 +117,7 @@ export function useDndContext({ clientId, month, year, onManualRefetch }: UseDnd
         capture_end_date: draggedEvent.capture_end_date ? parseStringToDate(draggedEvent.capture_end_date) : null,
         is_all_day: draggedEvent.is_all_day,
         location: draggedEvent.location
-      } as ContentScheduleFormData;
+      };
       
       // Convert to API format (strings) before sending
       const apiData = {

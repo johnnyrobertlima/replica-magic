@@ -7,7 +7,7 @@ export interface OniAgenciaContentSchedule {
   collaborator_id: string | null;
   title: string | null; 
   description: string | null;
-  scheduled_date: string | null; // Permanece como string no modelo de dados da API
+  scheduled_date: string | null; // API format - remains string
   execution_phase: string | null;
   editorial_line_id: string | null;
   product_id: string | null;
@@ -15,8 +15,8 @@ export interface OniAgenciaContentSchedule {
   creators: string[] | null;
   created_at: string;
   updated_at: string;
-  capture_date: string | null;
-  capture_end_date: string | null;
+  capture_date: string | null; // API format - remains string
+  capture_end_date: string | null; // API format - remains string
   is_all_day: boolean | null;
   location: string | null;
 }
@@ -28,14 +28,14 @@ export interface ContentScheduleFormData {
   collaborator_id: string | null;
   title: string | null; 
   description: string | null;
-  scheduled_date: Date | null;  // Sempre Date ou null durante a vida do formulário
+  scheduled_date: Date | null;  // Always Date or null during form lifecycle
   execution_phase: string | null;
   editorial_line_id: string | null;
   product_id: string | null;
   status_id: string | null;
   creators: string[] | null;
-  capture_date: Date | null;  // Sempre Date ou null durante a vida do formulário
-  capture_end_date: Date | null;  // Sempre Date ou null durante a vida do formulário
+  capture_date: Date | null;  // Always Date or null during form lifecycle
+  capture_end_date: Date | null;  // Always Date or null during form lifecycle
   is_all_day: boolean | null;
   location: string | null;
 }

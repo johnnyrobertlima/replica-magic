@@ -14,7 +14,7 @@ interface UseScheduleMutationsProps {
 }
 
 // Helper function to convert Date objects to strings for API
-const convertDatesToStrings = (data: ContentScheduleFormData) => {
+const convertDatesToStrings = (data: ContentScheduleFormData | Partial<ContentScheduleFormData>) => {
   const result: Record<string, any> = { ...data };
   
   // Convert Date objects to string format expected by API
@@ -111,14 +111,19 @@ export function useScheduleMutations({
         
         setIsSubmitting(true);
         
-        // Only update the status, collaborator and description
-        // We need to ensure these are properly formatted for the API
-        const apiData = convertDatesToStrings({
-          ...currentSelectedEvent,
+        // Extract only the relevant fields for status update
+        const updateData: Partial<ContentScheduleFormData> = {
           status_id: formData.status_id,
           collaborator_id: formData.collaborator_id,
-          description: formData.description
-        } as ContentScheduleFormData);
+          description: formData.description,
+          // Include the date fields as they are in formData
+          scheduled_date: formData.scheduled_date,
+          capture_date: formData.capture_date,
+          capture_end_date: formData.capture_end_date
+        };
+        
+        // Convert to API format (strings)
+        const apiData = convertDatesToStrings(updateData);
         
         // Update the status
         await updateMutation.mutateAsync({

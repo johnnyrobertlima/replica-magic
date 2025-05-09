@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
 import { updateContentSchedule } from "@/services/oniAgenciaContentScheduleServices";
-import { format, parse } from "date-fns";
+import { format } from "date-fns";
 import { DragStartEvent, DragEndEvent } from "@dnd-kit/core";
 
 // Helper function to convert string date to Date object
@@ -82,22 +82,25 @@ export function useDragAndDrop() {
       };
       
       // Remove unnecessary fields for API call
-      delete (updateData as any).id;
-      delete (updateData as any).service;
-      delete (updateData as any).collaborator;
-      delete (updateData as any).editorial_line;
-      delete (updateData as any).product;
-      delete (updateData as any).status;
-      delete (updateData as any).client;
-      delete (updateData as any).created_at;
-      delete (updateData as any).updated_at;
+      const { 
+        id, 
+        service, 
+        collaborator, 
+        editorial_line, 
+        product, 
+        status, 
+        client, 
+        created_at, 
+        updated_at,
+        ...cleanData 
+      } = updateData as any;
       
-      // Convert back to API format (strings)
+      // Convert to API format (strings)
       const apiData = {
-        ...updateData,
+        ...cleanData,
         scheduled_date: formattedDate,
-        capture_date: updateData.capture_date ? format(updateData.capture_date, 'yyyy-MM-dd') : null,
-        capture_end_date: updateData.capture_end_date ? format(updateData.capture_end_date, 'yyyy-MM-dd') : null
+        capture_date: cleanData.capture_date instanceof Date ? format(cleanData.capture_date, 'yyyy-MM-dd') : cleanData.capture_date,
+        capture_end_date: cleanData.capture_end_date instanceof Date ? format(cleanData.capture_end_date, 'yyyy-MM-dd') : cleanData.capture_end_date
       };
       
       // Backup of the original event for use in case of error

@@ -56,7 +56,7 @@ export function ScheduleEventDialog({
     return uniqueEvents;
   }, [propEvents, dateEvents]);
   
-  // Form state management - passando uma cópia da data para evitar problemas de referência
+  // Form state management - passing a copy of the date to avoid reference problems
   const {
     currentSelectedEvent,
     formData,
@@ -90,15 +90,11 @@ export function ScheduleEventDialog({
     isLoadingClients
   } = useScheduleResources(clientId);
 
-  // Função auxiliar para formatar a data ao enviar para a API
-  const prepareDataForAPI = (data: ContentScheduleFormData): ContentScheduleFormData => {
-    // Clone o objeto para não modificar o original
-    const preparedData: ContentScheduleFormData = { ...data };
-    
-    // Manter os campos do tipo Date como Date objects
-    // A conversão para string acontecerá somente na camada de serviço antes do envio à API
-    
-    return preparedData;
+  // Helper function to prepare form data for API - using proper type casting
+  const prepareDataForAPI = (data: ContentScheduleFormData) => {
+    // We'll only convert Date objects to strings in the mutation service,
+    // so we just return the data here
+    return data;
   };
 
   const {
