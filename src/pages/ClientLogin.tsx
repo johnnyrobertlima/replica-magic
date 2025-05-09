@@ -1,5 +1,6 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +9,7 @@ import { Loader2 } from "lucide-react";
 import { PasswordResetDialog } from "@/components/auth/PasswordResetDialog";
 import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
 import { useClientAuth } from "@/hooks/useClientAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 const ClientLogin = () => {
   const [email, setEmail] = useState("");
@@ -16,6 +18,23 @@ const ClientLogin = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
   const { loading, signInWithEmail, signUpWithEmail } = useClientAuth();
+  const navigate = useNavigate();
+
+  // Verificar se já existe uma sessão ao carregar a página
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (data.session) {
+          navigate("/client-area");
+        }
+      } catch (error) {
+        console.error("Erro ao verificar sessão:", error);
+      }
+    };
+    
+    checkSession();
+  }, [navigate]);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
