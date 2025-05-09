@@ -73,13 +73,13 @@ export function EventEditor({
   onAllDayChange,
   defaultTab = "details"
 }: EventEditorProps) {
-  const [activeTab, setActiveTab] = useState<"details" | "status" | "history" | "capture">(defaultActiveTab);
+  const [activeTab, setActiveTab] = useState<"details" | "status" | "history" | "capture">(defaultTab);
   const [note, setNote] = useState<string>(formData.description || "");
   
-  // Update activeTab when defaultActiveTab changes
+  // Update activeTab when defaultTab changes
   useEffect(() => {
-    setActiveTab(defaultActiveTab);
-  }, [defaultActiveTab]);
+    setActiveTab(defaultTab);
+  }, [defaultTab]);
   
   const handleNoteChange = (value: string) => {
     setNote(value);
