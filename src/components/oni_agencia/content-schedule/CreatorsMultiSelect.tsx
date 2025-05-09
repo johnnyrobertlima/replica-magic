@@ -101,6 +101,11 @@ export function CreatorsMultiSelect({
                         key={collaborator.id}
                         value={collaborator.id}
                         onSelect={() => handleSelect(collaborator.id)}
+                        className={cn(
+                          safeValue.includes(collaborator.id) 
+                            ? "bg-blue-50 text-blue-800" // Cor mais clara para facilitar a leitura quando selecionado
+                            : ""
+                        )}
                       >
                         <Check
                           className={cn(
@@ -132,7 +137,7 @@ export function CreatorsMultiSelect({
               <Badge
                 key={collaborator.id}
                 variant="secondary"
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 bg-blue-50 text-blue-800 hover:bg-blue-100"
               >
                 {collaborator.name}
                 <button

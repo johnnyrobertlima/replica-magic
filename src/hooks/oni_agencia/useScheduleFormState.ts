@@ -20,19 +20,22 @@ export function useScheduleFormState({
   // Clone the selectedDate to avoid timezone issues
   const localSelectedDate = new Date(selectedDate);
   
+  // Formato padronizado para garantir consistência nas datas
+  const formattedDate = format(localSelectedDate, 'yyyy-MM-dd');
+  
   const [formData, setFormData] = useState<ContentScheduleFormData>({
     client_id: clientId,
     service_id: "",
     collaborator_id: null,
     title: "",
     description: null,
-    scheduled_date: prioritizeCaptureDate ? null : format(localSelectedDate, 'yyyy-MM-dd'),
+    scheduled_date: prioritizeCaptureDate ? null : formattedDate,
     execution_phase: null,
     editorial_line_id: null,
     product_id: null,
     status_id: null,
     creators: [],
-    capture_date: prioritizeCaptureDate ? format(localSelectedDate, 'yyyy-MM-dd') : null,
+    capture_date: prioritizeCaptureDate ? formattedDate : null,
     capture_end_date: null,
     is_all_day: true,
     location: null
@@ -49,24 +52,18 @@ export function useScheduleFormState({
     }
   }, [selectedEvent]);
 
-  // Update form when selectedDate changes
+  // Update form when selectedDate changes to keep dates in sync
   useEffect(() => {
     if (!currentSelectedEvent && !isUserEditing.current) {
       // Only update if there's no selected event and user is not editing
       const formattedDate = format(localSelectedDate, 'yyyy-MM-dd');
       console.log("Updating form with selected date:", formattedDate);
       
-      if (prioritizeCaptureDate) {
-        setFormData(prev => ({
-          ...prev,
-          capture_date: formattedDate
-        }));
-      } else {
-        setFormData(prev => ({
-          ...prev,
-          scheduled_date: formattedDate
-        }));
-      }
+      setFormData(prev => ({
+        ...prev,
+        scheduled_date: prioritizeCaptureDate ? prev.scheduled_date : formattedDate,
+        capture_date: prioritizeCaptureDate ? formattedDate : prev.capture_date
+      }));
     }
   }, [localSelectedDate, currentSelectedEvent, prioritizeCaptureDate]);
 
@@ -118,19 +115,23 @@ export function useScheduleFormState({
       }
     }
     
+    // Garantir que as datas sejam consistentes
+    const captureDate = event.capture_date || null;
+    const scheduledDate = event.scheduled_date || formattedDate;
+    
     setFormData({
       client_id: event.client_id,
       service_id: event.service_id || "", // Garantir que nunca seja null
       collaborator_id: event.collaborator_id,
       title: event.title || "", // Garantir que nunca seja null
       description: event.description,
-      scheduled_date: event.scheduled_date,
+      scheduled_date: scheduledDate,
       execution_phase: event.execution_phase,
       editorial_line_id: event.editorial_line_id,
       product_id: event.product_id,
       status_id: event.status_id,
       creators: creatorsArray, // Sempre um array válido
-      capture_date: event.capture_date,
+      capture_date: captureDate,
       capture_end_date: event.capture_end_date,
       is_all_day: event.is_all_day !== undefined ? event.is_all_day : true,
       location: event.location
@@ -230,7 +231,21 @@ export function useScheduleFormState({
       const formattedDateTime = format(value, "yyyy-MM-dd'T'HH:mm:ss");
       console.log(`Formatted dateTime for ${name}:`, formattedDateTime);
       
-      if (name === "capture_date" && !formData.capture_end_date && !formData.is_all_day) {
+      // Se estamos atualizando uma data e a outra data relacionada deveria ser sincronizada,
+      // atualize ambas para manter consistência
+      if (name === "scheduled_date" && !prioritizeCaptureDate) {
+        setFormData(prev => ({ 
+          ...prev, 
+          [name]: formattedDateTime,
+          capture_date: formattedDateTime
+        }));
+      } else if (name === "capture_date" && prioritizeCaptureDate) {
+        setFormData(prev => ({ 
+          ...prev, 
+          [name]: formattedDateTime,
+          scheduled_date: formattedDateTime
+        }));
+      } else if (name === "capture_date" && !formData.capture_end_date && !formData.is_all_day) {
         // If setting a start date with specific time and no end date exists, 
         // automatically create an end date 30 minutes later
         const endDate = addMinutes(value, 30);
