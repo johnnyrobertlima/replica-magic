@@ -3,6 +3,31 @@ import { ContentScheduleFormData, OniAgenciaContentSchedule } from "@/types/oni-
 import { supabase } from "@/integrations/supabase/client";
 import { sanitizeScheduleData } from "./contentScheduleDataProcessor";
 import { TABLE_NAME } from "./baseQuery";
+import { format } from "date-fns";
+
+// Helper function to ensure dates are converted to strings
+const formatDateForDB = (date: Date | string | null): string | null => {
+  if (!date) return null;
+  
+  if (date instanceof Date) {
+    return format(date, "yyyy-MM-dd");
+  }
+  
+  return date;
+};
+
+// Helper function to ensure date-times are converted to strings
+const formatDateTimeForDB = (date: Date | string | null, isAllDay: boolean | null): string | null => {
+  if (!date) return null;
+  
+  if (date instanceof Date) {
+    return isAllDay ? 
+      format(date, "yyyy-MM-dd") : 
+      format(date, "yyyy-MM-dd'T'HH:mm:ss");
+  }
+  
+  return date;
+};
 
 export async function createContentSchedule(schedule: ContentScheduleFormData): Promise<OniAgenciaContentSchedule> {
   try {
@@ -21,13 +46,14 @@ export async function createContentSchedule(schedule: ContentScheduleFormData): 
       throw new Error('service_id is required for content schedule creation');
     }
     
+    // Convert any Date objects to formatted strings for the database
     const createData = {
       client_id: processedSchedule.client_id,
       service_id: processedSchedule.service_id,
       title: processedSchedule.title || " ",
-      scheduled_date: processedSchedule.scheduled_date || null, // Permitimos que seja nulo se capture_date estiver presente
-      capture_date: processedSchedule.capture_date || null,
-      capture_end_date: processedSchedule.capture_end_date || null,
+      scheduled_date: formatDateForDB(processedSchedule.scheduled_date),
+      capture_date: formatDateTimeForDB(processedSchedule.capture_date, processedSchedule.is_all_day),
+      capture_end_date: formatDateTimeForDB(processedSchedule.capture_end_date, processedSchedule.is_all_day),
       is_all_day: processedSchedule.is_all_day !== null ? processedSchedule.is_all_day : true,
       location: processedSchedule.location || null,
       collaborator_id: processedSchedule.collaborator_id,
@@ -132,7 +158,15 @@ export async function updateContentSchedule(id: string, schedule: Partial<Conten
     // Now process the cleaned schedule data
     const processedSchedule = sanitizeScheduleData(cleanedSchedule);
     
-    console.log('Updating content schedule:', id, processedSchedule);
+    // Convert Date objects to strings for the database
+    const updateData = {
+      ...processedSchedule,
+      scheduled_date: formatDateForDB(processedSchedule.scheduled_date),
+      capture_date: formatDateTimeForDB(processedSchedule.capture_date, processedSchedule.is_all_day),
+      capture_end_date: formatDateTimeForDB(processedSchedule.capture_end_date, processedSchedule.is_all_day)
+    };
+    
+    console.log('Updating content schedule:', id, updateData);
     
     // Fetch the existing record to compare changes
     const { data: existingRecord, error: fetchError } = await supabase
@@ -149,7 +183,7 @@ export async function updateContentSchedule(id: string, schedule: Partial<Conten
     // Handle service_id specially to prevent nulling
     if ('service_id' in schedule && (schedule.service_id === null || schedule.service_id === "")) {
       if (existingRecord && existingRecord.service_id) {
-        processedSchedule.service_id = existingRecord.service_id;
+        updateData.service_id = existingRecord.service_id;
         console.log('Using existing service_id value for update:', existingRecord.service_id);
       } else {
         console.error('Cannot update schedule: no existing service_id found and null value not allowed');
@@ -160,7 +194,7 @@ export async function updateContentSchedule(id: string, schedule: Partial<Conten
     // Update the record
     const { data, error } = await supabase
       .from(TABLE_NAME)
-      .update(processedSchedule)
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();

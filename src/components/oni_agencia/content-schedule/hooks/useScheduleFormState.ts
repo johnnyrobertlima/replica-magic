@@ -1,30 +1,38 @@
 import { useState, useEffect, useRef } from "react";
-import { format } from "date-fns";
+import { format, addMinutes, parseISO } from "date-fns";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
+
+interface UseScheduleFormStateProps {
+  clientId: string;
+  selectedDate: Date;
+  selectedEvent?: CalendarEvent;
+  prioritizeCaptureDate?: boolean;
+}
 
 export function useScheduleFormState({
   clientId,
   selectedDate,
-  selectedEvent
-}: {
-  clientId: string;
-  selectedDate: Date;
-  selectedEvent?: CalendarEvent;
-}) {
+  selectedEvent,
+  prioritizeCaptureDate = false
+}: UseScheduleFormStateProps) {
   const [currentSelectedEvent, setCurrentSelectedEvent] = useState<CalendarEvent | null>(selectedEvent || null);
+  
+  // Clone the selectedDate to avoid timezone issues
+  const localSelectedDate = new Date(selectedDate);
+  
   const [formData, setFormData] = useState<ContentScheduleFormData>({
     client_id: clientId,
     service_id: "",
     collaborator_id: null,
     title: "",
     description: null,
-    scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
+    scheduled_date: prioritizeCaptureDate ? null : localSelectedDate,
     execution_phase: null,
     editorial_line_id: null,
     product_id: null,
     status_id: null,
     creators: [],
-    capture_date: null,
+    capture_date: prioritizeCaptureDate ? localSelectedDate : null,
     capture_end_date: null,
     is_all_day: true,
     location: null
@@ -41,16 +49,38 @@ export function useScheduleFormState({
     }
   }, [selectedEvent]);
 
+  // Update form when selectedDate changes to keep dates in sync
+  useEffect(() => {
+    if (!currentSelectedEvent && !isUserEditing.current) {
+      // Only update if there's no selected event and user is not editing
+      console.log("Updating form with selected date:", localSelectedDate);
+      
+      const updatedState: Partial<ContentScheduleFormData> = {};
+      
+      if (prioritizeCaptureDate) {
+        updatedState.capture_date = localSelectedDate;
+      } else {
+        updatedState.scheduled_date = localSelectedDate;
+      }
+      
+      setFormData(prev => ({
+        ...prev,
+        ...updatedState
+      }));
+    }
+  }, [localSelectedDate, currentSelectedEvent, prioritizeCaptureDate]);
+
   const resetForm = () => {
     console.log("resetting form in useScheduleFormState");
     setCurrentSelectedEvent(null);
-    setFormData({
+    
+    const initialData: ContentScheduleFormData = {
       client_id: clientId,
       service_id: "",
       collaborator_id: null,
       title: "",
       description: null,
-      scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
+      scheduled_date: null,
       execution_phase: null,
       editorial_line_id: null,
       product_id: null,
@@ -60,7 +90,16 @@ export function useScheduleFormState({
       capture_end_date: null,
       is_all_day: true,
       location: null
-    });
+    };
+    
+    // Set the appropriate date based on the prioritizeCaptureDate flag
+    if (prioritizeCaptureDate) {
+      initialData.capture_date = localSelectedDate;
+    } else {
+      initialData.scheduled_date = localSelectedDate;
+    }
+    
+    setFormData(initialData);
   };
 
   const handleSelectEvent = (event: CalendarEvent) => {
@@ -88,22 +127,51 @@ export function useScheduleFormState({
       }
     }
     
+    // Converter datas de string para objetos Date quando necessário
+    let scheduledDate: Date | string | null = null;
+    let captureDate: Date | string | null = null;
+    let captureEndDate: Date | string | null = null;
+    
+    if (event.scheduled_date) {
+      try {
+        scheduledDate = new Date(event.scheduled_date);
+      } catch (e) {
+        scheduledDate = event.scheduled_date;
+      }
+    }
+    
+    if (event.capture_date) {
+      try {
+        captureDate = new Date(event.capture_date);
+      } catch (e) {
+        captureDate = event.capture_date;
+      }
+    }
+    
+    if (event.capture_end_date) {
+      try {
+        captureEndDate = new Date(event.capture_end_date);
+      } catch (e) {
+        captureEndDate = event.capture_end_date;
+      }
+    }
+    
     setFormData({
       client_id: event.client_id,
       service_id: event.service_id || "", // Garantir que nunca seja null
       collaborator_id: event.collaborator_id,
       title: event.title || "", // Garantir que nunca seja null
       description: event.description,
-      scheduled_date: event.scheduled_date,
+      scheduled_date: scheduledDate,
       execution_phase: event.execution_phase,
       editorial_line_id: event.editorial_line_id,
       product_id: event.product_id,
       status_id: event.status_id,
       creators: creatorsArray, // Sempre um array válido
-      capture_date: event.capture_date || null,
-      capture_end_date: event.capture_end_date || null,
+      capture_date: captureDate,
+      capture_end_date: captureEndDate,
       is_all_day: event.is_all_day !== undefined ? event.is_all_day : true,
-      location: event.location || null
+      location: event.location
     });
   };
 
@@ -155,13 +223,9 @@ export function useScheduleFormState({
         name === "editorial_line_id" || 
         name === "product_id" || 
         name === "collaborator_id") && 
-        (value === "" || value === "null")
+        (value === "null")
       ) {
-        if (name === "service_id" && currentSelectedEvent) {
-          console.log("Keeping existing service_id for required field");
-        } else {
-          setFormData(prev => ({ ...prev, [name]: null }));
-        }
+        setFormData(prev => ({ ...prev, [name]: null }));
       } else {
         setFormData(prev => ({ ...prev, [name]: value === "null" ? null : value }));
       }
@@ -172,15 +236,42 @@ export function useScheduleFormState({
     }, 100);
   };
   
-  // Modify handleDateChange to handle capture_date and capture_end_date fields
+  // Atualizado para trabalhar com objeto Date diretamente
   const handleDateChange = (name: string, value: Date | null) => {
     console.log("Date changed:", name, value);
     
     isUserEditing.current = true;
     
     if (value) {
-      const formattedDate = format(value, "yyyy-MM-dd");
-      setFormData(prev => ({ ...prev, [name]: formattedDate }));
+      // Keep the original Date object in state
+      console.log(`Setting ${name} to Date:`, value);
+      
+      // Logic to sync capture_date and scheduled_date
+      if (name === "scheduled_date") {
+        const updatedData: Partial<ContentScheduleFormData> = {
+          [name]: value
+        };
+        
+        // Synchronize capture_date with scheduled_date if prioritizeCaptureDate is false
+        if (!prioritizeCaptureDate) {
+          updatedData.capture_date = value;
+        }
+        
+        setFormData(prev => ({ ...prev, ...updatedData }));
+      } else if (name === "capture_date") {
+        const updatedData: Partial<ContentScheduleFormData> = {
+          [name]: value
+        };
+        
+        // Synchronize scheduled_date with capture_date if prioritizeCaptureDate is true
+        if (prioritizeCaptureDate) {
+          updatedData.scheduled_date = value;
+        }
+        
+        setFormData(prev => ({ ...prev, ...updatedData }));
+      } else {
+        setFormData(prev => ({ ...prev, [name]: value }));
+      }
     } else {
       setFormData(prev => ({ ...prev, [name]: null }));
     }
@@ -190,15 +281,73 @@ export function useScheduleFormState({
     }, 100);
   };
 
-  // Add a new handler for dateTime fields (with time)
+  // Atualizado para trabalhar com objeto Date diretamente
   const handleDateTimeChange = (name: string, value: Date | null) => {
     console.log("DateTime changed:", name, value);
     
     isUserEditing.current = true;
     
     if (value) {
-      const formattedDateTime = format(value, "yyyy-MM-dd'T'HH:mm:ss");
-      setFormData(prev => ({ ...prev, [name]: formattedDateTime }));
+      console.log(`Setting DateTime for ${name}:`, value);
+      
+      if (name === "scheduled_date" && !prioritizeCaptureDate) {
+        const updatedData: Partial<ContentScheduleFormData> = {
+          [name]: value
+        };
+        
+        // If capture_date exists, synchronize it preserving time
+        if (formData.capture_date) {
+          let captureDate: Date;
+          
+          if (formData.capture_date instanceof Date) {
+            captureDate = new Date(value.getFullYear(), value.getMonth(), value.getDate(), 
+                                 formData.capture_date.getHours(), formData.capture_date.getMinutes());
+          } else {
+            captureDate = new Date(value); // Use the same date if capture_date is a string
+          }
+          
+          updatedData.capture_date = captureDate;
+        } else {
+          updatedData.capture_date = value;
+        }
+        
+        setFormData(prev => ({ ...prev, ...updatedData }));
+      } else if (name === "capture_date" && prioritizeCaptureDate) {
+        const updatedData: Partial<ContentScheduleFormData> = {
+          [name]: value
+        };
+        
+        // If scheduled_date exists, synchronize it preserving time
+        if (formData.scheduled_date) {
+          let scheduledDate: Date;
+          
+          if (formData.scheduled_date instanceof Date) {
+            scheduledDate = new Date(value.getFullYear(), value.getMonth(), value.getDate(),
+                                   formData.scheduled_date instanceof Date ? formData.scheduled_date.getHours() : 0, 
+                                   formData.scheduled_date instanceof Date ? formData.scheduled_date.getMinutes() : 0);
+          } else {
+            scheduledDate = new Date(value); // Use the same date if scheduled_date is a string
+          }
+          
+          updatedData.scheduled_date = scheduledDate;
+        } else {
+          updatedData.scheduled_date = value;
+        }
+        
+        setFormData(prev => ({ ...prev, ...updatedData }));
+      } else if (name === "capture_date" && !formData.capture_end_date && !formData.is_all_day) {
+        // Se definindo uma data de início com hora específica e não existe data de término,
+        // crie automaticamente uma data de término 30 minutos depois
+        const endDate = addMinutes(value, 30);
+        
+        setFormData(prev => ({ 
+          ...prev, 
+          [name]: value,
+          capture_end_date: endDate
+        }));
+      } else {
+        setFormData(prev => ({ ...prev, [name]: value }));
+      }
     } else {
       setFormData(prev => ({ ...prev, [name]: null }));
     }
@@ -214,15 +363,138 @@ export function useScheduleFormState({
     
     isUserEditing.current = true;
     
-    setFormData(prev => ({ 
-      ...prev, 
-      is_all_day: isAllDay,
-      // If switching to all-day, remove time component from dates
-      ...(isAllDay && prev.capture_date ? { 
-        capture_date: prev.capture_date.split('T')[0],
-        capture_end_date: prev.capture_end_date?.split('T')[0] || null
-      } : {})
-    }));
+    if (isAllDay) {
+      // When switching to all-day, preserve only the date part
+      const updatedData: Partial<ContentScheduleFormData> = {
+        is_all_day: true
+      };
+      
+      if (formData.capture_date) {
+        if (formData.capture_date instanceof Date) {
+          // Keep just the date part (reset time to midnight)
+          updatedData.capture_date = new Date(
+            formData.capture_date.getFullYear(),
+            formData.capture_date.getMonth(),
+            formData.capture_date.getDate()
+          );
+        } else if (typeof formData.capture_date === 'string') {
+          // Handle string date format
+          try {
+            const parsedDate = parseISO(formData.capture_date);
+            updatedData.capture_date = new Date(
+              parsedDate.getFullYear(),
+              parsedDate.getMonth(),
+              parsedDate.getDate()
+            );
+          } catch (e) {
+            console.error("Error parsing capture_date:", e);
+            updatedData.capture_date = formData.capture_date;
+          }
+        }
+      }
+      
+      if (formData.capture_end_date) {
+        if (formData.capture_end_date instanceof Date) {
+          // Keep just the date part (reset time to midnight)
+          updatedData.capture_end_date = new Date(
+            formData.capture_end_date.getFullYear(),
+            formData.capture_end_date.getMonth(),
+            formData.capture_end_date.getDate()
+          );
+        } else if (typeof formData.capture_end_date === 'string') {
+          // Handle string date format
+          try {
+            const parsedDate = parseISO(formData.capture_end_date);
+            updatedData.capture_end_date = new Date(
+              parsedDate.getFullYear(),
+              parsedDate.getMonth(),
+              parsedDate.getDate()
+            );
+          } catch (e) {
+            console.error("Error parsing capture_end_date:", e);
+            updatedData.capture_end_date = formData.capture_end_date;
+          }
+        }
+      }
+      
+      setFormData(prev => ({ ...prev, ...updatedData }));
+    } else {
+      // When switching to specific time, add default time component (current time)
+      const now = new Date();
+      const currentHours = now.getHours();
+      const currentMinutes = now.getMinutes();
+      
+      const updatedData: Partial<ContentScheduleFormData> = {
+        is_all_day: false
+      };
+      
+      if (formData.capture_date) {
+        let date: Date;
+        
+        if (formData.capture_date instanceof Date) {
+          date = new Date(formData.capture_date);
+        } else if (typeof formData.capture_date === 'string') {
+          try {
+            date = parseISO(formData.capture_date);
+          } catch (e) {
+            console.error("Error parsing capture_date:", e);
+            date = new Date();
+          }
+        } else {
+          date = new Date();
+        }
+        
+        date.setHours(currentHours);
+        date.setMinutes(currentMinutes);
+        updatedData.capture_date = date;
+        
+        // Also set end time if not already set
+        if (!formData.capture_end_date) {
+          const endDate = addMinutes(date, 30);
+          updatedData.capture_end_date = endDate;
+        }
+      }
+      
+      if (formData.capture_end_date) {
+        let endDate: Date;
+        
+        if (formData.capture_end_date instanceof Date) {
+          endDate = new Date(formData.capture_end_date);
+        } else if (typeof formData.capture_end_date === 'string') {
+          try {
+            endDate = parseISO(formData.capture_end_date);
+          } catch (e) {
+            console.error("Error parsing capture_end_date:", e);
+            endDate = addMinutes(new Date(), 30);
+          }
+        } else {
+          endDate = addMinutes(new Date(), 30);
+        }
+        
+        endDate.setHours(currentHours);
+        endDate.setMinutes(currentMinutes + 30);
+        
+        if (formData.capture_date && updatedData.capture_date) {
+          // Make sure end date is at least 30 min after start
+          const startDate = updatedData.capture_date instanceof Date 
+            ? updatedData.capture_date 
+            : (typeof updatedData.capture_date === 'string' ? parseISO(updatedData.capture_date) : new Date());
+            
+          const minEndDate = addMinutes(startDate, 30);
+          
+          // If the calculated end date is before min end date, use min end date
+          if (endDate < minEndDate) {
+            updatedData.capture_end_date = minEndDate;
+          } else {
+            updatedData.capture_end_date = endDate;
+          }
+        } else {
+          updatedData.capture_end_date = endDate;
+        }
+      }
+      
+      setFormData(prev => ({ ...prev, ...updatedData }));
+    }
     
     setTimeout(() => {
       isUserEditing.current = false;
