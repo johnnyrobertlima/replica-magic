@@ -29,8 +29,9 @@ export function SelectClient({
       <Label htmlFor="client_id">Cliente</Label>
       <Select
         disabled={isLoading || clients.length === 0}
-        value={value}
+        value={value || ""}
         onValueChange={onChange}
+        data-testid="client-select"
       >
         <SelectTrigger>
           <SelectValue placeholder="Selecione um cliente" />
