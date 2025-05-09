@@ -73,11 +73,11 @@ export function useScheduleMutations({
           // Update existing schedule
           await updateMutation.mutateAsync({ 
             id: currentSelectedEvent.id,
-            data: apiData
+            data: apiData as ContentScheduleFormData
           });
         } else {
           // Create new schedule
-          await createMutation.mutateAsync(apiData);
+          await createMutation.mutateAsync(apiData as ContentScheduleFormData);
         }
         
         // Call the onSuccess callback if provided
@@ -113,13 +113,22 @@ export function useScheduleMutations({
         
         // Extract only the relevant fields for status update
         const updateData: Partial<ContentScheduleFormData> = {
+          client_id: formData.client_id,
+          service_id: formData.service_id,
           status_id: formData.status_id,
           collaborator_id: formData.collaborator_id,
           description: formData.description,
+          title: formData.title,
           // Include the date fields as they are in formData
           scheduled_date: formData.scheduled_date,
           capture_date: formData.capture_date,
-          capture_end_date: formData.capture_end_date
+          capture_end_date: formData.capture_end_date,
+          is_all_day: formData.is_all_day,
+          location: formData.location,
+          execution_phase: formData.execution_phase,
+          editorial_line_id: formData.editorial_line_id,
+          product_id: formData.product_id,
+          creators: formData.creators
         };
         
         // Convert to API format (strings)
@@ -128,7 +137,7 @@ export function useScheduleMutations({
         // Update the status
         await updateMutation.mutateAsync({
           id: currentSelectedEvent.id,
-          data: apiData
+          data: apiData as ContentScheduleFormData
         });
         
         // Call the onSuccess callback if provided

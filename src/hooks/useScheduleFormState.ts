@@ -3,15 +3,19 @@ import { useState, useEffect, useRef } from "react";
 import { format, addMinutes } from "date-fns";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
 
-export function useScheduleFormState({
-  clientId,
-  selectedDate,
-  selectedEvent
-}: {
+interface UseScheduleFormStateProps {
   clientId: string;
   selectedDate: Date;
   selectedEvent?: CalendarEvent;
-}) {
+  prioritizeCaptureDate?: boolean;
+}
+
+export function useScheduleFormState({
+  clientId,
+  selectedDate,
+  selectedEvent,
+  prioritizeCaptureDate = false
+}: UseScheduleFormStateProps) {
   const [currentSelectedEvent, setCurrentSelectedEvent] = useState<CalendarEvent | null>(selectedEvent || null);
   const [formData, setFormData] = useState<ContentScheduleFormData>({
     client_id: clientId,
@@ -202,6 +206,28 @@ export function useScheduleFormState({
       isUserEditing.current = false;
     }, 100);
   };
+  
+  // Add handleDateTimeChange function for datetime picker inputs
+  const handleDateTimeChange = (name: string, value: Date | null) => {
+    console.log("DateTime changed:", name, value);
+    
+    isUserEditing.current = true;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    setTimeout(() => {
+      isUserEditing.current = false;
+    }, 100);
+  };
+  
+  // Add handleAllDayChange function
+  const handleAllDayChange = (value: boolean) => {
+    console.log("All day changed:", value);
+    
+    isUserEditing.current = true;
+    setFormData(prev => ({ ...prev, is_all_day: value }));
+    setTimeout(() => {
+      isUserEditing.current = false;
+    }, 100);
+  };
 
   return {
     currentSelectedEvent,
@@ -210,6 +236,8 @@ export function useScheduleFormState({
     handleSelectEvent,
     handleInputChange,
     handleSelectChange,
-    handleDateChange
+    handleDateChange,
+    handleDateTimeChange,
+    handleAllDayChange
   };
 }

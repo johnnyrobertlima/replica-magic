@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -73,12 +72,24 @@ export function useDragAndDrop() {
     try {
       console.log(`Moving event ${activeDragEvent.id} from ${activeDragEvent.scheduled_date} to ${formattedDate}`);
       
-      // Convert string dates to Date objects for ContentScheduleFormData
-      const updateData: Partial<ContentScheduleFormData> = {
-        ...activeDragEvent,
-        scheduled_date: date, // Use Date object for scheduled_date
+      // Create a proper ContentScheduleFormData object with all required fields
+      const updateData: ContentScheduleFormData = {
+        client_id: activeDragEvent.client_id,
+        service_id: activeDragEvent.service_id,
+        collaborator_id: activeDragEvent.collaborator_id,
+        title: activeDragEvent.title,
+        description: activeDragEvent.description,
+        scheduled_date: date, // Use Date object
+        execution_phase: activeDragEvent.execution_phase,
+        editorial_line_id: activeDragEvent.editorial_line_id,
+        product_id: activeDragEvent.product_id,
+        status_id: activeDragEvent.status_id,
+        creators: activeDragEvent.creators,
+        // Convert string dates to Date objects if present
         capture_date: activeDragEvent.capture_date ? parseStringToDate(activeDragEvent.capture_date) : null,
-        capture_end_date: activeDragEvent.capture_end_date ? parseStringToDate(activeDragEvent.capture_end_date) : null
+        capture_end_date: activeDragEvent.capture_end_date ? parseStringToDate(activeDragEvent.capture_end_date) : null,
+        is_all_day: activeDragEvent.is_all_day,
+        location: activeDragEvent.location
       };
       
       // Remove unnecessary fields for API call
@@ -93,14 +104,14 @@ export function useDragAndDrop() {
         created_at, 
         updated_at,
         ...cleanData 
-      } = updateData as any;
+      } = activeDragEvent as any;
       
-      // Convert to API format (strings)
+      // Convert to API format (strings) for the API call
       const apiData = {
         ...cleanData,
         scheduled_date: formattedDate,
-        capture_date: cleanData.capture_date instanceof Date ? format(cleanData.capture_date, 'yyyy-MM-dd') : cleanData.capture_date,
-        capture_end_date: cleanData.capture_end_date instanceof Date ? format(cleanData.capture_end_date, 'yyyy-MM-dd') : cleanData.capture_end_date
+        capture_date: updateData.capture_date instanceof Date ? format(updateData.capture_date, 'yyyy-MM-dd') : cleanData.capture_date,
+        capture_end_date: updateData.capture_end_date instanceof Date ? format(updateData.capture_end_date, 'yyyy-MM-dd') : cleanData.capture_end_date
       };
       
       // Backup of the original event for use in case of error
