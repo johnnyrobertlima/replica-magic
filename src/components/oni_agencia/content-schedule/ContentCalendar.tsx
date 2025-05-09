@@ -153,14 +153,6 @@ export function ContentCalendar({
     );
   };
 
-  // Adicione esse console.log para diagnóstico
-  useEffect(() => {
-    if (selectedDate) {
-      console.log("Selected date set in ContentCalendar:", selectedDate);
-      console.log("Dialog should be open:", isDialogOpen);
-    }
-  }, [selectedDate, isDialogOpen]);
-
   return (
     <div className="rounded-md border bg-white">
       <div className="flex items-center justify-between p-4">
@@ -214,12 +206,16 @@ export function ContentCalendar({
           Day: renderDayContents
         }}
       />
+      
       {selectedDate && (
         <ScheduleEventDialog
           isOpen={isDialogOpen}
           onOpenChange={(open) => {
             console.log("Dialog open state changing to:", open);
-            setIsDialogOpen(open);
+            // Evitar mudanças duplicadas
+            if (isDialogOpen !== open) {
+              setIsDialogOpen(open);
+            }
           }}
           clientId={clientId}
           selectedDate={selectedDate}
