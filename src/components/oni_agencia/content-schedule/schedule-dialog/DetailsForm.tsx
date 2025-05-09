@@ -13,6 +13,7 @@ import { ptBR } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect, useState } from "react";
 import { linkifyText } from "@/utils/linkUtils";
+import { CalendarDatePicker } from "@/components/ui/calendar-date-picker";
 
 interface DetailsFormProps {
   clientId: string;
@@ -49,11 +50,6 @@ export function DetailsForm({
   onDateChange,
   prioritizeCaptureDate = false
 }: DetailsFormProps) {
-  // Obter uma data válida a partir do formData ou selectedDate
-  const calendarDate = formData.scheduled_date instanceof Date && !isNaN(formData.scheduled_date.getTime())
-    ? formData.scheduled_date
-    : selectedDate;
-
   return (
     <div className="space-y-4">
       <div>
@@ -120,35 +116,11 @@ export function DetailsForm({
           <label className="block text-sm font-medium mb-1">
             {prioritizeCaptureDate ? "Data de Agendamento (opcional)" : "Data de Agendamento*"}
           </label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-full pl-3 text-left font-normal",
-                  !calendarDate && "text-muted-foreground"
-                )}
-              >
-                {calendarDate ? (
-                  format(calendarDate, "dd/MM/yyyy", { locale: ptBR })
-                ) : (
-                  <span>Selecione uma data</span>
-                )}
-                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={calendarDate}
-                onSelect={(date) => onDateChange("scheduled_date", date)}
-                disabled={(date) => date < new Date("1900-01-01")}
-                initialFocus
-                className="pointer-events-auto"
-                locale={ptBR}
-              />
-            </PopoverContent>
-          </Popover>
+          <CalendarDatePicker
+            value={formData.scheduled_date}
+            onChange={(date) => onDateChange("scheduled_date", date)}
+            placeholder="Selecione uma data"
+          />
           {prioritizeCaptureDate && (
             <p className="text-xs text-muted-foreground mt-1">
               Nesta página, a data de agendamento é opcional. A data de captura será a principal.

@@ -1,4 +1,3 @@
-
 // Modify the OniAgenciaContentSchedule interface to make scheduled_date optional when capture_date is present
 export interface OniAgenciaContentSchedule {
   id: string;
@@ -7,7 +6,7 @@ export interface OniAgenciaContentSchedule {
   collaborator_id: string | null;
   title: string | null; 
   description: string | null;
-  scheduled_date: string | null; // Agora pode ser null quando capture_date estiver presente
+  scheduled_date: string | null; // Permanece como string no modelo de dados
   execution_phase: string | null;
   editorial_line_id: string | null;
   product_id: string | null;
@@ -28,14 +27,14 @@ export interface ContentScheduleFormData {
   collaborator_id: string | null;
   title: string | null; 
   description: string | null;
-  scheduled_date: Date | string | null;
+  scheduled_date: Date | null;  // Sempre Date ou null durante a vida do formulário
   execution_phase: string | null;
   editorial_line_id: string | null;
   product_id: string | null;
   status_id: string | null;
   creators: string[] | null;
-  capture_date: Date | string | null;
-  capture_end_date: Date | string | null;
+  capture_date: Date | null;  // Sempre Date ou null durante a vida do formulário
+  capture_end_date: Date | null;  // Sempre Date ou null durante a vida do formulário
   is_all_day: boolean | null;
   location: string | null;
 }

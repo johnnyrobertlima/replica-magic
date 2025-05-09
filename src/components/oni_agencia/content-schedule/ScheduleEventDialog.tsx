@@ -6,7 +6,7 @@ import { useScheduleMutations } from "./hooks/useScheduleMutations";
 import { useEventsByDate } from "./hooks/useEventsByDate";
 import { DialogContainer } from "./schedule-dialog/DialogContainer";
 import { DialogContent } from "./schedule-dialog/DialogContent";
-import { CalendarEvent } from "@/types/oni-agencia";
+import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
 import { format } from "date-fns";
 
 export interface ScheduleEventDialogProps {
@@ -92,9 +92,9 @@ export function ScheduleEventDialog({
   } = useScheduleResources(clientId);
 
   // Função auxiliar para formatar a data ao enviar para a API
-  const prepareDataForAPI = (data: typeof formData) => {
+  const prepareDataForAPI = (data: ContentScheduleFormData) => {
     // Clone o objeto para não modificar o original
-    const preparedData = { ...data };
+    const preparedData = { ...data } as Record<string, any>;
     
     // Converter objetos Date para o formato esperado pela API
     if (preparedData.scheduled_date instanceof Date) {

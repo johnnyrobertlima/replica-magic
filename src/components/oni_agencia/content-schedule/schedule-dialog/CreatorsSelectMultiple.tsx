@@ -40,6 +40,9 @@ export function CreatorsSelectMultiple({
     return collaborator ? collaborator.name : id;
   };
   
+  // Certifique-se de que value é sempre um array
+  const creators = Array.isArray(value) ? value : [];
+  
   return (
     <div className="grid gap-2">
       <Label>Criadores</Label>
@@ -72,7 +75,7 @@ export function CreatorsSelectMultiple({
                   >
                     <Check className={cn(
                       "mr-2 h-4 w-4", 
-                      value.includes(collaborator.id) ? "opacity-100" : "opacity-0"
+                      creators.includes(collaborator.id) ? "opacity-100" : "opacity-0"
                     )} />
                     {collaborator.name}
                   </CommandItem>
@@ -82,9 +85,9 @@ export function CreatorsSelectMultiple({
           </PopoverContent>
         </Popover>
 
-        {value.length > 0 && (
+        {creators.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-2">
-            {value.map(id => (
+            {creators.map(id => (
               <Badge key={id} variant="secondary" className="px-2 py-1 bg-emerald-200">
                 {getCollaboratorName(id)}
                 <button type="button" className="ml-1 outline-none" onClick={() => removeItem(id)}>
