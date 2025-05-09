@@ -1,19 +1,30 @@
 
 import { useState } from "react";
-import { format, addMinutes, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar } from "@/components/ui/calendar";
-import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Input } from "@/components/ui/input";
 import { CalendarIcon, Clock } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { toast } from "@/hooks/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface CaptureFormProps {
-  captureDate: string | null;
-  captureEndDate: string | null;
+  captureDate: Date | string | null;
+  captureEndDate: Date | string | null;
   isAllDay: boolean;
   location: string | null;
   onCaptureChange: (name: string, value: Date | null) => void;
@@ -30,212 +41,214 @@ export function CaptureForm({
   onLocationChange,
   onAllDayChange,
 }: CaptureFormProps) {
-  // Formato de exibição da data/hora
-  const getFormattedDateTime = (dateString: string | null) => {
-    if (!dateString) return "";
-    
-    try {
-      const date = new Date(dateString);
-      return isAllDay
-        ? format(date, "dd/MM/yyyy", { locale: ptBR })
-        : format(date, "dd/MM/yyyy HH:mm", { locale: ptBR });
-    } catch (e) {
-      console.error("Error formatting date:", e);
-      return "";
-    }
-  };
-
-  // Handle capture end date selection with validation for minimum 30 minutes difference
-  const handleCaptureEndDateChange = (name: string, date: Date | null) => {
-    if (date && captureDate) {
-      const startDate = new Date(captureDate);
-      const minEndDate = addMinutes(startDate, 30);
-      
-      // If the selected end date is before minEndDate
-      if (date < minEndDate) {
-        // Set the end date to be 30 minutes after start date
-        onCaptureChange(name, minEndDate);
-        toast({
-          title: "Ajuste de horário",
-          description: "O tempo final deve ser pelo menos 30 minutos após o tempo inicial. Ajustamos automaticamente.",
-        });
-        return;
-      }
-    }
-    
-    onCaptureChange(name, date);
+  // Convert string dates to Date objects if needed
+  const getDateObject = (date: Date | string | null): Date | null => {
+    if (!date) return null;
+    if (date instanceof Date) return date;
+    return new Date(date);
   };
   
-  // Handle capture start date changes with end date adjustment
-  const handleCaptureStartDateChange = (name: string, date: Date | null) => {
-    onCaptureChange(name, date);
-    
-    if (date && captureEndDate) {
-      const newStartDate = new Date(date);
-      const currentEndDate = new Date(captureEndDate);
-      const minEndDate = addMinutes(newStartDate, 30);
-      
-      // If current end date is less than 30 minutes after new start date
-      if (currentEndDate < minEndDate) {
-        onCaptureChange("capture_end_date", minEndDate);
-        toast({
-          title: "Ajuste de horário",
-          description: "O horário final foi ajustado para manter um intervalo mínimo de 30 minutos.",
+  const captureDateObj = getDateObject(captureDate);
+  const captureEndDateObj = getDateObject(captureEndDate);
+
+  const generateTimeOptions = () => {
+    const options = [];
+    for (let hour = 0; hour < 24; hour++) {
+      for (let minute = 0; minute < 60; minute += 30) {
+        const formattedHour = hour.toString().padStart(2, "0");
+        const formattedMinute = minute.toString().padStart(2, "0");
+        options.push({
+          value: `${formattedHour}:${formattedMinute}`,
+          label: `${formattedHour}:${formattedMinute}`,
         });
       }
-    } else if (date && !captureEndDate && !isAllDay) {
-      // If setting a start date and no end date exists, automatically create an end date 30 minutes later
-      const defaultEndDate = addMinutes(date, 30);
-      onCaptureChange("capture_end_date", defaultEndDate);
+    }
+    return options;
+  };
+
+  const timeOptions = generateTimeOptions();
+
+  const getTimeString = (date: Date | null) => {
+    if (!date) return "00:00";
+    const hours = date.getHours().toString().padStart(2, "0");
+    const minutes = date.getMinutes().toString().padStart(2, "0");
+    return `${hours}:${minutes}`;
+  };
+
+  const handleSelectTime = (field: "start" | "end", timeValue: string) => {
+    const [hours, minutes] = timeValue.split(":").map(Number);
+    
+    if (field === "start" && captureDateObj) {
+      const newDate = new Date(captureDateObj);
+      newDate.setHours(hours);
+      newDate.setMinutes(minutes);
+      onCaptureChange("capture_date", newDate);
+    } else if (field === "end" && captureEndDateObj) {
+      const newDate = new Date(captureEndDateObj);
+      newDate.setHours(hours);
+      newDate.setMinutes(minutes);
+      onCaptureChange("capture_end_date", newDate);
     }
   };
 
-  return (
-    <div className="space-y-4">
-      <div className="grid gap-2">
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="is-all-day"
-            checked={isAllDay}
-            onCheckedChange={onAllDayChange}
-          />
-          <label htmlFor="is-all-day" className="text-sm font-medium">
-            Dia inteiro
-          </label>
-        </div>
-      </div>
+  const handleDateChange = (field: "start" | "end", date: Date | undefined) => {
+    if (!date) return;
+    
+    if (field === "start") {
+      const currentTime = captureDateObj || new Date();
+      const newDate = new Date(date);
+      newDate.setHours(currentTime.getHours());
+      newDate.setMinutes(currentTime.getMinutes());
+      onCaptureChange("capture_date", newDate);
+      
+      // If there's no end date, set it to the same day
+      if (!captureEndDateObj) {
+        onCaptureChange("capture_end_date", new Date(newDate));
+      }
+    } else if (field === "end") {
+      const currentTime = captureEndDateObj || captureDateObj || new Date();
+      const newDate = new Date(date);
+      newDate.setHours(currentTime.getHours());
+      newDate.setMinutes(currentTime.getMinutes());
+      onCaptureChange("capture_end_date", newDate);
+    }
+  };
 
-      <div className="grid gap-2">
-        <label className="text-sm font-medium">Data de Captura</label>
-        <div className="flex flex-col space-y-2">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !captureDate && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {captureDate ? (
-                  getFormattedDateTime(captureDate)
-                ) : (
-                  <span>Selecione uma data</span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={captureDate ? new Date(captureDate) : undefined}
-                onSelect={(date) => handleCaptureStartDateChange("capture_date", date)}
-                initialFocus
-                className="pointer-events-auto"
-              />
-              {!isAllDay && captureDate && (
-                <div className="p-3 border-t border-border">
-                  <div className="flex items-center space-x-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <Input
-                      type="time"
-                      className="w-full"
-                      value={captureDate ? format(new Date(captureDate), "HH:mm") : ""}
-                      onChange={(e) => {
-                        const [hours, minutes] = e.target.value.split(':').map(Number);
-                        const date = new Date(captureDate);
-                        date.setHours(hours, minutes);
-                        handleCaptureStartDateChange("capture_date", date);
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-            </PopoverContent>
-          </Popover>
-          
-          {!isAllDay && (
+  const startTimeValue = captureDateObj ? getTimeString(captureDateObj) : "00:00";
+  const endTimeValue = captureEndDateObj ? getTimeString(captureEndDateObj) : "00:30";
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center space-x-2">
+        <Checkbox
+          id="is-all-day"
+          checked={isAllDay}
+          onCheckedChange={() => onAllDayChange(!isAllDay)}
+        />
+        <Label htmlFor="is-all-day" className="text-sm font-medium cursor-pointer">
+          Evento de dia inteiro
+        </Label>
+      </div>
+      
+      <div className="space-y-4">
+        <div>
+          <Label className="text-sm font-medium mb-1 block">Data de captura</Label>
+          <div className="grid grid-cols-2 gap-2">
             <Popover>
               <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
+                <Button 
+                  variant="outline" 
                   className={cn(
                     "w-full justify-start text-left font-normal",
-                    !captureEndDate && "text-muted-foreground"
+                    !captureDateObj && "text-muted-foreground"
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {captureEndDate ? (
-                    getFormattedDateTime(captureEndDate)
+                  {captureDateObj ? (
+                    format(captureDateObj, "dd/MM/yyyy", { locale: ptBR })
                   ) : (
-                    <span>Selecione uma data de término</span>
+                    <span>Selecione a data</span>
                   )}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
                 <Calendar
                   mode="single"
-                  selected={captureEndDate ? new Date(captureEndDate) : undefined}
-                  onSelect={(date) => handleCaptureEndDateChange("capture_end_date", date)}
-                  disabled={(date) => {
-                    if (!captureDate) return false;
-                    return date < new Date(captureDate);
-                  }}
+                  selected={captureDateObj || undefined}
+                  onSelect={(date) => handleDateChange("start", date)}
                   initialFocus
                   className="pointer-events-auto"
                 />
-                {captureEndDate && (
-                  <div className="p-3 border-t border-border">
-                    <div className="flex items-center space-x-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <Input
-                        type="time"
-                        className="w-full"
-                        value={captureEndDate ? format(new Date(captureEndDate), "HH:mm") : ""}
-                        onChange={(e) => {
-                          const [hours, minutes] = e.target.value.split(':').map(Number);
-                          const date = new Date(captureEndDate);
-                          date.setHours(hours, minutes);
-                          
-                          // Check if the new time maintains the 30-minute minimum difference
-                          if (captureDate) {
-                            const startDate = new Date(captureDate);
-                            const endDate = new Date(date);
-                            const diffMs = endDate.getTime() - startDate.getTime();
-                            const diffMinutes = diffMs / (1000 * 60);
-                            
-                            if (diffMinutes < 30) {
-                              // Set to 30 minutes after start time
-                              const adjustedDate = addMinutes(startDate, 30);
-                              handleCaptureEndDateChange("capture_end_date", adjustedDate);
-                              toast({
-                                title: "Tempo mínimo requerido",
-                                description: "O término deve ser pelo menos 30 minutos após o início da captura.",
-                              });
-                              return;
-                            }
-                          }
-                          
-                          handleCaptureEndDateChange("capture_end_date", date);
-                        }}
-                      />
-                    </div>
-                  </div>
-                )}
               </PopoverContent>
             </Popover>
-          )}
+            
+            {!isAllDay && (
+              <Select 
+                value={startTimeValue} 
+                onValueChange={(value) => handleSelectTime("start", value)}
+                disabled={isAllDay}
+              >
+                <SelectTrigger className="justify-start">
+                  <Clock className="mr-2 h-4 w-4" />
+                  <SelectValue placeholder="Horário" />
+                </SelectTrigger>
+                <SelectContent>
+                  {timeOptions.map(option => (
+                    <SelectItem key={`start-${option.value}`} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
         </div>
-      </div>
 
-      <div className="grid gap-2">
-        <label className="text-sm font-medium">Local</label>
-        <Input
-          name="location"
-          value={location || ""}
-          onChange={onLocationChange}
-          placeholder="Informe o local da captura"
-        />
+        {!isAllDay && (
+          <div>
+            <Label className="text-sm font-medium mb-1 block">Data de finalização</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !captureEndDateObj && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {captureEndDateObj ? (
+                      format(captureEndDateObj, "dd/MM/yyyy", { locale: ptBR })
+                    ) : (
+                      <span>Selecione a data</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={captureEndDateObj || undefined}
+                    onSelect={(date) => handleDateChange("end", date)}
+                    disabled={(date) => captureDateObj ? date < captureDateObj : false}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+              
+              <Select 
+                value={endTimeValue} 
+                onValueChange={(value) => handleSelectTime("end", value)}
+              >
+                <SelectTrigger className="justify-start">
+                  <Clock className="mr-2 h-4 w-4" />
+                  <SelectValue placeholder="Horário" />
+                </SelectTrigger>
+                <SelectContent>
+                  {timeOptions.map(option => (
+                    <SelectItem key={`end-${option.value}`} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
+
+        <div>
+          <Label htmlFor="location" className="text-sm font-medium mb-1 block">
+            Local
+          </Label>
+          <Input
+            id="location"
+            name="location"
+            value={location || ""}
+            onChange={onLocationChange}
+            placeholder="Local da captura"
+          />
+        </div>
       </div>
     </div>
   );

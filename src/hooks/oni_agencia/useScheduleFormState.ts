@@ -1,6 +1,5 @@
-
 import { useState, useEffect, useRef } from "react";
-import { format, addMinutes } from "date-fns";
+import { format, addMinutes, parseISO } from "date-fns";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
 
 interface UseScheduleFormStateProps {
@@ -21,22 +20,19 @@ export function useScheduleFormState({
   // Clone the selectedDate to avoid timezone issues
   const localSelectedDate = new Date(selectedDate);
   
-  // Formato padronizado para garantir consistência nas datas
-  const formattedDate = format(localSelectedDate, 'yyyy-MM-dd');
-  
   const [formData, setFormData] = useState<ContentScheduleFormData>({
     client_id: clientId,
     service_id: "",
     collaborator_id: null,
     title: "",
     description: null,
-    scheduled_date: prioritizeCaptureDate ? null : formattedDate,
+    scheduled_date: prioritizeCaptureDate ? null : localSelectedDate,
     execution_phase: null,
     editorial_line_id: null,
     product_id: null,
     status_id: null,
     creators: [],
-    capture_date: prioritizeCaptureDate ? formattedDate : null,
+    capture_date: prioritizeCaptureDate ? localSelectedDate : null,
     capture_end_date: null,
     is_all_day: true,
     location: null
@@ -57,13 +53,12 @@ export function useScheduleFormState({
   useEffect(() => {
     if (!currentSelectedEvent && !isUserEditing.current) {
       // Only update if there's no selected event and user is not editing
-      const formattedDate = format(localSelectedDate, 'yyyy-MM-dd');
-      console.log("Updating form with selected date:", formattedDate);
+      console.log("Updating form with selected date:", localSelectedDate);
       
       setFormData(prev => ({
         ...prev,
-        scheduled_date: prioritizeCaptureDate ? prev.scheduled_date : formattedDate,
-        capture_date: prioritizeCaptureDate ? formattedDate : prev.capture_date
+        scheduled_date: prioritizeCaptureDate ? prev.scheduled_date : localSelectedDate,
+        capture_date: prioritizeCaptureDate ? localSelectedDate : prev.capture_date
       }));
     }
   }, [localSelectedDate, currentSelectedEvent, prioritizeCaptureDate]);
@@ -71,20 +66,19 @@ export function useScheduleFormState({
   const resetForm = () => {
     console.log("resetting form in useScheduleFormState");
     setCurrentSelectedEvent(null);
-    const formattedDate = format(localSelectedDate, 'yyyy-MM-dd');
     setFormData({
       client_id: clientId,
       service_id: "",
       collaborator_id: null,
       title: "",
       description: null,
-      scheduled_date: prioritizeCaptureDate ? null : formattedDate,
+      scheduled_date: prioritizeCaptureDate ? null : localSelectedDate,
       execution_phase: null,
       editorial_line_id: null,
       product_id: null,
       status_id: null,
       creators: [],
-      capture_date: prioritizeCaptureDate ? formattedDate : null,
+      capture_date: prioritizeCaptureDate ? localSelectedDate : null,
       capture_end_date: null,
       is_all_day: true,
       location: null
@@ -116,9 +110,10 @@ export function useScheduleFormState({
       }
     }
     
-    // Garantir que as datas sejam consistentes
-    const captureDate = event.capture_date || null;
-    const scheduledDate = event.scheduled_date || formattedDate;
+    // Converter datas de string para objetos Date
+    const captureDate = event.capture_date ? parseISO(event.capture_date) : null;
+    const captureEndDate = event.capture_end_date ? parseISO(event.capture_end_date) : null;
+    const scheduledDate = event.scheduled_date ? parseISO(event.scheduled_date) : localSelectedDate;
     
     setFormData({
       client_id: event.client_id,
@@ -133,7 +128,7 @@ export function useScheduleFormState({
       status_id: event.status_id,
       creators: creatorsArray, // Sempre um array válido
       capture_date: captureDate,
-      capture_end_date: event.capture_end_date,
+      capture_end_date: captureEndDate,
       is_all_day: event.is_all_day !== undefined ? event.is_all_day : true,
       location: event.location
     });
@@ -200,34 +195,33 @@ export function useScheduleFormState({
     }, 100);
   };
   
-  // Add handleDateChange function
+  // Atualizado para trabalhar com objeto Date diretamente
   const handleDateChange = (name: string, value: Date | null) => {
     console.log("Date changed:", name, value);
     
     isUserEditing.current = true;
     
     if (value) {
-      // Make sure we're using the exact date selected without timezone adjustments
-      const formattedDate = format(value, "yyyy-MM-dd");
-      console.log(`Setting ${name} to:`, formattedDate);
+      // Keep the original Date object in state
+      console.log(`Setting ${name} to Date:`, value);
       
       // Logic to sync capture_date and scheduled_date
       if (name === "scheduled_date") {
         setFormData(prev => ({ 
           ...prev, 
-          scheduled_date: formattedDate,
+          scheduled_date: value,
           // Synchronize capture_date with scheduled_date if prioritizeCaptureDate is false
-          ...(prioritizeCaptureDate ? {} : { capture_date: formattedDate })
+          ...(prioritizeCaptureDate ? {} : { capture_date: value })
         }));
       } else if (name === "capture_date") {
         setFormData(prev => ({ 
           ...prev, 
-          capture_date: formattedDate,
+          capture_date: value,
           // Synchronize scheduled_date with capture_date if prioritizeCaptureDate is true
-          ...(prioritizeCaptureDate ? { scheduled_date: formattedDate } : {})
+          ...(prioritizeCaptureDate ? { scheduled_date: value } : {})
         }));
       } else {
-        setFormData(prev => ({ ...prev, [name]: formattedDate }));
+        setFormData(prev => ({ ...prev, [name]: value }));
       }
     } else {
       setFormData(prev => ({ ...prev, [name]: null }));
@@ -238,52 +232,49 @@ export function useScheduleFormState({
     }, 100);
   };
 
-  // Add a new handler for dateTime fields (with time)
+  // Atualizado para trabalhar com objeto Date diretamente
   const handleDateTimeChange = (name: string, value: Date | null) => {
     console.log("DateTime changed:", name, value);
     
     isUserEditing.current = true;
     
     if (value) {
-      // Fix: Use a consistent format that preserves the exact date and time
-      const formattedDateTime = format(value, "yyyy-MM-dd'T'HH:mm:ss");
-      console.log(`Formatted dateTime for ${name}:`, formattedDateTime);
+      console.log(`Setting DateTime for ${name}:`, value);
       
-      // Se estamos atualizando uma data e a outra data relacionada deveria ser sincronizada,
-      // atualize ambas para manter consistência
       if (name === "scheduled_date" && !prioritizeCaptureDate) {
-        const dateOnly = formattedDateTime.split('T')[0];
         setFormData(prev => ({ 
           ...prev, 
-          [name]: formattedDateTime,
-          // Se capture_date existe e tiver tempo, mantenha o tempo
-          capture_date: prev.capture_date?.includes('T') 
-            ? `${dateOnly}${prev.capture_date.substring(prev.capture_date.indexOf('T'))}`
-            : dateOnly
+          [name]: value,
+          // Se prioritizeCaptureDate é false, sincronize capture_date com scheduled_date
+          // Preservando a hora se capture_date existir
+          capture_date: prev.capture_date 
+            ? new Date(value.getFullYear(), value.getMonth(), value.getDate(), 
+                prev.capture_date.getHours(), prev.capture_date.getMinutes())
+            : value
         }));
       } else if (name === "capture_date" && prioritizeCaptureDate) {
-        const dateOnly = formattedDateTime.split('T')[0];
         setFormData(prev => ({ 
           ...prev, 
-          [name]: formattedDateTime,
-          // Se scheduled_date existe e tiver tempo, mantenha o tempo
-          scheduled_date: prev.scheduled_date?.includes('T') 
-            ? `${dateOnly}${prev.scheduled_date.substring(prev.scheduled_date.indexOf('T'))}` 
-            : dateOnly
+          [name]: value,
+          // Se prioritizeCaptureDate é true, sincronize scheduled_date com capture_date
+          // Preservando a hora se scheduled_date existir
+          scheduled_date: prev.scheduled_date
+            ? new Date(value.getFullYear(), value.getMonth(), value.getDate(),
+                prev.scheduled_date.getHours(), prev.scheduled_date.getMinutes())
+            : value
         }));
       } else if (name === "capture_date" && !formData.capture_end_date && !formData.is_all_day) {
-        // If setting a start date with specific time and no end date exists, 
-        // automatically create an end date 30 minutes later
+        // Se definindo uma data de início com hora específica e não existe data de término,
+        // crie automaticamente uma data de término 30 minutos depois
         const endDate = addMinutes(value, 30);
-        const formattedEndDateTime = format(endDate, "yyyy-MM-dd'T'HH:mm:ss");
         
         setFormData(prev => ({ 
           ...prev, 
-          [name]: formattedDateTime,
-          capture_end_date: formattedEndDateTime
+          [name]: value,
+          capture_end_date: endDate
         }));
       } else {
-        setFormData(prev => ({ ...prev, [name]: formattedDateTime }));
+        setFormData(prev => ({ ...prev, [name]: value }));
       }
     } else {
       setFormData(prev => ({ ...prev, [name]: null }));
@@ -301,19 +292,27 @@ export function useScheduleFormState({
     isUserEditing.current = true;
     
     if (isAllDay) {
-      // When switching to all-day, remove time component from dates
+      // When switching to all-day, preserve only the date part
       const updatedData: Partial<ContentScheduleFormData> = {
         is_all_day: true
       };
       
       if (formData.capture_date) {
-        // Keep just the date part
-        updatedData.capture_date = formData.capture_date.split('T')[0];
+        // Keep just the date part (reset time to midnight)
+        updatedData.capture_date = new Date(
+          formData.capture_date.getFullYear(),
+          formData.capture_date.getMonth(),
+          formData.capture_date.getDate()
+        );
       }
       
       if (formData.capture_end_date) {
-        // Keep just the date part
-        updatedData.capture_end_date = formData.capture_end_date.split('T')[0];
+        // Keep just the date part (reset time to midnight)
+        updatedData.capture_end_date = new Date(
+          formData.capture_end_date.getFullYear(),
+          formData.capture_end_date.getMonth(),
+          formData.capture_end_date.getDate()
+        );
       }
       
       setFormData(prev => ({ ...prev, ...updatedData }));
@@ -329,37 +328,38 @@ export function useScheduleFormState({
       
       if (formData.capture_date) {
         // Add time to the existing date
-        const datePart = formData.capture_date.split('T')[0];
-        const date = new Date(`${datePart}T${currentHours}:${currentMinutes}:00`);
-        updatedData.capture_date = format(date, "yyyy-MM-dd'T'HH:mm:ss");
+        const date = new Date(formData.capture_date);
+        date.setHours(currentHours);
+        date.setMinutes(currentMinutes);
+        updatedData.capture_date = date;
         
         // Also set end time if not already set
         if (!formData.capture_end_date) {
           const endDate = addMinutes(date, 30);
-          updatedData.capture_end_date = format(endDate, "yyyy-MM-dd'T'HH:mm:ss");
+          updatedData.capture_end_date = endDate;
         }
       }
       
       if (formData.capture_end_date) {
         // Add time to the existing end date, ensuring it's at least 30 minutes after start
-        const datePart = formData.capture_end_date.split('T')[0];
-        let endDate: Date;
+        const endDate = new Date(formData.capture_end_date);
+        endDate.setHours(currentHours);
+        endDate.setMinutes(currentMinutes + 30);
         
         if (formData.capture_date && updatedData.capture_date) {
           // Make sure end date is at least 30 min after start
-          const startDate = new Date(updatedData.capture_date);
+          const startDate = updatedData.capture_date;
           const minEndDate = addMinutes(startDate, 30);
-          endDate = new Date(`${datePart}T${currentHours}:${currentMinutes + 30}:00`);
           
           // If the calculated end date is before min end date, use min end date
           if (endDate < minEndDate) {
-            endDate = minEndDate;
+            updatedData.capture_end_date = minEndDate;
+          } else {
+            updatedData.capture_end_date = endDate;
           }
         } else {
-          endDate = new Date(`${datePart}T${currentHours}:${currentMinutes + 30}:00`);
+          updatedData.capture_end_date = endDate;
         }
-        
-        updatedData.capture_end_date = format(endDate, "yyyy-MM-dd'T'HH:mm:ss");
       }
       
       setFormData(prev => ({ ...prev, ...updatedData }));

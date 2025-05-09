@@ -7,10 +7,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { ContentScheduleFormData } from "@/types/oni-agencia";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CalendarIcon } from "lucide-react";
-import { format, parse } from "date-fns";
+import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect, useState } from "react";
-import { linkifyText } from "@/utils/linkUtils"; // Import the missing linkifyText function
+import { linkifyText } from "@/utils/linkUtils";
 
 interface DetailsFormProps {
   clientId: string;
@@ -47,30 +47,13 @@ export function DetailsForm({
   onDateChange,
   prioritizeCaptureDate = false
 }: DetailsFormProps) {
-  // State to ensure calendar displays the correct date
-  const [calendarDate, setCalendarDate] = useState<Date | undefined>(
-    formData.scheduled_date ? new Date(formData.scheduled_date) : selectedDate
-  );
-  
-  // Update the calendar date when formData changes
-  useEffect(() => {
-    if (formData.scheduled_date) {
-      try {
-        const date = new Date(formData.scheduled_date);
-        if (!isNaN(date.getTime())) {
-          setCalendarDate(date);
-        }
-      } catch (e) {
-        console.error("Error parsing date:", e);
-      }
-    } else {
-      setCalendarDate(selectedDate);
-    }
-  }, [formData.scheduled_date, selectedDate]);
+  // Garantir que temos um objeto Date válido
+  const calendarDate = formData.scheduled_date instanceof Date && !isNaN(formData.scheduled_date.getTime()) 
+    ? formData.scheduled_date 
+    : selectedDate;
   
   // Function to handle date selection from calendar
   const handleCalendarSelect = (date: Date | null) => {
-    setCalendarDate(date || undefined);
     onDateChange("scheduled_date", date);
   };
 
@@ -146,11 +129,11 @@ export function DetailsForm({
                 variant="outline"
                 className={cn(
                   "w-full pl-3 text-left font-normal",
-                  !formData.scheduled_date && "text-muted-foreground"
+                  !calendarDate && "text-muted-foreground"
                 )}
               >
-                {formData.scheduled_date ? (
-                  format(new Date(formData.scheduled_date), "dd/MM/yyyy")
+                {calendarDate ? (
+                  format(calendarDate, "dd/MM/yyyy")
                 ) : (
                   <span>Selecione uma data</span>
                 )}
@@ -164,6 +147,7 @@ export function DetailsForm({
                 onSelect={handleCalendarSelect}
                 disabled={(date) => date < new Date("1900-01-01")}
                 initialFocus
+                className="pointer-events-auto"
               />
             </PopoverContent>
           </Popover>

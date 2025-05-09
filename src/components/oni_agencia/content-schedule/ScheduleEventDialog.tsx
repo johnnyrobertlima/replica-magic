@@ -56,7 +56,7 @@ export function ScheduleEventDialog({
     return uniqueEvents;
   }, [propEvents, dateEvents]);
   
-  // Form state management
+  // Form state management - passando uma cópia da data para evitar problemas de referência
   const {
     currentSelectedEvent,
     formData,
@@ -69,7 +69,7 @@ export function ScheduleEventDialog({
     handleAllDayChange
   } = useScheduleFormState({
     clientId,
-    selectedDate,
+    selectedDate: new Date(selectedDate),
     selectedEvent,
     prioritizeCaptureDate,
   });
@@ -90,6 +90,35 @@ export function ScheduleEventDialog({
     isLoadingClients
   } = useScheduleResources(clientId);
 
+  // Função auxiliar para formatar a data ao enviar para a API
+  const prepareDataForAPI = (data: typeof formData) => {
+    // Clone o objeto para não modificar o original
+    const preparedData = { ...data };
+    
+    // Converter objetos Date para o formato esperado pela API
+    if (preparedData.scheduled_date instanceof Date) {
+      preparedData.scheduled_date = format(preparedData.scheduled_date, 'yyyy-MM-dd');
+    }
+    
+    if (preparedData.capture_date instanceof Date) {
+      if (preparedData.is_all_day) {
+        preparedData.capture_date = format(preparedData.capture_date, 'yyyy-MM-dd');
+      } else {
+        preparedData.capture_date = format(preparedData.capture_date, "yyyy-MM-dd'T'HH:mm:ss");
+      }
+    }
+    
+    if (preparedData.capture_end_date instanceof Date) {
+      if (preparedData.is_all_day) {
+        preparedData.capture_end_date = format(preparedData.capture_end_date, 'yyyy-MM-dd');
+      } else {
+        preparedData.capture_end_date = format(preparedData.capture_end_date, "yyyy-MM-dd'T'HH:mm:ss");
+      }
+    }
+    
+    return preparedData;
+  };
+
   const {
     handleSubmit: submitEvent,
     handleDelete: deleteEvent,
@@ -105,11 +134,15 @@ export function ScheduleEventDialog({
   
   // Wrap handlers to match expected function signatures
   const handleSubmit = async (e: React.FormEvent) => {
-    await submitEvent(e, currentSelectedEvent, formData);
+    // Converter os objetos Date para strings no formato esperado pela API
+    const preparedData = prepareDataForAPI(formData);
+    await submitEvent(e, currentSelectedEvent, preparedData);
   };
   
   const handleStatusUpdate = async (e: React.FormEvent) => {
-    await updateStatus(e, currentSelectedEvent, formData);
+    // Converter os objetos Date para strings no formato esperado pela API
+    const preparedData = prepareDataForAPI(formData);
+    await updateStatus(e, currentSelectedEvent, preparedData);
   };
   
   const handleDelete = async () => {
