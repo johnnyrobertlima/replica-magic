@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Loader2, Trash } from "lucide-react";
+import { useUserGroups } from "@/hooks/useUserGroups";
 
 interface DialogActionsProps {
   isSubmitting: boolean;
@@ -20,10 +21,11 @@ export function DialogActions({
   saveLabel = "Salvar"
 }: DialogActionsProps) {
   const isStatusUpdate = saveLabel === "Atualizar Status";
+  const { isInGroups: isAdmin } = useUserGroups(["admin", "Oni_admin"]);
   
   return (
     <div className="flex items-center justify-end space-x-2 pt-2">
-      {isEditing && onDelete && (
+      {isEditing && onDelete && isAdmin && (
         <Button
           type="button"
           variant="destructive"
