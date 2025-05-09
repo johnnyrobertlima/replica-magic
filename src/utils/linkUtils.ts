@@ -1,10 +1,17 @@
 
-export function linkifyText(text: string | null): string {
-  if (!text) return "";
+/**
+ * Converts URLs in text to clickable links
+ * @param text The text to process
+ * @returns HTML string with URLs converted to <a> tags
+ */
+export function linkifyText(text: string): string {
+  if (!text) return '';
   
-  // Regex para encontrar URLs no texto
+  // Regular expression to identify URLs
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   
-  // Substitui URLs por links clicáveis
-  return text.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:underline">$1</a>');
+  // Replace URLs with anchor tags
+  return text.replace(urlRegex, (url) => {
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">${url}</a>`;
+  });
 }
