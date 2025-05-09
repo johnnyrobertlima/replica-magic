@@ -13,8 +13,8 @@ import {
 } from "@/components/ui/popover";
 
 interface CalendarDatePickerProps {
-  value?: Date;
-  onChange: (date: Date | undefined) => void;
+  value?: Date | null;
+  onChange: (date: Date | null) => void;
   className?: string;
   placeholder?: string;
   disabled?: boolean;
@@ -30,7 +30,7 @@ export function CalendarDatePicker({
   // Garantir que o valor seja um objeto Date válido
   const dateValue = value instanceof Date && !isNaN(value.getTime()) 
     ? value 
-    : undefined;
+    : null;
   
   return (
     <Popover>
@@ -45,7 +45,7 @@ export function CalendarDatePicker({
           disabled={disabled}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
-          {dateValue ? format(dateValue, "PPP", { locale: ptBR }) : <span>{placeholder}</span>}
+          {dateValue ? format(dateValue, "dd/MM/yyyy", { locale: ptBR }) : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0">

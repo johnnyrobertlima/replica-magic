@@ -9,6 +9,7 @@ import { ContentScheduleFormData } from "@/types/oni-agencia";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect, useState } from "react";
 import { linkifyText } from "@/utils/linkUtils";
@@ -48,19 +49,10 @@ export function DetailsForm({
   onDateChange,
   prioritizeCaptureDate = false
 }: DetailsFormProps) {
-  // Garantir que temos um objeto Date válido
-  const calendarDate = formData.scheduled_date 
-    ? (formData.scheduled_date instanceof Date 
-      ? formData.scheduled_date 
-      : typeof formData.scheduled_date === 'string' 
-        ? new Date(formData.scheduled_date) 
-        : selectedDate)
+  // Obter uma data válida a partir do formData ou selectedDate
+  const calendarDate = formData.scheduled_date instanceof Date && !isNaN(formData.scheduled_date.getTime())
+    ? formData.scheduled_date
     : selectedDate;
-  
-  // Function to handle date selection from calendar
-  const handleCalendarSelect = (date: Date | null) => {
-    onDateChange("scheduled_date", date);
-  };
 
   return (
     <div className="space-y-4">
@@ -138,7 +130,7 @@ export function DetailsForm({
                 )}
               >
                 {calendarDate ? (
-                  format(calendarDate, "dd/MM/yyyy")
+                  format(calendarDate, "dd/MM/yyyy", { locale: ptBR })
                 ) : (
                   <span>Selecione uma data</span>
                 )}
@@ -149,10 +141,11 @@ export function DetailsForm({
               <Calendar
                 mode="single"
                 selected={calendarDate}
-                onSelect={handleCalendarSelect}
+                onSelect={(date) => onDateChange("scheduled_date", date)}
                 disabled={(date) => date < new Date("1900-01-01")}
                 initialFocus
                 className="pointer-events-auto"
+                locale={ptBR}
               />
             </PopoverContent>
           </Popover>
