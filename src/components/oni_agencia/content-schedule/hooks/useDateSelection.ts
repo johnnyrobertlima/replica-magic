@@ -9,6 +9,20 @@ export function useDateSelection() {
   
   const handleDateSelect = useCallback((date: Date | undefined) => {
     console.log("Date selected in useDateSelection:", date);
+    
+    // Prevent infinite loops by checking if the date is the same
+    if (selectedDate && date && 
+        selectedDate.getFullYear() === date.getFullYear() &&
+        selectedDate.getMonth() === date.getMonth() &&
+        selectedDate.getDate() === date.getDate()) {
+      // If same date and dialog is already open, we don't update anything
+      if (isDialogOpen) {
+        console.log("Same date selected and dialog already open, ignoring");
+        return;
+      }
+    }
+    
+    // Update the selected date
     setSelectedDate(date);
     
     // Always clear event selection when selecting a date directly
@@ -16,7 +30,7 @@ export function useDateSelection() {
     setSelectedEvent(undefined);
     
     setIsDialogOpen(true); // Open dialog when a date is selected
-  }, []);
+  }, [selectedDate, isDialogOpen]);
   
   const handleEventClick = useCallback((event: CalendarEvent, date: Date) => {
     console.log("Event clicked in useDateSelection:", event.id, event.title);
