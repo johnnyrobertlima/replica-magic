@@ -3,18 +3,17 @@ import { useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { CalendarEvent } from "@/types/oni-agencia";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 import { DndContext as DndContextComponent } from "@dnd-kit/core";
 import { useDragAndDrop } from "./useDragAndDrop";
 
-// Helper function to convert string date to Date object
+// Helper function to convert string date to Date object using parse to avoid timezone issues
 const parseStringToDate = (dateString: string): Date => {
   if (dateString.includes('T')) {
-    return new Date(dateString);
+    return parse(dateString, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx", new Date());
   }
   // Parse YYYY-MM-DD format to Date object
-  const [year, month, day] = dateString.split('-').map(Number);
-  return new Date(year, month - 1, day);
+  return parse(dateString, 'yyyy-MM-dd', new Date());
 };
 
 interface UseDndContextProps {
@@ -67,9 +66,6 @@ export function useDndContext({ clientId, month, year, onManualRefetch }: UseDnd
     setSelectedDate(undefined);
   }, []);
 
-  // Return the DndContext component to be used in the ContentArea
-  const DndContext = DndContextComponent;
-
   return {
     selectedDate,
     selectedEvent,
@@ -82,7 +78,6 @@ export function useDndContext({ clientId, month, year, onManualRefetch }: UseDnd
     handleDragEnd,
     handleDrop,
     handleDialogOpenChange,
-    handleDialogClose,
-    DndContext
+    handleDialogClose
   };
 }

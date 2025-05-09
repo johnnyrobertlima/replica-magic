@@ -4,17 +4,25 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
 import { updateContentSchedule } from "@/services/oniAgenciaContentScheduleServices";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 import { DragStartEvent, DragEndEvent } from "@dnd-kit/core";
 
 // Helper function to convert string date to Date object
-const parseStringToDate = (dateString: string): Date => {
-  if (dateString.includes('T')) {
-    return new Date(dateString);
+const parseStringToDate = (dateString: string): Date | null => {
+  if (!dateString) return null;
+
+  try {
+    if (dateString.includes('T')) {
+      // If ISO format with time, still use parse but with a different format
+      return parse(dateString, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx", new Date());
+    }
+    
+    // Parse YYYY-MM-DD format to Date object using parse to avoid timezone issues
+    return parse(dateString, 'yyyy-MM-dd', new Date());
+  } catch (e) {
+    console.error("Error parsing date string:", dateString, e);
+    return null;
   }
-  // Parse YYYY-MM-DD format to Date object
-  const [year, month, day] = dateString.split('-').map(Number);
-  return new Date(year, month - 1, day);
 };
 
 export function useDragAndDrop() {
@@ -86,7 +94,7 @@ export function useDragAndDrop() {
         product_id: activeDragEvent.product_id,
         status_id: activeDragEvent.status_id,
         creators: activeDragEvent.creators,
-        // Convert string dates to Date objects if present
+        // Convert string dates to Date objects if present using parse to avoid timezone issues
         capture_date: activeDragEvent.capture_date ? parseStringToDate(activeDragEvent.capture_date) : null,
         capture_end_date: activeDragEvent.capture_end_date ? parseStringToDate(activeDragEvent.capture_end_date) : null,
         is_all_day: activeDragEvent.is_all_day,

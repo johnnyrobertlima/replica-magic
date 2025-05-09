@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useRef } from "react";
-import { format, addMinutes, parseISO } from "date-fns";
+import { format, addMinutes, parseISO, parse } from "date-fns";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
 
 interface UseScheduleFormStateProps {
@@ -129,35 +129,49 @@ export function useScheduleFormState({
       }
     }
     
-    // Converter datas de string para objetos Date
+    // Converter datas de string para objetos Date usando parse para evitar shifts de timezone
     let scheduledDate: Date | null = null;
     let captureDate: Date | null = null;
     let captureEndDate: Date | null = null;
     
     if (event.scheduled_date) {
       try {
-        // Garantir que a data seja preservada com hora local
-        scheduledDate = new Date(event.scheduled_date);
+        // Faz o parse explicitamente em LOCAL time sem shift UTC
+        scheduledDate = parse(
+          event.scheduled_date as string,   // ex: "2025-05-05"
+          'yyyy-MM-dd',                     // formato recebido da API
+          new Date()                        // base date
+        );
       } catch (e) {
-        console.error("Erro ao converter scheduled_date:", e);
+        console.error("Erro ao converter scheduled_date via parse:", e);
         scheduledDate = null;
       }
     }
     
     if (event.capture_date) {
       try {
-        captureDate = new Date(event.capture_date);
+        // Faz o parse explicitamente em LOCAL time sem shift UTC
+        captureDate = parse(
+          event.capture_date as string,     // ex: "2025-05-05"
+          'yyyy-MM-dd',                     // formato recebido da API
+          new Date()                        // base date
+        );
       } catch (e) {
-        console.error("Erro ao converter capture_date:", e);
+        console.error("Erro ao converter capture_date via parse:", e);
         captureDate = null;
       }
     }
     
     if (event.capture_end_date) {
       try {
-        captureEndDate = new Date(event.capture_end_date);
+        // Faz o parse explicitamente em LOCAL time sem shift UTC
+        captureEndDate = parse(
+          event.capture_end_date as string, // ex: "2025-05-05"
+          'yyyy-MM-dd',                     // formato recebido da API
+          new Date()                        // base date
+        );
       } catch (e) {
-        console.error("Erro ao converter capture_end_date:", e);
+        console.error("Erro ao converter capture_end_date via parse:", e);
         captureEndDate = null;
       }
     }
