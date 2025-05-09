@@ -8,7 +8,7 @@ import React, { useMemo } from "react";
 interface EventsListProps {
   events: CalendarEvent[];
   date: Date;
-  onEventClick: (e: React.MouseEvent, event: CalendarEvent) => void;
+  onEventClick: (event: CalendarEvent) => void;
   isDraggable?: boolean;
 }
 
@@ -29,13 +29,13 @@ export function EventsList({ events, date, onEventClick, isDraggable = true }: E
   
   if (uniqueEvents.length === 0) return null;
 
-  // FIXED: Adicionar logs para debugging
+  // Add logs for debugging
   console.log(`Rendering ${uniqueEvents.length} events for date ${date.toISOString().split('T')[0]}`);
 
   return (
     <div className="flex flex-col gap-[2px] pr-2 w-full">
       {uniqueEvents.map((event) => (
-        // Usar uma key verdadeiramente única combinando ID do evento e a data ISO
+        // Use a truly unique key combining event ID and the ISO date
         <EventTooltip 
           key={`event-${event.id}-${date.toISOString()}`} 
           event={event}
@@ -44,12 +44,12 @@ export function EventsList({ events, date, onEventClick, isDraggable = true }: E
             {isDraggable ? (
               <DraggableEventItem 
                 event={event}
-                onClick={(e) => onEventClick(e, event)}
+                onClick={() => onEventClick(event)}
               />
             ) : (
               <EventItem 
                 event={event}
-                onClick={(e) => onEventClick(e, event)}
+                onClick={() => onEventClick(event)}
               />
             )}
           </div>

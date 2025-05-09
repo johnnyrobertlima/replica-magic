@@ -87,6 +87,7 @@ export function CalendarDay({
       </div>
       <EventsList 
         events={filteredEvents} 
+        date={date} 
         onEventClick={(event) => onEventClick(event, date)} 
       />
     </div>
