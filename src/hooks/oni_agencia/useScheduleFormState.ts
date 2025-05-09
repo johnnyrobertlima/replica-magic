@@ -212,17 +212,19 @@ export function useScheduleFormState({
       console.log(`Setting ${name} to:`, formattedDate);
       
       // Logic to sync capture_date and scheduled_date
-      if (name === "scheduled_date" && !prioritizeCaptureDate) {
+      if (name === "scheduled_date") {
         setFormData(prev => ({ 
           ...prev, 
-          [name]: formattedDate,
-          capture_date: formattedDate // Synchronize capture_date with scheduled_date
+          scheduled_date: formattedDate,
+          // Synchronize capture_date with scheduled_date if prioritizeCaptureDate is false
+          ...(prioritizeCaptureDate ? {} : { capture_date: formattedDate })
         }));
-      } else if (name === "capture_date" && prioritizeCaptureDate) {
+      } else if (name === "capture_date") {
         setFormData(prev => ({ 
           ...prev, 
-          [name]: formattedDate,
-          scheduled_date: formattedDate // Synchronize scheduled_date with capture_date
+          capture_date: formattedDate,
+          // Synchronize scheduled_date with capture_date if prioritizeCaptureDate is true
+          ...(prioritizeCaptureDate ? { scheduled_date: formattedDate } : {})
         }));
       } else {
         setFormData(prev => ({ ...prev, [name]: formattedDate }));
@@ -250,16 +252,24 @@ export function useScheduleFormState({
       // Se estamos atualizando uma data e a outra data relacionada deveria ser sincronizada,
       // atualize ambas para manter consistência
       if (name === "scheduled_date" && !prioritizeCaptureDate) {
+        const dateOnly = formattedDateTime.split('T')[0];
         setFormData(prev => ({ 
           ...prev, 
           [name]: formattedDateTime,
-          capture_date: formattedDateTime
+          // Se capture_date existe e tiver tempo, mantenha o tempo
+          capture_date: prev.capture_date?.includes('T') 
+            ? `${dateOnly}${prev.capture_date.substring(prev.capture_date.indexOf('T'))}`
+            : dateOnly
         }));
       } else if (name === "capture_date" && prioritizeCaptureDate) {
+        const dateOnly = formattedDateTime.split('T')[0];
         setFormData(prev => ({ 
           ...prev, 
           [name]: formattedDateTime,
-          scheduled_date: formattedDateTime
+          // Se scheduled_date existe e tiver tempo, mantenha o tempo
+          scheduled_date: prev.scheduled_date?.includes('T') 
+            ? `${dateOnly}${prev.scheduled_date.substring(prev.scheduled_date.indexOf('T'))}` 
+            : dateOnly
         }));
       } else if (name === "capture_date" && !formData.capture_end_date && !formData.is_all_day) {
         // If setting a start date with specific time and no end date exists, 
