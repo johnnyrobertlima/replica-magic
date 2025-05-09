@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { format, addMinutes } from "date-fns";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
@@ -53,18 +54,15 @@ export function useScheduleFormState({
   useEffect(() => {
     if (!currentSelectedEvent && !isUserEditing.current) {
       // Only update if there's no selected event and user is not editing
-      const formattedDate = format(localSelectedDate, 'yyyy-MM-dd');
-      console.log("Updating form with selected date:", formattedDate);
-      
       if (prioritizeCaptureDate) {
         setFormData(prev => ({
           ...prev,
-          capture_date: formattedDate
+          capture_date: format(localSelectedDate, 'yyyy-MM-dd')
         }));
       } else {
         setFormData(prev => ({
           ...prev,
-          scheduled_date: formattedDate
+          scheduled_date: format(localSelectedDate, 'yyyy-MM-dd')
         }));
       }
     }
@@ -73,20 +71,19 @@ export function useScheduleFormState({
   const resetForm = () => {
     console.log("resetting form in useScheduleFormState");
     setCurrentSelectedEvent(null);
-    const formattedDate = format(localSelectedDate, 'yyyy-MM-dd');
     setFormData({
       client_id: clientId,
       service_id: "",
       collaborator_id: null,
       title: "",
       description: null,
-      scheduled_date: prioritizeCaptureDate ? null : formattedDate,
+      scheduled_date: prioritizeCaptureDate ? null : format(localSelectedDate, 'yyyy-MM-dd'),
       execution_phase: null,
       editorial_line_id: null,
       product_id: null,
       status_id: null,
       creators: [],
-      capture_date: prioritizeCaptureDate ? formattedDate : null,
+      capture_date: prioritizeCaptureDate ? format(localSelectedDate, 'yyyy-MM-dd') : null,
       capture_end_date: null,
       is_all_day: true,
       location: null
@@ -209,10 +206,9 @@ export function useScheduleFormState({
     isUserEditing.current = true;
     
     if (value) {
-      // Make sure we're using the exact date selected without timezone adjustments
+      // Preserve the original date without timezone adjustments
       const formattedDate = format(value, "yyyy-MM-dd");
-      console.log(`Setting ${name} to:`, formattedDate);
-      
+      console.log(`Formatted date for ${name}:`, formattedDate);
       setFormData(prev => ({ ...prev, [name]: formattedDate }));
     } else {
       setFormData(prev => ({ ...prev, [name]: null }));

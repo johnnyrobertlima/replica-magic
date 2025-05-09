@@ -8,9 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { ContentScheduleFormData } from "@/types/oni-agencia";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CalendarIcon } from "lucide-react";
-import { format, parse } from "date-fns";
+import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useEffect, useState } from "react";
 
 interface DetailsFormProps {
   clientId: string;
@@ -47,33 +46,6 @@ export function DetailsForm({
   onDateChange,
   prioritizeCaptureDate = false
 }: DetailsFormProps) {
-  // State to ensure calendar displays the correct date
-  const [calendarDate, setCalendarDate] = useState<Date | undefined>(
-    formData.scheduled_date ? new Date(formData.scheduled_date) : selectedDate
-  );
-  
-  // Update the calendar date when formData changes
-  useEffect(() => {
-    if (formData.scheduled_date) {
-      try {
-        const date = new Date(formData.scheduled_date);
-        if (!isNaN(date.getTime())) {
-          setCalendarDate(date);
-        }
-      } catch (e) {
-        console.error("Error parsing date:", e);
-      }
-    } else {
-      setCalendarDate(selectedDate);
-    }
-  }, [formData.scheduled_date, selectedDate]);
-  
-  // Function to handle date selection from calendar
-  const handleCalendarSelect = (date: Date | null) => {
-    setCalendarDate(date || undefined);
-    onDateChange("scheduled_date", date);
-  };
-
   return (
     <div className="space-y-4">
       <div>
@@ -160,8 +132,8 @@ export function DetailsForm({
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
                 mode="single"
-                selected={calendarDate}
-                onSelect={handleCalendarSelect}
+                selected={formData.scheduled_date ? new Date(formData.scheduled_date) : undefined}
+                onSelect={(date) => onDateChange("scheduled_date", date)}
                 disabled={(date) => date < new Date("1900-01-01")}
                 initialFocus
               />
@@ -234,16 +206,6 @@ export function DetailsForm({
           placeholder="Descrição do agendamento"
           rows={3}
         />
-        {/* Display clickable links if description has URLs */}
-        {formData.description && formData.description.match(/(https?:\/\/[^\s]+)/g) && (
-          <div className="mt-2 text-sm">
-            <p className="font-medium mb-1">Links detectados:</p>
-            <div 
-              className="p-2 bg-muted rounded-md" 
-              dangerouslySetInnerHTML={{ __html: linkifyText(formData.description || "") }} 
-            />
-          </div>
-        )}
       </div>
     </div>
   );
