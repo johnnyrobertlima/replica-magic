@@ -32,7 +32,7 @@ export function useScheduleHistory(scheduleId: string) {
             new_value,
             created_at,
             changed_by,
-            user_profiles:changed_by (full_name, email)
+            user_profiles(full_name, email)
           `)
           .eq('schedule_id', scheduleId)
           .order('created_at', { ascending: false });
@@ -50,7 +50,9 @@ export function useScheduleHistory(scheduleId: string) {
           old_value: entry.old_value,
           new_value: entry.new_value,
           changed_by: entry.changed_by,
-          changed_by_name: entry.user_profiles?.full_name || entry.user_profiles?.email || 'Sistema',
+          changed_by_name: entry.user_profiles?.[0]?.full_name || 
+                          entry.user_profiles?.[0]?.email || 
+                          'Sistema',
           created_at: entry.created_at
         }));
         
