@@ -7,6 +7,7 @@ import { useEventsByDate } from "./hooks/useEventsByDate";
 import { DialogContainer } from "./schedule-dialog/DialogContainer";
 import { DialogContent } from "./schedule-dialog/DialogContent";
 import { CalendarEvent } from "@/types/oni-agencia";
+import { format } from "date-fns";
 
 export interface ScheduleEventDialogProps {
   isOpen: boolean;
@@ -96,11 +97,11 @@ export function ScheduleEventDialog({
     const preparedData = { ...data };
     
     // Converter objetos Date para o formato esperado pela API
-    if (preparedData.scheduled_date instanceof Date) {
+    if (preparedData.scheduled_date && preparedData.scheduled_date instanceof Date) {
       preparedData.scheduled_date = format(preparedData.scheduled_date, 'yyyy-MM-dd');
     }
     
-    if (preparedData.capture_date instanceof Date) {
+    if (preparedData.capture_date && preparedData.capture_date instanceof Date) {
       if (preparedData.is_all_day) {
         preparedData.capture_date = format(preparedData.capture_date, 'yyyy-MM-dd');
       } else {
@@ -108,7 +109,7 @@ export function ScheduleEventDialog({
       }
     }
     
-    if (preparedData.capture_end_date instanceof Date) {
+    if (preparedData.capture_end_date && preparedData.capture_end_date instanceof Date) {
       if (preparedData.is_all_day) {
         preparedData.capture_end_date = format(preparedData.capture_end_date, 'yyyy-MM-dd');
       } else {

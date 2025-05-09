@@ -1,3 +1,4 @@
+
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -48,7 +49,7 @@ export function DetailsForm({
   prioritizeCaptureDate = false
 }: DetailsFormProps) {
   // Garantir que temos um objeto Date válido
-  const calendarDate = formData.scheduled_date instanceof Date && !isNaN(formData.scheduled_date.getTime()) 
+  const calendarDate = formData.scheduled_date && typeof formData.scheduled_date === 'object' && formData.scheduled_date instanceof Date
     ? formData.scheduled_date 
     : selectedDate;
   
