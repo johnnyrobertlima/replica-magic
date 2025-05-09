@@ -53,9 +53,7 @@ export function CalendarDayCell({
     ? `Existem +${hiddenEventsCount} agendamentos neste dia` 
     : undefined;
   
-  // Fixed: Prevent propagation to parent elements to avoid infinite loop
   const handleCellClick = (e: React.MouseEvent) => {
-    // Check if the click was on an event or indicator, not on the cell background
     const target = e.target as HTMLElement;
     const isEventClick = 
       target.closest('.event-item') || 
@@ -66,14 +64,12 @@ export function CalendarDayCell({
       target.classList.contains('events-overflow-indicator');
     
     if (!isEventClick) {
-      // Only if clicking the background of the cell, not an event
       console.log("Cell background clicked for date:", format(date, 'yyyy-MM-dd'));
-      e.stopPropagation(); // Stop propagation to prevent multiple handlers from firing
       onSelect(date);
     }
   };
 
-  // Handle event click - ensure we don't have a loop by stopping propagation
+  // Updated to match the new EventsList signature
   const handleEventClick = (event: CalendarEvent) => {
     console.log("Event clicked:", event.id, event.title);
     onEventClick(event, date);
@@ -106,11 +102,6 @@ export function CalendarDayCell({
             }`}
             title={dayTooltip}
             aria-label={dayTooltip || `Dia ${format(date, 'd')}`}
-            onClick={(e) => {
-              // Handle click on day number button specifically
-              e.stopPropagation();
-              onSelect(date);
-            }}
           >
             {format(date, 'd')}
           </button>
