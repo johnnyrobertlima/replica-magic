@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -79,7 +80,7 @@ export function useDragAndDrop() {
         collaborator_id: activeDragEvent.collaborator_id,
         title: activeDragEvent.title,
         description: activeDragEvent.description,
-        scheduled_date: date, // Use Date object
+        scheduled_date: date, // Use Date object directly
         execution_phase: activeDragEvent.execution_phase,
         editorial_line_id: activeDragEvent.editorial_line_id,
         product_id: activeDragEvent.product_id,
@@ -162,11 +163,6 @@ export function useDragAndDrop() {
           pages: updatedPages
         };
       });
-      
-      // Certifique-se que o ID do evento existe e está sendo passado corretamente
-      if (!activeDragEvent.id) {
-        throw new Error("ID do evento não definido");
-      }
       
       // Make the update API call with the correct event ID
       await updateContentSchedule(activeDragEvent.id, apiData);
