@@ -81,10 +81,9 @@ export function EventForm({
         <div className="space-y-2">
           <Label htmlFor="scheduled_date">Data de Agendamento</Label>
           <CalendarDatePicker
-            id="scheduled_date"
-            date={scheduledDate}
-            onSelect={(date) => onDateChange("scheduled_date", date)}
-            locale={ptBR}
+            value={scheduledDate}
+            onChange={(date) => onDateChange("scheduled_date", date)}
+            placeholder="Selecione uma data"
           />
         </div>
       </div>
