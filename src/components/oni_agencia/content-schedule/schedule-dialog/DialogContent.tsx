@@ -149,7 +149,7 @@ export function DialogContent({
     );
   }
   
-  if (showEditor) {
+  if (showEditor && currentSelectedEvent) {
     return (
       <EventEditor
         event={currentSelectedEvent}
