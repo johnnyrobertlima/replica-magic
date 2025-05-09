@@ -94,7 +94,11 @@ export function DialogContent({
         <EventSelector
           events={events}
           onSelectEvent={onSelectEvent}
-          onCreateNew={onResetForm}
+          onCreateNew={() => {
+            console.log("Forcing reset of form from DialogContent");
+            // Force reset the form and clear any previously selected event
+            onResetForm();
+          }}
         />
       </>
     );
