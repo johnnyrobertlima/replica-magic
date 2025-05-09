@@ -48,13 +48,21 @@ export function ContentCalendar({
     handleDateSelect,
     handleEventClick,
     setSelectedDate: setSelectedDateContext,
-    setSelectedEvent: setSelectedEventContext
+    setSelectedEvent: setSelectedEventContext,
+    openDialog,
+    closeDialog
   } = useDateSelection();
 
+  // Log when dialog state changes for debugging
+  useEffect(() => {
+    console.log("Dialog state changed:", isDialogOpen);
+  }, [isDialogOpen]);
+
   const handleDialogClose = () => {
+    console.log("Closing dialog in ContentCalendar");
     setSelectedDateContext(undefined);
     setSelectedEventContext(undefined);
-    setIsDialogOpen(false);
+    closeDialog();
   };
 
   // Modified to consider the useCaptureDate option
@@ -92,8 +100,11 @@ export function ContentCalendar({
           <Button
             variant="ghost"
             className="h-9 w-9 p-0 font-normal text-muted-foreground"
-            onClick={() => {
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
               if (!isSelected) {
+                console.log("Day clicked in calendar:", date);
                 handleDateSelect(date);
               }
             }}
@@ -123,6 +134,7 @@ export function ContentCalendar({
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    console.log("Event clicked in popover:", event.id);
                     handleEventClick(event, date);
                   }}
                 >
@@ -140,6 +152,14 @@ export function ContentCalendar({
       </Popover>
     );
   };
+
+  // Adicione esse console.log para diagnóstico
+  useEffect(() => {
+    if (selectedDate) {
+      console.log("Selected date set in ContentCalendar:", selectedDate);
+      console.log("Dialog should be open:", isDialogOpen);
+    }
+  }, [selectedDate, isDialogOpen]);
 
   return (
     <div className="rounded-md border bg-white">
@@ -180,6 +200,7 @@ export function ContentCalendar({
         selected={selectedDate}
         onSelect={(newDate) => {
           if (newDate) {
+            console.log("Calendar onSelect called with date:", newDate);
             handleDateSelect(newDate);
             setDate(newDate);
           }
@@ -196,7 +217,10 @@ export function ContentCalendar({
       {selectedDate && (
         <ScheduleEventDialog
           isOpen={isDialogOpen}
-          onOpenChange={setIsDialogOpen}
+          onOpenChange={(open) => {
+            console.log("Dialog open state changing to:", open);
+            setIsDialogOpen(open);
+          }}
           clientId={clientId}
           selectedDate={selectedDate}
           events={[]}

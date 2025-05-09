@@ -65,13 +65,15 @@ export function CalendarDayCell({
     
     if (!isEventClick) {
       console.log("Cell background clicked for date:", format(date, 'yyyy-MM-dd'));
+      e.preventDefault();
+      e.stopPropagation();
       onSelect(date);
     }
   };
 
   // Updated to match the new EventsList signature
   const handleEventClick = (event: CalendarEvent) => {
-    console.log("Event clicked:", event.id, event.title);
+    console.log("Event clicked in CalendarDayCell:", event.id, event.title);
     onEventClick(event, date);
   };
   
@@ -102,6 +104,11 @@ export function CalendarDayCell({
             }`}
             title={dayTooltip}
             aria-label={dayTooltip || `Dia ${format(date, 'd')}`}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onSelect(date);
+            }}
           >
             {format(date, 'd')}
           </button>
