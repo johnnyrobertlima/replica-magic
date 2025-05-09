@@ -31,8 +31,7 @@ export function useScheduleHistory(scheduleId: string) {
             old_value,
             new_value,
             created_at,
-            changed_by,
-            user_profiles(full_name, email)
+            changed_by
           `)
           .eq('schedule_id', scheduleId)
           .order('created_at', { ascending: false });
@@ -42,13 +41,34 @@ export function useScheduleHistory(scheduleId: string) {
           throw error;
         }
         
+        // Once we have the history entries, fetch the user profiles in a separate query
+        // Create a list of unique user IDs
+        const userIds = Array.from(new Set(historyEntries.filter(entry => entry.changed_by).map(entry => entry.changed_by)));
+        
+        let userProfiles: Record<string, { full_name?: string, email?: string }> = {};
+        
+        // Only fetch user profiles if we have user IDs
+        if (userIds.length > 0) {
+          const { data: profiles, error: profilesError } = await supabase
+            .from('user_profiles')
+            .select('id, full_name, email')
+            .in('id', userIds);
+            
+          if (profilesError) {
+            console.error("Error fetching user profiles:", profilesError);
+          } else if (profiles) {
+            // Create a map of user IDs to profiles
+            userProfiles = profiles.reduce((acc, profile) => {
+              acc[profile.id] = { full_name: profile.full_name, email: profile.email };
+              return acc;
+            }, {} as Record<string, { full_name?: string, email?: string }>);
+          }
+        }
+        
         // Transform the data to include the user's name
         return historyEntries.map(entry => {
-          // Extract user_profiles data safely, handling the array structure
-          const userProfile = entry.user_profiles && Array.isArray(entry.user_profiles) && entry.user_profiles.length > 0
-            ? entry.user_profiles[0]
-            : null;
-
+          const userProfile = entry.changed_by ? userProfiles[entry.changed_by] : null;
+          
           return {
             id: entry.id,
             schedule_id: entry.schedule_id,
