@@ -43,18 +43,23 @@ export function useScheduleHistory(scheduleId: string) {
         }
         
         // Transform the data to include the user's name
-        return historyEntries.map(entry => ({
-          id: entry.id,
-          schedule_id: entry.schedule_id,
-          field_name: entry.field_name,
-          old_value: entry.old_value,
-          new_value: entry.new_value,
-          changed_by: entry.changed_by,
-          changed_by_name: entry.user_profiles?.[0]?.full_name || 
-                          entry.user_profiles?.[0]?.email || 
-                          'Sistema',
-          created_at: entry.created_at
-        }));
+        return historyEntries.map(entry => {
+          // Extract user_profiles data safely, handling the array structure
+          const userProfile = entry.user_profiles && Array.isArray(entry.user_profiles) && entry.user_profiles.length > 0
+            ? entry.user_profiles[0]
+            : null;
+
+          return {
+            id: entry.id,
+            schedule_id: entry.schedule_id,
+            field_name: entry.field_name,
+            old_value: entry.old_value,
+            new_value: entry.new_value,
+            changed_by: entry.changed_by,
+            changed_by_name: userProfile?.full_name || userProfile?.email || 'Sistema',
+            created_at: entry.created_at
+          };
+        });
         
       } catch (error) {
         console.error("Error in useScheduleHistory:", error);
