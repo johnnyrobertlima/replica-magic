@@ -6,6 +6,7 @@ import { CalendarEvent } from "@/types/oni-agencia";
 import { useDndContext } from "@/components/oni_agencia/content-schedule/hooks/useDndContext";
 import { ContentScheduleLoading } from "@/components/oni_agencia/content-schedule/ContentScheduleLoading";
 import { PautaStatusIndicator } from "@/components/oni_agencia/content-schedule/PautaStatusIndicator";
+import { DndContext } from "@dnd-kit/core";
 
 interface ContentAreaProps {
   viewMode: "calendar" | "list";
@@ -43,7 +44,6 @@ export function ContentArea({
     selectedEvent,
     selectedDate,
     isDialogOpen,
-    dndContext,
     handleEventClick,
     handleDateSelect,
     handleDragEnd,
@@ -79,7 +79,7 @@ export function ContentArea({
       )}
       
       {viewMode === "calendar" ? (
-        <dndContext.DndContext onDragEnd={handleDragEnd}>
+        <DndContext onDragEnd={handleDragEnd}>
           <Calendar 
             events={filteredSchedules}
             month={month}
@@ -96,7 +96,7 @@ export function ContentArea({
             onDialogClose={handleDialogClose}
             onManualRefetch={onManualRefetch}
           />
-        </dndContext.DndContext>
+        </DndContext>
       ) : (
         <ContentScheduleList 
           events={filteredSchedules} 
