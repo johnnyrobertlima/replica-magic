@@ -1,20 +1,26 @@
 
 import React, { useState } from "react";
 import { OniAgenciaCollaborator } from "@/types/oni-agencia";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { X, ChevronsUpDown } from "lucide-react";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { X, Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
-interface CreatorsSelectMultipleProps {
+interface CreatorsMultiSelectProps {
   collaborators: OniAgenciaCollaborator[];
   isLoading: boolean;
   value: string[];
@@ -26,7 +32,7 @@ export function CreatorsSelectMultiple({
   isLoading,
   value = [],
   onValueChange
-}: CreatorsSelectMultipleProps) {
+}: CreatorsMultiSelectProps) {
   const [open, setOpen] = useState(false);
   
   // Garantir que value seja sempre um array válido
@@ -40,21 +46,50 @@ export function CreatorsSelectMultiple({
     c && c.id && safeValue.includes(c.id)
   );
 
-  const handleToggleCreator = (collaboratorId: string, checked: boolean) => {
+  const handleSelect = (collaboratorId: string) => {
     if (!collaboratorId) return;
     
-    if (checked) {
-      if (!safeValue.includes(collaboratorId)) {
-        onValueChange([...safeValue, collaboratorId]);
-      }
-    } else {
+    if (safeValue.includes(collaboratorId)) {
       onValueChange(safeValue.filter(id => id !== collaboratorId));
+    } else {
+      onValueChange([...safeValue, collaboratorId]);
     }
   };
 
   const handleRemove = (collaboratorId: string) => {
     if (!collaboratorId) return;
     onValueChange(safeValue.filter(id => id !== collaboratorId));
+  };
+
+  // Componentes filhos que serão renderizados dentro do Command.Group
+  const renderCollaboratorItems = () => {
+    if (!safeCollaborators || safeCollaborators.length === 0) {
+      return (
+        <div className="p-2 text-sm text-muted-foreground">
+          Nenhum colaborador disponível.
+        </div>
+      );
+    }
+
+    return safeCollaborators.map((collaborator) => (
+      collaborator && collaborator.id ? (
+        <CommandItem
+          key={collaborator.id}
+          value={collaborator.id}
+          onSelect={() => handleSelect(collaborator.id)}
+        >
+          <Check
+            className={cn(
+              "mr-2 h-4 w-4",
+              safeValue.includes(collaborator.id) 
+                ? "opacity-100"
+                : "opacity-0"
+            )}
+          />
+          {collaborator.name}
+        </CommandItem>
+      ) : null
+    ));
   };
 
   return (
@@ -78,45 +113,16 @@ export function CreatorsSelectMultiple({
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-2 bg-white">
-          <ScrollArea className="h-64">
-            <div className="space-y-2">
-              {safeCollaborators.length > 0 ? (
-                safeCollaborators.map((collaborator) => (
-                  collaborator && collaborator.id ? (
-                    <div 
-                      key={collaborator.id} 
-                      className="flex items-center space-x-2 bg-white hover:bg-green-50 p-2 rounded-md transition-colors"
-                    >
-                      <Checkbox
-                        id={`creator-${collaborator.id}`}
-                        checked={safeValue.includes(collaborator.id)}
-                        onCheckedChange={(checked) => 
-                          handleToggleCreator(collaborator.id, checked === true)
-                        }
-                        className={cn(
-                          "border-gray-300",
-                          safeValue.includes(collaborator.id) 
-                            ? "bg-green-500 text-white border-green-500" 
-                            : ""
-                        )}
-                      />
-                      <Label 
-                        htmlFor={`creator-${collaborator.id}`}
-                        className="text-sm cursor-pointer flex-grow"
-                      >
-                        {collaborator.name}
-                      </Label>
-                    </div>
-                  ) : null
-                ))
-              ) : (
-                <div className="p-2 text-sm text-muted-foreground">
-                  Nenhum colaborador disponível.
-                </div>
-              )}
-            </div>
-          </ScrollArea>
+        <PopoverContent className="w-[300px] p-0">
+          <Command>
+            <CommandInput placeholder="Buscar creators..." />
+            <CommandEmpty>Nenhum creator encontrado.</CommandEmpty>
+            <CommandGroup>
+              <ScrollArea className="h-64">
+                {renderCollaboratorItems()}
+              </ScrollArea>
+            </CommandGroup>
+          </Command>
         </PopoverContent>
       </Popover>
       
@@ -127,7 +133,7 @@ export function CreatorsSelectMultiple({
               <Badge
                 key={collaborator.id}
                 variant="secondary"
-                className="flex items-center gap-1 bg-green-100 text-green-800"
+                className="flex items-center gap-1"
               >
                 {collaborator.name}
                 <button
@@ -145,4 +151,3 @@ export function CreatorsSelectMultiple({
     </div>
   );
 }
-

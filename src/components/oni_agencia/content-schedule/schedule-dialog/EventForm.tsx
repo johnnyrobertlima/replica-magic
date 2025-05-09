@@ -117,13 +117,16 @@ export function EventForm({
         onValueChange={(value) => onSelectChange("service_id", value)}
       />
       
+      {/* Adicionar campo Colaborador Responsável - este estava faltando */}
       <CollaboratorSelect
         collaborators={safeCollaborators}
         isLoading={isLoadingCollaborators}
         value={formData.collaborator_id}
         onValueChange={(value) => onSelectChange("collaborator_id", value)}
+        label="Colaborador Responsável"
       />
       
+      {/* Adicionar campo Creators - este também estava faltando */}
       <CreatorsSelectMultiple
         collaborators={safeCollaborators}
         isLoading={isLoadingCollaborators}
