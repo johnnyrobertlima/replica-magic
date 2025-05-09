@@ -28,7 +28,7 @@ export function SelectProduct({
       <Label htmlFor="product_id">Produto</Label>
       <Select
         disabled={isLoading}
-        value={value || ""}
+        value={value || "null"}
         onValueChange={onChange}
         data-testid="product-select"
       >
@@ -37,7 +37,7 @@ export function SelectProduct({
         </SelectTrigger>
         <SelectContent className="bg-white">
           <SelectGroup>
-            <SelectItem value="">-- Nenhum --</SelectItem>
+            <SelectItem value="null">-- Nenhum --</SelectItem>
             {products && products.length > 0 && products.map((product) => (
               <SelectItem key={product.id} value={product.id}>
                 {product.name}

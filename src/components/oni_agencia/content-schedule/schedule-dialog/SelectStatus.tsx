@@ -28,7 +28,7 @@ export function SelectStatus({
       <Label htmlFor="status_id">Status</Label>
       <Select
         disabled={isLoading}
-        value={value || ""}
+        value={value || "null"}
         onValueChange={onChange}
         data-testid="status-select"
       >
@@ -37,7 +37,7 @@ export function SelectStatus({
         </SelectTrigger>
         <SelectContent className="bg-white">
           <SelectGroup>
-            <SelectItem value="">-- Nenhum --</SelectItem>
+            <SelectItem value="null">-- Nenhum --</SelectItem>
             {statuses && statuses.length > 0 && statuses.map((status) => (
               <SelectItem key={status.id} value={status.id}>
                 {status.name}

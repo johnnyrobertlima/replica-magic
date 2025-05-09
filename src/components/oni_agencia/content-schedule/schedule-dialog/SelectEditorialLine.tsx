@@ -28,16 +28,16 @@ export function SelectEditorialLine({
       <Label htmlFor="editorial_line_id">Linha Editorial</Label>
       <Select
         disabled={isLoading}
-        value={value || ""}
+        value={value || "null"}
         onValueChange={onChange}
         data-testid="editorial-line-select"
       >
-        <SelectTrigger>
+        <SelectTrigger className="w-full bg-white">
           <SelectValue placeholder="Selecione uma linha editorial" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="bg-white">
           <SelectGroup>
-            <SelectItem value="">-- Nenhum --</SelectItem>
+            <SelectItem value="null">-- Nenhum --</SelectItem>
             {editorialLines && editorialLines.length > 0 && editorialLines.map((line) => (
               <SelectItem key={line.id} value={line.id}>
                 {line.name}

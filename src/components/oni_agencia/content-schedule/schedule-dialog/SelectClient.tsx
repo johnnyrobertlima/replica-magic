@@ -29,7 +29,7 @@ export function SelectClient({
       <Label htmlFor="client_id">Cliente</Label>
       <Select
         disabled={isLoading || clients.length === 0}
-        value={value || ""}
+        value={value || "null"}
         onValueChange={onChange}
         data-testid="client-select"
       >
@@ -38,7 +38,7 @@ export function SelectClient({
         </SelectTrigger>
         <SelectContent className="bg-white">
           <SelectGroup>
-            <SelectItem value="">-- Nenhum --</SelectItem>
+            <SelectItem value="null">-- Nenhum --</SelectItem>
             {clients && clients.length > 0 && clients.map((client) => (
               <SelectItem key={client.id} value={client.id}>
                 {client.name}

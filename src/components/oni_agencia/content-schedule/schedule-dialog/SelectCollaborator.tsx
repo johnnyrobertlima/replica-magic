@@ -29,16 +29,16 @@ export function SelectCollaborator({
       <Label htmlFor="collaborator_id">Responsável</Label>
       <Select
         disabled={isLoading}
-        value={value}
+        value={value || "null"}
         onValueChange={onChange}
         data-testid="collaborator-select"
       >
-        <SelectTrigger>
+        <SelectTrigger className="w-full bg-white">
           <SelectValue placeholder="Selecione um responsável" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="bg-white">
           <SelectGroup>
-            <SelectItem value="">-- Nenhum --</SelectItem>
+            <SelectItem value="null">-- Nenhum --</SelectItem>
             {collaborators && collaborators.length > 0 && collaborators.map((collaborator) => (
               <SelectItem key={collaborator.id} value={collaborator.id}>
                 {collaborator.name}

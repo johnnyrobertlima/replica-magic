@@ -185,13 +185,9 @@ export function useScheduleFormState({
         name === "editorial_line_id" || 
         name === "product_id" || 
         name === "collaborator_id") && 
-        (value === "" || value === "null")
+        (value === "null")
       ) {
-        if (name === "service_id" && currentSelectedEvent) {
-          console.log("Keeping existing service_id for required field");
-        } else {
-          setFormData(prev => ({ ...prev, [name]: null }));
-        }
+        setFormData(prev => ({ ...prev, [name]: null }));
       } else {
         setFormData(prev => ({ ...prev, [name]: value === "null" ? null : value }));
       }
