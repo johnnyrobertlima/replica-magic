@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { useScheduleFormState } from "@/hooks/oni_agencia/useScheduleFormState";
 import { useScheduleResources } from "./hooks/useScheduleResources";
 import { useScheduleMutations } from "./hooks/useScheduleMutations";
@@ -33,6 +33,11 @@ export function ScheduleEventDialog({
   defaultTab,
   prioritizeCaptureDate = false
 }: ScheduleEventDialogProps) {
+  // Log dialog state for debugging
+  useEffect(() => {
+    console.log(`ScheduleEventDialog - isOpen: ${isOpen}, clientId: ${clientId}, selectedDate: ${format(selectedDate, 'yyyy-MM-dd')}`);
+  }, [isOpen, clientId, selectedDate]);
+
   // Get events for the selected date - pass prioritizeCaptureDate to determine which date field to use
   const { events: dateEvents, isLoading: isLoadingEvents } = useEventsByDate(
     clientId, 

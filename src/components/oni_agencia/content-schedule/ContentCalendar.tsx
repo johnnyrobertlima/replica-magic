@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { format, isSameDay } from "date-fns";
@@ -153,6 +152,14 @@ export function ContentCalendar({
     );
   };
 
+  // Add diagnostic logs to monitor dialog state
+  useEffect(() => {
+    if (selectedDate) {
+      console.log("Selected date set in ContentCalendar:", selectedDate);
+      console.log("Dialog open state:", isDialogOpen);
+    }
+  }, [selectedDate, isDialogOpen]);
+
   return (
     <div className="rounded-md border bg-white">
       <div className="flex items-center justify-between p-4">
@@ -212,9 +219,13 @@ export function ContentCalendar({
           isOpen={isDialogOpen}
           onOpenChange={(open) => {
             console.log("Dialog open state changing to:", open);
-            // Evitar mudanças duplicadas
+            // Only update if the state is actually changing
             if (isDialogOpen !== open) {
-              setIsDialogOpen(open);
+              if (open) {
+                openDialog();
+              } else {
+                closeDialog();
+              }
             }
           }}
           clientId={clientId}

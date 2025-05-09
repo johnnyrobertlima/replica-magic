@@ -16,9 +16,9 @@ export function useDateSelection() {
   }, [isDialogOpen]);
   
   const handleDateSelect = useCallback((date: Date | undefined) => {
-    // Previne múltiplas chamadas durante o mesmo ciclo de seleção
+    // Prevent multiple calls during the same selection cycle
     if (isProcessingRef.current) {
-      console.log("Ignorando chamada duplicada de handleDateSelect");
+      console.log("Ignoring duplicate call to handleDateSelect");
       return;
     }
     
@@ -31,16 +31,17 @@ export function useDateSelection() {
     // This is crucial to ensure we're creating a new event, not editing
     setSelectedEvent(undefined);
     
-    // Force dialog to open
-    setIsDialogOpen(true);
-    
-    console.log("Dialog should open now, isDialogOpen was set to true");
+    // Force dialog to open with a small delay to ensure state updates properly
+    setTimeout(() => {
+      setIsDialogOpen(true);
+      console.log("Dialog should be open now, isDialogOpen was set to true");
+    }, 100);
   }, []);
   
   const handleEventClick = useCallback((event: CalendarEvent, date: Date) => {
-    // Previne múltiplas chamadas durante o mesmo ciclo de seleção
+    // Prevent multiple calls during the same selection cycle
     if (isProcessingRef.current) {
-      console.log("Ignorando chamada duplicada de handleEventClick");
+      console.log("Ignoring duplicate call to handleEventClick");
       return;
     }
     
@@ -50,10 +51,11 @@ export function useDateSelection() {
     setSelectedDate(date);
     setSelectedEvent(event); // Set the selected event when an event is clicked
     
-    // Force dialog to open
-    setIsDialogOpen(true);
-    
-    console.log("Dialog should open now (event click), isDialogOpen was set to true");
+    // Force dialog to open with a small delay to ensure state updates properly
+    setTimeout(() => {
+      setIsDialogOpen(true);
+      console.log("Dialog should be open now (event click), isDialogOpen was set to true");
+    }, 100);
   }, []);
   
   // Add a dedicated method to open dialog
