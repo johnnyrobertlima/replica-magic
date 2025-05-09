@@ -154,6 +154,12 @@ export function ScheduleEventDialog({
     await deleteEvent(currentSelectedEvent);
   };
 
+  // Enhanced reset form function to ensure complete reset
+  const enhancedResetForm = () => {
+    console.log("Enhanced reset form called in ScheduleEventDialog");
+    resetForm(); // Call the original resetForm from the hook
+  };
+
   // Dialog title
   const dialogTitle = currentSelectedEvent ? "Editar Agendamento" : "Novo Agendamento";
 
@@ -192,7 +198,7 @@ export function ScheduleEventDialog({
         isDeleting={isDeleting}
         formData={formData}
         onSelectEvent={handleSelectEvent}
-        onResetForm={resetForm}
+        onResetForm={enhancedResetForm}
         onSubmit={handleSubmit}
         onStatusUpdate={handleStatusUpdate}
         onDelete={handleDelete}

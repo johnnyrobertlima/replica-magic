@@ -80,7 +80,7 @@ export function DialogContent({
   const hasEvents = events && events.length > 0;
   
   const showSelector = hasEvents && !currentSelectedEvent;
-  const showNewForm = !hasEvents && !currentSelectedEvent;
+  const showNewForm = !hasEvents || (!currentSelectedEvent && hasEvents);
   const showEditor = !!currentSelectedEvent;
   
   if (showSelector) {
@@ -104,7 +104,7 @@ export function DialogContent({
     );
   }
   
-  if (showNewForm) {
+  if (!currentSelectedEvent) {
     return (
       <div className="p-6">
         {prioritizeCaptureDate ? (
