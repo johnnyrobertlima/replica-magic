@@ -69,8 +69,8 @@ export function CalendarDayCell({
     }
   };
 
-  const handleEventClick = (e: React.MouseEvent, event: CalendarEvent) => {
-    e.stopPropagation();
+  // Updated to match the new EventsList signature
+  const handleEventClick = (event: CalendarEvent) => {
     console.log("Event clicked:", event.id, event.title);
     onEventClick(event, date);
   };

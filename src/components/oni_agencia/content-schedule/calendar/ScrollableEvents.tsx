@@ -6,7 +6,7 @@ import { EventsList } from "./EventsList";
 interface ScrollableEventsProps {
   events: CalendarEvent[];
   date: Date;
-  onEventClick: (e: React.MouseEvent, event: CalendarEvent) => void;
+  onEventClick: (event: CalendarEvent) => void;
 }
 
 export function ScrollableEvents({ events, date, onEventClick }: ScrollableEventsProps) {
