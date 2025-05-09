@@ -1,127 +1,94 @@
 
-import { format } from "date-fns";
+import { format, isSameDay, isToday, getDay, isSameMonth } from "date-fns";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { EventsList } from "./EventsList";
-import { useDroppable } from "@dnd-kit/core";
-import React, { useCallback, useMemo } from "react";
+import { cn } from "@/lib/utils";
+import { useMemo } from "react";
 
 interface CalendarDayProps {
   date: Date;
-  selectedDate?: Date;
   events: CalendarEvent[];
-  selectedCollaborator?: string | null;
+  selectedDate?: Date;
   onSelect: (date: Date) => void;
   onEventClick: (event: CalendarEvent, date: Date) => void;
+  selectedCollaborator?: string | null;
+  useCaptureDate?: boolean;
 }
 
 export function CalendarDay({
   date,
-  selectedDate,
   events,
-  selectedCollaborator,
+  selectedDate,
   onSelect,
-  onEventClick
+  onEventClick,
+  selectedCollaborator,
+  useCaptureDate = false
 }: CalendarDayProps) {
-  // Set up the droppable area for this day with a stable ID
-  const dateStr = format(date, 'yyyy-MM-dd');
-  const dropId = `day-${dateStr}`;
+  const isCurrentDay = isToday(date);
+  const isSelected = selectedDate ? isSameDay(date, selectedDate) : false;
+  const isInCurrentMonth = isSameMonth(date, selectedDate || new Date());
+  const dayOfWeek = getDay(date);
+  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
   
-  const { setNodeRef, isOver } = useDroppable({
-    id: dropId,
-    data: { date }
-  });
-  
-  // Melhoria de performance utilizando useCallback para funções de evento
-  const handleDayClick = useCallback((e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
+  // Filter events for this day based on useCaptureDate flag
+  const dayEvents = useMemo(() => {
+    const dateStr = format(date, "yyyy-MM-dd");
     
-    // Check if the click is on an event or event-related element
-    const isEventClick = 
-      target.closest('.event-item') || 
-      target.closest('.event-item-wrapper') ||
-      target.classList.contains('event-item') ||
-      target.classList.contains('event-item-wrapper');
-    
-    // Only select the day if we're not clicking on an event
-    if (!isEventClick) {
-      onSelect(date);
+    if (useCaptureDate) {
+      // Filter by capture_date when useCaptureDate is true
+      return events.filter((event) => {
+        if (!event.capture_date) return false;
+        return event.capture_date.split('T')[0] === dateStr;
+      });
+    } else {
+      // Filter by scheduled_date (original behavior)
+      return events.filter((event) => event.scheduled_date === dateStr);
     }
-  }, [date, onSelect]);
+  }, [date, events, useCaptureDate]);
   
-  // Create an event click handler that adapts the parameters
-  const handleEventClick = useCallback((e: React.MouseEvent, event: CalendarEvent) => {
-    e.stopPropagation(); // Stop propagation to prevent calendar day click
-    onEventClick(event, date);
-  }, [date, onEventClick]);
-  
-  // Filtra eventos para esse dia específico usando useMemo para otimização
+  // Further filter by selectedCollaborator if specified
   const filteredEvents = useMemo(() => {
-    // First filter events for this specific day
-    const dayEvents = events.filter(event => event.scheduled_date === dateStr);
-    
-    // Then apply collaborator filter if needed
     if (!selectedCollaborator) return dayEvents;
     
-    return dayEvents.filter(event => {
-      // Check if person is main collaborator
+    return dayEvents.filter((event) => {
+      // Check if collaborator is assigned to the event
       const isCollaborator = event.collaborator_id === selectedCollaborator;
       
-      // Check if person is in creators array
-      let isCreator = false;
-      if (event.creators) {
-        // Ensure creators is always treated as an array
-        const creatorsArray = Array.isArray(event.creators) ? event.creators : 
-                            (typeof event.creators === 'string' ? [event.creators] : []);
-        
-        isCreator = creatorsArray.includes(selectedCollaborator);
-      }
+      // Check if collaborator is part of the creators array
+      const isCreator = event.creators?.includes(selectedCollaborator) || false;
       
       return isCollaborator || isCreator;
     });
-  }, [events, dateStr, selectedCollaborator]);
-  
-  // Log filtrados para debugging
-  if (filteredEvents.length > 0) {
-    console.log(`Rendering ${filteredEvents.length} events for date ${dateStr}`);
-  }
-  
-  const isActive = selectedDate && format(selectedDate, 'yyyy-MM-dd') === dateStr;
-  const today = new Date();
-  const isToday = format(today, 'yyyy-MM-dd') === dateStr;
-  const isCurrentMonth = date.getMonth() === new Date().getMonth();
-  
-  // Determinar se é de outro mês em relação ao mês selecionado (não ao mês atual)
-  const selectedMonth = selectedDate ? selectedDate.getMonth() : new Date().getMonth();
-  const isOtherMonth = date.getMonth() !== selectedMonth;
+  }, [dayEvents, selectedCollaborator]);
+
+  // Debug log for number of events
+  const day = date.getDate();
+  const dayOfMonth = format(date, 'd');
   
   return (
-    <div 
-      ref={setNodeRef}
-      className={`calendar-day relative ${
-        isToday ? 'today' : ''
-      } ${
-        isActive ? 'selected' : ''
-      } ${
-        isOtherMonth ? 'other-month' : ''
-      } ${
-        isOver ? 'drop-active' : ''
-      } ${
-        filteredEvents.length > 0 ? 'has-events' : ''
-      }`} 
-      onClick={handleDayClick}
-    >
-      <span className="day-number">{date.getDate()}</span>
-      
-      {filteredEvents.length > 0 && (
-        <div className="mt-5">
-          <EventsList 
-            events={filteredEvents}
-            date={date}
-            onEventClick={handleEventClick}
-            isDraggable={true}
-          />
-        </div>
+    <div
+      className={cn(
+        "border border-gray-200 min-h-[120px] p-1 relative",
+        isInCurrentMonth ? "bg-white" : "bg-gray-50",
+        isWeekend ? "bg-gray-50" : "",
+        isSelected ? "bg-blue-50 border-blue-300" : "",
+        isCurrentDay ? "border-primary" : ""
       )}
+      onClick={() => onSelect(date)}
+    >
+      <div 
+        className={cn(
+          "flex items-center justify-center w-7 h-7 mb-1 rounded-full",
+          isCurrentDay ? "bg-primary text-white" : "",
+          isSelected && !isCurrentDay ? "bg-blue-200" : ""
+        )}
+      >
+        {dayOfMonth}
+      </div>
+      <EventsList 
+        events={filteredEvents} 
+        onEventClick={(event) => onEventClick(event, date)} 
+      />
     </div>
   );
 }

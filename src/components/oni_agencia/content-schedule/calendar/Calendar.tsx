@@ -25,6 +25,7 @@ interface CalendarProps {
   onDialogOpenChange: (open: boolean) => void;
   onDialogClose: () => void;
   onManualRefetch?: () => void;
+  useCaptureDate?: boolean; // New prop to determine which date to use
 }
 
 export function Calendar({
@@ -41,7 +42,8 @@ export function Calendar({
   isDialogOpen,
   onDialogOpenChange,
   onDialogClose,
-  onManualRefetch
+  onManualRefetch,
+  useCaptureDate = false // Default to using scheduled_date
 }: CalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date(year, month - 1, 1));
   
@@ -73,13 +75,14 @@ export function Calendar({
     
     // Group events by date for debugging
     const eventsByDate = events.reduce((acc, event) => {
-      const date = event.scheduled_date;
+      const date = useCaptureDate && event.capture_date ? 
+        event.capture_date.split('T')[0] : event.scheduled_date;
       acc[date] = (acc[date] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
     
     console.log("Events by date:", eventsByDate);
-  }, [events, month, year]);
+  }, [events, month, year, useCaptureDate]);
 
   const renderCalendarDays = () => {
     const days = [];
@@ -102,6 +105,7 @@ export function Calendar({
           onSelect={onDateSelect}
           onEventClick={onEventClick}
           selectedCollaborator={selectedCollaborator}
+          useCaptureDate={useCaptureDate}
         />
       );
     }
@@ -118,6 +122,7 @@ export function Calendar({
           onSelect={onDateSelect}
           onEventClick={onEventClick}
           selectedCollaborator={selectedCollaborator}
+          useCaptureDate={useCaptureDate}
         />
       );
     }
@@ -135,6 +140,7 @@ export function Calendar({
           onSelect={onDateSelect}
           onEventClick={onEventClick}
           selectedCollaborator={selectedCollaborator}
+          useCaptureDate={useCaptureDate}
         />
       );
     }
@@ -157,7 +163,6 @@ export function Calendar({
         onNextMonth={handleNextMonth}
       />
       
-      {/* Adicionamos o componente WeekDaysHeader aqui */}
       <WeekDaysHeader weekDays={weekDays} />
       
       <div className="grid grid-cols-7 gap-px">
@@ -170,10 +175,17 @@ export function Calendar({
           onOpenChange={onDialogOpenChange}
           clientId={clientId}
           selectedDate={selectedDate}
-          events={events.filter(e => e.scheduled_date === format(selectedDate, 'yyyy-MM-dd'))}
+          events={events.filter(e => {
+            const dateStr = format(selectedDate, 'yyyy-MM-dd');
+            return useCaptureDate && e.capture_date ? 
+              e.capture_date.split('T')[0] === dateStr : 
+              e.scheduled_date === dateStr;
+          })}
           onClose={onDialogClose}
           selectedEvent={selectedEvent}
           onManualRefetch={onManualRefetch}
+          defaultTab={useCaptureDate ? "capture" : "details"}
+          prioritizeCaptureDate={useCaptureDate}
         />
       )}
     </div>
