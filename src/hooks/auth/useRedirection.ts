@@ -42,13 +42,12 @@ export const useRedirection = () => {
         console.log("Redirecionando para:", normalizedHomepage);
         
         navigate(`/${normalizedHomepage}`);
-        return true;
+        return;
       }
       
       // If we got here, no specific homepage was found
       console.log("Nenhuma homepage específica encontrada, redirecionando para a área padrão");
       navigate("/client-area");
-      return true;
       
     } catch (error: any) {
       console.error("Erro ao verificar redirecionamento:", error);
@@ -59,7 +58,6 @@ export const useRedirection = () => {
       });
       // Default redirect in case of error
       navigate("/client-area");
-      return false;
     }
   };
 

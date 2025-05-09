@@ -16,14 +16,7 @@ export const useClientAuth = () => {
       
       // After successful login, check where to redirect the user
       if (user) {
-        // Primeiro tentamos redirecionar com base na homepage do grupo
-        try {
-          await handleRedirect(user.id);
-        } catch (error) {
-          console.error("Erro ao redirecionar:", error);
-          // Se falhar, redireciona para a área do cliente padrão
-          navigate("/client-area");
-        }
+        await handleRedirect(user.id);
       }
     } catch (error) {
       // Error is handled in the authentication hook
@@ -48,12 +41,7 @@ export const useClientAuth = () => {
       if (user && hasSession) {
         // Redirecionar imediatamente se o usuário já está autenticado
         setTimeout(() => {
-          try {
-            handleRedirect(user.id);
-          } catch (error) {
-            console.error("Erro ao redirecionar após registro:", error);
-            navigate("/client-area");
-          }
+          handleRedirect(user.id);
         }, 1500);
       } else {
         // Mostrar uma mensagem específica para orientação

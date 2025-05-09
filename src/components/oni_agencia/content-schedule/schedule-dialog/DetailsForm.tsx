@@ -1,3 +1,4 @@
+
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -10,7 +11,6 @@ import { CalendarIcon } from "lucide-react";
 import { format, parse } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect, useState } from "react";
-import { linkifyText } from "@/utils/linkUtils"; // Import the missing linkifyText function
 
 interface DetailsFormProps {
   clientId: string;

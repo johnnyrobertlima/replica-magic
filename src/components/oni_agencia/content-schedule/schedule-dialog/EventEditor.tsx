@@ -40,7 +40,7 @@ interface EventEditorProps {
   onDateChange: (name: string, value: Date | null) => void;
   onDateTimeChange?: (name: string, value: Date | null) => void;
   onAllDayChange?: (value: boolean) => void;
-  defaultTab?: "details" | "status" | "history" | "capture";
+  defaultActiveTab?: "details" | "status" | "history" | "capture";
 }
 
 export function EventEditor({
@@ -71,15 +71,15 @@ export function EventEditor({
   onDateChange,
   onDateTimeChange,
   onAllDayChange,
-  defaultTab = "details"
+  defaultActiveTab = "details"
 }: EventEditorProps) {
-  const [activeTab, setActiveTab] = useState<"details" | "status" | "history" | "capture">(defaultTab);
+  const [activeTab, setActiveTab] = useState<"details" | "status" | "history" | "capture">(defaultActiveTab);
   const [note, setNote] = useState<string>(formData.description || "");
   
-  // Update activeTab when defaultTab changes
+  // Update activeTab when defaultActiveTab changes
   useEffect(() => {
-    setActiveTab(defaultTab);
-  }, [defaultTab]);
+    setActiveTab(defaultActiveTab);
+  }, [defaultActiveTab]);
   
   const handleNoteChange = (value: string) => {
     setNote(value);

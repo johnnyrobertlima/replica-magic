@@ -12,7 +12,7 @@ export const useAuthentication = () => {
     try {
       console.log("Tentando autenticar com:", { email: email.trim() });
 
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data: { user }, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: password.trim(),
       });
@@ -22,13 +22,13 @@ export const useAuthentication = () => {
         throw error;
       }
       
-      if (!data.user) {
+      if (!user) {
         throw new Error("Usuário não encontrado");
       }
 
-      console.log("Login bem-sucedido:", data.user);
+      console.log("Login bem-sucedido:", user);
       
-      return data.user;
+      return user;
       
     } catch (error: any) {
       console.error("Erro completo:", error);
@@ -80,21 +80,27 @@ export const useAuthentication = () => {
       if (data && data.user) {
         console.log("Usuário criado com sucesso:", data.user);
         console.log("Status do email de confirmação:", data.user.confirmation_sent_at ? "Enviado" : "Não enviado");
+        console.log("ID do usuário:", data.user.id);
+        console.log("Email confirmado:", data.user.email_confirmed_at ? "Sim" : "Não");
+        
+        if (data.user.identities && data.user.identities.length === 0) {
+          console.error("Erro: Identidades não definidas no usuário.");
+        }
         
         // Determinar a mensagem correta com base no comportamento do Supabase
+        let message = "Verifique seu email para confirmar o cadastro.";
         let hasSession = false;
         
         // Se o Supabase não estiver configurado para exigir confirmação de email
         if (data.session) {
           console.log("Sessão criada imediatamente após o registro:", data.session);
+          message = "Sua conta foi criada e você já está autenticado.";
           hasSession = true;
         }
         
         toast({
           title: "Conta criada com sucesso!",
-          description: hasSession 
-            ? "Sua conta foi criada e você já está autenticado."
-            : "Verifique seu email para confirmar o cadastro.",
+          description: message,
         });
 
         return { user: data.user, hasSession };
