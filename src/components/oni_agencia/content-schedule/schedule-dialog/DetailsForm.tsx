@@ -49,8 +49,12 @@ export function DetailsForm({
   prioritizeCaptureDate = false
 }: DetailsFormProps) {
   // Garantir que temos um objeto Date válido
-  const calendarDate = formData.scheduled_date && typeof formData.scheduled_date === 'object' && formData.scheduled_date instanceof Date
-    ? formData.scheduled_date 
+  const calendarDate = formData.scheduled_date 
+    ? (formData.scheduled_date instanceof Date 
+      ? formData.scheduled_date 
+      : typeof formData.scheduled_date === 'string' 
+        ? new Date(formData.scheduled_date) 
+        : selectedDate)
     : selectedDate;
   
   // Function to handle date selection from calendar

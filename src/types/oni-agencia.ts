@@ -1,3 +1,4 @@
+
 // Modify the OniAgenciaContentSchedule interface to make scheduled_date optional when capture_date is present
 export interface OniAgenciaContentSchedule {
   id: string;
@@ -20,11 +21,23 @@ export interface OniAgenciaContentSchedule {
   location: string | null;
 }
 
-// Update ContentScheduleFormData to allow Date objects for date fields
-export type ContentScheduleFormData = Omit<OniAgenciaContentSchedule, 'id' | 'created_at' | 'updated_at'> & {
-  scheduled_date: string | Date | null;
-  capture_date: string | Date | null;
-  capture_end_date: string | Date | null;
+// Update ContentScheduleFormData to properly handle Date objects for date fields
+export interface ContentScheduleFormData {
+  client_id: string;
+  service_id: string;
+  collaborator_id: string | null;
+  title: string | null; 
+  description: string | null;
+  scheduled_date: Date | string | null;
+  execution_phase: string | null;
+  editorial_line_id: string | null;
+  product_id: string | null;
+  status_id: string | null;
+  creators: string[] | null;
+  capture_date: Date | string | null;
+  capture_end_date: Date | string | null;
+  is_all_day: boolean | null;
+  location: string | null;
 }
 
 // Add missing types for OniAgenciaClient
