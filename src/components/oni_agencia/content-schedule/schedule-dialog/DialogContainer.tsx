@@ -47,9 +47,11 @@ export function DialogContainer({
       >
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>
-            {formattedDate}
-          </DialogDescription>
+          {formattedDate && (
+            <DialogDescription>
+              {formattedDate}
+            </DialogDescription>
+          )}
         </DialogHeader>
         {children}
       </DialogContent>

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useMemo } from "react";
 import { format, parse, isValid, addMinutes } from "date-fns";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
@@ -7,20 +8,21 @@ interface UseScheduleFormStateProps {
   selectedDate: Date;
   selectedEvent?: CalendarEvent;
   prioritizeCaptureDate?: boolean;
+  isOpen?: boolean; // Add isOpen parameter
 }
 
-// Função de utilidade para converter string de data para objeto Date
+// Function to parse a date string to Date object safely
 function parseLocalDate(dateString: string | null): Date | null {
   if (!dateString) return null;
   
   try {
-    // Se a string já tem formato ISO com hora (T)
+    // If string already has ISO format with time (T)
     if (dateString.includes('T')) {
       const date = new Date(dateString);
       return isValid(date) ? date : null;
     }
     
-    // Para formatos simples YYYY-MM-DD
+    // For simple YYYY-MM-DD formats
     if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
       const [year, month, day] = dateString.split('-').map(Number);
       return new Date(year, month - 1, day);
@@ -28,7 +30,7 @@ function parseLocalDate(dateString: string | null): Date | null {
     
     return null;
   } catch (e) {
-    console.error("Erro ao converter data:", e);
+    console.error("Error converting date:", e);
     return null;
   }
 }
@@ -37,15 +39,16 @@ export function useScheduleFormState({
   clientId,
   selectedDate,
   selectedEvent,
-  prioritizeCaptureDate = false
+  prioritizeCaptureDate = false,
+  isOpen = false // Default to false if not provided
 }: UseScheduleFormStateProps) {
-  const [currentSelectedEvent, setCurrentSelectedEvent] = useState<CalendarEvent | null>(selectedEvent || null);
-  
   // Create a stable reference to the selected date to avoid recreation on each render
   const localSelectedDate = useMemo(() => new Date(selectedDate), [selectedDate]);
   
+  const [currentSelectedEvent, setCurrentSelectedEvent] = useState<CalendarEvent | null>(selectedEvent || null);
+  
   const [formData, setFormData] = useState<ContentScheduleFormData>(() => {
-    // Initialize form data with proper date values to avoid unnecessary updates
+    // Initialize form data with proper date values
     return {
       client_id: clientId,
       service_id: "",
@@ -71,18 +74,20 @@ export function useScheduleFormState({
   // Flag to prevent infinite loops on date updates
   const hasUpdatedRef = useRef(false);
 
-  // Set the selectedEvent when it comes from props
+  // Update currentSelectedEvent when selectedEvent changes (even when it becomes undefined)
   useEffect(() => {
-    if (selectedEvent && !isUserEditing.current) {
-      console.log("useScheduleFormState selectedEvent effect:", selectedEvent.id);
-      handleSelectEvent(selectedEvent);
+    if (selectedEvent) {
+      setCurrentSelectedEvent(selectedEvent);
+    } else {
+      // Clear currentSelectedEvent when selectedEvent becomes undefined
+      setCurrentSelectedEvent(null);
     }
   }, [selectedEvent]);
 
-  // Update form when selectedDate changes - with proper dependency array
+  // Update form when selectedDate changes - only if dialog is open
   useEffect(() => {
-    // Only update if there's no selected event, user is not editing, and we haven't updated yet
-    if (!currentSelectedEvent && !isUserEditing.current && !hasUpdatedRef.current) {
+    // Only update if there's no selected event, user is not editing, we haven't updated yet, and dialog is open
+    if (isOpen && !currentSelectedEvent && !isUserEditing.current && !hasUpdatedRef.current) {
       console.log("Updating form with selected date:", localSelectedDate);
       
       // Set the flag to true to prevent multiple updates
@@ -98,7 +103,7 @@ export function useScheduleFormState({
         hasUpdatedRef.current = false;
       }, 500);
     }
-  }, [localSelectedDate, currentSelectedEvent, prioritizeCaptureDate]);
+  }, [localSelectedDate, currentSelectedEvent, prioritizeCaptureDate, isOpen]);
 
   const resetForm = () => {
     console.log("resetting form in useScheduleFormState");

@@ -47,6 +47,14 @@ export function ScheduleEventDialog({
     }
   }, [isOpen, clientId, selectedDate, isInitialized]);
 
+  // Force reset form when opening dialog for new event
+  useEffect(() => {
+    if (isOpen && !selectedEvent) {
+      console.log("Dialog opened for new event - resetting form");
+      resetForm();
+    }
+  }, [isOpen, selectedEvent]);
+
   // Get events for the selected date - pass prioritizeCaptureDate to determine which date field to use
   // Only enable query when dialog is open and we have clientId and selectedDate
   const { events: dateEvents, isLoading: isLoadingEvents } = useEventsByDate(
@@ -90,6 +98,7 @@ export function ScheduleEventDialog({
     selectedDate: selectedDate ? new Date(selectedDate) : new Date(),
     selectedEvent,
     prioritizeCaptureDate,
+    isOpen  // Pass isOpen parameter to the hook
   });
 
   // Use schedule resources and mutations hooks
