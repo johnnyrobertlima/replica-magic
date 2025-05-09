@@ -32,10 +32,10 @@ export function SelectProduct({
         onValueChange={onChange}
         data-testid="product-select"
       >
-        <SelectTrigger>
+        <SelectTrigger className="w-full bg-white">
           <SelectValue placeholder="Selecione um produto" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="bg-white">
           <SelectGroup>
             <SelectItem value="">-- Nenhum --</SelectItem>
             {products && products.length > 0 && products.map((product) => (

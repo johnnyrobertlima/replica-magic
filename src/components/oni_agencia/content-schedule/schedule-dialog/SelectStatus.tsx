@@ -32,10 +32,10 @@ export function SelectStatus({
         onValueChange={onChange}
         data-testid="status-select"
       >
-        <SelectTrigger>
+        <SelectTrigger className="w-full bg-white">
           <SelectValue placeholder="Selecione um status" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="bg-white">
           <SelectGroup>
             <SelectItem value="">-- Nenhum --</SelectItem>
             {statuses && statuses.length > 0 && statuses.map((status) => (

@@ -33,10 +33,10 @@ export function SelectClient({
         onValueChange={onChange}
         data-testid="client-select"
       >
-        <SelectTrigger>
+        <SelectTrigger className="w-full bg-white">
           <SelectValue placeholder="Selecione um cliente" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="bg-white">
           <SelectGroup>
             <SelectItem value="">-- Nenhum --</SelectItem>
             {clients && clients.length > 0 && clients.map((client) => (
