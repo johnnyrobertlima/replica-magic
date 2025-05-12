@@ -1,11 +1,12 @@
 
-import { useServices, useCollaborators } from "@/hooks/useOniAgenciaContentSchedules";
+import { useServices, useCollaborators } from "@/hooks/oni_agencia/useBasicResources";
 import { useOniAgenciaThemes } from "@/hooks/useOniAgenciaThemes";
 import { useClients } from "@/hooks/useOniAgenciaClients";
 
 export function useScheduleResources(clientId: string) {
-  const { data: services = [], isLoading: isLoadingServices } = useServices();
-  const { data: collaborators = [], isLoading: isLoadingCollaborators } = useCollaborators();
+  // Corrigindo para usar os hooks de recursos básicos
+  const { data: services = [], isLoading: isLoadingServices, isError: isServicesError, refetch: refetchServices } = useServices();
+  const { data: collaborators = [], isLoading: isLoadingCollaborators, isError: isCollaboratorsError, refetch: refetchCollaborators } = useCollaborators();
   
   // Get the data from useOniAgenciaThemes hook
   const { 
@@ -14,10 +15,19 @@ export function useScheduleResources(clientId: string) {
     products,
     isLoadingProducts,
     statuses,
-    isLoadingStatuses
+    isLoadingStatuses,
+    refetchThemes
   } = useOniAgenciaThemes();
   
-  const { data: clients = [], isLoading: isLoadingClients } = useClients();
+  const { data: clients = [], isLoading: isLoadingClients, refetch: refetchClients } = useClients();
+
+  const refetchAllResources = () => {
+    console.log("Refetching all schedule resources");
+    refetchServices();
+    refetchCollaborators();
+    refetchThemes();
+    refetchClients();
+  };
 
   return {
     services,
@@ -27,10 +37,13 @@ export function useScheduleResources(clientId: string) {
     statuses,
     clients,
     isLoadingServices,
+    isServicesError,
     isLoadingCollaborators,
+    isCollaboratorsError,
     isLoadingEditorialLines,
     isLoadingProducts,
     isLoadingStatuses,
-    isLoadingClients
+    isLoadingClients,
+    refetchAllResources
   };
 }

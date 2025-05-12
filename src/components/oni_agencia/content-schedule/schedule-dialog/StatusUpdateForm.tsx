@@ -6,9 +6,9 @@ import { StatusSelect } from "./StatusSelect";
 import { CollaboratorSelect } from "./CollaboratorSelect";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { linkifyText } from "@/utils/linkUtils";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Loader2, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface StatusUpdateFormProps {
   event: CalendarEvent;
@@ -23,6 +23,7 @@ interface StatusUpdateFormProps {
   onStatusChange: (value: string) => void;
   onCollaboratorChange: (value: string) => void;
   onNoteChange: (value: string) => void;
+  onRetryLoadResources?: () => void;
 }
 
 export function StatusUpdateForm({
@@ -37,7 +38,8 @@ export function StatusUpdateForm({
   isSubmitting = false,
   onStatusChange,
   onCollaboratorChange,
-  onNoteChange
+  onNoteChange,
+  onRetryLoadResources
 }: StatusUpdateFormProps) {
   // Process links in the note
   const noteWithLinks = linkifyText(note);
@@ -49,6 +51,10 @@ export function StatusUpdateForm({
       setValidationError(null);
     }
   }, [isSubmitting]);
+
+  // Determine if there was an error loading resources
+  const hasResourcesError = (!isLoadingCollaborators && collaborators.length === 0) || 
+                          (!isLoadingStatuses && statuses.length === 0);
 
   // Validate status selection
   const handleStatusChangeWithValidation = (value: string) => {
@@ -76,11 +82,33 @@ export function StatusUpdateForm({
         </Alert>
       )}
       
+      {hasResourcesError && (
+        <Alert variant="destructive" className="mb-2">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="flex flex-col gap-2">
+            <p>Não foi possível carregar alguns recursos necessários.</p>
+            {onRetryLoadResources && (
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="sm" 
+                onClick={onRetryLoadResources}
+                className="w-full flex items-center gap-2"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Tentar novamente
+              </Button>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <StatusSelect
         statuses={statuses}
         isLoading={isLoadingStatuses || isSubmitting}
         value={selectedStatus}
         onValueChange={handleStatusChangeWithValidation}
+        errorMessage={!isLoadingStatuses && statuses.length === 0 ? "Não foi possível carregar os status" : undefined}
       />
       
       <CollaboratorSelect
@@ -88,6 +116,7 @@ export function StatusUpdateForm({
         isLoading={isLoadingCollaborators || isSubmitting}
         value={selectedCollaborator}
         onValueChange={onCollaboratorChange}
+        errorMessage={!isLoadingCollaborators && collaborators.length === 0 ? "Não foi possível carregar os colaboradores" : undefined}
       />
       
       <div className="grid gap-2">

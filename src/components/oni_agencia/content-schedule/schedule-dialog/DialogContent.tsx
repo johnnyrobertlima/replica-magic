@@ -1,10 +1,24 @@
-
-import { ContentScheduleFormData, CalendarEvent } from "@/types/oni-agencia";
-import { EventEditor } from "./EventEditor";
-import { EventSelector } from "./EventSelector";
-import { NewEventForm } from "./NewEventForm";
-import { DetailsForm } from "./DetailsForm";
-import { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { EventForm } from "./EventForm";
+import { StatusUpdateForm } from "./StatusUpdateForm";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
+import { useHistoryTab } from "../hooks/useHistoryTab";
+import { HistoryTimeline } from "./HistoryTimeline";
+import { CaptureForm } from "./CaptureForm";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface DialogContentProps {
   selectedEvent?: CalendarEvent;
@@ -27,19 +41,19 @@ interface DialogContentProps {
   isSubmitting: boolean;
   isDeleting: boolean;
   formData: ContentScheduleFormData;
+  defaultTab?: "details" | "status" | "history" | "capture";
+  prioritizeCaptureDate?: boolean;
   onSelectEvent: (event: CalendarEvent) => void;
   onResetForm: () => void;
-  onSubmit: (e: React.FormEvent) => Promise<void>;
-  onStatusUpdate: (e: React.FormEvent) => Promise<void>;
-  onDelete: () => Promise<void>;
+  onSubmit: (e: React.FormEvent) => void;
+  onStatusUpdate: (e: React.FormEvent) => void;
+  onDelete: () => void;
   onCancel: () => void;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onSelectChange: (name: string, value: string) => void;
   onDateChange: (name: string, value: Date | null) => void;
-  onDateTimeChange?: (name: string, value: Date | null) => void;
-  onAllDayChange?: (value: boolean) => void;
-  defaultTab?: "details" | "status" | "history" | "capture";
-  prioritizeCaptureDate?: boolean;
+  onDateTimeChange: (name: string, value: Date | null) => void;
+  onAllDayChange: (value: boolean) => void;
 }
 
 export function DialogContent({
@@ -74,133 +88,150 @@ export function DialogContent({
   onDateChange,
   onDateTimeChange,
   onAllDayChange,
-  defaultTab,
+  defaultTab = "details",
   prioritizeCaptureDate = false
 }: DialogContentProps) {
-  // Track if we're in "create new" mode
-  const [createNewMode, setCreateNewMode] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>(defaultTab);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   
-  // Se há eventos para este dia e nenhum evento selecionado, mostrar seletor de eventos
-  const hasEvents = events && events.length > 0;
+  const { historyData, isLoadingHistory, isHistoryError } = useHistoryTab(
+    currentSelectedEvent?.id,
+    !!currentSelectedEvent
+  );
   
-  // Mostrar o seletor quando há eventos e nenhum evento está selecionado e não estamos em modo de criação
-  const showSelector = hasEvents && !currentSelectedEvent && !createNewMode;
+  const queryClient = useQueryClient();
   
-  // Reset createNewMode when the dialog closes (when selectedEvent or events change)
-  useEffect(() => {
-    setCreateNewMode(false);
-  }, [selectedEvent, events.length]);
-  
-  if (showSelector) {
-    return (
-      <>
-        <div className="p-4">
-          <h3 className="text-lg font-semibold mb-4">
-            Selecione um agendamento existente ou crie um novo
-          </h3>
-        </div>
-        <EventSelector
-          events={events}
-          onSelectEvent={onSelectEvent}
-          onCreateNew={() => {
-            console.log("Forcing reset of form from DialogContent - onCreateNew called");
-            // Force reset the form and clear any previously selected event
-            onResetForm();
-            // Set create new mode to true to force showing the form
-            setCreateNewMode(true);
-          }}
-        />
-      </>
-    );
-  }
-  
-  // Show the form if we're in create new mode or there's no current selected event
-  if (!currentSelectedEvent || createNewMode) {
-    return (
-      <div className="p-6">
-        {prioritizeCaptureDate ? (
-          <DetailsForm 
-            clientId={clientId} 
-            selectedDate={selectedDate}
-            services={services}
-            editorialLines={editorialLines}
-            products={products}
-            clients={clients}
-            isLoadingServices={isLoadingServices}
-            isLoadingEditorialLines={isLoadingEditorialLines}
-            isLoadingProducts={isLoadingProducts}
-            isLoadingClients={isLoadingClients}
-            formData={formData}
-            onInputChange={onInputChange}
-            onSelectChange={onSelectChange}
-            onDateChange={onDateChange}
-            prioritizeCaptureDate={prioritizeCaptureDate}
-          />
-        ) : (
-          <NewEventForm
-            formData={formData}
-            services={services}
-            collaborators={collaborators}
-            editorialLines={editorialLines}
-            products={products}
-            statuses={statuses}
-            clients={clients}
-            isLoadingServices={isLoadingServices}
-            isLoadingCollaborators={isLoadingCollaborators}
-            isLoadingEditorialLines={isLoadingEditorialLines}
-            isLoadingProducts={isLoadingProducts}
-            isLoadingStatuses={isLoadingStatuses}
-            isLoadingClients={isLoadingClients}
-            isSubmitting={isSubmitting}
-            isDeleting={isDeleting}
-            onSubmit={onSubmit}
-            onCancel={() => {
-              setCreateNewMode(false);
-              onCancel();
-            }}
-            onInputChange={onInputChange}
-            onSelectChange={onSelectChange}
-            onDateChange={onDateChange}
-          />
-        )}
-      </div>
-    );
-  }
-  
-  if (currentSelectedEvent) {
-    return (
-      <EventEditor
-        event={currentSelectedEvent}
-        clientId={clientId}
-        selectedDate={selectedDate}
-        services={services}
-        collaborators={collaborators}
-        editorialLines={editorialLines}
-        products={products}
-        statuses={statuses}
-        clients={clients}
-        isLoadingServices={isLoadingServices}
-        isLoadingCollaborators={isLoadingCollaborators}
-        isLoadingEditorialLines={isLoadingEditorialLines}
-        isLoadingProducts={isLoadingProducts}
-        isLoadingStatuses={isLoadingStatuses}
-        isLoadingClients={isLoadingClients}
-        isSubmitting={isSubmitting}
-        isDeleting={isDeleting}
-        onSubmit={onSubmit}
-        onStatusUpdate={onStatusUpdate}
-        onDelete={onDelete}
-        onCancel={onCancel}
-        formData={formData}
-        onInputChange={onInputChange}
-        onSelectChange={onSelectChange}
-        onDateChange={onDateChange}
-        onDateTimeChange={onDateTimeChange}
-        onAllDayChange={onAllDayChange}
-        defaultTab={defaultTab}
-      />
-    );
-  }
-  
-  return null;
+  const handleRefetchResources = () => {
+    console.log("Refetching resources from DialogContent");
+    queryClient.invalidateQueries({ queryKey: ['oniAgenciaCollaborators'] });
+    queryClient.invalidateQueries({ queryKey: ['oniAgenciaStatuses'] });
+    queryClient.invalidateQueries({ queryKey: ['oniAgenciaThemes'] });
+    queryClient.invalidateQueries({ queryKey: ['oniAgenciaServices'] });
+  };
+
+  return (
+    <>
+      <Tabs 
+        defaultValue={defaultTab} 
+        value={activeTab} 
+        onValueChange={setActiveTab}
+        className="w-full"
+      >
+        <TabsList className="grid grid-cols-4 mb-4">
+          <TabsTrigger value="details">Detalhes</TabsTrigger>
+          <TabsTrigger value="status" disabled={!currentSelectedEvent}>Status</TabsTrigger>
+          <TabsTrigger value="history" disabled={!currentSelectedEvent}>Histórico</TabsTrigger>
+          <TabsTrigger value="capture">Captura</TabsTrigger>
+        </TabsList>
+        
+        <ScrollArea className="h-[60vh]">
+          <form onSubmit={activeTab === "status" ? onStatusUpdate : onSubmit} className="p-2">
+            <TabsContent value="details">
+              <EventForm
+                formData={formData}
+                services={services}
+                collaborators={collaborators}
+                editorialLines={editorialLines}
+                products={products}
+                statuses={statuses}
+                clients={clients}
+                isLoadingServices={isLoadingServices}
+                isLoadingCollaborators={isLoadingCollaborators}
+                isLoadingEditorialLines={isLoadingEditorialLines}
+                isLoadingProducts={isLoadingProducts}
+                isLoadingStatuses={isLoadingStatuses}
+                isLoadingClients={isLoadingClients}
+                onInputChange={onInputChange}
+                onSelectChange={onSelectChange}
+                onDateChange={onDateChange}
+              />
+            </TabsContent>
+            
+            <TabsContent value="status">
+              {currentSelectedEvent && (
+                <StatusUpdateForm
+                  event={currentSelectedEvent}
+                  statuses={statuses}
+                  collaborators={collaborators}
+                  isLoadingStatuses={isLoadingStatuses}
+                  isLoadingCollaborators={isLoadingCollaborators}
+                  selectedStatus={formData.status_id || ""}
+                  selectedCollaborator={formData.collaborator_id || ""}
+                  note={formData.description || ""}
+                  isSubmitting={isSubmitting}
+                  onStatusChange={(value) => onSelectChange("status_id", value)}
+                  onCollaboratorChange={(value) => onSelectChange("collaborator_id", value)}
+                  onNoteChange={(value) => onInputChange({ target: { name: "description", value } } as React.ChangeEvent<HTMLTextAreaElement>)}
+                  onRetryLoadResources={handleRefetchResources}
+                />
+              )}
+            </TabsContent>
+            
+            <TabsContent value="history">
+              <HistoryTimeline
+                historyData={historyData}
+                isLoading={isLoadingHistory}
+                isError={isHistoryError}
+              />
+            </TabsContent>
+            
+            <TabsContent value="capture">
+              <CaptureForm
+                formData={formData}
+                onInputChange={onInputChange}
+                onDateChange={onDateTimeChange}
+                onAllDayChange={onAllDayChange}
+              />
+            </TabsContent>
+            
+            <div className="flex justify-end gap-2 mt-8">
+              {currentSelectedEvent && activeTab !== "history" && (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => setIsDeleteConfirmOpen(true)}
+                  disabled={isSubmitting || isDeleting}
+                >
+                  Excluir
+                </Button>
+              )}
+              
+              <div className="flex-1"></div>
+              
+              <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting || isDeleting}>
+                Cancelar
+              </Button>
+              
+              {activeTab !== "history" && (
+                <Button 
+                  type="submit" 
+                  disabled={isSubmitting || isDeleting || 
+                    (activeTab === "status" && (!formData.status_id || formData.status_id === "null"))}
+                >
+                  {activeTab === "status" ? "Atualizar Status" : currentSelectedEvent ? "Salvar" : "Criar"}
+                </Button>
+              )}
+            </div>
+          </form>
+        </ScrollArea>
+      </Tabs>
+
+      <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. O agendamento será permanentemente excluído.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={onDelete} disabled={isDeleting}>
+              {isDeleting ? "Excluindo..." : "Sim, excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
 }

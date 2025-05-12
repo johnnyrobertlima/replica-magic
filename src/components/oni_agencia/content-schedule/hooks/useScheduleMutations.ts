@@ -4,6 +4,7 @@ import { useCreateContentSchedule, useUpdateContentSchedule, useDeleteContentSch
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 // Update the interface to include onSuccess and onManualRefetch
 interface UseScheduleMutationsProps {
@@ -53,11 +54,31 @@ export function useScheduleMutations({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   // Get mutation hooks
   const createMutation = useCreateContentSchedule();
   const updateMutation = useUpdateContentSchedule();
   const deleteMutation = useDeleteContentSchedule();
+
+  // Function to manually refetch resources
+  const refetchResources = useCallback(() => {
+    console.log("Manually refetching resources");
+    queryClient.invalidateQueries({ queryKey: ['oniAgenciaCollaborators'] });
+    queryClient.invalidateQueries({ queryKey: ['oniAgenciaServices'] });
+    queryClient.invalidateQueries({ queryKey: ['oniAgenciaStatuses'] });
+    queryClient.invalidateQueries({ queryKey: ['oniAgenciaThemes'] });
+    queryClient.invalidateQueries({ queryKey: ['oniAgenciaClients'] });
+    
+    if (onManualRefetch) {
+      onManualRefetch();
+    }
+    
+    toast({
+      title: "Atualizando dados",
+      description: "Tentando recarregar os recursos necessários...",
+    });
+  }, [queryClient, onManualRefetch, toast]);
 
   // Handle form submission (create or update)
   const handleSubmit = useCallback(
@@ -149,7 +170,7 @@ export function useScheduleMutations({
         const updatePromise = new Promise<any>((resolve, reject) => {
           const timeoutId = setTimeout(() => {
             reject(new Error("A solicitação expirou. Por favor, tente novamente."));
-          }, 10000); // 10 segundos de timeout
+          }, 15000); // 15 segundos de timeout
           
           updateMutation.mutateAsync({
             id: currentSelectedEvent.id,
@@ -246,6 +267,7 @@ export function useScheduleMutations({
     isDeleting,
     handleSubmit,
     handleStatusUpdate,
-    handleDelete
+    handleDelete,
+    refetchResources
   };
 }
