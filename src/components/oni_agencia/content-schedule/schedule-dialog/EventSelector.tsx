@@ -43,10 +43,11 @@ export function EventSelector({ events, onSelectEvent, onCreateNew }: EventSelec
         <Button
           variant="default"
           onClick={() => {
-            console.log("Criar novo button clicked, resetting form");
+            console.log("Criar novo button clicked - calling onCreateNew function");
             onCreateNew();
           }}
           className="w-full"
+          type="button"
         >
           <Calendar className="mr-2 h-4 w-4" />
           Criar novo agendamento

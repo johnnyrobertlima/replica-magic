@@ -79,9 +79,8 @@ export function DialogContent({
   // Se há eventos para este dia e nenhum evento selecionado, mostrar seletor de eventos
   const hasEvents = events && events.length > 0;
   
+  // Mostrar o seletor quando há eventos e nenhum evento está selecionado
   const showSelector = hasEvents && !currentSelectedEvent;
-  const showNewForm = !hasEvents || (!currentSelectedEvent && hasEvents);
-  const showEditor = !!currentSelectedEvent;
   
   if (showSelector) {
     return (
@@ -95,7 +94,7 @@ export function DialogContent({
           events={events}
           onSelectEvent={onSelectEvent}
           onCreateNew={() => {
-            console.log("Forcing reset of form from DialogContent");
+            console.log("Forcing reset of form from DialogContent - onCreateNew called");
             // Force reset the form and clear any previously selected event
             onResetForm();
           }}
@@ -153,7 +152,7 @@ export function DialogContent({
     );
   }
   
-  if (showEditor && currentSelectedEvent) {
+  if (currentSelectedEvent) {
     return (
       <EventEditor
         event={currentSelectedEvent}

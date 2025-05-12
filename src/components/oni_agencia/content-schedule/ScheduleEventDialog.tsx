@@ -157,7 +157,14 @@ export function ScheduleEventDialog({
   // Enhanced reset form function to ensure complete reset
   const enhancedResetForm = () => {
     console.log("Enhanced reset form called in ScheduleEventDialog");
+    setCurrentSelectedEventNull(); // Reset the currentSelectedEvent state
     resetForm(); // Call the original resetForm from the hook
+  };
+
+  // Helper function to clear selected event
+  const setCurrentSelectedEventNull = () => {
+    console.log("Explicitly setting currentSelectedEvent to null");
+    handleSelectEvent(null as unknown as CalendarEvent); // Force null as selected event
   };
 
   // Dialog title

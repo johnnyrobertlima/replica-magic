@@ -80,9 +80,12 @@ export function useScheduleFormState({
   }, [localSelectedDate, currentSelectedEvent, prioritizeCaptureDate, isOpen]);
 
   const resetForm = () => {
-    console.log("resetting form in useScheduleFormState");
+    console.log("Resetting form in useScheduleFormState - FULL RESET");
+    
+    // First explicitly set currentSelectedEvent to null
     setCurrentSelectedEvent(null);
     
+    // Then reset all form data
     const initialData: ContentScheduleFormData = {
       client_id: clientId,
       service_id: "",
@@ -108,10 +111,19 @@ export function useScheduleFormState({
       initialData.scheduled_date = localSelectedDate;
     }
     
+    // Set the form data with the initial values
     setFormData(initialData);
+    
+    console.log("Form reset complete - currentSelectedEvent is now:", null);
   };
 
   const handleSelectEvent = (event: CalendarEvent) => {
+    if (!event) {
+      console.log("handleSelectEvent called with null/undefined event - clearing selected event");
+      setCurrentSelectedEvent(null);
+      return;
+    }
+    
     console.log("selecting event in useScheduleFormState:", event.id);
     setCurrentSelectedEvent(event);
     
