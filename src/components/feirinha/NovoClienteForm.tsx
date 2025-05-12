@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { NovoClienteFeirinhaFormData } from "@/types/feirinha";
 
 const formSchema = z.object({
   solicitante: z.string().min(1, "O nome do solicitante é obrigatório"),
