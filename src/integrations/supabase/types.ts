@@ -1045,6 +1045,42 @@ export type Database = {
         }
         Relationships: []
       }
+      feirinha_novo_cliente: {
+        Row: {
+          corredor: string
+          created_at: string
+          data_inauguracao: string
+          id: string
+          nome_lojista: string
+          numero_banca: string
+          observacao: string | null
+          solicitante: string
+          telefone_proprietario: string
+        }
+        Insert: {
+          corredor: string
+          created_at?: string
+          data_inauguracao: string
+          id?: string
+          nome_lojista: string
+          numero_banca: string
+          observacao?: string | null
+          solicitante: string
+          telefone_proprietario: string
+        }
+        Update: {
+          corredor?: string
+          created_at?: string
+          data_inauguracao?: string
+          id?: string
+          nome_lojista?: string
+          numero_banca?: string
+          observacao?: string | null
+          solicitante?: string
+          telefone_proprietario?: string
+        }
+        Relationships: []
+      }
       group_client_access: {
         Row: {
           all_clients: boolean

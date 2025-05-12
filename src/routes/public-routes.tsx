@@ -7,6 +7,7 @@ import SignupConfirmation from "@/pages/SignupConfirmation";
 const ClientLogin = lazy(() => import("@/pages/ClientLogin"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
 const Index = lazy(() => import("@/pages/Index"));
+const NovoClienteFeirinha = lazy(() => import("@/pages/NovoClienteFeirinha"));
 
 export const publicRoutes = (
   <>
@@ -17,6 +18,7 @@ export const publicRoutes = (
     <Route path="/#" element={<ResetPassword />} />
     <Route path="/reset-password" element={<ResetPassword />} />
     <Route path="/signup-confirmation" element={<SignupConfirmation />} />
+    <Route path="/novocliente/feirinha" element={<NovoClienteFeirinha />} />
     <Route path="*" element={<Navigate to="/" />} />
   </>
 );

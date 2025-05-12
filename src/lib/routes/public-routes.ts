@@ -3,6 +3,7 @@ import Index from "@/pages/Index";
 import ClientLogin from "@/pages/ClientLogin";
 import ResetPassword from "@/pages/ResetPassword";
 import SignupConfirmation from "@/pages/SignupConfirmation";
+import NovoClienteFeirinha from "@/pages/NovoClienteFeirinha";
 
 export const publicRoutes = [
   {
@@ -20,5 +21,9 @@ export const publicRoutes = [
   {
     path: "/signup-confirmation",
     element: SignupConfirmation,
+  },
+  {
+    path: "/novocliente/feirinha",
+    element: NovoClienteFeirinha,
   },
 ] as const;
