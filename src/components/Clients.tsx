@@ -1,8 +1,10 @@
+
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { getStorageUrl } from "@/utils/imageUtils";
+import React from "react";
 
 export const Clients = () => {
   const { data: clients, isLoading } = useQuery({
@@ -16,6 +18,7 @@ export const Clients = () => {
       if (error) throw error;
       return data;
     },
+    staleTime: 5 * 60 * 1000, // Cache data for 5 minutes
   });
 
   if (isLoading) {
@@ -45,8 +48,6 @@ export const Clients = () => {
               ? client.logo_url 
               : getStorageUrl(client.logo_url);
 
-            console.log('Client logo URL:', imageUrl); // Debug log
-
             return (
               <motion.div
                 key={client.id}
@@ -68,8 +69,10 @@ export const Clients = () => {
                       alt={client.name}
                       className="w-full h-full grayscale hover:grayscale-0 transition-all object-contain"
                       loading="lazy"
+                      decoding="async"
+                      width="200"
+                      height="150"
                       onError={(e) => {
-                        console.error('Image load error:', e); // Debug log
                         const img = e.target as HTMLImageElement;
                         img.src = '/placeholder.svg';
                       }}
@@ -82,8 +85,10 @@ export const Clients = () => {
                       alt={client.name}
                       className="w-full h-full grayscale hover:grayscale-0 transition-all object-contain"
                       loading="lazy"
+                      decoding="async"
+                      width="200"
+                      height="150"
                       onError={(e) => {
-                        console.error('Image load error:', e); // Debug log
                         const img = e.target as HTMLImageElement;
                         img.src = '/placeholder.svg';
                       }}
@@ -98,3 +103,5 @@ export const Clients = () => {
     </section>
   );
 };
+
+export default Clients;
