@@ -41,9 +41,10 @@ export const useNovoClienteForm = () => {
 
       console.log("Submitting data:", clienteData);
       
+      // Use upsert instead of insert to handle potential conflicts
       const { data, error } = await supabase
         .from("feirinha_novo_cliente")
-        .insert(clienteData)
+        .upsert(clienteData)
         .select();
 
       if (error) {
@@ -51,7 +52,7 @@ export const useNovoClienteForm = () => {
         toast({
           variant: "destructive",
           title: "Erro ao cadastrar",
-          description: "Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente.",
+          description: `Ocorreu um erro: ${error.message || "Tente novamente mais tarde"}`,
         });
         return;
       }
