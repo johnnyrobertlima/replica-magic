@@ -32,6 +32,30 @@ export function CalendarDatePicker({
     ? value 
     : null;
   
+  // Presets para facilitar a seleção de datas comuns
+  const presets = [
+    {
+      name: "Hoje",
+      date: new Date(),
+    },
+    {
+      name: "Ontem",
+      date: (() => {
+        const date = new Date();
+        date.setDate(date.getDate() - 1);
+        return date;
+      })(),
+    },
+    {
+      name: "Início do mês",
+      date: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+    },
+    {
+      name: "Fim do mês",
+      date: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0),
+    },
+  ];
+  
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -48,14 +72,29 @@ export function CalendarDatePicker({
           {dateValue ? format(dateValue, "dd/MM/yyyy", { locale: ptBR }) : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0">
+      <PopoverContent className="w-auto p-0 bg-white">
+        <div className="p-3 border-b">
+          <div className="grid grid-cols-2 gap-2">
+            {presets.map((preset) => (
+              <Button
+                key={preset.name}
+                variant="outline"
+                size="sm"
+                className="text-xs h-8"
+                onClick={() => onChange(preset.date)}
+              >
+                {preset.name}
+              </Button>
+            ))}
+          </div>
+        </div>
         <Calendar
           mode="single"
           selected={dateValue}
           onSelect={onChange}
           initialFocus
           locale={ptBR}
-          className="pointer-events-auto"
+          className="pointer-events-auto bg-white p-3"
         />
       </PopoverContent>
     </Popover>

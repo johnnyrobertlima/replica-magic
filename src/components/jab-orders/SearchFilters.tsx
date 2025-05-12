@@ -5,6 +5,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Search, Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
 import {
@@ -65,6 +66,46 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
     }
   };
 
+  // Presets para facilitar a seleção de períodos comuns
+  const datePresets = [
+    {
+      name: "Hoje",
+      dates: {
+        from: new Date(),
+        to: new Date(),
+      },
+    },
+    {
+      name: "Últimos 7 dias",
+      dates: {
+        from: (() => {
+          const date = new Date();
+          date.setDate(date.getDate() - 7);
+          return date;
+        })(),
+        to: new Date(),
+      },
+    },
+    {
+      name: "Últimos 30 dias",
+      dates: {
+        from: (() => {
+          const date = new Date();
+          date.setDate(date.getDate() - 30);
+          return date;
+        })(),
+        to: new Date(),
+      },
+    },
+    {
+      name: "Este mês",
+      dates: {
+        from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+        to: new Date(),
+      },
+    },
+  ];
+
   return (
     <div className="flex flex-col sm:flex-row items-center gap-4 flex-1">
       <Select value={searchType} onValueChange={value => onSearchTypeChange(value as SearchType)}>
@@ -102,10 +143,10 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
             {date?.from ? (
               date.to ? (
                 <>
-                  {format(date.from, "dd/MM/yyyy")} - {format(date.to, "dd/MM/yyyy")}
+                  {format(date.from, "dd/MM/yyyy", { locale: ptBR })} - {format(date.to, "dd/MM/yyyy", { locale: ptBR })}
                 </>
               ) : (
-                format(date.from, "dd/MM/yyyy")
+                format(date.from, "dd/MM/yyyy", { locale: ptBR })
               )
             ) : (
               <span>Selecione um período</span>
@@ -113,6 +154,23 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0 bg-white" align="end">
+          <div className="p-3 border-b">
+            <div className="grid grid-cols-2 gap-2">
+              {datePresets.map((preset) => (
+                <Button
+                  key={preset.name}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs h-8"
+                  onClick={() => {
+                    onDateChange(preset.dates);
+                  }}
+                >
+                  {preset.name}
+                </Button>
+              ))}
+            </div>
+          </div>
           <Calendar
             initialFocus
             mode="range"
@@ -120,7 +178,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
             selected={date}
             onSelect={handleDateChange}
             numberOfMonths={2}
-            className="bg-white pointer-events-auto"
+            className="bg-white pointer-events-auto p-3"
           />
         </PopoverContent>
       </Popover>

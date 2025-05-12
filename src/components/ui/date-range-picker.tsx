@@ -27,6 +27,13 @@ export function DatePickerWithRange({
 }: DatePickerWithRangeProps) {
   const presets = [
     {
+      name: "Hoje",
+      handler: () => {
+        const today = new Date();
+        onDateRangeChange({ from: today, to: today });
+      },
+    },
+    {
       name: "Últimos 7 dias",
       handler: () => {
         const end = new Date();
@@ -135,14 +142,14 @@ export function DatePickerWithRange({
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium">Filtros rápidos</p>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {presets.map((preset) => (
                   <Button
                     key={preset.name}
                     variant="outline"
                     size="sm"
                     onClick={preset.handler}
-                    className="text-xs bg-white"
+                    className="text-xs bg-white h-8"
                   >
                     {preset.name}
                   </Button>
