@@ -1,6 +1,5 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { format, parse } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { 
   createContentSchedule, 
@@ -18,7 +17,7 @@ export function useCreateContentSchedule() {
       console.log("Creating content schedule with data:", data);
       return createContentSchedule(data);
     },
-    onSuccess: (response, variables) => {
+    onSuccess: () => {
       toast({
         title: "Agendamento criado",
         description: "O agendamento foi criado com sucesso.",
@@ -28,12 +27,12 @@ export function useCreateContentSchedule() {
       queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
       queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Error creating content schedule:", error);
       toast({
         variant: "destructive",
         title: "Erro ao criar agendamento",
-        description: "Não foi possível criar o agendamento. Tente novamente.",
+        description: error?.message || "Não foi possível criar o agendamento. Tente novamente.",
       });
     }
   });
@@ -46,7 +45,24 @@ export function useUpdateContentSchedule() {
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: ContentScheduleFormData }) => {
       console.log("Updating content schedule with id:", id, "data:", data);
-      return updateContentSchedule(id, data);
+      // Add a timeout to avoid UI freezing and give feedback to user
+      return new Promise((resolve, reject) => {
+        setTimeout(async () => {
+          try {
+            const result = await updateContentSchedule(id, data);
+            resolve(result);
+          } catch (error) {
+            reject(error);
+          }
+        }, 100);
+      });
+    },
+    onMutate: async ({ id, data }) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: ['content-schedules'] });
+      
+      // Return a rollback context
+      return { id, previousData: data };
     },
     onSuccess: () => {
       toast({
@@ -59,12 +75,12 @@ export function useUpdateContentSchedule() {
       queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
       queryClient.invalidateQueries({ queryKey: ['scheduleHistory'] });
     },
-    onError: (error) => {
+    onError: (error: any, variables, context) => {
       console.error("Error updating content schedule:", error);
       toast({
         variant: "destructive",
         title: "Erro ao atualizar agendamento",
-        description: "Não foi possível atualizar o agendamento. Tente novamente.",
+        description: error?.message || "Não foi possível atualizar o agendamento. Tente novamente.",
       });
       
       // If there's an error, we should refetch to restore the correct data
@@ -93,12 +109,12 @@ export function useDeleteContentSchedule() {
       queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
       queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Error deleting content schedule:", error);
       toast({
         variant: "destructive",
         title: "Erro ao excluir agendamento",
-        description: "Não foi possível excluir o agendamento. Tente novamente.",
+        description: error?.message || "Não foi possível excluir o agendamento. Tente novamente.",
       });
       
       // If there's an error, we should refetch to restore the correct data

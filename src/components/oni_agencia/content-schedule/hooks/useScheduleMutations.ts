@@ -3,6 +3,7 @@ import { useState, useCallback } from "react";
 import { useCreateContentSchedule, useUpdateContentSchedule, useDeleteContentSchedule } from "@/hooks/useOniAgenciaContentSchedules";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
 import { format } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
 
 // Update the interface to include onSuccess and onManualRefetch
 interface UseScheduleMutationsProps {
@@ -51,6 +52,7 @@ export function useScheduleMutations({
   // Local state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const { toast } = useToast();
   
   // Get mutation hooks
   const createMutation = useCreateContentSchedule();
@@ -91,11 +93,16 @@ export function useScheduleMutations({
         
       } catch (error) {
         console.error("Error submitting content schedule:", error);
+        toast({
+          variant: "destructive",
+          title: "Erro ao salvar",
+          description: "Não foi possível salvar as alterações. Por favor, tente novamente."
+        });
       } finally {
         setIsSubmitting(false);
       }
     },
-    [clientId, selectedDate, createMutation, updateMutation, onClose, onSuccess, onManualRefetch]
+    [clientId, selectedDate, createMutation, updateMutation, onClose, onSuccess, onManualRefetch, toast]
   );
   
   // Handle status update
@@ -106,38 +113,40 @@ export function useScheduleMutations({
       try {
         if (!currentSelectedEvent) {
           console.error("No event selected");
+          toast({
+            variant: "destructive",
+            title: "Erro",
+            description: "Nenhum agendamento selecionado para atualizar."
+          });
           return;
         }
         
         setIsSubmitting(true);
         
-        // Extract only the relevant fields for status update
+        // Extract only the relevant fields for status update to minimize data being sent
         const updateData: Partial<ContentScheduleFormData> = {
           client_id: formData.client_id,
           service_id: formData.service_id,
           status_id: formData.status_id,
           collaborator_id: formData.collaborator_id,
           description: formData.description,
-          title: formData.title,
-          // Include the date fields as they are in formData
-          scheduled_date: formData.scheduled_date,
-          capture_date: formData.capture_date,
-          capture_end_date: formData.capture_end_date,
-          is_all_day: formData.is_all_day,
-          location: formData.location,
-          execution_phase: formData.execution_phase,
-          editorial_line_id: formData.editorial_line_id,
-          product_id: formData.product_id,
-          creators: formData.creators
+          title: formData.title
         };
         
         // Convert to API format (strings)
         const apiData = convertDatesToStrings(updateData);
         
+        console.log("Sending status update with data:", apiData);
+        
         // Update the status
         await updateMutation.mutateAsync({
           id: currentSelectedEvent.id,
           data: apiData as ContentScheduleFormData
+        });
+        
+        toast({
+          title: "Status atualizado",
+          description: "O status do agendamento foi atualizado com sucesso."
         });
         
         // Call the onSuccess callback if provided
@@ -151,11 +160,16 @@ export function useScheduleMutations({
         
       } catch (error) {
         console.error("Error updating status:", error);
+        toast({
+          variant: "destructive",
+          title: "Erro ao atualizar status",
+          description: "Não foi possível atualizar o status. Por favor, tente novamente."
+        });
       } finally {
         setIsSubmitting(false);
       }
     },
-    [updateMutation, onClose, onSuccess, onManualRefetch]
+    [updateMutation, onClose, onSuccess, onManualRefetch, toast]
   );
   
   // Handle delete
@@ -163,6 +177,11 @@ export function useScheduleMutations({
     async (currentSelectedEvent: CalendarEvent | null) => {
       if (!currentSelectedEvent) {
         console.error("No event selected to delete");
+        toast({
+          variant: "destructive",
+          title: "Erro",
+          description: "Nenhum agendamento selecionado para excluir."
+        });
         return;
       }
       
@@ -171,6 +190,11 @@ export function useScheduleMutations({
         
         // Delete the schedule
         await deleteMutation.mutateAsync(currentSelectedEvent.id);
+        
+        toast({
+          title: "Agendamento excluído",
+          description: "O agendamento foi excluído com sucesso."
+        });
         
         // Call the onSuccess callback if provided
         if (onSuccess) onSuccess();
@@ -183,11 +207,16 @@ export function useScheduleMutations({
         
       } catch (error) {
         console.error("Error deleting schedule:", error);
+        toast({
+          variant: "destructive",
+          title: "Erro ao excluir",
+          description: "Não foi possível excluir o agendamento. Por favor, tente novamente."
+        });
       } finally {
         setIsDeleting(false);
       }
     },
-    [deleteMutation, onClose, onSuccess, onManualRefetch]
+    [deleteMutation, onClose, onSuccess, onManualRefetch, toast]
   );
   
   return {

@@ -158,13 +158,42 @@ export async function updateContentSchedule(id: string, schedule: Partial<Conten
     // Now process the cleaned schedule data
     const processedSchedule = sanitizeScheduleData(cleanedSchedule);
     
-    // Convert Date objects to strings for the database
-    const updateData = {
-      ...processedSchedule,
-      scheduled_date: formatDateForDB(processedSchedule.scheduled_date),
-      capture_date: formatDateTimeForDB(processedSchedule.capture_date, processedSchedule.is_all_day),
-      capture_end_date: formatDateTimeForDB(processedSchedule.capture_end_date, processedSchedule.is_all_day)
-    };
+    // For status updates, we may only have a subset of fields
+    // Make a minimal update data object
+    const updateData: Record<string, any> = {};
+    
+    // Add the fields that are provided
+    if (processedSchedule.client_id !== undefined) updateData.client_id = processedSchedule.client_id;
+    if (processedSchedule.service_id !== undefined) updateData.service_id = processedSchedule.service_id;
+    if (processedSchedule.title !== undefined) updateData.title = processedSchedule.title;
+    if (processedSchedule.description !== undefined) updateData.description = processedSchedule.description;
+    if (processedSchedule.status_id !== undefined) updateData.status_id = processedSchedule.status_id;
+    if (processedSchedule.collaborator_id !== undefined) updateData.collaborator_id = processedSchedule.collaborator_id;
+    if (processedSchedule.editorial_line_id !== undefined) updateData.editorial_line_id = processedSchedule.editorial_line_id;
+    if (processedSchedule.product_id !== undefined) updateData.product_id = processedSchedule.product_id;
+    if (processedSchedule.execution_phase !== undefined) updateData.execution_phase = processedSchedule.execution_phase;
+    if (processedSchedule.location !== undefined) updateData.location = processedSchedule.location;
+    if (processedSchedule.creators !== undefined) updateData.creators = processedSchedule.creators;
+    
+    // Only add date fields if they're provided
+    if (processedSchedule.scheduled_date !== undefined) {
+      updateData.scheduled_date = formatDateForDB(processedSchedule.scheduled_date);
+    }
+    if (processedSchedule.capture_date !== undefined) {
+      updateData.capture_date = formatDateTimeForDB(
+        processedSchedule.capture_date, 
+        processedSchedule.is_all_day !== undefined ? processedSchedule.is_all_day : null
+      );
+    }
+    if (processedSchedule.capture_end_date !== undefined) {
+      updateData.capture_end_date = formatDateTimeForDB(
+        processedSchedule.capture_end_date,
+        processedSchedule.is_all_day !== undefined ? processedSchedule.is_all_day : null
+      );
+    }
+    if (processedSchedule.is_all_day !== undefined) {
+      updateData.is_all_day = processedSchedule.is_all_day;
+    }
     
     console.log('Updating content schedule:', id, updateData);
     
@@ -191,18 +220,30 @@ export async function updateContentSchedule(id: string, schedule: Partial<Conten
       }
     }
     
-    // Update the record
-    const { data, error } = await supabase
-      .from(TABLE_NAME)
-      .update(updateData)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error updating content schedule:', error);
-      throw error;
-    }
+    // Update the record - use a timeout to avoid potential backend issues
+    const updatePromise = new Promise<any>((resolve, reject) => {
+      setTimeout(async () => {
+        try {
+          const { data, error } = await supabase
+            .from(TABLE_NAME)
+            .update(updateData)
+            .eq('id', id)
+            .select()
+            .single();
+            
+          if (error) {
+            console.error('Error updating content schedule:', error);
+            reject(error);
+          } else {
+            resolve(data);
+          }
+        } catch (err) {
+          reject(err);
+        }
+      }, 100); // small delay to ensure transactions don't conflict
+    });
+    
+    const data = await updatePromise;
     
     // Record history for important field changes
     const fieldsToTrack = [
