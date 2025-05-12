@@ -2,7 +2,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { handleApiError } from "../errorHandlingService";
 import { SupabaseTable, QueryCondition, FetchBatchesParams } from "./queryTypes";
-import { PostgrestFilterBuilder } from "@supabase/postgrest-js";
 
 /**
  * Função utilitária genérica para consultar dados em batches
@@ -38,7 +37,6 @@ export const fetchInBatches = async ({
       let filteredQuery = typedCountQuery;
       for (const [key, value] of Object.entries(filters)) {
         if (value !== undefined && value !== null) {
-          // @ts-ignore - Aplicando filtro dinamicamente
           filteredQuery = filteredQuery.eq(key, value);
         }
       }
@@ -46,19 +44,14 @@ export const fetchInBatches = async ({
       // Aplica condições adicionais diretamente
       for (const condition of conditions) {
         if (condition.type === 'gt') {
-          // @ts-ignore - Aplicando condição dinamicamente
           filteredQuery = filteredQuery.gt(condition.column, condition.value);
         } else if (condition.type === 'lt') {
-          // @ts-ignore - Aplicando condição dinamicamente
           filteredQuery = filteredQuery.lt(condition.column, condition.value);
         } else if (condition.type === 'gte') {
-          // @ts-ignore - Aplicando condição dinamicamente
           filteredQuery = filteredQuery.gte(condition.column, condition.value);
         } else if (condition.type === 'lte') {
-          // @ts-ignore - Aplicando condição dinamicamente
           filteredQuery = filteredQuery.lte(condition.column, condition.value);
         } else if (condition.type === 'in') {
-          // @ts-ignore - Aplicando condição dinamicamente
           filteredQuery = filteredQuery.in(condition.column, condition.value);
         }
       }
@@ -87,7 +80,6 @@ export const fetchInBatches = async ({
       // Aplica filtros por igualdade
       for (const [key, value] of Object.entries(filters)) {
         if (value !== undefined && value !== null) {
-          // @ts-ignore - Aplicando filtro dinamicamente
           query = query.eq(key, value);
         }
       }
@@ -95,19 +87,14 @@ export const fetchInBatches = async ({
       // Aplica condições adicionais diretamente
       for (const condition of conditions) {
         if (condition.type === 'gt') {
-          // @ts-ignore - Aplicando condição dinamicamente
           query = query.gt(condition.column, condition.value);
         } else if (condition.type === 'lt') {
-          // @ts-ignore - Aplicando condição dinamicamente
           query = query.lt(condition.column, condition.value);
         } else if (condition.type === 'gte') {
-          // @ts-ignore - Aplicando condição dinamicamente
           query = query.gte(condition.column, condition.value);
         } else if (condition.type === 'lte') {
-          // @ts-ignore - Aplicando condição dinamicamente
           query = query.lte(condition.column, condition.value);
         } else if (condition.type === 'in') {
-          // @ts-ignore - Aplicando condição dinamicamente
           query = query.in(condition.column, condition.value);
         }
       }
