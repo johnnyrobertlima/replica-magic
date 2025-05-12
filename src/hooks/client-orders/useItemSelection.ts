@@ -38,6 +38,7 @@ export const useItemSelection = (
         delete newSelectedItemsDetails[itemCode];
       } else {
         // Adicionar o item com os detalhes
+        // Usar o código do item como chave única para garantir que apenas um item com o mesmo código seja selecionado
         const qtde = item.QTDE_SALDO;
         const valor = qtde * item.VALOR_UNITARIO;
         const clientName = item.APELIDO || '';

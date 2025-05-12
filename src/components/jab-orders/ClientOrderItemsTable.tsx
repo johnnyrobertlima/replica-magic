@@ -62,11 +62,13 @@ export const ClientOrderItemsTable = ({
           {filteredItems.map((item, index) => {
             const valorPedido = item.QTDE_PEDIDA * item.VALOR_UNITARIO;
             const valorSaldo = item.QTDE_SALDO * item.VALOR_UNITARIO;
+            // Use a combination of item code, pedido, and index to ensure uniqueness
+            const itemKey = `${item.ITEM_CODIGO}-${item.pedido}-${index}`;
             const isSelected = selectedItems.includes(item.ITEM_CODIGO);
             
             return (
               <tr 
-                key={`${item.pedido}-${item.ITEM_CODIGO}-${index}`} 
+                key={itemKey}
                 className={cn(
                   "border-t",
                   item.emSeparacao && "bg-[#FEF7CD]", // Fundo amarelo claro para itens em separação
@@ -76,9 +78,9 @@ export const ClientOrderItemsTable = ({
                 <td className="p-2">
                   <Checkbox
                     checked={isSelected}
-                    onCheckedChange={() => onItemSelect(item)}
+                    onCheckedChange={() => onItemSelect(item)} // Pass the complete item object
                     disabled={item.emSeparacao}
-                    id={`item-${item.ITEM_CODIGO}-${index}`}
+                    id={itemKey}
                     aria-label={`Selecionar item ${item.ITEM_CODIGO}`}
                   />
                 </td>
