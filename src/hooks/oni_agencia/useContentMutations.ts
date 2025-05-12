@@ -45,6 +45,7 @@ export function useUpdateContentSchedule() {
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: ContentScheduleFormData }) => {
       console.log("Updating content schedule with id:", id, "data:", data);
+      
       // Add a timeout to avoid UI freezing and give feedback to user
       return new Promise((resolve, reject) => {
         setTimeout(async () => {
@@ -52,16 +53,19 @@ export function useUpdateContentSchedule() {
             const result = await updateContentSchedule(id, data);
             resolve(result);
           } catch (error) {
+            console.error("Error in update mutation:", error);
             reject(error);
           }
-        }, 100);
+        }, 300);
       });
     },
     onMutate: async ({ id, data }) => {
-      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      // Cancel any outgoing refetches to avoid race conditions
       await queryClient.cancelQueries({ queryKey: ['content-schedules'] });
+      await queryClient.cancelQueries({ queryKey: ['infinite-content-schedules'] });
+      await queryClient.cancelQueries({ queryKey: ['scheduleHistory'] });
       
-      // Return a rollback context
+      // Return a context with the previous data
       return { id, previousData: data };
     },
     onSuccess: () => {
@@ -75,7 +79,7 @@ export function useUpdateContentSchedule() {
       queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
       queryClient.invalidateQueries({ queryKey: ['scheduleHistory'] });
     },
-    onError: (error: any, variables, context) => {
+    onError: (error: any) => {
       console.error("Error updating content schedule:", error);
       toast({
         variant: "destructive",
@@ -83,7 +87,12 @@ export function useUpdateContentSchedule() {
         description: error?.message || "Não foi possível atualizar o agendamento. Tente novamente.",
       });
       
-      // If there's an error, we should refetch to restore the correct data
+      // Refetch to restore the correct data
+      queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
+      queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
+    },
+    onSettled: () => {
+      // Always refetch after error or success
       queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
       queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
     }

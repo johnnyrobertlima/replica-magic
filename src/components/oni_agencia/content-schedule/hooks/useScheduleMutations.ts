@@ -110,17 +110,27 @@ export function useScheduleMutations({
     async (e: React.FormEvent, currentSelectedEvent: CalendarEvent | null, formData: ContentScheduleFormData) => {
       e.preventDefault();
       
+      if (!currentSelectedEvent) {
+        console.error("No event selected");
+        toast({
+          variant: "destructive",
+          title: "Erro",
+          description: "Nenhum agendamento selecionado para atualizar."
+        });
+        return;
+      }
+      
+      // Validate that status is selected
+      if (!formData.status_id) {
+        toast({
+          variant: "destructive",
+          title: "Erro",
+          description: "Por favor, selecione um status válido."
+        });
+        return;
+      }
+      
       try {
-        if (!currentSelectedEvent) {
-          console.error("No event selected");
-          toast({
-            variant: "destructive",
-            title: "Erro",
-            description: "Nenhum agendamento selecionado para atualizar."
-          });
-          return;
-        }
-        
         setIsSubmitting(true);
         
         // Extract only the relevant fields for status update to minimize data being sent
@@ -133,16 +143,28 @@ export function useScheduleMutations({
           title: formData.title
         };
         
-        // Convert to API format (strings)
-        const apiData = convertDatesToStrings(updateData);
+        console.log("Sending status update with data:", updateData);
         
-        console.log("Sending status update with data:", apiData);
-        
-        // Update the status
-        await updateMutation.mutateAsync({
-          id: currentSelectedEvent.id,
-          data: apiData as ContentScheduleFormData
+        // Create a promise with timeout to prevent infinite loading
+        const updatePromise = new Promise<any>((resolve, reject) => {
+          const timeoutId = setTimeout(() => {
+            reject(new Error("A solicitação expirou. Por favor, tente novamente."));
+          }, 10000); // 10 segundos de timeout
+          
+          updateMutation.mutateAsync({
+            id: currentSelectedEvent.id,
+            data: updateData as ContentScheduleFormData
+          }).then((result) => {
+            clearTimeout(timeoutId);
+            resolve(result);
+          }).catch((error) => {
+            clearTimeout(timeoutId);
+            reject(error);
+          });
         });
+        
+        // Wait for the promise to resolve or reject
+        await updatePromise;
         
         toast({
           title: "Status atualizado",
@@ -158,12 +180,12 @@ export function useScheduleMutations({
         // Close the dialog after successful submission
         if (onClose) onClose();
         
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error updating status:", error);
         toast({
           variant: "destructive",
           title: "Erro ao atualizar status",
-          description: "Não foi possível atualizar o status. Por favor, tente novamente."
+          description: error?.message || "Não foi possível atualizar o status. Por favor, tente novamente."
         });
       } finally {
         setIsSubmitting(false);

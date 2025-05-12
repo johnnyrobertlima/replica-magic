@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusSelect } from "./StatusSelect";
@@ -8,6 +8,7 @@ import { CalendarEvent } from "@/types/oni-agencia";
 import { linkifyText } from "@/utils/linkUtils";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2 } from "lucide-react";
 
 interface StatusUpdateFormProps {
   event: CalendarEvent;
@@ -41,6 +42,13 @@ export function StatusUpdateForm({
   // Process links in the note
   const noteWithLinks = linkifyText(note);
   const [validationError, setValidationError] = useState<string | null>(null);
+
+  // Clear validation error when isSubmitting changes to false
+  useEffect(() => {
+    if (!isSubmitting) {
+      setValidationError(null);
+    }
+  }, [isSubmitting]);
 
   // Validate status selection
   const handleStatusChangeWithValidation = (value: string) => {
@@ -104,6 +112,13 @@ export function StatusUpdateForm({
           </div>
         )}
       </div>
+      
+      {isSubmitting && (
+        <div className="flex items-center justify-center py-2">
+          <Loader2 className="h-5 w-5 animate-spin text-primary mr-2" />
+          <span>Atualizando...</span>
+        </div>
+      )}
     </div>
   );
 }
