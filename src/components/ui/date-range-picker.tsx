@@ -121,7 +121,7 @@ export function DatePickerWithRange({
               !displayRange.from && !displayRange.to && "text-muted-foreground"
             )}
           >
-            <CalendarIcon className="mr-2 h-4 w-4" />
+            <CalendarIcon className="mr-2 h-5 w-5" />
             {displayRange.from ? (
               displayRange.to ? (
                 <>
@@ -136,36 +136,63 @@ export function DatePickerWithRange({
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0 bg-white" align="start">
-          <div className="grid gap-2">
-            <div className="grid gap-2 p-4 bg-white">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium">Filtros rápidos</p>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {presets.map((preset) => (
+        <PopoverContent className="w-auto p-0 bg-white max-w-[95vw]" align="start">
+          <div className="space-y-3">
+            <div className="p-4 border-b">
+              <h3 className="text-sm font-medium mb-2">Selecione um filtro rápido</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {presets.slice(0, 4).map((preset) => (
                   <Button
                     key={preset.name}
                     variant="outline"
                     size="sm"
                     onClick={preset.handler}
-                    className="text-xs bg-white h-8"
+                    className="text-xs h-9 bg-white hover:bg-gray-100"
+                  >
+                    {preset.name}
+                  </Button>
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                {presets.slice(4).map((preset) => (
+                  <Button
+                    key={preset.name}
+                    variant="outline"
+                    size="sm"
+                    onClick={preset.handler}
+                    className="text-xs h-9 bg-white hover:bg-gray-100"
                   >
                     {preset.name}
                   </Button>
                 ))}
               </div>
             </div>
-            <div className="p-3 border-t bg-white">
+            <div className="p-0 bg-white">
               <Calendar
-                initialFocus
                 mode="range"
                 defaultMonth={displayRange.from || undefined}
                 selected={displayRange}
                 onSelect={handleCalendarSelect}
                 numberOfMonths={2}
-                className="p-0 pointer-events-auto bg-white"
+                showOutsideDays={false}
+                fixedWeeks
+                className="p-2 rounded-md pointer-events-auto bg-white border-t"
               />
+            </div>
+            <div className="p-4 border-t flex justify-end">
+              <Button 
+                variant="default" 
+                className="bg-[#F97316] hover:bg-[#F97316]/90"
+                onClick={() => {
+                  if (!displayRange.from || !displayRange.to) {
+                    // Se não houver um intervalo completo, selecione hoje
+                    const today = new Date();
+                    onDateRangeChange({ from: today, to: today });
+                  }
+                }}
+              >
+                Aplicar
+              </Button>
             </div>
           </div>
         </PopoverContent>

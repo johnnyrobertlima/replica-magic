@@ -88,7 +88,7 @@ export const DateRangePicker = ({
                 variant={"outline"} 
                 className="w-[300px] justify-start text-left font-normal bg-white"
               >
-                <CalendarIcon className="mr-2 h-4 w-4" />
+                <CalendarIcon className="mr-2 h-5 w-5" />
                 {startDate && endDate ? (
                   <span>
                     {format(startDate, "dd/MM/yyyy", { locale: ptBR })} - {format(endDate, "dd/MM/yyyy", { locale: ptBR })}
@@ -98,27 +98,27 @@ export const DateRangePicker = ({
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 bg-white" align="start" side="bottom">
-              <div className="grid gap-4 p-4">
-                <div className="grid gap-2">
+            <PopoverContent className="w-auto p-0 bg-white max-w-[95vw]" align="start" side="bottom">
+              <div className="grid gap-4">
+                <div className="grid gap-2 p-4">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-medium">Filtros rápidos</p>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     {presets.map((preset) => (
                       <Button
                         key={preset.name}
                         variant="outline"
                         size="sm"
                         onClick={preset.handler}
-                        className="text-xs bg-white"
+                        className="text-xs h-9 bg-white hover:bg-gray-100"
                       >
                         {preset.name}
                       </Button>
                     ))}
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4 p-4 pt-0 border-t">
                   <div className="grid gap-2">
                     <div className="flex items-center">
                       <p className="text-sm font-medium">Data inicial</p>
@@ -129,7 +129,9 @@ export const DateRangePicker = ({
                       onSelect={handleStartDateChange}
                       initialFocus
                       disabled={(date) => (endDate ? date > endDate : false)}
-                      className="p-3 pointer-events-auto bg-white"
+                      className="p-3 pointer-events-auto bg-white rounded border"
+                      showOutsideDays={false}
+                      fixedWeeks
                     />
                   </div>
                   <div className="grid gap-2">
@@ -142,9 +144,26 @@ export const DateRangePicker = ({
                       onSelect={handleEndDateChange}
                       initialFocus
                       disabled={(date) => (startDate ? date < startDate : false)}
-                      className="p-3 pointer-events-auto bg-white"
+                      className="p-3 pointer-events-auto bg-white rounded border"
+                      showOutsideDays={false}
+                      fixedWeeks
                     />
                   </div>
+                </div>
+                <div className="p-4 border-t flex justify-end">
+                  <Button 
+                    variant="default"
+                    className="bg-[#F97316] hover:bg-[#F97316]/90"
+                    onClick={() => {
+                      if (!startDate || !endDate) {
+                        // Se não houver um intervalo completo, selecione hoje
+                        const today = new Date();
+                        onUpdate({ startDate: today, endDate: today });
+                      }
+                    }}
+                  >
+                    Aplicar
+                  </Button>
                 </div>
               </div>
             </PopoverContent>

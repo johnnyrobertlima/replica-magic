@@ -54,6 +54,34 @@ export function CalendarDatePicker({
       name: "Fim do mês",
       date: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0),
     },
+    {
+      name: "1ª semana",
+      date: (() => {
+        const date = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+        return date;
+      })(),
+    },
+    {
+      name: "2ª semana",
+      date: (() => {
+        const date = new Date(new Date().getFullYear(), new Date().getMonth(), 8);
+        return date;
+      })(),
+    },
+    {
+      name: "3ª semana",
+      date: (() => {
+        const date = new Date(new Date().getFullYear(), new Date().getMonth(), 15);
+        return date;
+      })(),
+    },
+    {
+      name: "4ª semana",
+      date: (() => {
+        const date = new Date(new Date().getFullYear(), new Date().getMonth(), 22);
+        return date;
+      })(),
+    },
   ];
   
   return (
@@ -68,19 +96,33 @@ export function CalendarDatePicker({
           )}
           disabled={disabled}
         >
-          <CalendarIcon className="mr-2 h-4 w-4" />
+          <CalendarIcon className="mr-2 h-5 w-5" />
           {dateValue ? format(dateValue, "dd/MM/yyyy", { locale: ptBR }) : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0 bg-white">
+      <PopoverContent className="w-auto p-0 bg-white max-w-[95vw]" align="center">
         <div className="p-3 border-b">
-          <div className="grid grid-cols-2 gap-2">
-            {presets.map((preset) => (
+          <h3 className="text-sm font-medium mb-2">Seleção rápida</h3>
+          <div className="grid grid-cols-4 gap-2">
+            {presets.slice(0, 4).map((preset) => (
               <Button
                 key={preset.name}
                 variant="outline"
                 size="sm"
-                className="text-xs h-8"
+                className="text-xs h-9 bg-white hover:bg-gray-100"
+                onClick={() => onChange(preset.date)}
+              >
+                {preset.name}
+              </Button>
+            ))}
+          </div>
+          <div className="grid grid-cols-4 gap-2 mt-2">
+            {presets.slice(4).map((preset) => (
+              <Button
+                key={preset.name}
+                variant="outline"
+                size="sm"
+                className="text-xs h-9 bg-white hover:bg-gray-100"
                 onClick={() => onChange(preset.date)}
               >
                 {preset.name}
@@ -94,7 +136,9 @@ export function CalendarDatePicker({
           onSelect={onChange}
           initialFocus
           locale={ptBR}
-          className="pointer-events-auto bg-white p-3"
+          showOutsideDays={false}
+          fixedWeeks
+          className="pointer-events-auto bg-white p-3 border-t"
         />
       </PopoverContent>
     </Popover>
