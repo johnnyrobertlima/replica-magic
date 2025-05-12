@@ -52,7 +52,7 @@ export const NovoClienteForm = () => {
     try {
       const { error } = await supabase
         .from("feirinha_novo_cliente")
-        .insert([values]);
+        .insert(values); // Aqui enviamos values diretamente, não como array
 
       if (error) {
         console.error("Erro ao inserir dados:", error);
