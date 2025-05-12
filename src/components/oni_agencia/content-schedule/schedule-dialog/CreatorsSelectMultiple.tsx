@@ -47,8 +47,11 @@ export function CreatorsSelectMultiple({
     return collaborator ? collaborator.name : id;
   };
   
-  // Certifique-se de que value é sempre um array
+  // Ensure value is always an array
   const creators = Array.isArray(value) ? value : [];
+  
+  // Ensure collaborators is always an array
+  const safeCollaborators = Array.isArray(collaborators) ? collaborators : [];
   
   return (
     <div className="grid gap-2">
@@ -72,7 +75,7 @@ export function CreatorsSelectMultiple({
               <CommandInput placeholder="Buscar criador..." />
               <CommandEmpty>Nenhum criador encontrado.</CommandEmpty>
               <CommandGroup className="max-h-64 overflow-y-auto">
-                {collaborators.map(collaborator => (
+                {safeCollaborators.map(collaborator => (
                   <CommandItem 
                     key={collaborator.id} 
                     value={collaborator.name} 

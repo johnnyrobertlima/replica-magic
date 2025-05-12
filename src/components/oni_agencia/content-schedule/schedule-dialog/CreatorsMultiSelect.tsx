@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { OniAgenciaCollaborator } from "@/types/oni-agencia";
 import {
   Command,
@@ -35,61 +35,33 @@ export function CreatorsMultiSelect({
 }: CreatorsMultiSelectProps) {
   const [open, setOpen] = useState(false);
   
-  // Garantir que value seja sempre um array válido
+  // Ensure value is always an array
   const safeValue = Array.isArray(value) ? value : [];
   
-  // Garantir que collaborators seja sempre um array
+  // Ensure collaborators is always an array
   const safeCollaborators = Array.isArray(collaborators) ? collaborators : [];
   
-  // Encontrar colaboradores selecionados com proteções contra valores undefined
-  const selectedCollaborators = safeCollaborators.filter(c => 
-    c && c.id && safeValue.includes(c.id)
+  // Add a check to ensure collaborators objects are valid
+  const validCollaborators = safeCollaborators.filter(c => c && c.id && typeof c.id === 'string' && c.name);
+  
+  // Find selected collaborators with safety checks
+  const selectedCollaborators = validCollaborators.filter(c => 
+    safeValue.includes(c.id)
   );
 
   const handleSelect = (collaboratorId: string) => {
     if (!collaboratorId) return;
     
-    if (safeValue.includes(collaboratorId)) {
-      onValueChange(safeValue.filter(id => id !== collaboratorId));
-    } else {
-      onValueChange([...safeValue, collaboratorId]);
-    }
+    const newValue = safeValue.includes(collaboratorId)
+      ? safeValue.filter(id => id !== collaboratorId)
+      : [...safeValue, collaboratorId];
+    
+    onValueChange(newValue);
   };
 
   const handleRemove = (collaboratorId: string) => {
     if (!collaboratorId) return;
     onValueChange(safeValue.filter(id => id !== collaboratorId));
-  };
-
-  // Componentes filhos que serão renderizados dentro do Command.Group
-  const renderCollaboratorItems = () => {
-    if (!safeCollaborators || safeCollaborators.length === 0) {
-      return (
-        <div className="p-2 text-sm text-muted-foreground">
-          Nenhum colaborador disponível.
-        </div>
-      );
-    }
-
-    return safeCollaborators.map((collaborator) => (
-      collaborator && collaborator.id ? (
-        <CommandItem
-          key={collaborator.id}
-          value={collaborator.id}
-          onSelect={() => handleSelect(collaborator.id)}
-        >
-          <Check
-            className={cn(
-              "mr-2 h-4 w-4",
-              safeValue.includes(collaborator.id) 
-                ? "opacity-100"
-                : "opacity-0"
-            )}
-          />
-          {collaborator.name}
-        </CommandItem>
-      ) : null
-    ));
   };
 
   return (
@@ -119,7 +91,29 @@ export function CreatorsMultiSelect({
             <CommandEmpty>Nenhum creator encontrado.</CommandEmpty>
             <CommandGroup>
               <ScrollArea className="h-64">
-                {renderCollaboratorItems()}
+                {validCollaborators.length === 0 ? (
+                  <div className="p-2 text-sm text-muted-foreground">
+                    Nenhum colaborador disponível.
+                  </div>
+                ) : (
+                  validCollaborators.map(collaborator => (
+                    <CommandItem
+                      key={collaborator.id}
+                      value={collaborator.name}
+                      onSelect={() => handleSelect(collaborator.id)}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          safeValue.includes(collaborator.id) 
+                            ? "opacity-100"
+                            : "opacity-0"
+                        )}
+                      />
+                      {collaborator.name}
+                    </CommandItem>
+                  ))
+                )}
               </ScrollArea>
             </CommandGroup>
           </Command>
@@ -128,23 +122,21 @@ export function CreatorsMultiSelect({
       
       {selectedCollaborators.length > 0 && (
         <div className="flex flex-wrap gap-1 mt-2">
-          {selectedCollaborators.map((collaborator) => (
-            collaborator && collaborator.id ? (
-              <Badge
-                key={collaborator.id}
-                variant="secondary"
-                className="flex items-center gap-1"
+          {selectedCollaborators.map(collaborator => (
+            <Badge
+              key={collaborator.id}
+              variant="secondary"
+              className="flex items-center gap-1"
+            >
+              {collaborator.name}
+              <button
+                type="button"
+                className="rounded-full outline-none focus:outline-none"
+                onClick={() => handleRemove(collaborator.id)}
               >
-                {collaborator.name}
-                <button
-                  type="button"
-                  className="rounded-full outline-none focus:outline-none"
-                  onClick={() => handleRemove(collaborator.id)}
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </Badge>
-            ) : null
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
           ))}
         </div>
       )}
