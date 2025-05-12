@@ -29,7 +29,6 @@ export const useNovoClienteForm = () => {
     setIsSubmitting(true);
     try {
       // Convert form values to match the expected NovoClienteFeirinha type
-      // ensuring all required fields are present and not optional
       const clienteData: NovoClienteFeirinha = {
         solicitante: values.solicitante,
         nome_lojista: values.nome_lojista,
@@ -40,9 +39,12 @@ export const useNovoClienteForm = () => {
         observacao: values.observacao,
       };
 
-      const { error } = await supabase
+      console.log("Submitting data:", clienteData);
+      
+      const { data, error } = await supabase
         .from("feirinha_novo_cliente")
-        .insert(clienteData);
+        .insert(clienteData)
+        .select();
 
       if (error) {
         console.error("Erro ao inserir dados:", error);
@@ -54,6 +56,7 @@ export const useNovoClienteForm = () => {
         return;
       }
 
+      console.log("Submission successful:", data);
       setSubmitted(true);
       form.reset();
       toast({
