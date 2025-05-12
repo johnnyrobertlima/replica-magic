@@ -61,17 +61,11 @@ const formSchema = z.object({
   corredor: z
     .string()
     .min(1, "O corredor é obrigatório")
-    .max(2, "O corredor deve ter no máximo 2 dígitos")
-    .refine((val) => /^\d{1,2}$/.test(val), { 
-      message: "O corredor deve conter apenas números (até 2 dígitos)" 
-    }),
+    .max(2, "O corredor deve ter no máximo 2 caracteres"),
   numero_banca: z
     .string()
     .min(1, "O número da banca é obrigatório")
-    .max(5, "O número da banca deve ter no máximo 5 dígitos")
-    .refine((val) => /^\d{1,5}$/.test(val), { 
-      message: "O número da banca deve conter apenas números (até 5 dígitos)" 
-    }),
+    .max(5, "O número da banca deve ter no máximo 5 caracteres"),
   data_inauguracao: z.date({
     required_error: "A data de inauguração é obrigatória",
   }),
@@ -234,15 +228,9 @@ export const NovoClienteForm = () => {
               <FormLabel>Corredor</FormLabel>
               <FormControl>
                 <Input 
-                  placeholder="Digite o corredor (2 dígitos)" 
+                  placeholder="Digite o corredor (2 caracteres)" 
                   maxLength={2}
                   {...field}
-                  onChange={(e) => {
-                    // Permite apenas números
-                    const value = e.target.value.replace(/\D/g, '');
-                    e.target.value = value;
-                    field.onChange(e);
-                  }}
                 />
               </FormControl>
               <FormMessage />
@@ -258,15 +246,9 @@ export const NovoClienteForm = () => {
               <FormLabel>Número da Banca</FormLabel>
               <FormControl>
                 <Input 
-                  placeholder="Digite o número da banca (até 5 dígitos)" 
+                  placeholder="Digite o número da banca (até 5 caracteres)" 
                   maxLength={5}
                   {...field}
-                  onChange={(e) => {
-                    // Permite apenas números
-                    const value = e.target.value.replace(/\D/g, '');
-                    e.target.value = value;
-                    field.onChange(e);
-                  }}
                 />
               </FormControl>
               <FormMessage />
