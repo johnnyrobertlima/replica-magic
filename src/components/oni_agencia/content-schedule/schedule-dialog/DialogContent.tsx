@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { EventForm } from "./EventForm";
 import { StatusUpdateForm } from "./StatusUpdateForm";
@@ -177,9 +178,12 @@ export function DialogContent({
             
             <TabsContent value="capture">
               <CaptureForm
-                formData={formData}
-                onInputChange={onInputChange}
-                onDateChange={onDateTimeChange}
+                captureDate={formData.capture_date}
+                captureEndDate={formData.capture_end_date}
+                isAllDay={formData.is_all_day === true}
+                location={formData.location}
+                onCaptureChange={onDateTimeChange}
+                onLocationChange={onInputChange}
                 onAllDayChange={onAllDayChange}
               />
             </TabsContent>

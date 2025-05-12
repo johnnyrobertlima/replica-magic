@@ -16,22 +16,23 @@ export function useCreateContentSchedule() {
     mutationFn: async (data: ContentScheduleFormData) => {
       console.log("Creating content schedule with data:", data);
       
-      // Add a timeout to prevent UI freezing
-      return new Promise((resolve, reject) => {
-        const timeoutId = setTimeout(() => {
-          reject(new Error("A solicitação expirou. Por favor, tente novamente."));
-        }, 30000); // 30 second timeout
+      try {
+        // Add a timeout to prevent UI freezing
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => {
+            reject(new Error("A solicitação expirou. Por favor, tente novamente."));
+          }, 30000); // 30 second timeout
+        });
+
+        // Actual API call
+        const apiPromise = createContentSchedule(data);
         
-        createContentSchedule(data)
-          .then(result => {
-            clearTimeout(timeoutId);
-            resolve(result);
-          })
-          .catch(error => {
-            clearTimeout(timeoutId);
-            reject(error);
-          });
-      });
+        // Race between timeout and API call
+        return Promise.race([apiPromise, timeoutPromise]);
+      } catch (error) {
+        console.error("Error in create content schedule:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast({
@@ -46,6 +47,7 @@ export function useCreateContentSchedule() {
       // Also invalidate resources in case they're related
       queryClient.invalidateQueries({ queryKey: ['oniAgenciaCollaborators'] });
       queryClient.invalidateQueries({ queryKey: ['oniAgenciaStatuses'] });
+      queryClient.invalidateQueries({ queryKey: ['scheduleHistory'] });
     },
     onError: (error: any) => {
       console.error("Error creating content schedule:", error);
@@ -63,26 +65,26 @@ export function useUpdateContentSchedule() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: ContentScheduleFormData }) => {
+    mutationFn: async ({ id, data }: { id: string; data: Partial<ContentScheduleFormData> }) => {
       console.log("Updating content schedule with id:", id, "data:", data);
       
-      // Add a timeout to avoid UI freezing and give feedback to user
-      return new Promise((resolve, reject) => {
-        const timeoutId = setTimeout(() => {
-          reject(new Error("A solicitação expirou. Por favor, tente novamente."));
-        }, 30000); // 30 second timeout
+      try {
+        // Add a timeout to avoid UI freezing and give feedback to user
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => {
+            reject(new Error("A solicitação expirou. Por favor, tente novamente."));
+          }, 30000); // 30 second timeout
+        });
+
+        // Actual API call
+        const apiPromise = updateContentSchedule(id, data);
         
-        updateContentSchedule(id, data)
-          .then(result => {
-            clearTimeout(timeoutId);
-            resolve(result);
-          })
-          .catch(error => {
-            clearTimeout(timeoutId);
-            console.error("Error in update mutation:", error);
-            reject(error);
-          });
-      });
+        // Race between timeout and API call
+        return Promise.race([apiPromise, timeoutPromise]);
+      } catch (error) {
+        console.error("Error in update content schedule:", error);
+        throw error;
+      }
     },
     onMutate: async ({ id, data }) => {
       // Cancel any outgoing refetches to avoid race conditions
@@ -108,7 +110,7 @@ export function useUpdateContentSchedule() {
       queryClient.invalidateQueries({ queryKey: ['oniAgenciaCollaborators'] });
       queryClient.invalidateQueries({ queryKey: ['oniAgenciaStatuses'] });
     },
-    onError: (error: any) => {
+    onError: (error: any, variables) => {
       console.error("Error updating content schedule:", error);
       toast({
         variant: "destructive",
@@ -136,22 +138,23 @@ export function useDeleteContentSchedule() {
     mutationFn: async (id: string) => {
       console.log("Deleting content schedule with id:", id);
       
-      // Add a timeout to prevent UI freezing
-      return new Promise((resolve, reject) => {
-        const timeoutId = setTimeout(() => {
-          reject(new Error("A solicitação expirou. Por favor, tente novamente."));
-        }, 30000); // 30 second timeout
+      try {
+        // Add a timeout to prevent UI freezing
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => {
+            reject(new Error("A solicitação expirou. Por favor, tente novamente."));
+          }, 30000); // 30 second timeout
+        });
+
+        // Actual API call
+        const apiPromise = deleteContentSchedule(id);
         
-        deleteContentSchedule(id)
-          .then(result => {
-            clearTimeout(timeoutId);
-            resolve(result);
-          })
-          .catch(error => {
-            clearTimeout(timeoutId);
-            reject(error);
-          });
-      });
+        // Race between timeout and API call
+        return Promise.race([apiPromise, timeoutPromise]);
+      } catch (error) {
+        console.error("Error in delete content schedule:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast({

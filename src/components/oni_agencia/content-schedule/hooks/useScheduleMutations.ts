@@ -142,7 +142,7 @@ export function useScheduleMutations({
       }
       
       // Validate that status is selected
-      if (!formData.status_id) {
+      if (!formData.status_id || formData.status_id === "null") {
         toast({
           variant: "destructive",
           title: "Erro",
@@ -166,26 +166,11 @@ export function useScheduleMutations({
         
         console.log("Sending status update with data:", updateData);
         
-        // Create a promise with timeout to prevent infinite loading
-        const updatePromise = new Promise<any>((resolve, reject) => {
-          const timeoutId = setTimeout(() => {
-            reject(new Error("A solicitação expirou. Por favor, tente novamente."));
-          }, 15000); // 15 segundos de timeout
-          
-          updateMutation.mutateAsync({
-            id: currentSelectedEvent.id,
-            data: updateData as ContentScheduleFormData
-          }).then((result) => {
-            clearTimeout(timeoutId);
-            resolve(result);
-          }).catch((error) => {
-            clearTimeout(timeoutId);
-            reject(error);
-          });
+        // Use a shorter timeout for status updates (15s instead of 30s)
+        await updateMutation.mutateAsync({
+          id: currentSelectedEvent.id,
+          data: updateData
         });
-        
-        // Wait for the promise to resolve or reject
-        await updatePromise;
         
         toast({
           title: "Status atualizado",

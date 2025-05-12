@@ -2,24 +2,52 @@
 import { useServices, useCollaborators } from "@/hooks/oni_agencia/useBasicResources";
 import { useOniAgenciaThemes } from "@/hooks/useOniAgenciaThemes";
 import { useClients } from "@/hooks/useOniAgenciaClients";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function useScheduleResources(clientId: string) {
-  // Corrigindo para usar os hooks de recursos básicos
-  const { data: services = [], isLoading: isLoadingServices, isError: isServicesError, refetch: refetchServices } = useServices();
-  const { data: collaborators = [], isLoading: isLoadingCollaborators, isError: isCollaboratorsError, refetch: refetchCollaborators } = useCollaborators();
+  const queryClient = useQueryClient();
+  
+  // Basic resources
+  const { 
+    data: services = [], 
+    isLoading: isLoadingServices, 
+    isError: isServicesError, 
+    refetch: refetchServices 
+  } = useServices();
+  
+  const { 
+    data: collaborators = [], 
+    isLoading: isLoadingCollaborators, 
+    isError: isCollaboratorsError, 
+    refetch: refetchCollaborators 
+  } = useCollaborators();
   
   // Get the data from useOniAgenciaThemes hook
   const { 
     editorialLines,
     isLoadingEditorialLines,
+    isErrorEditorialLines,
     products,
     isLoadingProducts,
+    isErrorProducts,
     statuses,
     isLoadingStatuses,
-    refetchThemes
+    isErrorStatuses
   } = useOniAgenciaThemes();
   
-  const { data: clients = [], isLoading: isLoadingClients, refetch: refetchClients } = useClients();
+  // Clients data
+  const { 
+    data: clients = [], 
+    isLoading: isLoadingClients, 
+    refetch: refetchClients 
+  } = useClients();
+
+  // Function to manually refetch theme-related data
+  const refetchThemes = () => {
+    queryClient.invalidateQueries({ queryKey: ['editorialLines'] });
+    queryClient.invalidateQueries({ queryKey: ['products'] });
+    queryClient.invalidateQueries({ queryKey: ['statuses'] });
+  };
 
   const refetchAllResources = () => {
     console.log("Refetching all schedule resources");
@@ -44,6 +72,7 @@ export function useScheduleResources(clientId: string) {
     isLoadingProducts,
     isLoadingStatuses,
     isLoadingClients,
-    refetchAllResources
+    refetchAllResources,
+    refetchThemes
   };
 }
