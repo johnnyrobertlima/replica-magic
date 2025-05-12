@@ -17,6 +17,6 @@ export interface NovoClienteFeirinhaFormData {
   telefone_proprietario: string;
   corredor: string;
   numero_banca: string;
-  data_inauguracao: string;
+  data_inauguracao: Date;
   observacao: string;
 }

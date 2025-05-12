@@ -3,6 +3,8 @@ import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -17,14 +19,62 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { NovoClienteFeirinha, NovoClienteFeirinhaFormData } from "@/types/feirinha";
+import { CalendarIcon } from "lucide-react";
+import { CalendarDatePicker } from "@/components/ui/calendar-date-picker";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+
+// Função para formatar o telefone no padrão XX XXXXX-XXXX
+const formatPhoneNumber = (value: string) => {
+  // Remove tudo que não for dígito
+  const numbers = value.replace(/\D/g, '');
+  
+  // Aplica a formatação
+  if (numbers.length <= 2) {
+    return numbers;
+  } else if (numbers.length <= 7) {
+    return `${numbers.slice(0, 2)} ${numbers.slice(2)}`;
+  } else {
+    return `${numbers.slice(0, 2)} ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
+  }
+};
 
 const formSchema = z.object({
   solicitante: z.string().min(1, "O nome do solicitante é obrigatório"),
   nome_lojista: z.string().min(1, "O nome do lojista é obrigatório"),
-  telefone_proprietario: z.string().min(1, "O telefone do proprietário é obrigatório"),
-  corredor: z.string().min(1, "O corredor é obrigatório"),
-  numero_banca: z.string().min(1, "O número da banca é obrigatório"),
-  data_inauguracao: z.string().min(1, "A data de inauguração é obrigatória"),
+  telefone_proprietario: z
+    .string()
+    .min(1, "O telefone do proprietário é obrigatório")
+    .refine(
+      (value) => {
+        // Verifica se há pelo menos 10 números após remover formatação
+        const justNumbers = value.replace(/\D/g, '');
+        return justNumbers.length >= 10 && justNumbers.length <= 11;
+      },
+      { message: "Telefone inválido. Deve conter 10 ou 11 dígitos" }
+    ),
+  corredor: z
+    .string()
+    .min(1, "O corredor é obrigatório")
+    .max(2, "O corredor deve ter no máximo 2 dígitos")
+    .refine((val) => /^\d{1,2}$/.test(val), { 
+      message: "O corredor deve conter apenas números (até 2 dígitos)" 
+    }),
+  numero_banca: z
+    .string()
+    .min(1, "O número da banca é obrigatório")
+    .max(5, "O número da banca deve ter no máximo 5 dígitos")
+    .refine((val) => /^\d{1,5}$/.test(val), { 
+      message: "O número da banca deve conter apenas números (até 5 dígitos)" 
+    }),
+  data_inauguracao: z.date({
+    required_error: "A data de inauguração é obrigatória",
+  }),
   observacao: z.string().optional(),
 });
 
@@ -43,7 +93,6 @@ export const NovoClienteForm = () => {
       telefone_proprietario: "",
       corredor: "",
       numero_banca: "",
-      data_inauguracao: "",
       observacao: "",
     },
   });
@@ -59,7 +108,7 @@ export const NovoClienteForm = () => {
         telefone_proprietario: values.telefone_proprietario,
         corredor: values.corredor,
         numero_banca: values.numero_banca,
-        data_inauguracao: values.data_inauguracao,
+        data_inauguracao: format(values.data_inauguracao, 'yyyy-MM-dd'),
         observacao: values.observacao,
       };
 
@@ -157,11 +206,20 @@ export const NovoClienteForm = () => {
         <FormField
           control={form.control}
           name="telefone_proprietario"
-          render={({ field }) => (
+          render={({ field: { onChange, ...restField } }) => (
             <FormItem>
               <FormLabel>Telefone do Proprietário</FormLabel>
               <FormControl>
-                <Input placeholder="Digite o telefone" {...field} />
+                <Input 
+                  placeholder="XX XXXXX-XXXX" 
+                  {...restField} 
+                  onChange={(e) => {
+                    const formattedValue = formatPhoneNumber(e.target.value);
+                    e.target.value = formattedValue;
+                    onChange(e);
+                  }}
+                  maxLength={14} // Comprimento máximo: XX XXXXX-XXXX
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -175,7 +233,17 @@ export const NovoClienteForm = () => {
             <FormItem>
               <FormLabel>Corredor</FormLabel>
               <FormControl>
-                <Input placeholder="Digite o corredor" {...field} />
+                <Input 
+                  placeholder="Digite o corredor (2 dígitos)" 
+                  maxLength={2}
+                  {...field}
+                  onChange={(e) => {
+                    // Permite apenas números
+                    const value = e.target.value.replace(/\D/g, '');
+                    e.target.value = value;
+                    field.onChange(e);
+                  }}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -189,7 +257,17 @@ export const NovoClienteForm = () => {
             <FormItem>
               <FormLabel>Número da Banca</FormLabel>
               <FormControl>
-                <Input placeholder="Digite o número da banca" {...field} />
+                <Input 
+                  placeholder="Digite o número da banca (até 5 dígitos)" 
+                  maxLength={5}
+                  {...field}
+                  onChange={(e) => {
+                    // Permite apenas números
+                    const value = e.target.value.replace(/\D/g, '');
+                    e.target.value = value;
+                    field.onChange(e);
+                  }}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -200,11 +278,38 @@ export const NovoClienteForm = () => {
           control={form.control}
           name="data_inauguracao"
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="flex flex-col">
               <FormLabel>Data de Inauguração da Banca</FormLabel>
-              <FormControl>
-                <Input placeholder="Digite a data de inauguração" {...field} />
-              </FormControl>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-full pl-3 text-left font-normal",
+                        !field.value && "text-muted-foreground"
+                      )}
+                    >
+                      {field.value ? (
+                        format(field.value, "dd/MM/yyyy", { locale: ptBR })
+                      ) : (
+                        <span>Selecione a data de inauguração</span>
+                      )}
+                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={field.value}
+                    onSelect={field.onChange}
+                    initialFocus
+                    locale={ptBR}
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
               <FormMessage />
             </FormItem>
           )}
