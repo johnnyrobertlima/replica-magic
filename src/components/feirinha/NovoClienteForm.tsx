@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { NovoClienteFeirinhaFormData } from "@/types/feirinha";
+import { NovoClienteFeirinha, NovoClienteFeirinhaFormData } from "@/types/feirinha";
 
 const formSchema = z.object({
   solicitante: z.string().min(1, "O nome do solicitante é obrigatório"),
@@ -51,9 +51,21 @@ export const NovoClienteForm = () => {
   const onSubmit = async (values: NovoClienteFormValues) => {
     setIsSubmitting(true);
     try {
+      // Convert form values to match the expected NovoClienteFeirinha type
+      // ensuring all required fields are present and not optional
+      const clienteData: NovoClienteFeirinha = {
+        solicitante: values.solicitante,
+        nome_lojista: values.nome_lojista,
+        telefone_proprietario: values.telefone_proprietario,
+        corredor: values.corredor,
+        numero_banca: values.numero_banca,
+        data_inauguracao: values.data_inauguracao,
+        observacao: values.observacao,
+      };
+
       const { error } = await supabase
         .from("feirinha_novo_cliente")
-        .insert(values); // Aqui enviamos values diretamente, não como array
+        .insert(clienteData);
 
       if (error) {
         console.error("Erro ao inserir dados:", error);
