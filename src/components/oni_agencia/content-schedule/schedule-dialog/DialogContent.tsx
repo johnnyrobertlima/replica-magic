@@ -4,6 +4,7 @@ import { EventEditor } from "./EventEditor";
 import { EventSelector } from "./EventSelector";
 import { NewEventForm } from "./NewEventForm";
 import { DetailsForm } from "./DetailsForm";
+import { useState, useEffect } from "react";
 
 interface DialogContentProps {
   selectedEvent?: CalendarEvent;
@@ -76,11 +77,19 @@ export function DialogContent({
   defaultTab,
   prioritizeCaptureDate = false
 }: DialogContentProps) {
+  // Track if we're in "create new" mode
+  const [createNewMode, setCreateNewMode] = useState(false);
+  
   // Se há eventos para este dia e nenhum evento selecionado, mostrar seletor de eventos
   const hasEvents = events && events.length > 0;
   
-  // Mostrar o seletor quando há eventos e nenhum evento está selecionado
-  const showSelector = hasEvents && !currentSelectedEvent;
+  // Mostrar o seletor quando há eventos e nenhum evento está selecionado e não estamos em modo de criação
+  const showSelector = hasEvents && !currentSelectedEvent && !createNewMode;
+  
+  // Reset createNewMode when the dialog closes (when selectedEvent or events change)
+  useEffect(() => {
+    setCreateNewMode(false);
+  }, [selectedEvent, events.length]);
   
   if (showSelector) {
     return (
@@ -97,13 +106,16 @@ export function DialogContent({
             console.log("Forcing reset of form from DialogContent - onCreateNew called");
             // Force reset the form and clear any previously selected event
             onResetForm();
+            // Set create new mode to true to force showing the form
+            setCreateNewMode(true);
           }}
         />
       </>
     );
   }
   
-  if (!currentSelectedEvent) {
+  // Show the form if we're in create new mode or there's no current selected event
+  if (!currentSelectedEvent || createNewMode) {
     return (
       <div className="p-6">
         {prioritizeCaptureDate ? (
@@ -142,7 +154,10 @@ export function DialogContent({
             isSubmitting={isSubmitting}
             isDeleting={isDeleting}
             onSubmit={onSubmit}
-            onCancel={onCancel}
+            onCancel={() => {
+              setCreateNewMode(false);
+              onCancel();
+            }}
             onInputChange={onInputChange}
             onSelectChange={onSelectChange}
             onDateChange={onDateChange}

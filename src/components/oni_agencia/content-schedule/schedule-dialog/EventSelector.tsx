@@ -41,12 +41,12 @@ export function EventSelector({ events, onSelectEvent, onCreateNew }: EventSelec
       
       <div className="text-center border-t pt-4">
         <Button
-          variant="default"
+          variant="success"
           onClick={() => {
             console.log("Criar novo button clicked - calling onCreateNew function");
             onCreateNew();
           }}
-          className="w-full"
+          className="w-full font-medium"
           type="button"
         >
           <Calendar className="mr-2 h-4 w-4" />

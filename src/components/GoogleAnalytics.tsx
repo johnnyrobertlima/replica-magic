@@ -51,21 +51,26 @@ export const GoogleAnalytics = () => {
   }, []);
 
   useEffect(() => {
-    try {
-      // Make sure gtag is available before using it and wrap in try-catch
-      if (window.gtag) {
-        try {
-          window.gtag("event", "page_view", {
-            page_path: location.pathname,
-            page_title: document.title,
-          });
-        } catch (innerError) {
-          console.warn("Failed to send page view to Google Analytics:", innerError);
+    const sendPageView = () => {
+      try {
+        // Make sure gtag is available before using it
+        if (window.gtag) {
+          try {
+            window.gtag("event", "page_view", {
+              page_path: location.pathname,
+              page_title: document.title,
+            });
+          } catch (innerError) {
+            console.warn("Failed to send page view to Google Analytics:", innerError);
+          }
         }
+      } catch (error) {
+        console.warn("Error sending page view to Google Analytics:", error);
       }
-    } catch (error) {
-      console.warn("Error sending page view to Google Analytics:", error);
-    }
+    };
+
+    // Use setTimeout to delay the page view tracking to avoid potential cross-origin issues
+    setTimeout(sendPageView, 1000);
   }, [location]);
 
   return null;
