@@ -36,8 +36,12 @@ export function SelectCollaborator({
     return `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`.toUpperCase();
   };
 
-  // Debug log to check collaborators data
-  console.log("SelectCollaborator - received collaborators:", collaborators);
+  // Debug log to check all collaborators data including photo_url
+  console.log("All collaborators data:", collaborators.map(c => ({
+    id: c.id,
+    name: c.name,
+    hasPhoto: !!c.photo_url
+  })));
   
   return (
     <div className="grid gap-2">
@@ -55,11 +59,15 @@ export function SelectCollaborator({
                 {(() => {
                   const selectedCollaborator = collaborators.find(c => c.id === value);
                   if (selectedCollaborator) {
-                    console.log("Selected collaborator:", selectedCollaborator);
+                    console.log("Selected collaborator data:", {
+                      id: selectedCollaborator.id,
+                      name: selectedCollaborator.name,
+                      hasPhoto: !!selectedCollaborator.photo_url
+                    });
                     return (
                       <>
                         <Avatar className="h-5 w-5">
-                          {selectedCollaborator.photo_url ? (
+                          {(selectedCollaborator.photo_url) ? (
                             <AvatarImage 
                               src={selectedCollaborator.photo_url} 
                               alt={selectedCollaborator.name} 
@@ -98,7 +106,7 @@ export function SelectCollaborator({
               <SelectItem key={collaborator.id} value={collaborator.id} className="flex items-center gap-2">
                 <div className="flex items-center gap-2 w-full">
                   <Avatar className="h-5 w-5">
-                    {collaborator.photo_url ? (
+                    {(collaborator.photo_url) ? (
                       <AvatarImage 
                         src={collaborator.photo_url} 
                         alt={collaborator.name} 

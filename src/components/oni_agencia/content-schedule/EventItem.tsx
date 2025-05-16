@@ -58,8 +58,9 @@ export function EventItem({ event, onClick }: EventItemProps) {
     return `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`.toUpperCase();
   };
   
-  // Debug log for collaborator data
-  console.log(`Rendering event ${id} with collaborator:`, collaborator);
+  // Debug log to check if photo_url is present
+  console.log(`Event ${id} - Collaborator:`, collaborator?.name, 
+              "Has photo_url:", collaborator?.photo_url ? "Yes" : "No");
   
   return (
     <div
@@ -86,7 +87,7 @@ export function EventItem({ event, onClick }: EventItemProps) {
       
       {/* Collaborator photo using Avatar component */}
       <Avatar className="h-5 w-5 flex-shrink-0 border border-gray-200">
-        {collaborator?.photo_url ? (
+        {(collaborator?.photo_url) ? (
           <AvatarImage 
             src={collaborator.photo_url} 
             alt={collaborator.name || "Colaborador"}

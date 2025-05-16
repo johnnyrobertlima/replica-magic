@@ -68,10 +68,9 @@ export const EventCard: React.FC<EventCardProps> = ({
     return `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`.toUpperCase();
   };
   
-  // Debug log for collaborator info
-  if (collaborator?.photo_url) {
-    console.log(`EventCard rendering collaborator with photo: ${collaborator.name}`, collaborator.photo_url);
-  }
+  // Debug log for collaborator photo info
+  console.log(`EventCard: ${event.id} - Collaborator ${collaborator?.name}, has photo:`, 
+              collaborator?.photo_url ? "Yes" : "No");
   
   return (
     <Card 
@@ -102,7 +101,7 @@ export const EventCard: React.FC<EventCardProps> = ({
         <div className="flex items-center gap-2">
           {/* Collaborator avatar - agora usando o componente Avatar */}
           <Avatar className="h-6 w-6 flex-shrink-0">
-            {collaborator?.photo_url ? (
+            {(collaborator?.photo_url) ? (
               <AvatarImage 
                 src={collaborator.photo_url} 
                 alt={collaborator.name || "?"} 
