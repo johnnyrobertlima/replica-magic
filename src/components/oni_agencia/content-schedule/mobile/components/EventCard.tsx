@@ -54,7 +54,19 @@ export const EventCard: React.FC<EventCardProps> = ({
     // Return white text for dark backgrounds, black for light
     return brightness > 0.6 ? "#000" : "#fff";
   };
+  
   const statusTextColor = getTextColor(statusColor);
+  
+  // Get appropriate initials for collaborator fallback
+  const getCollaboratorInitials = () => {
+    if (!collaborator?.name) return "?";
+    
+    const nameParts = collaborator.name.trim().split(/\s+/);
+    if (nameParts.length === 1) return nameParts[0].charAt(0).toUpperCase();
+    
+    // Get first and last name initials
+    return `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`.toUpperCase();
+  };
   
   return (
     <Card 
@@ -92,7 +104,7 @@ export const EventCard: React.FC<EventCardProps> = ({
               />
             ) : (
               <AvatarFallback className="text-xs font-medium border border-gray-200 bg-gray-100">
-                {collaborator?.name?.charAt(0) || "?"}
+                {getCollaboratorInitials()}
               </AvatarFallback>
             )}
           </Avatar>

@@ -47,6 +47,17 @@ export function EventItem({ event, onClick }: EventItemProps) {
   // Safe service color
   const serviceColor = service?.color || '#ccc';
   
+  // Get appropriate initials for collaborator fallback
+  const getCollaboratorInitials = () => {
+    if (!collaborator?.name) return "?";
+    
+    const nameParts = collaborator.name.trim().split(/\s+/);
+    if (nameParts.length === 1) return nameParts[0].charAt(0).toUpperCase();
+    
+    // Get first and last name initials
+    return `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`.toUpperCase();
+  };
+  
   return (
     <div
       onClick={(e) => {
@@ -80,7 +91,7 @@ export function EventItem({ event, onClick }: EventItemProps) {
           />
         ) : (
           <AvatarFallback className="text-[8px] bg-gray-300 text-gray-700">
-            {collaborator?.name ? collaborator.name.charAt(0) : "?"}
+            {getCollaboratorInitials()}
           </AvatarFallback>
         )}
       </Avatar>
