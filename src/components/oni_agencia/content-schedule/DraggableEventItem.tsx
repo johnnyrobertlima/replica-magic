@@ -33,10 +33,28 @@ export function DraggableEventItem({ event, onClick }: DraggableEventItemProps) 
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
     zIndex: isDragging ? 999 : 'auto',
     opacity: isDragging ? 0.8 : 1,
+    boxShadow: isDragging ? '0 5px 10px rgba(0,0,0,0.15)' : 'none',
     position: isDragging ? 'absolute' : 'relative' as any,
     cursor: isDragging ? 'grabbing' : 'grab'
   } : {
     cursor: 'grab'
+  };
+  
+  // Add touch events for better mobile experience
+  const handleTouchStart = (e: React.TouchEvent) => {
+    pressTimeoutRef.current = setTimeout(() => {
+      setLongPressTriggered(true);
+    }, 300);
+  };
+  
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (pressTimeoutRef.current) {
+      clearTimeout(pressTimeoutRef.current);
+    }
+    // Reset after a short delay to allow click handling
+    setTimeout(() => {
+      setLongPressTriggered(false);
+    }, 100);
   };
   
   // Log when dragging state changes
@@ -74,7 +92,9 @@ export function DraggableEventItem({ event, onClick }: DraggableEventItemProps) 
       onClick={handleClick}
       data-event-id={event.id}
       data-draggable="true"
-      className="touch-none cursor-grab active:cursor-grabbing"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      className="touch-none cursor-grab active:cursor-grabbing hover:brightness-95 transition-all"
     >
       <EventItem 
         event={event} 
@@ -83,6 +103,20 @@ export function DraggableEventItem({ event, onClick }: DraggableEventItemProps) 
           e.stopPropagation();
         }} 
       />
+      
+      {/* Add drag handle indicator */}
+      {!isDragging && (
+        <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center justify-center w-4 h-4">
+          <svg 
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            className="w-3 h-3 text-gray-400"
+          >
+            <path d="M7 2a1 1 0 011 1v1h3a1 1 0 110 2H9v1a1 1 0 11-2 0V6H4a1 1 0 110-2h3V3a1 1 0 011-1zm3 14a1 1 0 01-1 1H5a1 1 0 01-1-1v-1H1a1 1 0 110-2h3v-1a1 1 0 112 0v1h14a1 1 0 110 2H5v1z" />
+          </svg>
+        </div>
+      )}
     </div>
   );
 }

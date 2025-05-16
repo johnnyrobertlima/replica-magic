@@ -18,7 +18,7 @@ interface CalendarContainerProps {
   onEventClick: (event: CalendarEvent, date: Date) => void;
 }
 
-// Custom mouse sensor that only activates on left-click and has a delay 
+// Custom mouse sensor that only activates on left-click
 class CustomMouseSensor extends MouseSensor {
   static activators = [{
     eventName: 'onMouseDown' as const,
