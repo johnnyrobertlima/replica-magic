@@ -93,7 +93,8 @@ export function PautaStatusIndicator({
         toast({
           title: "Distribuição concluída",
           description: `${result.createdCount} agendamentos foram distribuídos no calendário.`,
-          variant: "success",
+          // Changed variant from "success" to "default" as "success" is not a valid variant
+          variant: "default",
         });
         
         // Refresh the data after distribution
@@ -160,11 +161,11 @@ export function PautaStatusIndicator({
           {!isPautaComplete && (
             <div className="flex justify-end mb-2">
               <Button 
-                variant="success" 
+                variant="outline" 
                 size="sm" 
                 onClick={handleDistributeScope}
                 disabled={isDistributing || isPautaComplete}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 border-green-200"
               >
                 <CalendarDays className="h-4 w-4" />
                 {isDistributing ? "Distribuindo..." : "Distribuir Escopo"}
