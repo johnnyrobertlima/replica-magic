@@ -1,6 +1,6 @@
-
 import { CalendarEvent } from "@/types/oni-agencia";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getStorageUrl } from "@/utils/imageUtils";
 
 interface EventItemProps {
   event: CalendarEvent;
@@ -58,15 +58,26 @@ export function EventItem({ event, onClick }: EventItemProps) {
     return `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`.toUpperCase();
   };
   
-  // Check if the collaborator photo is Base64 encoded
-  const isBase64Image = (url: string | null): boolean => {
-    return url ? url.startsWith('data:image') : false;
+  // Process collaborator photo URL - use the same mechanism as the collaborators page
+  const getPhotoUrl = (photoUrl: string | null) => {
+    // If no photo, return null
+    if (!photoUrl) return null;
+    
+    // If it's already a complete URL (http/https) or data URL, return as is
+    if (photoUrl.startsWith('http') || photoUrl.startsWith('data:')) {
+      return photoUrl;
+    }
+    
+    // Otherwise, use the storage URL helper
+    return getStorageUrl(photoUrl);
   };
+  
+  const photoUrl = getPhotoUrl(collaborator?.photo_url);
   
   // Debug log to check collaborator info
   console.log(`Event ${id} - Collaborator:`, collaborator?.name, 
               "Has photo:", collaborator?.photo_url ? "Yes" : "No", 
-              "Is Base64:", isBase64Image(collaborator?.photo_url) ? "Yes" : "No");
+              "Photo URL after processing:", photoUrl);
   
   return (
     <div
@@ -93,14 +104,14 @@ export function EventItem({ event, onClick }: EventItemProps) {
       
       {/* Collaborator photo using Avatar component */}
       <Avatar className="h-5 w-5 flex-shrink-0 border border-gray-200">
-        {(collaborator?.photo_url) ? (
+        {photoUrl ? (
           <AvatarImage 
-            src={collaborator.photo_url} 
-            alt={collaborator.name || "Colaborador"}
-            title={collaborator.name || "Sem responsável"}
+            src={photoUrl} 
+            alt={collaborator?.name || "Colaborador"}
+            title={collaborator?.name || "Sem responsável"}
             onError={(e) => {
-              console.error(`Failed to load avatar image for ${collaborator.name || 'unknown'}:`, e);
-              console.error(`Avatar URL that failed to load: ${collaborator.photo_url}`);
+              console.error(`Failed to load avatar image for ${collaborator?.name || 'unknown'} in EventItem:`, e);
+              console.error(`Avatar URL that failed to load: ${photoUrl}`);
               // Let the fallback handle it
               const target = e.target as HTMLImageElement;
               target.style.display = 'none';
