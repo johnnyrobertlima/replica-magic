@@ -92,7 +92,8 @@ export function EventItem({ event, onClick }: EventItemProps) {
             alt={collaborator.name || "Colaborador"}
             title={collaborator.name || "Sem responsável"}
             onError={(e) => {
-              console.error(`Failed to load avatar image for ${collaborator.name}:`, e);
+              console.error(`Failed to load avatar image for ${collaborator.name || 'unknown'}:`, e);
+              console.error(`Avatar URL that failed to load: ${collaborator.photo_url}`);
               // Let the fallback handle it
               const target = e.target as HTMLImageElement;
               target.style.display = 'none';

@@ -65,6 +65,7 @@ export function SelectCollaborator({
                               alt={selectedCollaborator.name} 
                               onError={(e) => {
                                 console.error(`Failed to load avatar for ${selectedCollaborator.name}:`, e);
+                                console.error(`Avatar URL that failed to load: ${selectedCollaborator.photo_url}`);
                                 // Let the fallback handle it
                                 const target = e.target as HTMLImageElement;
                                 target.style.display = 'none';
@@ -102,7 +103,8 @@ export function SelectCollaborator({
                         src={collaborator.photo_url} 
                         alt={collaborator.name} 
                         onError={(e) => {
-                          console.error(`Failed to load collaborator avatar:`, e);
+                          console.error(`Failed to load collaborator avatar for ${collaborator.name}:`, e);
+                          console.error(`Avatar URL that failed to load: ${collaborator.photo_url}`);
                           // Let the fallback handle it
                           const target = e.target as HTMLImageElement;
                           target.style.display = 'none';

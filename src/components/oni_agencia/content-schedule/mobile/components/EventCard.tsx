@@ -68,6 +68,11 @@ export const EventCard: React.FC<EventCardProps> = ({
     return `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`.toUpperCase();
   };
   
+  // Debug log for collaborator info
+  if (collaborator?.photo_url) {
+    console.log(`EventCard rendering collaborator with photo: ${collaborator.name}`, collaborator.photo_url);
+  }
+  
   return (
     <Card 
       className="mb-3 overflow-hidden cursor-pointer hover:shadow-md transition-shadow" 
@@ -101,6 +106,13 @@ export const EventCard: React.FC<EventCardProps> = ({
               <AvatarImage 
                 src={collaborator.photo_url} 
                 alt={collaborator.name || "?"} 
+                onError={(e) => {
+                  console.error(`Failed to load avatar in EventCard for ${collaborator?.name || 'unknown'}:`, e);
+                  console.error(`Avatar URL that failed to load: ${collaborator?.photo_url}`);
+                  // Let the fallback handle it
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                }}
               />
             ) : (
               <AvatarFallback className="text-xs font-medium border border-gray-200 bg-gray-100">

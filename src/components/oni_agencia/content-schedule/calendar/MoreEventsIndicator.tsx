@@ -42,9 +42,9 @@ export function MoreEventsIndicator({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex flex-col gap-1">
-          {events.map((event) => (
+          {events.map((event, index) => (
             <div 
-              key={event.id}
+              key={`${event.id}-${index}`}
               className="event-item-wrapper rounded hover:bg-gray-100 transition-colors"
               onClick={(e) => {
                 e.stopPropagation();

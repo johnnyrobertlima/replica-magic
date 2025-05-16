@@ -13,9 +13,9 @@ export function ScrollableEvents({ events, date, onEventClick }: ScrollableEvent
   return (
     <ScrollArea className="h-[calc(100%-20px)] w-full event-scroll-area">
       <div className="flex flex-col gap-1 p-1">
-        {events.map((event) => (
+        {events.map((event, index) => (
           <div 
-            key={event.id} 
+            key={`${event.id}-${index}`} 
             className="event-item-wrapper mb-1 hover:bg-gray-100 rounded transition-colors"
             onClick={(e) => {
               e.stopPropagation();
