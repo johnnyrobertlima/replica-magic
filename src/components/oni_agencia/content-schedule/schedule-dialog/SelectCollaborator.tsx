@@ -36,6 +36,9 @@ export function SelectCollaborator({
     return `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`.toUpperCase();
   };
 
+  // Debug log to check collaborators data
+  console.log("SelectCollaborator - received collaborators:", collaborators);
+  
   return (
     <div className="grid gap-2">
       <Label htmlFor="collaborator_id">Responsável</Label>
@@ -52,11 +55,21 @@ export function SelectCollaborator({
                 {(() => {
                   const selectedCollaborator = collaborators.find(c => c.id === value);
                   if (selectedCollaborator) {
+                    console.log("Selected collaborator:", selectedCollaborator);
                     return (
                       <>
                         <Avatar className="h-5 w-5">
                           {selectedCollaborator.photo_url ? (
-                            <AvatarImage src={selectedCollaborator.photo_url} alt={selectedCollaborator.name} />
+                            <AvatarImage 
+                              src={selectedCollaborator.photo_url} 
+                              alt={selectedCollaborator.name} 
+                              onError={(e) => {
+                                console.error(`Failed to load avatar for ${selectedCollaborator.name}:`, e);
+                                // Let the fallback handle it
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                              }}
+                            />
                           ) : (
                             <AvatarFallback className="text-xs bg-gray-100">
                               {getInitials(selectedCollaborator.name)}
@@ -85,7 +98,16 @@ export function SelectCollaborator({
                 <div className="flex items-center gap-2 w-full">
                   <Avatar className="h-5 w-5">
                     {collaborator.photo_url ? (
-                      <AvatarImage src={collaborator.photo_url} alt={collaborator.name} />
+                      <AvatarImage 
+                        src={collaborator.photo_url} 
+                        alt={collaborator.name} 
+                        onError={(e) => {
+                          console.error(`Failed to load collaborator avatar:`, e);
+                          // Let the fallback handle it
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                        }}
+                      />
                     ) : (
                       <AvatarFallback className="text-xs bg-gray-100">
                         {getInitials(collaborator.name)}

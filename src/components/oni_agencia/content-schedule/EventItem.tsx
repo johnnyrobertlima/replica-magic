@@ -58,6 +58,9 @@ export function EventItem({ event, onClick }: EventItemProps) {
     return `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`.toUpperCase();
   };
   
+  // Debug log for collaborator data
+  console.log(`Rendering event ${id} with collaborator:`, collaborator);
+  
   return (
     <div
       onClick={(e) => {
@@ -88,6 +91,12 @@ export function EventItem({ event, onClick }: EventItemProps) {
             src={collaborator.photo_url} 
             alt={collaborator.name || "Colaborador"}
             title={collaborator.name || "Sem responsável"}
+            onError={(e) => {
+              console.error(`Failed to load avatar image for ${collaborator.name}:`, e);
+              // Let the fallback handle it
+              const target = e.target as HTMLImageElement;
+              target.style.display = 'none';
+            }}
           />
         ) : (
           <AvatarFallback className="text-[8px] bg-gray-300 text-gray-700">

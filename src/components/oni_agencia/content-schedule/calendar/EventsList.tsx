@@ -11,9 +11,9 @@ interface EventsListProps {
 export function EventsList({ events, date, onEventClick }: EventsListProps) {
   return (
     <div className="flex flex-col gap-1">
-      {events.map((event) => (
+      {events.map((event, index) => (
         <div 
-          key={event.id} 
+          key={`${event.id}-${index}`} // Add index to make keys truly unique
           className="event-item-wrapper"
           onClick={(e) => {
             e.stopPropagation();
