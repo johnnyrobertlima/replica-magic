@@ -1,12 +1,16 @@
+
 import React from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { CalendarEvent } from "@/types/oni-agencia";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+
 interface EventCardProps {
   event: CalendarEvent;
   onClick: (event: CalendarEvent) => void;
 }
+
 export const EventCard: React.FC<EventCardProps> = ({
   event,
   onClick
@@ -51,9 +55,15 @@ export const EventCard: React.FC<EventCardProps> = ({
     return brightness > 0.6 ? "#000" : "#fff";
   };
   const statusTextColor = getTextColor(statusColor);
-  return <Card className="mb-3 overflow-hidden cursor-pointer hover:shadow-md transition-shadow" onClick={() => onClick(event)} style={{
-    borderLeft: `4px solid ${serviceColor}`
-  }}>
+  
+  return (
+    <Card 
+      className="mb-3 overflow-hidden cursor-pointer hover:shadow-md transition-shadow" 
+      onClick={() => onClick(event)} 
+      style={{
+        borderLeft: `4px solid ${serviceColor}`
+      }}
+    >
       <CardHeader className="p-3 pb-2">
         <CardTitle className="text-base font-medium line-clamp-1">{title}</CardTitle>
         {/* Agora exibimos o cliente e produto juntos na descrição do card */}
@@ -66,7 +76,6 @@ export const EventCard: React.FC<EventCardProps> = ({
       
       <CardContent className="p-3 pt-0 pb-2">
         <div className="flex items-center gap-2 text-sm">
-          
           <span className="text-gray-400">•</span>
           <span className="text-gray-600">{service?.name || "Sem serviço"}</span>
         </div>
@@ -74,19 +83,29 @@ export const EventCard: React.FC<EventCardProps> = ({
       
       <CardFooter className="p-3 pt-1 flex justify-between items-center">
         <div className="flex items-center gap-2">
-          {/* Collaborator avatar */}
-          <div className="h-6 w-6 rounded-full overflow-hidden flex-shrink-0 bg-gray-100 flex items-center justify-center text-xs font-medium border border-gray-200">
-            {collaborator?.photo_url ? <img src={collaborator.photo_url} alt={collaborator.name || "?"} className="h-full w-full object-cover" /> : <span>{collaborator?.name?.charAt(0) || "?"}</span>}
-          </div>
+          {/* Collaborator avatar - agora usando o componente Avatar */}
+          <Avatar className="h-6 w-6 flex-shrink-0">
+            {collaborator?.photo_url ? (
+              <AvatarImage 
+                src={collaborator.photo_url} 
+                alt={collaborator.name || "?"} 
+              />
+            ) : (
+              <AvatarFallback className="text-xs font-medium border border-gray-200 bg-gray-100">
+                {collaborator?.name?.charAt(0) || "?"}
+              </AvatarFallback>
+            )}
+          </Avatar>
           <span className="text-xs truncate max-w-[120px]">{collaborator?.name || "Sem responsável"}</span>
         </div>
         
         <div className="text-xs py-1 px-2 rounded-full font-medium" style={{
-        backgroundColor: statusColor,
-        color: statusTextColor
-      }}>
+          backgroundColor: statusColor,
+          color: statusTextColor
+        }}>
           {statusName}
         </div>
       </CardFooter>
-    </Card>;
+    </Card>
+  );
 };

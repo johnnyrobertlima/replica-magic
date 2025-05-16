@@ -1,5 +1,6 @@
 
 import { CalendarEvent } from "@/types/oni-agencia";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface EventItemProps {
   event: CalendarEvent;
@@ -69,24 +70,20 @@ export function EventItem({ event, onClick }: EventItemProps) {
         style={{ backgroundColor: editorial_line?.color || '#fff' }}
       />
       
-      {/* Collaborator photo or icon */}
-      <div className="h-5 w-5 flex-shrink-0 border border-gray-200 rounded-full overflow-hidden">
+      {/* Collaborator photo using Avatar component */}
+      <Avatar className="h-5 w-5 flex-shrink-0 border border-gray-200">
         {collaborator?.photo_url ? (
-          <img 
+          <AvatarImage 
             src={collaborator.photo_url} 
-            alt={collaborator.name} 
-            title={collaborator.name}
-            className="h-full w-full object-cover"
+            alt={collaborator.name || "Colaborador"}
+            title={collaborator.name || "Sem responsável"}
           />
         ) : (
-          <div 
-            className="bg-gray-300 h-full w-full flex items-center justify-center text-[8px] font-medium text-gray-700"
-            title={collaborator?.name || "Sem responsável"}
-          >
+          <AvatarFallback className="text-[8px] bg-gray-300 text-gray-700">
             {collaborator?.name ? collaborator.name.charAt(0) : "?"}
-          </div>
+          </AvatarFallback>
         )}
-      </div>
+      </Avatar>
       
       {/* Main content: Status color, Product + Title */}
       <div 
