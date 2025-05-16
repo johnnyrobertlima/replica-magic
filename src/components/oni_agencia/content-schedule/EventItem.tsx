@@ -1,6 +1,5 @@
+
 import { CalendarEvent } from "@/types/oni-agencia";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getStorageUrl } from "@/utils/imageUtils";
 
 interface EventItemProps {
   event: CalendarEvent;
@@ -47,38 +46,6 @@ export function EventItem({ event, onClick }: EventItemProps) {
   // Safe service color
   const serviceColor = service?.color || '#ccc';
   
-  // Get appropriate initials for collaborator fallback
-  const getCollaboratorInitials = () => {
-    if (!collaborator?.name) return "?";
-    
-    const nameParts = collaborator.name.trim().split(/\s+/);
-    if (nameParts.length === 1) return nameParts[0].charAt(0).toUpperCase();
-    
-    // Get first and last name initials
-    return `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`.toUpperCase();
-  };
-  
-  // Process collaborator photo URL - use the same mechanism as the collaborators page
-  const getPhotoUrl = (photoUrl: string | null) => {
-    // If no photo, return null
-    if (!photoUrl) return null;
-    
-    // If it's already a complete URL (http/https) or data URL, return as is
-    if (photoUrl.startsWith('http') || photoUrl.startsWith('data:')) {
-      return photoUrl;
-    }
-    
-    // Otherwise, use the storage URL helper
-    return getStorageUrl(photoUrl);
-  };
-  
-  const photoUrl = getPhotoUrl(collaborator?.photo_url);
-  
-  // Debug log to check collaborator info
-  console.log(`Event ${id} - Collaborator:`, collaborator?.name, 
-              "Has photo:", collaborator?.photo_url ? "Yes" : "No", 
-              "Photo URL after processing:", photoUrl);
-  
   return (
     <div
       onClick={(e) => {
@@ -102,27 +69,24 @@ export function EventItem({ event, onClick }: EventItemProps) {
         style={{ backgroundColor: editorial_line?.color || '#fff' }}
       />
       
-      {/* Collaborator photo using Avatar component */}
-      <Avatar className="h-5 w-5 flex-shrink-0 border border-gray-200">
-        {photoUrl ? (
-          <AvatarImage 
-            src={photoUrl} 
-            alt={collaborator?.name || "Colaborador"}
-            title={collaborator?.name || "Sem responsável"}
-            onError={(e) => {
-              console.error(`Failed to load avatar image for ${collaborator?.name || 'unknown'} in EventItem:`, e);
-              console.error(`Avatar URL that failed to load: ${photoUrl}`);
-              // Let the fallback handle it
-              const target = e.target as HTMLImageElement;
-              target.style.display = 'none';
-            }}
+      {/* Collaborator photo or icon */}
+      <div className="h-5 w-5 flex-shrink-0 border border-gray-200 rounded-full overflow-hidden">
+        {collaborator?.photo_url ? (
+          <img 
+            src={collaborator.photo_url} 
+            alt={collaborator.name} 
+            title={collaborator.name}
+            className="h-full w-full object-cover"
           />
         ) : (
-          <AvatarFallback className="text-[8px] bg-gray-300 text-gray-700">
-            {getCollaboratorInitials()}
-          </AvatarFallback>
+          <div 
+            className="bg-gray-300 h-full w-full flex items-center justify-center text-[8px] font-medium text-gray-700"
+            title={collaborator?.name || "Sem responsável"}
+          >
+            {collaborator?.name ? collaborator.name.charAt(0) : "?"}
+          </div>
         )}
-      </Avatar>
+      </div>
       
       {/* Main content: Status color, Product + Title */}
       <div 
