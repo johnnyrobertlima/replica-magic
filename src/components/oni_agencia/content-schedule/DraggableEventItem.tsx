@@ -34,7 +34,7 @@ export function DraggableEventItem({ event, onClick }: DraggableEventItemProps) 
     zIndex: isDragging ? 999 : 'auto',
     opacity: isDragging ? 0.8 : 1,
     position: isDragging ? 'absolute' : 'relative' as any,
-    cursor: 'grab'
+    cursor: isDragging ? 'grabbing' : 'grab'
   } : {
     cursor: 'grab'
   };
@@ -60,6 +60,9 @@ export function DraggableEventItem({ event, onClick }: DraggableEventItemProps) 
       e.stopPropagation();
       onClick(e);
     }
+    
+    // Reset long press flag
+    setLongPressTriggered(false);
   };
 
   return (

@@ -1,13 +1,13 @@
 
-import { DndContext, useSensor, useSensors, PointerSensor } from "@dnd-kit/core";
+import { DndContext, useSensor, useSensors, PointerSensor, MouseSensor, TouchSensor } from "@dnd-kit/core";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarDay } from "./CalendarDay";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { ptBR } from "date-fns/locale";
 import { useDragAndDrop } from "../hooks/useDragAndDrop";
 import { useCurrentUser } from "../hooks/useCurrentUser";
-import { MouseSensor } from "@dnd-kit/core";
-import { TouchSensor } from "@dnd-kit/core";
+import { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
+import type { MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from "react";
 
 interface CalendarContainerProps {
   events: CalendarEvent[];
@@ -18,30 +18,40 @@ interface CalendarContainerProps {
   onEventClick: (event: CalendarEvent, date: Date) => void;
 }
 
-// Custom mouse sensor that only activates on left-click 
-// and delays triggering to avoid conflict with clicks
+// Custom mouse sensor that only activates on left-click and has a delay 
 class CustomMouseSensor extends MouseSensor {
-  static activators = [
-    {
-      eventName: 'mousedown',
-      handler: ({ nativeEvent: event }: MouseEvent) => {
-        if (event.button !== 0) return false; // Only left clicks
-        return true;
-      },
+  static activators = [{
+    eventName: 'onMouseDown' as const,
+    handler: ({ nativeEvent: event }: ReactMouseEvent<Element, MouseEvent>, { onActivation }: { onActivation: () => void }) => {
+      if (event.button !== 0) return false; // Only left clicks
+      
+      // Check if we're clicking on a draggable element
+      const target = event.target as HTMLElement;
+      const isDraggable = target.closest('[data-draggable="true"]');
+      
+      if (!isDraggable) return false;
+      
+      onActivation();
+      return true;
     },
-  ];
+  }];
 }
 
-// Custom touch sensor that waits a bit before activating
+// Custom touch sensor with improved activation
 class CustomTouchSensor extends TouchSensor {
-  static activators = [
-    {
-      eventName: 'touchstart',
-      handler: ({ nativeEvent: event }: TouchEvent) => {
-        return true;
-      },
+  static activators = [{
+    eventName: 'onTouchStart' as const,
+    handler: ({ nativeEvent: event }: ReactTouchEvent<Element>, { onActivation }: { onActivation: () => void }) => {
+      // Check if we're touching a draggable element
+      const target = event.target as HTMLElement;
+      const isDraggable = target.closest('[data-draggable="true"]');
+      
+      if (!isDraggable) return false;
+      
+      onActivation();
+      return true;
     },
-  ];
+  }];
 }
 
 export function CalendarContainer({
