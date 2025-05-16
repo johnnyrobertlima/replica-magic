@@ -6,7 +6,7 @@ import { CalendarEvent } from "@/types/oni-agencia";
 import { useDndContext } from "@/components/oni_agencia/content-schedule/hooks/useDndContext";
 import { ContentScheduleLoading } from "@/components/oni_agencia/content-schedule/ContentScheduleLoading";
 import { PautaStatusIndicator } from "@/components/oni_agencia/content-schedule/PautaStatusIndicator";
-import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 
 interface ContentAreaProps {
   viewMode: "calendar" | "list";
@@ -22,6 +22,44 @@ interface ContentAreaProps {
   showLoadingState: boolean;
   isCollapsed: boolean;
   onManualRefetch?: () => void;
+}
+
+// Custom mouse sensor with lower activation delay
+class CustomMouseSensor extends MouseSensor {
+  static activators = [
+    {
+      eventName: 'mousedown',
+      handler: ({ nativeEvent: event }: MouseEvent) => {
+        if (event.button !== 0) return false; // Only left clicks
+        
+        // Check if we're clicking on a draggable event item
+        const target = event.target as HTMLElement;
+        const isDraggableEvent = target.closest('[data-draggable="true"]');
+        
+        if (!isDraggableEvent) return false;
+        
+        event.preventDefault();
+        return true;
+      },
+    },
+  ];
+}
+
+// Custom touch sensor with lower activation constraints
+class CustomTouchSensor extends TouchSensor {
+  static activators = [
+    {
+      eventName: 'touchstart',
+      handler: ({ nativeEvent: event }: TouchEvent) => {
+        const target = event.target as HTMLElement;
+        const isDraggableEvent = target.closest('[data-draggable="true"]');
+        
+        if (!isDraggableEvent) return false;
+        
+        return true;
+      },
+    },
+  ];
 }
 
 export function ContentArea({ 
@@ -56,14 +94,19 @@ export function ContentArea({
     onManualRefetch
   });
   
-  // Configure sensors with better responsiveness for drag operations
+  // Configure sensors for drag operations with more permissive settings
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      // Reduced delay and increased tolerance for better drag detection
+    useSensor(CustomMouseSensor, {
       activationConstraint: {
-        delay: 100,
-        tolerance: 8,
-      },
+        delay: 150,
+        tolerance: 5,
+      }
+    }),
+    useSensor(CustomTouchSensor, {
+      activationConstraint: {
+        delay: 150,
+        tolerance: 5,
+      }
     })
   );
   
@@ -73,7 +116,7 @@ export function ContentArea({
   // Show status indicator when we have a valid clientId and data is loaded
   const showStatusIndicator = !!clientId && clientId !== "" && clientId !== "all" && !showLoadingState;
   
-  // Caso esteja carregando, mostra um loader
+  // Show loading state if needed
   if (showLoadingState) {
     return <ContentScheduleLoading isCollapsed={isCollapsed} />;
   }
@@ -95,7 +138,7 @@ export function ContentArea({
           onDragEnd={handleDragEnd}
           sensors={sensors}
           onDragStart={(event) => {
-            console.log("DndContext drag start detected:", event);
+            console.log("DndContext drag start detected in ContentArea:", event);
           }}
         >
           <Calendar 

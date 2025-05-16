@@ -31,9 +31,10 @@ export function CalendarDayCell({
   
   // Set up droppable with extra data for the date
   const { setNodeRef, isOver } = useDroppable({
-    id: dateString,
+    id: `date-${dateString}`,
     data: {
-      date // Pass the date to make it available in the drop handlers
+      date, // Pass the date to make it available in the drop handlers
+      type: 'calendar-day'
     }
   });
   

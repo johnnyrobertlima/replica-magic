@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -32,21 +31,36 @@ export function useDragAndDrop() {
   const { toast } = useToast();
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
-    console.log("Drag start event:", event);
+    console.log("Drag start event triggered:", event);
+    console.log("Drag active element:", event.active);
+    console.log("Drag event data:", event.active.data.current);
     
     // Extract the CalendarEvent from the draggable item's data
     const calendarEvent = event.active.data.current?.event as CalendarEvent;
     if (calendarEvent) {
-      console.log("Iniciando arrasto do evento:", calendarEvent.id, calendarEvent.title);
+      console.log("Starting drag for event:", calendarEvent.id, calendarEvent.title);
       setIsDragging(true);
       setActiveDragEvent(calendarEvent);
+      
+      // Visual feedback
+      document.body.style.cursor = 'grabbing';
+      
+      // Notify user that drag is active
+      toast({
+        title: "Arrasto iniciado",
+        description: "Arraste para uma data para mover o agendamento.",
+        duration: 3000,
+      });
     } else {
       console.error("Drag started but no event data found:", event.active);
     }
-  }, []);
+  }, [toast]);
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     console.log("Drag end event called with:", event);
+    
+    // Reset cursor
+    document.body.style.cursor = '';
     
     if (!activeDragEvent) {
       console.log("No active drag event to handle");
@@ -55,10 +69,11 @@ export function useDragAndDrop() {
     }
     
     if (event.over) {
+      console.log("Drop target found:", event.over.id);
+      console.log("Drop target data:", event.over.data.current);
+      
       // Get the date from the droppable area's data
       const dropDate = event.over.data.current?.date as Date;
-      
-      console.log("Drop container found:", event.over.id, "with date data:", dropDate);
       
       if (dropDate) {
         console.log("Handling drop to date:", format(dropDate, 'yyyy-MM-dd'));

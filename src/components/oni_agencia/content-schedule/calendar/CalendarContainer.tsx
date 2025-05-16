@@ -6,6 +6,8 @@ import { CalendarEvent } from "@/types/oni-agencia";
 import { ptBR } from "date-fns/locale";
 import { useDragAndDrop } from "../hooks/useDragAndDrop";
 import { useCurrentUser } from "../hooks/useCurrentUser";
+import { MouseSensor } from "@dnd-kit/core";
+import { TouchSensor } from "@dnd-kit/core";
 
 interface CalendarContainerProps {
   events: CalendarEvent[];
@@ -14,6 +16,32 @@ interface CalendarContainerProps {
   selectedCollaborator?: string | null;
   onSelect: (date: Date) => void;
   onEventClick: (event: CalendarEvent, date: Date) => void;
+}
+
+// Custom mouse sensor that only activates on left-click 
+// and delays triggering to avoid conflict with clicks
+class CustomMouseSensor extends MouseSensor {
+  static activators = [
+    {
+      eventName: 'mousedown',
+      handler: ({ nativeEvent: event }: MouseEvent) => {
+        if (event.button !== 0) return false; // Only left clicks
+        return true;
+      },
+    },
+  ];
+}
+
+// Custom touch sensor that waits a bit before activating
+class CustomTouchSensor extends TouchSensor {
+  static activators = [
+    {
+      eventName: 'touchstart',
+      handler: ({ nativeEvent: event }: TouchEvent) => {
+        return true;
+      },
+    },
+  ];
 }
 
 export function CalendarContainer({
@@ -27,14 +55,22 @@ export function CalendarContainer({
   // Get username first - maintain hook order
   const userName = useCurrentUser();
   
-  // Configure sensors for drag and drop with activation constraints
+  // Configure sensors with improved settings for better drag detection
   const sensors = useSensors(
-    useSensor(PointerSensor, {
+    useSensor(CustomMouseSensor, {
+      // Activation delay in milliseconds
       activationConstraint: {
-        delay: 100, // Reduced from 250ms to make dragging more responsive
-        tolerance: 8, // Increased from 5 to make drag detection more reliable
+        delay: 150,
+        tolerance: 8,
       },
-    })
+    }),
+    useSensor(CustomTouchSensor, {
+      // Activation delay in milliseconds
+      activationConstraint: {
+        delay: 150,
+        tolerance: 8,
+      },
+    }),
   );
   
   // Get drag-and-drop handlers

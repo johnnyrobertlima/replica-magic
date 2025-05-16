@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { format, parse } from "date-fns";
-import { DragEndEvent } from "@dnd-kit/core";
+import { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import { useDragAndDrop } from "./useDragAndDrop";
 
 // Helper function to convert string date to Date object using parse to avoid timezone issues
@@ -34,26 +34,37 @@ export function useDndContext({ clientId, month, year, onManualRefetch }: UseDnd
   const {
     isDragging,
     activeDragEvent,
-    handleDragStart,
-    handleDragEnd: dragEndHandler,
+    handleDragStart: baseDragStart,
+    handleDragEnd: baseDragEnd,
     handleDrop
   } = useDragAndDrop();
   
+  // Enhance the handleDragStart function for better logging
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    console.log("Drag start detected in useDndContext:", event);
+    // Call the base implementation
+    baseDragStart(event);
+  }, [baseDragStart]);
+  
   // Wrap the handleDragEnd from useDragAndDrop to fit the DndContext's expected format
   const handleDragEnd = useCallback((event: DragEndEvent) => {
-    console.log("Drag end event triggered in useDndContext", event);
+    console.log("Drag end event triggered in useDndContext:", event);
     
     // Handle the drag end event
-    dragEndHandler(event);
+    baseDragEnd(event);
     
-    // Manually trigger a refetch after drag operations if needed
-    if (onManualRefetch) {
-      setTimeout(() => {
-        console.log("Triggering manual refetch after drag operation");
+    // Manually trigger a refetch after drag operations
+    setTimeout(() => {
+      console.log("Triggering manual refetch after drag operation");
+      if (onManualRefetch) {
         onManualRefetch();
-      }, 500);
-    }
-  }, [dragEndHandler, onManualRefetch]);
+      } else {
+        // If no manual refetch provided, invalidate queries
+        queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
+        queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
+      }
+    }, 500);
+  }, [baseDragEnd, onManualRefetch, queryClient]);
 
   const handleDateSelect = useCallback((date: Date) => {
     setSelectedDate(date);
