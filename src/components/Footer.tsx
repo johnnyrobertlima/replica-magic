@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { Facebook, Twitter, Instagram, Linkedin, Youtube } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,6 +48,12 @@ export const Footer = () => {
 
   console.log('ONI Logo URL:', logoUrl); // Debug log
 
+  // Make sure Instagram is included in social media links
+  const instagramUrl = "https://www.instagram.com/oniagencia";
+  const hasInstagram = socialMedia?.some(social => 
+    social.icon === "Instagram" && social.is_active
+  );
+
   return (
     <footer className="bg-primary text-white py-12">
       <div className="container-custom">
@@ -54,9 +61,9 @@ export const Footer = () => {
           <img
             src={logoUrl}
             alt="ONI Digital"
-            className="h-60 w-auto object-contain" // Changed from h-12 to h-60
+            className="h-60 w-auto object-contain"
             onError={(e) => {
-              console.error('Logo load error:', e); // Debug log
+              console.error('Logo load error:', e);
               const img = e.target as HTMLImageElement;
               img.src = '/placeholder.svg';
             }}
@@ -76,6 +83,18 @@ export const Footer = () => {
                 </a>
               ) : null;
             })}
+            
+            {/* Add Instagram link if not already in database */}
+            {!hasInstagram && (
+              <a
+                href={instagramUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-white/80 transition-colors"
+              >
+                <Instagram className="w-6 h-6" />
+              </a>
+            )}
           </div>
           <div className="text-center space-y-2">
             <p className="text-white/80">
