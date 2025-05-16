@@ -68,9 +68,15 @@ export const EventCard: React.FC<EventCardProps> = ({
     return `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`.toUpperCase();
   };
   
+  // Check if the collaborator photo is Base64 encoded
+  const isBase64Image = (url: string | null): boolean => {
+    return url ? url.startsWith('data:image') : false;
+  };
+  
   // Debug log for collaborator photo info
   console.log(`EventCard: ${event.id} - Collaborator ${collaborator?.name}, has photo:`, 
-              collaborator?.photo_url ? "Yes" : "No");
+              collaborator?.photo_url ? "Yes" : "No",
+              "Is Base64:", isBase64Image(collaborator?.photo_url) ? "Yes" : "No");
   
   return (
     <Card 

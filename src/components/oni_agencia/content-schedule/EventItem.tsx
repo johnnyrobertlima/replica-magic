@@ -58,9 +58,15 @@ export function EventItem({ event, onClick }: EventItemProps) {
     return `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`.toUpperCase();
   };
   
-  // Debug log to check if photo_url is present
+  // Check if the collaborator photo is Base64 encoded
+  const isBase64Image = (url: string | null): boolean => {
+    return url ? url.startsWith('data:image') : false;
+  };
+  
+  // Debug log to check collaborator info
   console.log(`Event ${id} - Collaborator:`, collaborator?.name, 
-              "Has photo_url:", collaborator?.photo_url ? "Yes" : "No");
+              "Has photo:", collaborator?.photo_url ? "Yes" : "No", 
+              "Is Base64:", isBase64Image(collaborator?.photo_url) ? "Yes" : "No");
   
   return (
     <div

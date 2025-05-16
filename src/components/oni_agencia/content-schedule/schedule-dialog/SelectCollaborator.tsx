@@ -36,11 +36,17 @@ export function SelectCollaborator({
     return `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`.toUpperCase();
   };
 
+  // Check if the photo is Base64 encoded
+  const isBase64Image = (url: string | null): boolean => {
+    return url ? url.startsWith('data:image') : false;
+  };
+
   // Debug log to check all collaborators data including photo_url
   console.log("All collaborators data:", collaborators.map(c => ({
     id: c.id,
     name: c.name,
-    hasPhoto: !!c.photo_url
+    hasPhoto: !!c.photo_url,
+    isBase64: isBase64Image(c.photo_url)
   })));
   
   return (
@@ -62,7 +68,8 @@ export function SelectCollaborator({
                     console.log("Selected collaborator data:", {
                       id: selectedCollaborator.id,
                       name: selectedCollaborator.name,
-                      hasPhoto: !!selectedCollaborator.photo_url
+                      hasPhoto: !!selectedCollaborator.photo_url,
+                      isBase64: isBase64Image(selectedCollaborator.photo_url)
                     });
                     return (
                       <>
