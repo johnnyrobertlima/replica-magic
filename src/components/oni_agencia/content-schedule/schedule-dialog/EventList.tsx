@@ -24,7 +24,10 @@ export function EventList({ events, onSelectEvent, onCreateNew, clientId }: Even
             variant="outline"
             className="justify-start h-auto py-2 px-3 text-left"
             style={{ borderLeftColor: event.service?.color, borderLeftWidth: '4px' }}
-            onClick={() => onSelectEvent(event)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelectEvent(event);
+            }}
           >
             <div>
               <div className="font-medium">{event.title}</div>
@@ -34,7 +37,8 @@ export function EventList({ events, onSelectEvent, onCreateNew, clientId }: Even
         ))}
       </div>
       <div className="flex justify-center mt-4">
-        <Button variant="outline" onClick={() => {
+        <Button variant="outline" onClick={(e) => {
+          e.stopPropagation();
           console.log("Criar Novo button clicked");
           onCreateNew();
         }}>Criar Novo</Button>
