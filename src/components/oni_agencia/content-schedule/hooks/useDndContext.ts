@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { format, parse } from "date-fns";
-import { DndContext as DndContextComponent } from "@dnd-kit/core";
+import { DragEndEvent } from "@dnd-kit/core";
 import { useDragAndDrop } from "./useDragAndDrop";
 
 // Helper function to convert string date to Date object using parse to avoid timezone issues
@@ -35,9 +35,25 @@ export function useDndContext({ clientId, month, year, onManualRefetch }: UseDnd
     isDragging,
     activeDragEvent,
     handleDragStart,
-    handleDragEnd,
+    handleDragEnd: dragEndHandler,
     handleDrop
   } = useDragAndDrop();
+  
+  // Wrap the handleDragEnd from useDragAndDrop to fit the DndContext's expected format
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    console.log("Drag end event triggered in useDndContext", event);
+    
+    // Handle the drag end event
+    dragEndHandler(event);
+    
+    // Manually trigger a refetch after drag operations if needed
+    if (onManualRefetch) {
+      setTimeout(() => {
+        console.log("Triggering manual refetch after drag operation");
+        onManualRefetch();
+      }, 500);
+    }
+  }, [dragEndHandler, onManualRefetch]);
 
   const handleDateSelect = useCallback((date: Date) => {
     setSelectedDate(date);

@@ -13,11 +13,13 @@ export function DraggableEventItem({ event, onClick }: DraggableEventItemProps) 
   const [longPressTriggered, setLongPressTriggered] = useState(false);
   const pressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Make sure we have a valid ID for the draggable item
+  // Debug log to verify events have IDs
   if (!event.id) {
     console.error("Attempted to render draggable event with no ID:", event);
     return <EventItem event={event} onClick={onClick} />;
   }
+  
+  console.log("Setting up draggable for event:", event.id, event.title);
   
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: event.id,
@@ -92,6 +94,7 @@ export function DraggableEventItem({ event, onClick }: DraggableEventItemProps) 
       onTouchStart={handleMouseDown}
       onTouchEnd={handleMouseUp}
       onClick={handleClick}
+      data-event-id={event.id}
     >
       <EventItem 
         event={event} 
