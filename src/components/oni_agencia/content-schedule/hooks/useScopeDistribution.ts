@@ -73,18 +73,23 @@ export async function distributeClientScope(params: DistributeParams): Promise<D
       };
     }
     
-    // Track what days already have events for each service
-    const existingEventDays: Record<string, Set<string>> = {};
+    // Track occupied days for even distribution
+    const daysWithEvents: Record<string, number> = {};
     
-    // Group existing events by date and service
+    // Initialize days count for tracking distribution density
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(year, month - 1, day);
+      const formattedDate = format(date, 'yyyy-MM-dd');
+      daysWithEvents[formattedDate] = 0;
+    }
+    
+    // Pre-populate days with existing events to avoid too many events on the same day
     existingEvents.forEach(event => {
-      if (!event.service_id || !event.scheduled_date) return;
-      
-      if (!existingEventDays[event.service_id]) {
-        existingEventDays[event.service_id] = new Set();
+      if (event.scheduled_date) {
+        if (daysWithEvents[event.scheduled_date] !== undefined) {
+          daysWithEvents[event.scheduled_date]++;
+        }
       }
-      
-      existingEventDays[event.service_id].add(event.scheduled_date);
     });
     
     let createdCount = 0;
@@ -98,40 +103,38 @@ export async function distributeClientScope(params: DistributeParams): Promise<D
       
       console.log(`Need to create ${needed} events for service ${scope.service_name}`);
       
-      // Initialize days set for this service if not already done
-      if (!existingEventDays[scope.service_id]) {
-        existingEventDays[scope.service_id] = new Set();
-      }
+      // If we need more events than days in month, we'll need to distribute multiple per day
+      const eventsPerDay = Math.ceil(needed / daysInMonth);
       
-      // Evenly distribute the events across available days
-      const step = Math.max(1, Math.floor(daysInMonth / (needed + 1)));
-      
+      // Create needed events
       for (let i = 0; i < needed; i++) {
-        // Find an appropriate day to schedule this event
-        let dayOffset = (i + 1) * step;
-        let targetDate = addDays(monthStartDate, dayOffset - 1);
+        // Find the day with the least events currently scheduled
+        let leastBusyDate = '';
+        let minEvents = Number.MAX_SAFE_INTEGER;
         
-        // If this day already has an event for this service, find the next available day
-        let attempts = 0;
-        const formattedDate = format(targetDate, 'yyyy-MM-dd');
+        // Find the day with the fewest events
+        Object.entries(daysWithEvents).forEach(([date, count]) => {
+          if (count < minEvents) {
+            minEvents = count;
+            leastBusyDate = date;
+          }
+        });
         
-        while (
-          existingEventDays[scope.service_id].has(formattedDate) && 
-          attempts < daysInMonth
-        ) {
-          dayOffset = (dayOffset + 1) % daysInMonth || 1; // Wrap around to 1 if we hit 0
-          targetDate = addDays(monthStartDate, dayOffset - 1);
-          attempts++;
+        // If all days are equally busy or this is weird, use a randomized approach
+        if (leastBusyDate === '' || minEvents === Number.MAX_SAFE_INTEGER) {
+          const randomDayOffset = Math.floor(Math.random() * daysInMonth) + 1;
+          const randomDate = new Date(year, month - 1, randomDayOffset);
+          leastBusyDate = format(randomDate, 'yyyy-MM-dd');
         }
         
-        // Create the event
+        // Create the event on the least busy day
         const { data, error } = await supabase
           .from('oni_agencia_content_schedules')
           .insert({
             client_id: clientId,
             service_id: scope.service_id,
             title: `${scope.service_name} ${i + 1}`,
-            scheduled_date: format(targetDate, 'yyyy-MM-dd'),
+            scheduled_date: leastBusyDate,
             editorial_line_id: editorialLineId,
             is_all_day: true
           })
@@ -142,8 +145,8 @@ export async function distributeClientScope(params: DistributeParams): Promise<D
           continue;
         }
         
-        // Mark this day as used
-        existingEventDays[scope.service_id].add(format(targetDate, 'yyyy-MM-dd'));
+        // Increment the count for this date since we added an event
+        daysWithEvents[leastBusyDate]++;
         createdCount++;
       }
     }
