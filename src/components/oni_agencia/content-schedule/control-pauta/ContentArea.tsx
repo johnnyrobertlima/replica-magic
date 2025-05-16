@@ -75,6 +75,7 @@ export function ContentArea({
           clientId={clientId}
           month={month}
           year={year}
+          onManualRefetch={onManualRefetch}
         />
       )}
       

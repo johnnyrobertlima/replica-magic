@@ -6,26 +6,31 @@ import {
   AlertTriangle, 
   CheckCircle,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  CalendarDays
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePautaStatus } from "./hooks/usePautaStatus";
 import { useToast } from "@/hooks/use-toast";
+import { distributeClientScope } from "./hooks/useScopeDistribution";
 
 interface PautaStatusIndicatorProps {
   events: CalendarEvent[];
   clientId: string;
   month: number;
   year: number;
+  onManualRefetch?: () => void;
 }
 
 export function PautaStatusIndicator({ 
   events, 
   clientId,
   month,
-  year
+  year,
+  onManualRefetch
 }: PautaStatusIndicatorProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isDistributing, setIsDistributing] = useState(false);
   const { toast } = useToast();
   const { clientScopes, error } = usePautaStatus(clientId, month, year, events);
   
@@ -70,6 +75,50 @@ export function PautaStatusIndicator({
     setIsExpanded(!isExpanded);
   };
 
+  // Handle distribution of scope items
+  const handleDistributeScope = async () => {
+    if (!clientId || incompleteScopes.length === 0) return;
+    
+    setIsDistributing(true);
+    try {
+      const result = await distributeClientScope({
+        clientId, 
+        month, 
+        year, 
+        incompleteScopes,
+        existingEvents: events
+      });
+      
+      if (result.success) {
+        toast({
+          title: "Distribuição concluída",
+          description: `${result.createdCount} agendamentos foram distribuídos no calendário.`,
+          variant: "success",
+        });
+        
+        // Refresh the data after distribution
+        if (onManualRefetch) {
+          onManualRefetch();
+        }
+      } else {
+        toast({
+          title: "Erro na distribuição",
+          description: result.error || "Não foi possível distribuir o escopo.",
+          variant: "destructive",
+        });
+      }
+    } catch (err) {
+      console.error("Error distributing scope:", err);
+      toast({
+        title: "Erro na distribuição",
+        description: "Ocorreu um erro ao tentar distribuir o escopo.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDistributing(false);
+    }
+  };
+
   // If there are no client scopes, don't render anything
   if (!clientScopes || clientScopes.length === 0) {
     console.log("No client scopes found, not rendering PautaStatusIndicator for client:", clientId);
@@ -107,35 +156,52 @@ export function PautaStatusIndicator({
       </Button>
 
       {isExpanded && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 animate-fade-in p-2 bg-gray-50 rounded-md">
-          {clientScopes.map((scope) => {
-            const completed = serviceCounts[scope.service_id] || 0;
-            const isComplete = completed >= scope.quantity;
-            
-            return (
-              <div 
-                key={scope.id}
-                className={cn(
-                  "flex items-center justify-between px-3 py-2 rounded-md",
-                  isComplete 
-                    ? "bg-green-50 border border-green-100" 
-                    : "bg-red-50 border border-red-100"
-                )}
+        <div className="animate-fade-in">
+          {!isPautaComplete && (
+            <div className="flex justify-end mb-2">
+              <Button 
+                variant="success" 
+                size="sm" 
+                onClick={handleDistributeScope}
+                disabled={isDistributing || isPautaComplete}
+                className="flex items-center gap-2"
               >
-                <span className="text-sm font-medium truncate mr-2">
-                  {scope.service_name}
-                </span>
-                <span 
+                <CalendarDays className="h-4 w-4" />
+                {isDistributing ? "Distribuindo..." : "Distribuir Escopo"}
+              </Button>
+            </div>
+          )}
+          
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 p-2 bg-gray-50 rounded-md">
+            {clientScopes.map((scope) => {
+              const completed = serviceCounts[scope.service_id] || 0;
+              const isComplete = completed >= scope.quantity;
+              
+              return (
+                <div 
+                  key={scope.id}
                   className={cn(
-                    "text-sm font-medium",
-                    isComplete ? "text-green-700" : "text-red-600"
+                    "flex items-center justify-between px-3 py-2 rounded-md",
+                    isComplete 
+                      ? "bg-green-50 border border-green-100" 
+                      : "bg-red-50 border border-red-100"
                   )}
                 >
-                  {completed}/{scope.quantity}
-                </span>
-              </div>
-            );
-          })}
+                  <span className="text-sm font-medium truncate mr-2">
+                    {scope.service_name}
+                  </span>
+                  <span 
+                    className={cn(
+                      "text-sm font-medium",
+                      isComplete ? "text-green-700" : "text-red-600"
+                    )}
+                  >
+                    {completed}/{scope.quantity}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
