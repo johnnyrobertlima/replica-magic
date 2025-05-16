@@ -16,9 +16,11 @@ export const validateImage = (file: File) => {
 
 export const getStorageUrl = (path: string | null) => {
   if (!path) return '';
+  
+  // If it already has an http(s), return it as is
   if (path.startsWith('http')) return path;
   
-  // Remove qualquer barra inicial se existir
+  // Remove any leading slash if it exists
   const cleanPath = path.startsWith('/') ? path.slice(1) : path;
   
   // Check which bucket the path belongs to
@@ -29,8 +31,17 @@ export const getStorageUrl = (path: string | null) => {
     bucketName = 'request_attachments';
   }
   
-  // Verifica se o path já contém o nome do bucket
+  // Check if path is from the services directory
+  if (cleanPath.includes('services/') || cleanPath.startsWith('services/')) {
+    bucketName = 'oni-media';
+  }
+  
+  // Verify if the path already contains the bucket name
   const bucketPath = cleanPath.startsWith(`${bucketName}/`) ? cleanPath : `${bucketName}/${cleanPath}`;
   
+  console.log('Creating storage URL for path:', path);
+  console.log('Final bucket path:', bucketPath);
+  
+  // Return the full Supabase storage URL
   return `https://mwvrxtvlqkttylfzzxas.supabase.co/storage/v1/object/public/${bucketPath}`;
 };

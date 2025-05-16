@@ -1,3 +1,4 @@
+
 import {
   Dialog,
   DialogContent,
@@ -31,7 +32,14 @@ interface ServiceDialogProps {
 }
 
 export const ServiceDialog = ({ isOpen, onClose, service }: ServiceDialogProps) => {
+  // Debug log to see what URL we're working with
+  console.log("Service cover image URL:", service.cover_image_url);
+  
+  // Use proper URL format for the cover image
   const coverImageUrl = service.cover_image_url ? getStorageUrl(service.cover_image_url) : null;
+  
+  // Debug log the processed URL
+  console.log("Processed cover image URL:", coverImageUrl);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -44,6 +52,10 @@ export const ServiceDialog = ({ isOpen, onClose, service }: ServiceDialogProps) 
                   src={coverImageUrl}
                   alt={service.title}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    console.error("Image failed to load:", coverImageUrl);
+                    e.currentTarget.style.display = 'none';
+                  }}
                 />
               </div>
             )}
