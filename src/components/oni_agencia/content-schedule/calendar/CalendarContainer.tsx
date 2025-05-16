@@ -31,8 +31,8 @@ export function CalendarContainer({
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        delay: 250, // 250ms delay helps differentiate between click and drag
-        tolerance: 5, // Slight movement tolerance
+        delay: 100, // Reduced from 250ms to make dragging more responsive
+        tolerance: 8, // Increased from 5 to make drag detection more reliable
       },
     })
   );

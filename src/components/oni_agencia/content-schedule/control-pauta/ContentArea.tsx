@@ -6,7 +6,7 @@ import { CalendarEvent } from "@/types/oni-agencia";
 import { useDndContext } from "@/components/oni_agencia/content-schedule/hooks/useDndContext";
 import { ContentScheduleLoading } from "@/components/oni_agencia/content-schedule/ContentScheduleLoading";
 import { PautaStatusIndicator } from "@/components/oni_agencia/content-schedule/PautaStatusIndicator";
-import { DndContext, DragEndEvent } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 
 interface ContentAreaProps {
   viewMode: "calendar" | "list";
@@ -56,6 +56,17 @@ export function ContentArea({
     onManualRefetch
   });
   
+  // Configure sensors with better responsiveness for drag operations
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      // Reduced delay and increased tolerance for better drag detection
+      activationConstraint: {
+        delay: 100,
+        tolerance: 8,
+      },
+    })
+  );
+  
   // Debug logs to track events count
   console.log(`ContentArea received ${filteredSchedules.length} events, showLoadingState=${showLoadingState}`);
   
@@ -80,7 +91,13 @@ export function ContentArea({
       )}
       
       {viewMode === "calendar" ? (
-        <DndContext onDragEnd={handleDragEnd}>
+        <DndContext 
+          onDragEnd={handleDragEnd}
+          sensors={sensors}
+          onDragStart={(event) => {
+            console.log("DndContext drag start detected:", event);
+          }}
+        >
           <Calendar 
             events={filteredSchedules}
             month={month}

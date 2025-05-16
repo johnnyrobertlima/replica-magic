@@ -32,27 +32,56 @@ export function useDragAndDrop() {
   const { toast } = useToast();
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
+    console.log("Drag start event:", event);
+    
     // Extract the CalendarEvent from the draggable item's data
     const calendarEvent = event.active.data.current?.event as CalendarEvent;
     if (calendarEvent) {
       console.log("Iniciando arrasto do evento:", calendarEvent.id, calendarEvent.title);
       setIsDragging(true);
       setActiveDragEvent(calendarEvent);
+    } else {
+      console.error("Drag started but no event data found:", event.active);
     }
   }, []);
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
-    if (activeDragEvent && event.over) {
+    console.log("Drag end event called with:", event);
+    
+    if (!activeDragEvent) {
+      console.log("No active drag event to handle");
+      setIsDragging(false);
+      return;
+    }
+    
+    if (event.over) {
       // Get the date from the droppable area's data
       const dropDate = event.over.data.current?.date as Date;
+      
+      console.log("Drop container found:", event.over.id, "with date data:", dropDate);
+      
       if (dropDate) {
+        console.log("Handling drop to date:", format(dropDate, 'yyyy-MM-dd'));
         handleDrop(dropDate);
+      } else {
+        console.error("Drop area has no date data:", event.over);
+        toast({
+          variant: "destructive",
+          title: "Erro ao mover agendamento",
+          description: "Área de destino inválida.",
+        });
       }
+    } else {
+      console.log("No valid drop target found");
+      toast({
+        title: "Movimento cancelado",
+        description: "Arraste para uma data válida para mover o agendamento.",
+      });
     }
     
     setIsDragging(false);
     setActiveDragEvent(null);
-  }, [activeDragEvent]);
+  }, [activeDragEvent, toast]);
 
   const handleDrop = async (date: Date) => {
     if (!activeDragEvent) {
@@ -71,8 +100,10 @@ export function useDragAndDrop() {
     }
     
     const formattedDate = format(date, "yyyy-MM-dd");
+    console.log(`Attempting to move event from ${activeDragEvent.scheduled_date} to ${formattedDate}`);
     
     if (formattedDate === activeDragEvent.scheduled_date) {
+      console.log("Source and destination dates are the same, cancelling move");
       setIsDragging(false);
       setActiveDragEvent(null);
       return;
@@ -138,6 +169,7 @@ export function useDragAndDrop() {
       queryClient.setQueriesData({ queryKey: ['content-schedules'] }, (old: any) => {
         if (!old || !Array.isArray(old)) return old;
         
+        console.log("Updating content-schedules cache");
         // Remove the old event and add the new one
         const filteredEvents = old.filter((event: CalendarEvent) => event.id !== activeDragEvent.id);
         return [...filteredEvents, updatedEvent];
@@ -147,6 +179,7 @@ export function useDragAndDrop() {
       queryClient.setQueriesData({ queryKey: ['infinite-content-schedules'] }, (old: any) => {
         if (!old || !old.pages) return old;
         
+        console.log("Updating infinite-content-schedules cache");
         const updatedPages = old.pages.map((page: any) => {
           if (!page.data) return page;
           
@@ -172,7 +205,14 @@ export function useDragAndDrop() {
         };
       });
       
+      // Show "updating" toast
+      toast({
+        title: "Movendo agendamento...",
+        description: "Aguarde enquanto atualizamos o agendamento.",
+      });
+      
       // Make the update API call with the correct event ID
+      console.log("Making API call to update event with ID:", activeDragEvent.id);
       await updateContentSchedule(activeDragEvent.id, apiData);
       
       // Show success toast
@@ -182,6 +222,7 @@ export function useDragAndDrop() {
       });
       
       // Force a refetch to ensure data consistency
+      console.log("Invalidating queries to refresh data");
       queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
       queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
       queryClient.invalidateQueries({ queryKey: ['scheduleHistory'] });

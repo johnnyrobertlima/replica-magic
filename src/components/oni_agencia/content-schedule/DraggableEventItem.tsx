@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { CalendarEvent } from "@/types/oni-agencia";
 import { EventItem } from "./EventItem";
 import { useDraggable } from '@dnd-kit/core';
@@ -28,6 +28,13 @@ export function DraggableEventItem({ event, onClick }: DraggableEventItemProps) 
     }
   });
   
+  // Log when drag state changes
+  useEffect(() => {
+    if (isDragging) {
+      console.log("Event is now being dragged:", event.id, event.title);
+    }
+  }, [isDragging, event.id, event.title]);
+  
   const style = transform ? {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
     zIndex: isDragging ? 999 : 'auto',
@@ -45,11 +52,11 @@ export function DraggableEventItem({ event, onClick }: DraggableEventItemProps) 
       clearTimeout(pressTimeoutRef.current);
     }
     
-    // Set a timeout for long press (300ms)
+    // Set a timeout for long press (200ms - reduced from 300ms to make it more responsive)
     pressTimeoutRef.current = setTimeout(() => {
       setLongPressTriggered(true);
-      console.log("Long press detected, enabling drag");
-    }, 300);
+      console.log("Long press detected, enabling drag for event:", event.id);
+    }, 200);
   };
 
   // Handle mouse/touch up - clear the timer if it exists
@@ -95,6 +102,7 @@ export function DraggableEventItem({ event, onClick }: DraggableEventItemProps) 
       onTouchEnd={handleMouseUp}
       onClick={handleClick}
       data-event-id={event.id}
+      data-draggable="true"
     >
       <EventItem 
         event={event} 

@@ -1,7 +1,7 @@
 
 import { format } from "date-fns";
 import { useState } from "react";
-import { useDroppable } from "@dnd-kit/core";
+import { useDroppable } from '@dnd-kit/core';
 import { CalendarEvent } from "@/types/oni-agencia";
 import { EventsList } from "./EventsList";
 import { MoreEventsIndicator } from "./MoreEventsIndicator";
@@ -29,8 +29,12 @@ export function CalendarDayCell({
   const [isHovering, setIsHovering] = useState(false);
   const dateString = format(date, 'yyyy-MM-dd');
   
+  // Set up droppable with extra data for the date
   const { setNodeRef, isOver } = useDroppable({
     id: dateString,
+    data: {
+      date // Pass the date to make it available in the drop handlers
+    }
   });
   
   let dayEvents = events.filter(event => event.scheduled_date === dateString);
@@ -83,15 +87,19 @@ export function CalendarDayCell({
     setIsHovering(false);
   };
   
+  // Add a border when a draggable is over the cell
+  const cellClasses = `h-36 w-full border-r border-b cursor-pointer hover:bg-gray-50 calendar-day-cell p-1 relative ${
+    isCurrentDay ? 'bg-blue-50' : ''
+  } ${isOver ? 'bg-blue-100 border-2 border-primary' : ''}`;
+  
   return (
     <div 
       ref={setNodeRef}
-      className={`h-36 w-full border-r border-b cursor-pointer hover:bg-gray-50 calendar-day-cell p-1 relative ${
-        isCurrentDay ? 'bg-blue-50' : ''
-      } ${isOver ? 'bg-blue-100' : ''}`}
+      className={cellClasses}
       onClick={handleCellClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      data-date={dateString}
     >
       <div className="flex justify-between items-center mb-1">
         <div className="relative group">
