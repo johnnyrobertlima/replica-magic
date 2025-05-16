@@ -4,6 +4,7 @@ import { AdminBanners } from "@/pages/admin/banners";
 import AdminRequests from "@/pages/admin/requests";
 import AdminSubThemes from "@/pages/admin/sub-themes";
 import { AdminPermissions } from "@/pages/admin/permissions";
+import AdminIconsPage from "@/pages/admin/icons";
 
 export const adminRoutes = [
   {
@@ -25,5 +26,9 @@ export const adminRoutes = [
   {
     path: "/admin/permissions",
     element: AdminPermissions,
+  },
+  {
+    path: "/admin/icons",
+    element: AdminIconsPage,
   },
 ] as const;

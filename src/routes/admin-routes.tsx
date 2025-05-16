@@ -12,11 +12,12 @@ import { AdminSEO } from "@/pages/admin/seo";
 import { AdminServices } from "@/pages/admin/services";
 import { AdminSocial } from "@/pages/admin/social";
 import { AdminGroups } from "@/pages/admin/groups";
-import { AdminPermissions } from "@/pages/admin/permissions"; // Correct import
+import { AdminPermissions } from "@/pages/admin/permissions";
 import { AdminLogin } from "@/pages/admin/login";
 import { UserGroupManagement } from "@/pages/admin/users/UserGroupManagement";
 import AdminRequests from "@/pages/admin/requests";
 import AdminSubThemes from "@/pages/admin/sub-themes";
+import AdminIconsPage from "@/pages/admin/icons";
 
 export const adminRoutes = (
   <>
@@ -83,6 +84,11 @@ export const adminRoutes = (
       <Route path="social" element={
         <PermissionGuard resourcePath="/admin/social">
           <AdminSocial />
+        </PermissionGuard>
+      } />
+      <Route path="icons" element={
+        <PermissionGuard resourcePath="/admin" requiredPermission="admin">
+          <AdminIconsPage />
         </PermissionGuard>
       } />
     </Route>

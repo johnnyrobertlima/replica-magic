@@ -1,10 +1,20 @@
 
 export const validateImage = (file: File) => {
   const MAX_SIZE = 5 * 1024 * 1024; // 5MB
-  const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/x-icon', 'image/ico', 'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+  const ALLOWED_TYPES = [
+    'image/jpeg', 
+    'image/png', 
+    'image/webp', 
+    'image/x-icon', 
+    'image/ico', 
+    'image/svg+xml',
+    'application/pdf', 
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  ];
 
   if (!ALLOWED_TYPES.includes(file.type)) {
-    throw new Error('Tipo de arquivo não permitido. Use JPEG, PNG, WEBP, ICO, PDF, DOCX ou XLSX.');
+    throw new Error('Tipo de arquivo não permitido. Use JPEG, PNG, WEBP, ICO, SVG, PDF, DOCX ou XLSX.');
   }
 
   if (file.size > MAX_SIZE) {
@@ -33,6 +43,11 @@ export const getStorageUrl = (path: string | null) => {
   
   // Check if path is from the services directory
   if (cleanPath.includes('services/') || cleanPath.startsWith('services/')) {
+    bucketName = 'oni-media';
+  }
+  
+  // Check if path is from the icons directory
+  if (cleanPath.includes('icons/') || cleanPath.startsWith('icons/')) {
     bucketName = 'oni-media';
   }
   
