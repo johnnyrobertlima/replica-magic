@@ -7,11 +7,13 @@ export function useDateSelection() {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | undefined>(undefined);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const isProcessingRef = useRef(false);
+  const selectedEventIdRef = useRef<string | null>(null);
   
   // Reset processing flag when dialog closes
   useEffect(() => {
     if (!isDialogOpen) {
       isProcessingRef.current = false;
+      selectedEventIdRef.current = null;
     }
   }, [isDialogOpen]);
   
@@ -30,6 +32,7 @@ export function useDateSelection() {
     // Always clear event selection when selecting a date directly
     // This is crucial to ensure we're creating a new event, not editing
     setSelectedEvent(undefined);
+    selectedEventIdRef.current = null;
     
     // Force dialog to open with a small delay to ensure state updates properly
     setTimeout(() => {
@@ -45,17 +48,27 @@ export function useDateSelection() {
       return;
     }
     
+    // Prevent selecting the same event twice
+    if (selectedEventIdRef.current === event.id) {
+      console.log("Ignoring duplicate event selection:", event.id);
+      return;
+    }
+    
     console.log("Event clicked in useDateSelection:", event.id, event.title);
     isProcessingRef.current = true;
+    selectedEventIdRef.current = event.id;
     
-    setSelectedDate(date);
-    setSelectedEvent(event); // Set the selected event when an event is clicked
-    
-    // Force dialog to open with a small delay to ensure state updates properly
+    // Create a slight delay to ensure we don't get multiple rapid selections
     setTimeout(() => {
-      setIsDialogOpen(true);
-      console.log("Dialog should be open now (event click), isDialogOpen was set to true");
-    }, 100);
+      setSelectedDate(date);
+      setSelectedEvent(event); // Set the selected event when an event is clicked
+      
+      // Force dialog to open with a small delay to ensure state updates properly
+      setTimeout(() => {
+        setIsDialogOpen(true);
+        console.log("Dialog should be open now (event click), isDialogOpen was set to true");
+      }, 50);
+    }, 10);
   }, []);
   
   // Add a dedicated method to open dialog
@@ -70,6 +83,7 @@ export function useDateSelection() {
     setIsDialogOpen(false);
     // Reset processing flag on dialog close
     isProcessingRef.current = false;
+    selectedEventIdRef.current = null;
   }, []);
   
   return {

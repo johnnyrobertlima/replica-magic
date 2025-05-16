@@ -8,7 +8,7 @@ interface EventItemProps {
 
 export function EventItem({ event, onClick }: EventItemProps) {
   // Extract all the data we need from the event with proper null checks
-  const { service, editorial_line, collaborator, status, product, title = "" } = event;
+  const { service, editorial_line, collaborator, status, product, title = "", id } = event;
   
   // Safely handle title
   const truncatedTitle = title && title.length > 18 ? `${title.substring(0, 18)}...` : title || "Sem título";
@@ -48,9 +48,14 @@ export function EventItem({ event, onClick }: EventItemProps) {
   
   return (
     <div
-      onClick={onClick}
+      onClick={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        onClick(e);
+      }}
       className="h-6 text-[10px] rounded-sm hover:brightness-90 transition-all cursor-pointer w-full flex items-center overflow-hidden"
       title={`${title || "Sem título"}${product ? ` - ${product.name}` : ""}${service ? ` (${service.name})` : ''}${status ? ` [${status.name}]` : ''}`}
+      data-event-id={id}
     >
       {/* Service color block - no text */}
       <div 
