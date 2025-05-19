@@ -97,12 +97,14 @@ export function ContentArea({
   // Configure sensors for drag operations with more permissive settings
   const sensors = useSensors(
     useSensor(CustomMouseSensor, {
+      // Move activationConstraint to the sensor configuration
       activationConstraint: {
         delay: 150,
         tolerance: 5,
       }
     }),
     useSensor(CustomTouchSensor, {
+      // Move activationConstraint to the sensor configuration
       activationConstraint: {
         delay: 150,
         tolerance: 5,
