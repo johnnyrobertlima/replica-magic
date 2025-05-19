@@ -71,6 +71,12 @@ export function ContentArea({
     return <ContentScheduleLoading isCollapsed={isCollapsed} />;
   }
   
+  // Add additional debugging for DnD
+  const handleDragStartDebug = (event: any) => {
+    console.log("Drag start detected in ContentArea:", event);
+    console.log("Active element data:", event.active?.data?.current);
+  };
+
   return (
     <div className={`pt-4 ${isCollapsed ? 'mt-0' : 'mt-4'}`}>
       {showStatusIndicator && (
@@ -86,10 +92,8 @@ export function ContentArea({
       {viewMode === "calendar" ? (
         <DndContext 
           onDragEnd={handleDragEnd}
+          onDragStart={handleDragStartDebug}
           sensors={sensors}
-          onDragStart={(event) => {
-            console.log("DndContext drag start detected in ContentArea:", event);
-          }}
         >
           <Calendar 
             events={filteredSchedules}

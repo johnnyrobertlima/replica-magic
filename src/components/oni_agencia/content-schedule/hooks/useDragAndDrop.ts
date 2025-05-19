@@ -17,8 +17,6 @@ export function useDragAndDrop() {
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     console.log("Drag start event triggered:", event);
-    console.log("Drag active element:", event.active);
-    console.log("Drag event data:", event.active.data.current);
     
     // Extract the CalendarEvent from the draggable item's data
     const calendarEvent = event.active.data.current?.event as CalendarEvent;

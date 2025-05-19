@@ -34,6 +34,8 @@ export function CalendarContainer({
   // Get drag-and-drop handlers
   const { isDragging, handleDragStart, handleDragEnd } = useDragAndDrop();
 
+  console.log("CalendarContainer rendering with events:", events.length);
+
   return (
     <DndContext 
       sensors={sensors} 

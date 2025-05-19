@@ -34,6 +34,8 @@ export function useDndContext({ clientId, month, year, onManualRefetch }: UseDnd
   // Enhance the handleDragStart function for better logging
   const handleDragStart = useCallback((event: DragStartEvent) => {
     console.log("Drag start detected in useDndContext:", event);
+    console.log("Active element data:", event.active?.data?.current);
+    
     // Call the base implementation
     baseDragStart(event);
   }, [baseDragStart]);
@@ -41,6 +43,7 @@ export function useDndContext({ clientId, month, year, onManualRefetch }: UseDnd
   // Wrap the handleDragEnd from useDragAndDrop to fit the DndContext's expected format
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     console.log("Drag end event triggered in useDndContext:", event);
+    console.log("Over element data:", event.over?.data?.current);
     
     // Handle the drag end event
     baseDragEnd(event);
@@ -59,18 +62,21 @@ export function useDndContext({ clientId, month, year, onManualRefetch }: UseDnd
   }, [baseDragEnd, onManualRefetch, queryClient]);
 
   const handleDateSelect = useCallback((date: Date) => {
+    console.log("Date selected in useDndContext:", format(date, 'yyyy-MM-dd'));
     setSelectedDate(date);
     setSelectedEvent(undefined);
     setIsDialogOpen(true);
   }, []);
 
   const handleEventClick = useCallback((event: CalendarEvent, date: Date) => {
+    console.log("Event clicked in useDndContext:", event.id, event.title);
     setSelectedDate(date);
     setSelectedEvent(event);
     setIsDialogOpen(true);
   }, []);
 
   const handleDialogOpenChange = useCallback((open: boolean) => {
+    console.log("Dialog open change:", open);
     setIsDialogOpen(open);
     if (!open) {
       // Reset state when dialog is closed
@@ -80,6 +86,7 @@ export function useDndContext({ clientId, month, year, onManualRefetch }: UseDnd
   }, []);
 
   const handleDialogClose = useCallback(() => {
+    console.log("Dialog close called");
     setIsDialogOpen(false);
     setSelectedEvent(undefined);
     setSelectedDate(undefined);

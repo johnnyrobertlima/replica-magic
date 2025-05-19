@@ -38,12 +38,15 @@ export function CalendarDayCell({
     }
   });
   
-  let dayEvents = events.filter(event => event.scheduled_date === dateString);
+  let dayEvents = Array.isArray(events) 
+    ? events.filter(event => event?.scheduled_date === dateString)
+    : [];
   
   if (selectedCollaborator) {
     dayEvents = dayEvents.filter(event => {
       const isCollaborator = event.collaborator_id === selectedCollaborator;
-      const isCreator = event.creators?.includes(selectedCollaborator) || false;
+      const isCreator = Array.isArray(event.creators) && 
+        event.creators?.includes(selectedCollaborator) || false;
       return isCollaborator || isCreator;
     });
   }
@@ -93,6 +96,8 @@ export function CalendarDayCell({
     isCurrentDay ? 'bg-blue-50' : ''
   } ${isOver ? 'bg-blue-100 border-2 border-primary' : ''}`;
   
+  console.log(`Rendering day cell for ${dateString} with ${dayEvents.length} events`);
+
   return (
     <div 
       ref={setNodeRef}

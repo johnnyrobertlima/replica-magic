@@ -41,23 +41,6 @@ export function DraggableEventItem({ event, onClick }: DraggableEventItemProps) 
     cursor: 'grab'
   };
   
-  // Add touch events for better mobile experience
-  const handleTouchStart = (e: React.TouchEvent) => {
-    pressTimeoutRef.current = setTimeout(() => {
-      setLongPressTriggered(true);
-    }, 300);
-  };
-  
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (pressTimeoutRef.current) {
-      clearTimeout(pressTimeoutRef.current);
-    }
-    // Reset after a short delay to allow click handling
-    setTimeout(() => {
-      setLongPressTriggered(false);
-    }, 100);
-  };
-  
   // Clean up timeout on unmount
   useEffect(() => {
     return () => {
@@ -102,8 +85,6 @@ export function DraggableEventItem({ event, onClick }: DraggableEventItemProps) 
       onClick={handleClick}
       data-event-id={event.id}
       data-draggable="true"
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
       className="touch-none cursor-grab active:cursor-grabbing hover:brightness-95 transition-all relative"
     >
       <EventItem 
