@@ -18,24 +18,29 @@ export function useDragAndDrop() {
   const handleDragStart = useCallback((event: DragStartEvent) => {
     console.log("Drag start event triggered:", event);
     
-    // Extract the CalendarEvent from the draggable item's data
-    const calendarEvent = event.active.data.current?.event as CalendarEvent;
-    if (calendarEvent) {
-      console.log("Starting drag for event:", calendarEvent.id, calendarEvent.title);
-      setIsDragging(true);
-      setActiveDragEvent(calendarEvent);
+    try {
+      // Extract the CalendarEvent from the draggable item's data, with proper null checks
+      const calendarEvent = event.active?.data?.current?.event;
       
-      // Visual feedback
-      document.body.style.cursor = 'grabbing';
-      
-      // Notify user that drag is active
-      toast({
-        title: "Arrasto iniciado",
-        description: "Arraste para uma data para mover o agendamento.",
-        duration: 3000,
-      });
-    } else {
-      console.error("Drag started but no event data found:", event.active);
+      if (calendarEvent && calendarEvent.id) {
+        console.log("Starting drag for event:", calendarEvent.id, calendarEvent.title);
+        setIsDragging(true);
+        setActiveDragEvent(calendarEvent);
+        
+        // Visual feedback
+        document.body.style.cursor = 'grabbing';
+        
+        // Notify user that drag is active
+        toast({
+          title: "Arrasto iniciado",
+          description: "Arraste para uma data para mover o agendamento.",
+          duration: 3000,
+        });
+      } else {
+        console.error("Drag started but no valid event data found:", event.active?.data?.current);
+      }
+    } catch (error) {
+      console.error("Error in handleDragStart:", error);
     }
   }, [toast]);
 
@@ -51,34 +56,43 @@ export function useDragAndDrop() {
       return;
     }
     
-    if (event.over) {
-      console.log("Drop target found:", event.over.id);
-      console.log("Drop target data:", event.over.data.current);
-      
-      // Get the date from the droppable area's data
-      const dropDate = event.over.data.current?.date as Date;
-      
-      if (dropDate) {
-        console.log("Handling drop to date:", format(dropDate, 'yyyy-MM-dd'));
-        handleDrop(dropDate);
+    try {
+      if (event.over && event.over.data) {
+        console.log("Drop target found:", event.over.id);
+        console.log("Drop target data:", event.over.data.current);
+        
+        // Get the date from the droppable area's data
+        const dropDate = event.over.data.current?.date;
+        
+        if (dropDate instanceof Date) {
+          console.log("Handling drop to date:", format(dropDate, 'yyyy-MM-dd'));
+          handleDrop(dropDate);
+        } else {
+          console.error("Drop area has no valid date data:", event.over.data.current);
+          toast({
+            variant: "destructive",
+            title: "Erro ao mover agendamento",
+            description: "Área de destino inválida.",
+          });
+        }
       } else {
-        console.error("Drop area has no date data:", event.over);
+        console.log("No valid drop target found");
         toast({
-          variant: "destructive",
-          title: "Erro ao mover agendamento",
-          description: "Área de destino inválida.",
+          title: "Movimento cancelado",
+          description: "Arraste para uma data válida para mover o agendamento.",
         });
       }
-    } else {
-      console.log("No valid drop target found");
+    } catch (error) {
+      console.error("Error in handleDragEnd:", error);
       toast({
-        title: "Movimento cancelado",
-        description: "Arraste para uma data válida para mover o agendamento.",
+        variant: "destructive",
+        title: "Erro ao processar arrasto",
+        description: "Ocorreu um erro ao finalizar o arrasto.",
       });
+    } finally {
+      setIsDragging(false);
+      setActiveDragEvent(null);
     }
-    
-    setIsDragging(false);
-    setActiveDragEvent(null);
   }, [activeDragEvent, toast]);
 
   const handleDrop = async (date: Date) => {
@@ -97,17 +111,15 @@ export function useDragAndDrop() {
       return;
     }
     
-    const formattedDate = formatDateToString(date);
-    console.log(`Attempting to move event from ${activeDragEvent.scheduled_date} to ${formattedDate}`);
-    
-    if (formattedDate === activeDragEvent.scheduled_date) {
-      console.log("Source and destination dates are the same, cancelling move");
-      setIsDragging(false);
-      setActiveDragEvent(null);
-      return;
-    }
-    
     try {
+      const formattedDate = formatDateToString(date);
+      console.log(`Attempting to move event from ${activeDragEvent.scheduled_date} to ${formattedDate}`);
+      
+      if (formattedDate === activeDragEvent.scheduled_date) {
+        console.log("Source and destination dates are the same, cancelling move");
+        return;
+      }
+      
       console.log(`Moving event ${activeDragEvent.id} from ${activeDragEvent.scheduled_date} to ${formattedDate}`);
       
       // Prepare data for update
@@ -142,7 +154,6 @@ export function useDragAndDrop() {
       
       // Force a refetch to ensure data consistency
       invalidateScheduleQueries(queryClient);
-      
     } catch (error) {
       console.error("Error moving event:", error);
       toast({
@@ -153,9 +164,6 @@ export function useDragAndDrop() {
       
       // If there's an error, refetch to restore the correct data
       invalidateScheduleQueries(queryClient);
-    } finally {
-      setIsDragging(false);
-      setActiveDragEvent(null);
     }
   };
 

@@ -46,9 +46,10 @@ export function EventItem({ event, onClick }: EventItemProps) {
   // Safe service color
   const serviceColor = service?.color || '#ccc';
   
-  // Prevenção de seleção de texto
+  // Prevent text selection during any mouse interaction
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
   };
   
   return (
@@ -59,10 +60,17 @@ export function EventItem({ event, onClick }: EventItemProps) {
         onClick(e);
       }}
       onMouseDown={handleMouseDown}
-      className="h-6 text-[10px] rounded-sm hover:brightness-90 transition-all cursor-pointer w-full flex items-center overflow-hidden select-none"
+      onTouchStart={(e) => e.stopPropagation()}
+      className="h-6 text-[10px] rounded-sm hover:brightness-90 transition-all cursor-pointer w-full flex items-center overflow-hidden"
       title={`${title || "Sem título"}${product ? ` - ${product.name}` : ""}${service ? ` (${service.name})` : ''}${status ? ` [${status.name}]` : ''}`}
       data-event-id={id}
-      style={{ userSelect: 'none', WebkitUserSelect: 'none', MozUserSelect: 'none', msUserSelect: 'none' }}
+      style={{ 
+        userSelect: 'none', 
+        WebkitUserSelect: 'none', 
+        MozUserSelect: 'none', 
+        msUserSelect: 'none',
+        touchAction: 'none'
+      }}
     >
       {/* Service color block - no text */}
       <div 

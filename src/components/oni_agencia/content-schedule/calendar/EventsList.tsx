@@ -1,6 +1,7 @@
 
 import { CalendarEvent } from "@/types/oni-agencia";
 import { EventItem } from "../EventItem";
+import { useMemo } from "react";
 
 interface EventsListProps {
   events: CalendarEvent[];
@@ -9,42 +10,49 @@ interface EventsListProps {
 }
 
 export function EventsList({ events, date, onEventClick }: EventsListProps) {
-  // Garantir que não temos eventos duplicados baseados no ID
-  const uniqueEvents = Array.isArray(events) ? 
-    events.reduce<Record<string, CalendarEvent>>((acc, event) => {
-      if (!event.id) return acc;
-      // Se o evento já existe no acumulador, não adicionar novamente
-      if (!acc[event.id]) {
-        acc[event.id] = event;
+  // Ensure events is always an array and deduplicate by ID
+  const deduplicatedEvents = useMemo(() => {
+    if (!Array.isArray(events)) {
+      console.warn("EventsList received non-array events:", events);
+      return [];
+    }
+    
+    // Filter out events without IDs
+    const validEvents = events.filter(event => !!event?.id);
+    
+    // Create a map to deduplicate by ID
+    const eventMap = new Map();
+    validEvents.forEach(event => {
+      if (!eventMap.has(event.id)) {
+        eventMap.set(event.id, event);
       }
-      return acc;
-    }, {}) : {};
-
-  const deduplicatedEvents = Object.values(uniqueEvents);
+    });
+    
+    return Array.from(eventMap.values());
+  }, [events]);
   
-  // Adicionar logs para debug
-  console.log(`EventsList rendering ${deduplicatedEvents.length} events for date ${date.toISOString().split('T')[0]}`);
+  // Get the date string for consistent key generation
+  const dateString = date.toISOString().split('T')[0];
   
   return (
     <div className="flex flex-col gap-1">
       {deduplicatedEvents.map((event) => (
         <div 
-          key={`${event.id}-${date.toISOString().split('T')[0]}`} 
+          key={`event-${event.id}-${dateString}`}
           className="event-item-wrapper"
           onClick={(e) => {
             e.stopPropagation();
             e.preventDefault();
-            console.log("Event clicked:", event.id, event.title);
             onEventClick(event);
           }}
           data-event-id={event.id}
+          style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
         >
           <EventItem
             event={event}
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();
-              console.log("EventItem clicked:", event.id, event.title);
               onEventClick(event);
             }}
           />

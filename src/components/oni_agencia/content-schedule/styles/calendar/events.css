@@ -32,18 +32,20 @@
   @apply cursor-pointer rounded-sm p-1 mb-1 text-xs overflow-hidden whitespace-nowrap text-ellipsis border-l-4;
   max-width: 100%;
   min-height: 22px;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  touch-action: none !important;
 }
 
 .event-item-wrapper {
   @apply w-full cursor-grab select-none;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  touch-action: none !important;
 }
 
 .event-item.dragging {
@@ -94,6 +96,9 @@
   -webkit-user-select: none !important;
   -moz-user-select: none !important;
   -ms-user-select: none !important;
+  transform: scale(1.05);
+  z-index: 999;
+  box-shadow: 0 5px 10px rgba(0,0,0,0.2);
 }
 
 .drop-indicator {
@@ -112,18 +117,31 @@
   cursor: grabbing !important;
 }
 
-/* Adicionar seletores mais específicos para impedir seleção de texto */
+/* Add more specific selectors to prevent text selection */
 [data-draggable="true"],
 [data-draggable="true"] *,
 .event-item,
-.event-item * {
+.event-item *,
+.event-item-wrapper,
+.event-item-wrapper * {
   user-select: none !important;
   -webkit-user-select: none !important;
   -moz-user-select: none !important;
   -ms-user-select: none !important;
+  touch-action: none !important;
 }
 
-/* Estilos para melhorar feedback visual durante o arrasto */
+/* Styles for better visual feedback during dragging */
 body.dragging-active {
   cursor: grabbing !important;
+}
+
+body.dragging-active * {
+  cursor: grabbing !important;
+}
+
+/* Droppable area highlight */
+.droppable-active {
+  @apply bg-blue-100 !important;
+  transition: background-color 0.2s ease;
 }

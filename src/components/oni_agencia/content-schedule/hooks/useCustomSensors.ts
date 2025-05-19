@@ -1,17 +1,22 @@
 
-import { useSensor, useSensors, PointerSensor } from "@dnd-kit/core";
+import { useSensor, useSensors, PointerSensor, KeyboardSensor } from "@dnd-kit/core";
 import type { MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from "react";
 
-// Hook personalizado para criar sensores configurados corretamente para o DnD
+// Custom hook for creating properly configured sensors for DnD
 export function useCustomDndSensors(delayMs = 0, tolerancePx = 5) {
+  // Pointer sensor with better default settings
   const pointerSensor = useSensor(PointerSensor, {
-    // Reduzir o atraso e a tolerância para tornar o arrasto mais responsivo
+    // Reduce delay and tolerance to make dragging more responsive
     activationConstraint: {
       delay: delayMs,
       tolerance: tolerancePx,
-      // Isso reduz a quantidade de movimento necessária antes de iniciar o arrastar
+      // This reduces the amount of movement needed before starting the drag
     }
   });
   
-  return useSensors(pointerSensor);
+  // Add keyboard sensor for accessibility
+  const keyboardSensor = useSensor(KeyboardSensor, {});
+  
+  // Return multiple sensors
+  return useSensors(pointerSensor, keyboardSensor);
 }
