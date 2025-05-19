@@ -16,14 +16,20 @@ interface CreatorsSelectMultipleProps {
 }
 
 export function CreatorsSelectMultiple({
-  collaborators,
+  collaborators = [],
   isLoading,
   value = [],
   onValueChange
 }: CreatorsSelectMultipleProps) {
   const [open, setOpen] = useState(false);
   
-  // Ensure value is always an array
+  // Ensure collaborators is always a valid array
+  const safeCollaborators = Array.isArray(collaborators) ? collaborators : [];
+  
+  // Ensure value is always a valid array
+  const safeValue = Array.isArray(value) ? value : [];
+  
+  // Ensure value is always an array when component mounts or value prop changes
   useEffect(() => {
     if (!Array.isArray(value)) {
       onValueChange([]);
@@ -31,27 +37,37 @@ export function CreatorsSelectMultiple({
   }, [value, onValueChange]);
   
   const handleSelect = (id: string) => {
-    if (value.includes(id)) {
-      onValueChange(value.filter(item => item !== id));
+    if (!id) return;
+    
+    if (safeValue.includes(id)) {
+      onValueChange(safeValue.filter(item => item !== id));
     } else {
-      onValueChange([...value, id]);
+      onValueChange([...safeValue, id]);
     }
   };
   
   const removeItem = (id: string) => {
-    onValueChange(value.filter(item => item !== id));
+    if (!id) return;
+    onValueChange(safeValue.filter(item => item !== id));
   };
   
   const getCollaboratorName = (id: string) => {
-    const collaborator = collaborators.find(c => c.id === id);
-    return collaborator ? collaborator.name : id;
+    if (!id) return "Unknown";
+    const collaborator = safeCollaborators.find(c => c?.id === id);
+    return collaborator?.name || id;
   };
   
-  // Ensure value is always an array
-  const creators = Array.isArray(value) ? value : [];
-  
-  // Ensure collaborators is always an array
-  const safeCollaborators = Array.isArray(collaborators) ? collaborators : [];
+  // Add additional error checking to ensure our Command component doesn't receive undefined values
+  if (!safeCollaborators.length && !isLoading) {
+    return (
+      <div className="grid gap-2">
+        <Label>Criadores</Label>
+        <div className="text-sm text-muted-foreground">
+          No collaborators available
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="grid gap-2">
@@ -71,33 +87,41 @@ export function CreatorsSelectMultiple({
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-full p-0">
-            <Command>
-              <CommandInput placeholder="Buscar criador..." />
-              <CommandEmpty>Nenhum criador encontrado.</CommandEmpty>
-              <CommandGroup className="max-h-64 overflow-y-auto">
-                {safeCollaborators.map(collaborator => (
-                  <CommandItem 
-                    key={collaborator.id} 
-                    value={collaborator.name} 
-                    onSelect={() => {
-                      handleSelect(collaborator.id);
-                    }}
-                  >
-                    <Check className={cn(
-                      "mr-2 h-4 w-4", 
-                      creators.includes(collaborator.id) ? "opacity-100" : "opacity-0"
-                    )} />
-                    {collaborator.name}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </Command>
+            {safeCollaborators.length > 0 ? (
+              <Command>
+                <CommandInput placeholder="Buscar criador..." />
+                <CommandEmpty>Nenhum criador encontrado.</CommandEmpty>
+                <CommandGroup className="max-h-64 overflow-y-auto">
+                  {safeCollaborators
+                    .filter(collaborator => collaborator && typeof collaborator === 'object' && collaborator.id)
+                    .map(collaborator => (
+                      <CommandItem 
+                        key={collaborator.id} 
+                        value={collaborator.name || ""} 
+                        onSelect={() => {
+                          handleSelect(collaborator.id);
+                        }}
+                      >
+                        <Check className={cn(
+                          "mr-2 h-4 w-4", 
+                          safeValue.includes(collaborator.id) ? "opacity-100" : "opacity-0"
+                        )} />
+                        {collaborator.name || "Unnamed"}
+                      </CommandItem>
+                    ))}
+                </CommandGroup>
+              </Command>
+            ) : (
+              <div className="p-4 text-center text-sm text-muted-foreground">
+                {isLoading ? "Carregando..." : "Nenhum criador disponível."}
+              </div>
+            )}
           </PopoverContent>
         </Popover>
 
-        {creators.length > 0 && (
+        {safeValue.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-2">
-            {creators.map(id => (
+            {safeValue.map(id => (
               <Badge key={id} variant="secondary" className="px-2 py-1 bg-emerald-200">
                 {getCollaboratorName(id)}
                 <button type="button" className="ml-1 outline-none" onClick={() => removeItem(id)}>

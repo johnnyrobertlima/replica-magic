@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { OniAgenciaCollaborator } from "@/types/oni-agencia";
 import {
   Command,
@@ -28,7 +28,7 @@ interface CreatorsMultiSelectProps {
 }
 
 export function CreatorsMultiSelect({ 
-  collaborators,
+  collaborators = [],
   isLoading,
   value = [],
   onValueChange
@@ -64,6 +64,18 @@ export function CreatorsMultiSelect({
     onValueChange(safeValue.filter(id => id !== collaboratorId));
   };
 
+  // Add safe rendering condition
+  if (!validCollaborators.length && !isLoading) {
+    return (
+      <div className="grid gap-2">
+        <Label htmlFor="creators">Creators</Label>
+        <div className="text-sm text-muted-foreground">
+          Nenhum colaborador disponível.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="grid gap-2">
       <Label htmlFor="creators">Creators</Label>
@@ -86,17 +98,13 @@ export function CreatorsMultiSelect({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[300px] p-0">
-          <Command>
-            <CommandInput placeholder="Buscar creators..." />
-            <CommandEmpty>Nenhum creator encontrado.</CommandEmpty>
-            <CommandGroup>
-              <ScrollArea className="h-64">
-                {validCollaborators.length === 0 ? (
-                  <div className="p-2 text-sm text-muted-foreground">
-                    Nenhum colaborador disponível.
-                  </div>
-                ) : (
-                  validCollaborators.map(collaborator => (
+          {validCollaborators.length > 0 ? (
+            <Command>
+              <CommandInput placeholder="Buscar creators..." />
+              <CommandEmpty>Nenhum creator encontrado.</CommandEmpty>
+              <CommandGroup>
+                <ScrollArea className="h-64">
+                  {validCollaborators.map(collaborator => (
                     <CommandItem
                       key={collaborator.id}
                       value={collaborator.name}
@@ -112,11 +120,15 @@ export function CreatorsMultiSelect({
                       />
                       {collaborator.name}
                     </CommandItem>
-                  ))
-                )}
-              </ScrollArea>
-            </CommandGroup>
-          </Command>
+                  ))}
+                </ScrollArea>
+              </CommandGroup>
+            </Command>
+          ) : (
+            <div className="p-4 text-center text-sm text-muted-foreground">
+              {isLoading ? "Carregando..." : "Nenhum colaborador disponível."}
+            </div>
+          )}
         </PopoverContent>
       </Popover>
       
