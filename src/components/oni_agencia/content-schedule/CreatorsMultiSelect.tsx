@@ -28,7 +28,7 @@ interface CreatorsMultiSelectProps {
 }
 
 export function CreatorsMultiSelect({ 
-  collaborators,
+  collaborators = [],
   isLoading,
   value = [],
   onValueChange
@@ -41,15 +41,14 @@ export function CreatorsMultiSelect({
   // Make sure collaborators is always an array
   const safeCollaborators = Array.isArray(collaborators) ? collaborators : [];
   
-  // Using useEffect to log values for debugging
-  useEffect(() => {
-    console.log("CreatorsMultiSelect - value:", value);
-    console.log("CreatorsMultiSelect - collaborators:", collaborators);
-  }, [value, collaborators]);
+  // Filter to ensure we only have valid collaborators before rendering
+  const validCollaborators = safeCollaborators.filter(
+    c => c && typeof c === 'object' && c.id && typeof c.id === 'string' && c.name
+  );
   
   // Find selected collaborators with safeguards against undefined values
-  const selectedCollaborators = safeCollaborators.filter(c => 
-    c && c.id && safeValue.includes(c.id)
+  const selectedCollaborators = validCollaborators.filter(c => 
+    safeValue.includes(c.id)
   );
 
   const handleSelect = (collaboratorId: string) => {
@@ -66,6 +65,18 @@ export function CreatorsMultiSelect({
     if (!collaboratorId) return;
     onValueChange(safeValue.filter(id => id !== collaboratorId));
   };
+
+  // Add safe rendering condition
+  if (!validCollaborators.length && !isLoading) {
+    return (
+      <div className="grid gap-2">
+        <Label htmlFor="creators">Creators</Label>
+        <div className="text-sm text-muted-foreground">
+          Nenhum colaborador disponível.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="grid gap-2">
@@ -89,66 +100,57 @@ export function CreatorsMultiSelect({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[300px] p-0">
-          <Command>
-            <CommandInput placeholder="Buscar creators..." />
-            <CommandEmpty>Nenhum creator encontrado.</CommandEmpty>
-            <CommandGroup>
-              <ScrollArea className="h-64">
-                {safeCollaborators.length > 0 ? (
-                  safeCollaborators.map((collaborator) => (
-                    collaborator && collaborator.id ? (
-                      <CommandItem
-                        key={collaborator.id}
-                        value={collaborator.id}
-                        onSelect={() => handleSelect(collaborator.id)}
+          {validCollaborators.length > 0 ? (
+            <Command>
+              <CommandInput placeholder="Buscar creators..." />
+              <CommandEmpty>Nenhum creator encontrado.</CommandEmpty>
+              <CommandGroup>
+                <ScrollArea className="h-64">
+                  {validCollaborators.map(collaborator => (
+                    <CommandItem
+                      key={collaborator.id}
+                      value={collaborator.name || ""}
+                      onSelect={() => handleSelect(collaborator.id)}
+                    >
+                      <Check
                         className={cn(
+                          "mr-2 h-4 w-4",
                           safeValue.includes(collaborator.id) 
-                            ? "bg-blue-50 text-blue-800" // Cor mais clara para facilitar a leitura quando selecionado
-                            : ""
+                            ? "opacity-100"
+                            : "opacity-0"
                         )}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            safeValue.includes(collaborator.id) 
-                              ? "opacity-100"
-                              : "opacity-0"
-                          )}
-                        />
-                        {collaborator.name}
-                      </CommandItem>
-                    ) : null
-                  ))
-                ) : (
-                  <div className="p-2 text-sm text-muted-foreground">
-                    Nenhum colaborador disponível.
-                  </div>
-                )}
-              </ScrollArea>
-            </CommandGroup>
-          </Command>
+                      />
+                      {collaborator.name}
+                    </CommandItem>
+                  ))}
+                </ScrollArea>
+              </CommandGroup>
+            </Command>
+          ) : (
+            <div className="p-4 text-center text-sm text-muted-foreground">
+              {isLoading ? "Carregando..." : "Nenhum colaborador disponível."}
+            </div>
+          )}
         </PopoverContent>
       </Popover>
       
       {selectedCollaborators.length > 0 && (
         <div className="flex flex-wrap gap-1 mt-2">
-          {selectedCollaborators.map((collaborator) => (
-            collaborator && collaborator.id ? (
-              <Badge
-                key={collaborator.id}
-                variant="secondary"
-                className="flex items-center gap-1 bg-blue-50 text-blue-800 hover:bg-blue-100"
+          {selectedCollaborators.map(collaborator => (
+            <Badge
+              key={collaborator.id}
+              variant="secondary"
+              className="flex items-center gap-1"
+            >
+              {collaborator.name}
+              <button
+                type="button"
+                className="rounded-full outline-none focus:outline-none"
+                onClick={() => handleRemove(collaborator.id)}
               >
-                {collaborator.name}
-                <button
-                  type="button"
-                  className="rounded-full outline-none focus:outline-none"
-                  onClick={() => handleRemove(collaborator.id)}
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </Badge>
-            ) : null
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
           ))}
         </div>
       )}

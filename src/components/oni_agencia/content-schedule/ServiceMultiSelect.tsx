@@ -16,12 +16,18 @@ export function ServiceMultiSelect({
 }: ServiceMultiSelectProps) {
   const { data: services = [], isLoading } = useServices();
   
+  // Ensure value is always a valid array
+  const safeValue = Array.isArray(value) ? value : [];
+  
+  // Ensure services is always a valid array
+  const safeServices = Array.isArray(services) ? services : [];
+  
   // Initialize with all services selected when they load
   useEffect(() => {
-    if (services.length > 0 && value.length === 0) {
-      onChange(services.map(service => service.id));
+    if (safeServices.length > 0 && safeValue.length === 0) {
+      onChange(safeServices.map(service => service.id));
     }
-  }, [services, value.length, onChange]);
+  }, [safeServices, safeValue.length, onChange]);
   
   if (isLoading) {
     return (
@@ -31,7 +37,7 @@ export function ServiceMultiSelect({
     );
   }
   
-  const serviceOptions: Option[] = services.map(service => ({
+  const serviceOptions: Option[] = safeServices.filter(service => service && service.id).map(service => ({
     value: service.id,
     label: service.name
   }));
@@ -39,7 +45,7 @@ export function ServiceMultiSelect({
   return (
     <MultiSelect
       options={serviceOptions}
-      value={value}
+      value={safeValue}
       onChange={onChange}
       placeholder="Selecionar serviços"
       className={className}

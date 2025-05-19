@@ -24,12 +24,19 @@ export function MultiSelect({
   className
 }: MultiSelectProps) {
   const [open, setOpen] = useState(false);
-  const [selectedOptions, setSelectedOptions] = useState<string[]>(value || []);
+  
+  // Ensure options is always a valid array
+  const safeOptions = Array.isArray(options) ? options : [];
+  
+  // Ensure value is always a valid array
+  const safeValue = Array.isArray(value) ? value : [];
+  
+  const [selectedOptions, setSelectedOptions] = useState<string[]>(safeValue);
   const containerRef = useRef<HTMLDivElement>(null);
   
   // Sync internal state with external value
   useEffect(() => {
-    setSelectedOptions(value || []);
+    setSelectedOptions(Array.isArray(value) ? value : []);
   }, [value]);
 
   // Close dropdown when clicking outside
@@ -54,10 +61,10 @@ export function MultiSelect({
     
     if (optionValue === "all") {
       // Toggle all options selection
-      if (selectedOptions.length === options.length) {
+      if (selectedOptions.length === safeOptions.length) {
         newSelectedOptions = [];
       } else {
-        newSelectedOptions = options.map(option => option.value);
+        newSelectedOptions = safeOptions.map(option => option.value);
       }
     } else {
       // Toggle individual option
@@ -77,7 +84,7 @@ export function MultiSelect({
       return placeholder;
     }
     
-    if (selectedOptions.length === options.length) {
+    if (selectedOptions.length === safeOptions.length && safeOptions.length > 0) {
       return "All selected";
     }
     
@@ -98,7 +105,7 @@ export function MultiSelect({
         <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
       </button>
       
-      {open && (
+      {open && safeOptions.length > 0 && (
         <div className="absolute z-[100] mt-1 max-h-60 w-full overflow-auto rounded-md border bg-white shadow-lg">
           <div className="p-1">
             <div
@@ -106,16 +113,16 @@ export function MultiSelect({
               onClick={() => handleToggleOption("all")}
             >
               <div className={`flex h-4 w-4 items-center justify-center rounded border ${
-                selectedOptions.length === options.length ? "bg-primary border-primary" : "border-gray-300"
+                selectedOptions.length === safeOptions.length ? "bg-primary border-primary" : "border-gray-300"
               }`}>
-                {selectedOptions.length === options.length && (
+                {selectedOptions.length === safeOptions.length && (
                   <Check className="h-3 w-3 text-white" />
                 )}
               </div>
               <span className="text-gray-800">All options</span>
             </div>
             
-            {options.map(option => (
+            {safeOptions.map(option => (
               <div
                 key={option.value}
                 className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-100 cursor-pointer"

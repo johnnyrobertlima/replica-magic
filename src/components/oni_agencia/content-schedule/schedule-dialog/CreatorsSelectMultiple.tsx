@@ -29,6 +29,11 @@ export function CreatorsSelectMultiple({
   // Ensure value is always a valid array
   const safeValue = Array.isArray(value) ? value : [];
   
+  // Filter to ensure we only have valid collaborators before rendering
+  const validCollaborators = safeCollaborators.filter(
+    c => c && typeof c === 'object' && c.id && typeof c.id === 'string'
+  );
+  
   // Ensure value is always an array when component mounts or value prop changes
   useEffect(() => {
     if (!Array.isArray(value)) {
@@ -53,12 +58,12 @@ export function CreatorsSelectMultiple({
   
   const getCollaboratorName = (id: string) => {
     if (!id) return "Unknown";
-    const collaborator = safeCollaborators.find(c => c?.id === id);
+    const collaborator = validCollaborators.find(c => c.id === id);
     return collaborator?.name || id;
   };
   
   // Add additional error checking to ensure our Command component doesn't receive undefined values
-  if (!safeCollaborators.length && !isLoading) {
+  if (!validCollaborators.length && !isLoading) {
     return (
       <div className="grid gap-2">
         <Label>Criadores</Label>
@@ -87,28 +92,26 @@ export function CreatorsSelectMultiple({
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-full p-0">
-            {safeCollaborators.length > 0 ? (
+            {validCollaborators.length > 0 ? (
               <Command>
                 <CommandInput placeholder="Buscar criador..." />
                 <CommandEmpty>Nenhum criador encontrado.</CommandEmpty>
                 <CommandGroup className="max-h-64 overflow-y-auto">
-                  {safeCollaborators
-                    .filter(collaborator => collaborator && typeof collaborator === 'object' && collaborator.id)
-                    .map(collaborator => (
-                      <CommandItem 
-                        key={collaborator.id} 
-                        value={collaborator.name || ""} 
-                        onSelect={() => {
-                          handleSelect(collaborator.id);
-                        }}
-                      >
-                        <Check className={cn(
-                          "mr-2 h-4 w-4", 
-                          safeValue.includes(collaborator.id) ? "opacity-100" : "opacity-0"
-                        )} />
-                        {collaborator.name || "Unnamed"}
-                      </CommandItem>
-                    ))}
+                  {validCollaborators.map(collaborator => (
+                    <CommandItem 
+                      key={collaborator.id} 
+                      value={collaborator.name || ""} 
+                      onSelect={() => {
+                        handleSelect(collaborator.id);
+                      }}
+                    >
+                      <Check className={cn(
+                        "mr-2 h-4 w-4", 
+                        safeValue.includes(collaborator.id) ? "opacity-100" : "opacity-0"
+                      )} />
+                      {collaborator.name || "Unnamed"}
+                    </CommandItem>
+                  ))}
                 </CommandGroup>
               </Command>
             ) : (
