@@ -14,11 +14,11 @@ interface ContentScheduleListProps {
   events: CalendarEvent[];
   clientId: string;
   selectedCollaborator?: string | null;
-  onManualRefetch?: () => void; // Adicionamos essa prop
+  onManualRefetch?: () => void;
 }
 
 export function ContentScheduleList({ 
-  events, 
+  events = [], 
   clientId,
   selectedCollaborator,
   onManualRefetch
@@ -37,10 +37,12 @@ export function ContentScheduleList({
 
   // Filter events based on selectedCollaborator and remove "Publicado" and "Agendado" status events
   const filteredEvents = useMemo(() => {
+    if (!Array.isArray(events)) return [];
+    
     // First filter out events with "Publicado" and "Agendado" status
     const withoutExcludedStatuses = events.filter(event => 
-      !(event.status?.name === "Publicado") && 
-      !(event.status?.name === "Agendado")
+      !(event?.status?.name === "Publicado") && 
+      !(event?.status?.name === "Agendado")
     );
     
     if (!selectedCollaborator) return withoutExcludedStatuses;
@@ -68,7 +70,11 @@ export function ContentScheduleList({
   
   // Group events by date (optimized with useMemo)
   const groupedEvents = useMemo(() => {
+    if (!Array.isArray(filteredEvents)) return {};
+    
     return filteredEvents.reduce<Record<string, CalendarEvent[]>>((acc, event) => {
+      if (!event?.scheduled_date) return acc;
+      
       const dateKey = event.scheduled_date;
       if (!acc[dateKey]) {
         acc[dateKey] = [];
@@ -83,6 +89,10 @@ export function ContentScheduleList({
   const sortedDates = useMemo(() => Object.keys(groupedEvents).sort(), [groupedEvents]);
   
   const handleEventItemClick = (event: CalendarEvent) => {
+    if (!event?.scheduled_date) {
+      console.error("Cannot handle event click: event has no scheduled_date", event);
+      return;
+    }
     const date = parseISO(event.scheduled_date);
     handleEventClick(event, date);
   };
@@ -153,7 +163,7 @@ export function ContentScheduleList({
           events={[]}
           onClose={handleDialogClose}
           selectedEvent={selectedEvent}
-          onManualRefetch={onManualRefetch} // Passamos a função de atualização manual
+          onManualRefetch={onManualRefetch}
         />
       )}
     </div>

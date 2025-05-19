@@ -20,7 +20,7 @@ interface OptimizedContentScheduleListProps {
 }
 
 export function OptimizedContentScheduleList({ 
-  events, 
+  events = [], 
   clientId,
   selectedCollaborator,
   hasNextPage = false,
@@ -41,10 +41,12 @@ export function OptimizedContentScheduleList({
 
   // Filter events based on selectedCollaborator and remove specific status events
   const filteredEvents = useMemo(() => {
+    if (!Array.isArray(events)) return [];
+    
     // First filter out events with "Publicado" and "Agendado" status
     const withoutExcludedStatuses = events.filter(event => 
-      !(event.status?.name === "Publicado") && 
-      !(event.status?.name === "Agendado")
+      !(event?.status?.name === "Publicado") && 
+      !(event?.status?.name === "Agendado")
     );
     
     if (!selectedCollaborator) return withoutExcludedStatuses;
@@ -57,6 +59,7 @@ export function OptimizedContentScheduleList({
       let isCreator = false;
       
       if (event.creators) {
+        // Ensure creators is always treated as array
         const creatorsArray = Array.isArray(event.creators) ? event.creators : 
                             (typeof event.creators === 'string' ? [event.creators] : []);
         
@@ -68,6 +71,10 @@ export function OptimizedContentScheduleList({
   }, [events, selectedCollaborator]);
   
   const handleEventItemClick = (event: CalendarEvent) => {
+    if (!event?.scheduled_date) {
+      console.error("Cannot handle event click: event has no scheduled_date", event);
+      return;
+    }
     const date = parseISO(event.scheduled_date);
     handleEventClick(event, date);
   };

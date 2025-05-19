@@ -12,15 +12,15 @@ export function useCalendarEvents(
 ) {
   // Memo for events on the selected date
   const currentEvents = useMemo(() => {
-    if (!selectedDate) return [];
+    if (!selectedDate || !events || !Array.isArray(events)) return [];
     
     const dateString = format(selectedDate, 'yyyy-MM-dd');
     
     // Filter events for the selected date and remove "Publicado" and "Agendado" status events
     const filteredByDate = events.filter(event => 
-      event.scheduled_date === dateString && 
-      !(event.status?.name === "Publicado") &&
-      !(event.status?.name === "Agendado")
+      event?.scheduled_date === dateString && 
+      !(event?.status?.name === "Publicado") &&
+      !(event?.status?.name === "Agendado")
     );
     
     // Ensure we have no duplicate events
@@ -39,7 +39,8 @@ export function useCalendarEvents(
         const isCollaborator = event.collaborator_id === selectedCollaborator;
         
         // Check if the person is in the creators array
-        const isCreator = event.creators?.includes(selectedCollaborator) || false;
+        const isCreator = Array.isArray(event.creators) && 
+          event.creators?.includes(selectedCollaborator) || false;
         
         // Return true if the person is either a collaborator or a creator
         return isCollaborator || isCreator;

@@ -8,7 +8,7 @@ interface UseMobileScheduleEventDialogProps {
   clientId: string;
   selectedDate: Date;
   events: CalendarEvent[];
-  selectedEvent?: CalendarEvent;
+  selectedEvent?: CalendarEvent | undefined;
   initialTabActive?: "details" | "status" | "history" | "capture";
   onClose: () => void;
 }
@@ -16,7 +16,7 @@ interface UseMobileScheduleEventDialogProps {
 export function useScheduleEventDialog({
   clientId,
   selectedDate,
-  events,
+  events = [],
   selectedEvent,
   initialTabActive = "details",
   onClose

@@ -4,8 +4,9 @@ import { format, parse } from "date-fns";
 /**
  * Converts a string date to a Date object
  * Handles different date formats including ISO strings with time
+ * Returns null for undefined/null/empty dateString
  */
-export const parseStringToDate = (dateString: string): Date | null => {
+export const parseStringToDate = (dateString: string | null | undefined): Date | null => {
   if (!dateString) return null;
 
   try {
@@ -24,7 +25,9 @@ export const parseStringToDate = (dateString: string): Date | null => {
 
 /**
  * Format a Date object to YYYY-MM-DD string
+ * Safely handles null/undefined dates
  */
-export const formatDateToString = (date: Date): string => {
+export const formatDateToString = (date: Date | null | undefined): string => {
+  if (!date) return '';
   return format(date, "yyyy-MM-dd");
 };

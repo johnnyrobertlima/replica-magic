@@ -17,7 +17,7 @@ interface UseScheduleEventDialogProps {
 export function useScheduleEventDialog({
   clientId,
   selectedDate,
-  events,
+  events = [],
   selectedEvent,
   onClose,
   onManualRefetch

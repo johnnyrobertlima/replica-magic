@@ -18,11 +18,18 @@ export function EventDialogHandler({
   onOpenChange, 
   clientId, 
   selectedDate, 
-  filteredEvents, 
+  filteredEvents = [], 
   selectedEvent, 
   onClose 
 }: EventDialogHandlerProps) {
   if (!selectedDate) return null;
+  
+  // Safely filter events, ensuring we handle nullish values
+  const dateEvents = Array.isArray(filteredEvents) 
+    ? filteredEvents.filter(e => 
+        e?.scheduled_date === selectedDate.toISOString().split('T')[0]
+      )
+    : [];
   
   return (
     <MobileScheduleEventDialog
@@ -30,7 +37,7 @@ export function EventDialogHandler({
       onOpenChange={onOpenChange}
       clientId={clientId}
       selectedDate={selectedDate}
-      events={filteredEvents.filter(e => e.scheduled_date === selectedDate.toISOString().split('T')[0])}
+      events={dateEvents}
       onClose={onClose}
       selectedEvent={selectedEvent}
       initialStatusTabActive={true} // This will open the status tab by default
