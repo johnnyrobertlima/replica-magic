@@ -43,9 +43,17 @@ export function DraggableEventItem({ event, onClick, dateContext }: DraggableEve
     opacity: isDragging ? 0.8 : 1,
     boxShadow: isDragging ? '0 5px 10px rgba(0,0,0,0.15)' : 'none',
     position: isDragging ? 'absolute' : 'relative' as any,
-    cursor: isDragging ? 'grabbing' : 'grab'
+    cursor: isDragging ? 'grabbing' : 'grab',
+    userSelect: 'none' as const,  // Impede seleção de texto
+    WebkitUserSelect: 'none' as const, // Para Safari
+    MozUserSelect: 'none' as const, // Para Firefox
+    msUserSelect: 'none' as const // Para IE/Edge
   } : {
-    cursor: 'grab'
+    cursor: 'grab',
+    userSelect: 'none' as const,  // Impede seleção de texto
+    WebkitUserSelect: 'none' as const,
+    MozUserSelect: 'none' as const,
+    msUserSelect: 'none' as const
   };
   
   // Clean up timeout on unmount
@@ -71,6 +79,12 @@ export function DraggableEventItem({ event, onClick, dateContext }: DraggableEve
     };
   }, [isDragging, event.id, event.title, uniqueDraggableId]);
 
+  // Prevenir padrão no mouse down para evitar seleção de texto
+  const handleMouseDown = (e: React.MouseEvent) => {
+    // Isso impede a seleção de texto ao arrastar
+    e.preventDefault();
+  };
+
   // Handle click separately to avoid conflicts with drag
   const handleClick = (e: React.MouseEvent) => {
     // Only trigger if not dragging
@@ -90,10 +104,11 @@ export function DraggableEventItem({ event, onClick, dateContext }: DraggableEve
       {...listeners} 
       {...attributes}
       onClick={handleClick}
+      onMouseDown={handleMouseDown}
       data-event-id={event.id}
       data-unique-id={uniqueDraggableId}
       data-draggable="true"
-      className="touch-none cursor-grab active:cursor-grabbing hover:brightness-95 transition-all relative"
+      className="touch-none cursor-grab active:cursor-grabbing hover:brightness-95 transition-all relative select-none"
     >
       <EventItem 
         event={event} 

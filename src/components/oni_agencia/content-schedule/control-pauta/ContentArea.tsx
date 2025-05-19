@@ -1,12 +1,12 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calendar } from "@/components/oni_agencia/content-schedule/calendar/Calendar";
 import { ContentScheduleList } from "@/components/oni_agencia/content-schedule/ContentScheduleList";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { useDndContext } from "@/components/oni_agencia/content-schedule/hooks/useDndContext";
 import { ContentScheduleLoading } from "@/components/oni_agencia/content-schedule/ContentScheduleLoading";
 import { PautaStatusIndicator } from "@/components/oni_agencia/content-schedule/PautaStatusIndicator";
-import { DndContext } from "@dnd-kit/core";
+import { DndContext, DragStartEvent, DragEndEvent } from "@dnd-kit/core";
 import { useCustomDndSensors } from "@/components/oni_agencia/content-schedule/hooks/useCustomSensors";
 
 interface ContentAreaProps {
@@ -57,8 +57,8 @@ export function ContentArea({
     onManualRefetch
   });
   
-  // Use our custom sensors hook with more permissive settings for ContentArea
-  const sensors = useCustomDndSensors(150, 5);
+  // Configuração mais responsiva dos sensores para o DnD
+  const sensors = useCustomDndSensors(0, 5); // Zero delay, lower tolerance
   
   // Debug logs to track events count
   console.log(`ContentArea received ${filteredSchedules.length} events, showLoadingState=${showLoadingState}`);
@@ -71,10 +71,17 @@ export function ContentArea({
     return <ContentScheduleLoading isCollapsed={isCollapsed} />;
   }
   
-  // Add additional debugging for DnD
-  const handleDragStartDebug = (event: any) => {
+  // Adicionar classe ao corpo durante o arrasto
+  const handleDragStartWithFeedback = (event: DragStartEvent) => {
     console.log("Drag start detected in ContentArea:", event);
     console.log("Active element data:", event.active?.data?.current);
+    document.body.classList.add('dragging-active');
+  };
+
+  const handleDragEndWithFeedback = (event: DragEndEvent) => {
+    console.log("Drag end detected in ContentArea");
+    document.body.classList.remove('dragging-active');
+    handleDragEnd(event);
   };
 
   return (
@@ -91,8 +98,8 @@ export function ContentArea({
       
       {viewMode === "calendar" ? (
         <DndContext 
-          onDragEnd={handleDragEnd}
-          onDragStart={handleDragStartDebug}
+          onDragEnd={handleDragEndWithFeedback}
+          onDragStart={handleDragStartWithFeedback}
           sensors={sensors}
         >
           <Calendar 

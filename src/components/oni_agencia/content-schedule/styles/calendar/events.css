@@ -32,10 +32,18 @@
   @apply cursor-pointer rounded-sm p-1 mb-1 text-xs overflow-hidden whitespace-nowrap text-ellipsis border-l-4;
   max-width: 100%;
   min-height: 22px;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .event-item-wrapper {
-  @apply w-full cursor-grab;
+  @apply w-full cursor-grab select-none;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .event-item.dragging {
@@ -81,6 +89,11 @@
 /* Dragging styles */
 .dragging {
   @apply opacity-70;
+  cursor: grabbing !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
 }
 
 .drop-indicator {
@@ -96,4 +109,21 @@
 
 .event-item-wrapper:active {
   animation: pulse 0.3s ease-in-out;
+  cursor: grabbing !important;
+}
+
+/* Adicionar seletores mais específicos para impedir seleção de texto */
+[data-draggable="true"],
+[data-draggable="true"] *,
+.event-item,
+.event-item * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+}
+
+/* Estilos para melhorar feedback visual durante o arrasto */
+body.dragging-active {
+  cursor: grabbing !important;
 }
