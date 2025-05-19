@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { CalendarEvent } from "@/types/oni-agencia";
 import { EventItem } from "./EventItem";
 import { useDraggable } from '@dnd-kit/core';
+import { MoveIcon } from "lucide-react";
 
 interface DraggableEventItemProps {
   event: CalendarEvent;
@@ -57,6 +58,15 @@ export function DraggableEventItem({ event, onClick }: DraggableEventItemProps) 
     }, 100);
   };
   
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (pressTimeoutRef.current) {
+        clearTimeout(pressTimeoutRef.current);
+      }
+    };
+  }, []);
+  
   // Log when dragging state changes
   useEffect(() => {
     if (isDragging) {
@@ -94,7 +104,7 @@ export function DraggableEventItem({ event, onClick }: DraggableEventItemProps) 
       data-draggable="true"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
-      className="touch-none cursor-grab active:cursor-grabbing hover:brightness-95 transition-all"
+      className="touch-none cursor-grab active:cursor-grabbing hover:brightness-95 transition-all relative"
     >
       <EventItem 
         event={event} 
@@ -107,15 +117,13 @@ export function DraggableEventItem({ event, onClick }: DraggableEventItemProps) 
       {/* Add drag handle indicator */}
       {!isDragging && (
         <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center justify-center w-4 h-4">
-          <svg 
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            className="w-3 h-3 text-gray-400"
-          >
-            <path d="M7 2a1 1 0 011 1v1h3a1 1 0 110 2H9v1a1 1 0 11-2 0V6H4a1 1 0 110-2h3V3a1 1 0 011-1zm3 14a1 1 0 01-1 1H5a1 1 0 01-1-1v-1H1a1 1 0 110-2h3v-1a1 1 0 112 0v1h14a1 1 0 110 2H5v1z" />
-          </svg>
+          <MoveIcon className="w-3 h-3 text-gray-400" />
         </div>
+      )}
+      
+      {/* Visual feedback when dragging */}
+      {isDragging && (
+        <div className="absolute inset-0 bg-primary/10 border-2 border-primary rounded pointer-events-none" />
       )}
     </div>
   );

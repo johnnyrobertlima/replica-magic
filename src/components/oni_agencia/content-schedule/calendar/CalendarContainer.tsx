@@ -68,19 +68,17 @@ export function CalendarContainer({
   // Configure sensors with improved settings for better drag detection
   const sensors = useSensors(
     useSensor(CustomMouseSensor, {
-      // Activation constraints defined here at the sensor level, not in the handler
       activationConstraint: {
         delay: 150,
         tolerance: 8,
-      },
+      }
     }),
     useSensor(CustomTouchSensor, {
-      // Activation constraints defined here at the sensor level, not in the handler
       activationConstraint: {
         delay: 150,
         tolerance: 8,
-      },
-    }),
+      }
+    })
   );
   
   // Get drag-and-drop handlers
