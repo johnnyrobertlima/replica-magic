@@ -1,13 +1,12 @@
 
-import { DndContext, useSensor, useSensors, PointerSensor, MouseSensor, TouchSensor } from "@dnd-kit/core";
+import { DndContext } from "@dnd-kit/core";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarDay } from "./CalendarDay";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { ptBR } from "date-fns/locale";
 import { useDragAndDrop } from "../hooks/useDragAndDrop";
 import { useCurrentUser } from "../hooks/useCurrentUser";
-import { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
-import type { MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from "react";
+import { useCustomDndSensors } from "../hooks/useCustomSensors";
 
 interface CalendarContainerProps {
   events: CalendarEvent[];
@@ -16,42 +15,6 @@ interface CalendarContainerProps {
   selectedCollaborator?: string | null;
   onSelect: (date: Date) => void;
   onEventClick: (event: CalendarEvent, date: Date) => void;
-}
-
-// Custom mouse sensor that only activates on left-click
-class CustomMouseSensor extends MouseSensor {
-  static activators = [{
-    eventName: 'onMouseDown' as const,
-    handler: ({ nativeEvent: event }: ReactMouseEvent<Element, MouseEvent>, { onActivation }: { onActivation: () => void }) => {
-      if (event.button !== 0) return false; // Only left clicks
-      
-      // Check if we're clicking on a draggable element
-      const target = event.target as HTMLElement;
-      const isDraggable = target.closest('[data-draggable="true"]');
-      
-      if (!isDraggable) return false;
-      
-      onActivation();
-      return true;
-    },
-  }];
-}
-
-// Custom touch sensor with improved activation
-class CustomTouchSensor extends TouchSensor {
-  static activators = [{
-    eventName: 'onTouchStart' as const,
-    handler: ({ nativeEvent: event }: ReactTouchEvent<Element>, { onActivation }: { onActivation: () => void }) => {
-      // Check if we're touching a draggable element
-      const target = event.target as HTMLElement;
-      const isDraggable = target.closest('[data-draggable="true"]');
-      
-      if (!isDraggable) return false;
-      
-      onActivation();
-      return true;
-    },
-  }];
 }
 
 export function CalendarContainer({
@@ -65,21 +28,8 @@ export function CalendarContainer({
   // Get username first - maintain hook order
   const userName = useCurrentUser();
   
-  // Configure sensors with improved settings for better drag detection
-  const sensors = useSensors(
-    useSensor(CustomMouseSensor, {
-      activationConstraint: {
-        delay: 150,
-        tolerance: 8,
-      }
-    }),
-    useSensor(CustomTouchSensor, {
-      activationConstraint: {
-        delay: 150,
-        tolerance: 8,
-      }
-    })
-  );
+  // Use our custom sensors hook with default settings
+  const sensors = useCustomDndSensors(150, 8);
   
   // Get drag-and-drop handlers
   const { isDragging, handleDragStart, handleDragEnd } = useDragAndDrop();

@@ -1,28 +1,13 @@
+
 import { useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
-import { updateContentSchedule } from "@/services/oniAgenciaContentScheduleServices";
-import { format, parse } from "date-fns";
+import { CalendarEvent } from "@/types/oni-agencia";
+import { format } from "date-fns";
 import { DragStartEvent, DragEndEvent } from "@dnd-kit/core";
-
-// Helper function to convert string date to Date object
-const parseStringToDate = (dateString: string): Date | null => {
-  if (!dateString) return null;
-
-  try {
-    if (dateString.includes('T')) {
-      // If ISO format with time, still use parse but with a different format
-      return parse(dateString, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx", new Date());
-    }
-    
-    // Parse YYYY-MM-DD format to Date object using parse to avoid timezone issues
-    return parse(dateString, 'yyyy-MM-dd', new Date());
-  } catch (e) {
-    console.error("Error parsing date string:", dateString, e);
-    return null;
-  }
-};
+import { formatDateToString } from "./utils/dateUtils";
+import { updateContentSchedulesCache, invalidateScheduleQueries } from "./utils/cacheUtils";
+import { prepareEventUpdateData, updateEventScheduledDate } from "./utils/eventUpdateUtils";
 
 export function useDragAndDrop() {
   const [isDragging, setIsDragging] = useState(false);
@@ -114,7 +99,7 @@ export function useDragAndDrop() {
       return;
     }
     
-    const formattedDate = format(date, "yyyy-MM-dd");
+    const formattedDate = formatDateToString(date);
     console.log(`Attempting to move event from ${activeDragEvent.scheduled_date} to ${formattedDate}`);
     
     if (formattedDate === activeDragEvent.scheduled_date) {
@@ -127,98 +112,20 @@ export function useDragAndDrop() {
     try {
       console.log(`Moving event ${activeDragEvent.id} from ${activeDragEvent.scheduled_date} to ${formattedDate}`);
       
-      // Create a proper ContentScheduleFormData object with all required fields
-      const updateData: ContentScheduleFormData = {
-        client_id: activeDragEvent.client_id,
-        service_id: activeDragEvent.service_id,
-        collaborator_id: activeDragEvent.collaborator_id,
-        title: activeDragEvent.title,
-        description: activeDragEvent.description,
-        scheduled_date: date, // Use Date object directly
-        execution_phase: activeDragEvent.execution_phase,
-        editorial_line_id: activeDragEvent.editorial_line_id,
-        product_id: activeDragEvent.product_id,
-        status_id: activeDragEvent.status_id,
-        creators: activeDragEvent.creators,
-        // Convert string dates to Date objects if present using parse to avoid timezone issues
-        capture_date: activeDragEvent.capture_date ? parseStringToDate(activeDragEvent.capture_date) : null,
-        capture_end_date: activeDragEvent.capture_end_date ? parseStringToDate(activeDragEvent.capture_end_date) : null,
-        is_all_day: activeDragEvent.is_all_day,
-        location: activeDragEvent.location
-      };
-      
-      // Remove unnecessary fields for API call
-      const { 
-        id, 
-        service, 
-        collaborator, 
-        editorial_line, 
-        product, 
-        status, 
-        client, 
-        created_at, 
-        updated_at,
-        ...cleanData 
-      } = activeDragEvent as any;
-      
-      // Convert to API format (strings) for the API call
-      const apiData = {
-        ...cleanData,
-        scheduled_date: formattedDate,
-        capture_date: updateData.capture_date instanceof Date ? format(updateData.capture_date, 'yyyy-MM-dd') : cleanData.capture_date,
-        capture_end_date: updateData.capture_end_date instanceof Date ? format(updateData.capture_end_date, 'yyyy-MM-dd') : cleanData.capture_end_date
-      };
+      // Prepare data for update
+      const { apiData } = prepareEventUpdateData(activeDragEvent, date);
       
       // Backup of the original event for use in case of error
       const originalEvent = { ...activeDragEvent };
       
-      // Update the event in local state immediately
+      // Update the event in local state immediately for optimistic update
       const updatedEvent = {
         ...activeDragEvent,
         scheduled_date: formattedDate
       };
       
-      // Immediately update all queries to reflect the change
-      
-      // 1. For standard query cache
-      queryClient.setQueriesData({ queryKey: ['content-schedules'] }, (old: any) => {
-        if (!old || !Array.isArray(old)) return old;
-        
-        console.log("Updating content-schedules cache");
-        // Remove the old event and add the new one
-        const filteredEvents = old.filter((event: CalendarEvent) => event.id !== activeDragEvent.id);
-        return [...filteredEvents, updatedEvent];
-      });
-      
-      // 2. For infinite query cache
-      queryClient.setQueriesData({ queryKey: ['infinite-content-schedules'] }, (old: any) => {
-        if (!old || !old.pages) return old;
-        
-        console.log("Updating infinite-content-schedules cache");
-        const updatedPages = old.pages.map((page: any) => {
-          if (!page.data) return page;
-          
-          // Remove the old event
-          const filteredData = page.data.filter((event: CalendarEvent) => 
-            event.id !== activeDragEvent.id
-          );
-          
-          // Add the updated event to the page if it matches the date range
-          const updatedData = [...filteredData];
-          if (page.data.some((event: CalendarEvent) => 
-            event.scheduled_date.substring(0, 7) === formattedDate.substring(0, 7)
-          )) {
-            updatedData.push(updatedEvent);
-          }
-          
-          return { ...page, data: updatedData };
-        });
-        
-        return {
-          ...old,
-          pages: updatedPages
-        };
-      });
+      // Update all queries to reflect the change optimistically
+      updateContentSchedulesCache(queryClient, originalEvent, updatedEvent);
       
       // Show "updating" toast
       toast({
@@ -226,9 +133,8 @@ export function useDragAndDrop() {
         description: "Aguarde enquanto atualizamos o agendamento.",
       });
       
-      // Make the update API call with the correct event ID
-      console.log("Making API call to update event with ID:", activeDragEvent.id);
-      await updateContentSchedule(activeDragEvent.id, apiData);
+      // Make the update API call
+      await updateEventScheduledDate(activeDragEvent.id, apiData);
       
       // Show success toast
       toast({
@@ -237,10 +143,7 @@ export function useDragAndDrop() {
       });
       
       // Force a refetch to ensure data consistency
-      console.log("Invalidating queries to refresh data");
-      queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
-      queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
-      queryClient.invalidateQueries({ queryKey: ['scheduleHistory'] });
+      invalidateScheduleQueries(queryClient);
       
     } catch (error) {
       console.error("Error moving event:", error);
@@ -251,8 +154,7 @@ export function useDragAndDrop() {
       });
       
       // If there's an error, refetch to restore the correct data
-      queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
-      queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
+      invalidateScheduleQueries(queryClient);
     } finally {
       setIsDragging(false);
       setActiveDragEvent(null);

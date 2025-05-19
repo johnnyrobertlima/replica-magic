@@ -3,18 +3,10 @@ import { useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { CalendarEvent } from "@/types/oni-agencia";
-import { format, parse } from "date-fns";
+import { format } from "date-fns";
 import { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import { useDragAndDrop } from "./useDragAndDrop";
-
-// Helper function to convert string date to Date object using parse to avoid timezone issues
-const parseStringToDate = (dateString: string): Date => {
-  if (dateString.includes('T')) {
-    return parse(dateString, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx", new Date());
-  }
-  // Parse YYYY-MM-DD format to Date object
-  return parse(dateString, 'yyyy-MM-dd', new Date());
-};
+import { parseStringToDate } from "./utils/dateUtils";
 
 interface UseDndContextProps {
   clientId: string;

@@ -6,9 +6,8 @@ import { CalendarEvent } from "@/types/oni-agencia";
 import { useDndContext } from "@/components/oni_agencia/content-schedule/hooks/useDndContext";
 import { ContentScheduleLoading } from "@/components/oni_agencia/content-schedule/ContentScheduleLoading";
 import { PautaStatusIndicator } from "@/components/oni_agencia/content-schedule/PautaStatusIndicator";
-import { DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
-import type { MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from "react";
-import { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
+import { DndContext } from "@dnd-kit/core";
+import { useCustomDndSensors } from "@/components/oni_agencia/content-schedule/hooks/useCustomSensors";
 
 interface ContentAreaProps {
   viewMode: "calendar" | "list";
@@ -24,42 +23,6 @@ interface ContentAreaProps {
   showLoadingState: boolean;
   isCollapsed: boolean;
   onManualRefetch?: () => void;
-}
-
-// Custom mouse sensor with improved activation for event items
-class CustomMouseSensor extends MouseSensor {
-  static activators = [{
-    eventName: 'onMouseDown' as const,
-    handler: ({ nativeEvent: event }: ReactMouseEvent<Element, MouseEvent>, { onActivation }: { onActivation: () => void }) => {
-      if (event.button !== 0) return false; // Only left clicks
-      
-      // Check if we're clicking on a draggable event item
-      const target = event.target as HTMLElement;
-      const isDraggableEvent = target.closest('[data-draggable="true"]');
-      
-      if (!isDraggableEvent) return false;
-      
-      event.preventDefault();
-      onActivation();
-      return true;
-    },
-  }];
-}
-
-// Custom touch sensor with improved activation for event items
-class CustomTouchSensor extends TouchSensor {
-  static activators = [{
-    eventName: 'onTouchStart' as const,
-    handler: ({ nativeEvent: event }: ReactTouchEvent<Element>, { onActivation }: { onActivation: () => void }) => {
-      const target = event.target as HTMLElement;
-      const isDraggableEvent = target.closest('[data-draggable="true"]');
-      
-      if (!isDraggableEvent) return false;
-      
-      onActivation();
-      return true;
-    },
-  }];
 }
 
 export function ContentArea({ 
@@ -94,21 +57,8 @@ export function ContentArea({
     onManualRefetch
   });
   
-  // Configure sensors for drag operations with more permissive settings
-  const sensors = useSensors(
-    useSensor(CustomMouseSensor, {
-      activationConstraint: {
-        delay: 150,
-        tolerance: 5,
-      }
-    }),
-    useSensor(CustomTouchSensor, {
-      activationConstraint: {
-        delay: 150,
-        tolerance: 5,
-      }
-    })
-  );
+  // Use our custom sensors hook with more permissive settings for ContentArea
+  const sensors = useCustomDndSensors(150, 5);
   
   // Debug logs to track events count
   console.log(`ContentArea received ${filteredSchedules.length} events, showLoadingState=${showLoadingState}`);
