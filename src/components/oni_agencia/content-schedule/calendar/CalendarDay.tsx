@@ -32,18 +32,33 @@ export function CalendarDay({
   
   // Filter events for this day based on useCaptureDate flag
   const dayEvents = useMemo(() => {
+    if (!Array.isArray(events)) return [];
+    
     const dateStr = format(date, "yyyy-MM-dd");
+    let filteredEvents = [];
     
     if (useCaptureDate) {
       // Filter by capture_date when useCaptureDate is true
-      return events.filter((event) => {
-        if (!event.capture_date) return false;
+      filteredEvents = events.filter((event) => {
+        if (!event?.capture_date) return false;
         return event.capture_date.split('T')[0] === dateStr;
       });
     } else {
       // Filter by scheduled_date (original behavior)
-      return events.filter((event) => event.scheduled_date === dateStr);
+      filteredEvents = events.filter((event) => {
+        return event?.scheduled_date === dateStr;
+      });
     }
+    
+    // Deduplicate events by ID
+    const uniqueEvents = filteredEvents.reduce<Record<string, CalendarEvent>>((acc, event) => {
+      if (event?.id) {
+        acc[event.id] = event;
+      }
+      return acc;
+    }, {});
+    
+    return Object.values(uniqueEvents);
   }, [date, events, useCaptureDate]);
   
   // Further filter by selectedCollaborator if specified
@@ -61,9 +76,9 @@ export function CalendarDay({
     });
   }, [dayEvents, selectedCollaborator]);
 
-  // Debug log for number of events
-  const day = date.getDate();
-  const dayOfMonth = format(date, 'd');
+  // Debug log for events
+  const dateStr = format(date, 'yyyy-MM-dd');
+  console.log(`CalendarDay ${dateStr} has ${filteredEvents.length} events after filtering`);
   
   return (
     <div
@@ -83,13 +98,15 @@ export function CalendarDay({
           isSelected && !isCurrentDay ? "bg-blue-200" : ""
         )}
       >
-        {dayOfMonth}
+        {format(date, 'd')}
       </div>
-      <EventsList 
-        events={filteredEvents} 
-        date={date} 
-        onEventClick={(event) => onEventClick(event, date)} 
-      />
+      {filteredEvents.length > 0 && (
+        <EventsList 
+          events={filteredEvents} 
+          date={date} 
+          onEventClick={(event) => onEventClick(event, date)} 
+        />
+      )}
     </div>
   );
 }

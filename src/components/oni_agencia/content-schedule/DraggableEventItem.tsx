@@ -8,24 +8,31 @@ import { MoveIcon } from "lucide-react";
 interface DraggableEventItemProps {
   event: CalendarEvent;
   onClick: (e: React.MouseEvent) => void;
+  dateContext?: string; // Adicionado para garantir chaves únicas
 }
 
-export function DraggableEventItem({ event, onClick }: DraggableEventItemProps) {
+export function DraggableEventItem({ event, onClick, dateContext }: DraggableEventItemProps) {
   const [longPressTriggered, setLongPressTriggered] = useState(false);
   const pressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Debug log to verify events have IDs
-  if (!event.id) {
+  // Checagem de segurança para eventos sem ID
+  if (!event?.id) {
     console.error("Attempted to render draggable event with no ID:", event);
     return <EventItem event={event} onClick={onClick} />;
   }
   
+  // Criar um ID único que inclui a data de contexto para evitar colisões
+  const uniqueDraggableId = dateContext 
+    ? `event-${event.id}-${dateContext}` 
+    : `event-${event.id}`;
+  
   // Create a useDraggable hook with the event ID
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: `event-${event.id}`,
+    id: uniqueDraggableId,
     data: {
       event,
-      type: 'calendar-event'
+      type: 'calendar-event',
+      originalId: event.id // Mantém o ID original para operações de banco de dados
     }
   });
   
@@ -53,7 +60,7 @@ export function DraggableEventItem({ event, onClick }: DraggableEventItemProps) 
   // Log when dragging state changes
   useEffect(() => {
     if (isDragging) {
-      console.log("Event is being dragged:", event.id, event.title);
+      console.log("Event is being dragged:", event.id, event.title, "with unique ID:", uniqueDraggableId);
       document.body.style.cursor = 'grabbing';
     } else {
       document.body.style.cursor = '';
@@ -62,7 +69,7 @@ export function DraggableEventItem({ event, onClick }: DraggableEventItemProps) 
     return () => {
       document.body.style.cursor = '';
     };
-  }, [isDragging, event.id, event.title]);
+  }, [isDragging, event.id, event.title, uniqueDraggableId]);
 
   // Handle click separately to avoid conflicts with drag
   const handleClick = (e: React.MouseEvent) => {
@@ -84,6 +91,7 @@ export function DraggableEventItem({ event, onClick }: DraggableEventItemProps) 
       {...attributes}
       onClick={handleClick}
       data-event-id={event.id}
+      data-unique-id={uniqueDraggableId}
       data-draggable="true"
       className="touch-none cursor-grab active:cursor-grabbing hover:brightness-95 transition-all relative"
     >
