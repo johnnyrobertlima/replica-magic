@@ -117,7 +117,7 @@ export function CreatorsSelectMultiple({
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className="justify-between w-full"
+            className="justify-between w-full bg-white border-gray-300"
             disabled={isLoading}
             data-testid="creators-select"
           >
@@ -129,21 +129,21 @@ export function CreatorsSelectMultiple({
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-0" align="start">
+        <PopoverContent className="w-[300px] p-0 bg-white" align="start">
           {/* Search input */}
-          <div className="border-b px-3 flex items-center">
+          <div className="border-b px-3 flex items-center bg-white">
             <input
               placeholder="Buscar creators..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex h-11 w-full bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
+              className="flex h-11 w-full bg-white py-3 text-sm outline-none placeholder:text-gray-500"
             />
           </div>
           
           {/* Collaborator list */}
-          <ScrollArea className="h-72 overflow-auto p-1">
+          <ScrollArea className="h-72 overflow-auto p-1 bg-white">
             {filteredCollaborators.length === 0 ? (
-              <div className="py-6 text-center text-sm">
+              <div className="py-6 text-center text-sm text-gray-500">
                 Nenhum creator encontrado.
               </div>
             ) : (
@@ -152,20 +152,22 @@ export function CreatorsSelectMultiple({
                   key={collaborator.id}
                   className={cn(
                     "flex items-center justify-between px-2 py-2 rounded-sm cursor-pointer",
-                    safeValue.includes(collaborator.id) ? "bg-muted" : "hover:bg-muted/50"
+                    safeValue.includes(collaborator.id) ? "bg-blue-50" : "hover:bg-gray-50"
                   )}
                   onClick={() => handleToggleSelection(collaborator.id)}
                 >
                   <div className="flex items-center gap-2">
                     <div className={cn(
                       "h-4 w-4 flex items-center justify-center rounded-sm border",
-                      safeValue.includes(collaborator.id) ? "bg-primary border-primary text-primary-foreground" : "border-primary"
+                      safeValue.includes(collaborator.id) 
+                        ? "bg-primary border-primary text-white" 
+                        : "border-gray-400"
                     )}>
                       {safeValue.includes(collaborator.id) && (
                         <Check className="h-3 w-3" />
                       )}
                     </div>
-                    <span>{collaborator.name}</span>
+                    <span className="text-gray-800">{collaborator.name}</span>
                   </div>
                 </div>
               ))
@@ -180,12 +182,12 @@ export function CreatorsSelectMultiple({
             <Badge
               key={collaborator.id}
               variant="secondary"
-              className="flex items-center gap-1"
+              className="flex items-center gap-1 bg-blue-100 text-blue-800 hover:bg-blue-200"
             >
               {collaborator.name}
               <button
                 type="button"
-                className="rounded-full outline-none focus:outline-none"
+                className="rounded-full outline-none focus:outline-none text-blue-600 hover:text-blue-800"
                 onClick={() => handleToggleSelection(collaborator.id)}
               >
                 <X className="h-3 w-3" />
