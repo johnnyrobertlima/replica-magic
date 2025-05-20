@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { ContentScheduleFormData } from "@/types/oni-agencia";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,7 @@ import { ProductSelect } from "./ProductSelect";
 import { StatusSelect } from "./StatusSelect";
 import { Switch } from "@/components/ui/switch";
 import { CreatorsSelectMultiple } from "./CreatorsSelectMultiple";
+
 interface EventFormProps {
   formData: ContentScheduleFormData;
   services: any[];
@@ -30,6 +32,7 @@ interface EventFormProps {
   onSelectChange: (name: string, value: string) => void;
   onDateChange: (name: string, value: Date | null) => void;
 }
+
 export function EventForm({
   formData,
   services = [],
@@ -51,9 +54,11 @@ export function EventForm({
   const handleAllDayChange = (checked: boolean) => {
     onSelectChange("is_all_day", checked ? "true" : "false");
   };
+  
   const handleCreatorsChange = (value: string[]) => {
     onSelectChange("creators", JSON.stringify(value));
   };
+  
   const getCreatorsArray = () => {
     if (!formData.creators) return [];
 
@@ -68,17 +73,13 @@ export function EventForm({
     }
     return Array.isArray(formData.creators) ? formData.creators : [];
   };
+  
   return <div className="grid gap-4 py-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-4">
           <div className="grid gap-2">
             <Label htmlFor="title">Título</Label>
             <Input id="title" name="title" value={formData.title || ""} onChange={onInputChange} placeholder="Título do evento" required />
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="description">Descrição</Label>
-            <Textarea id="description" name="description" value={formData.description || ""} onChange={onInputChange} placeholder="Descrição do evento" />
           </div>
 
           <ClientSelect clients={clients || []} value={formData.client_id} isLoading={isLoadingClients} onValueChange={value => onSelectChange("client_id", value)} />
@@ -96,18 +97,22 @@ export function EventForm({
           <StatusSelect statuses={statuses || []} value={formData.status_id || "null"} isLoading={isLoadingStatuses} onValueChange={value => onSelectChange("status_id", value)} />
 
           <DateTimePicker label="Data de Agendamento" date={formData.scheduled_date} onDateChange={date => onDateChange("scheduled_date", date)} />
-
-          <DateTimePicker label="Data de Captura" date={formData.capture_date} onDateChange={date => onDateChange("capture_date", date)} />
-
-          <div className="grid gap-2">
-            
-            
-          </div>
-
-          
           
           <CreatorsSelectMultiple collaborators={collaborators || []} value={getCreatorsArray()} isLoading={isLoadingCollaborators} onValueChange={handleCreatorsChange} />
         </div>
+      </div>
+      
+      {/* Description field moved out of columns to take full width */}
+      <div className="grid gap-2 mt-2">
+        <Label htmlFor="description">Descrição</Label>
+        <Textarea 
+          id="description" 
+          name="description" 
+          value={formData.description || ""} 
+          onChange={onInputChange} 
+          placeholder="Descrição do evento"
+          className="min-h-[120px]" 
+        />
       </div>
     </div>;
 }

@@ -179,6 +179,7 @@ export function DetailsForm({
         </div>
       </div>
 
+      {/* Description field with greater height */}
       <div>
         <label className="block text-sm font-medium mb-1">Descrição</label>
         <Textarea
@@ -186,7 +187,8 @@ export function DetailsForm({
           value={formData.description || ""}
           onChange={onInputChange}
           placeholder="Descrição do agendamento"
-          rows={3}
+          rows={5}
+          className="min-h-[150px]"
         />
         {/* Display clickable links if description has URLs */}
         {formData.description && formData.description.match(/(https?:\/\/[^\s]+)/g) && (
