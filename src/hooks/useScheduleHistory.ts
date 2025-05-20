@@ -47,7 +47,7 @@ export function useScheduleHistory(scheduleId: string) {
         // Create a list of unique user IDs
         const userIds = Array.from(new Set(historyEntries.filter(entry => entry.changed_by).map(entry => entry.changed_by)));
         
-        let userProfiles: Record<string, { full_name?: string, email?: string }> = {};
+        let userProfiles: Record<string, { full_name?: string; email?: string }> = {};
         
         // Only fetch user profiles if we have user IDs
         if (userIds.length > 0) {
@@ -55,15 +55,15 @@ export function useScheduleHistory(scheduleId: string) {
             .from('user_profiles')
             .select('id, full_name, email')
             .in('id', userIds);
-            
+
           if (profilesError) {
             console.error("Error fetching user profiles:", profilesError);
-          } else if (profiles) {
+          } else if (Array.isArray(profiles)) {
             // Create a map of user IDs to profiles
             userProfiles = profiles.reduce((acc, profile) => {
               acc[profile.id] = { full_name: profile.full_name, email: profile.email };
               return acc;
-            }, {} as Record<string, { full_name?: string, email?: string }>);
+            }, {} as Record<string, { full_name?: string; email?: string }>);
           }
         }
         
