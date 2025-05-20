@@ -30,17 +30,24 @@ export function useCollaborators() {
     queryFn: async () => {
       try {
         console.log("Fetching collaborators...");
-        // Initialize with empty array as fallback
-        let result = [];
         
-        // Only assign if the response is valid
+        // Always return a safe array
         const response = await getCollaborators();
-        if (Array.isArray(response)) {
-          result = response;
-        }
         
-        console.log(`Successfully fetched ${result.length} collaborators:`, result);
-        return result;
+        // Ensure we always have a valid array, even if API returns null/undefined
+        const result = Array.isArray(response) ? response : [];
+        
+        // Additional safeguard: ensure all items in the array are valid objects
+        const validCollaborators = result.filter(item => 
+          item && 
+          typeof item === 'object' && 
+          item.id && 
+          typeof item.id === 'string' &&
+          item.name
+        );
+        
+        console.log(`Successfully fetched ${validCollaborators.length} valid collaborators`);
+        return validCollaborators;
       } catch (error) {
         console.error("Error fetching collaborators:", error);
         // Return empty array instead of throwing to prevent UI errors

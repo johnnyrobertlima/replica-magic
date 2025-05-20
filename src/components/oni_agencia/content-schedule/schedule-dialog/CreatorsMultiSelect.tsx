@@ -1,24 +1,17 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { OniAgenciaCollaborator } from "@/types/oni-agencia";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { X, ChevronsUpDown, Check } from "lucide-react";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { X, Check, ChevronsUpDown } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 interface CreatorsMultiSelectProps {
   collaborators: OniAgenciaCollaborator[];
@@ -27,7 +20,7 @@ interface CreatorsMultiSelectProps {
   onValueChange: (value: string[]) => void;
 }
 
-export function CreatorsMultiSelect({ 
+export function CreatorsMultiSelect({
   collaborators = [],
   isLoading,
   value = [],
@@ -38,94 +31,37 @@ export function CreatorsMultiSelect({
   // Ensure value is always an array
   const safeValue = Array.isArray(value) ? value : [];
   
-  // Ensure collaborators is always an array
+  // Double safety: ensure collaborators is always an array
   const safeCollaborators = Array.isArray(collaborators) ? collaborators : [];
   
-  // Add a check to ensure collaborators objects are valid
-  const validCollaborators = safeCollaborators.filter(c => 
-    c && typeof c === 'object' && c.id && typeof c.id === 'string' && c.name
+  // Additional validation
+  const validCollaborators = safeCollaborators.filter(
+    c => c && typeof c === 'object' && c.id && typeof c.id === 'string' && c.name
   );
   
-  // Find selected collaborators with safety checks
-  const selectedCollaborators = validCollaborators.filter(c => 
-    safeValue.includes(c.id)
+  // Make sure value is an array when component first mounts
+  useEffect(() => {
+    if (!Array.isArray(value)) {
+      onValueChange([]);
+    }
+  }, []);
+  
+  // Find selected collaborators
+  const selectedCollaborators = validCollaborators.filter(
+    c => safeValue.includes(c.id)
   );
-
-  const handleSelect = (collaboratorId: string) => {
-    if (!collaboratorId) return;
+  
+  const handleToggleSelection = (id: string) => {
+    if (!id) return;
     
-    const newValue = safeValue.includes(collaboratorId)
-      ? safeValue.filter(id => id !== collaboratorId)
-      : [...safeValue, collaboratorId];
-    
-    onValueChange(newValue);
-  };
-
-  const handleRemove = (collaboratorId: string) => {
-    if (!collaboratorId) return;
-    onValueChange(safeValue.filter(id => id !== collaboratorId));
-  };
-
-  // Add safe rendering condition
-  if (validCollaborators.length === 0 && !isLoading) {
-    return (
-      <div className="grid gap-2">
-        <Label htmlFor="creators">Creators</Label>
-        <div className="text-sm text-muted-foreground">
-          Nenhum colaborador disponível.
-        </div>
-      </div>
-    );
-  }
-
-  // Use safer Command rendering to prevent "undefined is not iterable" error
-  const renderCommands = () => {
-    // If no valid collaborators and not loading, return null to avoid rendering Command
-    if (validCollaborators.length === 0 && !isLoading) {
-      return (
-        <div className="p-4 text-center text-sm text-muted-foreground">
-          Nenhum colaborador disponível.
-        </div>
-      );
+    if (safeValue.includes(id)) {
+      onValueChange(safeValue.filter(v => v !== id));
+    } else {
+      onValueChange([...safeValue, id]);
     }
-
-    if (isLoading) {
-      return (
-        <div className="p-4 text-center text-sm text-muted-foreground">
-          Carregando...
-        </div>
-      );
-    }
-
-    return (
-      <Command>
-        <CommandInput placeholder="Buscar creators..." />
-        <CommandEmpty>Nenhum creator encontrado.</CommandEmpty>
-        <CommandGroup>
-          <ScrollArea className="h-64">
-            {validCollaborators.map(collaborator => (
-              <CommandItem
-                key={collaborator.id}
-                value={collaborator.name}
-                onSelect={() => handleSelect(collaborator.id)}
-              >
-                <Check
-                  className={cn(
-                    "mr-2 h-4 w-4",
-                    safeValue.includes(collaborator.id) 
-                      ? "opacity-100"
-                      : "opacity-0"
-                  )}
-                />
-                {collaborator.name}
-              </CommandItem>
-            ))}
-          </ScrollArea>
-        </CommandGroup>
-      </Command>
-    );
   };
-
+  
+  // Completely custom solution without using Command component
   return (
     <div className="grid gap-2">
       <Label htmlFor="creators">Creators</Label>
@@ -135,7 +71,7 @@ export function CreatorsMultiSelect({
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className="justify-between"
+            className="justify-between w-full"
             disabled={isLoading}
             data-testid="creators-select"
           >
@@ -147,8 +83,41 @@ export function CreatorsMultiSelect({
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-0">
-          {renderCommands()}
+        <PopoverContent className="w-[300px] p-0" align="start">
+          {isLoading ? (
+            <div className="p-4 text-center text-sm text-muted-foreground">
+              Carregando...
+            </div>
+          ) : validCollaborators.length === 0 ? (
+            <div className="p-4 text-center text-sm text-muted-foreground">
+              Nenhum colaborador disponível
+            </div>
+          ) : (
+            <ScrollArea className="h-72 overflow-auto p-1">
+              {validCollaborators.map(collaborator => (
+                <div 
+                  key={collaborator.id}
+                  className={cn(
+                    "flex items-center justify-between px-2 py-2 rounded-sm cursor-pointer",
+                    safeValue.includes(collaborator.id) ? "bg-muted" : "hover:bg-muted/50"
+                  )}
+                  onClick={() => handleToggleSelection(collaborator.id)}
+                >
+                  <div className="flex items-center gap-2">
+                    <div className={cn(
+                      "h-4 w-4 flex items-center justify-center rounded-sm border",
+                      safeValue.includes(collaborator.id) ? "bg-primary border-primary text-primary-foreground" : "border-primary"
+                    )}>
+                      {safeValue.includes(collaborator.id) && (
+                        <Check className="h-3 w-3" />
+                      )}
+                    </div>
+                    <span>{collaborator.name}</span>
+                  </div>
+                </div>
+              ))}
+            </ScrollArea>
+          )}
         </PopoverContent>
       </Popover>
       
@@ -164,7 +133,7 @@ export function CreatorsMultiSelect({
               <button
                 type="button"
                 className="rounded-full outline-none focus:outline-none"
-                onClick={() => handleRemove(collaborator.id)}
+                onClick={() => handleToggleSelection(collaborator.id)}
               >
                 <X className="h-3 w-3" />
               </button>

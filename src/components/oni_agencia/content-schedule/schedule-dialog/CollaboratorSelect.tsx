@@ -27,15 +27,15 @@ export function CollaboratorSelect({
   label = "Colaborador Responsável",
   errorMessage
 }: CollaboratorSelectProps) {
-  // Ensure collaborators is an array
+  // Double safety: ensure collaborators is always an array
   const safeCollaborators = Array.isArray(collaborators) ? collaborators : [];
   
-  // Validate collection items to prevent rendering errors
+  // Additional validation to prevent rendering errors
   const validCollaborators = safeCollaborators.filter(
     c => c && typeof c === 'object' && c.id && typeof c.id === 'string' && c.name
   );
   
-  // Handle case when collaborators fail to load but we're not in loading state anymore
+  // Handle error state
   const hasError = !isLoading && validCollaborators.length === 0;
 
   return (
