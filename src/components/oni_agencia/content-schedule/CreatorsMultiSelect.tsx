@@ -40,29 +40,27 @@ export function CreatorsMultiSelect({
   
   // Initialize safely with validated data
   useEffect(() => {
-    console.log("CreatorsSelectMultiple - Is Loading:", isLoading);
-    
-    // Ensure collaborators is an array and filter out invalid entries
-    if (Array.isArray(collaborators)) {
-      const validCollaborators = collaborators.filter(c => 
-        c && typeof c === 'object' && c.id && typeof c.id === 'string' && c.name
-      );
+    try {
+      // Ensure collaborators is an array and filter out invalid entries
+      const validCollaborators = Array.isArray(collaborators) 
+        ? collaborators.filter(c => 
+            c && typeof c === 'object' && c.id && typeof c.id === 'string' && c.name)
+        : [];
+      
       setInternalCollaborators(validCollaborators);
-    } else {
-      console.warn("Collaborators is not an array:", collaborators);
-      setInternalCollaborators([]);
-    }
-    
-    // Ensure value is an array
-    if (Array.isArray(value)) {
-      setInternalValue([...value]);
-    } else {
-      console.warn("Value is not an array:", value);
-      setInternalValue([]);
+      
+      // Ensure value is an array
+      const validValue = Array.isArray(value) ? [...value] : [];
+      setInternalValue(validValue);
+      
       // If value is undefined or not an array, update parent with empty array
-      if (value !== undefined) {
+      if (!Array.isArray(value)) {
         onValueChange([]);
       }
+    } catch (error) {
+      console.error("Error in CreatorsMultiSelect useEffect:", error);
+      setInternalCollaborators([]);
+      setInternalValue([]);
     }
   }, [collaborators, value, onValueChange]);
 
