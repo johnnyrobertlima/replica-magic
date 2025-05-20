@@ -1,21 +1,27 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { OniAgenciaCollaborator, CollaboratorFormData } from "@/types/oni-agencia";
 
 const ONI_AGENCIA_COLLABORATORS_TABLE = 'oni_agencia_collaborators';
 
 export async function getCollaborators(): Promise<OniAgenciaCollaborator[]> {
-  const { data, error } = await supabase
-    .from(ONI_AGENCIA_COLLABORATORS_TABLE)
-    .select('*')
-    .order('name');
+  try {
+    console.log("Fetching collaborators from table:", ONI_AGENCIA_COLLABORATORS_TABLE);
+    const { data, error } = await supabase
+      .from(ONI_AGENCIA_COLLABORATORS_TABLE)
+      .select('*')
+      .order('name');
 
-  if (error) {
-    console.error('Error fetching collaborators:', error);
+    if (error) {
+      console.error('Error fetching collaborators:', error);
+      throw error;
+    }
+
+    console.log(`Successfully fetched ${data?.length || 0} collaborators from database`);
+    return data || [];
+  } catch (error) {
+    console.error('Exception while fetching collaborators:', error);
     throw error;
   }
-
-  return data || [];
 }
 
 export async function createCollaborator(collaborator: CollaboratorFormData): Promise<OniAgenciaCollaborator> {

@@ -7,6 +7,7 @@ import { Check, ChevronsUpDown, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface CreatorsSelectMultipleProps {
   collaborators: any[];
@@ -63,7 +64,11 @@ export function CreatorsSelectMultiple({
     return collaborator?.name || id;
   };
   
-  // Don't render the Command component if there are no valid collaborators
+  console.log("CreatorsSelectMultiple - Collaborators:", collaborators);
+  console.log("CreatorsSelectMultiple - Valid collaborators:", validCollaborators);
+  console.log("CreatorsSelectMultiple - Is Loading:", isLoading);
+  
+  // Return a basic message if there are no collaborators and we're not loading
   if (validCollaborators.length === 0 && !isLoading) {
     return (
       <div className="grid gap-2">
