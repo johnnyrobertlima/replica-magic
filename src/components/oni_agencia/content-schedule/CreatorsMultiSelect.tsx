@@ -35,52 +35,65 @@ export function CreatorsMultiSelect({
 }: CreatorsMultiSelectProps) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [internalCollaborators, setInternalCollaborators] = useState<OniAgenciaCollaborator[]>([]);
+  const [internalValue, setInternalValue] = useState<string[]>([]);
   
-  // Ensure values are valid
+  // Initialize with safe values on mount and when props change
   useEffect(() => {
-    // If value is undefined or not an array, initialize with empty array
-    if (!Array.isArray(value)) {
-      console.warn("CreatorsMultiSelect received invalid value prop:", value);
-      onValueChange([]);
+    // Safely set collaborators
+    if (Array.isArray(collaborators)) {
+      setInternalCollaborators(
+        collaborators.filter(c => c && typeof c === 'object' && c.id && typeof c.id === 'string' && c.name)
+      );
+    } else {
+      console.warn("CreatorsMultiSelect received non-array collaborators:", collaborators);
+      setInternalCollaborators([]);
     }
-  }, [value, onValueChange]);
+    
+    // Safely set value
+    if (Array.isArray(value)) {
+      setInternalValue(value);
+    } else {
+      console.warn("CreatorsMultiSelect received non-array value:", value);
+      setInternalValue([]);
+      // Update parent component if needed
+      if (value !== undefined) {
+        onValueChange([]);
+      }
+    }
+  }, [collaborators, value, onValueChange]);
   
-  // Make sure collaborators is always an array with valid entries
-  const safeCollaborators = Array.isArray(collaborators) 
-    ? collaborators.filter(c => c && typeof c === 'object' && c.id && typeof c.id === 'string' && c.name)
-    : [];
-  
-  // Ensure value is always a valid array
-  const safeValue = Array.isArray(value) ? value : [];
-  
-  // Find selected collaborators with safeguards against undefined values
-  const selectedCollaborators = safeCollaborators.filter(c => 
-    safeValue.includes(c.id)
+  // Find selected collaborators with safeguards
+  const selectedCollaborators = internalCollaborators.filter(c => 
+    internalValue.includes(c.id)
   );
 
   const handleSelect = (collaboratorId: string) => {
     if (!collaboratorId) return;
     
     let newValue;
-    if (safeValue.includes(collaboratorId)) {
-      newValue = safeValue.filter(id => id !== collaboratorId);
+    if (internalValue.includes(collaboratorId)) {
+      newValue = internalValue.filter(id => id !== collaboratorId);
     } else {
-      newValue = [...safeValue, collaboratorId];
+      newValue = [...internalValue, collaboratorId];
     }
+    setInternalValue(newValue);
     onValueChange(newValue);
   };
 
   const handleRemove = (collaboratorId: string) => {
     if (!collaboratorId) return;
-    onValueChange(safeValue.filter(id => id !== collaboratorId));
+    const newValue = internalValue.filter(id => id !== collaboratorId);
+    setInternalValue(newValue);
+    onValueChange(newValue);
   };
 
   // Filter collaborators based on search query
-  const filteredCollaborators = searchQuery
-    ? safeCollaborators.filter(c => 
+  const filteredCollaborators = searchQuery && internalCollaborators.length > 0
+    ? internalCollaborators.filter(c => 
         c.name && c.name.toLowerCase().includes(searchQuery.toLowerCase())
       )
-    : safeCollaborators;
+    : internalCollaborators;
 
   // Render different UI based on loading or empty state
   if (isLoading) {
@@ -95,7 +108,7 @@ export function CreatorsMultiSelect({
   }
 
   // Show message if no collaborators available
-  if (safeCollaborators.length === 0) {
+  if (internalCollaborators.length === 0) {
     return (
       <div className="grid gap-2">
         <Label htmlFor="creators">Creators</Label>
@@ -120,9 +133,9 @@ export function CreatorsMultiSelect({
             data-testid="creators-select"
           >
             <span className="truncate">
-              {safeValue.length === 0
+              {internalValue.length === 0
                 ? "Selecione os creators..."
-                : `${safeValue.length} creator${safeValue.length === 1 ? "" : "s"} selecionado${safeValue.length === 1 ? "" : "s"}`}
+                : `${internalValue.length} creator${internalValue.length === 1 ? "" : "s"} selecionado${internalValue.length === 1 ? "" : "s"}`}
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
@@ -137,7 +150,7 @@ export function CreatorsMultiSelect({
             <CommandEmpty>Nenhum creator encontrado.</CommandEmpty>
             <CommandGroup>
               <ScrollArea className="h-64">
-                {filteredCollaborators?.map(collaborator => (
+                {filteredCollaborators.map((collaborator) => (
                   <CommandItem
                     key={collaborator.id}
                     value={collaborator.name || ""}
@@ -146,9 +159,9 @@ export function CreatorsMultiSelect({
                     <div className="flex items-center gap-2 w-full">
                       <div className={cn(
                         "h-4 w-4 flex items-center justify-center rounded-sm border",
-                        safeValue.includes(collaborator.id) ? "bg-primary border-primary text-primary-foreground" : "border-primary"
+                        internalValue.includes(collaborator.id) ? "bg-primary border-primary text-primary-foreground" : "border-primary"
                       )}>
-                        {safeValue.includes(collaborator.id) && (
+                        {internalValue.includes(collaborator.id) && (
                           <Check className="h-3 w-3" />
                         )}
                       </div>
