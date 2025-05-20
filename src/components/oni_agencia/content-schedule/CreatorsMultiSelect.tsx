@@ -66,8 +66,16 @@ export function CreatorsMultiSelect({
     onValueChange(safeValue.filter(id => id !== collaboratorId));
   };
 
-  // Add safe rendering condition
-  if (!validCollaborators.length && !isLoading) {
+  // Use useEffect to ensure value is always an array, preventing "undefined is not iterable" errors
+  useEffect(() => {
+    if (!Array.isArray(value)) {
+      console.warn("CreatorsMultiSelect received non-array value:", value);
+      onValueChange([]);
+    }
+  }, [value, onValueChange]);
+
+  // Add safe rendering condition with fallback for when there are no collaborators
+  if (validCollaborators.length === 0 && !isLoading) {
     return (
       <div className="grid gap-2">
         <Label htmlFor="creators">Creators</Label>

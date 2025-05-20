@@ -25,7 +25,13 @@ export function ServiceMultiSelect({
   // Initialize with all services selected when they load
   useEffect(() => {
     if (safeServices.length > 0 && safeValue.length === 0) {
-      onChange(safeServices.map(service => service.id));
+      const validServiceIds = safeServices
+        .filter(service => service && typeof service === 'object' && service.id)
+        .map(service => service.id);
+      
+      if (validServiceIds.length > 0) {
+        onChange(validServiceIds);
+      }
     }
   }, [safeServices, safeValue.length, onChange]);
   
@@ -37,10 +43,13 @@ export function ServiceMultiSelect({
     );
   }
   
-  const serviceOptions: Option[] = safeServices.filter(service => service && service.id).map(service => ({
-    value: service.id,
-    label: service.name
-  }));
+  // Create service options with thorough validation
+  const serviceOptions: Option[] = safeServices
+    .filter(service => service && typeof service === 'object' && service.id && service.name)
+    .map(service => ({
+      value: service.id,
+      label: service.name
+    }));
   
   return (
     <MultiSelect

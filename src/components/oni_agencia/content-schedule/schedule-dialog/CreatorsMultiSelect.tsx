@@ -42,7 +42,9 @@ export function CreatorsMultiSelect({
   const safeCollaborators = Array.isArray(collaborators) ? collaborators : [];
   
   // Add a check to ensure collaborators objects are valid
-  const validCollaborators = safeCollaborators.filter(c => c && c.id && typeof c.id === 'string' && c.name);
+  const validCollaborators = safeCollaborators.filter(c => 
+    c && typeof c === 'object' && c.id && typeof c.id === 'string' && c.name
+  );
   
   // Find selected collaborators with safety checks
   const selectedCollaborators = validCollaborators.filter(c => 
@@ -65,7 +67,7 @@ export function CreatorsMultiSelect({
   };
 
   // Add safe rendering condition
-  if (!validCollaborators.length && !isLoading) {
+  if (validCollaborators.length === 0 && !isLoading) {
     return (
       <div className="grid gap-2">
         <Label htmlFor="creators">Creators</Label>
@@ -75,6 +77,54 @@ export function CreatorsMultiSelect({
       </div>
     );
   }
+
+  // Use safer Command rendering to prevent "undefined is not iterable" error
+  const renderCommands = () => {
+    // If no valid collaborators and not loading, return null to avoid rendering Command
+    if (validCollaborators.length === 0 && !isLoading) {
+      return (
+        <div className="p-4 text-center text-sm text-muted-foreground">
+          Nenhum colaborador disponível.
+        </div>
+      );
+    }
+
+    if (isLoading) {
+      return (
+        <div className="p-4 text-center text-sm text-muted-foreground">
+          Carregando...
+        </div>
+      );
+    }
+
+    return (
+      <Command>
+        <CommandInput placeholder="Buscar creators..." />
+        <CommandEmpty>Nenhum creator encontrado.</CommandEmpty>
+        <CommandGroup>
+          <ScrollArea className="h-64">
+            {validCollaborators.map(collaborator => (
+              <CommandItem
+                key={collaborator.id}
+                value={collaborator.name}
+                onSelect={() => handleSelect(collaborator.id)}
+              >
+                <Check
+                  className={cn(
+                    "mr-2 h-4 w-4",
+                    safeValue.includes(collaborator.id) 
+                      ? "opacity-100"
+                      : "opacity-0"
+                  )}
+                />
+                {collaborator.name}
+              </CommandItem>
+            ))}
+          </ScrollArea>
+        </CommandGroup>
+      </Command>
+    );
+  };
 
   return (
     <div className="grid gap-2">
@@ -98,37 +148,7 @@ export function CreatorsMultiSelect({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[300px] p-0">
-          {validCollaborators.length > 0 ? (
-            <Command>
-              <CommandInput placeholder="Buscar creators..." />
-              <CommandEmpty>Nenhum creator encontrado.</CommandEmpty>
-              <CommandGroup>
-                <ScrollArea className="h-64">
-                  {validCollaborators.map(collaborator => (
-                    <CommandItem
-                      key={collaborator.id}
-                      value={collaborator.name}
-                      onSelect={() => handleSelect(collaborator.id)}
-                    >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          safeValue.includes(collaborator.id) 
-                            ? "opacity-100"
-                            : "opacity-0"
-                        )}
-                      />
-                      {collaborator.name}
-                    </CommandItem>
-                  ))}
-                </ScrollArea>
-              </CommandGroup>
-            </Command>
-          ) : (
-            <div className="p-4 text-center text-sm text-muted-foreground">
-              {isLoading ? "Carregando..." : "Nenhum colaborador disponível."}
-            </div>
-          )}
+          {renderCommands()}
         </PopoverContent>
       </Popover>
       

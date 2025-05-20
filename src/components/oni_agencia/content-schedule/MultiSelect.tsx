@@ -25,8 +25,10 @@ export function MultiSelect({
 }: MultiSelectProps) {
   const [open, setOpen] = useState(false);
   
-  // Ensure options is always a valid array
-  const safeOptions = Array.isArray(options) ? options : [];
+  // Ensure options is always a valid array with proper validation
+  const safeOptions = Array.isArray(options) 
+    ? options.filter(option => option && typeof option === 'object' && option.value && option.label)
+    : [];
   
   // Ensure value is always a valid array
   const safeValue = Array.isArray(value) ? value : [];
@@ -36,6 +38,7 @@ export function MultiSelect({
   
   // Sync internal state with external value
   useEffect(() => {
+    // Use the safe version to avoid errors
     setSelectedOptions(Array.isArray(value) ? value : []);
   }, [value]);
 

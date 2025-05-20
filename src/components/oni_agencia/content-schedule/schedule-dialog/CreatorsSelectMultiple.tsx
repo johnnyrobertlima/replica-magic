@@ -37,6 +37,7 @@ export function CreatorsSelectMultiple({
   // Ensure value is always an array when component mounts or value prop changes
   useEffect(() => {
     if (!Array.isArray(value)) {
+      console.warn("CreatorsSelectMultiple received non-array value:", value);
       onValueChange([]);
     }
   }, [value, onValueChange]);
@@ -63,7 +64,7 @@ export function CreatorsSelectMultiple({
   };
   
   // Add additional error checking to ensure our Command component doesn't receive undefined values
-  if (!validCollaborators.length && !isLoading) {
+  if (validCollaborators.length === 0 && !isLoading) {
     return (
       <div className="grid gap-2">
         <Label>Criadores</Label>
