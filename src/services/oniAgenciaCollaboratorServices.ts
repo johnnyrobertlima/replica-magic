@@ -13,7 +13,7 @@ export async function getCollaborators(): Promise<OniAgenciaCollaborator[]> {
 
     if (error) {
       console.error('Error fetching collaborators:', error);
-      throw error;
+      return []; // Return empty array instead of throwing
     }
 
     // Safety check: ensure we always return an array, even if data is null or undefined
@@ -28,8 +28,7 @@ export async function getCollaborators(): Promise<OniAgenciaCollaborator[]> {
     return validCollaborators;
   } catch (error) {
     console.error('Exception while fetching collaborators:', error);
-    // Return empty array instead of throwing to prevent UI errors
-    return [];
+    return []; // Return empty array instead of throwing
   }
 }
 

@@ -14,7 +14,7 @@ export function useServices() {
         return await getServices();
       } catch (error) {
         console.error("Error fetching services:", error);
-        throw error;
+        return []; // Return empty array instead of throwing
       }
     },
     staleTime: CACHE_TIME,
@@ -29,16 +29,17 @@ export function useCollaborators() {
     queryKey: ['oniAgenciaCollaborators'],
     queryFn: async () => {
       try {
+        // Log the fetch attempt for debugging
         console.log("Fetching collaborators...");
         
-        // Always return a safe array
+        // Get collaborators from service
         const response = await getCollaborators();
         
-        // Ensure we always have a valid array, even if API returns null/undefined
-        const result = Array.isArray(response) ? response : [];
+        // Force array type to prevent "undefined is not iterable" errors
+        const safeResponse = Array.isArray(response) ? response : [];
         
-        // Additional safeguard: ensure all items in the array are valid objects
-        const validCollaborators = result.filter(item => 
+        // Filter out any invalid collaborator entries
+        const validCollaborators = safeResponse.filter(item => 
           item && 
           typeof item === 'object' && 
           item.id && 
@@ -50,7 +51,7 @@ export function useCollaborators() {
         return validCollaborators;
       } catch (error) {
         console.error("Error fetching collaborators:", error);
-        // Return empty array instead of throwing to prevent UI errors
+        // Return empty array to prevent UI errors
         return [];
       }
     },

@@ -9,6 +9,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { OniAgenciaCollaborator } from "@/types/oni-agencia";
+import { useState, useEffect } from "react";
 
 interface CollaboratorSelectProps {
   collaborators: OniAgenciaCollaborator[];
@@ -27,23 +28,47 @@ export function CollaboratorSelect({
   label = "Colaborador Responsável",
   errorMessage
 }: CollaboratorSelectProps) {
-  // Double safety: ensure collaborators is always an array
-  const safeCollaborators = Array.isArray(collaborators) ? collaborators : [];
+  // Local state to ensure stable rendering
+  const [safeCollaborators, setSafeCollaborators] = useState<OniAgenciaCollaborator[]>([]);
+  const [safeValue, setSafeValue] = useState<string>("null");
   
-  // Additional validation to prevent rendering errors
-  const validCollaborators = safeCollaborators.filter(
-    c => c && typeof c === 'object' && c.id && typeof c.id === 'string' && c.name
-  );
+  // Update safe collaborators when the prop changes
+  useEffect(() => {
+    if (Array.isArray(collaborators)) {
+      // Filter out invalid collaborators
+      const valid = collaborators.filter(c => 
+        c && typeof c === 'object' && c.id && c.name
+      );
+      setSafeCollaborators(valid);
+    } else {
+      setSafeCollaborators([]);
+    }
+  }, [collaborators]);
   
-  // Handle error state
-  const hasError = !isLoading && validCollaborators.length === 0;
+  // Update safe value when the prop changes
+  useEffect(() => {
+    setSafeValue(value || "null");
+  }, [value]);
+  
+  // Handle selection change with validation
+  const handleChange = (newValue: string) => {
+    // Ensure we always have a valid selection
+    if (typeof newValue === 'string') {
+      onValueChange(newValue);
+    } else {
+      onValueChange("null");
+    }
+  };
+  
+  // Error state
+  const hasError = !isLoading && safeCollaborators.length === 0;
 
   return (
     <div className="grid gap-2">
       <Label htmlFor="collaborator_id">{label}</Label>
       <Select
-        value={value || "null"}
-        onValueChange={onValueChange}
+        value={safeValue}
+        onValueChange={handleChange}
         disabled={isLoading || hasError}
       >
         <SelectTrigger 
@@ -63,12 +88,12 @@ export function CollaboratorSelect({
               <Loader2 className="h-4 w-4 animate-spin" />
               <span className="ml-2">Carregando...</span>
             </div>
-          ) : validCollaborators.length === 0 ? (
+          ) : safeCollaborators.length === 0 ? (
             <div className="p-2 text-sm text-red-500">
               Não foi possível carregar os colaboradores
             </div>
           ) : (
-            validCollaborators.map((collaborator) => (
+            safeCollaborators.map((collaborator) => (
               <SelectItem key={collaborator.id} value={collaborator.id}>
                 {collaborator.name}
               </SelectItem>

@@ -35,31 +35,33 @@ export function ContentScheduleList({
     setSelectedEvent
   } = useDateSelection();
 
-  // Filter events based on selectedCollaborator and remove "Publicado" and "Agendado" status events
+  // Ensure events is an array and filter based on selectedCollaborator
   const filteredEvents = useMemo(() => {
-    if (!Array.isArray(events)) return [];
+    // Safety check to ensure events is always an array
+    const safeEvents = Array.isArray(events) ? events : [];
     
     // First filter out events with "Publicado" and "Agendado" status
-    const withoutExcludedStatuses = events.filter(event => 
+    const withoutExcludedStatuses = safeEvents.filter(event => 
       !(event?.status?.name === "Publicado") && 
       !(event?.status?.name === "Agendado")
     );
     
+    // If no collaborator is selected, return all events
     if (!selectedCollaborator) return withoutExcludedStatuses;
     
+    // Filter events based on the selected collaborator
     return withoutExcludedStatuses.filter(event => {
       // Check if the person is a collaborator
       const isCollaborator = event.collaborator_id === selectedCollaborator;
       
-      // Check if the person is in the creators array - direct ID check
+      // Check if the person is in the creators array
       let isCreator = false;
       
       if (event.creators) {
-        // Ensure creators is always treated as an array of strings
+        // Safely handle creators which might be string, array, or undefined
         const creatorsArray = Array.isArray(event.creators) ? event.creators : 
                             (typeof event.creators === 'string' ? [event.creators] : []);
         
-        // Direct ID check
         isCreator = creatorsArray.includes(selectedCollaborator);
       }
       
@@ -68,8 +70,9 @@ export function ContentScheduleList({
     });
   }, [events, selectedCollaborator]);
   
-  // Group events by date (optimized with useMemo)
+  // Group events by date
   const groupedEvents = useMemo(() => {
+    // Safety check
     if (!Array.isArray(filteredEvents)) return {};
     
     return filteredEvents.reduce<Record<string, CalendarEvent[]>>((acc, event) => {
@@ -103,12 +106,11 @@ export function ContentScheduleList({
     setIsDialogOpen(false);
   };
 
-  // Handle PDF export - Corrigido para problemas de fuso horário
+  // Handle PDF export
   const handleExportToPdf = () => {
     try {
       const clientName = "Agenda";
       
-      // Usamos filteredEvents para garantir que exportamos exatamente o que o usuário está vendo
       exportToPdf({
         filename: `${clientName}_cronograma_conteudo.pdf`,
         content: null,

@@ -27,41 +27,50 @@ export function CreatorsMultiSelect({
   onValueChange
 }: CreatorsMultiSelectProps) {
   const [open, setOpen] = useState(false);
+  const [localCollaborators, setLocalCollaborators] = useState<OniAgenciaCollaborator[]>([]);
+  const [localValues, setLocalValues] = useState<string[]>([]);
   
-  // Ensure value is always an array
-  const safeValue = Array.isArray(value) ? value : [];
-  
-  // Double safety: ensure collaborators is always an array
-  const safeCollaborators = Array.isArray(collaborators) ? collaborators : [];
-  
-  // Additional validation
-  const validCollaborators = safeCollaborators.filter(
-    c => c && typeof c === 'object' && c.id && typeof c.id === 'string' && c.name
-  );
-  
-  // Make sure value is an array when component first mounts
+  // Initialize safely with array values
   useEffect(() => {
-    if (!Array.isArray(value)) {
-      onValueChange([]);
+    // Ensure collaborators is an array
+    if (Array.isArray(collaborators)) {
+      const validCollabs = collaborators.filter(
+        c => c && typeof c === 'object' && c.id && c.name
+      );
+      setLocalCollaborators(validCollabs);
+    } else {
+      setLocalCollaborators([]);
     }
-  }, []);
+    
+    // Ensure value is an array
+    if (Array.isArray(value)) {
+      setLocalValues([...value]);
+    } else {
+      setLocalValues([]);
+      // If parent provided non-array, fix it
+      if (value !== undefined) {
+        onValueChange([]);
+      }
+    }
+  }, [collaborators, value, onValueChange]);
   
-  // Find selected collaborators
-  const selectedCollaborators = validCollaborators.filter(
-    c => safeValue.includes(c.id)
-  );
-  
+  // Handle toggling selection
   const handleToggleSelection = (id: string) => {
     if (!id) return;
     
-    if (safeValue.includes(id)) {
-      onValueChange(safeValue.filter(v => v !== id));
-    } else {
-      onValueChange([...safeValue, id]);
-    }
+    const newValues = localValues.includes(id)
+      ? localValues.filter(v => v !== id)
+      : [...localValues, id];
+      
+    setLocalValues(newValues);
+    onValueChange(newValues);
   };
   
-  // Completely custom solution without using Command component
+  // Get selected collaborator objects
+  const selectedCollaborators = localCollaborators.filter(c => 
+    localValues.includes(c.id)
+  );
+  
   return (
     <div className="grid gap-2">
       <Label htmlFor="creators">Creators</Label>
@@ -76,9 +85,9 @@ export function CreatorsMultiSelect({
             data-testid="creators-select"
           >
             <span className="truncate">
-              {safeValue.length === 0
+              {localValues.length === 0
                 ? "Selecione os creators..."
-                : `${safeValue.length} creator${safeValue.length === 1 ? "" : "s"} selecionado${safeValue.length === 1 ? "" : "s"}`}
+                : `${localValues.length} creator${localValues.length === 1 ? "" : "s"} selecionado${localValues.length === 1 ? "" : "s"}`}
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
@@ -88,27 +97,27 @@ export function CreatorsMultiSelect({
             <div className="p-4 text-center text-sm text-muted-foreground">
               Carregando...
             </div>
-          ) : validCollaborators.length === 0 ? (
+          ) : localCollaborators.length === 0 ? (
             <div className="p-4 text-center text-sm text-muted-foreground">
               Nenhum colaborador disponível
             </div>
           ) : (
             <ScrollArea className="h-72 overflow-auto p-1">
-              {validCollaborators.map(collaborator => (
+              {localCollaborators.map(collaborator => (
                 <div 
                   key={collaborator.id}
                   className={cn(
                     "flex items-center justify-between px-2 py-2 rounded-sm cursor-pointer",
-                    safeValue.includes(collaborator.id) ? "bg-muted" : "hover:bg-muted/50"
+                    localValues.includes(collaborator.id) ? "bg-muted" : "hover:bg-muted/50"
                   )}
                   onClick={() => handleToggleSelection(collaborator.id)}
                 >
                   <div className="flex items-center gap-2">
                     <div className={cn(
                       "h-4 w-4 flex items-center justify-center rounded-sm border",
-                      safeValue.includes(collaborator.id) ? "bg-primary border-primary text-primary-foreground" : "border-primary"
+                      localValues.includes(collaborator.id) ? "bg-primary border-primary text-primary-foreground" : "border-primary"
                     )}>
-                      {safeValue.includes(collaborator.id) && (
+                      {localValues.includes(collaborator.id) && (
                         <Check className="h-3 w-3" />
                       )}
                     </div>
