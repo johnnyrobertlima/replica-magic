@@ -35,65 +35,40 @@ export function CreatorsMultiSelect({
 }: CreatorsMultiSelectProps) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [internalCollaborators, setInternalCollaborators] = useState<OniAgenciaCollaborator[]>([]);
-  const [internalValue, setInternalValue] = useState<string[]>([]);
   
-  // Initialize with safe values on mount and when props change
-  useEffect(() => {
-    // Safely set collaborators
-    if (Array.isArray(collaborators)) {
-      setInternalCollaborators(
-        collaborators.filter(c => c && typeof c === 'object' && c.id && typeof c.id === 'string' && c.name)
-      );
-    } else {
-      console.warn("CreatorsMultiSelect received non-array collaborators:", collaborators);
-      setInternalCollaborators([]);
-    }
-    
-    // Safely set value
-    if (Array.isArray(value)) {
-      setInternalValue(value);
-    } else {
-      console.warn("CreatorsMultiSelect received non-array value:", value);
-      setInternalValue([]);
-      // Update parent component if needed
-      if (value !== undefined) {
-        onValueChange([]);
-      }
-    }
-  }, [collaborators, value, onValueChange]);
+  // Ensure we have valid arrays to work with
+  const safeCollaborators = Array.isArray(collaborators) ? collaborators : [];
+  const safeValue = Array.isArray(value) ? value : [];
   
   // Find selected collaborators with safeguards
-  const selectedCollaborators = internalCollaborators.filter(c => 
-    internalValue.includes(c.id)
+  const selectedCollaborators = safeCollaborators.filter(c => 
+    c && c.id && safeValue.includes(c.id)
   );
 
   const handleSelect = (collaboratorId: string) => {
     if (!collaboratorId) return;
     
     let newValue;
-    if (internalValue.includes(collaboratorId)) {
-      newValue = internalValue.filter(id => id !== collaboratorId);
+    if (safeValue.includes(collaboratorId)) {
+      newValue = safeValue.filter(id => id !== collaboratorId);
     } else {
-      newValue = [...internalValue, collaboratorId];
+      newValue = [...safeValue, collaboratorId];
     }
-    setInternalValue(newValue);
     onValueChange(newValue);
   };
 
   const handleRemove = (collaboratorId: string) => {
     if (!collaboratorId) return;
-    const newValue = internalValue.filter(id => id !== collaboratorId);
-    setInternalValue(newValue);
+    const newValue = safeValue.filter(id => id !== collaboratorId);
     onValueChange(newValue);
   };
 
   // Filter collaborators based on search query
-  const filteredCollaborators = searchQuery && internalCollaborators.length > 0
-    ? internalCollaborators.filter(c => 
-        c.name && c.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredCollaborators = searchQuery && safeCollaborators.length > 0
+    ? safeCollaborators.filter(c => 
+        c && c.name && c.name.toLowerCase().includes(searchQuery.toLowerCase())
       )
-    : internalCollaborators;
+    : safeCollaborators;
 
   // Render different UI based on loading or empty state
   if (isLoading) {
@@ -108,7 +83,7 @@ export function CreatorsMultiSelect({
   }
 
   // Show message if no collaborators available
-  if (internalCollaborators.length === 0) {
+  if (safeCollaborators.length === 0) {
     return (
       <div className="grid gap-2">
         <Label htmlFor="creators">Creators</Label>
@@ -133,15 +108,16 @@ export function CreatorsMultiSelect({
             data-testid="creators-select"
           >
             <span className="truncate">
-              {internalValue.length === 0
+              {safeValue.length === 0
                 ? "Selecione os creators..."
-                : `${internalValue.length} creator${internalValue.length === 1 ? "" : "s"} selecionado${internalValue.length === 1 ? "" : "s"}`}
+                : `${safeValue.length} creator${safeValue.length === 1 ? "" : "s"} selecionado${safeValue.length === 1 ? "" : "s"}`}
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[300px] p-0" align="start">
-          <Command>
+          {/* Key fix: Make sure we provide all required props properly */}
+          <Command className="w-full">
             <CommandInput 
               placeholder="Buscar creators..." 
               value={searchQuery}
@@ -151,23 +127,25 @@ export function CreatorsMultiSelect({
             <CommandGroup>
               <ScrollArea className="h-64">
                 {filteredCollaborators.map((collaborator) => (
-                  <CommandItem
-                    key={collaborator.id}
-                    value={collaborator.name || ""}
-                    onSelect={() => handleSelect(collaborator.id)}
-                  >
-                    <div className="flex items-center gap-2 w-full">
-                      <div className={cn(
-                        "h-4 w-4 flex items-center justify-center rounded-sm border",
-                        internalValue.includes(collaborator.id) ? "bg-primary border-primary text-primary-foreground" : "border-primary"
-                      )}>
-                        {internalValue.includes(collaborator.id) && (
-                          <Check className="h-3 w-3" />
-                        )}
+                  collaborator && collaborator.id ? (
+                    <CommandItem
+                      key={collaborator.id}
+                      value={collaborator.name || ""}
+                      onSelect={() => handleSelect(collaborator.id)}
+                    >
+                      <div className="flex items-center gap-2 w-full">
+                        <div className={cn(
+                          "h-4 w-4 flex items-center justify-center rounded-sm border",
+                          safeValue.includes(collaborator.id) ? "bg-primary border-primary text-primary-foreground" : "border-primary"
+                        )}>
+                          {safeValue.includes(collaborator.id) && (
+                            <Check className="h-3 w-3" />
+                          )}
+                        </div>
+                        <span>{collaborator.name}</span>
                       </div>
-                      <span>{collaborator.name}</span>
-                    </div>
-                  </CommandItem>
+                    </CommandItem>
+                  ) : null
                 ))}
               </ScrollArea>
             </CommandGroup>
