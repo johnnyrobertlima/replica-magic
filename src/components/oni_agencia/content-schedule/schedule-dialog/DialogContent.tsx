@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { EventForm } from "./EventForm";
 import { StatusUpdateForm } from "./StatusUpdateForm";
@@ -9,18 +8,8 @@ import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
 import { useHistoryTab } from "../hooks/useHistoryTab";
 import { HistoryTimeline } from "./HistoryTimeline";
 import { CaptureForm } from "./CaptureForm";
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useQueryClient } from "@tanstack/react-query";
-
 interface DialogContentProps {
   selectedEvent?: CalendarEvent;
   events: CalendarEvent[];
@@ -56,7 +45,6 @@ interface DialogContentProps {
   onDateTimeChange: (name: string, value: Date | null) => void;
   onAllDayChange: (value: boolean) => void;
 }
-
 export function DialogContent({
   selectedEvent,
   events,
@@ -94,30 +82,29 @@ export function DialogContent({
 }: DialogContentProps) {
   const [activeTab, setActiveTab] = useState<string>(defaultTab);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  
-  const { historyData, isLoadingHistory, isHistoryError } = useHistoryTab(
-    currentSelectedEvent?.id,
-    !!currentSelectedEvent
-  );
-  
+  const {
+    historyData,
+    isLoadingHistory,
+    isHistoryError
+  } = useHistoryTab(currentSelectedEvent?.id, !!currentSelectedEvent);
   const queryClient = useQueryClient();
-  
   const handleRefetchResources = () => {
     console.log("Refetching resources from DialogContent");
-    queryClient.invalidateQueries({ queryKey: ['oniAgenciaCollaborators'] });
-    queryClient.invalidateQueries({ queryKey: ['oniAgenciaStatuses'] });
-    queryClient.invalidateQueries({ queryKey: ['oniAgenciaThemes'] });
-    queryClient.invalidateQueries({ queryKey: ['oniAgenciaServices'] });
+    queryClient.invalidateQueries({
+      queryKey: ['oniAgenciaCollaborators']
+    });
+    queryClient.invalidateQueries({
+      queryKey: ['oniAgenciaStatuses']
+    });
+    queryClient.invalidateQueries({
+      queryKey: ['oniAgenciaThemes']
+    });
+    queryClient.invalidateQueries({
+      queryKey: ['oniAgenciaServices']
+    });
   };
-
-  return (
-    <>
-      <Tabs 
-        defaultValue={defaultTab} 
-        value={activeTab} 
-        onValueChange={setActiveTab}
-        className="w-full"
-      >
+  return <>
+      <Tabs defaultValue={defaultTab} value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid grid-cols-4 mb-4">
           <TabsTrigger value="details">Detalhes</TabsTrigger>
           <TabsTrigger value="status" disabled={!currentSelectedEvent}>Status</TabsTrigger>
@@ -128,93 +115,40 @@ export function DialogContent({
         <ScrollArea className="h-[60vh]">
           <form onSubmit={activeTab === "status" ? onStatusUpdate : onSubmit} className="p-2">
             <TabsContent value="details">
-              <EventForm
-                formData={formData}
-                services={services}
-                collaborators={collaborators}
-                editorialLines={editorialLines}
-                products={products}
-                statuses={statuses}
-                clients={clients}
-                isLoadingServices={isLoadingServices}
-                isLoadingCollaborators={isLoadingCollaborators}
-                isLoadingEditorialLines={isLoadingEditorialLines}
-                isLoadingProducts={isLoadingProducts}
-                isLoadingStatuses={isLoadingStatuses}
-                isLoadingClients={isLoadingClients}
-                onInputChange={onInputChange}
-                onSelectChange={onSelectChange}
-                onDateChange={onDateChange}
-              />
+              <EventForm formData={formData} services={services} collaborators={collaborators} editorialLines={editorialLines} products={products} statuses={statuses} clients={clients} isLoadingServices={isLoadingServices} isLoadingCollaborators={isLoadingCollaborators} isLoadingEditorialLines={isLoadingEditorialLines} isLoadingProducts={isLoadingProducts} isLoadingStatuses={isLoadingStatuses} isLoadingClients={isLoadingClients} onInputChange={onInputChange} onSelectChange={onSelectChange} onDateChange={onDateChange} />
             </TabsContent>
             
             <TabsContent value="status">
-              {currentSelectedEvent && (
-                <StatusUpdateForm
-                  event={currentSelectedEvent}
-                  statuses={statuses}
-                  collaborators={collaborators}
-                  isLoadingStatuses={isLoadingStatuses}
-                  isLoadingCollaborators={isLoadingCollaborators}
-                  selectedStatus={formData.status_id || ""}
-                  selectedCollaborator={formData.collaborator_id || ""}
-                  note={formData.description || ""}
-                  isSubmitting={isSubmitting}
-                  onStatusChange={(value) => onSelectChange("status_id", value)}
-                  onCollaboratorChange={(value) => onSelectChange("collaborator_id", value)}
-                  onNoteChange={(value) => onInputChange({ target: { name: "description", value } } as React.ChangeEvent<HTMLTextAreaElement>)}
-                  onRetryLoadResources={handleRefetchResources}
-                />
-              )}
+              {currentSelectedEvent && <StatusUpdateForm event={currentSelectedEvent} statuses={statuses} collaborators={collaborators} isLoadingStatuses={isLoadingStatuses} isLoadingCollaborators={isLoadingCollaborators} selectedStatus={formData.status_id || ""} selectedCollaborator={formData.collaborator_id || ""} note={formData.description || ""} isSubmitting={isSubmitting} onStatusChange={value => onSelectChange("status_id", value)} onCollaboratorChange={value => onSelectChange("collaborator_id", value)} onNoteChange={value => onInputChange({
+              target: {
+                name: "description",
+                value
+              }
+            } as React.ChangeEvent<HTMLTextAreaElement>)} onRetryLoadResources={handleRefetchResources} />}
             </TabsContent>
             
             <TabsContent value="history">
-              <HistoryTimeline
-                historyData={historyData}
-                isLoading={isLoadingHistory}
-                isError={isHistoryError}
-              />
+              <HistoryTimeline historyData={historyData} isLoading={isLoadingHistory} isError={isHistoryError} />
             </TabsContent>
             
             <TabsContent value="capture">
-              <CaptureForm
-                captureDate={formData.capture_date}
-                captureEndDate={formData.capture_end_date}
-                isAllDay={formData.is_all_day === true}
-                location={formData.location}
-                onCaptureChange={onDateTimeChange}
-                onLocationChange={onInputChange}
-                onAllDayChange={onAllDayChange}
-              />
+              <CaptureForm captureDate={formData.capture_date} captureEndDate={formData.capture_end_date} isAllDay={formData.is_all_day === true} location={formData.location} onCaptureChange={onDateTimeChange} onLocationChange={onInputChange} onAllDayChange={onAllDayChange} />
             </TabsContent>
             
             <div className="flex justify-end gap-2 mt-8">
-              {currentSelectedEvent && activeTab !== "history" && (
-                <Button
-                  type="button"
-                  variant="destructive"
-                  onClick={() => setIsDeleteConfirmOpen(true)}
-                  disabled={isSubmitting || isDeleting}
-                >
+              {currentSelectedEvent && activeTab !== "history" && <Button type="button" variant="destructive" onClick={() => setIsDeleteConfirmOpen(true)} disabled={isSubmitting || isDeleting}>
                   Excluir
-                </Button>
-              )}
+                </Button>}
               
               <div className="flex-1"></div>
               
-              <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting || isDeleting}>
+              <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting || isDeleting} className="text-rose-50 text-base">
                 Cancelar
               </Button>
               
-              {activeTab !== "history" && (
-                <Button 
-                  type="submit" 
-                  disabled={isSubmitting || isDeleting || 
-                    (activeTab === "status" && (!formData.status_id || formData.status_id === "null"))}
-                >
+              {activeTab !== "history" && <Button type="submit" disabled={isSubmitting || isDeleting || activeTab === "status" && (!formData.status_id || formData.status_id === "null")}>
                   {activeTab === "status" ? "Atualizar Status" : currentSelectedEvent ? "Salvar" : "Criar"}
-                </Button>
-              )}
+                </Button>}
             </div>
           </form>
         </ScrollArea>
@@ -236,6 +170,5 @@ export function DialogContent({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
-  );
+    </>;
 }
