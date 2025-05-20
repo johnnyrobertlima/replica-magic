@@ -1,13 +1,6 @@
-
 import React, { useState, useEffect } from "react";
 import { OniAgenciaCollaborator } from "@/types/oni-agencia";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command";
+import { Search } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -86,7 +79,7 @@ export function CreatorsMultiSelect({
     onValueChange(newValue);
   };
 
-  // Find selected collaborators
+  // Find selected collaborators - with extra safety checks
   const selectedCollaborators = internalCollaborators.filter(c => 
     internalValue.includes(c.id)
   );
@@ -144,37 +137,52 @@ export function CreatorsMultiSelect({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[300px] p-0" align="start">
-          <Command>
-            <CommandInput 
-              placeholder="Buscar creators..." 
+          {/* CommandInput is now wrapped in a div to prevent direct rendering in the DOM */}
+          <div className="border-b px-3 flex items-center">
+            <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+            <input
+              className="flex h-11 w-full bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+              placeholder="Buscar creators..."
               value={searchQuery}
-              onValueChange={setSearchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
-            <CommandEmpty>Nenhum creator encontrado.</CommandEmpty>
-            <CommandGroup>
-              <ScrollArea className="h-64">
-                {filteredCollaborators.map((collaborator) => (
-                  <CommandItem
-                    key={collaborator.id}
-                    value={collaborator.name || ""}
-                    onSelect={() => handleSelect(collaborator.id)}
-                  >
-                    <div className="flex items-center gap-2 w-full">
-                      <div className={cn(
-                        "h-4 w-4 flex items-center justify-center rounded-sm border",
-                        internalValue.includes(collaborator.id) ? "bg-primary border-primary text-primary-foreground" : "border-primary"
-                      )}>
-                        {internalValue.includes(collaborator.id) && (
-                          <Check className="h-3 w-3" />
-                        )}
+          </div>
+          
+          {/* Use simple div structure for filtered items instead of Command component */}
+          <div className="max-h-[300px] overflow-y-auto">
+            <div className="p-1">
+              {filteredCollaborators.length === 0 ? (
+                <div className="py-6 text-center text-sm text-muted-foreground">
+                  Nenhum creator encontrado.
+                </div>
+              ) : (
+                <ScrollArea className="h-64">
+                  {filteredCollaborators.map((collaborator) => (
+                    <div
+                      key={collaborator.id}
+                      onClick={() => handleSelect(collaborator.id)}
+                      className={cn(
+                        "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground",
+                        internalValue.includes(collaborator.id) ? "bg-accent text-accent-foreground" : "hover:bg-accent hover:text-accent-foreground"
+                      )}
+                    >
+                      <div className="flex items-center gap-2 w-full">
+                        <div className={cn(
+                          "h-4 w-4 flex items-center justify-center rounded-sm border",
+                          internalValue.includes(collaborator.id) ? "bg-primary border-primary text-primary-foreground" : "border-primary"
+                        )}>
+                          {internalValue.includes(collaborator.id) && (
+                            <Check className="h-3 w-3" />
+                          )}
+                        </div>
+                        <span>{collaborator.name}</span>
                       </div>
-                      <span>{collaborator.name}</span>
                     </div>
-                  </CommandItem>
-                ))}
-              </ScrollArea>
-            </CommandGroup>
-          </Command>
+                  ))}
+                </ScrollArea>
+              )}
+            </div>
+          </div>
         </PopoverContent>
       </Popover>
       

@@ -1,23 +1,16 @@
 
 import React, { useState, useEffect } from "react";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Check, ChevronsUpDown, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { Check, ChevronsUpDown, X } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface CreatorsSelectMultipleProps {
   collaborators: any[];
@@ -33,58 +26,83 @@ export function CreatorsSelectMultiple({
   onValueChange
 }: CreatorsSelectMultipleProps) {
   const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [safeCollaborators, setSafeCollaborators] = useState<any[]>([]);
+  const [safeValue, setSafeValue] = useState<string[]>([]);
   
-  // Ensure collaborators is always a valid array
-  const safeCollaborators = Array.isArray(collaborators) ? collaborators : [];
-  
-  // Ensure value is always a valid array
-  const safeValue = Array.isArray(value) ? value : [];
-  
-  // Filter to ensure we only have valid collaborators before rendering
-  const validCollaborators = safeCollaborators.filter(
-    c => c && typeof c === 'object' && c.id && typeof c.id === 'string'
-  );
-  
-  // Ensure value is always an array when component mounts or value prop changes
+  // Ensure values are valid on mount and when props change
   useEffect(() => {
-    if (!Array.isArray(value)) {
-      console.warn("CreatorsSelectMultiple received non-array value:", value);
-      onValueChange([]);
+    try {
+      // Validate collaborators
+      const validCollabs = Array.isArray(collaborators)
+        ? collaborators.filter(c => c && typeof c === "object" && c.id)
+        : [];
+      
+      setSafeCollaborators(validCollabs);
+      
+      // Validate value 
+      const validValue = Array.isArray(value) ? [...value] : [];
+      setSafeValue(validValue);
+      
+      // Update parent if we received invalid value
+      if (!Array.isArray(value)) {
+        onValueChange([]);
+      }
+    } catch (error) {
+      console.error("Error in CreatorsSelectMultiple useEffect:", error);
+      setSafeCollaborators([]);
+      setSafeValue([]);
     }
-  }, [value, onValueChange]);
+  }, [collaborators, value, onValueChange]);
   
-  const handleSelect = (id: string) => {
+  // Handle toggling selection
+  const handleToggleSelection = (id: string) => {
     if (!id) return;
     
-    if (safeValue.includes(id)) {
-      onValueChange(safeValue.filter(item => item !== id));
-    } else {
-      onValueChange([...safeValue, id]);
+    try {
+      const newValues = safeValue.includes(id)
+        ? safeValue.filter(v => v !== id)
+        : [...safeValue, id];
+        
+      setSafeValue(newValues);
+      onValueChange(newValues);
+    } catch (error) {
+      console.error("Error toggling selection:", error);
     }
   };
   
-  const removeItem = (id: string) => {
-    if (!id) return;
-    onValueChange(safeValue.filter(item => item !== id));
-  };
+  // Filter collaborators based on search query
+  const filteredCollaborators = searchQuery 
+    ? safeCollaborators.filter(c => 
+        c.name && typeof c.name === "string" && 
+        c.name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : safeCollaborators;
   
-  const getCollaboratorName = (id: string) => {
-    if (!id) return "Unknown";
-    const collaborator = validCollaborators.find(c => c.id === id);
-    return collaborator?.name || id;
-  };
-  
-  console.log("CreatorsSelectMultiple - Collaborators:", collaborators);
-  console.log("CreatorsSelectMultiple - Valid collaborators:", validCollaborators);
-  console.log("CreatorsSelectMultiple - Is Loading:", isLoading);
-  
-  // Return a basic message if there are no collaborators and we're not loading
-  if (validCollaborators.length === 0 && !isLoading) {
+  // Get selected collaborator objects
+  const selectedCollaborators = safeCollaborators.filter(c => 
+    safeValue.includes(c.id)
+  );
+
+  // If loading, show loading state
+  if (isLoading) {
     return (
       <div className="grid gap-2">
-        <Label>Criadores</Label>
-        <div className="text-sm text-muted-foreground">
-          No collaborators available
+        <Label>Creators</Label>
+        <Button variant="outline" disabled className="w-full justify-start">
+          <span className="text-muted-foreground">Carregando...</span>
+        </Button>
+      </div>
+    );
+  }
+
+  // If no collaborators, show empty state
+  if (safeCollaborators.length === 0) {
+    return (
+      <div className="grid gap-2">
+        <Label>Creators</Label>
+        <div className="text-sm text-muted-foreground border rounded p-2">
+          Nenhum colaborador disponível
         </div>
       </div>
     );
@@ -92,69 +110,90 @@ export function CreatorsSelectMultiple({
   
   return (
     <div className="grid gap-2">
-      <Label>Criadores</Label>
-      <div className="space-y-2">
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <Button 
-              variant="outline" 
-              role="combobox" 
-              aria-expanded={open} 
-              className="w-full justify-between text-left" 
-              disabled={isLoading}
-            >
-              Selecionar criadores
-              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-full p-0">
-            {isLoading ? (
-              <div className="p-4 text-center text-sm text-muted-foreground">
-                Carregando...
-              </div>
-            ) : validCollaborators.length > 0 ? (
-              <Command>
-                <CommandInput placeholder="Buscar criador..." />
-                <CommandEmpty>Nenhum criador encontrado.</CommandEmpty>
-                <CommandGroup className="max-h-64 overflow-y-auto">
-                  {validCollaborators.map(collaborator => (
-                    <CommandItem 
-                      key={collaborator.id} 
-                      value={collaborator.name || ""} 
-                      onSelect={() => {
-                        handleSelect(collaborator.id);
-                      }}
-                    >
-                      <Check className={cn(
-                        "mr-2 h-4 w-4", 
-                        safeValue.includes(collaborator.id) ? "opacity-100" : "opacity-0"
-                      )} />
-                      {collaborator.name || "Unnamed"}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </Command>
-            ) : (
-              <div className="p-4 text-center text-sm text-muted-foreground">
-                Nenhum criador disponível.
-              </div>
-            )}
-          </PopoverContent>
-        </Popover>
-
-        {safeValue.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-2">
-            {safeValue.map(id => (
-              <Badge key={id} variant="secondary" className="px-2 py-1 bg-emerald-200">
-                {getCollaboratorName(id)}
-                <button type="button" className="ml-1 outline-none" onClick={() => removeItem(id)}>
-                  <X className="h-3 w-3" />
-                </button>
-              </Badge>
-            ))}
+      <Label>Creators</Label>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="justify-between w-full"
+            disabled={isLoading}
+            data-testid="creators-select"
+          >
+            <span className="truncate">
+              {safeValue.length === 0
+                ? "Selecione os creators..."
+                : `${safeValue.length} creator${safeValue.length === 1 ? "" : "s"} selecionado${safeValue.length === 1 ? "" : "s"}`}
+            </span>
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[300px] p-0" align="start">
+          {/* Search input */}
+          <div className="border-b px-3 flex items-center">
+            <input
+              placeholder="Buscar creators..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex h-11 w-full bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
+            />
           </div>
-        )}
-      </div>
+          
+          {/* Collaborator list */}
+          <ScrollArea className="h-72 overflow-auto p-1">
+            {filteredCollaborators.length === 0 ? (
+              <div className="py-6 text-center text-sm">
+                Nenhum creator encontrado.
+              </div>
+            ) : (
+              filteredCollaborators.map(collaborator => (
+                <div 
+                  key={collaborator.id}
+                  className={cn(
+                    "flex items-center justify-between px-2 py-2 rounded-sm cursor-pointer",
+                    safeValue.includes(collaborator.id) ? "bg-muted" : "hover:bg-muted/50"
+                  )}
+                  onClick={() => handleToggleSelection(collaborator.id)}
+                >
+                  <div className="flex items-center gap-2">
+                    <div className={cn(
+                      "h-4 w-4 flex items-center justify-center rounded-sm border",
+                      safeValue.includes(collaborator.id) ? "bg-primary border-primary text-primary-foreground" : "border-primary"
+                    )}>
+                      {safeValue.includes(collaborator.id) && (
+                        <Check className="h-3 w-3" />
+                      )}
+                    </div>
+                    <span>{collaborator.name}</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </ScrollArea>
+        </PopoverContent>
+      </Popover>
+      
+      {selectedCollaborators.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-2">
+          {selectedCollaborators.map(collaborator => (
+            <Badge
+              key={collaborator.id}
+              variant="secondary"
+              className="flex items-center gap-1"
+            >
+              {collaborator.name}
+              <button
+                type="button"
+                className="rounded-full outline-none focus:outline-none"
+                onClick={() => handleToggleSelection(collaborator.id)}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
