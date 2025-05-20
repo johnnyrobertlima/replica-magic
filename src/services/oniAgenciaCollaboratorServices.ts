@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { OniAgenciaCollaborator, CollaboratorFormData } from "@/types/oni-agencia";
 
@@ -16,8 +17,10 @@ export async function getCollaborators(): Promise<OniAgenciaCollaborator[]> {
       throw error;
     }
 
-    console.log(`Successfully fetched ${data?.length || 0} collaborators from database`);
-    return data || [];
+    // Ensure we always return an array, even if data is null or undefined
+    const collaborators = Array.isArray(data) ? data : [];
+    console.log(`Successfully fetched ${collaborators.length} collaborators from database`);
+    return collaborators;
   } catch (error) {
     console.error('Exception while fetching collaborators:', error);
     throw error;

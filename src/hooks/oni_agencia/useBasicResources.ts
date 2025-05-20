@@ -30,12 +30,21 @@ export function useCollaborators() {
     queryFn: async () => {
       try {
         console.log("Fetching collaborators...");
-        const result = await getCollaborators();
-        console.log(`Successfully fetched ${result?.length || 0} collaborators:`, result);
-        return result || [];
+        // Initialize with empty array as fallback
+        let result = [];
+        
+        // Only assign if the response is valid
+        const response = await getCollaborators();
+        if (Array.isArray(response)) {
+          result = response;
+        }
+        
+        console.log(`Successfully fetched ${result.length} collaborators:`, result);
+        return result;
       } catch (error) {
         console.error("Error fetching collaborators:", error);
-        return []; // Return empty array instead of throwing to prevent UI errors
+        // Return empty array instead of throwing to prevent UI errors
+        return [];
       }
     },
     staleTime: CACHE_TIME,

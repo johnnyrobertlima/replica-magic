@@ -15,20 +15,28 @@ interface CollaboratorSelectProps {
   isLoading: boolean;
   value: string | null;
   onValueChange: (value: string) => void;
-  label?: string; // Make label optional with a default value
-  errorMessage?: string; // Add error message prop
+  label?: string;
+  errorMessage?: string;
 }
 
 export function CollaboratorSelect({ 
-  collaborators, 
+  collaborators = [], 
   isLoading, 
   value, 
   onValueChange,
-  label = "Colaborador Responsável", // Default value
+  label = "Colaborador Responsável",
   errorMessage
 }: CollaboratorSelectProps) {
+  // Ensure collaborators is an array
+  const safeCollaborators = Array.isArray(collaborators) ? collaborators : [];
+  
+  // Validate collection items to prevent rendering errors
+  const validCollaborators = safeCollaborators.filter(
+    c => c && typeof c === 'object' && c.id && typeof c.id === 'string' && c.name
+  );
+  
   // Handle case when collaborators fail to load but we're not in loading state anymore
-  const hasError = !isLoading && collaborators.length === 0;
+  const hasError = !isLoading && validCollaborators.length === 0;
 
   return (
     <div className="grid gap-2">
@@ -55,12 +63,12 @@ export function CollaboratorSelect({
               <Loader2 className="h-4 w-4 animate-spin" />
               <span className="ml-2">Carregando...</span>
             </div>
-          ) : collaborators.length === 0 ? (
+          ) : validCollaborators.length === 0 ? (
             <div className="p-2 text-sm text-red-500">
               Não foi possível carregar os colaboradores
             </div>
           ) : (
-            collaborators.map((collaborator) => (
+            validCollaborators.map((collaborator) => (
               <SelectItem key={collaborator.id} value={collaborator.id}>
                 {collaborator.name}
               </SelectItem>
