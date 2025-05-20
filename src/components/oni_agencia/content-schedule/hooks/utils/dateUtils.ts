@@ -25,3 +25,9 @@ export function parseDateString(dateString: string): Date | null {
     return null;
   }
 }
+
+/**
+ * Alias for parseDateString to maintain backward compatibility
+ * This function was referenced in useDndContext but was missing from this file
+ */
+export const parseStringToDate = parseDateString;

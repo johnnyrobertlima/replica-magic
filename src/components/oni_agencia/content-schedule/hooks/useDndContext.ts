@@ -6,7 +6,7 @@ import { CalendarEvent } from "@/types/oni-agencia";
 import { format } from "date-fns";
 import { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import { useDragAndDrop } from "./useDragAndDrop";
-import { parseStringToDate } from "./utils/dateUtils";
+import { parseDateString } from "./utils/dateUtils";
 
 interface UseDndContextProps {
   clientId: string;
