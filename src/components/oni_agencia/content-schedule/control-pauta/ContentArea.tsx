@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { Calendar } from "@/components/oni_agencia/content-schedule/calendar/Calendar";
 import { ContentScheduleList } from "@/components/oni_agencia/content-schedule/ContentScheduleList";
 import { CalendarEvent } from "@/types/oni-agencia";
@@ -30,6 +30,7 @@ interface ContentAreaProps {
   showLoadingState: boolean;
   isCollapsed: boolean;
   onManualRefetch?: () => void;
+  onDialogStateChange?: (open: boolean) => void;
 }
 
 export function ContentArea({ 
@@ -45,9 +46,9 @@ export function ContentArea({
   fetchNextPage,
   showLoadingState,
   isCollapsed,
-  onManualRefetch
+  onManualRefetch,
+  onDialogStateChange
 }: ContentAreaProps) {
-  const [dialogOpen, setDialogOpen] = useState(false);
   const {
     selectedEvent,
     selectedDate,
@@ -66,6 +67,20 @@ export function ContentArea({
     year,
     onManualRefetch
   });
+
+  const handleDialogOpen = (open: boolean) => {
+    handleDialogOpenChange(open);
+    if (onDialogStateChange) {
+      onDialogStateChange(open);
+    }
+  };
+
+  const handleDialogCloseWithNotify = () => {
+    handleDialogClose();
+    if (onDialogStateChange) {
+      onDialogStateChange(false);
+    }
+  };
   
   // Configure sensors with zero delay for better responsiveness
   const sensors = useCustomDndSensors(0, 3);
@@ -139,8 +154,8 @@ export function ContentArea({
             selectedDate={selectedDate}
             selectedEvent={selectedEvent}
             isDialogOpen={isDialogOpen}
-            onDialogOpenChange={handleDialogOpenChange}
-            onDialogClose={handleDialogClose}
+            onDialogOpenChange={handleDialogOpen}
+            onDialogClose={handleDialogCloseWithNotify}
             onManualRefetch={onManualRefetch}
           />
 

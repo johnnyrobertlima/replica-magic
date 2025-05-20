@@ -17,6 +17,7 @@ const OniAgenciaControlePauta = () => {
   const [selectedCollaborator, setSelectedCollaborator] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
   const { isCollapsed, toggle: toggleFilters } = useCollapsible(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   
   // UseCallback for better performance
   const handleClientChange = useCallback((clientId: string) => {
@@ -69,16 +70,16 @@ const OniAgenciaControlePauta = () => {
   
   // Polling for automatic periodic updates
   useEffect(() => {
-    // Refetch data every 30 seconds
+    // Refetch data every 30 seconds when dialog is closed
     const intervalId = setInterval(() => {
-      if (selectedClient) {
+      if (selectedClient && !isDialogOpen) {
         console.log("Executando atualização automática periódica");
         handleManualRefetch();
       }
-    }, 30000); // 30 seconds
-    
+    }, 30000);
+
     return () => clearInterval(intervalId);
-  }, [queryClient, selectedClient, handleManualRefetch]);
+  }, [queryClient, selectedClient, handleManualRefetch, isDialogOpen]);
   
   return (
     <main className="container-fluid p-0 max-w-full">
@@ -123,6 +124,7 @@ const OniAgenciaControlePauta = () => {
           showLoadingState={showLoadingState}
           isCollapsed={isCollapsed}
           onManualRefetch={handleManualRefetch}
+          onDialogStateChange={setIsDialogOpen}
         />
       </div>
     </main>
