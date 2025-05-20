@@ -35,40 +35,70 @@ export function CreatorsMultiSelect({
 }: CreatorsMultiSelectProps) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [internalCollaborators, setInternalCollaborators] = useState<OniAgenciaCollaborator[]>([]);
+  const [internalValue, setInternalValue] = useState<string[]>([]);
   
-  // Ensure we have valid arrays to work with
-  const safeCollaborators = Array.isArray(collaborators) ? collaborators : [];
-  const safeValue = Array.isArray(value) ? value : [];
-  
-  // Find selected collaborators with safeguards
-  const selectedCollaborators = safeCollaborators.filter(c => 
-    c && c.id && safeValue.includes(c.id)
-  );
+  // Initialize safely with validated data
+  useEffect(() => {
+    console.log("CreatorsSelectMultiple - Is Loading:", isLoading);
+    
+    // Ensure collaborators is an array and filter out invalid entries
+    if (Array.isArray(collaborators)) {
+      const validCollaborators = collaborators.filter(c => 
+        c && typeof c === 'object' && c.id && typeof c.id === 'string' && c.name
+      );
+      setInternalCollaborators(validCollaborators);
+    } else {
+      console.warn("Collaborators is not an array:", collaborators);
+      setInternalCollaborators([]);
+    }
+    
+    // Ensure value is an array
+    if (Array.isArray(value)) {
+      setInternalValue([...value]);
+    } else {
+      console.warn("Value is not an array:", value);
+      setInternalValue([]);
+      // If value is undefined or not an array, update parent with empty array
+      if (value !== undefined) {
+        onValueChange([]);
+      }
+    }
+  }, [collaborators, value, onValueChange]);
 
   const handleSelect = (collaboratorId: string) => {
     if (!collaboratorId) return;
     
     let newValue;
-    if (safeValue.includes(collaboratorId)) {
-      newValue = safeValue.filter(id => id !== collaboratorId);
+    if (internalValue.includes(collaboratorId)) {
+      newValue = internalValue.filter(id => id !== collaboratorId);
     } else {
-      newValue = [...safeValue, collaboratorId];
+      newValue = [...internalValue, collaboratorId];
     }
+    
+    setInternalValue(newValue);
     onValueChange(newValue);
   };
 
   const handleRemove = (collaboratorId: string) => {
     if (!collaboratorId) return;
-    const newValue = safeValue.filter(id => id !== collaboratorId);
+    
+    const newValue = internalValue.filter(id => id !== collaboratorId);
+    setInternalValue(newValue);
     onValueChange(newValue);
   };
 
+  // Find selected collaborators
+  const selectedCollaborators = internalCollaborators.filter(c => 
+    internalValue.includes(c.id)
+  );
+
   // Filter collaborators based on search query
-  const filteredCollaborators = searchQuery && safeCollaborators.length > 0
-    ? safeCollaborators.filter(c => 
-        c && c.name && c.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredCollaborators = searchQuery 
+    ? internalCollaborators.filter(c => 
+        c.name && c.name.toLowerCase().includes(searchQuery.toLowerCase())
       )
-    : safeCollaborators;
+    : internalCollaborators;
 
   // Render different UI based on loading or empty state
   if (isLoading) {
@@ -83,7 +113,7 @@ export function CreatorsMultiSelect({
   }
 
   // Show message if no collaborators available
-  if (safeCollaborators.length === 0) {
+  if (internalCollaborators.length === 0) {
     return (
       <div className="grid gap-2">
         <Label htmlFor="creators">Creators</Label>
@@ -108,16 +138,15 @@ export function CreatorsMultiSelect({
             data-testid="creators-select"
           >
             <span className="truncate">
-              {safeValue.length === 0
+              {internalValue.length === 0
                 ? "Selecione os creators..."
-                : `${safeValue.length} creator${safeValue.length === 1 ? "" : "s"} selecionado${safeValue.length === 1 ? "" : "s"}`}
+                : `${internalValue.length} creator${internalValue.length === 1 ? "" : "s"} selecionado${internalValue.length === 1 ? "" : "s"}`}
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[300px] p-0" align="start">
-          {/* Key fix: Make sure we provide all required props properly */}
-          <Command className="w-full">
+          <Command>
             <CommandInput 
               placeholder="Buscar creators..." 
               value={searchQuery}
@@ -127,25 +156,23 @@ export function CreatorsMultiSelect({
             <CommandGroup>
               <ScrollArea className="h-64">
                 {filteredCollaborators.map((collaborator) => (
-                  collaborator && collaborator.id ? (
-                    <CommandItem
-                      key={collaborator.id}
-                      value={collaborator.name || ""}
-                      onSelect={() => handleSelect(collaborator.id)}
-                    >
-                      <div className="flex items-center gap-2 w-full">
-                        <div className={cn(
-                          "h-4 w-4 flex items-center justify-center rounded-sm border",
-                          safeValue.includes(collaborator.id) ? "bg-primary border-primary text-primary-foreground" : "border-primary"
-                        )}>
-                          {safeValue.includes(collaborator.id) && (
-                            <Check className="h-3 w-3" />
-                          )}
-                        </div>
-                        <span>{collaborator.name}</span>
+                  <CommandItem
+                    key={collaborator.id}
+                    value={collaborator.name || ""}
+                    onSelect={() => handleSelect(collaborator.id)}
+                  >
+                    <div className="flex items-center gap-2 w-full">
+                      <div className={cn(
+                        "h-4 w-4 flex items-center justify-center rounded-sm border",
+                        internalValue.includes(collaborator.id) ? "bg-primary border-primary text-primary-foreground" : "border-primary"
+                      )}>
+                        {internalValue.includes(collaborator.id) && (
+                          <Check className="h-3 w-3" />
+                        )}
                       </div>
-                    </CommandItem>
-                  ) : null
+                      <span>{collaborator.name}</span>
+                    </div>
+                  </CommandItem>
                 ))}
               </ScrollArea>
             </CommandGroup>
