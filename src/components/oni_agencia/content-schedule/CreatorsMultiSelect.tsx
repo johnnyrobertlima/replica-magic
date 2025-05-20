@@ -34,20 +34,18 @@ export function CreatorsMultiSelect({
   onValueChange
 }: CreatorsMultiSelectProps) {
   const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   
   // Ensure value is always a valid array, this fixes the "undefined is not iterable" error
   const safeValue = Array.isArray(value) ? value : [];
   
-  // Make sure collaborators is always an array
-  const safeCollaborators = Array.isArray(collaborators) ? collaborators : [];
-  
-  // Filter to ensure we only have valid collaborators before rendering
-  const validCollaborators = safeCollaborators.filter(
-    c => c && typeof c === 'object' && c.id && typeof c.id === 'string' && c.name
-  );
+  // Make sure collaborators is always an array with valid entries only
+  const safeCollaborators = Array.isArray(collaborators) 
+    ? collaborators.filter(c => c && typeof c === 'object' && c.id && typeof c.id === 'string' && c.name)
+    : [];
   
   // Find selected collaborators with safeguards against undefined values
-  const selectedCollaborators = validCollaborators.filter(c => 
+  const selectedCollaborators = safeCollaborators.filter(c => 
     safeValue.includes(c.id)
   );
 
@@ -74,12 +72,31 @@ export function CreatorsMultiSelect({
     onValueChange(safeValue.filter(id => id !== collaboratorId));
   };
 
-  // Add safe rendering condition with fallback for when there are no collaborators
-  if (validCollaborators.length === 0 && !isLoading) {
+  // Filter collaborators based on search query
+  const filteredCollaborators = searchQuery
+    ? safeCollaborators.filter(c => 
+        c.name && c.name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : safeCollaborators;
+
+  // Render different UI based on loading or empty state
+  if (isLoading) {
     return (
       <div className="grid gap-2">
         <Label htmlFor="creators">Creators</Label>
-        <div className="text-sm text-muted-foreground">
+        <Button variant="outline" disabled className="w-full justify-start">
+          <span className="text-muted-foreground">Carregando colaboradores...</span>
+        </Button>
+      </div>
+    );
+  }
+
+  // Show message if no collaborators available
+  if (safeCollaborators.length === 0) {
+    return (
+      <div className="grid gap-2">
+        <Label htmlFor="creators">Creators</Label>
+        <div className="text-sm text-muted-foreground border rounded p-2">
           Nenhum colaborador disponível.
         </div>
       </div>
@@ -95,7 +112,7 @@ export function CreatorsMultiSelect({
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className="justify-between"
+            className="justify-between w-full"
             disabled={isLoading}
             data-testid="creators-select"
           >
@@ -107,42 +124,38 @@ export function CreatorsMultiSelect({
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-0">
-          {isLoading ? (
-            <div className="p-4 text-center text-sm text-muted-foreground">
-              Carregando...
-            </div>
-          ) : validCollaborators.length > 0 ? (
-            <Command>
-              <CommandInput placeholder="Buscar creators..." />
-              <CommandEmpty>Nenhum creator encontrado.</CommandEmpty>
-              <CommandGroup>
-                <ScrollArea className="h-64">
-                  {validCollaborators.map(collaborator => (
-                    <CommandItem
-                      key={collaborator.id}
-                      value={collaborator.name || ""}
-                      onSelect={() => handleSelect(collaborator.id)}
-                    >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          safeValue.includes(collaborator.id) 
-                            ? "opacity-100"
-                            : "opacity-0"
+        <PopoverContent className="w-[300px] p-0" align="start">
+          <Command>
+            <CommandInput 
+              placeholder="Buscar creators..." 
+              value={searchQuery}
+              onValueChange={setSearchQuery}
+            />
+            <CommandEmpty>Nenhum creator encontrado.</CommandEmpty>
+            <CommandGroup>
+              <ScrollArea className="h-64">
+                {filteredCollaborators.map(collaborator => (
+                  <CommandItem
+                    key={collaborator.id}
+                    value={collaborator.name || ""}
+                    onSelect={() => handleSelect(collaborator.id)}
+                  >
+                    <div className="flex items-center gap-2 w-full">
+                      <div className={cn(
+                        "h-4 w-4 flex items-center justify-center rounded-sm border",
+                        safeValue.includes(collaborator.id) ? "bg-primary border-primary text-primary-foreground" : "border-primary"
+                      )}>
+                        {safeValue.includes(collaborator.id) && (
+                          <Check className="h-3 w-3" />
                         )}
-                      />
-                      {collaborator.name}
-                    </CommandItem>
-                  ))}
-                </ScrollArea>
-              </CommandGroup>
-            </Command>
-          ) : (
-            <div className="p-4 text-center text-sm text-muted-foreground">
-              Nenhum colaborador disponível.
-            </div>
-          )}
+                      </div>
+                      <span>{collaborator.name}</span>
+                    </div>
+                  </CommandItem>
+                ))}
+              </ScrollArea>
+            </CommandGroup>
+          </Command>
         </PopoverContent>
       </Popover>
       

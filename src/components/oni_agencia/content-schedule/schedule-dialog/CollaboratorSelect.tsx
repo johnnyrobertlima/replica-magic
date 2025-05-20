@@ -34,20 +34,32 @@ export function CollaboratorSelect({
   
   // Update safe collaborators when the prop changes
   useEffect(() => {
+    // Ensure collaborators is always an array and validate its contents
     if (Array.isArray(collaborators)) {
       // Filter out invalid collaborators
       const valid = collaborators.filter(c => 
-        c && typeof c === 'object' && c.id && c.name
+        c && 
+        typeof c === 'object' && 
+        c.id && 
+        typeof c.id === 'string' && 
+        c.name && 
+        typeof c.name === 'string'
       );
       setSafeCollaborators(valid);
     } else {
+      console.warn("Collaborators prop is not an array:", collaborators);
       setSafeCollaborators([]);
     }
   }, [collaborators]);
   
   // Update safe value when the prop changes
   useEffect(() => {
-    setSafeValue(value || "null");
+    // Ensure we have a valid string value
+    if (value && typeof value === 'string') {
+      setSafeValue(value);
+    } else {
+      setSafeValue("null");
+    }
   }, [value]);
   
   // Handle selection change with validation
@@ -56,6 +68,7 @@ export function CollaboratorSelect({
     if (typeof newValue === 'string') {
       onValueChange(newValue);
     } else {
+      console.warn("Invalid value selected:", newValue);
       onValueChange("null");
     }
   };

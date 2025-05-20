@@ -32,25 +32,33 @@ export function CreatorsMultiSelect({
   
   // Initialize safely with array values
   useEffect(() => {
-    // Ensure collaborators is an array
-    if (Array.isArray(collaborators)) {
-      const validCollabs = collaborators.filter(
-        c => c && typeof c === 'object' && c.id && c.name
-      );
-      setLocalCollaborators(validCollabs);
-    } else {
-      setLocalCollaborators([]);
-    }
-    
-    // Ensure value is an array
-    if (Array.isArray(value)) {
-      setLocalValues([...value]);
-    } else {
-      setLocalValues([]);
-      // If parent provided non-array, fix it
-      if (value !== undefined) {
-        onValueChange([]);
+    try {
+      // Ensure collaborators is an array
+      if (Array.isArray(collaborators)) {
+        const validCollabs = collaborators.filter(
+          c => c && typeof c === 'object' && c.id && c.name
+        );
+        setLocalCollaborators(validCollabs);
+      } else {
+        console.warn("Collaborators prop is not an array:", collaborators);
+        setLocalCollaborators([]);
       }
+      
+      // Ensure value is an array
+      if (Array.isArray(value)) {
+        setLocalValues([...value]);
+      } else {
+        console.warn("Value prop is not an array:", value);
+        setLocalValues([]);
+        // If parent provided non-array, fix it
+        if (value !== undefined) {
+          onValueChange([]);
+        }
+      }
+    } catch (error) {
+      console.error("Error in CreatorsMultiSelect useEffect:", error);
+      setLocalCollaborators([]);
+      setLocalValues([]);
     }
   }, [collaborators, value, onValueChange]);
   
@@ -58,18 +66,46 @@ export function CreatorsMultiSelect({
   const handleToggleSelection = (id: string) => {
     if (!id) return;
     
-    const newValues = localValues.includes(id)
-      ? localValues.filter(v => v !== id)
-      : [...localValues, id];
-      
-    setLocalValues(newValues);
-    onValueChange(newValues);
+    try {
+      const newValues = localValues.includes(id)
+        ? localValues.filter(v => v !== id)
+        : [...localValues, id];
+        
+      setLocalValues(newValues);
+      onValueChange(newValues);
+    } catch (error) {
+      console.error("Error toggling selection:", error);
+    }
   };
   
   // Get selected collaborator objects
   const selectedCollaborators = localCollaborators.filter(c => 
     localValues.includes(c.id)
   );
+
+  // If loading, show loading state
+  if (isLoading) {
+    return (
+      <div className="grid gap-2">
+        <Label htmlFor="creators">Creators</Label>
+        <Button variant="outline" disabled className="w-full justify-start">
+          <span className="text-muted-foreground">Carregando...</span>
+        </Button>
+      </div>
+    );
+  }
+
+  // If no collaborators, show empty state
+  if (localCollaborators.length === 0) {
+    return (
+      <div className="grid gap-2">
+        <Label htmlFor="creators">Creators</Label>
+        <div className="text-sm text-muted-foreground border rounded p-2">
+          Nenhum colaborador disponível
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="grid gap-2">
@@ -93,40 +129,30 @@ export function CreatorsMultiSelect({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[300px] p-0" align="start">
-          {isLoading ? (
-            <div className="p-4 text-center text-sm text-muted-foreground">
-              Carregando...
-            </div>
-          ) : localCollaborators.length === 0 ? (
-            <div className="p-4 text-center text-sm text-muted-foreground">
-              Nenhum colaborador disponível
-            </div>
-          ) : (
-            <ScrollArea className="h-72 overflow-auto p-1">
-              {localCollaborators.map(collaborator => (
-                <div 
-                  key={collaborator.id}
-                  className={cn(
-                    "flex items-center justify-between px-2 py-2 rounded-sm cursor-pointer",
-                    localValues.includes(collaborator.id) ? "bg-muted" : "hover:bg-muted/50"
-                  )}
-                  onClick={() => handleToggleSelection(collaborator.id)}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className={cn(
-                      "h-4 w-4 flex items-center justify-center rounded-sm border",
-                      localValues.includes(collaborator.id) ? "bg-primary border-primary text-primary-foreground" : "border-primary"
-                    )}>
-                      {localValues.includes(collaborator.id) && (
-                        <Check className="h-3 w-3" />
-                      )}
-                    </div>
-                    <span>{collaborator.name}</span>
+          <ScrollArea className="h-72 overflow-auto p-1">
+            {localCollaborators.map(collaborator => (
+              <div 
+                key={collaborator.id}
+                className={cn(
+                  "flex items-center justify-between px-2 py-2 rounded-sm cursor-pointer",
+                  localValues.includes(collaborator.id) ? "bg-muted" : "hover:bg-muted/50"
+                )}
+                onClick={() => handleToggleSelection(collaborator.id)}
+              >
+                <div className="flex items-center gap-2">
+                  <div className={cn(
+                    "h-4 w-4 flex items-center justify-center rounded-sm border",
+                    localValues.includes(collaborator.id) ? "bg-primary border-primary text-primary-foreground" : "border-primary"
+                  )}>
+                    {localValues.includes(collaborator.id) && (
+                      <Check className="h-3 w-3" />
+                    )}
                   </div>
+                  <span>{collaborator.name}</span>
                 </div>
-              ))}
-            </ScrollArea>
-          )}
+              </div>
+            ))}
+          </ScrollArea>
         </PopoverContent>
       </Popover>
       

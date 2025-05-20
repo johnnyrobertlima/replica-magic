@@ -11,7 +11,9 @@ export function useServices() {
     queryKey: ['oniAgenciaServices'],
     queryFn: async () => {
       try {
-        return await getServices();
+        const services = await getServices();
+        // Ensure we always return an array
+        return Array.isArray(services) ? services : [];
       } catch (error) {
         console.error("Error fetching services:", error);
         return []; // Return empty array instead of throwing
@@ -35,8 +37,15 @@ export function useCollaborators() {
         // Get collaborators from service
         const response = await getCollaborators();
         
-        // Force array type to prevent "undefined is not iterable" errors
+        // Force array type and handle undefined response
+        if (!response) {
+          console.warn("Collaborators response was undefined or null");
+          return [];
+        }
+        
+        // Ensure response is always an array
         const safeResponse = Array.isArray(response) ? response : [];
+        console.log(`Received ${safeResponse.length} collaborators before validation`);
         
         // Filter out any invalid collaborator entries
         const validCollaborators = safeResponse.filter(item => 

@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { OniAgenciaCollaborator, CollaboratorFormData } from "@/types/oni-agencia";
 
@@ -17,6 +18,11 @@ export async function getCollaborators(): Promise<OniAgenciaCollaborator[]> {
     }
 
     // Safety check: ensure we always return an array, even if data is null or undefined
+    if (!data) {
+      console.warn("Collaborator data is null or undefined");
+      return [];
+    }
+    
     const collaborators = Array.isArray(data) ? data : [];
     
     // Additional validation to ensure all items are valid

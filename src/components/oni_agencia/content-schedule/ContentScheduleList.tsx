@@ -38,12 +38,17 @@ export function ContentScheduleList({
   // Ensure events is an array and filter based on selectedCollaborator
   const filteredEvents = useMemo(() => {
     // Safety check to ensure events is always an array
-    const safeEvents = Array.isArray(events) ? events : [];
+    if (!Array.isArray(events)) {
+      console.warn("Events is not an array:", events);
+      return [];
+    }
     
     // First filter out events with "Publicado" and "Agendado" status
-    const withoutExcludedStatuses = safeEvents.filter(event => 
-      !(event?.status?.name === "Publicado") && 
-      !(event?.status?.name === "Agendado")
+    const withoutExcludedStatuses = events.filter(event => 
+      event && 
+      event.status && 
+      !(event.status.name === "Publicado") && 
+      !(event.status.name === "Agendado")
     );
     
     // If no collaborator is selected, return all events
@@ -51,6 +56,8 @@ export function ContentScheduleList({
     
     // Filter events based on the selected collaborator
     return withoutExcludedStatuses.filter(event => {
+      if (!event) return false;
+      
       // Check if the person is a collaborator
       const isCollaborator = event.collaborator_id === selectedCollaborator;
       
@@ -72,9 +79,6 @@ export function ContentScheduleList({
   
   // Group events by date
   const groupedEvents = useMemo(() => {
-    // Safety check
-    if (!Array.isArray(filteredEvents)) return {};
-    
     return filteredEvents.reduce<Record<string, CalendarEvent[]>>((acc, event) => {
       if (!event?.scheduled_date) return acc;
       
@@ -96,8 +100,12 @@ export function ContentScheduleList({
       console.error("Cannot handle event click: event has no scheduled_date", event);
       return;
     }
-    const date = parseISO(event.scheduled_date);
-    handleEventClick(event, date);
+    try {
+      const date = parseISO(event.scheduled_date);
+      handleEventClick(event, date);
+    } catch (error) {
+      console.error("Failed to parse scheduled_date:", event.scheduled_date, error);
+    }
   };
   
   const handleDialogClose = () => {
@@ -133,7 +141,7 @@ export function ContentScheduleList({
   };
 
   // Show empty state if no events
-  if (sortedDates.length === 0) {
+  if (!filteredEvents.length || sortedDates.length === 0) {
     return <EmptyState />;
   }
 
@@ -149,7 +157,7 @@ export function ContentScheduleList({
             <EventDateSection
               key={dateString}
               dateString={dateString}
-              events={groupedEvents[dateString]}
+              events={groupedEvents[dateString] || []}
               onEventClick={handleEventItemClick}
             />
           ))}
