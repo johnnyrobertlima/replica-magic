@@ -63,7 +63,7 @@ export function CreatorsSelectMultiple({
     return collaborator?.name || id;
   };
   
-  // Add additional error checking to ensure our Command component doesn't receive undefined values
+  // Don't render the Command component if there are no valid collaborators
   if (validCollaborators.length === 0 && !isLoading) {
     return (
       <div className="grid gap-2">
@@ -93,7 +93,11 @@ export function CreatorsSelectMultiple({
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-full p-0">
-            {validCollaborators.length > 0 ? (
+            {isLoading ? (
+              <div className="p-4 text-center text-sm text-muted-foreground">
+                Carregando...
+              </div>
+            ) : validCollaborators.length > 0 ? (
               <Command>
                 <CommandInput placeholder="Buscar criador..." />
                 <CommandEmpty>Nenhum criador encontrado.</CommandEmpty>
@@ -117,7 +121,7 @@ export function CreatorsSelectMultiple({
               </Command>
             ) : (
               <div className="p-4 text-center text-sm text-muted-foreground">
-                {isLoading ? "Carregando..." : "Nenhum criador disponível."}
+                Nenhum criador disponível.
               </div>
             )}
           </PopoverContent>

@@ -51,6 +51,14 @@ export function CreatorsMultiSelect({
     safeValue.includes(c.id)
   );
 
+  // Use useEffect to ensure value is always an array, preventing "undefined is not iterable" errors
+  useEffect(() => {
+    if (!Array.isArray(value)) {
+      console.warn("CreatorsMultiSelect received non-array value:", value);
+      onValueChange([]);
+    }
+  }, [value, onValueChange]);
+
   const handleSelect = (collaboratorId: string) => {
     if (!collaboratorId) return;
     
@@ -65,14 +73,6 @@ export function CreatorsMultiSelect({
     if (!collaboratorId) return;
     onValueChange(safeValue.filter(id => id !== collaboratorId));
   };
-
-  // Use useEffect to ensure value is always an array, preventing "undefined is not iterable" errors
-  useEffect(() => {
-    if (!Array.isArray(value)) {
-      console.warn("CreatorsMultiSelect received non-array value:", value);
-      onValueChange([]);
-    }
-  }, [value, onValueChange]);
 
   // Add safe rendering condition with fallback for when there are no collaborators
   if (validCollaborators.length === 0 && !isLoading) {
@@ -108,7 +108,11 @@ export function CreatorsMultiSelect({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[300px] p-0">
-          {validCollaborators.length > 0 ? (
+          {isLoading ? (
+            <div className="p-4 text-center text-sm text-muted-foreground">
+              Carregando...
+            </div>
+          ) : validCollaborators.length > 0 ? (
             <Command>
               <CommandInput placeholder="Buscar creators..." />
               <CommandEmpty>Nenhum creator encontrado.</CommandEmpty>
@@ -136,7 +140,7 @@ export function CreatorsMultiSelect({
             </Command>
           ) : (
             <div className="p-4 text-center text-sm text-muted-foreground">
-              {isLoading ? "Carregando..." : "Nenhum colaborador disponível."}
+              Nenhum colaborador disponível.
             </div>
           )}
         </PopoverContent>

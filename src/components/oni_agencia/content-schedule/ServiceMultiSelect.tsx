@@ -42,14 +42,23 @@ export function ServiceMultiSelect({
       </div>
     );
   }
-  
-  // Create service options with thorough validation
+
+  // Create safe service options with thorough validation to prevent undefined values
   const serviceOptions: Option[] = safeServices
     .filter(service => service && typeof service === 'object' && service.id && service.name)
     .map(service => ({
       value: service.id,
       label: service.name
     }));
+  
+  // Return MultiSelect with validated data or a fallback if no valid options
+  if (serviceOptions.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-10 border rounded-md bg-white px-3">
+        <span className="text-sm text-gray-500">Nenhum serviço disponível</span>
+      </div>
+    );
+  }
   
   return (
     <MultiSelect
