@@ -22,7 +22,7 @@ export function useScheduleHistory(scheduleId: string) {
       
       try {
         // Fetch the history entries
-        const { data: historyEntries, error } = await supabase
+        const { data: rawHistoryEntries, error } = await supabase
           .from('oni_agencia_schedule_history')
           .select(`
             id,
@@ -35,6 +35,8 @@ export function useScheduleHistory(scheduleId: string) {
           `)
           .eq('schedule_id', scheduleId)
           .order('created_at', { ascending: false });
+
+        const historyEntries = Array.isArray(rawHistoryEntries) ? rawHistoryEntries : [];
           
         if (error) {
           console.error("Error fetching schedule history:", error);
