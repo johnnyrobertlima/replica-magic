@@ -32,7 +32,7 @@ export function useCollaborators() {
     queryFn: async () => {
       try {
         // Log the fetch attempt for debugging
-        console.log("Fetching collaborators...");
+        console.log("Fetching collaborators from useCollaborators hook");
         
         // Get collaborators from service
         const response = await getCollaborators();

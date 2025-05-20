@@ -36,35 +36,38 @@ export function CreatorsMultiSelect({
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   
-  // Ensure value is always a valid array, this fixes the "undefined is not iterable" error
-  const safeValue = Array.isArray(value) ? value : [];
+  // Ensure values are valid
+  useEffect(() => {
+    // If value is undefined or not an array, initialize with empty array
+    if (!Array.isArray(value)) {
+      console.warn("CreatorsMultiSelect received invalid value prop:", value);
+      onValueChange([]);
+    }
+  }, [value, onValueChange]);
   
-  // Make sure collaborators is always an array with valid entries only
+  // Make sure collaborators is always an array with valid entries
   const safeCollaborators = Array.isArray(collaborators) 
     ? collaborators.filter(c => c && typeof c === 'object' && c.id && typeof c.id === 'string' && c.name)
     : [];
+  
+  // Ensure value is always a valid array
+  const safeValue = Array.isArray(value) ? value : [];
   
   // Find selected collaborators with safeguards against undefined values
   const selectedCollaborators = safeCollaborators.filter(c => 
     safeValue.includes(c.id)
   );
 
-  // Use useEffect to ensure value is always an array, preventing "undefined is not iterable" errors
-  useEffect(() => {
-    if (!Array.isArray(value)) {
-      console.warn("CreatorsMultiSelect received non-array value:", value);
-      onValueChange([]);
-    }
-  }, [value, onValueChange]);
-
   const handleSelect = (collaboratorId: string) => {
     if (!collaboratorId) return;
     
+    let newValue;
     if (safeValue.includes(collaboratorId)) {
-      onValueChange(safeValue.filter(id => id !== collaboratorId));
+      newValue = safeValue.filter(id => id !== collaboratorId);
     } else {
-      onValueChange([...safeValue, collaboratorId]);
+      newValue = [...safeValue, collaboratorId];
     }
+    onValueChange(newValue);
   };
 
   const handleRemove = (collaboratorId: string) => {
@@ -134,7 +137,7 @@ export function CreatorsMultiSelect({
             <CommandEmpty>Nenhum creator encontrado.</CommandEmpty>
             <CommandGroup>
               <ScrollArea className="h-64">
-                {filteredCollaborators.map(collaborator => (
+                {filteredCollaborators?.map(collaborator => (
                   <CommandItem
                     key={collaborator.id}
                     value={collaborator.name || ""}
