@@ -1,33 +1,27 @@
 
-import { format, parse } from "date-fns";
+import { format } from 'date-fns';
 
 /**
- * Converts a string date to a Date object
- * Handles different date formats including ISO strings with time
- * Returns null for undefined/null/empty dateString
+ * Formats a Date object as YYYY-MM-DD string
  */
-export const parseStringToDate = (dateString: string | null | undefined): Date | null => {
-  if (!dateString) return null;
-
+export function formatDateToString(date: Date): string {
   try {
-    if (dateString.includes('T')) {
-      // If ISO format with time, use parse with a different format
-      return parse(dateString, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx", new Date());
-    }
-    
-    // Parse YYYY-MM-DD format to Date object using parse to avoid timezone issues
-    return parse(dateString, 'yyyy-MM-dd', new Date());
-  } catch (e) {
-    console.error("Error parsing date string:", dateString, e);
+    return format(date, 'yyyy-MM-dd');
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return format(new Date(), 'yyyy-MM-dd'); // Fallback to current date
+  }
+}
+
+/**
+ * Safely parses a date string to Date object
+ */
+export function parseDateString(dateString: string): Date | null {
+  try {
+    if (!dateString) return null;
+    return new Date(dateString);
+  } catch (error) {
+    console.error('Error parsing date string:', error);
     return null;
   }
-};
-
-/**
- * Format a Date object to YYYY-MM-DD string
- * Safely handles null/undefined dates
- */
-export const formatDateToString = (date: Date | null | undefined): string => {
-  if (!date) return '';
-  return format(date, "yyyy-MM-dd");
-};
+}

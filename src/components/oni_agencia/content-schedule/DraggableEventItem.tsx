@@ -8,20 +8,20 @@ import { MoveIcon } from "lucide-react";
 interface DraggableEventItemProps {
   event: CalendarEvent;
   onClick: (e: React.MouseEvent) => void;
-  dateContext?: string; // Adicionado para garantir chaves únicas
+  dateContext?: string; // Added to ensure unique keys
 }
 
 export function DraggableEventItem({ event, onClick, dateContext }: DraggableEventItemProps) {
   const [longPressTriggered, setLongPressTriggered] = useState(false);
   const pressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Checagem de segurança para eventos sem ID
+  // Safety check for events without ID
   if (!event?.id) {
     console.error("Attempted to render draggable event with no ID:", event);
     return <EventItem event={event} onClick={onClick} />;
   }
   
-  // Criar um ID único que inclui a data de contexto para evitar colisões
+  // Create a unique draggable ID that includes date context to avoid collisions
   const uniqueDraggableId = dateContext 
     ? `event-${event.id}-${dateContext}` 
     : `event-${event.id}`;
@@ -32,7 +32,7 @@ export function DraggableEventItem({ event, onClick, dateContext }: DraggableEve
     data: {
       event,
       type: 'calendar-event',
-      originalId: event.id // Mantém o ID original para operações de banco de dados
+      originalId: event.id // Keep original ID for database operations
     }
   });
   
@@ -44,13 +44,13 @@ export function DraggableEventItem({ event, onClick, dateContext }: DraggableEve
     boxShadow: isDragging ? '0 5px 10px rgba(0,0,0,0.15)' : 'none',
     position: isDragging ? 'absolute' : 'relative' as any,
     cursor: isDragging ? 'grabbing' : 'grab',
-    userSelect: 'none' as const,  // Impede seleção de texto
-    WebkitUserSelect: 'none' as const, // Para Safari
-    MozUserSelect: 'none' as const, // Para Firefox
-    msUserSelect: 'none' as const // Para IE/Edge
+    userSelect: 'none' as const,  // Prevent text selection
+    WebkitUserSelect: 'none' as const, // For Safari
+    MozUserSelect: 'none' as const, // For Firefox
+    msUserSelect: 'none' as const // For IE/Edge
   } : {
     cursor: 'grab',
-    userSelect: 'none' as const,  // Impede seleção de texto
+    userSelect: 'none' as const,  // Prevent text selection
     WebkitUserSelect: 'none' as const,
     MozUserSelect: 'none' as const,
     msUserSelect: 'none' as const
@@ -79,9 +79,9 @@ export function DraggableEventItem({ event, onClick, dateContext }: DraggableEve
     };
   }, [isDragging, event.id, event.title, uniqueDraggableId]);
 
-  // Prevenir padrão no mouse down para evitar seleção de texto
+  // Prevent default on mouse down to avoid text selection
   const handleMouseDown = (e: React.MouseEvent) => {
-    // Isso impede a seleção de texto ao arrastar
+    // This prevents text selection when dragging
     e.preventDefault();
   };
 
