@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useMemo } from "react";
 import { format, parse, isValid, addMinutes } from "date-fns";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
@@ -49,19 +48,21 @@ export function useScheduleFormState({
   
   const [formData, setFormData] = useState<ContentScheduleFormData>(() => {
     // Initialize form data with proper date values
+    const initialDate = localSelectedDate ? new Date(localSelectedDate) : new Date();
+    
     return {
       client_id: clientId,
       service_id: "",
       collaborator_id: null,
       title: "",
       description: null,
-      scheduled_date: prioritizeCaptureDate ? null : localSelectedDate,
+      scheduled_date: prioritizeCaptureDate ? initialDate : initialDate, // Always set a default date
       execution_phase: null,
       editorial_line_id: null,
       product_id: null,
       status_id: null,
       creators: [],
-      capture_date: prioritizeCaptureDate ? localSelectedDate : null,
+      capture_date: prioritizeCaptureDate ? initialDate : null,
       capture_end_date: null,
       is_all_day: true,
       location: null
@@ -93,10 +94,25 @@ export function useScheduleFormState({
       // Set the flag to true to prevent multiple updates
       hasUpdatedRef.current = true;
       
-      setFormData(prev => ({
-        ...prev,
-        [prioritizeCaptureDate ? 'capture_date' : 'scheduled_date']: localSelectedDate
-      }));
+      setFormData(prev => {
+        const updatedData: Partial<ContentScheduleFormData> = {};
+        
+        // Always update both dates to ensure we have valid dates
+        if (prioritizeCaptureDate) {
+          updatedData.capture_date = localSelectedDate;
+          // Also update scheduled_date as a fallback for database requirements
+          updatedData.scheduled_date = localSelectedDate;
+        } else {
+          updatedData.scheduled_date = localSelectedDate;
+          
+          // If there's no capture date yet, set it too
+          if (!prev.capture_date) {
+            updatedData.capture_date = localSelectedDate;
+          }
+        }
+        
+        return { ...prev, ...updatedData };
+      });
       
       // Reset the flag after a while to allow future updates if needed
       setTimeout(() => {
@@ -116,7 +132,7 @@ export function useScheduleFormState({
       collaborator_id: null,
       title: "",
       description: null,
-      scheduled_date: null,
+      scheduled_date: localSelectedDate, // Always set scheduled_date
       execution_phase: null,
       editorial_line_id: null,
       product_id: null,
@@ -131,8 +147,6 @@ export function useScheduleFormState({
     // Set the appropriate date field based on prioritizeCaptureDate
     if (prioritizeCaptureDate) {
       initialData.capture_date = localSelectedDate;
-    } else {
-      initialData.scheduled_date = localSelectedDate;
     }
     
     setFormData(initialData);
@@ -287,17 +301,24 @@ export function useScheduleFormState({
           [name]: value
         };
         
-        // Synchronize scheduled_date with capture_date if prioritizeCaptureDate is true
-        if (prioritizeCaptureDate && !formData.scheduled_date) {
-          updatedData.scheduled_date = value;
-        }
+        // Always synchronize scheduled_date with capture_date 
+        // This is critical - we always need a scheduled_date for the database
+        updatedData.scheduled_date = value;
         
         setFormData(prev => ({ ...prev, ...updatedData }));
       } else {
         setFormData(prev => ({ ...prev, [name]: value }));
       }
     } else {
-      setFormData(prev => ({ ...prev, [name]: null }));
+      // If clearing capture_date, make sure scheduled_date remains
+      if (name === "capture_date") {
+        setFormData(prev => ({ ...prev, [name]: null }));
+      } else if (name === "scheduled_date" && formData.capture_date) {
+        // If clearing scheduled_date but we have capture_date, use that instead
+        setFormData(prev => ({ ...prev, scheduled_date: formData.capture_date }));
+      } else {
+        setFormData(prev => ({ ...prev, [name]: null }));
+      }
     }
     
     setTimeout(() => {
@@ -332,35 +353,32 @@ export function useScheduleFormState({
         setFormData(prev => ({ ...prev, ...updatedData }));
       } else if (name === "capture_date") {
         const updatedData: Partial<ContentScheduleFormData> = {
-          [name]: value
+          [name]: value,
+          // Always ensure scheduled_date is set - critical for database requirement
+          scheduled_date: value 
         };
         
-        // If scheduled_date exists, synchronize it preserving time
-        if (formData.scheduled_date && prioritizeCaptureDate) {
-          let scheduledDate = new Date(value);
-          if (formData.scheduled_date instanceof Date) {
-            scheduledDate.setHours(formData.scheduled_date.getHours());
-            scheduledDate.setMinutes(formData.scheduled_date.getMinutes());
-          }
-          updatedData.scheduled_date = scheduledDate;
+        // If capture_date is set and there's no end date yet (for non-all-day events)
+        if (name === "capture_date" && !formData.capture_end_date && !formData.is_all_day) {
+          // Create a default end time 30 minutes after start
+          updatedData.capture_end_date = addMinutes(value, 30);
         }
         
         setFormData(prev => ({ ...prev, ...updatedData }));
-      } else if (name === "capture_date" && !formData.capture_end_date && !formData.is_all_day) {
-        // Se definindo uma data de início com hora específica e não existe data de término,
-        // crie automaticamente uma data de término 30 minutos depois
-        const endDate = addMinutes(value, 30);
-        
-        setFormData(prev => ({ 
-          ...prev, 
-          [name]: value,
-          capture_end_date: endDate
-        }));
       } else {
         setFormData(prev => ({ ...prev, [name]: value }));
       }
     } else {
-      setFormData(prev => ({ ...prev, [name]: null }));
+      // Special handling for null values
+      if (name === "capture_date") {
+        // If clearing capture_date but scheduled_date exists, keep that one
+        setFormData(prev => ({ ...prev, [name]: null }));
+      } else if (name === "scheduled_date" && formData.capture_date) {
+        // If clearing scheduled_date but we have capture_date, use that
+        setFormData(prev => ({ ...prev, scheduled_date: formData.capture_date }));
+      } else {
+        setFormData(prev => ({ ...prev, [name]: null }));
+      }
     }
     
     setTimeout(() => {

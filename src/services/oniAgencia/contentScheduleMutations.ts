@@ -21,6 +21,13 @@ const formatDateTimeForAPI = (date: Date | null, isAllDay: boolean | null): stri
 // Create a new content schedule with optional capture data
 export async function createContentSchedule(data: ContentScheduleFormData) {
   try {
+    // Ensure scheduled_date is set, using capture_date as fallback if needed
+    const scheduledDate = data.scheduled_date || data.capture_date;
+    
+    if (!scheduledDate) {
+      throw new Error("Either scheduled_date or capture_date must be provided");
+    }
+    
     // Create a schedule data object without the capture-specific fields
     const scheduleData = {
       client_id: data.client_id,
@@ -28,7 +35,7 @@ export async function createContentSchedule(data: ContentScheduleFormData) {
       collaborator_id: data.collaborator_id || null,
       title: data.title || null,
       description: data.description || null,
-      scheduled_date: formatDateForAPI(data.scheduled_date),
+      scheduled_date: formatDateForAPI(scheduledDate), // Use the determined date
       execution_phase: data.execution_phase || null,
       editorial_line_id: data.editorial_line_id || null,
       product_id: data.product_id || null,
@@ -88,7 +95,14 @@ export async function updateContentSchedule(
     if (data.collaborator_id !== undefined) scheduleUpdateData.collaborator_id = data.collaborator_id;
     if (data.title !== undefined) scheduleUpdateData.title = data.title;
     if (data.description !== undefined) scheduleUpdateData.description = data.description;
-    if (data.scheduled_date !== undefined) scheduleUpdateData.scheduled_date = formatDateForAPI(data.scheduled_date);
+    
+    // For scheduled_date, use capture_date as fallback if needed
+    if (data.scheduled_date !== undefined) {
+      scheduleUpdateData.scheduled_date = formatDateForAPI(data.scheduled_date);
+    } else if (data.capture_date !== undefined && !data.scheduled_date) {
+      scheduleUpdateData.scheduled_date = formatDateForAPI(data.capture_date);
+    }
+    
     if (data.execution_phase !== undefined) scheduleUpdateData.execution_phase = data.execution_phase;
     if (data.editorial_line_id !== undefined) scheduleUpdateData.editorial_line_id = data.editorial_line_id;
     if (data.product_id !== undefined) scheduleUpdateData.product_id = data.product_id;
