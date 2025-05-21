@@ -138,8 +138,8 @@ export function EventEditor({
               isDeleting={isDeleting}
               onCancel={onCancel}
               onDelete={onDelete}
-              onSubmit={handleSubmitForm}
               isEditing={true}
+              saveLabel="Salvar"
             />
           </DialogFooter>
         </TabsContent>
@@ -163,9 +163,8 @@ export function EventEditor({
               isSubmitting={isSubmitting}
               isDeleting={false}
               onCancel={onCancel}
-              onSubmit={handleStatusUpdateForm}
-              submitLabel="Atualizar Status"
               isEditing={true}
+              submitLabel="Atualizar Status"
               showDelete={false}
             />
           </DialogFooter>
@@ -198,8 +197,8 @@ export function EventEditor({
               isDeleting={isDeleting}
               onCancel={onCancel}
               onDelete={onDelete}
-              onSubmit={handleSubmitForm}
               isEditing={true}
+              saveLabel="Salvar"
             />
           </DialogFooter>
         </TabsContent>
