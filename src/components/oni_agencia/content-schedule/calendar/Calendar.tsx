@@ -4,7 +4,6 @@ import { ContentCalendar } from "@/components/oni_agencia/content-schedule/Conte
 import { CalendarEvent } from "@/types/oni-agencia";
 import { format, isToday } from "date-fns";
 import { useDraggable } from "@dnd-kit/core";
-import { CalendarWeekHeader } from "./CalendarWeekHeader";
 import { CalendarDayCell } from "./CalendarDayCell";
 
 interface CalendarProps {
@@ -85,6 +84,11 @@ export function Calendar({
         prioritizeCaptureDate={prioritizeCaptureDate}
         onDateSelect={onDateSelect}
         onEventClick={onEventClick}
+        selectedDate={selectedDate}
+        selectedEvent={selectedEvent}
+        isDialogOpen={isDialogOpen}
+        onDialogOpenChange={onDialogOpenChange}
+        onDialogClose={onDialogClose}
       />
     );
   }
