@@ -40,8 +40,13 @@ export function CapturasContent({
   onManualRefetch,
   onDialogStateChange
 }: CapturasContentProps) {
-  // Filter events to only those with capture_date
-  const captureEvents = filteredSchedules.filter(event => event.capture_date);
+  // Filter events to only those with capture_date and status "Liberado para Captura"
+  const captureEvents = filteredSchedules.filter(event => 
+    event.capture_date && event.status?.name === "Liberado para Captura"
+  );
+  
+  // Adicione um log para depuração
+  console.log(`CapturasContent - Filtered ${captureEvents.length} capture events with status "Liberado para Captura"`);
   
   // Configure sensors with zero delay for better responsiveness
   const sensors = useCustomDndSensors(0, 3);

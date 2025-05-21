@@ -30,7 +30,7 @@ export function CalendarDay({
   const dayOfWeek = getDay(date);
   const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
   
-  // Filter events for this day based on useCaptureDate flag
+  // Filter events for this day based on useCaptureDate flag and status
   const dayEvents = useMemo(() => {
     if (!Array.isArray(events)) return [];
     
@@ -41,7 +41,16 @@ export function CalendarDay({
       // Filter by capture_date when useCaptureDate is true
       filteredEvents = events.filter((event) => {
         if (!event?.capture_date) return false;
-        return event.capture_date.split('T')[0] === dateStr;
+        
+        // Extract only the date part (without the hour) from capture_date
+        const captureDateOnly = event.capture_date.split('T')[0];
+        
+        // Verificar se o status é "Liberado para Captura"
+        const isLiberadoParaCaptura = event?.status?.name === "Liberado para Captura";
+        
+        // Retornar true se a data de captura corresponder à data do dia do calendário
+        // E o status for "Liberado para Captura"
+        return captureDateOnly === dateStr && isLiberadoParaCaptura;
       });
     } else {
       // Filter by scheduled_date (original behavior)

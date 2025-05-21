@@ -45,9 +45,12 @@ export function useCapturasFiltering(
   
   // Monitor loading state to know when all data is fully loaded
   useEffect(() => {
+    // Set isFullyLoaded to true when:
+    // 1. We have data AND
+    // 2. Either there's no more pages OR we're not fetching next page
     if (infiniteSchedules?.pages && !hasNextPage && !isFetchingNextPage && !isLoadingSchedules) {
       setIsFullyLoaded(true);
-      console.log("All content schedules for the month fully loaded in capturas!");
+      console.log("All content schedules for the month fully loaded!");
     } else {
       setIsFullyLoaded(false);
     }
@@ -59,49 +62,61 @@ export function useCapturasFiltering(
     return infiniteSchedules.pages.flatMap(page => page.data) as CalendarEvent[];
   }, [infiniteSchedules]);
   
-  // Filter events by capture_date AND selected services
+  // Filter events by selected services and status "Liberado para Captura"
   const filteredCaptureSchedules = useMemo(() => {
     if (selectedServiceIds.length === 0) {
       return []; // If no services selected, show nothing
     }
     
-    // First filter by service IDs
+    // Primeiro filtramos por serviço
     const serviceFiltered = selectedServiceIds.length === services.length
-      ? flattenedSchedules // If all services selected, no service filtering needed
+      ? flattenedSchedules // Se todos os serviços selecionados, não filtrar
       : flattenedSchedules.filter(event => selectedServiceIds.includes(event.service_id));
     
-    // Then filter to only include events with capture_date
-    return serviceFiltered.filter(event => event.capture_date !== null);
+    // Agora garantimos que apenas eventos com data de captura E status "Liberado para Captura" sejam retornados
+    const finalFiltered = serviceFiltered.filter(event => {
+      const hasCaptureDate = !!event.capture_date;
+      const isLiberadoParaCaptura = event.status?.name === "Liberado para Captura";
+      
+      return hasCaptureDate && isLiberadoParaCaptura;
+    });
+    
+    // Log para diagnóstico
+    console.log(`useCapturasFiltering - Found ${finalFiltered.length} events with capture date and status "Liberado para Captura"`);
+    
+    return finalFiltered;
   }, [flattenedSchedules, selectedServiceIds, services.length]);
   
   const handleServicesChange = useCallback((serviceIds: string[]) => {
     setSelectedServiceIds(serviceIds);
-    console.log("Services filter changed in capturas:", serviceIds);
+    // Apply filtering immediately
+    console.log("Services filter changed:", serviceIds);
   }, []);
 
-  // Função para atualização manual com debounce
+  // Função para atualização manual com debounce para evitar múltiplas chamadas
   const handleManualRefetch = useCallback(() => {
     const now = Date.now();
+    // Evita múltiplas atualizações em um curto período de tempo (limite de 2 segundos)
     if (now - lastRefetchTime < 2000) {
       console.log("Ignorando atualização manual (muito próxima da última atualização)");
       return;
     }
     
     setLastRefetchTime(now);
-    setIsFullyLoaded(false);
-    console.log("Executando atualização manual dos dados de captura");
+    setIsFullyLoaded(false); // Reset loading state on manual refresh
+    console.log("Executando atualização manual dos dados");
     
     refetchSchedules().then(() => {
       toast({
         title: "Dados atualizados",
-        description: "Os agendamentos de captura foram atualizados com sucesso.",
+        description: "Os agendamentos foram atualizados com sucesso.",
       });
     }).catch(error => {
       console.error("Erro ao atualizar os dados:", error);
       toast({
         variant: "destructive",
         title: "Erro na atualização",
-        description: "Não foi possível atualizar os agendamentos de captura.",
+        description: "Não foi possível atualizar os agendamentos.",
       });
     });
   }, [refetchSchedules, lastRefetchTime, toast]);
