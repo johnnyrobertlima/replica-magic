@@ -1,75 +1,46 @@
 
+import { supabase } from "@/integrations/supabase/client";
 import { CalendarEvent } from "@/types/oni-agencia";
-import { getBaseQuery } from "./baseQuery";
 
-export async function getContentSchedules(clientId: string, year: number, month: number): Promise<CalendarEvent[]> {
+// Get content schedules for a specific client, year and month
+export async function getContentSchedules(
+  clientId: string,
+  year: number,
+  month: number
+): Promise<CalendarEvent[]> {
   try {
-    // Calculate the start and end dates for the given month
+    // Calculate start and end date for the requested month
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0); // Last day of the month
 
-    if (!clientId) {
-      console.error('Error in getContentSchedules: Invalid clientId');
-      return [];
-    }
+    // Format dates as YYYY-MM-DD for Postgres
+    const startDateString = startDate.toISOString().split("T")[0];
+    const endDateString = endDate.toISOString().split("T")[0];
 
-    console.log(`Fetching events for date range:`, {
-      clientId,
-      startDate: startDate.toISOString().split('T')[0],
-      endDate: endDate.toISOString().split('T')[0]
-    });
-
-    const { data, error } = await getBaseQuery()
-      .eq('client_id', clientId)
-      .gte('scheduled_date', startDate.toISOString().split('T')[0])
-      .lte('scheduled_date', endDate.toISOString().split('T')[0]);
+    // Use the view that joins content schedules with captures
+    const { data, error } = await supabase
+      .from("oni_agencia_schedules_with_captures")
+      .select(`
+        *,
+        service:service_id(id, name, category, color),
+        collaborator:collaborator_id(id, name, email, photo_url),
+        editorial_line:editorial_line_id(id, name, symbol, color),
+        product:product_id(id, name, symbol, color),
+        status:status_id(id, name, color),
+        client:client_id(id, name)
+      `)
+      .eq("client_id", clientId)
+      .gte("scheduled_date", startDateString)
+      .lte("scheduled_date", endDateString)
+      .order("scheduled_date", { ascending: true });
 
     if (error) {
-      console.error('Error fetching content schedules:', error);
-      throw error;
+      throw new Error(`Error fetching content schedules: ${error.message}`);
     }
 
-    if (!data || data.length === 0) {
-      console.log(`No content schedules found for month ${month}/${year}`);
-      return [];
-    }
-    
-    console.log(`Fetched ${data.length} content schedules for month ${month}/${year}`);
-    
-    // Process data to ensure consistent handling of creators field
-    const safeData = data.map(item => {
-      // Create a normalized version of creators that's always an array of strings
-      let creatorsArray: string[] = [];
-      
-      if (item.creators !== null && item.creators !== undefined) {
-        if (Array.isArray(item.creators)) {
-          // If it's already an array, use it directly
-          creatorsArray = item.creators;
-        } else if (typeof item.creators === 'string') {
-          try {
-            // Try to parse JSON string
-            const parsed = JSON.parse(item.creators);
-            // Handle both array and single string cases
-            creatorsArray = Array.isArray(parsed) ? parsed : [parsed];
-          } catch (e) {
-            // If parsing fails, treat as a single string creator
-            creatorsArray = [item.creators];
-          }
-        } else {
-          // Handle any other possible type
-          creatorsArray = [String(item.creators)];
-        }
-      }
-
-      return {
-        ...item,
-        creators: creatorsArray // Always return a proper array
-      };
-    });
-
-    return safeData as unknown as CalendarEvent[];
+    return data as CalendarEvent[];
   } catch (error) {
-    console.error('Error in getContentSchedules:', error);
+    console.error("Error in getContentSchedules:", error);
     throw error;
   }
 }

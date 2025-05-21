@@ -1602,8 +1602,6 @@ export type Database = {
       }
       oni_agencia_content_schedules: {
         Row: {
-          capture_date: string | null
-          capture_end_date: string | null
           client_id: string
           collaborator_id: string | null
           created_at: string
@@ -1612,8 +1610,6 @@ export type Database = {
           editorial_line_id: string | null
           execution_phase: string | null
           id: string
-          is_all_day: boolean | null
-          location: string | null
           product_id: string | null
           scheduled_date: string
           service_id: string
@@ -1622,8 +1618,6 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          capture_date?: string | null
-          capture_end_date?: string | null
           client_id: string
           collaborator_id?: string | null
           created_at?: string
@@ -1632,8 +1626,6 @@ export type Database = {
           editorial_line_id?: string | null
           execution_phase?: string | null
           id?: string
-          is_all_day?: boolean | null
-          location?: string | null
           product_id?: string | null
           scheduled_date: string
           service_id: string
@@ -1642,8 +1634,6 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          capture_date?: string | null
-          capture_end_date?: string | null
           client_id?: string
           collaborator_id?: string | null
           created_at?: string
@@ -1652,8 +1642,6 @@ export type Database = {
           editorial_line_id?: string | null
           execution_phase?: string | null
           id?: string
-          is_all_day?: boolean | null
-          location?: string | null
           product_id?: string | null
           scheduled_date?: string
           service_id?: string
@@ -1749,6 +1737,13 @@ export type Database = {
             referencedRelation: "oni_agencia_content_schedules_view"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "oni_agencia_schedule_history_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "oni_agencia_schedules_with_captures"
+            referencedColumns: ["id"]
+          },
         ]
       }
       oni_agencia_services: {
@@ -1822,6 +1817,61 @@ export type Database = {
             columns: ["previous_status_id"]
             isOneToOne: false
             referencedRelation: "oni_agencia_status"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oniagencia_capturas: {
+        Row: {
+          capture_date: string | null
+          capture_end_date: string | null
+          content_schedule_id: string
+          created_at: string
+          id: string
+          is_all_day: boolean | null
+          location: string | null
+          updated_at: string
+        }
+        Insert: {
+          capture_date?: string | null
+          capture_end_date?: string | null
+          content_schedule_id: string
+          created_at?: string
+          id?: string
+          is_all_day?: boolean | null
+          location?: string | null
+          updated_at?: string
+        }
+        Update: {
+          capture_date?: string | null
+          capture_end_date?: string | null
+          content_schedule_id?: string
+          created_at?: string
+          id?: string
+          is_all_day?: boolean | null
+          location?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oniagencia_capturas_content_schedule_id_fkey"
+            columns: ["content_schedule_id"]
+            isOneToOne: false
+            referencedRelation: "oni_agencia_content_schedules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oniagencia_capturas_content_schedule_id_fkey"
+            columns: ["content_schedule_id"]
+            isOneToOne: false
+            referencedRelation: "oni_agencia_content_schedules_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oniagencia_capturas_content_schedule_id_fkey"
+            columns: ["content_schedule_id"]
+            isOneToOne: false
+            referencedRelation: "oni_agencia_schedules_with_captures"
             referencedColumns: ["id"]
           },
         ]
@@ -2352,6 +2402,73 @@ export type Database = {
           status_id: string | null
           status_name: string | null
           title: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oni_agencia_content_schedules_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "oni_agencia_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oni_agencia_content_schedules_collaborator_id_fkey"
+            columns: ["collaborator_id"]
+            isOneToOne: false
+            referencedRelation: "oni_agencia_collaborators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oni_agencia_content_schedules_editorial_line_id_fkey"
+            columns: ["editorial_line_id"]
+            isOneToOne: false
+            referencedRelation: "editorial_lines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oni_agencia_content_schedules_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oni_agencia_content_schedules_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "oni_agencia_services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oni_agencia_content_schedules_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "oni_agencia_status"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oni_agencia_schedules_with_captures: {
+        Row: {
+          capture_date: string | null
+          capture_end_date: string | null
+          capture_id: string | null
+          client_id: string | null
+          collaborator_id: string | null
+          created_at: string | null
+          creators: string[] | null
+          description: string | null
+          editorial_line_id: string | null
+          execution_phase: string | null
+          id: string | null
+          is_all_day: boolean | null
+          location: string | null
+          product_id: string | null
+          scheduled_date: string | null
+          service_id: string | null
+          status_id: string | null
+          title: string | null
+          updated_at: string | null
         }
         Relationships: [
           {
