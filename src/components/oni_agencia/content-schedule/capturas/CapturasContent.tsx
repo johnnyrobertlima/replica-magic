@@ -1,13 +1,10 @@
-
-import { useState } from "react";
-import { CalendarEvent } from "@/types/oni-agencia";
-import { Calendar } from "@/components/oni_agencia/content-schedule/calendar/Calendar";
-import { CaptureEventsList } from "./CaptureEventsList";
-import { ContentScheduleLoading } from "@/components/oni_agencia/content-schedule/ContentScheduleLoading";
-import { useDndContext } from "@/components/oni_agencia/content-schedule/hooks/useDndContext";
-import { DndContext } from "@dnd-kit/core";
-import { useCustomDndSensors } from "@/components/oni_agencia/content-schedule/hooks/useCustomSensors";
+import React, { useState } from "react";
+import { ContentCalendar } from "../../content-schedule/ContentCalendar";
+import { ContentScheduleList } from "../../content-schedule/ContentScheduleList";
+import { Button } from "@/components/ui/button";
+import { ChevronDown } from "lucide-react";
 import { CaptureScheduleManager } from "./CaptureScheduleManager";
+import { CalendarEvent } from "@/types/oni-agencia";
 
 interface CapturasContentProps {
   viewMode: "calendar" | "list";
@@ -17,13 +14,13 @@ interface CapturasContentProps {
   year: number;
   selectedCollaborator: string | null;
   onMonthYearChange: (month: number, year: number) => void;
-  hasNextPage: boolean;
-  isFetchingNextPage: boolean;
-  fetchNextPage: () => void;
-  showLoadingState: boolean;
-  isCollapsed: boolean;
-  onManualRefetch: () => void;
-  onDialogStateChange?: (open: boolean) => void;
+  hasNextPage?: boolean;
+  isFetchingNextPage?: boolean;
+  fetchNextPage?: () => void;
+  showLoadingState?: boolean;
+  isCollapsed?: boolean;
+  onManualRefetch?: () => void;
+  onDialogStateChange?: (isOpen: boolean) => void;
 }
 
 export function CapturasContent({
@@ -42,146 +39,68 @@ export function CapturasContent({
   onManualRefetch,
   onDialogStateChange
 }: CapturasContentProps) {
-  // State for capture dialog management
-  const [isCaptureDialogOpen, setIsCaptureDialogOpen] = useState(false);
-  const [selectedCaptureDate, setSelectedCaptureDate] = useState<Date | null>(null);
-  const [selectedCapture, setSelectedCapture] = useState<CalendarEvent | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   
-  // Filter events to only those with capture_date and status "Liberado para Captura"
-  const captureEvents = filteredSchedules.filter(event => 
-    event.capture_date && event.status?.name === "Liberado para Captura"
-  );
-  
-  // Configure sensors with zero delay for better responsiveness
-  const sensors = useCustomDndSensors(0, 3);
-  
-  // Use the DndContext hook for drag-and-drop functionality
-  const {
-    selectedEvent,
-    selectedDate,
-    isDialogOpen,
-    handleEventClick,
-    handleDateSelect,
-    handleDragStart,
-    handleDragEnd
-  } = useDndContext({
-    clientId,
-    month,
-    year,
-    onManualRefetch
-  });
-  
-  // Handle calendar date selection - open capture dialog
-  const handleCalendarDateSelect = (date: Date) => {
-    if (!clientId) {
-      console.log("Cannot open capture dialog: client ID not provided");
-      return;
-    }
-    
-    console.log("Date selected in calendar:", date);
-    setSelectedCaptureDate(date);
-    setSelectedCapture(null);
-    setIsCaptureDialogOpen(true);
-    
-    // Notify parent about dialog state change
-    if (onDialogStateChange) {
-      onDialogStateChange(true);
+  const handleDateSelect = (date: Date) => {
+    console.log("Date selected in CapturasContent:", date);
+    if (clientId) {
+      setSelectedDate(date);
+      setIsDialogOpen(true);
+      if (onDialogStateChange) onDialogStateChange(true);
+    } else {
+      console.warn("Cannot open capture dialog: client ID not provided");
     }
   };
   
-  // Handle calendar event click - open capture dialog with selected event
-  const handleCalendarEventClick = (event: CalendarEvent, date: Date) => {
-    if (!clientId) {
-      console.log("Cannot open capture dialog: client ID not provided");
-      return;
-    }
-    
-    console.log("Event clicked in calendar:", event.id, event.title);
-    setSelectedCaptureDate(date);
-    setSelectedCapture(event);
-    setIsCaptureDialogOpen(true);
-    
-    // Notify parent about dialog state change
-    if (onDialogStateChange) {
-      onDialogStateChange(true);
-    }
-  };
-  
-  // Handle dialog close
   const handleDialogClose = () => {
-    console.log("Closing capture dialog");
-    setIsCaptureDialogOpen(false);
-    
-    // Notify parent about dialog state change
-    if (onDialogStateChange) {
-      onDialogStateChange(false);
-    }
+    console.log("Closing capture dialog in CapturasContent");
+    setSelectedDate(undefined);
+    setIsDialogOpen(false);
+    if (onDialogStateChange) onDialogStateChange(false);
   };
-  
-  if (showLoadingState) {
-    return <ContentScheduleLoading isCollapsed={isCollapsed} />;
-  }
   
   return (
-    <div className="w-full pt-4">
+    <div className="mt-4">
       {viewMode === "calendar" ? (
-        <DndContext 
-          sensors={sensors}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-        >
-          <Calendar
-            events={captureEvents}
-            month={month}
-            year={year}
-            clientId={clientId}
-            selectedCollaborator={selectedCollaborator}
-            onMonthYearChange={onMonthYearChange}
-            onDateSelect={handleCalendarDateSelect}
-            onEventClick={handleCalendarEventClick}
-            selectedDate={selectedDate}
-            selectedEvent={selectedEvent}
-            isDialogOpen={false} // We're using our custom dialog instead
-            onDialogOpenChange={() => {}}
-            onDialogClose={() => {}}
-            onManualRefetch={onManualRefetch}
-            useCaptureDate={true}
-            prioritizeCaptureDate={true}
-            defaultTab="capture"
-          />
-        </DndContext>
-      ) : (
-        <CaptureEventsList
-          events={captureEvents}
+        <ContentCalendar
+          events={filteredSchedules}
+          month={month}
+          year={year}
           clientId={clientId}
-          selectedCollaborator={selectedCollaborator}
+          onMonthYearChange={onMonthYearChange}
+          isCollapsed={isCollapsed}
           onManualRefetch={onManualRefetch}
+          useCaptureDate={true}
+          selectedCollaborator={selectedCollaborator}
+          defaultTab="capture"
+          prioritizeCaptureDate={true}
+          onDateSelect={handleDateSelect}
+          selectedDate={selectedDate}
+          isDialogOpen={isDialogOpen}
+          onDialogClose={handleDialogClose}
+          onDialogOpenChange={setIsDialogOpen}
+        />
+      ) : (
+        <ContentScheduleList
+          events={filteredSchedules}
           hasNextPage={hasNextPage}
           isFetchingNextPage={isFetchingNextPage}
           fetchNextPage={fetchNextPage}
-          onDialogStateChange={onDialogStateChange}
-          onEventClick={(event) => {
-            setSelectedCaptureDate(null);
-            setSelectedCapture(event);
-            setIsCaptureDialogOpen(true);
-            
-            // Notify parent about dialog state change
-            if (onDialogStateChange) {
-              onDialogStateChange(true);
-            }
-          }}
+          showLoadingState={showLoadingState}
         />
       )}
       
-      {/* Capture Schedule Manager Dialog */}
-      <CaptureScheduleManager
-        isOpen={isCaptureDialogOpen}
-        onClose={handleDialogClose}
-        clientId={clientId}
-        selectedDate={selectedCaptureDate}
-        selectedCapture={selectedCapture}
-        onCaptureCreated={onManualRefetch}
-      />
+      {/* Use CaptureScheduleManager para criar/editar capturas */}
+      {selectedDate && clientId && (
+        <CaptureScheduleManager
+          isOpen={isDialogOpen}
+          onClose={handleDialogClose}
+          clientId={clientId}
+          selectedDate={selectedDate}
+          onCaptureCreated={onManualRefetch}
+        />
+      )}
     </div>
   );
 }
