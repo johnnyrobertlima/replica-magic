@@ -1,41 +1,46 @@
 
-import React from "react";
-import { SelectService } from "./SelectService";
-import { SelectCollaborator } from "./SelectCollaborator";
-import { SelectEditorialLine } from "./SelectEditorialLine";
-import { SelectProduct } from "./SelectProduct";
-import { SelectCreators } from "./SelectCreators";
-import { DetailsForm } from "./DetailsForm";
-import { useLocation } from "react-router-dom";
+import React, { useState } from "react";
+import { ContentScheduleFormData } from "@/types/oni-agencia";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { ClientSelect } from "./ClientSelect";
+import { ServiceSelect } from "./ServiceSelect";
+import { CollaboratorSelect } from "./CollaboratorSelect";
+import { DateTimePicker } from "./DateTimePicker";
+import { EditorialLineSelect } from "./EditorialLineSelect";
+import { ProductSelect } from "./ProductSelect";
+import { StatusSelect } from "./StatusSelect";
+import { Switch } from "@/components/ui/switch";
+import { CreatorsSelectMultiple } from "./CreatorsSelectMultiple";
 
 interface EventFormProps {
-  formData: any;
+  formData: ContentScheduleFormData;
   services: any[];
   collaborators: any[];
   editorialLines: any[];
   products: any[];
-  statuses?: any[];
-  clients?: any[];
+  statuses: any[];
+  clients: any[];
   isLoadingServices: boolean;
   isLoadingCollaborators: boolean;
   isLoadingEditorialLines: boolean;
   isLoadingProducts: boolean;
-  isLoadingStatuses?: boolean;
-  isLoadingClients?: boolean;
+  isLoadingStatuses: boolean;
+  isLoadingClients: boolean;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onSelectChange: (name: string, value: string) => void;
   onDateChange: (name: string, value: Date | null) => void;
-  prioritizeCaptureDate?: boolean;
 }
 
 export function EventForm({
   formData,
-  services,
-  collaborators,
-  editorialLines,
-  products,
-  statuses,
-  clients,
+  services = [],
+  collaborators = [],
+  editorialLines = [],
+  products = [],
+  statuses = [],
+  clients = [],
   isLoadingServices,
   isLoadingCollaborators,
   isLoadingEditorialLines,
@@ -44,75 +49,70 @@ export function EventForm({
   isLoadingClients,
   onInputChange,
   onSelectChange,
-  onDateChange,
-  prioritizeCaptureDate = false
+  onDateChange
 }: EventFormProps) {
-  const location = useLocation();
-  const isCapturesRoute = location.pathname.includes('/capturas');
+  const handleAllDayChange = (checked: boolean) => {
+    onSelectChange("is_all_day", checked ? "true" : "false");
+  };
   
-  // Determine which fields are required based on route
-  const isProductRequired = !isCapturesRoute;
+  const handleCreatorsChange = (value: string[]) => {
+    onSelectChange("creators", JSON.stringify(value));
+  };
   
-  return (
-    <div className="space-y-6">
-      <DetailsForm
-        clientId={formData.client_id}
-        selectedDate={formData.scheduled_date || new Date()}
-        services={services}
-        editorialLines={editorialLines}
-        products={products}
-        clients={clients || []}
-        isLoadingServices={isLoadingServices}
-        isLoadingEditorialLines={isLoadingEditorialLines}
-        isLoadingProducts={isLoadingProducts}
-        isLoadingClients={isLoadingClients || false}
-        formData={formData}
-        onInputChange={onInputChange}
-        onSelectChange={onSelectChange}
-        onDateChange={onDateChange}
-        prioritizeCaptureDate={prioritizeCaptureDate}
-      />
+  const getCreatorsArray = () => {
+    if (!formData.creators) return [];
+
+    // Handle both string JSON and actual arrays
+    if (typeof formData.creators === "string") {
+      try {
+        return JSON.parse(formData.creators);
+      } catch (e) {
+        console.error("Failed to parse creators string:", e);
+        return [];
+      }
+    }
+    return Array.isArray(formData.creators) ? formData.creators : [];
+  };
+  
+  return <div className="grid gap-4 py-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-4">
+          <div className="grid gap-2">
+            <Label htmlFor="title">Título</Label>
+            <Input id="title" name="title" value={formData.title || ""} onChange={onInputChange} placeholder="Título do evento" required />
+          </div>
+
+          <ClientSelect clients={clients || []} value={formData.client_id} isLoading={isLoadingClients} onValueChange={value => onSelectChange("client_id", value)} />
+
+          <ServiceSelect services={services || []} value={formData.service_id} isLoading={isLoadingServices} onValueChange={value => onSelectChange("service_id", value)} />
+
+          <CollaboratorSelect collaborators={collaborators || []} value={formData.collaborator_id || "null"} isLoading={isLoadingCollaborators} onValueChange={value => onSelectChange("collaborator_id", value)} />
+
+          <EditorialLineSelect editorialLines={editorialLines || []} value={formData.editorial_line_id || "null"} isLoading={isLoadingEditorialLines} onValueChange={value => onSelectChange("editorial_line_id", value)} />
+        </div>
+
+        <div className="space-y-4">
+          <ProductSelect products={products || []} value={formData.product_id || "null"} isLoading={isLoadingProducts} onValueChange={value => onSelectChange("product_id", value)} />
+
+          <StatusSelect statuses={statuses || []} value={formData.status_id || "null"} isLoading={isLoadingStatuses} onValueChange={value => onSelectChange("status_id", value)} />
+
+          <DateTimePicker label="Data de Agendamento" date={formData.scheduled_date} onDateChange={date => onDateChange("scheduled_date", date)} />
+          
+          <CreatorsSelectMultiple collaborators={collaborators || []} value={getCreatorsArray()} isLoading={isLoadingCollaborators} onValueChange={handleCreatorsChange} />
+        </div>
+      </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <SelectService
-          services={services}
-          value={formData.service_id || ""}
-          isLoading={isLoadingServices}
-          onChange={(value) => onSelectChange("service_id", value)}
-        />
-        
-        <SelectCollaborator
-          collaborators={collaborators}
-          value={formData.collaborator_id || "null"}
-          isLoading={isLoadingCollaborators}
-          onChange={(value) => onSelectChange("collaborator_id", value)}
+      {/* Description field moved out of columns to take full width */}
+      <div className="grid gap-2 mt-2">
+        <Label htmlFor="description">Descrição</Label>
+        <Textarea 
+          id="description" 
+          name="description" 
+          value={formData.description || ""} 
+          onChange={onInputChange} 
+          placeholder="Descrição do evento"
+          className="min-h-[120px]" 
         />
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <SelectEditorialLine
-          editorialLines={editorialLines}
-          value={formData.editorial_line_id || "null"}
-          isLoading={isLoadingEditorialLines}
-          onChange={(value) => onSelectChange("editorial_line_id", value)}
-        />
-        
-        <SelectProduct
-          products={products}
-          value={formData.product_id || "null"}
-          isLoading={isLoadingProducts}
-          onChange={(value) => onSelectChange("product_id", value)}
-          required={isProductRequired}
-        />
-      </div>
-
-      <SelectCreators
-        collaborators={collaborators}
-        value={formData.creators || []}
-        isLoading={isLoadingCollaborators}
-        onChange={(value) => onSelectChange("creators", value)}
-        label="Participantes"
-      />
-    </div>
-  );
+    </div>;
 }

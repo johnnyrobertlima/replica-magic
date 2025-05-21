@@ -1,67 +1,113 @@
 
 import React from "react";
-import { SelectStatus } from "./SelectStatus";
-import { SelectCollaborator } from "./SelectCollaborator";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { CalendarEvent } from "@/types/oni-agencia";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-export interface StatusUpdateFormProps {
-  event?: CalendarEvent; // Tornando opcional para resolver o erro
+interface StatusSelectProps {
   statuses: any[];
-  collaborators: any[];
-  isLoadingStatuses: boolean;
-  isLoadingCollaborators: boolean;
-  selectedStatus: string;
-  selectedCollaborator: string;
-  note: string;
-  onStatusChange: (value: string) => void;
-  onCollaboratorChange: (value: string) => void;
-  onNoteChange: (value: string) => void;
+  value: string;
+  isLoading: boolean;
+  onValueChange: (value: string) => void;
+  required?: boolean;
+}
+
+function StatusSelect({
+  statuses,
+  value,
+  isLoading,
+  onValueChange,
+  required = false
+}: StatusSelectProps) {
+  return (
+    <Select onValueChange={onValueChange} defaultValue={value}>
+      <SelectTrigger className="w-full">
+        <SelectValue placeholder="Selecione um status" />
+      </SelectTrigger>
+      <SelectContent>
+        {isLoading ? (
+          <SelectItem value="loading" disabled>
+            Carregando...
+          </SelectItem>
+        ) : (
+          statuses.map((status: any) => (
+            <SelectItem key={status.id} value={status.id}>
+              {status.name}
+            </SelectItem>
+          ))
+        )}
+      </SelectContent>
+    </Select>
+  );
+}
+
+interface StatusUpdateFormProps {
+  statuses: any[];
+  value: string;
+  description: string;
+  isLoading: boolean;
+  isSubmitting: boolean;
+  onSubmit: (e: React.FormEvent) => Promise<void> | void;
+  onValueChange: (value: string) => void;
+  onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onCancel: () => void;
 }
 
 export function StatusUpdateForm({
-  event,
   statuses,
-  collaborators,
-  isLoadingStatuses,
-  isLoadingCollaborators,
-  selectedStatus,
-  selectedCollaborator,
-  note,
-  onStatusChange,
-  onCollaboratorChange,
-  onNoteChange
+  value,
+  description,
+  isLoading,
+  isSubmitting,
+  onSubmit,
+  onValueChange,
+  onInputChange,
+  onCancel
 }: StatusUpdateFormProps) {
+  
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <SelectStatus
+    <form onSubmit={onSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="status" className="text-base font-medium">
+          Status
+        </Label>
+        <StatusSelect 
           statuses={statuses}
-          value={selectedStatus}
-          isLoading={isLoadingStatuses}
-          onChange={onStatusChange}
-        />
-        
-        <SelectCollaborator
-          collaborators={collaborators}
-          value={selectedCollaborator}
-          isLoading={isLoadingCollaborators}
-          onChange={onCollaboratorChange}
+          value={value}
+          isLoading={isLoading}
+          onValueChange={onValueChange}
+          required={true}
         />
       </div>
-      
-      <div className="grid gap-2">
-        <Label htmlFor="note">Observações</Label>
+
+      <div className="space-y-2">
+        <Label htmlFor="description" className="text-base font-medium">
+          Descrição
+        </Label>
         <Textarea
-          id="note"
-          rows={5}
-          placeholder="Digite suas observações aqui"
-          value={note}
-          onChange={(e) => onNoteChange(e.target.value)}
-          className="resize-none"
+          id="description"
+          name="description"
+          placeholder="Atualize a descrição do agendamento"
+          value={description}
+          onChange={onInputChange}
         />
       </div>
-    </div>
+
+      <div className="flex justify-end space-x-2">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancelar
+        </Button>
+        <Button type="submit" disabled={isSubmitting}>
+          Atualizar Status
+        </Button>
+      </div>
+    </form>
   );
 }

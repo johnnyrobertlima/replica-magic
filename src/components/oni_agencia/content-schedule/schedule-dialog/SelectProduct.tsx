@@ -15,28 +15,24 @@ interface SelectProductProps {
   value: string;
   isLoading: boolean;
   onChange: (value: string) => void;
-  required?: boolean;
 }
 
 export function SelectProduct({ 
   products, 
   value, 
   isLoading, 
-  onChange,
-  required = false
+  onChange 
 }: SelectProductProps) {
   return (
     <div className="grid gap-2">
-      <Label htmlFor="product_id">
-        Produto{required && <span className="text-red-500 ml-1">*</span>}
-      </Label>
+      <Label htmlFor="product_id">Produto</Label>
       <Select
         disabled={isLoading}
         value={value || "null"}
         onValueChange={onChange}
         data-testid="product-select"
       >
-        <SelectTrigger className={`w-full bg-white ${required && !value && "border-red-300"}`}>
+        <SelectTrigger className="w-full bg-white">
           <SelectValue placeholder="Selecione um produto" />
         </SelectTrigger>
         <SelectContent className="bg-white">
