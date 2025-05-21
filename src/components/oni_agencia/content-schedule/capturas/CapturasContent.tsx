@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { CalendarEvent } from "@/types/oni-agencia";
 import { Calendar } from "@/components/oni_agencia/content-schedule/calendar/Calendar";
 import { CaptureEventsList } from "./CaptureEventsList";
@@ -6,6 +7,7 @@ import { ContentScheduleLoading } from "@/components/oni_agencia/content-schedul
 import { useDndContext } from "@/components/oni_agencia/content-schedule/hooks/useDndContext";
 import { DndContext } from "@dnd-kit/core";
 import { useCustomDndSensors } from "@/components/oni_agencia/content-schedule/hooks/useCustomSensors";
+import { CaptureScheduleManager } from "./CaptureScheduleManager";
 
 interface CapturasContentProps {
   viewMode: "calendar" | "list";
@@ -40,18 +42,20 @@ export function CapturasContent({
   onManualRefetch,
   onDialogStateChange
 }: CapturasContentProps) {
+  // State for capture dialog management
+  const [isCaptureDialogOpen, setIsCaptureDialogOpen] = useState(false);
+  const [selectedCaptureDate, setSelectedCaptureDate] = useState<Date | null>(null);
+  const [selectedCapture, setSelectedCapture] = useState<CalendarEvent | null>(null);
+  
   // Filter events to only those with capture_date and status "Liberado para Captura"
   const captureEvents = filteredSchedules.filter(event => 
     event.capture_date && event.status?.name === "Liberado para Captura"
   );
   
-  // Adicione um log para depuração
-  console.log(`CapturasContent - Filtered ${captureEvents.length} capture events with status "Liberado para Captura"`);
-  
   // Configure sensors with zero delay for better responsiveness
   const sensors = useCustomDndSensors(0, 3);
   
-  // Use the same dndContext hook as in ContentArea for consistency
+  // Use the DndContext hook for drag-and-drop functionality
   const {
     selectedEvent,
     selectedDate,
@@ -59,9 +63,7 @@ export function CapturasContent({
     handleEventClick,
     handleDateSelect,
     handleDragStart,
-    handleDragEnd,
-    handleDialogOpenChange,
-    handleDialogClose
+    handleDragEnd
   } = useDndContext({
     clientId,
     month,
@@ -69,16 +71,39 @@ export function CapturasContent({
     onManualRefetch
   });
   
-  // Notify parent component about dialog state changes
-  const handleDialogOpen = (open: boolean) => {
-    handleDialogOpenChange(open);
+  // Handle calendar date selection - open capture dialog
+  const handleCalendarDateSelect = (date: Date) => {
+    if (!clientId) return;
+    
+    setSelectedCaptureDate(date);
+    setSelectedCapture(null);
+    setIsCaptureDialogOpen(true);
+    
+    // Notify parent about dialog state change
     if (onDialogStateChange) {
-      onDialogStateChange(open);
+      onDialogStateChange(true);
     }
   };
   
-  const handleDialogCloseWithNotify = () => {
-    handleDialogClose();
+  // Handle calendar event click - open capture dialog with selected event
+  const handleCalendarEventClick = (event: CalendarEvent, date: Date) => {
+    if (!clientId) return;
+    
+    setSelectedCaptureDate(date);
+    setSelectedCapture(event);
+    setIsCaptureDialogOpen(true);
+    
+    // Notify parent about dialog state change
+    if (onDialogStateChange) {
+      onDialogStateChange(true);
+    }
+  };
+  
+  // Handle dialog close
+  const handleDialogClose = () => {
+    setIsCaptureDialogOpen(false);
+    
+    // Notify parent about dialog state change
     if (onDialogStateChange) {
       onDialogStateChange(false);
     }
@@ -103,13 +128,13 @@ export function CapturasContent({
             clientId={clientId}
             selectedCollaborator={selectedCollaborator}
             onMonthYearChange={onMonthYearChange}
-            onDateSelect={handleDateSelect}
-            onEventClick={handleEventClick}
+            onDateSelect={handleCalendarDateSelect}
+            onEventClick={handleCalendarEventClick}
             selectedDate={selectedDate}
             selectedEvent={selectedEvent}
-            isDialogOpen={isDialogOpen}
-            onDialogOpenChange={handleDialogOpen}
-            onDialogClose={handleDialogCloseWithNotify}
+            isDialogOpen={false} // We're using our custom dialog instead
+            onDialogOpenChange={() => {}}
+            onDialogClose={() => {}}
             onManualRefetch={onManualRefetch}
             useCaptureDate={true}
             prioritizeCaptureDate={true}
@@ -126,8 +151,28 @@ export function CapturasContent({
           isFetchingNextPage={isFetchingNextPage}
           fetchNextPage={fetchNextPage}
           onDialogStateChange={onDialogStateChange}
+          onEventClick={(event) => {
+            setSelectedCaptureDate(null);
+            setSelectedCapture(event);
+            setIsCaptureDialogOpen(true);
+            
+            // Notify parent about dialog state change
+            if (onDialogStateChange) {
+              onDialogStateChange(true);
+            }
+          }}
         />
       )}
+      
+      {/* Capture Schedule Manager Dialog */}
+      <CaptureScheduleManager
+        isOpen={isCaptureDialogOpen}
+        onClose={handleDialogClose}
+        clientId={clientId}
+        selectedDate={selectedCaptureDate}
+        selectedCapture={selectedCapture}
+        onCaptureCreated={onManualRefetch}
+      />
     </div>
   );
 }

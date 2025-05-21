@@ -1,201 +1,163 @@
-import { useCallback, useMemo } from "react";
-import { parseISO, format } from "date-fns";
+
+import React from "react";
 import { CalendarEvent } from "@/types/oni-agencia";
-import { ScheduleEventDialog } from "../ScheduleEventDialog";
-import { useDateSelection } from "../hooks/useDateSelection";
-import { useToast } from "@/hooks/use-toast";
-import { exportToPdf } from "@/utils/exportUtils";
-import { EventDateSection } from "../event-list/EventDateSection";
-import { ExportButton } from "../event-list/ExportButton";
-import { EmptyState } from "../event-list/EmptyState";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
+import { Calendar, MapPin, Clock, Plus } from "lucide-react";
 
 interface CaptureEventsListProps {
   events: CalendarEvent[];
   clientId: string;
   selectedCollaborator?: string | null;
-  onManualRefetch?: () => void;
+  onManualRefetch: () => void;
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
   fetchNextPage: () => void;
   onDialogStateChange?: (open: boolean) => void;
+  onEventClick: (event: CalendarEvent) => void;
 }
 
-export function CaptureEventsList({ 
-  events, 
+export function CaptureEventsList({
+  events,
   clientId,
   selectedCollaborator,
   onManualRefetch,
   hasNextPage,
   isFetchingNextPage,
   fetchNextPage,
-  onDialogStateChange
+  onDialogStateChange,
+  onEventClick
 }: CaptureEventsListProps) {
-  const { toast } = useToast();
-  const { 
-    selectedDate, 
-    selectedEvent, 
-    isDialogOpen,
-    setIsDialogOpen,
-    handleDateSelect, 
-    handleEventClick,
-    setSelectedDate,
-    setSelectedEvent
-  } = useDateSelection();
-
-  // Group events by capture_date (optimized with useMemo)
-  const groupedEvents = useMemo(() => {
-    return events.reduce<Record<string, CalendarEvent[]>>((acc, event) => {
-      if (event.capture_date) {
-        // Use only the date part of capture_date for grouping
-        const datePart = event.capture_date.split('T')[0];
-        if (!acc[datePart]) {
-          acc[datePart] = [];
-        }
-        
-        acc[datePart].push(event);
-      }
-      return acc;
-    }, {});
-  }, [events]);
+  // Group events by date
+  const eventsByDate = events.reduce((acc, event) => {
+    if (!event.capture_date) return acc;
+    
+    const dateStr = event.capture_date.split('T')[0];
+    if (!acc[dateStr]) {
+      acc[dateStr] = [];
+    }
+    acc[dateStr].push(event);
+    return acc;
+  }, {} as Record<string, CalendarEvent[]>);
   
   // Sort dates
-  const sortedDates = useMemo(() => 
-    Object.keys(groupedEvents).sort((a, b) => 
-      new Date(a).getTime() - new Date(b).getTime()
-    ), 
-    [groupedEvents]
-  );
+  const sortedDates = Object.keys(eventsByDate).sort((a, b) => {
+    return new Date(a).getTime() - new Date(b).getTime();
+  });
   
-  const handleEventItemClick = useCallback((event: CalendarEvent) => {
-    // For capture events, we use the capture date instead of scheduled date
-    const date = event.capture_date ? parseISO(event.capture_date) : parseISO(event.scheduled_date);
-    handleEventClick(event, date);
-  }, [handleEventClick]);
+  // Handle new capture button click
+  const handleNewCapture = () => {
+    // This would typically open a dialog to create a new capture
+    if (onDialogStateChange) {
+      onDialogStateChange(true);
+    }
+  };
   
-  const handleDialogClose = useCallback(() => {
-    setSelectedDate(undefined);
-    setSelectedEvent(undefined);
-    setIsDialogOpen(false);
-    if (onDialogStateChange) {
-      onDialogStateChange(false);
-    }
-  }, [setSelectedDate, setSelectedEvent, setIsDialogOpen, onDialogStateChange]);
-
-  const handleDialogOpenChange = useCallback((open: boolean) => {
-    setIsDialogOpen(open);
-    if (onDialogStateChange) {
-      onDialogStateChange(open);
-    }
-  }, [setIsDialogOpen, onDialogStateChange]);
-
-  // Handle PDF export
-  const handleExportToPdf = useCallback(() => {
+  // Format time from ISO string
+  const formatTime = (dateString: string) => {
+    if (!dateString) return "";
     try {
-      exportToPdf({
-        filename: `Agenda_capturas.pdf`,
-        content: null,
-        orientation: 'landscape', 
-        data: events,
-      });
-      
-      toast({
-        title: "Exportação iniciada",
-        description: "O PDF está sendo gerado e será baixado em breve.",
-      });
-    } catch (error) {
-      console.error('Error exporting to PDF:', error);
-      toast({
-        variant: "destructive",
-        title: "Erro na exportação",
-        description: "Não foi possível exportar a agenda para PDF.",
-      });
+      return format(parseISO(dateString), 'HH:mm', { locale: ptBR });
+    } catch (e) {
+      return "";
     }
-  }, [events, toast]);
-
-  // Show empty state if no events
-  if (sortedDates.length === 0) {
-    return <EmptyState />;
-  }
+  };
 
   return (
-    <div className="bg-white rounded-md border shadow-sm w-full overflow-auto">
-      <div className="p-4">
-        <div className="flex justify-end mb-4">
-          <ExportButton onClick={handleExportToPdf} />
-        </div>
-        
-        <div id="capture-schedule-list">
-          {sortedDates.map((dateString) => (
-            <div key={dateString} className="mb-8">
-              <h3 className="text-lg font-semibold mb-2 border-b pb-1">
-                {format(new Date(dateString), "dd 'de' MMMM 'de' yyyy")}
-              </h3>
-              
-              <div className="grid gap-2">
-                {groupedEvents[dateString].map(event => {
-                  let timeInfo = "";
-                  if (event.capture_date) {
-                    if (event.is_all_day) {
-                      timeInfo = "Dia inteiro";
-                    } else if (event.capture_end_date) {
-                      timeInfo = `${format(new Date(event.capture_date), "HH:mm")} - ${format(new Date(event.capture_end_date), "HH:mm")}`;
-                    } else {
-                      timeInfo = format(new Date(event.capture_date), "HH:mm");
-                    }
-                  }
-                  
-                  return (
-                    <div 
-                      key={event.id} 
-                      onClick={() => handleEventItemClick(event)}
-                      className="p-3 border rounded-md cursor-pointer hover:bg-gray-50 transition-colors"
-                      style={{ borderLeftColor: event.service?.color, borderLeftWidth: '4px' }}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <div className="font-medium">{event.title}</div>
-                          <div className="text-sm text-muted-foreground">{event.service?.name}</div>
-                          {event.location && (
-                            <div className="text-xs text-gray-500">Local: {event.location}</div>
-                          )}
-                        </div>
-                        <div className="text-sm font-medium">{timeInfo}</div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
-        
-        {hasNextPage && (
-          <div className="flex justify-center mt-4">
-            <Button 
-              variant="outline" 
-              onClick={() => fetchNextPage()}
-              disabled={isFetchingNextPage}
-            >
-              {isFetchingNextPage ? "Carregando..." : "Carregar mais"}
-            </Button>
-          </div>
-        )}
+    <div className="space-y-8">
+      <div className="flex justify-end">
+        <Button 
+          onClick={handleNewCapture}
+          className="flex items-center gap-2"
+          disabled={!clientId}
+        >
+          <Plus size={16} />
+          Nova Captura
+        </Button>
       </div>
       
-      {selectedDate && (
-        <ScheduleEventDialog
-          isOpen={isDialogOpen}
-          onOpenChange={handleDialogOpenChange}
-          clientId={clientId}
-          selectedDate={selectedDate}
-          events={[]}
-          onClose={handleDialogClose}
-          selectedEvent={selectedEvent}
-          onManualRefetch={onManualRefetch}
-          defaultTab="capture"
-          prioritizeCaptureDate={true}
-        />
+      {sortedDates.length === 0 ? (
+        <Card className="bg-white">
+          <CardHeader>
+            <CardTitle className="text-center">Nenhuma captura encontrada</CardTitle>
+            <CardDescription className="text-center">
+              Selecione um cliente e adicione uma nova captura
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      ) : (
+        sortedDates.map(dateStr => (
+          <div key={dateStr} className="space-y-4">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              {format(new Date(dateStr), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {eventsByDate[dateStr].map(event => (
+                <Card 
+                  key={event.id} 
+                  className="bg-white cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => onEventClick(event)}
+                >
+                  <CardHeader 
+                    className="pb-2"
+                    style={{ 
+                      borderBottom: `3px solid ${event.service?.color || '#666'}` 
+                    }}
+                  >
+                    <CardTitle className="text-base">{event.title}</CardTitle>
+                    <CardDescription className="flex items-center gap-1">
+                      {event.service?.name}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-4 space-y-2 text-sm">
+                    {event.capture_date && (
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-gray-500" />
+                        <span>
+                          {event.is_all_day ? 
+                            "Dia todo" : 
+                            `${formatTime(event.capture_date)} - ${event.capture_end_date ? formatTime(event.capture_end_date) : 'Sem horário de fim'}`
+                          }
+                        </span>
+                      </div>
+                    )}
+                    
+                    {event.location && (
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-gray-500" />
+                        <span>{event.location}</span>
+                      </div>
+                    )}
+                    
+                    {event.collaborator && (
+                      <div className="mt-2 flex items-center gap-1">
+                        <span className="text-xs bg-gray-100 px-2 py-1 rounded-full">
+                          {event.collaborator.name}
+                        </span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        ))
+      )}
+      
+      {hasNextPage && (
+        <div className="flex justify-center mt-4">
+          <Button
+            variant="outline"
+            onClick={fetchNextPage}
+            disabled={isFetchingNextPage}
+          >
+            {isFetchingNextPage ? "Carregando mais..." : "Carregar mais"}
+          </Button>
+        </div>
       )}
     </div>
   );
