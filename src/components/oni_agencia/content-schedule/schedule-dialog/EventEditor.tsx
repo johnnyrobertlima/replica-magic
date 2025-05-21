@@ -1,16 +1,17 @@
 
-import { useState, useEffect } from "react";
-import { format } from "date-fns";
-import { CalendarEvent, ContentScheduleFormData, OniAgenciaClient } from "@/types/oni-agencia";
-import { DialogFooter } from "@/components/ui/dialog";
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { EventForm } from "./EventForm";
-import { DialogActions } from "./DialogActions";
-import { StatusUpdateForm } from "./StatusUpdateForm";
-import { ScheduleHistory } from "./ScheduleHistory";
-import { CaptureForm } from "./CaptureForm";
-import { ArrowDown, History, Camera } from "lucide-react";
+import { DialogFooter } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Pencil, Camera, History, FileText } from "lucide-react";
+import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
+import { EventForm } from "./EventForm";
+import { StatusUpdateForm } from "./StatusUpdateForm";
+import { CaptureForm } from "./CaptureForm";
+import { HistoryTimeline } from "./HistoryTimeline";
+import { DialogActions } from "./DialogActions";
+import { useScheduleHistory } from "../hooks/useScheduleHistory";
+import { useLocation } from 'react-router-dom';
 
 interface EventEditorProps {
   event: CalendarEvent;
@@ -21,7 +22,7 @@ interface EventEditorProps {
   editorialLines: any[];
   products: any[];
   statuses: any[];
-  clients: OniAgenciaClient[];
+  clients: any[];
   isLoadingServices: boolean;
   isLoadingCollaborators: boolean;
   isLoadingEditorialLines: boolean;
@@ -41,6 +42,7 @@ interface EventEditorProps {
   onDateTimeChange?: (name: string, value: Date | null) => void;
   onAllDayChange?: (value: boolean) => void;
   defaultTab?: "details" | "status" | "history" | "capture";
+  prioritizeCaptureDate?: boolean;
 }
 
 export function EventEditor({
@@ -71,161 +73,137 @@ export function EventEditor({
   onDateChange,
   onDateTimeChange,
   onAllDayChange,
-  defaultTab = "details"
+  defaultTab = "details",
+  prioritizeCaptureDate = false
 }: EventEditorProps) {
-  const [activeTab, setActiveTab] = useState<"details" | "status" | "history" | "capture">(defaultTab);
-  const [note, setNote] = useState<string>(formData.description || "");
+  const location = useLocation();
+  const isCapturesRoute = location.pathname.includes('/capturas');
+  const initialTab = isCapturesRoute ? "capture" : defaultTab;
+  const [activeTab, setActiveTab] = useState<string>(initialTab);
+  const { history, isLoadingHistory } = useScheduleHistory(event.id);
   
-  // Update activeTab when defaultTab changes
-  useEffect(() => {
-    setActiveTab(defaultTab);
-  }, [defaultTab]);
+  const handleSubmitForm = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(e);
+  };
   
-  const handleNoteChange = (value: string) => {
-    setNote(value);
-    onSelectChange("description", value);
-  };
-
-  // Determine the tab content height based on active tab
-  const getContentHeight = () => {
-    return activeTab === "history" ? "h-[60vh]" : "h-[60vh]";
-  };
-
-  // Handle date changes for the capture tab
-  const handleCaptureDateTime = (name: string, value: Date | null) => {
-    if (onDateTimeChange) {
-      onDateTimeChange(name, value);
-    } else {
-      // Fallback to standard date handling if not provided
-      onDateChange(name, value);
-    }
+  const handleStatusUpdateForm = (e: React.FormEvent) => {
+    e.preventDefault();
+    onStatusUpdate(e);
   };
 
   return (
-    <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "details" | "status" | "history" | "capture")} className="flex flex-col h-full">
-      <TabsList className="grid w-full grid-cols-4">
-        <TabsTrigger value="details">Detalhes</TabsTrigger>
-        <TabsTrigger 
-          value="status" 
-          className={`relative ${activeTab === "status" ? "bg-purple-100 hover:bg-purple-200 text-purple-800" : ""}`}
-        >
-          {activeTab === "status" && (
-            <ArrowDown className="h-4 w-4 absolute -top-3 left-1/2 transform -translate-x-1/2 text-purple-500" />
-          )}
-          Atualizar Status
-        </TabsTrigger>
-        <TabsTrigger 
-          value="history"
-          className="flex items-center gap-2"
-        >
-          <History className="h-4 w-4" />
-          Histórico
-        </TabsTrigger>
-        <TabsTrigger 
-          value="capture"
-          className="flex items-center gap-2"
-        >
-          <Camera className="h-4 w-4" />
-          Captura
-        </TabsTrigger>
-      </TabsList>
-      
-      <div className="flex-grow">
-        <TabsContent value="details" className="mt-2 h-full">
-          <ScrollArea className={getContentHeight()}>
-            <form onSubmit={onSubmit}>
-              <EventForm
-                formData={formData}
-                services={services}
-                collaborators={collaborators}
-                editorialLines={editorialLines}
-                products={products}
-                statuses={statuses}
-                clients={clients}
-                isLoadingServices={isLoadingServices}
-                isLoadingCollaborators={isLoadingCollaborators}
-                isLoadingEditorialLines={isLoadingEditorialLines}
-                isLoadingProducts={isLoadingProducts}
-                isLoadingStatuses={isLoadingStatuses}
-                isLoadingClients={isLoadingClients}
-                onInputChange={onInputChange}
-                onSelectChange={onSelectChange}
-                onDateChange={onDateChange}
-              />
-              
-              <DialogFooter>
-                <DialogActions
-                  isSubmitting={isSubmitting}
-                  isDeleting={isDeleting}
-                  onCancel={onCancel}
-                  onDelete={onDelete}
-                  isEditing={true}
-                />
-              </DialogFooter>
-            </form>
+    <form>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="details" className="flex items-center gap-2">
+            <FileText size={16} />
+            Detalhes
+          </TabsTrigger>
+          <TabsTrigger value="status" className="flex items-center gap-2">
+            <Pencil size={16} />
+            Status
+          </TabsTrigger>
+          <TabsTrigger value="history" className="flex items-center gap-2">
+            <History size={16} />
+            Histórico
+          </TabsTrigger>
+          <TabsTrigger value="capture" className="flex items-center gap-2">
+            <Camera size={16} />
+            Captura
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="details">
+          <ScrollArea className="max-h-[60vh]">
+            <EventForm
+              formData={formData}
+              services={services}
+              collaborators={collaborators}
+              editorialLines={editorialLines}
+              products={products}
+              isLoadingServices={isLoadingServices}
+              isLoadingCollaborators={isLoadingCollaborators}
+              isLoadingEditorialLines={isLoadingEditorialLines}
+              isLoadingProducts={isLoadingProducts}
+              onInputChange={onInputChange}
+              onSelectChange={onSelectChange}
+              onDateChange={onDateChange}
+              prioritizeCaptureDate={prioritizeCaptureDate}
+            />
+          </ScrollArea>
+          <DialogFooter className="mt-4">
+            <DialogActions
+              isSubmitting={isSubmitting}
+              isDeleting={isDeleting}
+              onCancel={onCancel}
+              onDelete={onDelete}
+              onSubmit={handleSubmitForm}
+              isEditing={true}
+            />
+          </DialogFooter>
+        </TabsContent>
+
+        <TabsContent value="status">
+          <StatusUpdateForm
+            event={event}
+            statuses={statuses}
+            collaborators={collaborators}
+            isLoadingStatuses={isLoadingStatuses}
+            isLoadingCollaborators={isLoadingCollaborators}
+            selectedStatus={formData.status_id || ""}
+            selectedCollaborator={formData.collaborator_id || ""}
+            note={formData.description || ""}
+            onStatusChange={(value) => onSelectChange("status_id", value)}
+            onCollaboratorChange={(value) => onSelectChange("collaborator_id", value)}
+            onNoteChange={(value) => onInputChange({ target: { name: "description", value } } as React.ChangeEvent<HTMLTextAreaElement>)}
+          />
+          <DialogFooter className="mt-4">
+            <DialogActions
+              isSubmitting={isSubmitting}
+              isDeleting={false}
+              onCancel={onCancel}
+              onSubmit={handleStatusUpdateForm}
+              submitLabel="Atualizar Status"
+              isEditing={true}
+              showDelete={false}
+            />
+          </DialogFooter>
+        </TabsContent>
+
+        <TabsContent value="history">
+          <ScrollArea className="max-h-[60vh]">
+            <HistoryTimeline 
+              history={history}
+              isLoading={isLoadingHistory}
+            />
           </ScrollArea>
         </TabsContent>
         
-        <TabsContent value="status" className="mt-2 h-full">
-          <ScrollArea className={getContentHeight()}>
-            <form onSubmit={onStatusUpdate}>
-              <StatusUpdateForm
-                statuses={statuses}
-                value={formData.status_id || ''}
-                description={formData.description || ''}
-                isLoading={isLoadingStatuses}
-                isSubmitting={isSubmitting}
-                onSubmit={onStatusUpdate}
-                onValueChange={(value) => onSelectChange("status_id", value)}
-                onInputChange={onInputChange}
-                onCancel={onCancel}
-              />
-              
-              <DialogFooter>
-                <DialogActions
-                  isSubmitting={isSubmitting}
-                  isDeleting={false}
-                  onCancel={onCancel}
-                  isEditing={true}
-                  saveLabel="Atualizar Status"
-                />
-              </DialogFooter>
-            </form>
+        <TabsContent value="capture">
+          <ScrollArea className="max-h-[60vh]">
+            <CaptureForm
+              captureDate={formData.capture_date}
+              captureEndDate={formData.capture_end_date}
+              isAllDay={formData.is_all_day === true}
+              location={formData.location}
+              onDateChange={onDateChange}
+              onLocationChange={onInputChange}
+              onAllDayChange={onAllDayChange || (() => {})}
+            />
           </ScrollArea>
+          <DialogFooter className="mt-4">
+            <DialogActions
+              isSubmitting={isSubmitting}
+              isDeleting={isDeleting}
+              onCancel={onCancel}
+              onDelete={onDelete}
+              onSubmit={handleSubmitForm}
+              isEditing={true}
+            />
+          </DialogFooter>
         </TabsContent>
-        
-        <TabsContent value="history" className="mt-2 h-full">
-          <div className="h-[60vh]">
-            <ScheduleHistory event={event} />
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="capture" className="mt-2 h-full">
-          <ScrollArea className={getContentHeight()}>
-            <form onSubmit={onSubmit}>
-              <CaptureForm
-                captureDate={formData.capture_date}
-                captureEndDate={formData.capture_end_date}
-                isAllDay={formData.is_all_day === true}
-                location={formData.location}
-                onDateChange={onDateChange}
-                onLocationChange={onInputChange}
-                onAllDayChange={onAllDayChange || (() => {})}
-              />
-              
-              <DialogFooter>
-                <DialogActions
-                  isSubmitting={isSubmitting}
-                  isDeleting={false}
-                  onCancel={onCancel}
-                  isEditing={true}
-                  saveLabel="Salvar"
-                />
-              </DialogFooter>
-            </form>
-          </ScrollArea>
-        </TabsContent>
-      </div>
-    </Tabs>
+      </Tabs>
+    </form>
   );
 }

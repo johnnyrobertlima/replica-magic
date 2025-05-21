@@ -1,10 +1,10 @@
-
 import { useState, useCallback } from "react";
 import { useCreateContentSchedule, useUpdateContentSchedule, useDeleteContentSchedule } from "@/hooks/useOniAgenciaContentSchedules";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "react-router-dom";
 
 // Update the interface to include onSuccess and onManualRefetch
 interface UseScheduleMutationsProps {
@@ -55,6 +55,8 @@ export function useScheduleMutations({
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const location = useLocation();
+  const isCapturesRoute = location.pathname.includes('/capturas');
   
   // Get mutation hooks
   const createMutation = useCreateContentSchedule();
@@ -85,11 +87,50 @@ export function useScheduleMutations({
     async (e: React.FormEvent, currentSelectedEvent: CalendarEvent | null, formData: ContentScheduleFormData) => {
       e.preventDefault();
       
+      // Validação personalizada com base na rota
+      const requiredFields = ['client_id', 'service_id', 'title'];
+      
+      // Na rota de capturas, o campo capture_date é obrigatório
+      if (isCapturesRoute) {
+        if (!formData.capture_date) {
+          toast({
+            variant: "destructive",
+            title: "Erro ao salvar",
+            description: "A Data de Captura é obrigatória."
+          });
+          return;
+        }
+      } else {
+        // Em outras rotas, scheduled_date é obrigatório
+        if (!formData.scheduled_date) {
+          toast({
+            variant: "destructive",
+            title: "Erro ao salvar",
+            description: "A Data de Agendamento é obrigatória."
+          });
+          return;
+        }
+      }
+      
+      // Validar campos obrigatórios comuns
+      for (const field of requiredFields) {
+        if (!formData[field as keyof ContentScheduleFormData]) {
+          toast({
+            variant: "destructive",
+            title: "Erro ao salvar",
+            description: `Preencha todos os campos obrigatórios.`,
+          });
+          return;
+        }
+      }
+      
       try {
         setIsSubmitting(true);
         
         // Convert all Date objects to strings for API
         const apiData = convertDatesToStrings(formData);
+        
+        console.log("Creating content schedule:", apiData);
         
         // Determine if we're creating or updating
         if (currentSelectedEvent) {
@@ -123,7 +164,7 @@ export function useScheduleMutations({
         setIsSubmitting(false);
       }
     },
-    [clientId, selectedDate, createMutation, updateMutation, onClose, onSuccess, onManualRefetch, toast]
+    [clientId, selectedDate, createMutation, updateMutation, onClose, onSuccess, onManualRefetch, toast, isCapturesRoute]
   );
   
   // Handle status update

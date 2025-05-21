@@ -8,6 +8,7 @@ import { CaptureForm } from "./CaptureForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Camera } from "lucide-react";
 import { useLocation } from "react-router-dom";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface NewEventFormProps {
   formData: ContentScheduleFormData;
@@ -62,78 +63,13 @@ export function NewEventForm({
 }: NewEventFormProps) {
   const location = useLocation();
   const isCapturesRoute = location.pathname.includes('/capturas');
-  const activeTab = defaultTab || (isCapturesRoute ? "capture" : "details");
+  const activeTab = isCapturesRoute ? "capture" : defaultTab;
 
   return (
     <form onSubmit={onSubmit}>
-      {isCapturesRoute ? (
-        <>
-          <CaptureForm 
-            captureDate={formData.capture_date}
-            captureEndDate={formData.capture_end_date}
-            isAllDay={formData.is_all_day === true}
-            location={formData.location}
-            onDateChange={onDateChange}
-            onLocationChange={onInputChange}
-            onAllDayChange={onAllDayChange || (() => {})}
-          />
-          <div className="mt-6 space-y-4">
-            <div className="flex items-center gap-2 text-blue-700 font-semibold">
-              <Camera size={16} />
-              <span>Dados do Agendamento</span>
-            </div>
-            <EventForm
-              formData={formData}
-              services={services}
-              collaborators={collaborators}
-              editorialLines={editorialLines}
-              products={products}
-              statuses={statuses}
-              clients={clients}
-              isLoadingServices={isLoadingServices}
-              isLoadingCollaborators={isLoadingCollaborators}
-              isLoadingEditorialLines={isLoadingEditorialLines}
-              isLoadingProducts={isLoadingProducts}
-              isLoadingStatuses={isLoadingStatuses}
-              isLoadingClients={isLoadingClients}
-              onInputChange={onInputChange}
-              onSelectChange={onSelectChange}
-              onDateChange={onDateChange}
-            />
-          </div>
-        </>
-      ) : (
-        <Tabs value={activeTab} className="w-full">
-          <TabsList className="mb-4">
-            <TabsTrigger value="details">Detalhes</TabsTrigger>
-            <TabsTrigger value="capture" className="flex items-center gap-2">
-              <Camera size={16} />
-              Captura
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="details">
-            <EventForm
-              formData={formData}
-              services={services}
-              collaborators={collaborators}
-              editorialLines={editorialLines}
-              products={products}
-              statuses={statuses}
-              clients={clients}
-              isLoadingServices={isLoadingServices}
-              isLoadingCollaborators={isLoadingCollaborators}
-              isLoadingEditorialLines={isLoadingEditorialLines}
-              isLoadingProducts={isLoadingProducts}
-              isLoadingStatuses={isLoadingStatuses}
-              isLoadingClients={isLoadingClients}
-              onInputChange={onInputChange}
-              onSelectChange={onSelectChange}
-              onDateChange={onDateChange}
-            />
-          </TabsContent>
-          
-          <TabsContent value="capture">
+      <ScrollArea className="max-h-[80vh]">
+        {isCapturesRoute ? (
+          <>
             <CaptureForm 
               captureDate={formData.capture_date}
               captureEndDate={formData.capture_end_date}
@@ -143,9 +79,76 @@ export function NewEventForm({
               onLocationChange={onInputChange}
               onAllDayChange={onAllDayChange || (() => {})}
             />
-          </TabsContent>
-        </Tabs>
-      )}
+            <div className="mt-6 space-y-4">
+              <div className="flex items-center gap-2 text-blue-700 font-semibold">
+                <span>Dados do Agendamento</span>
+              </div>
+              <EventForm
+                formData={formData}
+                services={services}
+                collaborators={collaborators}
+                editorialLines={editorialLines}
+                products={products}
+                statuses={statuses}
+                clients={clients}
+                isLoadingServices={isLoadingServices}
+                isLoadingCollaborators={isLoadingCollaborators}
+                isLoadingEditorialLines={isLoadingEditorialLines}
+                isLoadingProducts={isLoadingProducts}
+                isLoadingStatuses={isLoadingStatuses}
+                isLoadingClients={isLoadingClients}
+                onInputChange={onInputChange}
+                onSelectChange={onSelectChange}
+                onDateChange={onDateChange}
+                prioritizeCaptureDate={isCapturesRoute}
+              />
+            </div>
+          </>
+        ) : (
+          <Tabs value={activeTab} className="w-full">
+            <TabsList className="mb-4">
+              <TabsTrigger value="details">Detalhes</TabsTrigger>
+              <TabsTrigger value="capture" className="flex items-center gap-2">
+                <Camera size={16} />
+                Captura
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="details">
+              <EventForm
+                formData={formData}
+                services={services}
+                collaborators={collaborators}
+                editorialLines={editorialLines}
+                products={products}
+                statuses={statuses}
+                clients={clients}
+                isLoadingServices={isLoadingServices}
+                isLoadingCollaborators={isLoadingCollaborators}
+                isLoadingEditorialLines={isLoadingEditorialLines}
+                isLoadingProducts={isLoadingProducts}
+                isLoadingStatuses={isLoadingStatuses}
+                isLoadingClients={isLoadingClients}
+                onInputChange={onInputChange}
+                onSelectChange={onSelectChange}
+                onDateChange={onDateChange}
+              />
+            </TabsContent>
+            
+            <TabsContent value="capture">
+              <CaptureForm 
+                captureDate={formData.capture_date}
+                captureEndDate={formData.capture_end_date}
+                isAllDay={formData.is_all_day === true}
+                location={formData.location}
+                onDateChange={onDateChange}
+                onLocationChange={onInputChange}
+                onAllDayChange={onAllDayChange || (() => {})}
+              />
+            </TabsContent>
+          </Tabs>
+        )}
+      </ScrollArea>
       
       <DialogFooter>
         <DialogActions
