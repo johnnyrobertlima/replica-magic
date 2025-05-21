@@ -8,9 +8,6 @@ import { CapturasHeader } from "@/components/oni_agencia/content-schedule/captur
 import { CapturasContent } from "@/components/oni_agencia/content-schedule/capturas/CapturasContent";
 import { useCapturasFiltering } from "@/hooks/oni_agencia/useCapturasFiltering";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { CaptureScheduleManager } from "@/components/oni_agencia/content-schedule/capturas/CaptureScheduleManager";
 
 const OniAgenciaCapturas = () => {
   const currentDate = new Date();
@@ -23,9 +20,6 @@ const OniAgenciaCapturas = () => {
   const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
   const { isCollapsed, toggle: toggleFilters } = useCollapsible(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  
-  // New state for the capture creation dialog
-  const [isNewCaptureDialogOpen, setIsNewCaptureDialogOpen] = useState(false);
   
   // UseCallback for better performance
   const handleClientChange = useCallback((clientId: string) => {
@@ -105,26 +99,15 @@ const OniAgenciaCapturas = () => {
     <main className="container-fluid p-0 max-w-full">
       <OniAgenciaMenu />
       <div className="container mx-auto p-4 max-w-full">
-        <div className="flex justify-between items-center mb-4">
-          <CapturasHeader 
-            filteredSchedules={filteredCaptureSchedules}
-            viewMode={viewMode}
-            onViewChange={handleViewChange}
-            isRefetching={isRefetching}
-            isLoadingSchedules={isLoadingSchedules}
-            isFetchingNextPage={isFetchingNextPage}
-            onManualRefetch={handleManualRefetch}
-          />
-          
-          <Button
-            onClick={() => setIsNewCaptureDialogOpen(true)}
-            disabled={!selectedClient}
-            className="flex items-center gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            Nova Captura
-          </Button>
-        </div>
+        <CapturasHeader 
+          filteredSchedules={filteredCaptureSchedules}
+          viewMode={viewMode}
+          onViewChange={handleViewChange}
+          isRefetching={isRefetching}
+          isLoadingSchedules={isLoadingSchedules}
+          isFetchingNextPage={isFetchingNextPage}
+          onManualRefetch={handleManualRefetch}
+        />
         
         <ContentScheduleFilters
           selectedClient={selectedClient}
@@ -156,15 +139,6 @@ const OniAgenciaCapturas = () => {
           isCollapsed={isCollapsed}
           onManualRefetch={handleManualRefetch}
           onDialogStateChange={setIsDialogOpen}
-        />
-        
-        {/* New Capture Dialog */}
-        <CaptureScheduleManager
-          isOpen={isNewCaptureDialogOpen}
-          onClose={() => setIsNewCaptureDialogOpen(false)}
-          clientId={selectedClient}
-          selectedDate={new Date()}
-          onCaptureCreated={handleManualRefetch}
         />
       </div>
     </main>

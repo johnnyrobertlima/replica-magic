@@ -1,116 +1,169 @@
 
-import React from 'react';
-import { format } from 'date-fns';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarEvent } from '@/types/oni-agencia';
+import { format } from "date-fns";
+import { useState } from "react";
+import { useDroppable } from '@dnd-kit/core';
+import { CalendarEvent } from "@/types/oni-agencia";
+import { EventsList } from "./EventsList";
+import { MoreEventsIndicator } from "./MoreEventsIndicator";
+import { ScrollableEvents } from "./ScrollableEvents";
 
 interface CalendarDayCellProps {
   date: Date;
   events: CalendarEvent[];
   isSelected: boolean;
-  onDayClick: (date: Date) => void;
+  isCurrentDay?: boolean;
+  onSelect: (date: Date) => void;
   onEventClick: (event: CalendarEvent, date: Date) => void;
-  useCaptureDate?: boolean;
+  selectedCollaborator?: string | null;
 }
 
-export function CalendarDayCell({
-  date,
-  events,
-  isSelected,
-  onDayClick,
+export function CalendarDayCell({ 
+  date, 
+  events, 
+  isSelected, 
+  isCurrentDay = false,
+  onSelect, 
   onEventClick,
-  useCaptureDate = false
+  selectedCollaborator
 }: CalendarDayCellProps) {
-  // Format events for display - ensuring there are no duplicates
-  const uniqueEvents = events.reduce((unique: CalendarEvent[], event) => {
-    const exists = unique.some(e => e.id === event.id);
-    if (!exists) {
-      unique.push(event);
+  const [isHovering, setIsHovering] = useState(false);
+  const dateString = format(date, 'yyyy-MM-dd');
+  
+  // Set up droppable with extra data for the date
+  const { setNodeRef, isOver } = useDroppable({
+    id: `date-${dateString}`,
+    data: {
+      date, // Pass the date to make it available in the drop handlers
+      type: 'calendar-day'
     }
-    return unique;
-  }, []);
+  });
+  
+  let dayEvents = Array.isArray(events) 
+    ? events.filter(event => event?.scheduled_date === dateString)
+    : [];
+  
+  if (selectedCollaborator) {
+    dayEvents = dayEvents.filter(event => {
+      const isCollaborator = event.collaborator_id === selectedCollaborator;
+      const isCreator = Array.isArray(event.creators) && 
+        event.creators?.includes(selectedCollaborator) || false;
+      return isCollaborator || isCreator;
+    });
+  }
+  
+  // Constants for visible events display
+  const MAX_VISIBLE_EVENTS = 3;
+  const visibleEvents = dayEvents.slice(0, MAX_VISIBLE_EVENTS);
+  const hiddenEventsCount = Math.max(0, dayEvents.length - MAX_VISIBLE_EVENTS);
+  
+  // Generate the tooltip text for the day number if there are hidden events
+  const dayTooltip = hiddenEventsCount > 0 
+    ? `Existem +${hiddenEventsCount} agendamentos neste dia` 
+    : undefined;
+  
+  const handleCellClick = (e: React.MouseEvent) => {
+    // Check if the click target is actually the cell background
+    const target = e.target as HTMLElement;
+    const cellElement = target.closest('.calendar-day-cell');
+    const eventElement = target.closest('.event-item') || target.closest('.event-item-wrapper');
 
-  console.log(`CalendarDay ${format(date, 'yyyy-MM-dd')} has ${uniqueEvents.length} events after filtering`);
+    // Only select date if clicking on cell background (not an event)
+    if (cellElement && !eventElement && e.currentTarget === cellElement) {
+      console.log("Cell background clicked for date:", format(date, 'yyyy-MM-dd'));
+      e.preventDefault();
+      e.stopPropagation();
+      onSelect(date);
+    }
+  };
+
+  // Updated to match the new EventsList signature and include date
+  const handleEventClick = (event: CalendarEvent) => {
+    console.log("Event clicked in CalendarDayCell:", event.id, event.title);
+    onEventClick(event, date);
+  };
+  
+  // Mouse enter/leave events for scroll behavior
+  const handleMouseEnter = () => {
+    setIsHovering(true);
+  };
+  
+  const handleMouseLeave = () => {
+    setIsHovering(false);
+  };
+  
+  // Add a border when a draggable is over the cell
+  const cellClasses = `h-36 w-full border-r border-b cursor-pointer hover:bg-gray-50 calendar-day-cell p-1 relative ${
+    isCurrentDay ? 'bg-blue-50' : ''
+  } ${isOver ? 'bg-blue-100 border-2 border-primary' : ''}`;
+  
+  console.log(`Rendering day cell for ${dateString} with ${dayEvents.length} events`);
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          className={`h-9 w-9 p-0 font-normal ${isSelected ? 'bg-primary/10' : 'text-muted-foreground'}`}
-          onClick={(e) => {
-            // Prevent default to avoid triggering popover on specific clicks
-            if (!isSelected) {
-              console.log("Day clicked in calendar:", date);
+    <div 
+      ref={setNodeRef}
+      className={cellClasses}
+      onClick={handleCellClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      data-date={dateString}
+    >
+      <div className="flex justify-between items-center mb-1">
+        <div className="relative group">
+          <button 
+            className={`h-5 w-5 p-0 text-xs font-normal flex items-center justify-center rounded-full ${
+              isSelected ? 'bg-primary text-primary-foreground' : ''
+            }`}
+            title={dayTooltip}
+            aria-label={dayTooltip || `Dia ${format(date, 'd')}`}
+            onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              onDayClick(date);
-            }
-          }}
-        >
-          <div className="w-full h-full relative">
-            {format(date, "d")}
-            {uniqueEvents.length > 0 && (
-              <Badge
-                variant="secondary"
-                className="absolute bottom-1 right-1 rounded-sm px-1 py-0 text-[10px]"
-              >
-                {uniqueEvents.length}
-              </Badge>
-            )}
-          </div>
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-80">
-        {uniqueEvents.length > 0 ? (
-          <div className="grid gap-2">
-            <h3 className="text-sm font-medium">
-              {format(date, 'dd/MM/yyyy')}
-              {useCaptureDate && <span className="ml-1 text-xs">(Capturas)</span>}
-            </h3>
-            {uniqueEvents.map((event) => (
-              <Button
-                key={event.id}
-                variant="outline"
-                className="justify-start h-auto py-2 px-3 text-left"
-                style={{ borderLeftColor: event.service?.color || '#666', borderLeftWidth: '4px' }}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log("Event clicked in popover:", event.id);
-                  onEventClick(event, date);
-                }}
-              >
-                <div>
-                  <div className="font-medium">{event.title}</div>
-                  <div className="text-sm text-muted-foreground">{event.service?.name}</div>
+              onSelect(date);
+            }}
+          >
+            {format(date, 'd')}
+          </button>
+          
+          {/* Display a visible tooltip badge for days with hidden events */}
+          {hiddenEventsCount > 0 && (
+            <span className="day-tooltip">+{hiddenEventsCount}</span>
+          )}
+        </div>
+      </div>
+      
+      {dayEvents.length > 0 ? (
+        <>
+          {!isHovering ? (
+            <div className="flex flex-col gap-[2px]">
+              <EventsList 
+                events={visibleEvents}
+                date={date}
+                onEventClick={handleEventClick} 
+              />
+              
+              {hiddenEventsCount > 0 && (
+                <div className="mt-1">
+                  <MoreEventsIndicator 
+                    count={hiddenEventsCount}
+                    date={date}
+                    events={dayEvents.slice(MAX_VISIBLE_EVENTS)}
+                    onEventClick={handleEventClick}
+                  />
                 </div>
-              </Button>
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2">
-            <h3 className="text-sm font-medium">
-              {format(date, 'dd/MM/yyyy')}
-              {useCaptureDate && <span className="ml-1 text-xs">(Capturas)</span>}
-            </h3>
-            <p className="text-sm text-muted-foreground">Nenhum agendamento para este dia.</p>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onDayClick(date);
-              }}
-            >
-              Adicionar {useCaptureDate ? "captura" : "agendamento"}
-            </Button>
-          </div>
-        )}
-      </PopoverContent>
-    </Popover>
+              )}
+            </div>
+          ) : (
+            /* When hovering, show ScrollArea with all events */
+            <ScrollableEvents 
+              events={dayEvents}
+              date={date}
+              onEventClick={handleEventClick} 
+            />
+          )}
+        </>
+      ) : (
+        <div className="h-[calc(100%-20px)] w-full empty-cell-area" />
+      )}
+    </div>
   );
 }

@@ -1,7 +1,5 @@
 
 import React from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import {
   Select,
   SelectContent,
@@ -14,35 +12,18 @@ import {
 import { Label } from "@/components/ui/label";
 
 interface SelectCollaboratorProps {
-  clientId: string;
+  collaborators: any[];
   value: string;
+  isLoading: boolean;
   onChange: (value: string) => void;
 }
 
 export function SelectCollaborator({ 
-  clientId, 
+  collaborators, 
   value, 
+  isLoading, 
   onChange 
 }: SelectCollaboratorProps) {
-  // Fetch collaborators
-  const { data: collaborators = [], isLoading } = useQuery({
-    queryKey: ['collaborators'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('oni_agencia_collaborators')
-        .select('*')
-        .order('name');
-        
-      if (error) {
-        console.error('Error fetching collaborators:', error);
-        throw error;
-      }
-      
-      return data || [];
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-
   return (
     <div className="grid gap-2">
       <Label htmlFor="collaborator_id">Responsável</Label>

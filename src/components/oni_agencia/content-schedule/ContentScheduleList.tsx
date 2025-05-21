@@ -9,28 +9,19 @@ import { EmptyState } from "./event-list/EmptyState";
 import { ExportButton } from "./event-list/ExportButton";
 import { EventDateSection } from "./event-list/EventDateSection";
 import { useMemo } from "react";
-import { Button } from "@/components/ui/button";
 
 interface ContentScheduleListProps {
   events: CalendarEvent[];
-  clientId?: string;
+  clientId: string;
   selectedCollaborator?: string | null;
   onManualRefetch?: () => void;
-  hasNextPage?: boolean;
-  isFetchingNextPage?: boolean;
-  fetchNextPage?: () => void;
-  showLoadingState?: boolean;
 }
 
 export function ContentScheduleList({ 
   events = [], 
-  clientId = '',
+  clientId,
   selectedCollaborator,
-  onManualRefetch,
-  hasNextPage = false,
-  isFetchingNextPage = false,
-  fetchNextPage,
-  showLoadingState = false
+  onManualRefetch
 }: ContentScheduleListProps) {
   const { toast } = useToast();
   const { 
@@ -171,21 +162,9 @@ export function ContentScheduleList({
             />
           ))}
         </div>
-        
-        {hasNextPage && (
-          <div className="flex justify-center mt-4">
-            <Button
-              variant="outline"
-              onClick={fetchNextPage}
-              disabled={isFetchingNextPage}
-            >
-              {isFetchingNextPage ? "Carregando mais..." : "Carregar mais"}
-            </Button>
-          </div>
-        )}
       </div>
       
-      {selectedDate && clientId && (
+      {selectedDate && (
         <ScheduleEventDialog
           isOpen={isDialogOpen}
           onOpenChange={setIsDialogOpen}

@@ -1,11 +1,11 @@
 
-import React, { useState } from "react";
-import { ContentCalendar } from "../../content-schedule/ContentCalendar";
-import { ContentScheduleList } from "../../content-schedule/ContentScheduleList";
-import { Button } from "@/components/ui/button";
-import { ChevronDown } from "lucide-react";
-import { CaptureScheduleManager } from "./CaptureScheduleManager";
 import { CalendarEvent } from "@/types/oni-agencia";
+import { Calendar } from "@/components/oni_agencia/content-schedule/calendar/Calendar";
+import { CaptureEventsList } from "./CaptureEventsList";
+import { ContentScheduleLoading } from "@/components/oni_agencia/content-schedule/ContentScheduleLoading";
+import { useDndContext } from "@/components/oni_agencia/content-schedule/hooks/useDndContext";
+import { DndContext } from "@dnd-kit/core";
+import { useCustomDndSensors } from "@/components/oni_agencia/content-schedule/hooks/useCustomSensors";
 
 interface CapturasContentProps {
   viewMode: "calendar" | "list";
@@ -15,13 +15,13 @@ interface CapturasContentProps {
   year: number;
   selectedCollaborator: string | null;
   onMonthYearChange: (month: number, year: number) => void;
-  hasNextPage?: boolean;
-  isFetchingNextPage?: boolean;
-  fetchNextPage?: () => void;
-  showLoadingState?: boolean;
-  isCollapsed?: boolean;
-  onManualRefetch?: () => void;
-  onDialogStateChange?: (isOpen: boolean) => void;
+  hasNextPage: boolean;
+  isFetchingNextPage: boolean;
+  fetchNextPage: () => void;
+  showLoadingState: boolean;
+  isCollapsed: boolean;
+  onManualRefetch: () => void;
+  onDialogStateChange?: (open: boolean) => void;
 }
 
 export function CapturasContent({
@@ -40,69 +40,92 @@ export function CapturasContent({
   onManualRefetch,
   onDialogStateChange
 }: CapturasContentProps) {
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  // Filter events to only those with capture_date and status "Liberado para Captura"
+  const captureEvents = filteredSchedules.filter(event => 
+    event.capture_date && event.status?.name === "Liberado para Captura"
+  );
   
-  const handleDateSelect = (date: Date) => {
-    console.log("Date selected in CapturasContent:", date);
-    if (clientId) {
-      setSelectedDate(date);
-      setIsDialogOpen(true);
-      if (onDialogStateChange) onDialogStateChange(true);
-    } else {
-      console.warn("Cannot open capture dialog: client ID not provided");
+  // Adicione um log para depuração
+  console.log(`CapturasContent - Filtered ${captureEvents.length} capture events with status "Liberado para Captura"`);
+  
+  // Configure sensors with zero delay for better responsiveness
+  const sensors = useCustomDndSensors(0, 3);
+  
+  // Use the same dndContext hook as in ContentArea for consistency
+  const {
+    selectedEvent,
+    selectedDate,
+    isDialogOpen,
+    handleEventClick,
+    handleDateSelect,
+    handleDragStart,
+    handleDragEnd,
+    handleDialogOpenChange,
+    handleDialogClose
+  } = useDndContext({
+    clientId,
+    month,
+    year,
+    onManualRefetch
+  });
+  
+  // Notify parent component about dialog state changes
+  const handleDialogOpen = (open: boolean) => {
+    handleDialogOpenChange(open);
+    if (onDialogStateChange) {
+      onDialogStateChange(open);
     }
   };
   
-  const handleDialogClose = () => {
-    console.log("Closing capture dialog in CapturasContent");
-    setSelectedDate(undefined);
-    setIsDialogOpen(false);
-    if (onDialogStateChange) onDialogStateChange(false);
+  const handleDialogCloseWithNotify = () => {
+    handleDialogClose();
+    if (onDialogStateChange) {
+      onDialogStateChange(false);
+    }
   };
   
+  if (showLoadingState) {
+    return <ContentScheduleLoading isCollapsed={isCollapsed} />;
+  }
+  
   return (
-    <div className="mt-4">
+    <div className="w-full pt-4">
       {viewMode === "calendar" ? (
-        <ContentCalendar
-          events={filteredSchedules}
-          month={month}
-          year={year}
-          clientId={clientId}
-          onMonthYearChange={onMonthYearChange}
-          isCollapsed={isCollapsed}
-          onManualRefetch={onManualRefetch}
-          useCaptureDate={true}
-          selectedCollaborator={selectedCollaborator}
-          defaultTab="capture"
-          prioritizeCaptureDate={true}
-          onDateSelect={handleDateSelect}
-          selectedDate={selectedDate}
-          isDialogOpen={isDialogOpen}
-          onDialogClose={handleDialogClose}
-          onDialogOpenChange={setIsDialogOpen}
-        />
+        <DndContext 
+          sensors={sensors}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <Calendar
+            events={captureEvents}
+            month={month}
+            year={year}
+            clientId={clientId}
+            selectedCollaborator={selectedCollaborator}
+            onMonthYearChange={onMonthYearChange}
+            onDateSelect={handleDateSelect}
+            onEventClick={handleEventClick}
+            selectedDate={selectedDate}
+            selectedEvent={selectedEvent}
+            isDialogOpen={isDialogOpen}
+            onDialogOpenChange={handleDialogOpen}
+            onDialogClose={handleDialogCloseWithNotify}
+            onManualRefetch={onManualRefetch}
+            useCaptureDate={true}
+            prioritizeCaptureDate={true}
+            defaultTab="capture"
+          />
+        </DndContext>
       ) : (
-        <ContentScheduleList
-          events={filteredSchedules}
+        <CaptureEventsList
+          events={captureEvents}
           clientId={clientId}
           selectedCollaborator={selectedCollaborator}
           onManualRefetch={onManualRefetch}
           hasNextPage={hasNextPage}
           isFetchingNextPage={isFetchingNextPage}
           fetchNextPage={fetchNextPage}
-          showLoadingState={showLoadingState}
-        />
-      )}
-      
-      {/* Use CaptureScheduleManager para criar/editar capturas */}
-      {selectedDate && clientId && (
-        <CaptureScheduleManager
-          isOpen={isDialogOpen}
-          onClose={handleDialogClose}
-          clientId={clientId}
-          selectedDate={selectedDate}
-          onCaptureCreated={onManualRefetch}
+          onDialogStateChange={onDialogStateChange}
         />
       )}
     </div>

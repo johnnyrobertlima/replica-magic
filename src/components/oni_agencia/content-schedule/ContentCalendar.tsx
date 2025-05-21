@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { format, isSameDay } from "date-fns";
@@ -24,13 +23,6 @@ interface ContentCalendarProps {
   selectedCollaborator?: string | null;
   defaultTab?: "details" | "status" | "capture" | "history";
   prioritizeCaptureDate?: boolean;
-  onDateSelect?: (date: Date) => void;
-  onEventClick?: (event: CalendarEvent, date: Date) => void;
-  selectedDate?: Date;
-  selectedEvent?: CalendarEvent;
-  isDialogOpen?: boolean;
-  onDialogOpenChange?: (open: boolean) => void;
-  onDialogClose?: () => void;
 }
 
 export function ContentCalendar({
@@ -44,90 +36,32 @@ export function ContentCalendar({
   useCaptureDate = false,
   selectedCollaborator = null,
   defaultTab = "details",
-  prioritizeCaptureDate = false,
-  onDateSelect,
-  onEventClick,
-  selectedDate: externalSelectedDate,
-  selectedEvent: externalSelectedEvent,
-  isDialogOpen: externalIsDialogOpen = false,
-  onDialogOpenChange,
-  onDialogClose
+  prioritizeCaptureDate = false
 }: ContentCalendarProps) {
   const [date, setDate] = useState(new Date(year, month - 1, 1));
   const {
-    selectedDate: internalSelectedDate,
-    selectedEvent: internalSelectedEvent,
-    isDialogOpen: internalIsDialogOpen,
-    setIsDialogOpen: setInternalIsDialogOpen,
-    handleDateSelect: handleInternalDateSelect,
-    handleEventClick: handleInternalEventClick,
+    selectedDate,
+    selectedEvent,
+    isDialogOpen,
+    setIsDialogOpen,
+    handleDateSelect,
+    handleEventClick,
     setSelectedDate: setSelectedDateContext,
     setSelectedEvent: setSelectedEventContext,
     openDialog,
     closeDialog
   } = useDateSelection();
 
-  // Use external props if provided, otherwise use internal state
-  const selectedDate = externalSelectedDate !== undefined ? externalSelectedDate : internalSelectedDate;
-  const selectedEvent = externalSelectedEvent !== undefined ? externalSelectedEvent : internalSelectedEvent;
-  const isDialogOpen = externalIsDialogOpen !== undefined ? externalIsDialogOpen : internalIsDialogOpen;
-
   // Log when dialog state changes for debugging
   useEffect(() => {
     console.log("Dialog state changed:", isDialogOpen);
   }, [isDialogOpen]);
-
-  // Handler for date selection - call both internal handler and prop handler if provided
-  const handleDateSelectCombined = useCallback((date: Date) => {
-    console.log("Date selected in ContentCalendar:", format(date, 'yyyy-MM-dd'));
-    handleInternalDateSelect(date);
-    
-    // Call the prop handler if provided
-    if (onDateSelect) {
-      onDateSelect(date);
-    }
-  }, [handleInternalDateSelect, onDateSelect]);
-
-  // Handler for event click - call both internal handler and prop handler if provided
-  const handleEventClickCombined = useCallback((event: CalendarEvent, date: Date) => {
-    console.log("Event clicked in ContentCalendar:", event.id, event.title);
-    handleInternalEventClick(event, date);
-    
-    // Call the prop handler if provided
-    if (onEventClick) {
-      onEventClick(event, date);
-    }
-  }, [handleInternalEventClick, onEventClick]);
-
-  // Handler for dialog open change - call both internal handler and prop handler if provided
-  const handleDialogOpenChangeCombined = useCallback((open: boolean) => {
-    console.log("Dialog open state changing to:", open);
-    
-    // Update internal state
-    if (internalIsDialogOpen !== open) {
-      if (open) {
-        openDialog();
-      } else {
-        closeDialog();
-      }
-    }
-    
-    // Call the prop handler if provided
-    if (onDialogOpenChange) {
-      onDialogOpenChange(open);
-    }
-  }, [internalIsDialogOpen, openDialog, closeDialog, onDialogOpenChange]);
 
   const handleDialogClose = () => {
     console.log("Closing dialog in ContentCalendar");
     setSelectedDateContext(undefined);
     setSelectedEventContext(undefined);
     closeDialog();
-    
-    // Call the prop handler if provided
-    if (onDialogClose) {
-      onDialogClose();
-    }
   };
 
   // Modified to consider the useCaptureDate option
@@ -170,7 +104,7 @@ export function ContentCalendar({
               e.stopPropagation();
               if (!isSelected) {
                 console.log("Day clicked in calendar:", date);
-                handleDateSelectCombined(date);
+                handleDateSelect(date);
               }
             }}
           >
@@ -200,7 +134,7 @@ export function ContentCalendar({
                     e.preventDefault();
                     e.stopPropagation();
                     console.log("Event clicked in popover:", event.id);
-                    handleEventClickCombined(event, date);
+                    handleEventClick(event, date);
                   }}
                 >
                   <div>
@@ -211,20 +145,7 @@ export function ContentCalendar({
               ))}
             </div>
           ) : (
-            <div className="flex flex-col gap-2">
-              <p className="text-sm text-muted-foreground">Nenhum agendamento para este dia.</p>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleDateSelectCombined(date);
-                }}
-              >
-                Adicionar agendamento
-              </Button>
-            </div>
+            <p className="text-sm text-muted-foreground">Nenhum agendamento para este dia.</p>
           )}
         </PopoverContent>
       </Popover>
@@ -279,7 +200,7 @@ export function ContentCalendar({
         onSelect={(newDate) => {
           if (newDate) {
             console.log("Calendar onSelect called with date:", newDate);
-            handleDateSelectCombined(newDate);
+            handleDateSelect(newDate);
             setDate(newDate);
           }
         }}
@@ -293,11 +214,20 @@ export function ContentCalendar({
         }}
       />
       
-      {/* Only show the dialog if external handlers are not provided */}
-      {selectedDate && !onDateSelect && !onEventClick && (
+      {selectedDate && (
         <ScheduleEventDialog
           isOpen={isDialogOpen}
-          onOpenChange={handleDialogOpenChangeCombined}
+          onOpenChange={(open) => {
+            console.log("Dialog open state changing to:", open);
+            // Only update if the state is actually changing
+            if (isDialogOpen !== open) {
+              if (open) {
+                openDialog();
+              } else {
+                closeDialog();
+              }
+            }
+          }}
           clientId={clientId}
           selectedDate={selectedDate}
           events={[]}
