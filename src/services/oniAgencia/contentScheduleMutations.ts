@@ -1,26 +1,45 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { ContentScheduleFormData } from "@/types/oni-agencia";
+import { format } from "date-fns";
+
+// Helper function to convert Date objects to string format for the API
+const formatDateForAPI = (date: Date | null): string | null => {
+  if (!date) return null;
+  return format(date, "yyyy-MM-dd");
+};
+
+const formatDateTimeForAPI = (date: Date | null, isAllDay: boolean | null): string | null => {
+  if (!date) return null;
+  if (isAllDay) {
+    return format(date, "yyyy-MM-dd");
+  } else {
+    return format(date, "yyyy-MM-dd'T'HH:mm:ss");
+  }
+};
 
 // Create a new content schedule with optional capture data
 export async function createContentSchedule(data: ContentScheduleFormData) {
   try {
+    // Create a schedule data object without the capture-specific fields
+    const scheduleData = {
+      client_id: data.client_id,
+      service_id: data.service_id,
+      collaborator_id: data.collaborator_id || null,
+      title: data.title || null,
+      description: data.description || null,
+      scheduled_date: formatDateForAPI(data.scheduled_date),
+      execution_phase: data.execution_phase || null,
+      editorial_line_id: data.editorial_line_id || null,
+      product_id: data.product_id || null,
+      status_id: data.status_id || null,
+      creators: data.creators || null,
+    };
+
     // First create the content schedule
-    const { data: scheduleData, error: scheduleError } = await supabase
+    const { data: createdSchedule, error: scheduleError } = await supabase
       .from("oni_agencia_content_schedules")
-      .insert({
-        client_id: data.client_id,
-        service_id: data.service_id,
-        collaborator_id: data.collaborator_id || null,
-        title: data.title || null,
-        description: data.description || null,
-        scheduled_date: data.scheduled_date,
-        execution_phase: data.execution_phase || null,
-        editorial_line_id: data.editorial_line_id || null,
-        product_id: data.product_id || null,
-        status_id: data.status_id || null,
-        creators: data.creators || null,
-      })
+      .insert(scheduleData)
       .select()
       .single();
 
@@ -31,9 +50,9 @@ export async function createContentSchedule(data: ContentScheduleFormData) {
     // If we have capture data, insert it into the capture table
     if (data.capture_date) {
       const captureData = {
-        content_schedule_id: scheduleData.id,
-        capture_date: data.capture_date,
-        capture_end_date: data.capture_end_date || null,
+        content_schedule_id: createdSchedule.id,
+        capture_date: formatDateTimeForAPI(data.capture_date, data.is_all_day),
+        capture_end_date: formatDateTimeForAPI(data.capture_end_date, data.is_all_day),
         is_all_day: data.is_all_day || true,
         location: data.location || null,
       };
@@ -47,7 +66,7 @@ export async function createContentSchedule(data: ContentScheduleFormData) {
       }
     }
 
-    return scheduleData;
+    return createdSchedule;
   } catch (error: any) {
     console.error("Error in createContentSchedule:", error);
     throw new Error(error.message || "An error occurred while creating the content schedule");
@@ -69,7 +88,7 @@ export async function updateContentSchedule(
     if (data.collaborator_id !== undefined) scheduleUpdateData.collaborator_id = data.collaborator_id;
     if (data.title !== undefined) scheduleUpdateData.title = data.title;
     if (data.description !== undefined) scheduleUpdateData.description = data.description;
-    if (data.scheduled_date !== undefined) scheduleUpdateData.scheduled_date = data.scheduled_date;
+    if (data.scheduled_date !== undefined) scheduleUpdateData.scheduled_date = formatDateForAPI(data.scheduled_date);
     if (data.execution_phase !== undefined) scheduleUpdateData.execution_phase = data.execution_phase;
     if (data.editorial_line_id !== undefined) scheduleUpdateData.editorial_line_id = data.editorial_line_id;
     if (data.product_id !== undefined) scheduleUpdateData.product_id = data.product_id;
@@ -104,8 +123,8 @@ export async function updateContentSchedule(
         data.is_all_day !== undefined || data.location !== undefined) {
       
       const captureData: any = {};
-      if (data.capture_date !== undefined) captureData.capture_date = data.capture_date;
-      if (data.capture_end_date !== undefined) captureData.capture_end_date = data.capture_end_date;
+      if (data.capture_date !== undefined) captureData.capture_date = formatDateTimeForAPI(data.capture_date, data.is_all_day);
+      if (data.capture_end_date !== undefined) captureData.capture_end_date = formatDateTimeForAPI(data.capture_end_date, data.is_all_day);
       if (data.is_all_day !== undefined) captureData.is_all_day = data.is_all_day;
       if (data.location !== undefined) captureData.location = data.location;
 
