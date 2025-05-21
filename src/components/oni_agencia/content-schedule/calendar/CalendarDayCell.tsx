@@ -62,18 +62,11 @@ export function CalendarDayCell({
     : undefined;
   
   const handleCellClick = (e: React.MouseEvent) => {
-    // Check if the click target is actually the cell background
-    const target = e.target as HTMLElement;
-    const cellElement = target.closest('.calendar-day-cell');
-    const eventElement = target.closest('.event-item') || target.closest('.event-item-wrapper');
-
-    // Only select date if clicking on cell background (not an event)
-    if (cellElement && !eventElement && e.currentTarget === cellElement) {
-      console.log("Cell background clicked for date:", format(date, 'yyyy-MM-dd'));
-      e.preventDefault();
-      e.stopPropagation();
-      onSelect(date);
-    }
+    // Always select date when clicking on the cell background
+    console.log("Cell clicked for date:", format(date, 'yyyy-MM-dd'));
+    e.preventDefault();
+    e.stopPropagation();
+    onSelect(date);
   };
 
   // Updated to match the new EventsList signature and include date
@@ -162,7 +155,10 @@ export function CalendarDayCell({
           )}
         </>
       ) : (
-        <div className="h-[calc(100%-20px)] w-full empty-cell-area" />
+        <div 
+          className="h-[calc(100%-20px)] w-full empty-cell-area"
+          onClick={handleCellClick}
+        />
       )}
     </div>
   );

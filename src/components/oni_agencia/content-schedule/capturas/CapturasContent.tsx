@@ -73,8 +73,12 @@ export function CapturasContent({
   
   // Handle calendar date selection - open capture dialog
   const handleCalendarDateSelect = (date: Date) => {
-    if (!clientId) return;
+    if (!clientId) {
+      console.log("Cannot open capture dialog: client ID not provided");
+      return;
+    }
     
+    console.log("Date selected in calendar:", date);
     setSelectedCaptureDate(date);
     setSelectedCapture(null);
     setIsCaptureDialogOpen(true);
@@ -87,8 +91,12 @@ export function CapturasContent({
   
   // Handle calendar event click - open capture dialog with selected event
   const handleCalendarEventClick = (event: CalendarEvent, date: Date) => {
-    if (!clientId) return;
+    if (!clientId) {
+      console.log("Cannot open capture dialog: client ID not provided");
+      return;
+    }
     
+    console.log("Event clicked in calendar:", event.id, event.title);
     setSelectedCaptureDate(date);
     setSelectedCapture(event);
     setIsCaptureDialogOpen(true);
@@ -101,6 +109,7 @@ export function CapturasContent({
   
   // Handle dialog close
   const handleDialogClose = () => {
+    console.log("Closing capture dialog");
     setIsCaptureDialogOpen(false);
     
     // Notify parent about dialog state change
