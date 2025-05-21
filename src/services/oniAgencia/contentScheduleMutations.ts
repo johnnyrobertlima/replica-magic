@@ -30,15 +30,17 @@ export async function createContentSchedule(data: ContentScheduleFormData) {
     
     // If we have capture data, insert it into the capture table
     if (data.capture_date) {
+      const captureData = {
+        content_schedule_id: scheduleData.id,
+        capture_date: data.capture_date,
+        capture_end_date: data.capture_end_date || null,
+        is_all_day: data.is_all_day || true,
+        location: data.location || null,
+      };
+
       const { error: captureError } = await supabase
         .from("oniagencia_capturas")
-        .insert({
-          content_schedule_id: scheduleData.id,
-          capture_date: data.capture_date,
-          capture_end_date: data.capture_end_date || null,
-          is_all_day: data.is_all_day || true,
-          location: data.location || null,
-        });
+        .insert(captureData);
 
       if (captureError) {
         throw new Error(`Error creating capture data: ${captureError.message}`);
@@ -120,12 +122,11 @@ export async function updateContentSchedule(
           }
         } else {
           // Create new capture data
+          captureData.content_schedule_id = id;
+          
           const { error: insertCaptureError } = await supabase
             .from("oniagencia_capturas")
-            .insert({
-              content_schedule_id: id,
-              ...captureData
-            });
+            .insert(captureData);
 
           if (insertCaptureError) {
             throw new Error(`Error creating capture data: ${insertCaptureError.message}`);
