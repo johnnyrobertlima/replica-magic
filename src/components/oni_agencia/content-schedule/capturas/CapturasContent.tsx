@@ -106,9 +106,9 @@ export function CapturasContent({
             onDialogOpenChange={handleDialogOpen}
             onDialogClose={handleDialogCloseWithNotify}
             onManualRefetch={onManualRefetch}
-            useCaptureDate={true} // Flag to use capture_date for displaying events
-            prioritizeCaptureDate={true} // Priorizar data de captura ao abrir o formulário
-            defaultTab="capture" // Abrir diretamente na aba de captura
+            useCaptureDate={true}
+            prioritizeCaptureDate={true}
+            defaultTab="capture"
           />
         </DndContext>
       ) : (

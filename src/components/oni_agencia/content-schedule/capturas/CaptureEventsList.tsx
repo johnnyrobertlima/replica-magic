@@ -19,6 +19,7 @@ interface CaptureEventsListProps {
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
   fetchNextPage: () => void;
+  onDialogStateChange?: (open: boolean) => void;
 }
 
 export function CaptureEventsList({ 
@@ -28,7 +29,8 @@ export function CaptureEventsList({
   onManualRefetch,
   hasNextPage,
   isFetchingNextPage,
-  fetchNextPage
+  fetchNextPage,
+  onDialogStateChange
 }: CaptureEventsListProps) {
   const { toast } = useToast();
   const { 
@@ -76,7 +78,17 @@ export function CaptureEventsList({
     setSelectedDate(undefined);
     setSelectedEvent(undefined);
     setIsDialogOpen(false);
-  }, [setSelectedDate, setSelectedEvent, setIsDialogOpen]);
+    if (onDialogStateChange) {
+      onDialogStateChange(false);
+    }
+  }, [setSelectedDate, setSelectedEvent, setIsDialogOpen, onDialogStateChange]);
+
+  const handleDialogOpenChange = useCallback((open: boolean) => {
+    setIsDialogOpen(open);
+    if (onDialogStateChange) {
+      onDialogStateChange(open);
+    }
+  }, [setIsDialogOpen, onDialogStateChange]);
 
   // Handle PDF export
   const handleExportToPdf = useCallback(() => {
@@ -175,7 +187,7 @@ export function CaptureEventsList({
       {selectedDate && (
         <ScheduleEventDialog
           isOpen={isDialogOpen}
-          onOpenChange={setIsDialogOpen}
+          onOpenChange={handleDialogOpenChange}
           clientId={clientId}
           selectedDate={selectedDate}
           events={[]}
@@ -183,6 +195,7 @@ export function CaptureEventsList({
           selectedEvent={selectedEvent}
           onManualRefetch={onManualRefetch}
           defaultTab="capture"
+          prioritizeCaptureDate={true}
         />
       )}
     </div>

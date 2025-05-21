@@ -1,151 +1,181 @@
 
-import { useState, useEffect } from "react";
+import React from "react";
+import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { StatusSelect } from "./StatusSelect";
 import { CollaboratorSelect } from "./CollaboratorSelect";
-import { CalendarEvent } from "@/types/oni-agencia";
-import { linkifyText } from "@/utils/linkUtils";
-import { AlertCircle, Loader2, RefreshCw } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { StatusSelect } from "./StatusSelect";
 
 interface StatusUpdateFormProps {
-  event: CalendarEvent;
+  event?: CalendarEvent;
   statuses: any[];
-  collaborators: any[];
+  collaborators?: any[];
   isLoadingStatuses: boolean;
-  isLoadingCollaborators: boolean;
-  selectedStatus: string;
-  selectedCollaborator: string;
-  note: string;
-  isSubmitting?: boolean;
+  isLoadingCollaborators?: boolean;
+  selectedStatus?: string | null;
+  selectedCollaborator?: string | null;
+  note?: string;
+  formData?: ContentScheduleFormData;
   onStatusChange: (value: string) => void;
-  onCollaboratorChange: (value: string) => void;
-  onNoteChange: (value: string) => void;
-  onRetryLoadResources?: () => void;
+  onCollaboratorChange?: (value: string) => void;
+  onNoteChange?: (value: string) => void;
+  onSubmit?: (e: React.FormEvent) => Promise<void>;
+  onInputChange?: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onSelectChange?: (name: string, value: string) => void;
+  isSubmitting?: boolean;
+  onCancel?: () => void;
 }
 
 export function StatusUpdateForm({
   event,
   statuses,
-  collaborators,
+  collaborators = [],
   isLoadingStatuses,
-  isLoadingCollaborators,
+  isLoadingCollaborators = false,
   selectedStatus,
   selectedCollaborator,
   note,
-  isSubmitting = false,
+  formData,
   onStatusChange,
   onCollaboratorChange,
   onNoteChange,
-  onRetryLoadResources
+  onSubmit,
+  onInputChange,
+  onSelectChange,
+  isSubmitting,
+  onCancel
 }: StatusUpdateFormProps) {
-  // Process links in the note
-  const noteWithLinks = linkifyText(note);
-  const [validationError, setValidationError] = useState<string | null>(null);
-
-  // Clear validation error when isSubmitting changes to false
-  useEffect(() => {
-    if (!isSubmitting) {
-      setValidationError(null);
+  const handleNoteChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (onNoteChange) {
+      onNoteChange(e.target.value);
     }
-  }, [isSubmitting]);
-
-  // Determine if there was an error loading resources
-  const hasResourcesError = (!isLoadingCollaborators && collaborators.length === 0) || 
-                          (!isLoadingStatuses && statuses.length === 0);
-
-  // Validate status selection
-  const handleStatusChangeWithValidation = (value: string) => {
-    if (value === "null" || !value) {
-      setValidationError("Por favor, selecione um status válido.");
-    } else {
-      setValidationError(null);
+    
+    if (onInputChange) {
+      onInputChange(e);
     }
-    onStatusChange(value);
   };
-
+  
+  const handleStatusFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (onSubmit) {
+      onSubmit(e);
+    }
+  };
+  
+  const effectiveSelectedStatus = formData?.status_id || selectedStatus;
+  const effectiveSelectedCollaborator = formData?.collaborator_id || selectedCollaborator;
+  const effectiveNote = formData?.description || note;
+  
   return (
-    <div className="grid gap-4 py-4">
-      <div className="grid gap-2">
-        <Label htmlFor="event-title">Título</Label>
-        <div className="p-2 bg-muted rounded-md">
-          {event.title || "Sem título"}
-        </div>
-      </div>
-      
-      {validationError && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{validationError}</AlertDescription>
-        </Alert>
-      )}
-      
-      {hasResourcesError && (
-        <Alert variant="destructive" className="mb-2">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription className="flex flex-col gap-2">
-            <p>Não foi possível carregar alguns recursos necessários.</p>
-            {onRetryLoadResources && (
-              <Button 
-                type="button" 
-                variant="outline" 
-                size="sm" 
-                onClick={onRetryLoadResources}
-                className="w-full flex items-center gap-2"
-              >
-                <RefreshCw className="h-4 w-4" />
-                Tentar novamente
-              </Button>
+    <div className="space-y-4">
+      {onSubmit ? (
+        <form onSubmit={handleStatusFormSubmit}>
+          <div className="space-y-4">
+            <StatusSelect 
+              statuses={statuses}
+              value={effectiveSelectedStatus || ""}
+              isLoading={isLoadingStatuses}
+              onValueChange={value => {
+                if (onSelectChange) {
+                  onSelectChange("status_id", value);
+                } else {
+                  onStatusChange(value);
+                }
+              }}
+              required={true}
+            />
+            
+            {collaborators.length > 0 && (
+              <CollaboratorSelect
+                collaborators={collaborators}
+                value={effectiveSelectedCollaborator || "null"}
+                isLoading={isLoadingCollaborators}
+                onValueChange={value => {
+                  if (onSelectChange) {
+                    onSelectChange("collaborator_id", value);
+                  } else if (onCollaboratorChange) {
+                    onCollaboratorChange(value);
+                  }
+                }}
+              />
             )}
-          </AlertDescription>
-        </Alert>
-      )}
-      
-      <StatusSelect
-        statuses={statuses}
-        isLoading={isLoadingStatuses || isSubmitting}
-        value={selectedStatus}
-        onValueChange={handleStatusChangeWithValidation}
-        errorMessage={!isLoadingStatuses && statuses.length === 0 ? "Não foi possível carregar os status" : undefined}
-      />
-      
-      <CollaboratorSelect
-        collaborators={collaborators}
-        isLoading={isLoadingCollaborators || isSubmitting}
-        value={selectedCollaborator}
-        onValueChange={onCollaboratorChange}
-        errorMessage={!isLoadingCollaborators && collaborators.length === 0 ? "Não foi possível carregar os colaboradores" : undefined}
-      />
-      
-      <div className="grid gap-2">
-        <Label htmlFor="status-note">Observação</Label>
-        <Textarea
-          id="status-note"
-          placeholder="Adicione uma observação sobre esta atualização de status (opcional)"
-          value={note}
-          onChange={(e) => onNoteChange(e.target.value)}
-          rows={4}
-          disabled={isSubmitting}
-        />
-        
-        {/* Render clickable links if there are any in the note */}
-        {note && note.match(/(https?:\/\/[^\s]+)/g) && (
-          <div className="mt-2 text-sm">
-            <p className="font-medium mb-1">Links detectados:</p>
-            <div 
-              className="p-2 bg-muted rounded-md"
-              dangerouslySetInnerHTML={{ __html: noteWithLinks }}
+            
+            <div>
+              <Label htmlFor="description">Observações</Label>
+              <Textarea
+                id="description"
+                name="description"
+                value={effectiveNote || ""}
+                onChange={handleNoteChange}
+                rows={5}
+                placeholder="Adicione informações adicionais sobre esta atualização de status"
+                className="min-h-[120px]"
+              />
+            </div>
+            
+            {onCancel && (
+              <div className="flex justify-end space-x-2 mt-4">
+                <button
+                  type="button" 
+                  className="px-4 py-2 border rounded-md hover:bg-gray-100"
+                  onClick={onCancel}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Atualizando..." : "Atualizar Status"}
+                </button>
+              </div>
+            )}
+          </div>
+        </form>
+      ) : (
+        <div className="space-y-4">
+          <StatusSelect 
+            statuses={statuses}
+            value={effectiveSelectedStatus || ""}
+            isLoading={isLoadingStatuses}
+            onValueChange={value => {
+              if (onSelectChange) {
+                onSelectChange("status_id", value);
+              } else {
+                onStatusChange(value);
+              }
+            }}
+            required={true}
+          />
+          
+          {collaborators.length > 0 && (
+            <CollaboratorSelect
+              collaborators={collaborators}
+              value={effectiveSelectedCollaborator || "null"}
+              isLoading={isLoadingCollaborators}
+              onValueChange={value => {
+                if (onSelectChange) {
+                  onSelectChange("collaborator_id", value);
+                } else if (onCollaboratorChange) {
+                  onCollaboratorChange(value);
+                }
+              }}
+            />
+          )}
+          
+          <div>
+            <Label htmlFor="description">Observações</Label>
+            <Textarea
+              id="description"
+              name="description"
+              value={effectiveNote || ""}
+              onChange={handleNoteChange}
+              rows={5}
+              placeholder="Adicione informações adicionais sobre esta atualização de status"
+              className="min-h-[120px]"
             />
           </div>
-        )}
-      </div>
-      
-      {isSubmitting && (
-        <div className="flex items-center justify-center py-2">
-          <Loader2 className="h-5 w-5 animate-spin text-primary mr-2" />
-          <span>Atualizando...</span>
         </div>
       )}
     </div>
