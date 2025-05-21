@@ -8,6 +8,7 @@ import { DialogContainer } from "./schedule-dialog/DialogContainer";
 import { DialogContent } from "./schedule-dialog/DialogContent";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
 import { format } from "date-fns";
+import { useLocation } from "react-router-dom";
 
 export interface ScheduleEventDialogProps {
   isOpen: boolean;
@@ -37,6 +38,11 @@ export function ScheduleEventDialog({
   // Add state to track loading and prevent loops
   const [isInitialized, setIsInitialized] = useState(false);
   
+  // Get current route to determine default tab
+  const location = useLocation();
+  const isCapturesRoute = location.pathname.includes('/capturas');
+  const finalDefaultTab = defaultTab || (isCapturesRoute ? "capture" : "details");
+  
   // Log dialog state for debugging
   useEffect(() => {
     console.log(`ScheduleEventDialog - isOpen: ${isOpen}, clientId: ${clientId}, selectedDate: ${selectedDate ? format(selectedDate, 'yyyy-MM-dd') : 'undefined'}`);
@@ -61,7 +67,7 @@ export function ScheduleEventDialog({
     clientId, 
     selectedDate, 
     !!isOpen && !!clientId && !!selectedDate,
-    prioritizeCaptureDate
+    prioritizeCaptureDate || isCapturesRoute // Prioritize capture_date on capturas route
   );
   
   // Combine events from props and from the date query, removing duplicates
@@ -97,7 +103,7 @@ export function ScheduleEventDialog({
     clientId,
     selectedDate: selectedDate ? new Date(selectedDate) : new Date(),
     selectedEvent,
-    prioritizeCaptureDate,
+    prioritizeCaptureDate: prioritizeCaptureDate || isCapturesRoute, // Prioritize capture_date on capturas route
     isOpen  // Pass isOpen parameter to the hook
   });
 
@@ -167,8 +173,10 @@ export function ScheduleEventDialog({
     handleSelectEvent(null as unknown as CalendarEvent); // Force null as selected event
   };
 
-  // Dialog title
-  const dialogTitle = currentSelectedEvent ? "Editar Agendamento" : "Novo Agendamento";
+  // Dialog title based on route and event status
+  const dialogTitle = isCapturesRoute 
+    ? (currentSelectedEvent ? "Editar Captura" : "Nova Captura")
+    : (currentSelectedEvent ? "Editar Agendamento" : "Novo Agendamento");
 
   return (
     <DialogContainer
@@ -180,7 +188,7 @@ export function ScheduleEventDialog({
       aria-describedby="schedule-dialog-description"
     >
       <div id="schedule-dialog-description" className="sr-only">
-        Formulário de criação ou edição de agendamento de conteúdo.
+        Formulário de criação ou edição de {isCapturesRoute ? "captura" : "agendamento de conteúdo"}.
       </div>
       
       <DialogContent
@@ -215,8 +223,8 @@ export function ScheduleEventDialog({
         onDateChange={handleDateChange}
         onDateTimeChange={handleDateTimeChange}
         onAllDayChange={handleAllDayChange}
-        defaultTab={defaultTab}
-        prioritizeCaptureDate={prioritizeCaptureDate}
+        defaultTab={finalDefaultTab}
+        prioritizeCaptureDate={prioritizeCaptureDate || isCapturesRoute}
       />
     </DialogContainer>
   );
