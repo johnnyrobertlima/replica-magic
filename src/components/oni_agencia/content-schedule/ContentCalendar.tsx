@@ -26,6 +26,11 @@ interface ContentCalendarProps {
   prioritizeCaptureDate?: boolean;
   onDateSelect?: (date: Date) => void;
   onEventClick?: (event: CalendarEvent, date: Date) => void;
+  selectedDate?: Date;
+  selectedEvent?: CalendarEvent;
+  isDialogOpen?: boolean;
+  onDialogOpenChange?: (open: boolean) => void;
+  onDialogClose?: () => void;
 }
 
 export function ContentCalendar({
@@ -41,14 +46,19 @@ export function ContentCalendar({
   defaultTab = "details",
   prioritizeCaptureDate = false,
   onDateSelect,
-  onEventClick
+  onEventClick,
+  selectedDate: externalSelectedDate,
+  selectedEvent: externalSelectedEvent,
+  isDialogOpen: externalIsDialogOpen = false,
+  onDialogOpenChange,
+  onDialogClose
 }: ContentCalendarProps) {
   const [date, setDate] = useState(new Date(year, month - 1, 1));
   const {
-    selectedDate,
-    selectedEvent,
-    isDialogOpen,
-    setIsDialogOpen,
+    selectedDate: internalSelectedDate,
+    selectedEvent: internalSelectedEvent,
+    isDialogOpen: internalIsDialogOpen,
+    setIsDialogOpen: setInternalIsDialogOpen,
     handleDateSelect: handleInternalDateSelect,
     handleEventClick: handleInternalEventClick,
     setSelectedDate: setSelectedDateContext,
@@ -56,6 +66,11 @@ export function ContentCalendar({
     openDialog,
     closeDialog
   } = useDateSelection();
+
+  // Use external props if provided, otherwise use internal state
+  const selectedDate = externalSelectedDate !== undefined ? externalSelectedDate : internalSelectedDate;
+  const selectedEvent = externalSelectedEvent !== undefined ? externalSelectedEvent : internalSelectedEvent;
+  const isDialogOpen = externalIsDialogOpen !== undefined ? externalIsDialogOpen : internalIsDialogOpen;
 
   // Log when dialog state changes for debugging
   useEffect(() => {
@@ -84,11 +99,35 @@ export function ContentCalendar({
     }
   }, [handleInternalEventClick, onEventClick]);
 
+  // Handler for dialog open change - call both internal handler and prop handler if provided
+  const handleDialogOpenChangeCombined = useCallback((open: boolean) => {
+    console.log("Dialog open state changing to:", open);
+    
+    // Update internal state
+    if (internalIsDialogOpen !== open) {
+      if (open) {
+        openDialog();
+      } else {
+        closeDialog();
+      }
+    }
+    
+    // Call the prop handler if provided
+    if (onDialogOpenChange) {
+      onDialogOpenChange(open);
+    }
+  }, [internalIsDialogOpen, openDialog, closeDialog, onDialogOpenChange]);
+
   const handleDialogClose = () => {
     console.log("Closing dialog in ContentCalendar");
     setSelectedDateContext(undefined);
     setSelectedEventContext(undefined);
     closeDialog();
+    
+    // Call the prop handler if provided
+    if (onDialogClose) {
+      onDialogClose();
+    }
   };
 
   // Modified to consider the useCaptureDate option
@@ -258,17 +297,7 @@ export function ContentCalendar({
       {selectedDate && !onDateSelect && !onEventClick && (
         <ScheduleEventDialog
           isOpen={isDialogOpen}
-          onOpenChange={(open) => {
-            console.log("Dialog open state changing to:", open);
-            // Only update if the state is actually changing
-            if (isDialogOpen !== open) {
-              if (open) {
-                openDialog();
-              } else {
-                closeDialog();
-              }
-            }
-          }}
+          onOpenChange={handleDialogOpenChangeCombined}
           clientId={clientId}
           selectedDate={selectedDate}
           events={[]}
