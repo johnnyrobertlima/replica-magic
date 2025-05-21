@@ -204,19 +204,28 @@ export function EventEditor({
           <ScrollArea className={getContentHeight()}>
             <form onSubmit={onSubmit}>
               <CaptureForm
+                clientId={clientId}
                 captureDate={formData.capture_date}
                 captureEndDate={formData.capture_end_date}
                 isAllDay={formData.is_all_day === true}
                 location={formData.location}
+                collaboratorId={formData.collaborator_id || null}
+                serviceId={formData.service_id || ""}
+                description={formData.description || ""}
+                linkedSchedules={formData.creators || []}
                 onDateChange={onDateChange}
                 onLocationChange={onInputChange}
+                onDescriptionChange={onInputChange}
+                onCollaboratorChange={(value) => onSelectChange("collaborator_id", value)}
+                onServiceChange={(value) => onSelectChange("service_id", value)}
                 onAllDayChange={onAllDayChange || (() => {})}
+                onLinkedSchedulesChange={(scheduleIds) => onSelectChange("creators", scheduleIds.join(','))}
               />
               
               <DialogFooter>
                 <DialogActions
                   isSubmitting={isSubmitting}
-                  isDeleting={false}
+                  isDeleting={isDeleting}
                   onCancel={onCancel}
                   isEditing={true}
                   saveLabel="Salvar"
