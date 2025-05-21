@@ -11,7 +11,7 @@ interface CaptureFormProps {
   captureEndDate: Date | null;
   isAllDay: boolean;
   location: string | null;
-  onCaptureChange: (name: string, value: Date | null) => void;
+  onDateChange: (name: string, value: Date | null) => void;
   onLocationChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onAllDayChange: (value: boolean) => void;
 }
@@ -21,7 +21,7 @@ export function CaptureForm({
   captureEndDate,
   isAllDay,
   location,
-  onCaptureChange,
+  onDateChange,
   onLocationChange,
   onAllDayChange
 }: CaptureFormProps) {
@@ -52,14 +52,15 @@ export function CaptureForm({
           {isAllDay ? (
             <CalendarDatePicker
               value={captureDate}
-              onChange={(date) => onCaptureChange("capture_date", date)}
+              onChange={(date) => onDateChange("capture_date", date)}
               placeholder="Selecione uma data"
               className={!captureDate ? "border-red-300" : ""}
             />
           ) : (
             <DateTimePicker 
+              label="Data de início"
               date={captureDate}
-              onDateChange={(date) => onCaptureChange("capture_date", date)}
+              onDateChange={(date) => onDateChange("capture_date", date)}
               showTimePicker={true}
               className={!captureDate ? "border-red-300" : ""}
             />
@@ -70,8 +71,9 @@ export function CaptureForm({
           <div>
             <Label htmlFor="capture_end_date">Data de Término</Label>
             <DateTimePicker 
+              label="Data de término"
               date={captureEndDate}
-              onDateChange={(date) => onCaptureChange("capture_end_date", date)}
+              onDateChange={(date) => onDateChange("capture_end_date", date)}
               showTimePicker={true}
             />
           </div>

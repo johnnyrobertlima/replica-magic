@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { EventForm } from "./EventForm";
 import { StatusUpdateForm } from "./StatusUpdateForm";
@@ -39,9 +38,9 @@ interface DialogContentProps {
   prioritizeCaptureDate?: boolean;
   onSelectEvent: (event: CalendarEvent) => void;
   onResetForm: () => void;
-  onSubmit: (e: React.FormEvent) => void;
-  onStatusUpdate: (e: React.FormEvent) => void;
-  onDelete: () => void;
+  onSubmit: (e: React.FormEvent) => Promise<void> | void;
+  onStatusUpdate: (e: React.FormEvent) => Promise<void> | void;
+  onDelete: () => Promise<void> | void;
   onCancel: () => void;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onSelectChange: (name: string, value: string) => void;
@@ -225,12 +224,13 @@ export function DialogContent({
             
             <TabsContent value="status">
               <StatusUpdateForm 
-                formData={formData}
                 statuses={statuses}
-                isLoadingStatuses={isLoadingStatuses}
+                value={formData.status_id || ''}
+                isLoading={isLoadingStatuses}
+                description={formData.description || ''}
                 onSubmit={onStatusUpdate}
                 onInputChange={onInputChange}
-                onSelectChange={onSelectChange}
+                onValueChange={(value) => onSelectChange('status_id', value)}
                 isSubmitting={isSubmitting}
                 onCancel={onCancel}
               />
@@ -238,7 +238,7 @@ export function DialogContent({
             
             <TabsContent value="history">
               <HistoryTimeline 
-                data={historyData} 
+                historyData={historyData} 
                 isLoading={isLoadingHistory} 
                 isError={isHistoryError}
                 onRefetchResources={handleRefetchResources}
@@ -247,26 +247,13 @@ export function DialogContent({
             
             <TabsContent value="capture">
               <CaptureForm
-                formData={formData}
-                clients={clients}
-                services={services}
-                collaborators={collaborators}
-                editorialLines={editorialLines}
-                products={products}
-                isLoadingClients={isLoadingClients}
-                isLoadingServices={isLoadingServices}
-                isLoadingCollaborators={isLoadingCollaborators}
-                isLoadingEditorialLines={isLoadingEditorialLines}
-                isLoadingProducts={isLoadingProducts}
-                onInputChange={onInputChange}
-                onSelectChange={onSelectChange}
+                captureDate={formData.capture_date}
+                captureEndDate={formData.capture_end_date}
+                isAllDay={formData.is_all_day === true}
+                location={formData.location}
                 onDateChange={onDateChange}
-                onDateTimeChange={onDateTimeChange}
+                onLocationChange={onInputChange}
                 onAllDayChange={onAllDayChange}
-                clientId={clientId}
-                selectedDate={selectedDate}
-                isSubmitting={isSubmitting}
-                onCancel={onCancel}
               />
               <div className="flex justify-end space-x-2 mt-4">
                 <Button type="button" variant="outline" onClick={onCancel}>

@@ -1,9 +1,5 @@
-
-import React from "react";
-import { formatDistance, format } from "date-fns";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 export interface HistoryEntry {
   id: string;
@@ -12,125 +8,70 @@ export interface HistoryEntry {
   old_value: string | null;
   new_value: string;
   created_at: string;
-  changed_by?: string;
-  changed_by_name?: string;
+  changed_by: string | null;
 }
 
-export interface HistoryTimelineProps {
-  data?: HistoryEntry[];
-  isLoading?: boolean;
-  isError?: boolean;
+interface HistoryTimelineProps {
+  historyData: HistoryEntry[] | undefined;
+  isLoading: boolean;
+  isError: boolean;
   onRefetchResources?: () => void;
 }
 
 export function HistoryTimeline({ 
-  data = [], 
-  isLoading = false, 
-  isError = false,
-  onRefetchResources
+  historyData = [], 
+  isLoading, 
+  isError,
+  onRefetchResources 
 }: HistoryTimelineProps) {
   if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
-        <p className="mt-4 text-muted-foreground">Carregando histórico...</p>
-      </div>
-    );
+    return <div className="text-center py-4">Carregando histórico...</div>;
   }
 
   if (isError) {
     return (
-      <div className="flex flex-col items-center justify-center h-64">
-        <p className="text-destructive">Erro ao carregar o histórico.</p>
+      <div className="text-center py-4">
+        Erro ao carregar o histórico. 
         {onRefetchResources && (
-          <Button 
-            onClick={onRefetchResources} 
-            variant="outline" 
-            className="mt-4"
-          >
+          <button onClick={onRefetchResources} className="text-blue-500">
             Tentar novamente
-          </Button>
+          </button>
         )}
       </div>
     );
   }
 
-  if (!data || data.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64">
-        <p className="text-muted-foreground">Nenhum histórico disponível.</p>
-      </div>
-    );
+  if (!historyData || historyData.length === 0) {
+    return <div className="text-center py-4">Nenhum histórico disponível.</div>;
   }
 
-  // Sort entries by created_at, most recent first
-  const sortedEntries = [...data].sort(
-    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  );
-
-  const formatFieldName = (fieldName: string) => {
-    const mappings: Record<string, string> = {
-      'title': 'Título',
-      'description': 'Descrição',
-      'scheduled_date': 'Data de agendamento',
-      'status_id': 'Status',
-      'service_id': 'Serviço',
-      'collaborator_id': 'Colaborador',
-      'editorial_line_id': 'Linha Editorial',
-      'product_id': 'Produto',
-      'client_id': 'Cliente',
-      'execution_phase': 'Fase de Execução',
-      'capture_date': 'Data de Captura',
-      'capture_end_date': 'Data de Término da Captura',
-      'is_all_day': 'Todo o dia',
-      'location': 'Local',
-      'creators': 'Criadores'
-    };
-    
-    return mappings[fieldName] || fieldName;
-  };
-
   return (
-    <div className="space-y-4 px-2">
-      {sortedEntries.map((entry) => {
-        const date = new Date(entry.created_at);
-        return (
-          <div key={entry.id} className="relative pl-6 pb-6 border-l border-gray-200">
-            <div className="absolute left-0 -translate-x-1/2 w-4 h-4 rounded-full bg-purple-100 border-2 border-purple-600"></div>
-            <div className="ml-4">
-              <p className="text-sm text-muted-foreground">
-                {format(date, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                <span className="text-xs ml-2 text-gray-500">
-                  ({formatDistance(date, new Date(), { addSuffix: true, locale: ptBR })})
-                </span>
-              </p>
-              
-              <h4 className="font-medium">
-                {formatFieldName(entry.field_name)}
-              </h4>
-              
-              <div className="mt-2 space-y-1 text-sm">
-                {entry.old_value !== null && (
-                  <div>
-                    <span className="text-muted-foreground">De: </span>
-                    <span className="bg-red-50 text-red-700 px-1 rounded">{entry.old_value || '(vazio)'}</span>
-                  </div>
-                )}
-                <div>
-                  <span className="text-muted-foreground">Para: </span>
-                  <span className="bg-green-50 text-green-700 px-1 rounded">{entry.new_value || '(vazio)'}</span>
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold">Histórico de Alterações</h3>
+      <div className="relative">
+        <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-gray-400 -ml-0.5"></div>
+        <div className="space-y-6">
+          {historyData.map((entry) => (
+            <div key={entry.id} className="flex items-start space-x-4">
+              <div className="w-1/2">
+                <div className="text-sm text-gray-500">
+                  {format(new Date(entry.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                </div>
+                <div className="text-sm italic">
+                  {entry.changed_by ? `Alterado por: ${entry.changed_by}` : 'Alteração automática'}
                 </div>
               </div>
-              
-              {entry.changed_by_name && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  por {entry.changed_by_name}
-                </p>
-              )}
+              <div className="w-1/2">
+                <div className="font-medium">{entry.field_name}</div>
+                <div className="text-gray-700">
+                  De: {entry.old_value ? entry.old_value : "N/A"} <br />
+                  Para: {entry.new_value}
+                </div>
+              </div>
             </div>
-          </div>
-        );
-      })}
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

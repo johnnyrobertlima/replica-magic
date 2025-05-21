@@ -25,7 +25,9 @@ interface CalendarProps {
   onDialogOpenChange: (open: boolean) => void;
   onDialogClose: () => void;
   onManualRefetch?: () => void;
-  useCaptureDate?: boolean; // New prop to determine which date to use
+  useCaptureDate?: boolean;
+  prioritizeCaptureDate?: boolean;
+  defaultTab?: "details" | "status" | "history" | "capture";
 }
 
 export function Calendar({
@@ -43,7 +45,9 @@ export function Calendar({
   onDialogOpenChange,
   onDialogClose,
   onManualRefetch,
-  useCaptureDate = false // Default to using scheduled_date
+  useCaptureDate = false,
+  prioritizeCaptureDate = false,
+  defaultTab = "details"
 }: CalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date(year, month - 1, 1));
   
@@ -184,8 +188,8 @@ export function Calendar({
           onClose={onDialogClose}
           selectedEvent={selectedEvent}
           onManualRefetch={onManualRefetch}
-          defaultTab={useCaptureDate ? "capture" : "details"}
-          prioritizeCaptureDate={useCaptureDate}
+          defaultTab={defaultTab}
+          prioritizeCaptureDate={prioritizeCaptureDate}
         />
       )}
     </div>
