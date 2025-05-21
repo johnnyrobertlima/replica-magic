@@ -39,7 +39,7 @@ export function CaptureForm({
         <div className="grid gap-2">
           <Label htmlFor="capture_date">Data e hora da captura</Label>
           <DateTimePicker
-            dateOnly={isAllDay}
+            showTimePicker={!isAllDay}
             date={captureDate}
             onDateChange={(date) => {
               onDateChange("capture_date", date);
@@ -53,7 +53,7 @@ export function CaptureForm({
           <div className="grid gap-2">
             <Label htmlFor="capture_end_date">Data e hora de término</Label>
             <DateTimePicker
-              dateOnly={isAllDay}
+              showTimePicker={!isAllDay}
               date={captureEndDate}
               onDateChange={(date) => onDateChange("capture_end_date", date)}
             />

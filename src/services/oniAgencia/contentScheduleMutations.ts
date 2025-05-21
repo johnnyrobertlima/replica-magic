@@ -28,6 +28,8 @@ export async function createContentSchedule(data: ContentScheduleFormData) {
       throw new Error("Either scheduled_date or capture_date must be provided");
     }
     
+    console.log(`Creating content schedule with data:`, data);
+    
     // Create a schedule data object without the capture-specific fields
     const scheduleData = {
       client_id: data.client_id,
@@ -60,7 +62,7 @@ export async function createContentSchedule(data: ContentScheduleFormData) {
         content_schedule_id: createdSchedule.id,
         capture_date: formatDateTimeForAPI(data.capture_date, data.is_all_day),
         capture_end_date: formatDateTimeForAPI(data.capture_end_date, data.is_all_day),
-        is_all_day: data.is_all_day || true,
+        is_all_day: data.is_all_day || false,
         location: data.location || null,
       };
 
