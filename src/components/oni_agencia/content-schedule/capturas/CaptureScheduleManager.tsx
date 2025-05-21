@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { CaptureForm } from "../schedule-dialog/CaptureForm";
 import { useToast } from "@/hooks/use-toast";
+import { formatDateToString, formatDateTimeToString } from "../hooks/utils/dateUtils";
 
 interface CaptureScheduleManagerProps {
   isOpen: boolean;
@@ -93,9 +94,9 @@ export function CaptureScheduleManager({
         collaborator_id: collaboratorId,
         title: "Captura: " + location || new Date(captureDate).toLocaleDateString(),
         description: description,
-        scheduled_date: captureDate,
-        capture_date: captureDate,
-        capture_end_date: captureEndDate,
+        scheduled_date: captureDate ? formatDateToString(captureDate) : undefined,
+        capture_date: captureDate ? (isAllDay ? formatDateToString(captureDate) : formatDateTimeToString(captureDate)) : undefined,
+        capture_end_date: captureEndDate ? (isAllDay ? formatDateToString(captureEndDate) : formatDateTimeToString(captureEndDate)) : undefined,
         is_all_day: isAllDay,
         location: location,
         creators: linkedSchedules.length > 0 ? linkedSchedules : null,

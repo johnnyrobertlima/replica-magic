@@ -14,6 +14,18 @@ export function formatDateToString(date: Date): string {
 }
 
 /**
+ * Formats a Date object as YYYY-MM-DD HH:MM:SS string for database storage
+ */
+export function formatDateTimeToString(date: Date): string {
+  try {
+    return format(date, "yyyy-MM-dd'T'HH:mm:ss");
+  } catch (error) {
+    console.error('Error formatting datetime:', error);
+    return format(new Date(), "yyyy-MM-dd'T'HH:mm:ss"); // Fallback to current date/time
+  }
+}
+
+/**
  * Safely parses a date string to Date object
  */
 export function parseDateString(dateString: string): Date | null {
