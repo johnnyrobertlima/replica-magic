@@ -15,6 +15,7 @@ interface CalendarContainerProps {
   selectedCollaborator?: string | null;
   onSelect: (date: Date) => void;
   onEventClick: (event: CalendarEvent, date: Date) => void;
+  useCaptureDate?: boolean;
 }
 
 export function CalendarContainer({
@@ -23,7 +24,8 @@ export function CalendarContainer({
   currentDate,
   selectedCollaborator,
   onSelect,
-  onEventClick
+  onEventClick,
+  useCaptureDate = false
 }: CalendarContainerProps) {
   // Get username first - maintain hook order
   const userName = useCurrentUser();
@@ -59,6 +61,7 @@ export function CalendarContainer({
                 selectedCollaborator={selectedCollaborator}
                 onSelect={onSelect}
                 onEventClick={onEventClick}
+                useCaptureDate={useCaptureDate}
               />
             ),
             Caption: () => null, // Hide the default caption since we have a custom header
