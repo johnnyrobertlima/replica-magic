@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { EventForm } from "./EventForm";
 import { StatusUpdateForm } from "./StatusUpdateForm";
@@ -6,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
 import { useHistoryTab } from "../hooks/useHistoryTab";
-import { HistoryTimeline } from "./HistoryTimeline";
+import { HistoryTimeline, HistoryEntry } from "./HistoryTimeline";
 import { CaptureForm } from "./CaptureForm";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useQueryClient } from "@tanstack/react-query";
@@ -226,12 +227,12 @@ export function DialogContent({
               <StatusUpdateForm 
                 statuses={statuses}
                 value={formData.status_id || ''}
-                isLoading={isLoadingStatuses}
                 description={formData.description || ''}
-                onSubmit={onStatusUpdate}
-                onInputChange={onInputChange}
-                onValueChange={(value) => onSelectChange('status_id', value)}
+                isLoading={isLoadingStatuses}
                 isSubmitting={isSubmitting}
+                onSubmit={onStatusUpdate}
+                onValueChange={(value) => onSelectChange('status_id', value)}
+                onInputChange={onInputChange}
                 onCancel={onCancel}
               />
             </TabsContent>

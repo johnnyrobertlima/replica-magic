@@ -170,17 +170,15 @@ export function EventEditor({
           <ScrollArea className={getContentHeight()}>
             <form onSubmit={onStatusUpdate}>
               <StatusUpdateForm
-                event={event}
                 statuses={statuses}
-                collaborators={collaborators}
-                isLoadingStatuses={isLoadingStatuses}
-                isLoadingCollaborators={isLoadingCollaborators}
-                selectedStatus={formData.status_id}
-                selectedCollaborator={formData.collaborator_id}
-                note={note}
-                onStatusChange={(value) => onSelectChange("status_id", value)}
-                onCollaboratorChange={(value) => onSelectChange("collaborator_id", value)}
-                onNoteChange={handleNoteChange}
+                value={formData.status_id || ''}
+                description={formData.description || ''}
+                isLoading={isLoadingStatuses}
+                isSubmitting={isSubmitting}
+                onSubmit={onStatusUpdate}
+                onValueChange={(value) => onSelectChange("status_id", value)}
+                onInputChange={onInputChange}
+                onCancel={onCancel}
               />
               
               <DialogFooter>
@@ -210,7 +208,7 @@ export function EventEditor({
                 captureEndDate={formData.capture_end_date}
                 isAllDay={formData.is_all_day === true}
                 location={formData.location}
-                onCaptureChange={handleCaptureDateTime}
+                onDateChange={onDateChange}
                 onLocationChange={onInputChange}
                 onAllDayChange={onAllDayChange || (() => {})}
               />

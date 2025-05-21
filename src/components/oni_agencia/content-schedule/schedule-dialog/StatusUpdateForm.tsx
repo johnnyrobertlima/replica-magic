@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -92,6 +93,7 @@ export function StatusUpdateForm({
         </Label>
         <Textarea
           id="description"
+          name="description"
           placeholder="Atualize a descrição do agendamento"
           value={description}
           onChange={onInputChange}
