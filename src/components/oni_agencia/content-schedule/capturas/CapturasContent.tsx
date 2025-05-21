@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { ContentCalendar } from "../../content-schedule/ContentCalendar";
 import { ContentScheduleList } from "../../content-schedule/ContentScheduleList";
@@ -84,6 +85,9 @@ export function CapturasContent({
       ) : (
         <ContentScheduleList
           events={filteredSchedules}
+          clientId={clientId}
+          selectedCollaborator={selectedCollaborator}
+          onManualRefetch={onManualRefetch}
           hasNextPage={hasNextPage}
           isFetchingNextPage={isFetchingNextPage}
           fetchNextPage={fetchNextPage}
