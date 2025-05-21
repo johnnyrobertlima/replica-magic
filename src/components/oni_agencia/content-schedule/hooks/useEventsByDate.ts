@@ -27,16 +27,10 @@ export function useEventsByDate(
         );
         
         if (useCaptureDate) {
-          // Filter by capture_date
+          // Filter by capture_date - show ALL events with capture dates
           return result.filter((event: CalendarEvent) => {
-            // Não filtrar aqui por data, apenas garantir que eventos com data de captura e status
-            // "Liberado para Captura" sejam retornados
-            if (!event.capture_date) return false;
-            
-            // Adicionamos verificação do status "Liberado para Captura"
-            const isLiberadoParaCaptura = event?.status?.name === "Liberado para Captura";
-            
-            return isLiberadoParaCaptura;
+            // Only check if event has a capture_date, don't filter by status
+            return event.capture_date != null;
           });
         } else {
           // Filter by scheduled_date (original behavior)
