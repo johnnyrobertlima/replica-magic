@@ -7,16 +7,19 @@ import { useQueryClient } from "@tanstack/react-query";
 import { CapturasHeader } from "@/components/oni_agencia/content-schedule/capturas/CapturasHeader";
 import { CapturasContent } from "@/components/oni_agencia/content-schedule/capturas/CapturasContent";
 import { useCapturasFiltering } from "@/hooks/oni_agencia/useCapturasFiltering";
+import { useToast } from "@/hooks/use-toast";
 
 const OniAgenciaCapturas = () => {
   const currentDate = new Date();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [selectedClient, setSelectedClient] = useState<string>("");
   const [selectedMonth, setSelectedMonth] = useState<number>(currentDate.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
   const [selectedCollaborator, setSelectedCollaborator] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
   const { isCollapsed, toggle: toggleFilters } = useCollapsible(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   
   // UseCallback for better performance
   const handleClientChange = useCallback((clientId: string) => {
@@ -69,16 +72,28 @@ const OniAgenciaCapturas = () => {
   
   // Polling for automatic periodic updates
   useEffect(() => {
-    // Refetch data every 30 seconds
+    // Refetch data every 30 seconds when dialog is closed
     const intervalId = setInterval(() => {
-      if (selectedClient) {
+      if (selectedClient && !isDialogOpen) {
         console.log("Executando atualização automática periódica para capturas");
         handleManualRefetch();
       }
     }, 30000); // 30 seconds
     
     return () => clearInterval(intervalId);
-  }, [queryClient, selectedClient, handleManualRefetch]);
+  }, [queryClient, selectedClient, handleManualRefetch, isDialogOpen]);
+  
+  // Alertar o usuário quando não há cliente selecionado
+  useEffect(() => {
+    if (!selectedClient && !isLoadingSchedules && !isRefetching) {
+      toast({
+        title: "Cliente não selecionado",
+        description: "Selecione um cliente para criar agendamentos de captura.",
+        variant: "default",
+        duration: 5000,
+      });
+    }
+  }, [selectedClient, isLoadingSchedules, isRefetching, toast]);
   
   return (
     <main className="container-fluid p-0 max-w-full">
@@ -123,6 +138,7 @@ const OniAgenciaCapturas = () => {
           showLoadingState={showLoadingState}
           isCollapsed={isCollapsed}
           onManualRefetch={handleManualRefetch}
+          onDialogStateChange={setIsDialogOpen}
         />
       </div>
     </main>

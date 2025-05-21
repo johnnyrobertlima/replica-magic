@@ -15,13 +15,17 @@ interface ServiceSelectProps {
   isLoading: boolean;
   value: string;
   onValueChange: (value: string) => void;
+  required?: boolean;
+  label?: string;
 }
 
 export function ServiceSelect({ 
   services, 
   isLoading, 
   value, 
-  onValueChange 
+  onValueChange,
+  required = false,
+  label = "Serviço"
 }: ServiceSelectProps) {
   const getServiceColor = (serviceId: string) => {
     const service = services.find(s => s.id === serviceId);
@@ -30,15 +34,20 @@ export function ServiceSelect({
 
   return (
     <div className="grid gap-2">
-      <Label htmlFor="service_id">Serviço</Label>
+      <Label htmlFor="service_id" className="flex items-center">
+        {label}
+        {required && !value && (
+          <span className="text-red-500 ml-1 text-sm">Campo obrigatório</span>
+        )}
+      </Label>
       <Select
         value={value}
         onValueChange={onValueChange}
-        required
+        required={required}
       >
         <SelectTrigger 
           id="service_id"
-          className="w-full"
+          className={`w-full ${required && !value ? "border-red-300" : ""}`}
           style={value ? { borderLeftColor: getServiceColor(value), borderLeftWidth: '4px' } : {}}
         >
           <SelectValue placeholder="Selecione um serviço" />

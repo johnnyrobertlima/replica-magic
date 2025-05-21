@@ -5,6 +5,7 @@ import { CaptureEventsList } from "./CaptureEventsList";
 import { ContentScheduleLoading } from "@/components/oni_agencia/content-schedule/ContentScheduleLoading";
 import { useDndContext } from "@/components/oni_agencia/content-schedule/hooks/useDndContext";
 import { DndContext } from "@dnd-kit/core";
+import { useCustomDndSensors } from "@/components/oni_agencia/content-schedule/hooks/useCustomSensors";
 
 interface CapturasContentProps {
   viewMode: "calendar" | "list";
@@ -20,6 +21,7 @@ interface CapturasContentProps {
   showLoadingState: boolean;
   isCollapsed: boolean;
   onManualRefetch: () => void;
+  onDialogStateChange?: (open: boolean) => void;
 }
 
 export function CapturasContent({
@@ -35,10 +37,14 @@ export function CapturasContent({
   fetchNextPage,
   showLoadingState,
   isCollapsed,
-  onManualRefetch
+  onManualRefetch,
+  onDialogStateChange
 }: CapturasContentProps) {
   // Filter events to only those with capture_date
   const captureEvents = filteredSchedules.filter(event => event.capture_date);
+  
+  // Configure sensors with zero delay for better responsiveness
+  const sensors = useCustomDndSensors(0, 3);
   
   // Use the same dndContext hook as in ContentArea for consistency
   const {
@@ -47,6 +53,7 @@ export function CapturasContent({
     isDialogOpen,
     handleEventClick,
     handleDateSelect,
+    handleDragStart,
     handleDragEnd,
     handleDialogOpenChange,
     handleDialogClose
@@ -57,14 +64,33 @@ export function CapturasContent({
     onManualRefetch
   });
   
+  // Notify parent component about dialog state changes
+  const handleDialogOpen = (open: boolean) => {
+    handleDialogOpenChange(open);
+    if (onDialogStateChange) {
+      onDialogStateChange(open);
+    }
+  };
+  
+  const handleDialogCloseWithNotify = () => {
+    handleDialogClose();
+    if (onDialogStateChange) {
+      onDialogStateChange(false);
+    }
+  };
+  
   if (showLoadingState) {
-    return <ContentScheduleLoading />;
+    return <ContentScheduleLoading isCollapsed={isCollapsed} />;
   }
   
   return (
-    <div className="w-full">
+    <div className="w-full pt-4">
       {viewMode === "calendar" ? (
-        <DndContext onDragEnd={handleDragEnd}>
+        <DndContext 
+          sensors={sensors}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
           <Calendar
             events={captureEvents}
             month={month}
@@ -77,10 +103,12 @@ export function CapturasContent({
             selectedDate={selectedDate}
             selectedEvent={selectedEvent}
             isDialogOpen={isDialogOpen}
-            onDialogOpenChange={handleDialogOpenChange}
-            onDialogClose={handleDialogClose}
+            onDialogOpenChange={handleDialogOpen}
+            onDialogClose={handleDialogCloseWithNotify}
             onManualRefetch={onManualRefetch}
             useCaptureDate={true} // Flag to use capture_date for displaying events
+            prioritizeCaptureDate={true} // Priorizar data de captura ao abrir o formulário
+            defaultTab="capture" // Abrir diretamente na aba de captura
           />
         </DndContext>
       ) : (
@@ -92,6 +120,7 @@ export function CapturasContent({
           hasNextPage={hasNextPage}
           isFetchingNextPage={isFetchingNextPage}
           fetchNextPage={fetchNextPage}
+          onDialogStateChange={onDialogStateChange}
         />
       )}
     </div>

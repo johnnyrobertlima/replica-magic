@@ -1,50 +1,66 @@
 
-import React from "react";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { OniAgenciaClient } from "@/types/oni-agencia";
+import { Loader2 } from "lucide-react";
 
 interface ClientSelectProps {
-  clients: OniAgenciaClient[];
-  value: string;
+  clients: any[];
   isLoading: boolean;
+  value: string;
   onValueChange: (value: string) => void;
+  required?: boolean;
+  label?: string;
 }
 
 export function ClientSelect({ 
   clients, 
-  value, 
   isLoading, 
-  onValueChange 
+  value, 
+  onValueChange,
+  required = false,
+  label = "Cliente"
 }: ClientSelectProps) {
   return (
     <div className="grid gap-2">
-      <Label htmlFor="client_id">Cliente</Label>
+      <Label htmlFor="client_id" className="flex items-center">
+        {label}
+        {required && !value && (
+          <span className="text-red-500 ml-1 text-sm">Campo obrigatório</span>
+        )}
+      </Label>
       <Select
-        disabled={isLoading || clients.length === 0}
-        value={value || "null"}
+        value={value}
         onValueChange={onValueChange}
-        data-testid="client-select"
+        required={required}
       >
-        <SelectTrigger className="w-full bg-white">
+        <SelectTrigger 
+          id="client_id"
+          className={`w-full ${required && !value ? "border-red-300" : ""}`}
+        >
           <SelectValue placeholder="Selecione um cliente" />
         </SelectTrigger>
-        <SelectContent className="bg-white">
-          <SelectGroup>
-            <SelectItem value="null">-- Nenhum --</SelectItem>
-            {clients && clients.length > 0 && clients.map((client) => (
-              <SelectItem key={client.id} value={client.id}>
+        <SelectContent>
+          {isLoading ? (
+            <div className="flex items-center justify-center p-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span className="ml-2">Carregando...</span>
+            </div>
+          ) : (
+            clients.map((client) => (
+              <SelectItem 
+                key={client.id} 
+                value={client.id}
+              >
                 {client.name}
               </SelectItem>
-            ))}
-          </SelectGroup>
+            ))
+          )}
         </SelectContent>
       </Select>
     </div>
