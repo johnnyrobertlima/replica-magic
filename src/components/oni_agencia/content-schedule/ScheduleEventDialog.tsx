@@ -170,6 +170,9 @@ export function ScheduleEventDialog({
   // Dialog title
   const dialogTitle = currentSelectedEvent ? "Editar Agendamento" : "Novo Agendamento";
 
+  // Determine which tab to show by default
+  const effectiveDefaultTab = selectedEvent ? "status" : "details";
+
   return (
     <DialogContainer
       isOpen={isOpen}
@@ -215,7 +218,7 @@ export function ScheduleEventDialog({
         onDateChange={handleDateChange}
         onDateTimeChange={handleDateTimeChange}
         onAllDayChange={handleAllDayChange}
-        defaultTab={defaultTab}
+        defaultTab={effectiveDefaultTab}
         prioritizeCaptureDate={prioritizeCaptureDate}
       />
     </DialogContainer>

@@ -129,8 +129,6 @@ export function OptimizedContentScheduleList({
             events={filteredEvents}
             onEventClick={handleEventItemClick}
           />
-          
-          {/* No need for the Load More button since we auto-fetch all pages */}
         </div>
       </div>
       

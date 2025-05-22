@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { EventForm } from "./EventForm";
 import { StatusUpdateForm } from "./StatusUpdateForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
 import { useHistoryTab } from "../hooks/useHistoryTab";
-import { HistoryTimeline, HistoryEntry } from "./HistoryTimeline";
+import { HistoryTimeline } from "./HistoryTimeline";
 import { CaptureForm } from "./CaptureForm";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useQueryClient } from "@tanstack/react-query";
@@ -85,9 +85,17 @@ export function DialogContent({
   defaultTab = "details",
   prioritizeCaptureDate = false
 }: DialogContentProps) {
-  const [activeTab, setActiveTab] = useState<string>(defaultTab);
+  const [activeTab, setActiveTab] = useState<string>(defaultTab || "details");
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  
+  // Update activeTab whenever defaultTab changes
+  useEffect(() => {
+    if (defaultTab && currentSelectedEvent) {
+      console.log("Setting active tab to:", defaultTab);
+      setActiveTab(defaultTab);
+    }
+  }, [defaultTab, currentSelectedEvent]);
   
   const {
     historyData,
@@ -113,51 +121,51 @@ export function DialogContent({
     });
   };
 
-  // Função para validar o formulário antes do envio
+  // Function to validate form before submission
   const validateSubmitForm = (e: React.FormEvent) => {
     e.preventDefault();
     const errors = [];
     
-    // Verifica campos obrigatórios com base na aba ativa
+    // Check required fields based on active tab
     if (activeTab === "details" || activeTab === "capture") {
-      // Cliente é sempre obrigatório
+      // Client is always required
       if (!formData.client_id) {
         errors.push("Cliente é obrigatório");
       }
       
-      // Título é sempre obrigatório
+      // Title is always required
       if (!formData.title) {
         errors.push("Título é obrigatório");
       }
       
-      // Serviço é sempre obrigatório
+      // Service is always required
       if (!formData.service_id) {
         errors.push("Serviço é obrigatório");
       }
       
-      // Data de agendamento ou captura é obrigatória
+      // Scheduled date or capture date is required
       if (activeTab === "details" && !formData.scheduled_date) {
         errors.push("Data de agendamento é obrigatória");
       } else if (activeTab === "capture" && !formData.capture_date) {
         errors.push("Data de captura é obrigatória");
       }
     } else if (activeTab === "status") {
-      // Status é obrigatório na aba de status
+      // Status is required on status tab
       if (!formData.status_id) {
         errors.push("Status é obrigatório");
       }
     }
     
-    // Se houver erros, exiba-os e não envie o formulário
+    // If there are errors, show them and don't submit the form
     if (errors.length > 0) {
       setValidationErrors(errors);
       return;
     }
     
-    // Limpa erros de validação e envia o formulário
+    // Clear validation errors and submit the form
     setValidationErrors([]);
     
-    // Chama a função apropriada com base na aba ativa
+    // Call the appropriate function based on active tab
     if (activeTab === "status") {
       console.log("Submitting status update with data:", {
         status_id: formData.status_id,
@@ -172,7 +180,7 @@ export function DialogContent({
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    // Limpa erros de validação ao trocar de aba
+    // Clear validation errors when changing tabs
     setValidationErrors([]);
   };
 
