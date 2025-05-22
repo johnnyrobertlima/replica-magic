@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { CollaboratorSelect } from "./CollaboratorSelect";
 import { OniAgenciaCollaborator } from "@/types/oni-agencia";
+import { Button } from "@/components/ui/button";
 
 interface StatusSelectProps {
   statuses: any[];
@@ -117,7 +118,17 @@ export function StatusUpdateForm({
           placeholder="Atualize a descrição do agendamento"
           value={description}
           onChange={onInputChange}
+          className="min-h-[100px]"
         />
+      </div>
+
+      <div className="flex justify-end space-x-2 mt-6">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancelar
+        </Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Atualizando..." : "Atualizar Status"}
+        </Button>
       </div>
     </form>
   );
