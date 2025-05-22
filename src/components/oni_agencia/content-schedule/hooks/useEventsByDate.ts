@@ -1,6 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { getContentSchedules } from "@/services/oniAgenciaContentScheduleServices";
+import { getContentSchedules } from "@/services/oniAgencia/getContentSchedules";
 import { format } from "date-fns";
 import { CalendarEvent } from "@/types/oni-agencia";
 
@@ -48,8 +48,9 @@ export function useEventsByDate(
       }
     },
     enabled: !!clientId && !!formattedDate && enabled,
-    staleTime: 1000 * 60 * 1, // 1 minute - lower to get more frequent updates
+    staleTime: 1000 * 30, // 30 seconds - keep data fresh
     refetchOnWindowFocus: true, // refetch when window gets focus
+    refetchOnMount: true, // refetch when component mounts
   });
 
   return { events, isLoading, isRefetching };

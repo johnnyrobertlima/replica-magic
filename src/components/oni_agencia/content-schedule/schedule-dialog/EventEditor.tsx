@@ -171,12 +171,16 @@ export function EventEditor({
             <form onSubmit={onStatusUpdate}>
               <StatusUpdateForm
                 statuses={statuses}
+                collaborators={collaborators}
                 value={formData.status_id || ''}
+                collaboratorId={formData.collaborator_id}
                 description={formData.description || ''}
                 isLoading={isLoadingStatuses}
+                isLoadingCollaborators={isLoadingCollaborators}
                 isSubmitting={isSubmitting}
                 onSubmit={onStatusUpdate}
                 onValueChange={(value) => onSelectChange("status_id", value)}
+                onCollaboratorChange={(value) => onSelectChange("collaborator_id", value)}
                 onInputChange={onInputChange}
                 onCancel={onCancel}
               />

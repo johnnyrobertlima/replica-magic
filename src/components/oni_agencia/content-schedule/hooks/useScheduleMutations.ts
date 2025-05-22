@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { useCreateContentSchedule, useUpdateContentSchedule, useDeleteContentSchedule } from "@/hooks/useOniAgenciaContentSchedules";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
@@ -169,14 +168,18 @@ export function useScheduleMutations({
         
         console.log("Sending status update with data:", {
           status_id: formData.status_id,
+          collaborator_id: formData.collaborator_id,
           description: formData.description
         });
         
-        // Send the full form data to ensure all fields are updated
+        // Send the complete formData to ensure all fields are properly updated
         await updateMutation.mutateAsync({
           id: currentSelectedEvent.id,
           data: formData
         });
+        
+        // Add a more visible log to debug the status update
+        console.log("STATUS UPDATE COMPLETED SUCCESSFULLY");
         
         toast({
           title: "Status atualizado",

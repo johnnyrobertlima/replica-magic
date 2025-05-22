@@ -43,6 +43,9 @@ export async function getContentSchedules(
     // Log the response for debugging
     console.log(`Fetched ${data?.length || 0} schedules for ${year}-${month}`);
     
+    // Add a cache buster timestamp to help debugging
+    console.log(`Fetch timestamp: ${new Date().toISOString()}`);
+    
     return data as CalendarEvent[];
   } catch (error) {
     console.error("Error in getContentSchedules:", error);
