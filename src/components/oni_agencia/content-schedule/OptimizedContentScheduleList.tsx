@@ -143,6 +143,7 @@ export function OptimizedContentScheduleList({
           events={[]}
           onClose={handleDialogClose}
           selectedEvent={selectedEvent}
+          defaultTab="status"
         />
       )}
     </div>

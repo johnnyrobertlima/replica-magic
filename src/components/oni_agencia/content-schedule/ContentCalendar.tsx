@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { format, isSameDay } from "date-fns";
@@ -234,7 +235,7 @@ export function ContentCalendar({
           onClose={handleDialogClose}
           selectedEvent={selectedEvent}
           onManualRefetch={onManualRefetch}
-          defaultTab={defaultTab}
+          defaultTab="status"
           prioritizeCaptureDate={prioritizeCaptureDate}
         />
       )}
