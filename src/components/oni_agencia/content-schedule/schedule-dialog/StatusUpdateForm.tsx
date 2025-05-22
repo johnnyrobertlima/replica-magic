@@ -13,7 +13,7 @@ import { CollaboratorSelect } from "./CollaboratorSelect";
 import { OniAgenciaCollaborator } from "@/types/oni-agencia";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { appendToDescriptionHistory } from "@/utils/linkUtils";
+import { appendToDescriptionHistory, linkifyText } from "@/utils/linkUtils";
 
 interface StatusSelectProps {
   statuses: any[];
@@ -87,6 +87,31 @@ export function StatusUpdateForm({
   const { user } = useAuth();
   const userName = user?.email?.split('@')[0] || "Usuário";
   
+  // Function to handle submission with comment history
+  const handleCommentSubmit = (e: React.FormEvent) => {
+    if (newComment.trim()) {
+      // Create updated description with the new comment appended
+      const updatedDescription = appendToDescriptionHistory(description, newComment, userName);
+      
+      // Create a synthetic event to update the hidden input
+      const syntheticEvent = {
+        target: {
+          name: "description",
+          value: updatedDescription
+        }
+      } as React.ChangeEvent<HTMLInputElement>;
+      
+      // Update the hidden field with the complete history
+      onInputChange(syntheticEvent);
+      
+      // Submit the form
+      onSubmit(e);
+    } else {
+      // If no new comment, just submit the form
+      onSubmit(e);
+    }
+  };
+  
   // Importante: este componente NÃO deve renderizar uma tag <form> pois já está dentro de um form
   return (
     <div className="space-y-4">
@@ -141,11 +166,7 @@ export function StatusUpdateForm({
         <input 
           type="hidden" 
           name="description" 
-          value={appendToDescriptionHistory(description, newComment, userName)}
-          onChange={(e) => {
-            // Este onChange é apenas para satisfazer React, mas o valor real é definido no value acima
-            onInputChange(e as unknown as React.ChangeEvent<HTMLInputElement>);
-          }}
+          value={description || ''}
         />
       </div>
 
@@ -156,22 +177,11 @@ export function StatusUpdateForm({
         <Button 
           type="submit" 
           disabled={isSubmitting || (!newComment.trim() && !value)}
+          onClick={handleCommentSubmit}
         >
           {isSubmitting ? "Atualizando..." : "Atualizar Status"}
         </Button>
       </div>
     </div>
   );
-}
-
-function linkifyText(text: string): string {
-  if (!text) return '';
-  
-  // Expressão regular para identificar URLs
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
-  
-  // Substitui URLs por tags de âncora
-  return text.replace(urlRegex, (url) => {
-    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">${url}</a>`;
-  });
 }
