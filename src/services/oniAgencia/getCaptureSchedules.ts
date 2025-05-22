@@ -18,10 +18,12 @@ export const getCaptureSchedules = async (
     const startDate = firstDay.toISOString();
     const endDate = lastDay.toISOString();
 
-    // Start with the base query
-    let query = getBaseQuery();
-
-    // Apply all filters before any select operations
+    // Start with the base query - this gives us a PostgrestFilterBuilder
+    const baseQuery = getBaseQuery();
+    
+    // Build query with filters first
+    let query = baseQuery;
+    
     // Filter by client if provided
     if (clientId) {
       query = query.eq("client_id", clientId);
@@ -36,8 +38,8 @@ export const getCaptureSchedules = async (
       query = query.or(`collaborator_id.eq.${collaboratorId},creators.cs.{${collaboratorId}}`);
     }
     
-    // Only after all filters, apply the select statement
-    query = query.select(`
+    // Now apply the select statement after all filters
+    const { data, error } = await query.select(`
       *,
       status(*),
       capture:oniagencia_capturas!left(
@@ -47,14 +49,8 @@ export const getCaptureSchedules = async (
         capture_end_date,
         location
       )
-    `);
+    `).order("scheduled_date", { ascending: true });
     
-    // Finally add ordering
-    query = query.order("scheduled_date", { ascending: true });
-    
-    // Execute the query
-    const { data, error } = await query;
-
     if (error) {
       throw error;
     }
@@ -120,9 +116,11 @@ export const getCaptureSchedulesPaginated = async (
     const to = from + pageSize - 1;
 
     // Start with the base query
-    let query = getBaseQuery();
+    const baseQuery = getBaseQuery();
     
-    // Apply all filters before any select operations
+    // Build query with filters first
+    let query = baseQuery;
+    
     // Filter by client if provided
     if (clientId) {
       query = query.eq("client_id", clientId);
@@ -137,8 +135,8 @@ export const getCaptureSchedulesPaginated = async (
       query = query.or(`collaborator_id.eq.${collaboratorId},creators.cs.{${collaboratorId}}`);
     }
     
-    // Only after all filters, apply the select statement
-    query = query.select(`
+    // Now apply the select statement, ordering and pagination after all filters
+    const { data, error, count } = await query.select(`
       *,
       status(*),
       capture:oniagencia_capturas!left(
@@ -148,15 +146,10 @@ export const getCaptureSchedulesPaginated = async (
         capture_end_date,
         location
       )
-    `);
+    `)
+    .order("scheduled_date", { ascending: true })
+    .range(from, to);
     
-    // Finally add ordering and pagination
-    query = query.order("scheduled_date", { ascending: true });
-    query = query.range(from, to);
-    
-    // Execute the query
-    const { data, error, count } = await query;
-
     if (error) {
       throw error;
     }
