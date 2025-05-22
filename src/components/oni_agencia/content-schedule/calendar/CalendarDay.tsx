@@ -45,7 +45,7 @@ export function CalendarDay({
         // Extract only the date part (without the hour) from capture_date
         const captureDateOnly = event.capture_date.split('T')[0];
         
-        // Return true if the date matches - no status filter for captures page
+        // Return true if the date matches - REMOVED status filter
         return captureDateOnly === dateStr;
       });
     } else {

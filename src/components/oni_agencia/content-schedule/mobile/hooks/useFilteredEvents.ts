@@ -17,11 +17,8 @@ export function useFilteredEvents(
       return;
     }
     
-    // First, filter out events with "Publicado" and "Agendado" status
-    const withoutExcludedStatuses = events.filter(event => 
-      !(event.status?.name === "Publicado") &&
-      !(event.status?.name === "Agendado")
-    );
+    // Remover filtro de status para captura
+    const withoutExcludedStatuses = events;
     
     if (!selectedCollaborator) {
       setFilteredEvents(withoutExcludedStatuses);

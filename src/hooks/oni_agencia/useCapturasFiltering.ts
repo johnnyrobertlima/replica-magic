@@ -62,7 +62,7 @@ export function useCapturasFiltering(
     return infiniteSchedules.pages.flatMap(page => page.data) as CalendarEvent[];
   }, [infiniteSchedules]);
   
-  // Filter events by selected services and status "Liberado para Captura"
+  // Filter events by selected services and capture_date (REMOVED status filter)
   const filteredCaptureSchedules = useMemo(() => {
     if (selectedServiceIds.length === 0) {
       return []; // If no services selected, show nothing
@@ -73,16 +73,16 @@ export function useCapturasFiltering(
       ? flattenedSchedules // Se todos os serviços selecionados, não filtrar
       : flattenedSchedules.filter(event => selectedServiceIds.includes(event.service_id));
     
-    // Agora garantimos que apenas eventos com data de captura E status "Liberado para Captura" sejam retornados
+    // Agora garantimos que apenas eventos com data de captura sejam retornados
+    // REMOVIDO filtro de status "Liberado para Captura"
     const finalFiltered = serviceFiltered.filter(event => {
       const hasCaptureDate = !!event.capture_date;
-      const isLiberadoParaCaptura = event.status?.name === "Liberado para Captura";
       
-      return hasCaptureDate && isLiberadoParaCaptura;
+      return hasCaptureDate;
     });
     
     // Log para diagnóstico
-    console.log(`useCapturasFiltering - Found ${finalFiltered.length} events with capture date and status "Liberado para Captura"`);
+    console.log(`useCapturasFiltering - Found ${finalFiltered.length} events with capture date`);
     
     return finalFiltered;
   }, [flattenedSchedules, selectedServiceIds, services.length]);

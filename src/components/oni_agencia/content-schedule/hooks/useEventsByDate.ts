@@ -26,8 +26,11 @@ export function useEventsByDate(
           selectedDate.getMonth() + 1
         );
         
+        console.log(`useEventsByDate fetched ${result.length} events, useCaptureDate=${useCaptureDate}`);
+        
         if (useCaptureDate) {
           // Filter by capture_date - show ALL events with capture dates
+          // REMOVED STATUS FILTER HERE
           return result.filter((event: CalendarEvent) => {
             // Only check if event has a capture_date, don't filter by status
             return event.capture_date != null;
@@ -45,7 +48,7 @@ export function useEventsByDate(
       }
     },
     enabled: !!clientId && !!formattedDate && enabled,
-    staleTime: 1000 * 60 * 5 // 5 minutes
+    staleTime: 1000 * 60 * 5 // 5 minutos
   });
 
   return { events, isLoading };

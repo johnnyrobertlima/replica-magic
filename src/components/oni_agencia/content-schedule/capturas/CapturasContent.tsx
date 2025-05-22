@@ -40,10 +40,8 @@ export function CapturasContent({
   onManualRefetch,
   onDialogStateChange
 }: CapturasContentProps) {
-  // Filter events to only those with capture_date (no status filter)
-  const captureEvents = filteredSchedules.filter(event => 
-    event.capture_date
-  );
+  // Filter events to only those with capture_date (REMOVED status filter)
+  const captureEvents = filteredSchedules.filter(event => event.capture_date);
   
   // Adicione um log para depuração
   console.log(`CapturasContent - Filtered ${captureEvents.length} capture events`);
