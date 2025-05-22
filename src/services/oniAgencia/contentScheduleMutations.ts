@@ -96,7 +96,12 @@ export async function updateContentSchedule(
     // Only add fields that are part of the content schedule table
     if (data.client_id !== undefined) scheduleUpdateData.client_id = data.client_id;
     if (data.service_id !== undefined) scheduleUpdateData.service_id = data.service_id;
-    if (data.collaborator_id !== undefined) scheduleUpdateData.collaborator_id = data.collaborator_id;
+    
+    // Special handling for collaborator_id to handle null values correctly
+    if (data.collaborator_id !== undefined) {
+      scheduleUpdateData.collaborator_id = data.collaborator_id === "null" ? null : data.collaborator_id;
+    }
+    
     if (data.title !== undefined) scheduleUpdateData.title = data.title;
     if (data.description !== undefined) scheduleUpdateData.description = data.description;
     
@@ -175,7 +180,20 @@ export async function updateContentSchedule(
       }
     }
 
-    return { id, success: true };
+    // Fetch and return the updated record to confirm success
+    const { data: updatedSchedule, error: getError } = await supabase
+      .from("oni_agencia_content_schedules")
+      .select()
+      .eq("id", id)
+      .single();
+    
+    if (getError) {
+      console.warn("Could not fetch updated schedule:", getError);
+      // Don't throw here, just return success with ID
+      return { id, success: true };
+    }
+    
+    return updatedSchedule;
   } catch (error: any) {
     console.error("Error in updateContentSchedule:", error);
     throw new Error(error.message || "An error occurred while updating the content schedule");

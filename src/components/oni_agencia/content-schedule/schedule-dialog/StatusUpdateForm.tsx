@@ -82,8 +82,9 @@ export function StatusUpdateForm({
   onCancel
 }: StatusUpdateFormProps) {
   
+  // Important: this component should NOT render a <form> tag since it's already inside a form
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <div className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="status" className="text-base font-medium">
           Status
@@ -130,6 +131,6 @@ export function StatusUpdateForm({
           {isSubmitting ? "Atualizando..." : "Atualizar Status"}
         </Button>
       </div>
-    </form>
+    </div>
   );
 }

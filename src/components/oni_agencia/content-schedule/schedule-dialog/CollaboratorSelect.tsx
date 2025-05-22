@@ -5,7 +5,6 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -29,6 +28,10 @@ export function CollaboratorSelect({
   label = "Responsável",
   errorMessage = "Erro ao carregar colaboradores" 
 }: CollaboratorSelectProps) {
+  // Add debug logs to help trace issues
+  console.log("CollaboratorSelect rendering with value:", value);
+  console.log("CollaboratorSelect has collaborators:", collaborators?.length);
+  
   return (
     <div className="space-y-2">
       <Label htmlFor="collaborator_id" className="text-base font-medium">
@@ -37,7 +40,10 @@ export function CollaboratorSelect({
       <Select
         disabled={isLoading}
         value={value}
-        onValueChange={onValueChange}
+        onValueChange={(newValue) => {
+          console.log("CollaboratorSelect changed to:", newValue);
+          onValueChange(newValue);
+        }}
         data-testid="collaborator-select"
       >
         <SelectTrigger className="w-full">

@@ -141,6 +141,11 @@ export function DialogContent({
       } else if (activeTab === "capture" && !formData.capture_date) {
         errors.push("Data de captura é obrigatória");
       }
+    } else if (activeTab === "status") {
+      // Status é obrigatório na aba de status
+      if (!formData.status_id) {
+        errors.push("Status é obrigatório");
+      }
     }
     
     // Se houver erros, exiba-os e não envie o formulário
@@ -151,7 +156,18 @@ export function DialogContent({
     
     // Limpa erros de validação e envia o formulário
     setValidationErrors([]);
-    onSubmit(e);
+    
+    // Chama a função apropriada com base na aba ativa
+    if (activeTab === "status") {
+      console.log("Submitting status update with data:", {
+        status_id: formData.status_id,
+        collaborator_id: formData.collaborator_id,
+        description: formData.description
+      });
+      onStatusUpdate(e);
+    } else {
+      onSubmit(e);
+    }
   };
 
   const handleTabChange = (value: string) => {
@@ -236,7 +252,7 @@ export function DialogContent({
                 isLoading={isLoadingStatuses}
                 isLoadingCollaborators={isLoadingCollaborators}
                 isSubmitting={isSubmitting}
-                onSubmit={onStatusUpdate}
+                onSubmit={validateSubmitForm}
                 onValueChange={(value) => onSelectChange('status_id', value)}
                 onCollaboratorChange={(value) => onSelectChange('collaborator_id', value)}
                 onInputChange={onInputChange}
@@ -245,12 +261,14 @@ export function DialogContent({
             </TabsContent>
             
             <TabsContent value="history">
-              <HistoryTimeline 
-                historyData={historyData} 
-                isLoading={isLoadingHistory} 
-                isError={isHistoryError}
-                onRefetchResources={handleRefetchResources}
-              />
+              <div className="h-[60vh]">
+                <HistoryTimeline 
+                  historyData={historyData} 
+                  isLoading={isLoadingHistory} 
+                  isError={isHistoryError}
+                  onRefetchResources={handleRefetchResources}
+                />
+              </div>
             </TabsContent>
             
             <TabsContent value="capture">
@@ -261,7 +279,7 @@ export function DialogContent({
                 location={formData.location}
                 onDateChange={onDateChange}
                 onLocationChange={onInputChange}
-                onAllDayChange={onAllDayChange}
+                onAllDayChange={onAllDayChange || (() => {})}
               />
               <div className="flex justify-end space-x-2 mt-4">
                 <Button type="button" variant="outline" onClick={onCancel}>

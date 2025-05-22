@@ -95,7 +95,10 @@ export function useUpdateContentSchedule() {
       // Return a context with the previous data
       return { id, previousData: data };
     },
-    onSuccess: () => {
+    onSuccess: (result, variables) => {
+      // Log success for debugging
+      console.log(`Successfully updated schedule ${variables.id}`, result);
+      
       toast({
         title: "Agendamento atualizado",
         description: "O agendamento foi atualizado com sucesso.",
@@ -105,6 +108,7 @@ export function useUpdateContentSchedule() {
       queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
       queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
       queryClient.invalidateQueries({ queryKey: ['scheduleHistory'] });
+      queryClient.invalidateQueries({ queryKey: ['events'] });
       
       // Also invalidate resources in case they're related
       queryClient.invalidateQueries({ queryKey: ['oniAgenciaCollaborators'] });
@@ -165,6 +169,7 @@ export function useDeleteContentSchedule() {
       // Invalidate all content schedules queries to force refetch
       queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
       queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
+      queryClient.invalidateQueries({ queryKey: ['events'] });
     },
     onError: (error: any) => {
       console.error("Error deleting content schedule:", error);
