@@ -68,11 +68,17 @@ const OniAgenciaControlePauta = () => {
     selectedCollaborator
   );
   
-  // Polling for automatic periodic updates
+  // Polling for automatic periodic updates - but only when dialog is closed
   useEffect(() => {
+    // Only set up polling if dialog is closed
+    if (isDialogOpen) {
+      console.log("Dialog is open, automatic polling disabled");
+      return () => {}; // Return empty cleanup function
+    }
+    
     // Refetch data every 30 seconds when dialog is closed
     const intervalId = setInterval(() => {
-      if (selectedClient && !isDialogOpen) {
+      if (selectedClient) {
         console.log("Executando atualização automática periódica");
         handleManualRefetch();
       }
@@ -92,7 +98,7 @@ const OniAgenciaControlePauta = () => {
           isRefetching={isRefetching}
           isLoadingSchedules={isLoadingSchedules}
           isFetchingNextPage={isFetchingNextPage}
-          onManualRefetch={handleManualRefetch}
+          onManualRefetch={isDialogOpen ? undefined : handleManualRefetch}
         />
         
         <ContentScheduleFilters
@@ -123,7 +129,7 @@ const OniAgenciaControlePauta = () => {
           fetchNextPage={fetchNextPage}
           showLoadingState={showLoadingState}
           isCollapsed={isCollapsed}
-          onManualRefetch={handleManualRefetch}
+          onManualRefetch={isDialogOpen ? undefined : handleManualRefetch}
           onDialogStateChange={setIsDialogOpen}
         />
       </div>

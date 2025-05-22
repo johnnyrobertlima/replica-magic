@@ -40,16 +40,18 @@ export function MobileScheduleEventDialog({
     activeTab,
     isSubmitting,
     isDeleting,
+    isUserEditing,
     setActiveTab,
     handleInputChange,
     handleSelectChange,
     handleDateChange,
-    handleDateTimeChange,  // New handler
-    handleAllDayChange,    // New handler
+    handleDateTimeChange,
+    handleAllDayChange,
     handleSubmit,
     handleStatusUpdate,
     handleDelete,
     handleSelectEvent,
+    handleDialogClose,
     resetForm
   } = useScheduleEventDialog({
     clientId,
@@ -79,12 +81,25 @@ export function MobileScheduleEventDialog({
 
   const dialogTitle = currentSelectedEvent ? "Editar Agendamento" : "Novo Agendamento";
 
+  // Enhanced open change function to check for unsaved changes
+  const handleOpenChange = (open: boolean) => {
+    if (!open && isUserEditing && !isSubmitting && !isDeleting) {
+      if (window.confirm("Você tem alterações não salvas. Deseja realmente fechar?")) {
+        onOpenChange(open);
+        onClose();
+      }
+    } else {
+      onOpenChange(open);
+      if (!open) onClose();
+    }
+  };
+
   return (
     <MobileDialogContainer 
       isOpen={isOpen} 
-      onOpenChange={onOpenChange} 
+      onOpenChange={handleOpenChange} 
       selectedDate={selectedDate} 
-      onClose={onClose}
+      onClose={handleDialogClose}
       title={dialogTitle}
     >
       <DialogContent
@@ -113,15 +128,12 @@ export function MobileScheduleEventDialog({
         onSubmit={handleSubmit}
         onStatusUpdate={handleStatusUpdate}
         onDelete={handleDelete}
-        onCancel={() => {
-          onOpenChange(false);
-          onClose();
-        }}
+        onCancel={handleDialogClose}
         onInputChange={handleInputChange}
         onSelectChange={handleSelectChange}
         onDateChange={handleDateChange}
-        onDateTimeChange={handleDateTimeChange}  // Pass new handler
-        onAllDayChange={handleAllDayChange}      // Pass new handler
+        onDateTimeChange={handleDateTimeChange}
+        onAllDayChange={handleAllDayChange}
         defaultTab={activeTab}
       />
     </MobileDialogContainer>

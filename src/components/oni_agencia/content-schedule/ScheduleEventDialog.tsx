@@ -36,6 +36,7 @@ export function ScheduleEventDialog({
 }: ScheduleEventDialogProps) {
   // Add state to track loading and prevent loops
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isUserEditing, setIsUserEditing] = useState(false);
   
   // Log dialog state for debugging
   useEffect(() => {
@@ -44,6 +45,11 @@ export function ScheduleEventDialog({
     // Mark as initialized once component mounts
     if (!isInitialized) {
       setIsInitialized(true);
+    }
+    
+    // When dialog opens, reset the editing state
+    if (isOpen) {
+      setIsUserEditing(false);
     }
   }, [isOpen, clientId, selectedDate, isInitialized]);
 
@@ -57,16 +63,23 @@ export function ScheduleEventDialog({
 
   // Get events for the selected date - pass prioritizeCaptureDate to determine which date field to use
   // Only enable query when dialog is open and we have clientId and selectedDate
+  // IMPORTANT: If the user is editing, don't fetch new data!
   const { events: dateEvents, isLoading: isLoadingEvents } = useEventsByDate(
     clientId, 
     selectedDate, 
-    !!isOpen && !!clientId && !!selectedDate,
+    !!isOpen && !!clientId && !!selectedDate && !isUserEditing,
     prioritizeCaptureDate
   );
   
   // Combine events from props and from the date query, removing duplicates
   // Use useMemo to prevent unnecessary re-renders
   const events = useMemo(() => {
+    // If user is actively editing, don't update the events list
+    if (isUserEditing) {
+      console.log("User is editing, not updating events list");
+      return propEvents || [];
+    }
+    
     if (!propEvents && !dateEvents) return [];
     
     const allEvents = [...(propEvents || []), ...(dateEvents || [])];
@@ -80,7 +93,7 @@ export function ScheduleEventDialog({
     }, [] as CalendarEvent[]);
     
     return uniqueEvents;
-  }, [propEvents, dateEvents]);
+  }, [propEvents, dateEvents, isUserEditing]);
   
   // Form state management - passing a copy of the date to avoid reference problems
   const {
@@ -137,28 +150,82 @@ export function ScheduleEventDialog({
     onManualRefetch
   });
   
+  // Set the user as editing when any input changes
+  const handleAnyInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setIsUserEditing(true);
+    handleInputChange(e);
+  };
+  
+  const handleAnySelectChange = (name: string, value: string) => {
+    setIsUserEditing(true);
+    handleSelectChange(name, value);
+  };
+  
+  const handleAnyDateChange = (name: string, value: Date | null) => {
+    setIsUserEditing(true);
+    handleDateChange(name, value);
+  };
+  
+  const handleAnyDateTimeChange = (name: string, value: Date | null) => {
+    setIsUserEditing(true);
+    handleDateTimeChange(name, value);
+  };
+  
+  const handleAnyAllDayChange = (value: boolean) => {
+    setIsUserEditing(true);
+    handleAllDayChange(value);
+  };
+  
   // Wrap handlers to match expected function signatures
   const handleSubmit = async (e: React.FormEvent) => {
     // Prepare data but keep Date objects
     const preparedData = prepareDataForAPI(formData);
     await submitEvent(e, currentSelectedEvent, preparedData);
+    setIsUserEditing(false);
   };
   
   const handleStatusUpdate = async (e: React.FormEvent) => {
     // Prepare data but keep Date objects
     const preparedData = prepareDataForAPI(formData);
     await updateStatus(e, currentSelectedEvent, preparedData);
+    setIsUserEditing(false);
   };
   
   const handleDelete = async () => {
     await deleteEvent(currentSelectedEvent);
+    setIsUserEditing(false);
   };
 
   // Enhanced reset form function to ensure complete reset
   const enhancedResetForm = () => {
     console.log("Enhanced reset form called in ScheduleEventDialog");
+    setIsUserEditing(false);
     setCurrentSelectedEventNull(); // Reset the currentSelectedEvent state
     resetForm(); // Call the original resetForm from the hook
+  };
+
+  // Enhanced close function to ensure we prompt the user if they have unsaved changes
+  const handleDialogClose = () => {
+    if (isUserEditing && !isSubmitting && !isDeleting) {
+      if (window.confirm("Você tem alterações não salvas. Deseja realmente fechar?")) {
+        setIsUserEditing(false);
+        onClose();
+      }
+    } else {
+      onClose();
+    }
+  };
+  
+  // Enhanced open change function to check for unsaved changes
+  const handleOpenChange = (open: boolean) => {
+    if (!open && isUserEditing && !isSubmitting && !isDeleting) {
+      if (window.confirm("Você tem alterações não salvas. Deseja realmente fechar?")) {
+        setIsUserEditing(false);
+        onOpenChange(open);
+      }
+    } else {
+      onOpenChange(open);
+    }
   };
 
   // Helper function to clear selected event
@@ -176,9 +243,9 @@ export function ScheduleEventDialog({
   return (
     <DialogContainer
       isOpen={isOpen}
-      onOpenChange={onOpenChange}
+      onOpenChange={handleOpenChange}
       selectedDate={selectedDate}
-      onClose={onClose}
+      onClose={handleDialogClose}
       title={dialogTitle}
       aria-describedby="schedule-dialog-description"
     >
@@ -212,12 +279,12 @@ export function ScheduleEventDialog({
         onSubmit={handleSubmit}
         onStatusUpdate={handleStatusUpdate}
         onDelete={handleDelete}
-        onCancel={onClose}
-        onInputChange={handleInputChange}
-        onSelectChange={handleSelectChange}
-        onDateChange={handleDateChange}
-        onDateTimeChange={handleDateTimeChange}
-        onAllDayChange={handleAllDayChange}
+        onCancel={handleDialogClose}
+        onInputChange={handleAnyInputChange}
+        onSelectChange={handleAnySelectChange}
+        onDateChange={handleAnyDateChange}
+        onDateTimeChange={handleAnyDateTimeChange}
+        onAllDayChange={handleAnyAllDayChange}
         defaultTab={effectiveDefaultTab}
         prioritizeCaptureDate={prioritizeCaptureDate}
       />
