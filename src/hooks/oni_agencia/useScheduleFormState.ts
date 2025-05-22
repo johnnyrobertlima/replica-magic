@@ -479,16 +479,17 @@ export function useScheduleFormState({
       };
       
       if (formData.capture_date) {
-        if (formData.capture_date instanceof Date) {
+        const captureDate = formData.capture_date;
+        if (captureDate instanceof Date) {
           // Keep just the date part (reset time to midnight)
           updatedData.capture_date = new Date(
-            formData.capture_date.getFullYear(),
-            formData.capture_date.getMonth(),
-            formData.capture_date.getDate()
+            captureDate.getFullYear(),
+            captureDate.getMonth(),
+            captureDate.getDate()
           );
-        } else {
+        } else if (typeof captureDate === 'string') {
           try {
-            const parsedDate = typeof formData.capture_date === 'string' ? new Date(formData.capture_date) : new Date();
+            const parsedDate = new Date(captureDate);
             updatedData.capture_date = new Date(
               parsedDate.getFullYear(),
               parsedDate.getMonth(),
@@ -502,16 +503,17 @@ export function useScheduleFormState({
       }
       
       if (formData.capture_end_date) {
-        if (formData.capture_end_date instanceof Date) {
+        const captureEndDate = formData.capture_end_date;
+        if (captureEndDate instanceof Date) {
           // Keep just the date part (reset time to midnight)
           updatedData.capture_end_date = new Date(
-            formData.capture_end_date.getFullYear(),
-            formData.capture_end_date.getMonth(),
-            formData.capture_end_date.getDate()
+            captureEndDate.getFullYear(),
+            captureEndDate.getMonth(),
+            captureEndDate.getDate()
           );
-        } else {
+        } else if (typeof captureEndDate === 'string') {
           try {
-            const parsedDate = typeof formData.capture_end_date === 'string' ? new Date(formData.capture_end_date) : new Date();
+            const parsedDate = new Date(captureEndDate);
             updatedData.capture_end_date = new Date(
               parsedDate.getFullYear(),
               parsedDate.getMonth(),
@@ -537,16 +539,19 @@ export function useScheduleFormState({
       
       if (formData.capture_date) {
         let date: Date;
+        const captureDate = formData.capture_date;
         
-        if (formData.capture_date instanceof Date) {
-          date = new Date(formData.capture_date);
-        } else {
+        if (captureDate instanceof Date) {
+          date = new Date(captureDate);
+        } else if (typeof captureDate === 'string') {
           try {
-            date = typeof formData.capture_date === 'string' ? new Date(formData.capture_date) : new Date();
+            date = new Date(captureDate);
           } catch (e) {
             console.error("Error parsing capture_date:", e);
             date = new Date();
           }
+        } else {
+          date = new Date();
         }
         
         date.setHours(currentHours);
@@ -562,16 +567,19 @@ export function useScheduleFormState({
       
       if (formData.capture_end_date) {
         let endDate: Date;
+        const captureEndDate = formData.capture_end_date;
         
-        if (formData.capture_end_date instanceof Date) {
-          endDate = new Date(formData.capture_end_date);
-        } else {
+        if (captureEndDate instanceof Date) {
+          endDate = new Date(captureEndDate);
+        } else if (typeof captureEndDate === 'string') {
           try {
-            endDate = typeof formData.capture_end_date === 'string' ? new Date(formData.capture_end_date) : addMinutes(new Date(), 30);
+            endDate = new Date(captureEndDate);
           } catch (e) {
             console.error("Error parsing capture_end_date:", e);
             endDate = addMinutes(new Date(), 30);
           }
+        } else {
+          endDate = addMinutes(new Date(), 30);
         }
         
         endDate.setHours(currentHours);

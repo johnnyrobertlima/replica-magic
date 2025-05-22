@@ -18,10 +18,12 @@ export const getCaptureSchedules = async (
     const startDate = firstDay.toISOString().split("T")[0];
     const endDate = lastDay.toISOString().split("T")[0];
 
-    // Build query with filters first
-    let query = supabase
-      .from(TABLE_NAME)
-      .eq('status_id', 'f0593677-1afb-486d-80a8-a24cb6fb7071'); // Status "Liberado para Captura"
+    // Start with the base query
+    let query = supabase.from(TABLE_NAME);
+    
+    // Apply all filters
+    // Filter by status first - "Liberado para Captura"
+    query = query.eq('status_id', 'f0593677-1afb-486d-80a8-a24cb6fb7071');
     
     // Filter by client if provided
     if (clientId) {
@@ -119,10 +121,12 @@ export const getCaptureSchedulesPaginated = async (
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
-    // Build query with filters first
-    let query = supabase
-      .from(TABLE_NAME)
-      .eq('status_id', 'f0593677-1afb-486d-80a8-a24cb6fb7071'); // Status "Liberado para Captura"
+    // Start with the base query
+    let query = supabase.from(TABLE_NAME);
+    
+    // Apply all filters
+    // Filter by status first - "Liberado para Captura"
+    query = query.eq('status_id', 'f0593677-1afb-486d-80a8-a24cb6fb7071');
     
     // Filter by client if provided
     if (clientId) {
