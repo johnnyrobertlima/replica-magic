@@ -79,7 +79,7 @@ export function EventForm({
         <div className="space-y-4">
           <div className="grid gap-2">
             <Label htmlFor="title">Título</Label>
-            <Input id="title" name="title" value={formData.title || ""} onChange={onInputChange} placeholder="Título do evento" required />
+            <Input id="title" name="title" value={formData.title || ""} onChange={onInputChange} placeholder="Título do evento" />
           </div>
 
           <ClientSelect clients={clients || []} value={formData.client_id} isLoading={isLoadingClients} onValueChange={value => onSelectChange("client_id", value)} />

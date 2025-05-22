@@ -61,6 +61,7 @@ export function DetailsForm({
             value={formData.client_id || ""}
             onValueChange={(value) => onSelectChange("client_id", value)}
             disabled={!!clientId}
+            required
           >
             <SelectTrigger>
               <SelectValue placeholder="Selecione um cliente" />
@@ -77,13 +78,12 @@ export function DetailsForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">Título*</label>
+        <label className="block text-sm font-medium mb-1">Título</label>
         <Input
           name="title"
           value={formData.title || ""}
           onChange={onInputChange}
           placeholder="Título do agendamento"
-          required
         />
       </div>
 
