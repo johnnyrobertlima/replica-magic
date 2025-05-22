@@ -89,9 +89,14 @@ export function StatusUpdateForm({
   
   // Function to handle submission with comment history
   const handleCommentSubmit = (e: React.FormEvent) => {
+    e.preventDefault(); // Prevent form submission to handle it manually
+    
     if (newComment.trim()) {
+      console.log("Adding new comment to history:", newComment);
+      
       // Create updated description with the new comment appended
       const updatedDescription = appendToDescriptionHistory(description, newComment, userName);
+      console.log("Updated description:", updatedDescription);
       
       // Create a synthetic event to update the hidden input
       const syntheticEvent = {
@@ -103,6 +108,9 @@ export function StatusUpdateForm({
       
       // Update the hidden field with the complete history
       onInputChange(syntheticEvent);
+      
+      // Clear the comment field after submitting
+      setNewComment("");
       
       // Submit the form
       onSubmit(e);
@@ -175,7 +183,7 @@ export function StatusUpdateForm({
           Cancelar
         </Button>
         <Button 
-          type="submit" 
+          type="button" // Mudamos para type="button" para evitar duplo submit
           disabled={isSubmitting || (!newComment.trim() && !value)}
           onClick={handleCommentSubmit}
         >

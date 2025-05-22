@@ -7,12 +7,12 @@
 export function linkifyText(text: string): string {
   if (!text) return '';
   
-  // Expressão regular para identificar URLs
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  // Expressão regular mais robusta para identificar URLs
+  const urlRegex = /(https?:\/\/[^\s<]+[^<.,:;"')\]\s])/g;
   
   // Substitui URLs por tags de âncora
   return text.replace(urlRegex, (url) => {
-    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">${url}</a>`;
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline break-words">${url}</a>`;
   });
 }
 

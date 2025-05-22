@@ -1,6 +1,7 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
 
 interface HistoryEntry {
   id: string;
@@ -14,6 +15,27 @@ interface HistoryEntry {
 }
 
 export function useScheduleHistory(scheduleId: string) {
+  const queryClient = useQueryClient();
+
+  // Configurar um invalidador para forçar a atualização do cache
+  useEffect(() => {
+    // Função para lidar com mudanças no agendamento
+    const handleScheduleChange = () => {
+      if (scheduleId) {
+        console.log("Invalidating scheduleHistory cache for:", scheduleId);
+        queryClient.invalidateQueries({ queryKey: ['scheduleHistory', scheduleId] });
+      }
+    };
+
+    // Invalidar cache quando o scheduleId mudar
+    handleScheduleChange();
+
+    // Retornar função de limpeza (cleanup)
+    return () => {
+      // Nada a limpar
+    };
+  }, [scheduleId, queryClient]);
+
   return useQuery({
     queryKey: ['scheduleHistory', scheduleId],
     queryFn: async (): Promise<HistoryEntry[]> => {
@@ -21,6 +43,8 @@ export function useScheduleHistory(scheduleId: string) {
       if (!scheduleId) return [];
       
       try {
+        console.log("Fetching history data for schedule:", scheduleId);
+        
         // Fetch the history entries
         const { data: rawHistoryEntries, error } = await supabase
           .from('oni_agencia_schedule_history')

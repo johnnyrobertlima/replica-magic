@@ -2,8 +2,9 @@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { User, Clock, AlertTriangle } from "lucide-react";
+import { User, Clock, AlertTriangle, RefreshCw } from "lucide-react";
 import { linkifyText } from "@/utils/linkUtils";
+import { Button } from "@/components/ui/button";
 
 interface HistoryEntry {
   id: string;
@@ -42,9 +43,23 @@ export function HistoryTimeline({
 
   if (isError) {
     return (
-      <div className="text-sm text-red-500 flex items-center justify-center p-4 space-x-2 h-[400px]">
-        <AlertTriangle className="h-4 w-4" />
-        <span>Erro ao carregar histórico: {error instanceof Error ? error.message : 'Erro desconhecido'}</span>
+      <div className="flex flex-col items-center justify-center p-4 space-y-4 h-[400px]">
+        <div className="text-sm text-red-500 flex items-center space-x-2">
+          <AlertTriangle className="h-4 w-4" />
+          <span>Erro ao carregar histórico: {error instanceof Error ? error.message : 'Erro desconhecido'}</span>
+        </div>
+        
+        {onRefetchResources && (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={onRefetchResources}
+            className="flex items-center space-x-1"
+          >
+            <RefreshCw className="h-3 w-3 mr-1" />
+            <span>Tentar novamente</span>
+          </Button>
+        )}
       </div>
     );
   }
