@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { getBaseQuery, TABLE_NAME } from "./baseQuery";
 import { CalendarEvent } from "@/types/oni-agencia";
@@ -19,8 +20,9 @@ export const getCaptureSchedules = async (
 
     // Start with the base query
     let query = getBaseQuery();
-    
-    // Add filters first - very important for the TypeScript typing
+
+    // Apply all filters before any select operations
+    // Filter by client if provided
     if (clientId) {
       query = query.eq("client_id", clientId);
     }
@@ -29,12 +31,12 @@ export const getCaptureSchedules = async (
     query = query.gte("scheduled_date", startDate.split("T")[0]);
     query = query.lte("scheduled_date", endDate.split("T")[0]);
     
-    // Filter by collaborator if specified (must be before select to keep proper typing)
+    // Filter by collaborator if specified
     if (collaboratorId) {
       query = query.or(`collaborator_id.eq.${collaboratorId},creators.cs.{${collaboratorId}}`);
     }
     
-    // Now add the select statement (after all filters)
+    // Only after all filters, apply the select statement
     query = query.select(`
       *,
       status(*),
@@ -47,7 +49,7 @@ export const getCaptureSchedules = async (
       )
     `);
     
-    // Add ordering last
+    // Finally add ordering
     query = query.order("scheduled_date", { ascending: true });
     
     // Execute the query
@@ -120,7 +122,8 @@ export const getCaptureSchedulesPaginated = async (
     // Start with the base query
     let query = getBaseQuery();
     
-    // Apply filters first - critical for TypeScript typing
+    // Apply all filters before any select operations
+    // Filter by client if provided
     if (clientId) {
       query = query.eq("client_id", clientId);
     }
@@ -129,12 +132,12 @@ export const getCaptureSchedulesPaginated = async (
     query = query.gte("scheduled_date", startDate.split("T")[0]);
     query = query.lte("scheduled_date", endDate.split("T")[0]);
     
-    // Filter by collaborator if specified (must be before select to keep proper typing)
+    // Filter by collaborator if specified
     if (collaboratorId) {
       query = query.or(`collaborator_id.eq.${collaboratorId},creators.cs.{${collaboratorId}}`);
     }
     
-    // Now add the select statement (after all filters)
+    // Only after all filters, apply the select statement
     query = query.select(`
       *,
       status(*),
@@ -147,7 +150,7 @@ export const getCaptureSchedulesPaginated = async (
       )
     `);
     
-    // Add ordering and pagination last
+    // Finally add ordering and pagination
     query = query.order("scheduled_date", { ascending: true });
     query = query.range(from, to);
     
