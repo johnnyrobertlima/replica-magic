@@ -1,7 +1,7 @@
 
 import { useMemo, useState, useEffect, useCallback } from "react";
 import { CalendarEvent } from "@/types/oni-agencia";
-import { useInfiniteContentSchedules } from "@/hooks/oni_agencia/useInfiniteContentSchedules";
+import { useInfiniteCaptureSchedules } from "@/hooks/oni_agencia/useInfiniteCaptureSchedules";
 import { useServices } from "@/hooks/useOniAgenciaContentSchedules";
 import { useToast } from "@/hooks/use-toast";
 
@@ -26,7 +26,7 @@ export function useCapturasFiltering(
     }
   }, [services, selectedServiceIds.length]);
   
-  // Use the enhanced infinite query hook with auto-fetching enabled
+  // Use the enhanced infinite query hook with auto-fetching enabled for captures
   const { 
     data: infiniteSchedules,
     isLoading: isLoadingSchedules,
@@ -35,7 +35,7 @@ export function useCapturasFiltering(
     hasNextPage,
     refetch: refetchSchedules,
     isRefetching
-  } = useInfiniteContentSchedules(
+  } = useInfiniteCaptureSchedules(
     selectedClient || null, 
     selectedYear, 
     selectedMonth,
@@ -50,7 +50,7 @@ export function useCapturasFiltering(
     // 2. Either there's no more pages OR we're not fetching next page
     if (infiniteSchedules?.pages && !hasNextPage && !isFetchingNextPage && !isLoadingSchedules) {
       setIsFullyLoaded(true);
-      console.log("All content schedules for the month fully loaded!");
+      console.log("All capture schedules for the month fully loaded!");
     } else {
       setIsFullyLoaded(false);
     }
@@ -62,29 +62,21 @@ export function useCapturasFiltering(
     return infiniteSchedules.pages.flatMap(page => page.data) as CalendarEvent[];
   }, [infiniteSchedules]);
   
-  // Filter events by selected services and status "Liberado para Captura"
+  // Filter events by selected services
   const filteredCaptureSchedules = useMemo(() => {
     if (selectedServiceIds.length === 0) {
       return []; // If no services selected, show nothing
     }
     
-    // Primeiro filtramos por serviço
+    // First filter by services
     const serviceFiltered = selectedServiceIds.length === services.length
-      ? flattenedSchedules // Se todos os serviços selecionados, não filtrar
+      ? flattenedSchedules // If all services selected, don't filter
       : flattenedSchedules.filter(event => selectedServiceIds.includes(event.service_id));
     
-    // Agora garantimos que apenas eventos com data de captura E status "Liberado para Captura" sejam retornados
-    const finalFiltered = serviceFiltered.filter(event => {
-      const hasCaptureDate = !!event.capture_date;
-      const isLiberadoParaCaptura = event.status?.name === "Liberado para Captura";
-      
-      return hasCaptureDate && isLiberadoParaCaptura;
-    });
+    // Log for debugging
+    console.log(`useCapturasFiltering - Found ${serviceFiltered.length} events with services and capture date`);
     
-    // Log para diagnóstico
-    console.log(`useCapturasFiltering - Found ${finalFiltered.length} events with capture date and status "Liberado para Captura"`);
-    
-    return finalFiltered;
+    return serviceFiltered;
   }, [flattenedSchedules, selectedServiceIds, services.length]);
   
   const handleServicesChange = useCallback((serviceIds: string[]) => {
@@ -93,30 +85,30 @@ export function useCapturasFiltering(
     console.log("Services filter changed:", serviceIds);
   }, []);
 
-  // Função para atualização manual com debounce para evitar múltiplas chamadas
+  // Function for manual refetch with debounce to avoid multiple calls
   const handleManualRefetch = useCallback(() => {
     const now = Date.now();
-    // Evita múltiplas atualizações em um curto período de tempo (limite de 2 segundos)
+    // Avoid multiple updates in a short time period (2 second limit)
     if (now - lastRefetchTime < 2000) {
-      console.log("Ignorando atualização manual (muito próxima da última atualização)");
+      console.log("Ignoring manual update (too close to last update)");
       return;
     }
     
     setLastRefetchTime(now);
     setIsFullyLoaded(false); // Reset loading state on manual refresh
-    console.log("Executando atualização manual dos dados");
+    console.log("Executing manual update of capture data");
     
     refetchSchedules().then(() => {
       toast({
         title: "Dados atualizados",
-        description: "Os agendamentos foram atualizados com sucesso.",
+        description: "Os agendamentos de captura foram atualizados com sucesso.",
       });
     }).catch(error => {
-      console.error("Erro ao atualizar os dados:", error);
+      console.error("Error updating data:", error);
       toast({
         variant: "destructive",
         title: "Erro na atualização",
-        description: "Não foi possível atualizar os agendamentos.",
+        description: "Não foi possível atualizar os agendamentos de captura.",
       });
     });
   }, [refetchSchedules, lastRefetchTime, toast]);

@@ -83,7 +83,7 @@ const OniAgenciaCapturas = () => {
     return () => clearInterval(intervalId);
   }, [queryClient, selectedClient, handleManualRefetch, isDialogOpen]);
   
-  // Alertar o usuário quando não há cliente selecionado
+  // Alert the user when no client is selected
   useEffect(() => {
     if (!selectedClient && !isLoadingSchedules && !isRefetching) {
       toast({
