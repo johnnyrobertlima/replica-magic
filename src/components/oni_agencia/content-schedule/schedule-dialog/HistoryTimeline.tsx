@@ -1,4 +1,3 @@
-
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -72,10 +71,27 @@ export function HistoryTimeline({
     );
   }
 
+  // Filter to get only description changes
+  const descriptionEntries = historyData.filter(entry => entry.field_name === "description");
+  const otherEntries = historyData.filter(entry => entry.field_name !== "description");
+
   return (
     <ScrollArea className="h-[400px] pr-4">
-      <div className="space-y-4">
-        {historyData.map((entry) => (
+      <div className="space-y-6">
+        {/* Display description history as a special section if it exists */}
+        {descriptionEntries.length > 0 && (
+          <div className="mb-6 border rounded-md p-4 bg-muted/20">
+            <h3 className="text-sm font-medium mb-3 border-b pb-2">Histórico de Descrição</h3>
+            <div className="whitespace-pre-wrap text-sm" 
+                 dangerouslySetInnerHTML={{ 
+                   __html: linkifyText(descriptionEntries[0]?.new_value || '') 
+                 }} 
+            />
+          </div>
+        )}
+
+        {/* Other history entries */}
+        {otherEntries.map((entry) => (
           <div key={entry.id} className="text-sm border-l-2 border-primary pl-4 py-1">
             <div className="flex items-center text-muted-foreground text-xs gap-1 mb-1">
               <User className="h-3 w-3" />

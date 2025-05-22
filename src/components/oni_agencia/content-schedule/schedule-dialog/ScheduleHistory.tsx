@@ -20,6 +20,7 @@ export function ScheduleHistory({ event }: ScheduleHistoryProps) {
   }, [event, event?.id, event?.description, refetch]);
 
   const handleRefetchResources = () => {
+    console.log("ScheduleHistory: Manual refetch triggered");
     refetch();
   };
 

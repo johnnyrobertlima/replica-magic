@@ -114,13 +114,12 @@ export function StatusUpdateForm({
       
       // Submit the form
       onSubmit(e);
-    } else {
-      // If no new comment, just submit the form
+    } else if (value) {
+      // If no new comment but status changed, submit the form
       onSubmit(e);
     }
   };
   
-  // Importante: este componente NÃO deve renderizar uma tag <form> pois já está dentro de um form
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -149,11 +148,11 @@ export function StatusUpdateForm({
 
       <div className="space-y-2">
         <Label htmlFor="description" className="text-base font-medium">
-          Histórico de Descrições
+          Histórico de Descrição
         </Label>
         {description && (
           <div 
-            className="rounded-md border border-input bg-background p-3 text-sm text-muted-foreground h-[100px] overflow-y-auto whitespace-pre-wrap mb-2"
+            className="rounded-md border border-input bg-background p-3 text-sm text-muted-foreground h-[150px] overflow-y-auto whitespace-pre-wrap mb-2"
             dangerouslySetInnerHTML={{ __html: linkifyText(description) }}
           />
         )}
@@ -183,7 +182,7 @@ export function StatusUpdateForm({
           Cancelar
         </Button>
         <Button 
-          type="button" // Mudamos para type="button" para evitar duplo submit
+          type="button"
           disabled={isSubmitting || (!newComment.trim() && !value)}
           onClick={handleCommentSubmit}
         >

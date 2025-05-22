@@ -8,9 +8,9 @@ interface HistoryEntry {
   schedule_id: string;
   field_name: string;
   old_value: string | null;
-  new_value: string;
-  changed_by: string;
-  changed_by_name: string;
+  new_value: string | null;
+  changed_by: string | null;
+  changed_by_name: string | null;
   created_at: string;
 }
 
@@ -69,7 +69,9 @@ export function useScheduleHistory(scheduleId: string) {
         
         // Once we have the history entries, fetch the user profiles in a separate query
         // Create a list of unique user IDs
-        const userIds = Array.from(new Set(historyEntries.filter(entry => entry.changed_by).map(entry => entry.changed_by)));
+        const userIds = Array.from(new Set(historyEntries
+          .filter(entry => entry.changed_by)
+          .map(entry => entry.changed_by)));
         
         let userProfiles: Record<string, { full_name?: string; email?: string }> = {};
         
@@ -78,7 +80,7 @@ export function useScheduleHistory(scheduleId: string) {
           const { data: profiles, error: profilesError } = await supabase
             .from('user_profiles')
             .select('id, full_name, email')
-            .in('id', userIds);
+            .in('id', userIds as string[]);
 
           if (profilesError) {
             console.error("Error fetching user profiles:", profilesError);
@@ -113,5 +115,8 @@ export function useScheduleHistory(scheduleId: string) {
       }
     },
     enabled: !!scheduleId, // Only run the query if scheduleId is provided
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    staleTime: 10000, // 10 seconds
   });
 }
