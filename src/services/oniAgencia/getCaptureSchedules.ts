@@ -20,6 +20,8 @@ export const getCaptureSchedules = async (
 
     // Build the query with specific conditions for captured events
     let query = getBaseQuery()
+      .gte("scheduled_date", startDate.split("T")[0])
+      .lte("scheduled_date", endDate.split("T")[0])
       .select(`
         *,
         capture:oniagencia_capturas!left(
@@ -30,8 +32,6 @@ export const getCaptureSchedules = async (
           location
         )
       `)
-      .gte("scheduled_date", startDate.split("T")[0])
-      .lte("scheduled_date", endDate.split("T")[0])
       .order("scheduled_date", { ascending: true });
 
     // Filter by client
@@ -101,8 +101,10 @@ export const getCaptureSchedulesPaginated = async (
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
-    // Build the query with specific conditions for captured events
+    // Build the query with specific conditions for captured events - FIXED ORDER
     let query = getBaseQuery()
+      .gte("scheduled_date", startDate.split("T")[0])
+      .lte("scheduled_date", endDate.split("T")[0])
       .select(`
         *,
         capture:oniagencia_capturas!left(
@@ -113,8 +115,6 @@ export const getCaptureSchedulesPaginated = async (
           location
         )
       `)
-      .gte("scheduled_date", startDate.split("T")[0])
-      .lte("scheduled_date", endDate.split("T")[0])
       .order("scheduled_date", { ascending: true })
       .range(from, to);
 
