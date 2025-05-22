@@ -26,34 +26,18 @@ export function useEventsByDate(
           selectedDate.getMonth() + 1
         );
         
-        console.log(`useEventsByDate fetched ${result.length} events, useCaptureDate=${useCaptureDate}`);
-        
-        // Adicionar log para verificar quantos eventos têm capture_date
-        const eventsWithCapture = result.filter(event => event.capture_date != null);
-        console.log(`useEventsByDate found ${eventsWithCapture.length} events with capture_date`);
-        
-        // Para cada evento com capture_date, exibir o ID e a data de captura
-        eventsWithCapture.forEach(event => {
-          console.log(`Event ${event.id} has capture_date: ${event.capture_date}`);
-        });
-        
         if (useCaptureDate) {
           // Filter by capture_date - show ALL events with capture dates
-          const filteredEvents = result.filter((event: CalendarEvent) => {
+          return result.filter((event: CalendarEvent) => {
+            // Only check if event has a capture_date, don't filter by status
             return event.capture_date != null;
           });
-          
-          console.log(`useEventsByDate returning ${filteredEvents.length} events filtered by capture_date`);
-          return filteredEvents;
         } else {
           // Filter by scheduled_date (original behavior)
-          const filteredEvents = result.filter((event: CalendarEvent) => {
+          return result.filter((event: CalendarEvent) => {
             // Ensure we're comparing just the date part (YYYY-MM-DD)
             return event.scheduled_date === formattedDate;
           });
-          
-          console.log(`useEventsByDate returning ${filteredEvents.length} events filtered by scheduled_date`);
-          return filteredEvents;
         }
       } catch (error) {
         console.error("Error fetching events for date:", error);
@@ -61,7 +45,7 @@ export function useEventsByDate(
       }
     },
     enabled: !!clientId && !!formattedDate && enabled,
-    staleTime: 1000 * 60 * 5 // 5 minutos
+    staleTime: 1000 * 60 * 5 // 5 minutes
   });
 
   return { events, isLoading };

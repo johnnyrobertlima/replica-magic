@@ -26,17 +26,7 @@ export function useInfiniteContentSchedules(
       try {
         console.log(`Fetching page ${pageParam} of content schedules for ${year}-${month}`);
         
-        if (!clientId) {
-          console.log("No client selected, returning empty result");
-          return {
-            data: [],
-            nextPage: undefined,
-            totalCount: 0,
-            isLastPage: true
-          };
-        }
-        
-        // Buscar agendamentos regulares
+        // Use the RPC function which now returns all events for the month
         const { data, error } = await supabase
           .rpc('get_paginated_schedules', {
             p_client_id: clientId,
@@ -58,53 +48,8 @@ export function useInfiniteContentSchedules(
         // Create timestamps for now to use as fallback
         const now = new Date().toISOString();
         
-        // Buscar também os eventos com data de captura
-        const { data: captureData, error: captureError } = await supabase
-          .from("oni_agencia_schedules_with_captures")
-          .select(`
-            *,
-            service:service_id(id, name, category, color),
-            collaborator:collaborator_id(id, name, email, photo_url),
-            editorial_line:editorial_line_id(id, name, symbol, color),
-            product:product_id(id, name, symbol, color),
-            status:status_id(id, name, color),
-            client:client_id(id, name)
-          `)
-          .eq("client_id", clientId)
-          .not("capture_date", "is", null)
-          .order("capture_date", { ascending: true })
-          .range(pageParam * PAGE_SIZE, (pageParam + 1) * PAGE_SIZE - 1);
-          
-        if (captureError) {
-          console.error('Error fetching captures:', captureError);
-          // Continuar mesmo com erro nas capturas
-        }
-        
-        // Verificar capturas
-        if (captureData && captureData.length > 0) {
-          console.log(`Found ${captureData.length} events with capture_date`);
-          captureData.forEach((event: any) => {
-            console.log(`- Capture event ${event.id}: ${event.title}, Capture Date: ${event.capture_date}`);
-          });
-        } else {
-          console.log("No events with capture_date found");
-        }
-        
-        // Combinar resultados de agendamentos regulares e capturas
-        let combinedData = [...safeData];
-        
-        // Adicionar eventos com capture_date que ainda não estão na lista
-        if (captureData && captureData.length > 0) {
-          captureData.forEach((captureEvent: any) => {
-            const exists = combinedData.some(event => event.id === captureEvent.id);
-            if (!exists) {
-              combinedData.push(captureEvent);
-            }
-          });
-        }
-        
         // Process data to ensure it includes created_at and updated_at
-        const processedData = combinedData.map(item => {
+        const processedData = safeData.map(item => {
           // Map the data from the RPC function to our CalendarEvent type
           return {
             id: item.id || '',
@@ -119,13 +64,8 @@ export function useInfiniteContentSchedules(
             product_id: item.product_id || null,
             status_id: item.status_id || null,
             creators: item.creators || null,
-            created_at: (item as any).created_at || now,
-            updated_at: (item as any).updated_at || now,
-            // Adicionar campos de captura
-            capture_date: item.capture_date || null,
-            capture_end_date: item.capture_end_date || null,
-            is_all_day: item.is_all_day || null,
-            location: item.location || null,
+            created_at: (item as any).created_at || now, // Type assertion to avoid TS error
+            updated_at: (item as any).updated_at || now, // Type assertion to avoid TS error
             // Add nested objects if available
             service: item.service_name ? {
               id: item.service_id || '',
@@ -162,11 +102,7 @@ export function useInfiniteContentSchedules(
             } : null
           } as CalendarEvent;
         });
-        
-        // Log eventos com capture_date nos dados processados
-        const eventsWithCapture = processedData.filter((event: any) => event.capture_date !== null);
-        console.log(`Page ${pageParam} has ${eventsWithCapture.length} events with capture_date after processing`);
-        
+
         // Determine if there are more pages
         const hasMorePages = processedData.length >= PAGE_SIZE;
         console.log(`Fetched ${processedData.length} events for page ${pageParam}. Has more: ${hasMorePages}`);

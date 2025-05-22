@@ -59,16 +59,10 @@ export function useCapturasFiltering(
   // Flatten the paginated data for use in components
   const flattenedSchedules = useMemo(() => {
     if (!infiniteSchedules?.pages) return [] as CalendarEvent[];
-    const events = infiniteSchedules.pages.flatMap(page => page.data) as CalendarEvent[];
-    
-    // Log para diagnóstico - contar eventos com capture_date
-    const eventsWithCapture = events.filter(event => event.capture_date);
-    console.log(`useCapturasFiltering - Flattened data has ${events.length} total events, ${eventsWithCapture.length} with capture_date`);
-    
-    return events;
+    return infiniteSchedules.pages.flatMap(page => page.data) as CalendarEvent[];
   }, [infiniteSchedules]);
   
-  // Filter events by selected services and capture_date (REMOVED status filter)
+  // Filter events by selected services and status "Liberado para Captura"
   const filteredCaptureSchedules = useMemo(() => {
     if (selectedServiceIds.length === 0) {
       return []; // If no services selected, show nothing
@@ -79,22 +73,16 @@ export function useCapturasFiltering(
       ? flattenedSchedules // Se todos os serviços selecionados, não filtrar
       : flattenedSchedules.filter(event => selectedServiceIds.includes(event.service_id));
     
-    console.log(`useCapturasFiltering - After service filter: ${serviceFiltered.length} events`);
-    
-    // Agora garantimos que apenas eventos com data de captura sejam retornados
-    // REMOVIDO filtro de status "Liberado para Captura"
+    // Agora garantimos que apenas eventos com data de captura E status "Liberado para Captura" sejam retornados
     const finalFiltered = serviceFiltered.filter(event => {
       const hasCaptureDate = !!event.capture_date;
+      const isLiberadoParaCaptura = event.status?.name === "Liberado para Captura";
       
-      if (hasCaptureDate) {
-        console.log(`Event ${event.id} has capture_date: ${event.capture_date}`);
-      }
-      
-      return hasCaptureDate;
+      return hasCaptureDate && isLiberadoParaCaptura;
     });
     
     // Log para diagnóstico
-    console.log(`useCapturasFiltering - Found ${finalFiltered.length} events with capture date`);
+    console.log(`useCapturasFiltering - Found ${finalFiltered.length} events with capture date and status "Liberado para Captura"`);
     
     return finalFiltered;
   }, [flattenedSchedules, selectedServiceIds, services.length]);
