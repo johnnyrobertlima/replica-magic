@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { getBaseQuery, TABLE_NAME } from "./baseQuery";
 import { CalendarEvent } from "@/types/oni-agencia";
@@ -21,13 +20,24 @@ export const getCaptureSchedules = async (
     // Start with the base query
     let query = getBaseQuery();
     
+    // Add filters first - very important for the TypeScript typing
+    if (clientId) {
+      query = query.eq("client_id", clientId);
+    }
+    
     // Add date filters
     query = query.gte("scheduled_date", startDate.split("T")[0]);
     query = query.lte("scheduled_date", endDate.split("T")[0]);
     
-    // Add the select statement with left join to capture data
+    // Filter by collaborator if specified (must be before select to keep proper typing)
+    if (collaboratorId) {
+      query = query.or(`collaborator_id.eq.${collaboratorId},creators.cs.{${collaboratorId}}`);
+    }
+    
+    // Now add the select statement (after all filters)
     query = query.select(`
       *,
+      status(*),
       capture:oniagencia_capturas!left(
         id,
         is_all_day, 
@@ -37,19 +47,9 @@ export const getCaptureSchedules = async (
       )
     `);
     
-    // Add ordering
+    // Add ordering last
     query = query.order("scheduled_date", { ascending: true });
-
-    // Filter by client if provided
-    if (clientId) {
-      query = query.eq("client_id", clientId);
-    }
-
-    // Filter by collaborator if specified
-    if (collaboratorId) {
-      query = query.or(`collaborator_id.eq.${collaboratorId},creators.cs.{${collaboratorId}}`);
-    }
-
+    
     // Execute the query
     const { data, error } = await query;
 
@@ -57,8 +57,11 @@ export const getCaptureSchedules = async (
       throw error;
     }
 
+    // Type assertion to help TypeScript understand the structure
+    const typedData = data as any[];
+
     // Transform the data to include capture_date directly in the event object
-    const transformedData = data.map(item => {
+    const transformedData = typedData.map(item => {
       // If there's a capture object, extract its properties
       if (item.capture && item.capture.length > 0) {
         const capture = item.capture[0];
@@ -117,13 +120,24 @@ export const getCaptureSchedulesPaginated = async (
     // Start with the base query
     let query = getBaseQuery();
     
+    // Apply filters first - critical for TypeScript typing
+    if (clientId) {
+      query = query.eq("client_id", clientId);
+    }
+    
     // Add date filters
     query = query.gte("scheduled_date", startDate.split("T")[0]);
     query = query.lte("scheduled_date", endDate.split("T")[0]);
     
-    // Add the select statement with left join to capture data
+    // Filter by collaborator if specified (must be before select to keep proper typing)
+    if (collaboratorId) {
+      query = query.or(`collaborator_id.eq.${collaboratorId},creators.cs.{${collaboratorId}}`);
+    }
+    
+    // Now add the select statement (after all filters)
     query = query.select(`
       *,
+      status(*),
       capture:oniagencia_capturas!left(
         id,
         is_all_day, 
@@ -133,20 +147,10 @@ export const getCaptureSchedulesPaginated = async (
       )
     `);
     
-    // Add ordering and pagination
+    // Add ordering and pagination last
     query = query.order("scheduled_date", { ascending: true });
     query = query.range(from, to);
-
-    // Filter by client if provided
-    if (clientId) {
-      query = query.eq("client_id", clientId);
-    }
-
-    // Filter by collaborator if specified
-    if (collaboratorId) {
-      query = query.or(`collaborator_id.eq.${collaboratorId},creators.cs.{${collaboratorId}}`);
-    }
-
+    
     // Execute the query
     const { data, error, count } = await query;
 
@@ -154,8 +158,11 @@ export const getCaptureSchedulesPaginated = async (
       throw error;
     }
 
+    // Type assertion to help TypeScript understand the structure
+    const typedData = data as any[];
+
     // Transform the data to include capture_date directly in the event object
-    const transformedData = data.map(item => {
+    const transformedData = typedData.map(item => {
       // If there's a capture object, extract its properties
       if (item.capture && item.capture.length > 0) {
         const capture = item.capture[0];
