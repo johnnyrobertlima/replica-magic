@@ -18,23 +18,29 @@ export const getCaptureSchedules = async (
     const startDate = firstDay.toISOString();
     const endDate = lastDay.toISOString();
 
-    // Build the query with specific conditions for captured events
-    let query = getBaseQuery()
-      .gte("scheduled_date", startDate.split("T")[0])
-      .lte("scheduled_date", endDate.split("T")[0])
-      .select(`
-        *,
-        capture:oniagencia_capturas!left(
-          id,
-          is_all_day, 
-          capture_date,
-          capture_end_date,
-          location
-        )
-      `)
-      .order("scheduled_date", { ascending: true });
+    // Start with the base query
+    let query = getBaseQuery();
+    
+    // Add date filters
+    query = query.gte("scheduled_date", startDate.split("T")[0]);
+    query = query.lte("scheduled_date", endDate.split("T")[0]);
+    
+    // Add the select statement with left join to capture data
+    query = query.select(`
+      *,
+      capture:oniagencia_capturas!left(
+        id,
+        is_all_day, 
+        capture_date,
+        capture_end_date,
+        location
+      )
+    `);
+    
+    // Add ordering
+    query = query.order("scheduled_date", { ascending: true });
 
-    // Filter by client
+    // Filter by client if provided
     if (clientId) {
       query = query.eq("client_id", clientId);
     }
@@ -63,13 +69,20 @@ export const getCaptureSchedules = async (
           is_all_day: capture?.is_all_day || false,
           location: capture?.location || null,
           capture_id: capture?.id || null
-        };
+        } as CalendarEvent;
       }
-      return item;
+      return {
+        ...item,
+        capture_date: null,
+        capture_end_date: null,
+        is_all_day: false,
+        location: null,
+        capture_id: null
+      } as CalendarEvent;
     });
 
+    // Only include events with a capture_date AND status "Liberado para Captura"
     return transformedData.filter(event => 
-      // Only include events with a capture_date AND status "Liberado para Captura"
       event.capture_date && 
       event.status?.name === "Liberado para Captura"
     );
@@ -101,24 +114,30 @@ export const getCaptureSchedulesPaginated = async (
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
-    // Build the query with specific conditions for captured events - FIXED ORDER
-    let query = getBaseQuery()
-      .gte("scheduled_date", startDate.split("T")[0])
-      .lte("scheduled_date", endDate.split("T")[0])
-      .select(`
-        *,
-        capture:oniagencia_capturas!left(
-          id,
-          is_all_day, 
-          capture_date,
-          capture_end_date,
-          location
-        )
-      `)
-      .order("scheduled_date", { ascending: true })
-      .range(from, to);
+    // Start with the base query
+    let query = getBaseQuery();
+    
+    // Add date filters
+    query = query.gte("scheduled_date", startDate.split("T")[0]);
+    query = query.lte("scheduled_date", endDate.split("T")[0]);
+    
+    // Add the select statement with left join to capture data
+    query = query.select(`
+      *,
+      capture:oniagencia_capturas!left(
+        id,
+        is_all_day, 
+        capture_date,
+        capture_end_date,
+        location
+      )
+    `);
+    
+    // Add ordering and pagination
+    query = query.order("scheduled_date", { ascending: true });
+    query = query.range(from, to);
 
-    // Filter by client
+    // Filter by client if provided
     if (clientId) {
       query = query.eq("client_id", clientId);
     }
@@ -147,13 +166,20 @@ export const getCaptureSchedulesPaginated = async (
           is_all_day: capture?.is_all_day || false,
           location: capture?.location || null,
           capture_id: capture?.id || null
-        };
+        } as CalendarEvent;
       }
-      return item;
+      return {
+        ...item,
+        capture_date: null,
+        capture_end_date: null,
+        is_all_day: false,
+        location: null,
+        capture_id: null
+      } as CalendarEvent;
     });
 
+    // Only include events with a capture_date AND status "Liberado para Captura"
     const filteredData = transformedData.filter(event => 
-      // Only include events with a capture_date AND status "Liberado para Captura"
       event.capture_date && 
       event.status?.name === "Liberado para Captura"
     );
