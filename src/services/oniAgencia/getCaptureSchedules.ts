@@ -15,23 +15,22 @@ export const getCaptureSchedules = async (
     const lastDay = new Date(year, month, 0);
 
     // Format dates as ISO strings for Postgres
-    const startDate = firstDay.toISOString();
-    const endDate = lastDay.toISOString();
+    const startDate = firstDay.toISOString().split("T")[0];
+    const endDate = lastDay.toISOString().split("T")[0];
 
-    // Start with the base query - this gives us a PostgrestFilterBuilder
-    const baseQuery = getBaseQuery();
-    
     // Build query with filters first
-    let query = baseQuery;
+    let query = supabase
+      .from(TABLE_NAME)
+      .eq('status_id', 'f0593677-1afb-486d-80a8-a24cb6fb7071'); // Status "Liberado para Captura"
     
     // Filter by client if provided
     if (clientId) {
       query = query.eq("client_id", clientId);
     }
     
-    // Add date filters
-    query = query.gte("scheduled_date", startDate.split("T")[0]);
-    query = query.lte("scheduled_date", endDate.split("T")[0]);
+    // Filter by scheduled_date range
+    query = query.gte("scheduled_date", startDate);
+    query = query.lte("scheduled_date", endDate);
     
     // Filter by collaborator if specified
     if (collaboratorId) {
@@ -41,10 +40,15 @@ export const getCaptureSchedules = async (
     // Now apply the select statement after all filters
     const { data, error } = await query.select(`
       *,
-      status(*),
-      capture:oniagencia_capturas!left(
+      service:service_id(*),
+      collaborator:collaborator_id(*),
+      editorial_line:editorial_line_id(*),
+      product:product_id(*),
+      status:status_id(*),
+      client:client_id(*),
+      capture:oniagencia_capturas(
         id,
-        is_all_day, 
+        is_all_day,
         capture_date,
         capture_end_date,
         location
@@ -108,18 +112,17 @@ export const getCaptureSchedulesPaginated = async (
     const lastDay = new Date(year, month, 0);
 
     // Format dates as ISO strings for Postgres
-    const startDate = firstDay.toISOString();
-    const endDate = lastDay.toISOString();
+    const startDate = firstDay.toISOString().split("T")[0];
+    const endDate = lastDay.toISOString().split("T")[0];
 
     // Calculate pagination
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
-    // Start with the base query
-    const baseQuery = getBaseQuery();
-    
     // Build query with filters first
-    let query = baseQuery;
+    let query = supabase
+      .from(TABLE_NAME)
+      .eq('status_id', 'f0593677-1afb-486d-80a8-a24cb6fb7071'); // Status "Liberado para Captura"
     
     // Filter by client if provided
     if (clientId) {
@@ -127,8 +130,8 @@ export const getCaptureSchedulesPaginated = async (
     }
     
     // Add date filters
-    query = query.gte("scheduled_date", startDate.split("T")[0]);
-    query = query.lte("scheduled_date", endDate.split("T")[0]);
+    query = query.gte("scheduled_date", startDate);
+    query = query.lte("scheduled_date", endDate);
     
     // Filter by collaborator if specified
     if (collaboratorId) {
@@ -138,15 +141,20 @@ export const getCaptureSchedulesPaginated = async (
     // Now apply the select statement, ordering and pagination after all filters
     const { data, error, count } = await query.select(`
       *,
-      status(*),
-      capture:oniagencia_capturas!left(
+      service:service_id(*),
+      collaborator:collaborator_id(*),
+      editorial_line:editorial_line_id(*),
+      product:product_id(*),
+      status:status_id(*),
+      client:client_id(*),
+      capture:oniagencia_capturas(
         id,
-        is_all_day, 
+        is_all_day,
         capture_date,
         capture_end_date,
         location
       )
-    `)
+    `, { count: 'exact' })
     .order("scheduled_date", { ascending: true })
     .range(from, to);
     

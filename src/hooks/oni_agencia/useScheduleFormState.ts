@@ -26,7 +26,7 @@ interface UseScheduleFormStateProps {
   selectedDate: Date;
   selectedEvent?: CalendarEvent;
   prioritizeCaptureDate?: boolean;
-  isOpen?: boolean; // Add isOpen parameter
+  isOpen?: boolean;
 }
 
 export function useScheduleFormState({
@@ -34,7 +34,7 @@ export function useScheduleFormState({
   selectedDate,
   selectedEvent,
   prioritizeCaptureDate = false,
-  isOpen = false // Default to false if not provided
+  isOpen = false
 }: UseScheduleFormStateProps) {
   const [currentSelectedEvent, setCurrentSelectedEvent] = useState<CalendarEvent | null>(selectedEvent || null);
   
@@ -206,53 +206,64 @@ export function useScheduleFormState({
       }
     }
     
-    // Converter datas de string para objetos Date usando parse para evitar shifts de timezone
+    // Process dates from the event
     let scheduledDate: Date | null = null;
     let captureDate: Date | null = null;
     let captureEndDate: Date | null = null;
     
+    // Handle scheduled_date (from the main content schedule)
     if (event.scheduled_date) {
       try {
-        // Faz o parse explicitamente em LOCAL time sem shift UTC
-        scheduledDate = parse(
-          event.scheduled_date as string,   // ex: "2025-05-05"
-          'yyyy-MM-dd',                     // formato recebido da API
-          new Date()                        // base date
-        );
+        if (typeof event.scheduled_date === 'string') {
+          scheduledDate = parse(
+            event.scheduled_date,
+            'yyyy-MM-dd',
+            new Date()
+          );
+        } else if (event.scheduled_date instanceof Date) {
+          scheduledDate = event.scheduled_date;
+        }
       } catch (e) {
-        console.error("Erro ao converter scheduled_date via parse:", e);
+        console.error("Erro ao converter scheduled_date:", e);
         scheduledDate = null;
       }
     }
     
+    // Handle capture_date (from the related capture record)
     if (event.capture_date) {
       try {
-        // Faz o parse explicitamente em LOCAL time sem shift UTC
-        captureDate = parse(
-          event.capture_date as string,     // ex: "2025-05-05"
-          'yyyy-MM-dd',                     // formato recebido da API
-          new Date()                        // base date
-        );
+        if (typeof event.capture_date === 'string') {
+          // Try to parse capture_date as a full ISO string or date-only string
+          captureDate = event.capture_date.includes('T') 
+            ? new Date(event.capture_date)
+            : parse(event.capture_date, 'yyyy-MM-dd', new Date());
+        } else if (event.capture_date instanceof Date) {
+          captureDate = event.capture_date;
+        }
       } catch (e) {
-        console.error("Erro ao converter capture_date via parse:", e);
+        console.error("Erro ao converter capture_date:", e);
         captureDate = null;
       }
     }
     
+    // Handle capture_end_date (from the related capture record)
     if (event.capture_end_date) {
       try {
-        // Faz o parse explicitamente em LOCAL time sem shift UTC
-        captureEndDate = parse(
-          event.capture_end_date as string, // ex: "2025-05-05"
-          'yyyy-MM-dd',                     // formato recebido da API
-          new Date()                        // base date
-        );
+        if (typeof event.capture_end_date === 'string') {
+          // Try to parse capture_end_date as a full ISO string or date-only string
+          captureEndDate = event.capture_end_date.includes('T')
+            ? new Date(event.capture_end_date)
+            : parse(event.capture_end_date, 'yyyy-MM-dd', new Date());
+        } else if (event.capture_end_date instanceof Date) {
+          captureEndDate = event.capture_end_date;
+        }
       } catch (e) {
-        console.error("Erro ao converter capture_end_date via parse:", e);
+        console.error("Erro ao converter capture_end_date:", e);
         captureEndDate = null;
       }
     }
     
+    // Populate form data with the event information
     setFormData({
       client_id: event.client_id,
       service_id: event.service_id || "", // Garantir que nunca seja null
