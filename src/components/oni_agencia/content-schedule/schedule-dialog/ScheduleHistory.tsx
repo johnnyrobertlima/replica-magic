@@ -18,8 +18,11 @@ export function ScheduleHistory({ event }: ScheduleHistoryProps) {
     if (event && event.id) {
       console.log("ScheduleHistory: Refetching history for event", event.id);
       refetch();
+      
+      // Invalidate the cache specifically for this event's history
+      queryClient.invalidateQueries({ queryKey: ['scheduleHistory', event.id] });
     }
-  }, [event, event?.id, event?.description, refetch]);
+  }, [event, event?.id, event?.description, refetch, queryClient]);
 
   const handleRefetchResources = () => {
     console.log("ScheduleHistory: Manual refetch triggered");

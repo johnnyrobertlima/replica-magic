@@ -1,7 +1,6 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
 
 interface HistoryEntry {
   id: string;
@@ -120,8 +119,10 @@ export function useScheduleHistory(scheduleId: string) {
       }
     },
     enabled: !!scheduleId, // Only run the query if scheduleId is provided
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    staleTime: 5000, // 5 seconds, reduced from 10 to make data refresh quicker
+    refetchOnWindowFocus: false, // We don't want to refetch when window focus changes
+    refetchOnMount: true, // Refetch when component mounts
+    staleTime: 0, // Set staleTime to 0 to ensure fresh data on each request
   });
 }
+
+import { useEffect } from "react";
