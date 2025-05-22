@@ -1,3 +1,4 @@
+
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -75,21 +76,30 @@ export function HistoryTimeline({
   const descriptionEntries = historyData.filter(entry => entry.field_name === "description");
   const otherEntries = historyData.filter(entry => entry.field_name !== "description");
 
-  // Get the most recent description first
-  const mostRecentDescription = descriptionEntries.length > 0 ? descriptionEntries[0] : null;
-
   return (
     <ScrollArea className="h-[400px] pr-4">
       <div className="space-y-6">
         {/* Display description history as a special section if it exists */}
-        {mostRecentDescription && (
+        {descriptionEntries.length > 0 && (
           <div className="mb-6 border rounded-md p-4 bg-muted/20">
             <h3 className="text-sm font-medium mb-3 border-b pb-2">Histórico de Descrição</h3>
-            <div className="whitespace-pre-wrap text-sm" 
-                 dangerouslySetInnerHTML={{ 
-                   __html: linkifyText(mostRecentDescription?.new_value || '') 
-                 }} 
-            />
+            
+            <div className="space-y-4">
+              {descriptionEntries.map((entry) => (
+                <div key={entry.id} className="text-sm">
+                  <div className="flex items-center text-muted-foreground text-xs gap-1 mb-2">
+                    <User className="h-3 w-3" />
+                    <span className="font-medium">{entry.changed_by_name || "Usuário"}</span> - 
+                    {format(new Date(entry.created_at), " dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })}
+                  </div>
+                  
+                  <div 
+                    className="whitespace-pre-wrap pl-4 border-l-2 border-primary/30" 
+                    dangerouslySetInnerHTML={{ __html: linkifyText(entry.new_value || '') }}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

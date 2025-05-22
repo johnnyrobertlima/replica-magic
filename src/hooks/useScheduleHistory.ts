@@ -1,6 +1,7 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
 
 interface HistoryEntry {
   id: string;
@@ -9,7 +10,7 @@ interface HistoryEntry {
   old_value: string | null;
   new_value: string | null;
   changed_by: string | null;
-  changed_by_name: string | null;
+  changed_by_name?: string | null;
   created_at: string;
 }
 
@@ -124,5 +125,3 @@ export function useScheduleHistory(scheduleId: string) {
     staleTime: 0, // Set staleTime to 0 to ensure fresh data on each request
   });
 }
-
-import { useEffect } from "react";
