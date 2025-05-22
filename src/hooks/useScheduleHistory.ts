@@ -17,9 +17,9 @@ interface HistoryEntry {
 export function useScheduleHistory(scheduleId: string) {
   const queryClient = useQueryClient();
 
-  // Configurar um invalidador para forçar a atualização do cache
+  // Set up cache invalidation
   useEffect(() => {
-    // Função para lidar com mudanças no agendamento
+    // Function to handle schedule changes
     const handleScheduleChange = () => {
       if (scheduleId) {
         console.log("Invalidating scheduleHistory cache for:", scheduleId);
@@ -27,12 +27,12 @@ export function useScheduleHistory(scheduleId: string) {
       }
     };
 
-    // Invalidar cache quando o scheduleId mudar
+    // Invalidate cache when the scheduleId changes
     handleScheduleChange();
 
-    // Retornar função de limpeza (cleanup)
+    // Return cleanup function
     return () => {
-      // Nada a limpar
+      // Nothing to clean up
     };
   }, [scheduleId, queryClient]);
 
@@ -45,7 +45,7 @@ export function useScheduleHistory(scheduleId: string) {
       try {
         console.log("Fetching history data for schedule:", scheduleId);
         
-        // Fetch the history entries
+        // Fetch the history entries with proper ordering (newest first)
         const { data: rawHistoryEntries, error } = await supabase
           .from('oni_agencia_schedule_history')
           .select(`
@@ -66,6 +66,8 @@ export function useScheduleHistory(scheduleId: string) {
           console.error("Error fetching schedule history:", error);
           throw error;
         }
+        
+        console.log("Raw history entries:", historyEntries);
         
         // Once we have the history entries, fetch the user profiles in a separate query
         // Create a list of unique user IDs
@@ -94,7 +96,7 @@ export function useScheduleHistory(scheduleId: string) {
         }
         
         // Transform the data to include the user's name
-        return historyEntries.map(entry => {
+        const transformedEntries = historyEntries.map(entry => {
           const userProfile = entry.changed_by ? userProfiles[entry.changed_by] : null;
           
           return {
@@ -109,6 +111,9 @@ export function useScheduleHistory(scheduleId: string) {
           };
         });
         
+        console.log("Transformed history entries:", transformedEntries);
+        return transformedEntries;
+        
       } catch (error) {
         console.error("Error in useScheduleHistory:", error);
         throw error;
@@ -117,6 +122,6 @@ export function useScheduleHistory(scheduleId: string) {
     enabled: !!scheduleId, // Only run the query if scheduleId is provided
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    staleTime: 10000, // 10 seconds
+    staleTime: 5000, // 5 seconds, reduced from 10 to make data refresh quicker
   });
 }

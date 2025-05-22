@@ -72,5 +72,6 @@ export function appendToDescriptionHistory(
   }
   
   // Adiciona o novo comentário preservando o histórico
-  return `${existingDescription.trim()}\n\n${formatDescriptionComment(newComment, author, new Date())}`;
+  const formattedNewComment = formatDescriptionComment(newComment, author, new Date());
+  return `${existingDescription.trim()}\n\n${formattedNewComment}`;
 }

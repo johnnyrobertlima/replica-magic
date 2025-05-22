@@ -14,6 +14,7 @@ import { OniAgenciaCollaborator } from "@/types/oni-agencia";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { appendToDescriptionHistory, linkifyText } from "@/utils/linkUtils";
+import { toast } from "sonner";
 
 interface StatusSelectProps {
   statuses: any[];
@@ -86,37 +87,49 @@ export function StatusUpdateForm({
   const [newComment, setNewComment] = useState("");
   const { user } = useAuth();
   const userName = user?.email?.split('@')[0] || "Usuário";
-  
+
   // Function to handle submission with comment history
-  const handleCommentSubmit = (e: React.FormEvent) => {
+  const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); // Prevent form submission to handle it manually
     
-    if (newComment.trim()) {
-      console.log("Adding new comment to history:", newComment);
-      
-      // Create updated description with the new comment appended
-      const updatedDescription = appendToDescriptionHistory(description, newComment, userName);
-      console.log("Updated description:", updatedDescription);
-      
-      // Create a synthetic event to update the hidden input
-      const syntheticEvent = {
-        target: {
-          name: "description",
-          value: updatedDescription
+    if (newComment.trim() || value) {
+      try {
+        console.log("Adding new comment to history:", newComment);
+        
+        let updatedDescription = description;
+        
+        // Only append new comment if there is one
+        if (newComment.trim()) {
+          // Create updated description with the new comment appended
+          updatedDescription = appendToDescriptionHistory(description, newComment, userName);
+          console.log("Updated description:", updatedDescription);
+          
+          // Create a synthetic event to update the hidden input
+          const syntheticEvent = {
+            target: {
+              name: "description",
+              value: updatedDescription
+            }
+          } as React.ChangeEvent<HTMLInputElement>;
+          
+          // Update the hidden field with the complete history
+          onInputChange(syntheticEvent);
         }
-      } as React.ChangeEvent<HTMLInputElement>;
-      
-      // Update the hidden field with the complete history
-      onInputChange(syntheticEvent);
-      
-      // Clear the comment field after submitting
-      setNewComment("");
-      
-      // Submit the form
-      onSubmit(e);
-    } else if (value) {
-      // If no new comment but status changed, submit the form
-      onSubmit(e);
+        
+        // Submit the form
+        await onSubmit(e);
+        
+        // Clear the comment field after successful submission
+        setNewComment("");
+        
+        // Provide feedback to the user
+        toast.success("Comentário adicionado com sucesso");
+      } catch (error) {
+        console.error("Error submitting comment:", error);
+        toast.error("Erro ao adicionar comentário");
+      }
+    } else {
+      toast.error("Por favor, selecione um status ou adicione um comentário");
     }
   };
   
