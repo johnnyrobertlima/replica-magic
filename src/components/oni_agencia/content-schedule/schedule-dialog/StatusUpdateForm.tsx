@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { 
@@ -12,6 +12,8 @@ import {
 import { CollaboratorSelect } from "./CollaboratorSelect";
 import { OniAgenciaCollaborator } from "@/types/oni-agencia";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import { appendToDescriptionHistory } from "@/utils/linkUtils";
 
 interface StatusSelectProps {
   statuses: any[];
@@ -81,8 +83,11 @@ export function StatusUpdateForm({
   onInputChange,
   onCancel
 }: StatusUpdateFormProps) {
+  const [newComment, setNewComment] = useState("");
+  const { user } = useAuth();
+  const userName = user?.email?.split('@')[0] || "Usuário";
   
-  // Important: this component should NOT render a <form> tag since it's already inside a form
+  // Importante: este componente NÃO deve renderizar uma tag <form> pois já está dentro de um form
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -111,15 +116,36 @@ export function StatusUpdateForm({
 
       <div className="space-y-2">
         <Label htmlFor="description" className="text-base font-medium">
-          Descrição
+          Histórico de Descrições
+        </Label>
+        {description && (
+          <div 
+            className="rounded-md border border-input bg-background p-3 text-sm text-muted-foreground h-[100px] overflow-y-auto whitespace-pre-wrap mb-2"
+            dangerouslySetInnerHTML={{ __html: linkifyText(description) }}
+          />
+        )}
+        
+        <Label htmlFor="newComment" className="text-base font-medium">
+          Adicionar Comentário
         </Label>
         <Textarea
-          id="description"
-          name="description"
-          placeholder="Atualize a descrição do agendamento"
-          value={description}
-          onChange={onInputChange}
+          id="newComment"
+          name="newComment"
+          placeholder="Adicione informações sobre esta atualização de status"
+          value={newComment}
+          onChange={(e) => setNewComment(e.target.value)}
           className="min-h-[100px]"
+        />
+        
+        {/* Campo oculto para manter o valor completo da descrição */}
+        <input 
+          type="hidden" 
+          name="description" 
+          value={appendToDescriptionHistory(description, newComment, userName)}
+          onChange={(e) => {
+            // Este onChange é apenas para satisfazer React, mas o valor real é definido no value acima
+            onInputChange(e as unknown as React.ChangeEvent<HTMLInputElement>);
+          }}
         />
       </div>
 
@@ -127,10 +153,25 @@ export function StatusUpdateForm({
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancelar
         </Button>
-        <Button type="submit" disabled={isSubmitting}>
+        <Button 
+          type="submit" 
+          disabled={isSubmitting || (!newComment.trim() && !value)}
+        >
           {isSubmitting ? "Atualizando..." : "Atualizar Status"}
         </Button>
       </div>
     </div>
   );
+}
+
+function linkifyText(text: string): string {
+  if (!text) return '';
+  
+  // Expressão regular para identificar URLs
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  
+  // Substitui URLs por tags de âncora
+  return text.replace(urlRegex, (url) => {
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">${url}</a>`;
+  });
 }
