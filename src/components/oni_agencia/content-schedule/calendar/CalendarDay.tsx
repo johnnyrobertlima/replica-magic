@@ -42,12 +42,18 @@ export function CalendarDay({
       filteredEvents = events.filter((event) => {
         if (!event?.capture_date) return false;
         
+        // Debug log to see what capture_date looks like
+        console.log(`Event ${event.id} capture_date: ${event.capture_date}`);
+        
         // Extract only the date part (without the hour) from capture_date
         const captureDateOnly = event.capture_date.split('T')[0];
+        console.log(`Comparing ${captureDateOnly} with ${dateStr} for event ${event.id}`);
         
         // Return true if the date matches - REMOVED status filter
         return captureDateOnly === dateStr;
       });
+      
+      console.log(`Date ${dateStr} - Found ${filteredEvents.length} events with capture_date`);
     } else {
       // Filter by scheduled_date (original behavior)
       filteredEvents = events.filter((event) => {

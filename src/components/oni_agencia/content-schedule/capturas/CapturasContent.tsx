@@ -43,8 +43,23 @@ export function CapturasContent({
   // Filter events to only those with capture_date (REMOVED status filter)
   const captureEvents = filteredSchedules.filter(event => event.capture_date);
   
-  // Adicione um log para depuração
+  // Adicione um log mais detalhado para depuração
   console.log(`CapturasContent - Filtered ${captureEvents.length} capture events`);
+  // Log detalhado dos eventos - listar ids e datas de captura
+  if (captureEvents.length > 0) {
+    console.log("Capture events found:");
+    captureEvents.forEach(event => {
+      console.log(`- Event ID: ${event.id}, Title: ${event.title}, Capture Date: ${event.capture_date}`);
+    });
+  } else {
+    console.log("No capture events found in filteredSchedules. Checking raw data...");
+    // Verificar se há algum evento com capture_date nos dados originais
+    const eventsWithCapture = filteredSchedules.filter(e => e.capture_date);
+    console.log(`Original data has ${eventsWithCapture.length} events with capture_date`);
+    eventsWithCapture.forEach(event => {
+      console.log(`- Event ID: ${event.id}, Title: ${event.title}, Capture Date: ${event.capture_date}`);
+    });
+  }
   
   // Configure sensors with zero delay for better responsiveness
   const sensors = useCustomDndSensors(0, 3);

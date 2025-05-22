@@ -78,7 +78,7 @@ export function Calendar({
     console.log(`Calendar component received ${events?.length || 0} total events for ${year}-${month}`);
     
     // Group events by date for debugging
-    const eventsByDate = events.reduce((acc, event) => {
+    const eventsByDate = (events || []).reduce((acc, event) => {
       const date = useCaptureDate && event.capture_date ? 
         event.capture_date.split('T')[0] : event.scheduled_date;
       acc[date] = (acc[date] || 0) + 1;
@@ -86,6 +86,14 @@ export function Calendar({
     }, {} as Record<string, number>);
     
     console.log("Events by date:", eventsByDate);
+    
+    // Detalhamento dos eventos com capture_date para diagnóstico
+    const captureEvents = (events || []).filter(e => e.capture_date);
+    console.log(`Calendar has ${captureEvents.length} events with capture_date:`);
+    captureEvents.forEach(event => {
+      const captureDate = event.capture_date ? event.capture_date.split('T')[0] : 'unknown';
+      console.log(`- Event ${event.id}: ${event.title}, Capture Date: ${captureDate}`);
+    });
   }, [events, month, year, useCaptureDate]);
 
   const renderCalendarDays = () => {
