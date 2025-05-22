@@ -88,6 +88,8 @@ export async function updateContentSchedule(
   data: Partial<ContentScheduleFormData>
 ) {
   try {
+    console.log(`Updating content schedule ${id} with data:`, data);
+
     // First update the content schedule
     const scheduleUpdateData: any = {};
     
@@ -113,6 +115,7 @@ export async function updateContentSchedule(
 
     // Only proceed with schedule update if we have data to update
     if (Object.keys(scheduleUpdateData).length > 0) {
+      console.log("Sending schedule update with data:", scheduleUpdateData);
       const { error: scheduleError } = await supabase
         .from("oni_agencia_content_schedules")
         .update(scheduleUpdateData)
@@ -146,6 +149,7 @@ export async function updateContentSchedule(
 
       if (Object.keys(captureData).length > 0) {
         if (existingCapture) {
+          console.log("Updating existing capture data:", captureData);
           // Update existing capture data
           const { error: updateCaptureError } = await supabase
             .from("oniagencia_capturas")
@@ -158,6 +162,7 @@ export async function updateContentSchedule(
         } else {
           // Create new capture data
           captureData.content_schedule_id = id;
+          console.log("Creating new capture data:", captureData);
           
           const { error: insertCaptureError } = await supabase
             .from("oniagencia_capturas")
@@ -170,7 +175,7 @@ export async function updateContentSchedule(
       }
     }
 
-    return { id };
+    return { id, success: true };
   } catch (error: any) {
     console.error("Error in updateContentSchedule:", error);
     throw new Error(error.message || "An error occurred while updating the content schedule");

@@ -9,6 +9,8 @@ export async function getContentSchedules(
   month: number
 ): Promise<CalendarEvent[]> {
   try {
+    console.log(`Fetching content schedules for client ${clientId}, ${year}-${month}`);
+    
     // Calculate start and end date for the requested month
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0); // Last day of the month
@@ -38,6 +40,9 @@ export async function getContentSchedules(
       throw new Error(`Error fetching content schedules: ${error.message}`);
     }
 
+    // Log the response for debugging
+    console.log(`Fetched ${data?.length || 0} schedules for ${year}-${month}`);
+    
     return data as CalendarEvent[];
   } catch (error) {
     console.error("Error in getContentSchedules:", error);

@@ -12,9 +12,10 @@ export function useEventsByDate(
 ) {
   // Format date without timezone issues - only if selectedDate is valid
   const formattedDate = selectedDate ? format(new Date(selectedDate), 'yyyy-MM-dd') : '';
+  const queryKey = ['events', clientId, formattedDate, useCaptureDate];
   
-  const { data: events = [], isLoading } = useQuery({
-    queryKey: ['events', clientId, formattedDate, useCaptureDate],
+  const { data: events = [], isLoading, isRefetching } = useQuery({
+    queryKey: queryKey,
     queryFn: async () => {
       if (!clientId || !formattedDate) return [];
       
@@ -25,6 +26,8 @@ export function useEventsByDate(
           selectedDate.getFullYear(), 
           selectedDate.getMonth() + 1
         );
+        
+        console.log(`useEventsByDate fetched ${result.length} events for ${formattedDate}, useCaptureDate=${useCaptureDate}`);
         
         if (useCaptureDate) {
           // Filter by capture_date - show ALL events with capture dates
@@ -45,8 +48,9 @@ export function useEventsByDate(
       }
     },
     enabled: !!clientId && !!formattedDate && enabled,
-    staleTime: 1000 * 60 * 5 // 5 minutes
+    staleTime: 1000 * 60 * 1, // 1 minute - lower to get more frequent updates
+    refetchOnWindowFocus: true, // refetch when window gets focus
   });
 
-  return { events, isLoading };
+  return { events, isLoading, isRefetching };
 }

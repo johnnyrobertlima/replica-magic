@@ -64,11 +64,18 @@ export function useScheduleMutations({
   // Function to manually refetch resources
   const refetchResources = useCallback(() => {
     console.log("Manually refetching resources");
+    // Invalidate all content schedule related queries
+    queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
+    queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
+    queryClient.invalidateQueries({ queryKey: ['events'] });
+    
+    // Also invalidate resources
     queryClient.invalidateQueries({ queryKey: ['oniAgenciaCollaborators'] });
     queryClient.invalidateQueries({ queryKey: ['oniAgenciaServices'] });
     queryClient.invalidateQueries({ queryKey: ['oniAgenciaStatuses'] });
     queryClient.invalidateQueries({ queryKey: ['oniAgenciaThemes'] });
     queryClient.invalidateQueries({ queryKey: ['oniAgenciaClients'] });
+    queryClient.invalidateQueries({ queryKey: ['scheduleHistory'] });
     
     if (onManualRefetch) {
       onManualRefetch();
@@ -87,31 +94,37 @@ export function useScheduleMutations({
       
       try {
         setIsSubmitting(true);
-        
-        // Convert all Date objects to strings for API
-        const apiData = convertDatesToStrings(formData);
+        console.log("Submitting form with data:", formData);
         
         // Determine if we're creating or updating
         if (currentSelectedEvent) {
-          // Update existing schedule
+          console.log("Updating existing event:", currentSelectedEvent.id);
+          // Update existing schedule with full data to ensure all fields are updated
           await updateMutation.mutateAsync({ 
             id: currentSelectedEvent.id,
-            data: apiData as ContentScheduleFormData
+            data: formData
           });
         } else {
           // Create new schedule
-          await createMutation.mutateAsync(apiData as ContentScheduleFormData);
+          console.log("Creating new event");
+          await createMutation.mutateAsync(formData);
         }
         
         // Call the onSuccess callback if provided
         if (onSuccess) onSuccess();
         
-        // Call the onManualRefetch callback if provided
-        if (onManualRefetch) onManualRefetch();
+        // Clear cache and refetch to get fresh data
+        refetchResources();
         
         // Close the dialog after successful submission
         if (onClose) onClose();
         
+        toast({
+          title: currentSelectedEvent ? "Agendamento atualizado" : "Agendamento criado",
+          description: currentSelectedEvent 
+            ? "O agendamento foi atualizado com sucesso." 
+            : "O agendamento foi criado com sucesso.",
+        });
       } catch (error) {
         console.error("Error submitting content schedule:", error);
         toast({
@@ -123,7 +136,7 @@ export function useScheduleMutations({
         setIsSubmitting(false);
       }
     },
-    [clientId, selectedDate, createMutation, updateMutation, onClose, onSuccess, onManualRefetch, toast]
+    [createMutation, updateMutation, onClose, onSuccess, refetchResources, toast]
   );
   
   // Handle status update
@@ -154,22 +167,15 @@ export function useScheduleMutations({
       try {
         setIsSubmitting(true);
         
-        // Extract only the relevant fields for status update to minimize data being sent
-        const updateData: Partial<ContentScheduleFormData> = {
-          client_id: formData.client_id,
-          service_id: formData.service_id,
+        console.log("Sending status update with data:", {
           status_id: formData.status_id,
-          collaborator_id: formData.collaborator_id,
-          description: formData.description,
-          title: formData.title
-        };
+          description: formData.description
+        });
         
-        console.log("Sending status update with data:", updateData);
-        
-        // Use a shorter timeout for status updates (15s instead of 30s)
+        // Send the full form data to ensure all fields are updated
         await updateMutation.mutateAsync({
           id: currentSelectedEvent.id,
-          data: updateData
+          data: formData
         });
         
         toast({
@@ -180,8 +186,8 @@ export function useScheduleMutations({
         // Call the onSuccess callback if provided
         if (onSuccess) onSuccess();
         
-        // Call the onManualRefetch callback if provided
-        if (onManualRefetch) onManualRefetch();
+        // Clear cache and refetch to get fresh data
+        refetchResources();
         
         // Close the dialog after successful submission
         if (onClose) onClose();
@@ -197,7 +203,7 @@ export function useScheduleMutations({
         setIsSubmitting(false);
       }
     },
-    [updateMutation, onClose, onSuccess, onManualRefetch, toast]
+    [updateMutation, onClose, onSuccess, refetchResources, toast]
   );
   
   // Handle delete
@@ -216,6 +222,7 @@ export function useScheduleMutations({
       try {
         setIsDeleting(true);
         
+        console.log("Deleting schedule:", currentSelectedEvent.id);
         // Delete the schedule
         await deleteMutation.mutateAsync(currentSelectedEvent.id);
         
@@ -227,8 +234,8 @@ export function useScheduleMutations({
         // Call the onSuccess callback if provided
         if (onSuccess) onSuccess();
         
-        // Call the onManualRefetch callback if provided
-        if (onManualRefetch) onManualRefetch();
+        // Clear cache and refetch to get fresh data
+        refetchResources();
         
         // Close the dialog after successful deletion
         if (onClose) onClose();
@@ -244,7 +251,7 @@ export function useScheduleMutations({
         setIsDeleting(false);
       }
     },
-    [deleteMutation, onClose, onSuccess, onManualRefetch, toast]
+    [deleteMutation, onClose, onSuccess, refetchResources, toast]
   );
   
   return {
