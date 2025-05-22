@@ -30,8 +30,8 @@ export const getCaptureSchedules = async (
           location
         )
       `)
-      .filter("scheduled_date", "gte", startDate.split("T")[0])
-      .filter("scheduled_date", "lte", endDate.split("T")[0])
+      .gte("scheduled_date", startDate.split("T")[0])
+      .lte("scheduled_date", endDate.split("T")[0])
       .order("scheduled_date", { ascending: true });
 
     // Filter by client
@@ -113,8 +113,8 @@ export const getCaptureSchedulesPaginated = async (
           location
         )
       `)
-      .filter("scheduled_date", "gte", startDate.split("T")[0])
-      .filter("scheduled_date", "lte", endDate.split("T")[0])
+      .gte("scheduled_date", startDate.split("T")[0])
+      .lte("scheduled_date", endDate.split("T")[0])
       .order("scheduled_date", { ascending: true })
       .range(from, to);
 
