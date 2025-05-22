@@ -2,6 +2,25 @@ import { useState, useEffect, useRef } from "react";
 import { format, addMinutes, parseISO, parse } from "date-fns";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
 
+// Helper to serialize form data, converting Date objects to ISO strings
+const serializeFormData = (data: ContentScheduleFormData) => {
+  return JSON.stringify(data, (_, value) =>
+    value instanceof Date ? value.toISOString() : value
+  );
+};
+
+// Helper to deserialize form data from localStorage
+const deserializeFormData = (data: string): ContentScheduleFormData => {
+  const parsed = JSON.parse(data);
+  const parseDate = (v: any) => (v ? new Date(v) : null);
+  return {
+    ...parsed,
+    scheduled_date: parseDate(parsed.scheduled_date),
+    capture_date: parseDate(parsed.capture_date),
+    capture_end_date: parseDate(parsed.capture_end_date)
+  } as ContentScheduleFormData;
+};
+
 interface UseScheduleFormStateProps {
   clientId: string;
   selectedDate: Date;
@@ -40,6 +59,42 @@ export function useScheduleFormState({
     is_all_day: true,
     location: null
   });
+
+  // Key for persisting form data
+  const localStorageKey = `oni_agencia_schedule_form_${clientId}_${
+    selectedEvent?.id ?? 'new'}`;
+
+  // Load saved data when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      const saved = localStorage.getItem(localStorageKey);
+      if (saved) {
+        try {
+          setFormData(deserializeFormData(saved));
+        } catch (err) {
+          console.error('Failed to parse saved form data', err);
+        }
+      }
+    }
+  }, [isOpen, localStorageKey]);
+
+  // Persist form data while editing
+  useEffect(() => {
+    if (isOpen) {
+      try {
+        localStorage.setItem(localStorageKey, serializeFormData(formData));
+      } catch (err) {
+        console.error('Failed to save form data', err);
+      }
+    }
+  }, [formData, isOpen, localStorageKey]);
+
+  // Clear saved data when dialog closes
+  useEffect(() => {
+    if (!isOpen) {
+      localStorage.removeItem(localStorageKey);
+    }
+  }, [isOpen, localStorageKey]);
   
   // Use a ref to track when we're in the middle of user input
   const isUserEditing = useRef(false);
@@ -81,6 +136,9 @@ export function useScheduleFormState({
 
   const resetForm = () => {
     console.log("Resetting form in useScheduleFormState - FULL RESET");
+
+    // Remove any persisted data for this form
+    localStorage.removeItem(localStorageKey);
     
     // First explicitly set currentSelectedEvent to null
     setCurrentSelectedEvent(null);
