@@ -479,11 +479,10 @@ export function useScheduleFormState({
       };
       
       if (formData.capture_date) {
-        // Create a safe type for instanceof check
-        const captureDate = formData.capture_date as unknown;
+        // Safe approach - cast to any before checking instanceof
+        const captureDate = formData.capture_date as any;
         
-        // Now we can safely use instanceof
-        if (typeof captureDate === 'object' && captureDate instanceof Date) {
+        if (captureDate instanceof Date) {
           // Keep just the date part (reset time to midnight)
           updatedData.capture_date = new Date(
             captureDate.getFullYear(),
@@ -493,7 +492,7 @@ export function useScheduleFormState({
         } else if (captureDate) {  // Then check if it exists (could be any type)
           try {
             // Handle the case where captureDate is not a Date object
-            const parsedDate = new Date(captureDate as any);
+            const parsedDate = new Date(captureDate);
             updatedData.capture_date = new Date(
               parsedDate.getFullYear(),
               parsedDate.getMonth(),
@@ -507,11 +506,10 @@ export function useScheduleFormState({
       }
       
       if (formData.capture_end_date) {
-        // Create a safe type for instanceof check
-        const captureEndDate = formData.capture_end_date as unknown;
+        // Safe approach - cast to any before checking instanceof
+        const captureEndDate = formData.capture_end_date as any;
         
-        // Now we can safely use instanceof
-        if (typeof captureEndDate === 'object' && captureEndDate instanceof Date) {
+        if (captureEndDate instanceof Date) {
           // Keep just the date part (reset time to midnight)
           updatedData.capture_end_date = new Date(
             captureEndDate.getFullYear(),
@@ -521,7 +519,7 @@ export function useScheduleFormState({
         } else if (captureEndDate) {  // Then check if it exists (could be any type)
           try {
             // Handle the case where captureEndDate is not a Date object
-            const parsedDate = new Date(captureEndDate as any);
+            const parsedDate = new Date(captureEndDate);
             updatedData.capture_end_date = new Date(
               parsedDate.getFullYear(),
               parsedDate.getMonth(),
@@ -547,15 +545,15 @@ export function useScheduleFormState({
       
       if (formData.capture_date) {
         let date: Date;
-        // Create a safe type for instanceof check
-        const captureDate = formData.capture_date as unknown;
+        // Safe approach - cast to any before checking instanceof
+        const captureDate = formData.capture_date as any;
         
-        if (typeof captureDate === 'object' && captureDate instanceof Date) {
+        if (captureDate instanceof Date) {
           date = new Date(captureDate);
         } else {
           try {
             // Handle the case where captureDate is not a Date object
-            date = new Date(captureDate as any);
+            date = new Date(captureDate);
           } catch (e) {
             console.error("Error parsing capture_date:", e);
             date = new Date();
@@ -575,15 +573,15 @@ export function useScheduleFormState({
       
       if (formData.capture_end_date) {
         let endDate: Date;
-        // Create a safe type for instanceof check
-        const captureEndDate = formData.capture_end_date as unknown;
+        // Safe approach - cast to any before checking instanceof
+        const captureEndDate = formData.capture_end_date as any;
         
-        if (typeof captureEndDate === 'object' && captureEndDate instanceof Date) {
+        if (captureEndDate instanceof Date) {
           endDate = new Date(captureEndDate);
         } else {
           try {
             // Handle the case where captureEndDate is not a Date object
-            endDate = new Date(captureEndDate as any);
+            endDate = new Date(captureEndDate);
           } catch (e) {
             console.error("Error parsing capture_end_date:", e);
             endDate = addMinutes(new Date(), 30);
