@@ -92,51 +92,43 @@ export function StatusUpdateForm({
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); // Prevent form submission to handle it manually
     
-    if (newComment.trim() || value) {
-      try {
-        console.log("Adding new comment to history:", newComment);
+    try {
+      console.log("Adding new comment to history:", newComment);
+      
+      let updatedDescription = description;
+      
+      // Only append new comment if there is one
+      if (newComment.trim()) {
+        // Create updated description with the new comment appended
+        updatedDescription = appendToDescriptionHistory(description, newComment, userName);
+        console.log("Updated description:", updatedDescription);
         
-        let updatedDescription = description;
+        // Create a synthetic event to update the hidden input
+        const syntheticEvent = {
+          target: {
+            name: "description",
+            value: updatedDescription
+          }
+        } as React.ChangeEvent<HTMLInputElement>;
         
-        // Only append new comment if there is one
-        if (newComment.trim()) {
-          // Create updated description with the new comment appended
-          updatedDescription = appendToDescriptionHistory(description, newComment, userName);
-          console.log("Updated description:", updatedDescription);
-          
-          // Create a synthetic event to update the hidden input
-          const syntheticEvent = {
-            target: {
-              name: "description",
-              value: updatedDescription
-            }
-          } as React.ChangeEvent<HTMLInputElement>;
-          
-          // Update the hidden field with the complete history
-          onInputChange(syntheticEvent);
-        }
-        
-        // Log the current state for debugging
-        console.log("Submitting status update with data:", {
-          status_id: value,
-          collaborator_id: collaboratorId,
-          description: updatedDescription
-        });
-        
-        // Submit the form
-        await onSubmit(e);
-        
-        // Clear the comment field after successful submission
-        setNewComment("");
-        
-        // Provide feedback to the user
-        toast.success("Comentário adicionado com sucesso");
-      } catch (error) {
-        console.error("Error submitting comment:", error);
-        toast.error("Erro ao adicionar comentário");
+        // Update the hidden field with the complete history
+        onInputChange(syntheticEvent);
       }
-    } else {
-      toast.error("Por favor, selecione um status ou adicione um comentário");
+      
+      // Log the current state for debugging
+      console.log("Unified submission from status tab - all form data will be saved");
+      
+      // Submit the form using the unified submission function
+      await onSubmit(e);
+      
+      // Clear the comment field after successful submission
+      setNewComment("");
+      
+      // Provide feedback to the user
+      toast.success("Agendamento atualizado com sucesso");
+    } catch (error) {
+      console.error("Error submitting update:", error);
+      toast.error("Erro ao atualizar agendamento");
     }
   };
   
@@ -183,7 +175,7 @@ export function StatusUpdateForm({
         <Textarea
           id="newComment"
           name="newComment"
-          placeholder="Adicione informações sobre esta atualização de status"
+          placeholder="Adicione informações sobre esta atualização"
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
           className="min-h-[100px]"
@@ -203,7 +195,7 @@ export function StatusUpdateForm({
         </Button>
         <Button 
           type="button"
-          disabled={isSubmitting || (!newComment.trim() && !value)}
+          disabled={isSubmitting}
           onClick={handleCommentSubmit}
         >
           {isSubmitting ? "Atualizando..." : "Atualizar Status"}

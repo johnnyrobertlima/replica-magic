@@ -126,34 +126,22 @@ export function DialogContent({
     e.preventDefault();
     const errors = [];
     
-    // Check required fields based on active tab
-    if (activeTab === "details" || activeTab === "capture") {
-      // Client is always required
-      if (!formData.client_id) {
-        errors.push("Cliente é obrigatório");
-      }
-      
-      // Title is always required
-      if (!formData.title) {
-        errors.push("Título é obrigatório");
-      }
-      
-      // Service is always required
-      if (!formData.service_id) {
-        errors.push("Serviço é obrigatório");
-      }
-      
-      // Scheduled date or capture date is required
-      if (activeTab === "details" && !formData.scheduled_date) {
-        errors.push("Data de agendamento é obrigatória");
-      } else if (activeTab === "capture" && !formData.capture_date) {
-        errors.push("Data de captura é obrigatória");
-      }
-    } else if (activeTab === "status") {
-      // Status is required on status tab
-      if (!formData.status_id) {
-        errors.push("Status é obrigatório");
-      }
+    // Basic validation - client, title and service are always required
+    if (!formData.client_id) {
+      errors.push("Cliente é obrigatório");
+    }
+    
+    if (!formData.title) {
+      errors.push("Título é obrigatório");
+    }
+    
+    if (!formData.service_id) {
+      errors.push("Serviço é obrigatório");
+    }
+    
+    // At least one date is required (scheduled_date or capture_date)
+    if (!formData.scheduled_date && !formData.capture_date) {
+      errors.push("É necessário informar pelo menos uma data (Agendamento ou Captura)");
     }
     
     // If there are errors, show them and don't submit the form
@@ -165,17 +153,10 @@ export function DialogContent({
     // Clear validation errors and submit the form
     setValidationErrors([]);
     
-    // Call the appropriate function based on active tab
-    if (activeTab === "status") {
-      console.log("Submitting status update with data:", {
-        status_id: formData.status_id,
-        collaborator_id: formData.collaborator_id,
-        description: formData.description
-      });
-      onStatusUpdate(e);
-    } else {
-      onSubmit(e);
-    }
+    console.log("Unified submission - saving all form data:", formData);
+    
+    // Always use onSubmit (complete update) instead of onStatusUpdate (partial update)
+    onSubmit(e);
   };
 
   const handleTabChange = (value: string) => {
@@ -235,7 +216,7 @@ export function DialogContent({
                   Cancelar
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
-                  {currentSelectedEvent ? "Atualizar" : "Criar"}
+                  {isSubmitting ? "Atualizando..." : (currentSelectedEvent ? "Atualizar" : "Criar")}
                 </Button>
                 {currentSelectedEvent && (
                   <Button 
@@ -294,7 +275,7 @@ export function DialogContent({
                   Cancelar
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
-                  {currentSelectedEvent ? "Atualizar" : "Criar"}
+                  {isSubmitting ? "Atualizando..." : (currentSelectedEvent ? "Atualizar" : "Criar")}
                 </Button>
                 {currentSelectedEvent && (
                   <Button 
