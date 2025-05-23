@@ -407,10 +407,12 @@ export function useScheduleFormState({
         if (formData.capture_date) {
           let captureDate: Date;
           
-          if (formData.capture_date instanceof Date) {
+          if (formData.capture_date) {
             captureDate = new Date(value);
-            captureDate.setHours(formData.capture_date.getHours());
-            captureDate.setMinutes(formData.capture_date.getMinutes());
+            if (formData.capture_date instanceof Date) {
+              captureDate.setHours(formData.capture_date.getHours());
+              captureDate.setMinutes(formData.capture_date.getMinutes());
+            }
           } else {
             captureDate = new Date(value);
           }
@@ -430,10 +432,12 @@ export function useScheduleFormState({
         if (formData.scheduled_date) {
           let scheduledDate: Date;
           
-          if (formData.scheduled_date instanceof Date) {
+          if (formData.scheduled_date) {
             scheduledDate = new Date(value);
-            scheduledDate.setHours(formData.scheduled_date.getHours());
-            scheduledDate.setMinutes(formData.scheduled_date.getMinutes());
+            if (formData.scheduled_date instanceof Date) {
+              scheduledDate.setHours(formData.scheduled_date.getHours());
+              scheduledDate.setMinutes(formData.scheduled_date.getMinutes());
+            }
           } else {
             scheduledDate = new Date(value);
           }
