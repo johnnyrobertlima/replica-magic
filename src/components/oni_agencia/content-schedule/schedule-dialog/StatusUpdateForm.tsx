@@ -112,23 +112,31 @@ export function StatusUpdateForm({
   const extractCommentsFromDescription = (desc: string) => {
     if (!desc) return [];
     
-    const commentPattern = /\[(.*?) em (\d{2}\/\d{2}\/\d{4}, \d{2}:\d{2})\]:\s*(.*?)(?=\n\[|$)/gs;
+    console.log("Extracting comments from description:", desc);
+    
+    // Pattern more flexible to catch different formats
+    const commentPattern = /\[(.*?) em (\d{2}\/\d{2}\/\d{4}, \d{2}:\d{2})\]:\s*([\s\S]*?)(?=\n\[|$)/g;
     const comments = [];
     let match;
     
     while ((match = commentPattern.exec(desc)) !== null) {
-      comments.push({
+      const comment = {
         author: match[1],
         date: match[2],
         comment: match[3].trim()
-      });
+      };
+      console.log("Found comment:", comment);
+      comments.push(comment);
     }
     
     return comments.reverse(); // Show newest first
   };
 
   // Combine all comments from description and history
-  const descriptionComments = extractCommentsFromDescription(description);
+  const descriptionComments = extractCommentsFromDescription(description || "");
+  console.log("Description comments:", descriptionComments);
+  console.log("Current description:", description);
+  console.log("History data:", history);
   
   // Add history entries that are description changes
   const historyComments = history
@@ -143,6 +151,8 @@ export function StatusUpdateForm({
       }));
     })
     .flat();
+
+  console.log("History comments:", historyComments);
 
   // Combine and deduplicate comments
   const allComments = [...descriptionComments, ...historyComments]
@@ -159,6 +169,8 @@ export function StatusUpdateForm({
       const dateB = new Date(b.date.replace(/(\d{2})\/(\d{2})\/(\d{4}), (\d{2}):(\d{2})/, '$3-$2-$1T$4:$5'));
       return dateB.getTime() - dateA.getTime();
     });
+
+  console.log("All comments final:", allComments);
   
   return (
     <div className="space-y-4">
@@ -218,7 +230,16 @@ export function StatusUpdateForm({
                   ))}
                 </div>
               ) : (
-                <div className="text-sm text-gray-500">Nenhum comentário encontrado</div>
+                <div className="text-sm text-gray-500">
+                  Nenhum comentário encontrado
+                  {/* Debug info */}
+                  <div className="text-xs mt-2">
+                    <div>Description: {description ? 'Presente' : 'Ausente'}</div>
+                    <div>History entries: {history.length}</div>
+                    <div>Description comments: {descriptionComments.length}</div>
+                    <div>History comments: {historyComments.length}</div>
+                  </div>
+                </div>
               )}
             </ScrollArea>
           </CardContent>
