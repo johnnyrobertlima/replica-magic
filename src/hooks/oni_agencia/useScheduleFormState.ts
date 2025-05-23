@@ -479,20 +479,18 @@ export function useScheduleFormState({
       };
       
       if (formData.capture_date) {
-        // Safe approach - cast to any before checking instanceof
-        const captureDate = formData.capture_date as any;
-        
-        if (captureDate instanceof Date) {
+        // Use proper type handling for null checks and Date checks
+        if (formData.capture_date instanceof Date) {
           // Keep just the date part (reset time to midnight)
           updatedData.capture_date = new Date(
-            captureDate.getFullYear(),
-            captureDate.getMonth(),
-            captureDate.getDate()
+            formData.capture_date.getFullYear(),
+            formData.capture_date.getMonth(),
+            formData.capture_date.getDate()
           );
-        } else if (captureDate) {  // Then check if it exists (could be any type)
+        } else if (formData.capture_date) {  // Then check if it exists (could be any type)
           try {
             // Handle the case where captureDate is not a Date object
-            const parsedDate = new Date(captureDate);
+            const parsedDate = new Date(formData.capture_date as any);
             updatedData.capture_date = new Date(
               parsedDate.getFullYear(),
               parsedDate.getMonth(),
@@ -506,20 +504,18 @@ export function useScheduleFormState({
       }
       
       if (formData.capture_end_date) {
-        // Safe approach - cast to any before checking instanceof
-        const captureEndDate = formData.capture_end_date as any;
-        
-        if (captureEndDate instanceof Date) {
+        // Use proper type handling for null checks and Date checks
+        if (formData.capture_end_date instanceof Date) {
           // Keep just the date part (reset time to midnight)
           updatedData.capture_end_date = new Date(
-            captureEndDate.getFullYear(),
-            captureEndDate.getMonth(),
-            captureEndDate.getDate()
+            formData.capture_end_date.getFullYear(),
+            formData.capture_end_date.getMonth(),
+            formData.capture_end_date.getDate()
           );
-        } else if (captureEndDate) {  // Then check if it exists (could be any type)
+        } else if (formData.capture_end_date) {  // Then check if it exists (could be any type)
           try {
             // Handle the case where captureEndDate is not a Date object
-            const parsedDate = new Date(captureEndDate);
+            const parsedDate = new Date(formData.capture_end_date as any);
             updatedData.capture_end_date = new Date(
               parsedDate.getFullYear(),
               parsedDate.getMonth(),
@@ -545,15 +541,13 @@ export function useScheduleFormState({
       
       if (formData.capture_date) {
         let date: Date;
-        // Safe approach - cast to any before checking instanceof
-        const captureDate = formData.capture_date as any;
         
-        if (captureDate instanceof Date) {
-          date = new Date(captureDate);
+        if (formData.capture_date instanceof Date) {
+          date = new Date(formData.capture_date);
         } else {
           try {
             // Handle the case where captureDate is not a Date object
-            date = new Date(captureDate);
+            date = new Date(formData.capture_date as any);
           } catch (e) {
             console.error("Error parsing capture_date:", e);
             date = new Date();
@@ -573,15 +567,13 @@ export function useScheduleFormState({
       
       if (formData.capture_end_date) {
         let endDate: Date;
-        // Safe approach - cast to any before checking instanceof
-        const captureEndDate = formData.capture_end_date as any;
         
-        if (captureEndDate instanceof Date) {
-          endDate = new Date(captureEndDate);
+        if (formData.capture_end_date instanceof Date) {
+          endDate = new Date(formData.capture_end_date);
         } else {
           try {
             // Handle the case where captureEndDate is not a Date object
-            endDate = new Date(captureEndDate);
+            endDate = new Date(formData.capture_end_date as any);
           } catch (e) {
             console.error("Error parsing capture_end_date:", e);
             endDate = addMinutes(new Date(), 30);
