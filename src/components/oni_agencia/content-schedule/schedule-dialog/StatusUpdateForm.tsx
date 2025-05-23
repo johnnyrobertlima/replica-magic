@@ -52,7 +52,7 @@ export function StatusUpdateForm({
   const userName = user?.email?.split('@')[0] || "Usuário";
   
   // Get schedule history for comments
-  const { data: history = [], isLoading: isLoadingHistory } = useScheduleHistory(
+  const { data: history = [], isLoading: isLoadingHistory, refetch } = useScheduleHistory(
     currentSelectedEvent?.id || ""
   );
 
@@ -95,6 +95,11 @@ export function StatusUpdateForm({
       // Clear the comment field after successful submission
       setNewComment("");
       
+      // Refetch history to get the latest comments
+      setTimeout(() => {
+        refetch();
+      }, 1000);
+      
       // Provide feedback to the user
       toast.success("Agendamento atualizado com sucesso");
     } catch (error) {
@@ -122,15 +127,38 @@ export function StatusUpdateForm({
     return comments.reverse(); // Show newest first
   };
 
-  // Get all comments from description and history
-  const allComments = [
-    ...extractCommentsFromDescription(description),
-    ...history.filter(entry => entry.field_name === 'description' && entry.new_value).map(entry => ({
-      author: entry.changed_by_name || 'Sistema',
-      date: new Date(entry.created_at).toLocaleString('pt-BR'),
-      comment: entry.new_value
-    }))
-  ];
+  // Combine all comments from description and history
+  const descriptionComments = extractCommentsFromDescription(description);
+  
+  // Add history entries that are description changes
+  const historyComments = history
+    .filter(entry => entry.field_name === 'description' && entry.new_value)
+    .map(entry => {
+      // Extract comments from the history entry's new_value
+      const entryComments = extractCommentsFromDescription(entry.new_value);
+      return entryComments.map(comment => ({
+        author: comment.author || entry.changed_by_name || 'Sistema',
+        date: comment.date || new Date(entry.created_at).toLocaleString('pt-BR'),
+        comment: comment.comment
+      }));
+    })
+    .flat();
+
+  // Combine and deduplicate comments
+  const allComments = [...descriptionComments, ...historyComments]
+    .filter((comment, index, self) => 
+      index === self.findIndex(c => 
+        c.author === comment.author && 
+        c.date === comment.date && 
+        c.comment === comment.comment
+      )
+    )
+    .sort((a, b) => {
+      // Sort by date, newest first
+      const dateA = new Date(a.date.replace(/(\d{2})\/(\d{2})\/(\d{4}), (\d{2}):(\d{2})/, '$3-$2-$1T$4:$5'));
+      const dateB = new Date(b.date.replace(/(\d{2})\/(\d{2})\/(\d{4}), (\d{2}):(\d{2})/, '$3-$2-$1T$4:$5'));
+      return dateB.getTime() - dateA.getTime();
+    });
   
   return (
     <div className="space-y-4">
@@ -158,7 +186,7 @@ export function StatusUpdateForm({
         />
       </div>
 
-      {/* Seção de Comentários do Agendamento */}
+      {/* Comentários do Agendamento */}
       {currentSelectedEvent && (
         <div className="space-y-2">
           <Label className="text-base font-medium">
@@ -166,7 +194,7 @@ export function StatusUpdateForm({
           </Label>
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Histórico de Comentários</CardTitle>
+              <CardTitle className="text-sm">Todos os Comentários</CardTitle>
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-40 w-full">
