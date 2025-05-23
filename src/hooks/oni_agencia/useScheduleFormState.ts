@@ -547,7 +547,7 @@ export function useScheduleFormState({
         
         if (captureDate instanceof Date) {
           date = new Date(captureDate);
-        } else if (typeof captureDate === 'string' || captureDate) {
+        } else if (captureDate) {
           try {
             date = new Date(captureDate as any);
           } catch (e) {
@@ -575,7 +575,7 @@ export function useScheduleFormState({
         
         if (captureEndDate instanceof Date) {
           endDate = new Date(captureEndDate);
-        } else if (typeof captureEndDate === 'string' || captureEndDate) {
+        } else if (captureEndDate) {
           try {
             endDate = new Date(captureEndDate as any);
           } catch (e) {

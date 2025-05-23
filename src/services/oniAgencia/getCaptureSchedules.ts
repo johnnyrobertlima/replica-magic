@@ -18,10 +18,25 @@ export const getCaptureSchedules = async (
     const startDate = firstDay.toISOString().split("T")[0];
     const endDate = lastDay.toISOString().split("T")[0];
 
-    // Use the from() method to get a valid query builder
-    let query = supabase.from(TABLE_NAME);
-
-    // Add filters sequentially
+    // Build the query step by step using proper method chaining
+    let query = supabase.from(TABLE_NAME).select(`
+      *,
+      service:service_id(*),
+      collaborator:collaborator_id(*),
+      editorial_line:editorial_line_id(*),
+      product:product_id(*),
+      status:status_id(*),
+      client:client_id(*),
+      capture:oniagencia_capturas(
+        id,
+        is_all_day,
+        capture_date,
+        capture_end_date,
+        location
+      )
+    `);
+    
+    // Add status filter
     query = query.eq('status_id', 'f0593677-1afb-486d-80a8-a24cb6fb7071');
     
     // Apply client filter if provided
@@ -38,23 +53,8 @@ export const getCaptureSchedules = async (
       query = query.or(`collaborator_id.eq.${collaboratorId},creators.cs.{${collaboratorId}}`);
     }
     
-    // Finally apply the select operation after all filters
-    const { data, error } = await query.select(`
-      *,
-      service:service_id(*),
-      collaborator:collaborator_id(*),
-      editorial_line:editorial_line_id(*),
-      product:product_id(*),
-      status:status_id(*),
-      client:client_id(*),
-      capture:oniagencia_capturas(
-        id,
-        is_all_day,
-        capture_date,
-        capture_end_date,
-        location
-      )
-    `).order("scheduled_date", { ascending: true });
+    // Execute the query and order results
+    const { data, error } = await query.order("scheduled_date", { ascending: true });
     
     if (error) {
       throw error;
@@ -120,10 +120,25 @@ export const getCaptureSchedulesPaginated = async (
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
-    // Use the from() method to get a valid query builder
-    let query = supabase.from(TABLE_NAME);
-
-    // Add filters sequentially
+    // Build the query step by step using proper method chaining
+    let query = supabase.from(TABLE_NAME).select(`
+      *,
+      service:service_id(*),
+      collaborator:collaborator_id(*),
+      editorial_line:editorial_line_id(*),
+      product:product_id(*),
+      status:status_id(*),
+      client:client_id(*),
+      capture:oniagencia_capturas(
+        id,
+        is_all_day,
+        capture_date,
+        capture_end_date,
+        location
+      )
+    `, { count: 'exact' });
+    
+    // Add status filter
     query = query.eq('status_id', 'f0593677-1afb-486d-80a8-a24cb6fb7071');
     
     // Apply client filter if provided
@@ -140,25 +155,10 @@ export const getCaptureSchedulesPaginated = async (
       query = query.or(`collaborator_id.eq.${collaboratorId},creators.cs.{${collaboratorId}}`);
     }
     
-    // Finally apply the select operation after all filters
-    const { data, error, count } = await query.select(`
-      *,
-      service:service_id(*),
-      collaborator:collaborator_id(*),
-      editorial_line:editorial_line_id(*),
-      product:product_id(*),
-      status:status_id(*),
-      client:client_id(*),
-      capture:oniagencia_capturas(
-        id,
-        is_all_day,
-        capture_date,
-        capture_end_date,
-        location
-      )
-    `, { count: 'exact' })
-    .order("scheduled_date", { ascending: true })
-    .range(from, to);
+    // Execute the query with pagination and ordering
+    const { data, error, count } = await query
+      .order("scheduled_date", { ascending: true })
+      .range(from, to);
     
     if (error) {
       throw error;
