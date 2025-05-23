@@ -487,9 +487,9 @@ export function useScheduleFormState({
             captureDate.getMonth(),
             captureDate.getDate()
           );
-        } else if (typeof captureDate === 'string') {
+        } else if (typeof captureDate === 'string' || captureDate) {
           try {
-            const parsedDate = new Date(captureDate);
+            const parsedDate = new Date(captureDate as any);
             updatedData.capture_date = new Date(
               parsedDate.getFullYear(),
               parsedDate.getMonth(),
@@ -511,9 +511,9 @@ export function useScheduleFormState({
             captureEndDate.getMonth(),
             captureEndDate.getDate()
           );
-        } else if (typeof captureEndDate === 'string') {
+        } else if (typeof captureEndDate === 'string' || captureEndDate) {
           try {
-            const parsedDate = new Date(captureEndDate);
+            const parsedDate = new Date(captureEndDate as any);
             updatedData.capture_end_date = new Date(
               parsedDate.getFullYear(),
               parsedDate.getMonth(),
@@ -543,9 +543,9 @@ export function useScheduleFormState({
         
         if (captureDate instanceof Date) {
           date = new Date(captureDate);
-        } else if (typeof captureDate === 'string') {
+        } else if (typeof captureDate === 'string' || captureDate) {
           try {
-            date = new Date(captureDate);
+            date = new Date(captureDate as any);
           } catch (e) {
             console.error("Error parsing capture_date:", e);
             date = new Date();
@@ -571,9 +571,9 @@ export function useScheduleFormState({
         
         if (captureEndDate instanceof Date) {
           endDate = new Date(captureEndDate);
-        } else if (typeof captureEndDate === 'string') {
+        } else if (typeof captureEndDate === 'string' || captureEndDate) {
           try {
-            endDate = new Date(captureEndDate);
+            endDate = new Date(captureEndDate as any);
           } catch (e) {
             console.error("Error parsing capture_end_date:", e);
             endDate = addMinutes(new Date(), 30);

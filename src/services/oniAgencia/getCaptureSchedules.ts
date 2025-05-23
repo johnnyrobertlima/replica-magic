@@ -18,29 +18,26 @@ export const getCaptureSchedules = async (
     const startDate = firstDay.toISOString().split("T")[0];
     const endDate = lastDay.toISOString().split("T")[0];
 
-    // Start with the base query
-    let query = supabase.from(TABLE_NAME);
+    // Define base query
+    let baseQuery = supabase.from(TABLE_NAME);
     
-    // Apply all filters
-    // Filter by status first - "Liberado para Captura"
-    query = query.eq('status_id', 'f0593677-1afb-486d-80a8-a24cb6fb7071');
-    
-    // Filter by client if provided
-    if (clientId) {
-      query = query.eq("client_id", clientId);
-    }
-    
-    // Filter by scheduled_date range
-    query = query.gte("scheduled_date", startDate);
-    query = query.lte("scheduled_date", endDate);
-    
-    // Filter by collaborator if specified
-    if (collaboratorId) {
-      query = query.or(`collaborator_id.eq.${collaboratorId},creators.cs.{${collaboratorId}}`);
-    }
+    // Create a new query chain with filters
+    const query = baseQuery
+      // Filter by status - "Liberado para Captura"
+      .eq('status_id', 'f0593677-1afb-486d-80a8-a24cb6fb7071')
+      // Filter by client if provided
+      .eq(clientId ? "client_id" : "client_id", clientId || "")
+      // Filter by date range
+      .gte("scheduled_date", startDate)
+      .lte("scheduled_date", endDate);
+
+    // Add collaborator filter if specified using a separate variable to avoid type issues
+    const finalQuery = collaboratorId 
+      ? query.or(`collaborator_id.eq.${collaboratorId},creators.cs.{${collaboratorId}}`)
+      : query;
     
     // Now apply the select statement after all filters
-    const { data, error } = await query.select(`
+    const { data, error } = await finalQuery.select(`
       *,
       service:service_id(*),
       collaborator:collaborator_id(*),
@@ -121,29 +118,26 @@ export const getCaptureSchedulesPaginated = async (
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
-    // Start with the base query
-    let query = supabase.from(TABLE_NAME);
+    // Define base query
+    let baseQuery = supabase.from(TABLE_NAME);
     
-    // Apply all filters
-    // Filter by status first - "Liberado para Captura"
-    query = query.eq('status_id', 'f0593677-1afb-486d-80a8-a24cb6fb7071');
-    
-    // Filter by client if provided
-    if (clientId) {
-      query = query.eq("client_id", clientId);
-    }
-    
-    // Add date filters
-    query = query.gte("scheduled_date", startDate);
-    query = query.lte("scheduled_date", endDate);
-    
-    // Filter by collaborator if specified
-    if (collaboratorId) {
-      query = query.or(`collaborator_id.eq.${collaboratorId},creators.cs.{${collaboratorId}}`);
-    }
+    // Create a new query chain with filters
+    const query = baseQuery
+      // Filter by status - "Liberado para Captura"
+      .eq('status_id', 'f0593677-1afb-486d-80a8-a24cb6fb7071')
+      // Filter by client if provided
+      .eq(clientId ? "client_id" : "client_id", clientId || "")
+      // Filter by date range
+      .gte("scheduled_date", startDate)
+      .lte("scheduled_date", endDate);
+
+    // Add collaborator filter if specified using a separate variable to avoid type issues
+    const finalQuery = collaboratorId 
+      ? query.or(`collaborator_id.eq.${collaboratorId},creators.cs.{${collaboratorId}}`)
+      : query;
     
     // Now apply the select statement, ordering and pagination after all filters
-    const { data, error, count } = await query.select(`
+    const { data, error, count } = await finalQuery.select(`
       *,
       service:service_id(*),
       collaborator:collaborator_id(*),
