@@ -220,8 +220,8 @@ export function useScheduleFormState({
             'yyyy-MM-dd',
             new Date()
           );
-        } else if (event.scheduled_date instanceof Date) {
-          scheduledDate = event.scheduled_date;
+        } else if ((event.scheduled_date as any) instanceof Date) {
+          scheduledDate = event.scheduled_date as any;
         }
       } catch (e) {
         console.error("Erro ao converter scheduled_date:", e);
@@ -237,8 +237,8 @@ export function useScheduleFormState({
           captureDate = event.capture_date.includes('T') 
             ? new Date(event.capture_date)
             : parse(event.capture_date, 'yyyy-MM-dd', new Date());
-        } else if (event.capture_date instanceof Date) {
-          captureDate = event.capture_date;
+        } else if ((event.capture_date as any) instanceof Date) {
+          captureDate = event.capture_date as any;
         }
       } catch (e) {
         console.error("Erro ao converter capture_date:", e);
@@ -254,8 +254,8 @@ export function useScheduleFormState({
           captureEndDate = event.capture_end_date.includes('T')
             ? new Date(event.capture_end_date)
             : parse(event.capture_end_date, 'yyyy-MM-dd', new Date());
-        } else if (event.capture_end_date instanceof Date) {
-          captureEndDate = event.capture_end_date;
+        } else if ((event.capture_end_date as any) instanceof Date) {
+          captureEndDate = event.capture_end_date as any;
         }
       } catch (e) {
         console.error("Erro ao converter capture_end_date:", e);
