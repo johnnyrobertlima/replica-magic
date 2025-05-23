@@ -407,12 +407,10 @@ export function useScheduleFormState({
         if (formData.capture_date) {
           let captureDate: Date;
           
-          if (formData.capture_date) {
+          if (formData.capture_date instanceof Date) {
             captureDate = new Date(value);
-            if (formData.capture_date instanceof Date) {
-              captureDate.setHours(formData.capture_date.getHours());
-              captureDate.setMinutes(formData.capture_date.getMinutes());
-            }
+            captureDate.setHours(formData.capture_date.getHours());
+            captureDate.setMinutes(formData.capture_date.getMinutes());
           } else {
             captureDate = new Date(value);
           }
@@ -432,12 +430,10 @@ export function useScheduleFormState({
         if (formData.scheduled_date) {
           let scheduledDate: Date;
           
-          if (formData.scheduled_date) {
+          if (formData.scheduled_date instanceof Date) {
             scheduledDate = new Date(value);
-            if (formData.scheduled_date instanceof Date) {
-              scheduledDate.setHours(formData.scheduled_date.getHours());
-              scheduledDate.setMinutes(formData.scheduled_date.getMinutes());
-            }
+            scheduledDate.setHours(formData.scheduled_date.getHours());
+            scheduledDate.setMinutes(formData.scheduled_date.getMinutes());
           } else {
             scheduledDate = new Date(value);
           }
@@ -484,6 +480,7 @@ export function useScheduleFormState({
       
       if (formData.capture_date) {
         const captureDate = formData.capture_date;
+        // First check if it's a Date object
         if (captureDate instanceof Date) {
           // Keep just the date part (reset time to midnight)
           updatedData.capture_date = new Date(
@@ -491,7 +488,7 @@ export function useScheduleFormState({
             captureDate.getMonth(),
             captureDate.getDate()
           );
-        } else if (typeof captureDate === 'string' || captureDate) {
+        } else if (captureDate) {  // Then check if it exists (could be any type)
           try {
             const parsedDate = new Date(captureDate as any);
             updatedData.capture_date = new Date(
@@ -508,6 +505,7 @@ export function useScheduleFormState({
       
       if (formData.capture_end_date) {
         const captureEndDate = formData.capture_end_date;
+        // First check if it's a Date object
         if (captureEndDate instanceof Date) {
           // Keep just the date part (reset time to midnight)
           updatedData.capture_end_date = new Date(
@@ -515,7 +513,7 @@ export function useScheduleFormState({
             captureEndDate.getMonth(),
             captureEndDate.getDate()
           );
-        } else if (typeof captureEndDate === 'string' || captureEndDate) {
+        } else if (captureEndDate) {  // Then check if it exists (could be any type)
           try {
             const parsedDate = new Date(captureEndDate as any);
             updatedData.capture_end_date = new Date(
@@ -547,7 +545,7 @@ export function useScheduleFormState({
         
         if (captureDate instanceof Date) {
           date = new Date(captureDate);
-        } else if (captureDate) {
+        } else if (captureDate) {  // Check if it exists without checking type
           try {
             date = new Date(captureDate as any);
           } catch (e) {
@@ -575,7 +573,7 @@ export function useScheduleFormState({
         
         if (captureEndDate instanceof Date) {
           endDate = new Date(captureEndDate);
-        } else if (captureEndDate) {
+        } else if (captureEndDate) {  // Check if it exists without checking type
           try {
             endDate = new Date(captureEndDate as any);
           } catch (e) {
