@@ -51,7 +51,7 @@ export function StatusUpdateForm({
   const { user } = useAuth();
   const userName = user?.email?.split('@')[0] || "Usuário";
   
-  // Get schedule history for comments
+  // Get schedule history for comments - sempre buscar se temos um evento
   const { data: history = [], isLoading: isLoadingHistory, refetch } = useScheduleHistory(
     currentSelectedEvent?.id || ""
   );
@@ -186,46 +186,44 @@ export function StatusUpdateForm({
         />
       </div>
 
-      {/* Comentários do Agendamento */}
-      {currentSelectedEvent && (
-        <div className="space-y-2">
-          <Label className="text-base font-medium">
-            Comentários do Agendamento
-          </Label>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Todos os Comentários</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-40 w-full">
-                {isLoadingHistory ? (
-                  <div className="text-sm text-gray-500">Carregando comentários...</div>
-                ) : allComments.length > 0 ? (
-                  <div className="space-y-3">
-                    {allComments.map((comment, index) => (
-                      <div key={index} className="border-b border-gray-100 pb-2 last:border-b-0">
-                        <div className="flex justify-between items-start mb-1">
-                          <span className="text-sm font-medium text-gray-700">
-                            {comment.author}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {comment.date}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-600 whitespace-pre-wrap">
-                          {comment.comment}
-                        </p>
+      {/* Comentários do Agendamento - sempre mostrar */}
+      <div className="space-y-2">
+        <Label className="text-base font-medium">
+          Comentários do Agendamento
+        </Label>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm">Todos os Comentários</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-40 w-full">
+              {isLoadingHistory ? (
+                <div className="text-sm text-gray-500">Carregando comentários...</div>
+              ) : allComments.length > 0 ? (
+                <div className="space-y-3">
+                  {allComments.map((comment, index) => (
+                    <div key={index} className="border-b border-gray-100 pb-2 last:border-b-0">
+                      <div className="flex justify-between items-start mb-1">
+                        <span className="text-sm font-medium text-gray-700">
+                          {comment.author}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {comment.date}
+                        </span>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-sm text-gray-500">Nenhum comentário encontrado</div>
-                )}
-              </ScrollArea>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+                      <p className="text-sm text-gray-600 whitespace-pre-wrap">
+                        {comment.comment}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-sm text-gray-500">Nenhum comentário encontrado</div>
+              )}
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      </div>
       
       <div className="space-y-2">
         <Label htmlFor="newComment" className="text-base font-medium">
