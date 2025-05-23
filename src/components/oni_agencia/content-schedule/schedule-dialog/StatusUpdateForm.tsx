@@ -61,16 +61,19 @@ export function StatusUpdateForm({
         updatedDescription = appendToDescriptionHistory(description, newComment, userName);
         console.log("Updated description:", updatedDescription);
         
-        // Create a synthetic event to update the hidden input
+        // Create a synthetic event to update the description field
         const syntheticEvent = {
           target: {
             name: "description",
             value: updatedDescription
           }
-        } as React.ChangeEvent<HTMLInputElement>;
+        } as React.ChangeEvent<HTMLTextAreaElement>;
         
-        // Update the hidden field with the complete history
+        // Update the description field with the complete history
         onInputChange(syntheticEvent);
+        
+        // Wait a bit to ensure state is updated
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
       
       // Log the current state for debugging
@@ -129,13 +132,6 @@ export function StatusUpdateForm({
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
           className="min-h-[100px]"
-        />
-        
-        {/* Campo oculto para manter o valor completo da descrição */}
-        <input 
-          type="hidden" 
-          name="description" 
-          value={description || ''}
         />
       </div>
 

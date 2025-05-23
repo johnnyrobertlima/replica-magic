@@ -17,12 +17,17 @@ export function ScheduleHistory({ event }: ScheduleHistoryProps) {
   useEffect(() => {
     if (event && event.id) {
       console.log("ScheduleHistory: Refetching history for event", event.id);
-      refetch();
       
-      // Invalidate the cache specifically for this event's history
-      queryClient.invalidateQueries({ queryKey: ['scheduleHistory', event.id] });
+      // Force refetch with a small delay to ensure data is committed
+      const timeoutId = setTimeout(() => {
+        console.log("ScheduleHistory: Invalidating and refetching history cache");
+        queryClient.invalidateQueries({ queryKey: ['scheduleHistory', event.id] });
+        refetch();
+      }, 500);
+
+      return () => clearTimeout(timeoutId);
     }
-  }, [event, event?.id, event?.description, refetch, queryClient]);
+  }, [event, event?.id, event?.description, event?.updated_at, refetch, queryClient]);
 
   const handleRefetchResources = () => {
     console.log("ScheduleHistory: Manual refetch triggered");
