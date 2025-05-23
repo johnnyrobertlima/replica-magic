@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { useCreateContentSchedule, useUpdateContentSchedule, useDeleteContentSchedule } from "@/hooks/useOniAgenciaContentSchedules";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
@@ -194,22 +193,35 @@ export function useScheduleMutations({
       try {
         setIsSubmitting(true);
         
-        // Extract only the relevant fields for status update to minimize data being sent
+        // Instead of sending just a few fields, send the complete formData
+        // Just extract the necessary fields that need to be updated
         const updateData: Partial<ContentScheduleFormData> = {
           client_id: formData.client_id,
           service_id: formData.service_id,
           status_id: formData.status_id,
           collaborator_id: formData.collaborator_id,
           description: formData.description,
-          title: formData.title
+          title: formData.title,
+          editorial_line_id: formData.editorial_line_id,
+          product_id: formData.product_id,
+          creators: formData.creators,
+          execution_phase: formData.execution_phase,
+          scheduled_date: formData.scheduled_date,
+          capture_date: formData.capture_date,
+          capture_end_date: formData.capture_end_date,
+          is_all_day: formData.is_all_day,
+          location: formData.location
         };
         
-        console.log("Sending status update with data:", updateData);
+        console.log("Sending complete update with data:", updateData);
+        
+        // Convert dates to string format
+        const apiData = convertDatesToStrings(updateData);
         
         // Use a shorter timeout for status updates (15s instead of 30s)
         await updateMutation.mutateAsync({
           id: currentSelectedEvent.id,
-          data: updateData
+          data: apiData
         });
         
         toast({

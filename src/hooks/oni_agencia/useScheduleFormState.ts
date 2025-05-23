@@ -21,6 +21,11 @@ const deserializeFormData = (data: string): ContentScheduleFormData => {
   } as ContentScheduleFormData;
 };
 
+// Helper to safely check if a value is a Date object
+const isDateObject = (value: any): value is Date => {
+  return value instanceof Date && !isNaN(value.getTime());
+};
+
 interface UseScheduleFormStateProps {
   clientId: string;
   selectedDate: Date;
@@ -407,7 +412,7 @@ export function useScheduleFormState({
         if (formData.capture_date) {
           let captureDate: Date;
           
-          if (formData.capture_date instanceof Date) {
+          if (isDateObject(formData.capture_date)) {
             captureDate = new Date(value);
             captureDate.setHours(formData.capture_date.getHours());
             captureDate.setMinutes(formData.capture_date.getMinutes());
@@ -430,7 +435,7 @@ export function useScheduleFormState({
         if (formData.scheduled_date) {
           let scheduledDate: Date;
           
-          if (formData.scheduled_date instanceof Date) {
+          if (isDateObject(formData.scheduled_date)) {
             scheduledDate = new Date(value);
             scheduledDate.setHours(formData.scheduled_date.getHours());
             scheduledDate.setMinutes(formData.scheduled_date.getMinutes());
@@ -479,8 +484,8 @@ export function useScheduleFormState({
       };
       
       if (formData.capture_date) {
-        // Use proper type handling for null checks and Date checks
-        if (formData.capture_date instanceof Date) {
+        // Use the isDateObject helper function instead of instanceof
+        if (isDateObject(formData.capture_date)) {
           // Keep just the date part (reset time to midnight)
           updatedData.capture_date = new Date(
             formData.capture_date.getFullYear(),
@@ -504,8 +509,8 @@ export function useScheduleFormState({
       }
       
       if (formData.capture_end_date) {
-        // Use proper type handling for null checks and Date checks
-        if (formData.capture_end_date instanceof Date) {
+        // Use the isDateObject helper function
+        if (isDateObject(formData.capture_end_date)) {
           // Keep just the date part (reset time to midnight)
           updatedData.capture_end_date = new Date(
             formData.capture_end_date.getFullYear(),
@@ -542,7 +547,7 @@ export function useScheduleFormState({
       if (formData.capture_date) {
         let date: Date;
         
-        if (formData.capture_date instanceof Date) {
+        if (isDateObject(formData.capture_date)) {
           date = new Date(formData.capture_date);
         } else {
           try {
@@ -568,7 +573,7 @@ export function useScheduleFormState({
       if (formData.capture_end_date) {
         let endDate: Date;
         
-        if (formData.capture_end_date instanceof Date) {
+        if (isDateObject(formData.capture_end_date)) {
           endDate = new Date(formData.capture_end_date);
         } else {
           try {
