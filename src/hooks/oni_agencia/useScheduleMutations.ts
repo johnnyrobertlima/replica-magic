@@ -15,34 +15,6 @@ interface UseScheduleMutationsProps {
   onManualRefetch?: () => void;
 }
 
-// Helper function to convert Date objects to strings for API
-const convertDatesToStrings = (data: ContentScheduleFormData | Partial<ContentScheduleFormData>) => {
-  const result: Record<string, any> = { ...data };
-  
-  // Convert Date objects to string format expected by API
-  if (data.scheduled_date instanceof Date) {
-    result.scheduled_date = format(data.scheduled_date, 'yyyy-MM-dd');
-  }
-  
-  if (data.capture_date instanceof Date) {
-    if (data.is_all_day) {
-      result.capture_date = format(data.capture_date, 'yyyy-MM-dd');
-    } else {
-      result.capture_date = format(data.capture_date, "yyyy-MM-dd'T'HH:mm:ss");
-    }
-  }
-  
-  if (data.capture_end_date instanceof Date) {
-    if (data.is_all_day) {
-      result.capture_end_date = format(data.capture_end_date, 'yyyy-MM-dd');
-    } else {
-      result.capture_end_date = format(data.capture_end_date, "yyyy-MM-dd'T'HH:mm:ss");
-    }
-  }
-  
-  return result;
-};
-
 export function useScheduleMutations({
   clientId,
   selectedDate,
@@ -120,19 +92,16 @@ export function useScheduleMutations({
         
         console.log("Validação passou, enviando dados...");
         
-        // Convert all Date objects to strings for API
-        const apiData = convertDatesToStrings(formData);
-        
         // Determine if we're creating or updating
         if (currentSelectedEvent) {
-          // Update existing schedule
+          // Update existing schedule - use the proper service that handles both tables
           await updateMutation.mutateAsync({ 
             id: currentSelectedEvent.id,
-            data: apiData as ContentScheduleFormData
+            data: formData  // Send the complete formData object
           });
         } else {
-          // Create new schedule
-          await createMutation.mutateAsync(apiData as ContentScheduleFormData);
+          // Create new schedule - use the proper service that handles both tables
+          await createMutation.mutateAsync(formData);
         }
         
         // Call the onSuccess callback if provided
@@ -166,91 +135,13 @@ export function useScheduleMutations({
     [clientId, selectedDate, createMutation, updateMutation, onClose, onSuccess, onManualRefetch, toast]
   );
   
-  // Handle status update
+  // Handle status update - now just calls the main handleSubmit
   const handleStatusUpdate = useCallback(
     async (e: React.FormEvent, currentSelectedEvent: CalendarEvent | null, formData: ContentScheduleFormData) => {
-      e.preventDefault();
-      
-      if (!currentSelectedEvent) {
-        console.error("No event selected");
-        toast({
-          variant: "destructive",
-          title: "Erro",
-          description: "Nenhum agendamento selecionado para atualizar."
-        });
-        return;
-      }
-      
-      // Validate that status is selected
-      if (!formData.status_id || formData.status_id === "null") {
-        toast({
-          variant: "destructive",
-          title: "Erro",
-          description: "Por favor, selecione um status válido."
-        });
-        return;
-      }
-      
-      try {
-        setIsSubmitting(true);
-        
-        // Instead of sending just a few fields, send the complete formData
-        // Just extract the necessary fields that need to be updated
-        const updateData: Partial<ContentScheduleFormData> = {
-          client_id: formData.client_id,
-          service_id: formData.service_id,
-          status_id: formData.status_id,
-          collaborator_id: formData.collaborator_id,
-          description: formData.description,
-          title: formData.title,
-          editorial_line_id: formData.editorial_line_id,
-          product_id: formData.product_id,
-          creators: formData.creators,
-          execution_phase: formData.execution_phase,
-          scheduled_date: formData.scheduled_date,
-          capture_date: formData.capture_date,
-          capture_end_date: formData.capture_end_date,
-          is_all_day: formData.is_all_day,
-          location: formData.location
-        };
-        
-        console.log("Sending complete update with data:", updateData);
-        
-        // Convert dates to string format
-        const apiData = convertDatesToStrings(updateData);
-        
-        // Use a shorter timeout for status updates (15s instead of 30s)
-        await updateMutation.mutateAsync({
-          id: currentSelectedEvent.id,
-          data: apiData
-        });
-        
-        toast({
-          title: "Status atualizado",
-          description: "O status do agendamento foi atualizado com sucesso."
-        });
-        
-        // Call the onSuccess callback if provided
-        if (onSuccess) onSuccess();
-        
-        // Call the onManualRefetch callback if provided
-        if (onManualRefetch) onManualRefetch();
-        
-        // Close the dialog after successful submission
-        if (onClose) onClose();
-        
-      } catch (error: any) {
-        console.error("Error updating status:", error);
-        toast({
-          variant: "destructive",
-          title: "Erro ao atualizar status",
-          description: error?.message || "Não foi possível atualizar o status. Por favor, tente novamente."
-        });
-      } finally {
-        setIsSubmitting(false);
-      }
+      console.log("Status update called - delegating to main submit function");
+      return handleSubmit(e, currentSelectedEvent, formData);
     },
-    [updateMutation, onClose, onSuccess, onManualRefetch, toast]
+    [handleSubmit]
   );
   
   // Handle delete

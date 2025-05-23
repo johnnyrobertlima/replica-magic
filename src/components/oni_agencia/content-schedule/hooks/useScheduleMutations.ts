@@ -1,9 +1,12 @@
 
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { ContentScheduleFormData } from "@/types/oni-agencia";
-import { format } from "date-fns";
+import { 
+  createContentSchedule,
+  updateContentSchedule,
+  deleteContentSchedule
+} from "@/services/oniAgenciaContentScheduleServices";
 
 interface ScheduleMutationsProps {
   clientId: string;
@@ -27,41 +30,8 @@ export function useScheduleMutations({
 
   const createScheduleMutation = useMutation({
     mutationFn: async (data: ContentScheduleFormData) => {
-      // Convert Date objects to strings in the correct format
-      const scheduledDate = data.scheduled_date ? format(data.scheduled_date, 'yyyy-MM-dd HH:mm:ss') : null;
-      const captureDate = data.capture_date ? format(data.capture_date, 'yyyy-MM-dd HH:mm:ss') : null;
-      const captureEndDate = data.capture_end_date ? format(data.capture_end_date, 'yyyy-MM-dd HH:mm:ss') : null;
-      
-      const { data: newSchedule, error } = await supabase
-        .from('oni_agencia_content_schedules')
-        .insert([
-          {
-            client_id: data.client_id,
-            service_id: data.service_id,
-            collaborator_id: data.collaborator_id,
-            title: data.title,
-            description: data.description,
-            scheduled_date: scheduledDate,
-            execution_phase: data.execution_phase,
-            editorial_line_id: data.editorial_line_id,
-            product_id: data.product_id,
-            status_id: data.status_id,
-            creators: data.creators,
-            capture_date: captureDate,
-            capture_end_date: captureEndDate,
-            is_all_day: data.is_all_day,
-            location: data.location
-          },
-        ])
-        .select()
-        .single();
-
-      if (error) {
-        console.error("Error creating schedule:", error);
-        throw error;
-      }
-
-      return newSchedule;
+      console.log("Creating schedule with data:", data);
+      return createContentSchedule(data);
     },
     onSuccess: (newSchedule) => {
       console.log("Schedule created successfully:", newSchedule);
@@ -69,6 +39,8 @@ export function useScheduleMutations({
       // Invalidate queries to update the cache
       queryClient.invalidateQueries({ queryKey: ['schedules', clientId] });
       queryClient.invalidateQueries({ queryKey: ['eventsByDate', clientId, selectedDate] });
+      queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
+      queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
       if (onManualRefetch) {
         onManualRefetch();
       }
@@ -82,40 +54,8 @@ export function useScheduleMutations({
 
   const updateScheduleMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string, data: ContentScheduleFormData }) => {
-      // Convert Date objects to strings in the correct format
-      const scheduledDate = data.scheduled_date ? format(data.scheduled_date, 'yyyy-MM-dd HH:mm:ss') : null;
-      const captureDate = data.capture_date ? format(data.capture_date, 'yyyy-MM-dd HH:mm:ss') : null;
-      const captureEndDate = data.capture_end_date ? format(data.capture_end_date, 'yyyy-MM-dd HH:mm:ss') : null;
-      
-      const { data: updatedSchedule, error } = await supabase
-        .from('oni_agencia_content_schedules')
-        .update({
-          client_id: data.client_id,
-          service_id: data.service_id,
-          collaborator_id: data.collaborator_id,
-          title: data.title,
-          description: data.description,
-          scheduled_date: scheduledDate,
-          execution_phase: data.execution_phase,
-          editorial_line_id: data.editorial_line_id,
-          product_id: data.product_id,
-          status_id: data.status_id,
-          creators: data.creators,
-          capture_date: captureDate,
-          capture_end_date: captureEndDate,
-          is_all_day: data.is_all_day,
-          location: data.location
-        })
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) {
-        console.error("Error updating schedule:", error);
-        throw error;
-      }
-
-      return updatedSchedule;
+      console.log("Updating schedule with id:", id, "data:", data);
+      return updateContentSchedule(id, data);
     },
     onSuccess: (updatedSchedule) => {
       console.log("Schedule updated successfully:", updatedSchedule);
@@ -123,6 +63,8 @@ export function useScheduleMutations({
       // Invalidate queries to update the cache
       queryClient.invalidateQueries({ queryKey: ['schedules', clientId] });
       queryClient.invalidateQueries({ queryKey: ['eventsByDate', clientId, selectedDate] });
+      queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
+      queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
       if (onManualRefetch) {
         onManualRefetch();
       }
@@ -134,54 +76,10 @@ export function useScheduleMutations({
     },
   });
 
-  const updateScheduleStatusMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string, data: ContentScheduleFormData }) => {
-      const { data: updatedSchedule, error } = await supabase
-        .from('oni_agencia_content_schedules')
-        .update({
-          status_id: data.status_id,
-        })
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) {
-        console.error("Error updating schedule status:", error);
-        throw error;
-      }
-
-      return updatedSchedule;
-    },
-    onSuccess: (updatedSchedule) => {
-      console.log("Schedule status updated successfully:", updatedSchedule);
-      resetError();
-      // Invalidate queries to update the cache
-      queryClient.invalidateQueries({ queryKey: ['schedules', clientId] });
-       queryClient.invalidateQueries({ queryKey: ['eventsByDate', clientId, selectedDate] });
-      if (onManualRefetch) {
-        onManualRefetch();
-      }
-      onClose();
-    },
-    onError: (error: any) => {
-      console.error("Error updating schedule status:", error);
-      setMutationError("Erro ao atualizar o status do agendamento. Por favor, tente novamente.");
-    },
-  });
-
   const deleteScheduleMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { data, error } = await supabase
-        .from('oni_agencia_content_schedules')
-        .delete()
-        .eq('id', id);
-
-      if (error) {
-        console.error("Error deleting schedule:", error);
-        throw error;
-      }
-
-      return data;
+      console.log("Deleting schedule with id:", id);
+      return deleteContentSchedule(id);
     },
     onSuccess: () => {
       console.log("Schedule deleted successfully");
@@ -189,6 +87,8 @@ export function useScheduleMutations({
       // Invalidate queries to update the cache
       queryClient.invalidateQueries({ queryKey: ['schedules', clientId] });
       queryClient.invalidateQueries({ queryKey: ['eventsByDate', clientId, selectedDate] });
+      queryClient.invalidateQueries({ queryKey: ['content-schedules'] });
+      queryClient.invalidateQueries({ queryKey: ['infinite-content-schedules'] });
       if (onManualRefetch) {
         onManualRefetch();
       }
@@ -246,15 +146,8 @@ export function useScheduleMutations({
     currentSelectedEvent: any,
     formData: ContentScheduleFormData
   ) => {
-    e.preventDefault();
-    resetError();
-
-    if (currentSelectedEvent) {
-      // Update existing event status
-      updateScheduleStatusMutation.mutate({ id: currentSelectedEvent.id, data: formData });
-    } else {
-      setMutationError("Nenhum agendamento selecionado para atualizar o status.");
-    }
+    // Use the same handleSubmit function to save all data
+    return handleSubmit(e, currentSelectedEvent, formData);
   };
 
   const handleDelete = async (currentSelectedEvent: any) => {
@@ -272,7 +165,7 @@ export function useScheduleMutations({
     handleSubmit,
     handleStatusUpdate,
     handleDelete,
-    isSubmitting: createScheduleMutation.isPending || updateScheduleMutation.isPending || updateScheduleStatusMutation.isPending,
+    isSubmitting: createScheduleMutation.isPending || updateScheduleMutation.isPending,
     isDeleting: deleteScheduleMutation.isPending,
     mutationError,
   };
