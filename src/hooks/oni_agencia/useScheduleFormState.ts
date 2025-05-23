@@ -479,11 +479,11 @@ export function useScheduleFormState({
       };
       
       if (formData.capture_date) {
-        // Use type assertion to avoid TypeScript error with instanceof check
-        const captureDate: any = formData.capture_date;
+        // Create a safe type for instanceof check
+        const captureDate = formData.capture_date as unknown;
         
         // Now we can safely use instanceof
-        if (captureDate instanceof Date) {
+        if (typeof captureDate === 'object' && captureDate instanceof Date) {
           // Keep just the date part (reset time to midnight)
           updatedData.capture_date = new Date(
             captureDate.getFullYear(),
@@ -493,7 +493,7 @@ export function useScheduleFormState({
         } else if (captureDate) {  // Then check if it exists (could be any type)
           try {
             // Handle the case where captureDate is not a Date object
-            const parsedDate = new Date(captureDate);
+            const parsedDate = new Date(captureDate as any);
             updatedData.capture_date = new Date(
               parsedDate.getFullYear(),
               parsedDate.getMonth(),
@@ -507,11 +507,11 @@ export function useScheduleFormState({
       }
       
       if (formData.capture_end_date) {
-        // Use type assertion to avoid TypeScript error with instanceof check
-        const captureEndDate: any = formData.capture_end_date;
+        // Create a safe type for instanceof check
+        const captureEndDate = formData.capture_end_date as unknown;
         
         // Now we can safely use instanceof
-        if (captureEndDate instanceof Date) {
+        if (typeof captureEndDate === 'object' && captureEndDate instanceof Date) {
           // Keep just the date part (reset time to midnight)
           updatedData.capture_end_date = new Date(
             captureEndDate.getFullYear(),
@@ -521,7 +521,7 @@ export function useScheduleFormState({
         } else if (captureEndDate) {  // Then check if it exists (could be any type)
           try {
             // Handle the case where captureEndDate is not a Date object
-            const parsedDate = new Date(captureEndDate);
+            const parsedDate = new Date(captureEndDate as any);
             updatedData.capture_end_date = new Date(
               parsedDate.getFullYear(),
               parsedDate.getMonth(),
@@ -547,15 +547,15 @@ export function useScheduleFormState({
       
       if (formData.capture_date) {
         let date: Date;
-        // Use type assertion to avoid TypeScript error with instanceof check
-        const captureDate: any = formData.capture_date;
+        // Create a safe type for instanceof check
+        const captureDate = formData.capture_date as unknown;
         
-        if (captureDate instanceof Date) {
+        if (typeof captureDate === 'object' && captureDate instanceof Date) {
           date = new Date(captureDate);
         } else {
           try {
             // Handle the case where captureDate is not a Date object
-            date = new Date(captureDate);
+            date = new Date(captureDate as any);
           } catch (e) {
             console.error("Error parsing capture_date:", e);
             date = new Date();
@@ -575,15 +575,15 @@ export function useScheduleFormState({
       
       if (formData.capture_end_date) {
         let endDate: Date;
-        // Use type assertion to avoid TypeScript error with instanceof check
-        const captureEndDate: any = formData.capture_end_date;
+        // Create a safe type for instanceof check
+        const captureEndDate = formData.capture_end_date as unknown;
         
-        if (captureEndDate instanceof Date) {
+        if (typeof captureEndDate === 'object' && captureEndDate instanceof Date) {
           endDate = new Date(captureEndDate);
         } else {
           try {
             // Handle the case where captureEndDate is not a Date object
-            endDate = new Date(captureEndDate);
+            endDate = new Date(captureEndDate as any);
           } catch (e) {
             console.error("Error parsing capture_end_date:", e);
             endDate = addMinutes(new Date(), 30);
