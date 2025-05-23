@@ -1,57 +1,15 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { CollaboratorSelect } from "./CollaboratorSelect";
 import { OniAgenciaCollaborator } from "@/types/oni-agencia";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { appendToDescriptionHistory, linkifyText } from "@/utils/linkUtils";
+import { appendToDescriptionHistory } from "@/utils/linkUtils";
 import { toast } from "sonner";
-
-interface StatusSelectProps {
-  statuses: any[];
-  value: string;
-  isLoading: boolean;
-  onValueChange: (value: string) => void;
-  required?: boolean;
-}
-
-function StatusSelect({
-  statuses,
-  value,
-  isLoading,
-  onValueChange,
-  required = false
-}: StatusSelectProps) {
-  return (
-    <Select onValueChange={onValueChange} defaultValue={value}>
-      <SelectTrigger className="w-full">
-        <SelectValue placeholder="Selecione um status" />
-      </SelectTrigger>
-      <SelectContent>
-        {isLoading ? (
-          <SelectItem value="loading" disabled>
-            Carregando...
-          </SelectItem>
-        ) : (
-          statuses.map((status: any) => (
-            <SelectItem key={status.id} value={status.id}>
-              {status.name}
-            </SelectItem>
-          ))
-        )}
-      </SelectContent>
-    </Select>
-  );
-}
+import { StatusSelect } from "./StatusSelect";
+import { CommentHistory } from "./CommentHistory";
 
 interface StatusUpdateFormProps {
   statuses: any[];
@@ -158,17 +116,9 @@ export function StatusUpdateForm({
         />
       </div>
 
+      <CommentHistory description={description} />
+      
       <div className="space-y-2">
-        <Label htmlFor="description" className="text-base font-medium">
-          Histórico de Descrição
-        </Label>
-        {description && (
-          <div 
-            className="rounded-md border border-input bg-background p-3 text-sm text-muted-foreground h-[150px] overflow-y-auto whitespace-pre-wrap mb-2"
-            dangerouslySetInnerHTML={{ __html: linkifyText(description) }}
-          />
-        )}
-        
         <Label htmlFor="newComment" className="text-base font-medium">
           Adicionar Comentário
         </Label>

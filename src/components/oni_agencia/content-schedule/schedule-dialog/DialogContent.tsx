@@ -1,18 +1,13 @@
 
 import React, { useState, useEffect } from "react";
-import { EventForm } from "./EventForm";
-import { StatusUpdateForm } from "./StatusUpdateForm";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs } from "@/components/ui/tabs";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
 import { useHistoryTab } from "../hooks/useHistoryTab";
-import { HistoryTimeline } from "./HistoryTimeline";
-import { CaptureForm } from "./CaptureForm";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useQueryClient } from "@tanstack/react-query";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { TabNavigation } from "./TabNavigation";
+import { ValidationErrors } from "./ValidationErrors";
+import { TabContentWrapper } from "./TabContentWrapper";
+import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 
 interface DialogContentProps {
   selectedEvent?: CalendarEvent;
@@ -168,152 +163,55 @@ export function DialogContent({
   // Log form data for debugging
   console.log("FormData in DialogContent:", formData);
 
-  return <>
+  return (
+    <>
       <Tabs defaultValue={defaultTab} value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid grid-cols-4 mb-4">
-          <TabsTrigger value="details">Detalhes</TabsTrigger>
-          <TabsTrigger value="status" disabled={!currentSelectedEvent}>Status</TabsTrigger>
-          <TabsTrigger value="history" disabled={!currentSelectedEvent}>Histórico</TabsTrigger>
-          <TabsTrigger value="capture">Captura</TabsTrigger>
-        </TabsList>
+        <TabNavigation 
+          activeTab={activeTab}
+          currentSelectedEvent={currentSelectedEvent}
+          onTabChange={handleTabChange}
+        />
         
-        {validationErrors.length > 0 && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              <ul className="list-disc pl-5">
-                {validationErrors.map((error, index) => (
-                  <li key={index}>{error}</li>
-                ))}
-              </ul>
-            </AlertDescription>
-          </Alert>
-        )}
+        <ValidationErrors errors={validationErrors} />
         
-        <ScrollArea className="h-[60vh]">
-          <form onSubmit={validateSubmitForm}>
-            <TabsContent value="details">
-              <EventForm 
-                formData={formData}
-                services={services}
-                collaborators={collaborators}
-                editorialLines={editorialLines}
-                products={products}
-                statuses={statuses}
-                clients={clients}
-                isLoadingServices={isLoadingServices}
-                isLoadingCollaborators={isLoadingCollaborators}
-                isLoadingEditorialLines={isLoadingEditorialLines}
-                isLoadingProducts={isLoadingProducts}
-                isLoadingStatuses={isLoadingStatuses}
-                isLoadingClients={isLoadingClients}
-                onInputChange={onInputChange}
-                onSelectChange={onSelectChange}
-                onDateChange={onDateChange}
-              />
-              <div className="flex justify-end space-x-2 mt-4">
-                <Button type="button" variant="outline" onClick={onCancel}>
-                  Cancelar
-                </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Atualizando..." : (currentSelectedEvent ? "Atualizar" : "Criar")}
-                </Button>
-                {currentSelectedEvent && (
-                  <Button 
-                    type="button" 
-                    variant="destructive" 
-                    onClick={() => setIsDeleteConfirmOpen(true)}
-                    disabled={isDeleting}
-                  >
-                    Excluir
-                  </Button>
-                )}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="status">
-              <StatusUpdateForm 
-                statuses={statuses}
-                collaborators={collaborators}
-                value={formData.status_id || ''}
-                collaboratorId={formData.collaborator_id}
-                description={formData.description || ''}
-                isLoading={isLoadingStatuses}
-                isLoadingCollaborators={isLoadingCollaborators}
-                isSubmitting={isSubmitting}
-                onSubmit={validateSubmitForm}
-                onValueChange={(value) => onSelectChange('status_id', value)}
-                onCollaboratorChange={(value) => onSelectChange('collaborator_id', value)}
-                onInputChange={onInputChange}
-                onCancel={onCancel}
-              />
-            </TabsContent>
-            
-            <TabsContent value="history">
-              <div className="h-[60vh]">
-                <HistoryTimeline 
-                  historyData={historyData} 
-                  isLoading={isLoadingHistory} 
-                  isError={isHistoryError}
-                  onRefetchResources={handleRefetchResources}
-                />
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="capture">
-              <CaptureForm
-                captureDate={formData.capture_date}
-                captureEndDate={formData.capture_end_date}
-                isAllDay={formData.is_all_day === true}
-                location={formData.location}
-                onDateChange={onDateChange}
-                onLocationChange={onInputChange}
-                onAllDayChange={onAllDayChange || (() => {})}
-              />
-              <div className="flex justify-end space-x-2 mt-4">
-                <Button type="button" variant="outline" onClick={onCancel}>
-                  Cancelar
-                </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Atualizando..." : (currentSelectedEvent ? "Atualizar" : "Criar")}
-                </Button>
-                {currentSelectedEvent && (
-                  <Button 
-                    type="button" 
-                    variant="destructive" 
-                    onClick={() => setIsDeleteConfirmOpen(true)}
-                    disabled={isDeleting}
-                  >
-                    Excluir
-                  </Button>
-                )}
-              </div>
-            </TabsContent>
-          </form>
-        </ScrollArea>
+        <form onSubmit={validateSubmitForm}>
+          <TabContentWrapper
+            activeTab={activeTab}
+            currentSelectedEvent={currentSelectedEvent}
+            formData={formData}
+            services={services}
+            collaborators={collaborators}
+            editorialLines={editorialLines}
+            products={products}
+            statuses={statuses}
+            clients={clients}
+            isLoadingServices={isLoadingServices}
+            isLoadingCollaborators={isLoadingCollaborators}
+            isLoadingEditorialLines={isLoadingEditorialLines}
+            isLoadingProducts={isLoadingProducts}
+            isLoadingStatuses={isLoadingStatuses}
+            isLoadingClients={isLoadingClients}
+            isSubmitting={isSubmitting}
+            isDeleting={isDeleting}
+            historyData={historyData}
+            isLoadingHistory={isLoadingHistory}
+            isHistoryError={isHistoryError}
+            onSubmit={validateSubmitForm}
+            onCancel={onCancel}
+            onInputChange={onInputChange}
+            onSelectChange={onSelectChange}
+            onDateChange={onDateChange}
+            onAllDayChange={onAllDayChange}
+            onRefetchResources={handleRefetchResources}
+          />
+        </form>
       </Tabs>
       
-      <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta ação não pode ser desfeita. Isso excluirá permanentemente este agendamento.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={() => {
-                onDelete();
-                setIsDeleteConfirmOpen(false);
-              }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>;
+      <DeleteConfirmDialog
+        isOpen={isDeleteConfirmOpen}
+        onOpenChange={setIsDeleteConfirmOpen}
+        onConfirm={onDelete}
+      />
+    </>
+  );
 }
