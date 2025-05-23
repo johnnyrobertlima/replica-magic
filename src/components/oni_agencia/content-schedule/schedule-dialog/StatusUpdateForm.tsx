@@ -9,7 +9,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { appendToDescriptionHistory } from "@/utils/linkUtils";
 import { toast } from "sonner";
 import { StatusSelect } from "./StatusSelect";
-import { CommentHistory } from "./CommentHistory";
+import { useScheduleHistory } from "@/hooks/useScheduleHistory";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { CalendarEvent } from "@/types/oni-agencia";
 
 interface StatusUpdateFormProps {
   statuses: any[];
@@ -20,6 +23,7 @@ interface StatusUpdateFormProps {
   isLoading: boolean;
   isLoadingCollaborators: boolean;
   isSubmitting: boolean;
+  currentSelectedEvent?: CalendarEvent | null;
   onSubmit: (e: React.FormEvent) => Promise<void> | void;
   onValueChange: (value: string) => void;
   onCollaboratorChange: (value: string) => void;
@@ -36,6 +40,7 @@ export function StatusUpdateForm({
   isLoading,
   isLoadingCollaborators,
   isSubmitting,
+  currentSelectedEvent,
   onSubmit,
   onValueChange,
   onCollaboratorChange,
@@ -45,10 +50,15 @@ export function StatusUpdateForm({
   const [newComment, setNewComment] = useState("");
   const { user } = useAuth();
   const userName = user?.email?.split('@')[0] || "Usuário";
+  
+  // Get schedule history for comments
+  const { data: history = [], isLoading: isLoadingHistory } = useScheduleHistory(
+    currentSelectedEvent?.id || ""
+  );
 
   // Function to handle submission with comment history
   const handleCommentSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); // Prevent form submission to handle it manually
+    e.preventDefault();
     
     try {
       console.log("Adding new comment to history:", newComment);
@@ -92,6 +102,35 @@ export function StatusUpdateForm({
       toast.error("Erro ao atualizar agendamento");
     }
   };
+
+  // Extract comments from description history
+  const extractCommentsFromDescription = (desc: string) => {
+    if (!desc) return [];
+    
+    const commentPattern = /\[(.*?) em (\d{2}\/\d{2}\/\d{4}, \d{2}:\d{2})\]:\s*(.*?)(?=\n\[|$)/gs;
+    const comments = [];
+    let match;
+    
+    while ((match = commentPattern.exec(desc)) !== null) {
+      comments.push({
+        author: match[1],
+        date: match[2],
+        comment: match[3].trim()
+      });
+    }
+    
+    return comments.reverse(); // Show newest first
+  };
+
+  // Get all comments from description and history
+  const allComments = [
+    ...extractCommentsFromDescription(description),
+    ...history.filter(entry => entry.field_name === 'description' && entry.new_value).map(entry => ({
+      author: entry.changed_by_name || 'Sistema',
+      date: new Date(entry.created_at).toLocaleString('pt-BR'),
+      comment: entry.new_value
+    }))
+  ];
   
   return (
     <div className="space-y-4">
@@ -119,7 +158,46 @@ export function StatusUpdateForm({
         />
       </div>
 
-      <CommentHistory description={description} />
+      {/* Seção de Comentários do Agendamento */}
+      {currentSelectedEvent && (
+        <div className="space-y-2">
+          <Label className="text-base font-medium">
+            Comentários do Agendamento
+          </Label>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm">Histórico de Comentários</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-40 w-full">
+                {isLoadingHistory ? (
+                  <div className="text-sm text-gray-500">Carregando comentários...</div>
+                ) : allComments.length > 0 ? (
+                  <div className="space-y-3">
+                    {allComments.map((comment, index) => (
+                      <div key={index} className="border-b border-gray-100 pb-2 last:border-b-0">
+                        <div className="flex justify-between items-start mb-1">
+                          <span className="text-sm font-medium text-gray-700">
+                            {comment.author}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {comment.date}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600 whitespace-pre-wrap">
+                          {comment.comment}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-500">Nenhum comentário encontrado</div>
+                )}
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </div>
+      )}
       
       <div className="space-y-2">
         <Label htmlFor="newComment" className="text-base font-medium">

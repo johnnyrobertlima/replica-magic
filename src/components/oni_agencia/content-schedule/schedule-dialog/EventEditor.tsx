@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { CalendarEvent, ContentScheduleFormData, OniAgenciaClient } from "@/types/oni-agencia";
@@ -175,6 +174,7 @@ export function EventEditor({
                 value={formData.status_id || ''}
                 collaboratorId={formData.collaborator_id}
                 description={formData.description || ''}
+                currentSelectedEvent={event}
                 isLoading={isLoadingStatuses}
                 isLoadingCollaborators={isLoadingCollaborators}
                 isSubmitting={isSubmitting}
