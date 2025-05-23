@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { format, addMinutes, parseISO, parse } from "date-fns";
 import { CalendarEvent, ContentScheduleFormData } from "@/types/oni-agencia";
@@ -490,6 +491,8 @@ export function useScheduleFormState({
           );
         } else if (captureDate) {  // Then check if it exists (could be any type)
           try {
+            // Handle the case where captureDate is not a Date object
+            // by explicitly casting it to any before creating a new Date
             const parsedDate = new Date(captureDate as any);
             updatedData.capture_date = new Date(
               parsedDate.getFullYear(),
@@ -515,6 +518,8 @@ export function useScheduleFormState({
           );
         } else if (captureEndDate) {  // Then check if it exists (could be any type)
           try {
+            // Handle the case where captureEndDate is not a Date object
+            // by explicitly casting it to any before creating a new Date
             const parsedDate = new Date(captureEndDate as any);
             updatedData.capture_end_date = new Date(
               parsedDate.getFullYear(),
@@ -545,15 +550,15 @@ export function useScheduleFormState({
         
         if (captureDate instanceof Date) {
           date = new Date(captureDate);
-        } else if (captureDate) {  // Check if it exists without checking type
+        } else {
           try {
+            // Handle the case where captureDate is not a Date object
+            // by explicitly casting it to any before creating a new Date
             date = new Date(captureDate as any);
           } catch (e) {
             console.error("Error parsing capture_date:", e);
             date = new Date();
           }
-        } else {
-          date = new Date();
         }
         
         date.setHours(currentHours);
@@ -573,15 +578,15 @@ export function useScheduleFormState({
         
         if (captureEndDate instanceof Date) {
           endDate = new Date(captureEndDate);
-        } else if (captureEndDate) {  // Check if it exists without checking type
+        } else {
           try {
+            // Handle the case where captureEndDate is not a Date object
+            // by explicitly casting it to any before creating a new Date
             endDate = new Date(captureEndDate as any);
           } catch (e) {
             console.error("Error parsing capture_end_date:", e);
             endDate = addMinutes(new Date(), 30);
           }
-        } else {
-          endDate = addMinutes(new Date(), 30);
         }
         
         endDate.setHours(currentHours);
