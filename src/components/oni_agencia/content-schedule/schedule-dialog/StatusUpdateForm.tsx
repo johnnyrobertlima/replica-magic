@@ -116,6 +116,13 @@ export function StatusUpdateForm({
           onInputChange(syntheticEvent);
         }
         
+        // Log the current state for debugging
+        console.log("Submitting status update with data:", {
+          status_id: value,
+          collaborator_id: collaboratorId,
+          description: updatedDescription
+        });
+        
         // Submit the form
         await onSubmit(e);
         
