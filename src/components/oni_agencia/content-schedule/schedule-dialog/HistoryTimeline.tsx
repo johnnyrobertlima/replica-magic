@@ -22,6 +22,11 @@ interface HistoryTimelineProps {
   isError: boolean;
   error?: any;
   onRefetchResources?: () => void;
+  fieldMappings?: Record<string, {
+    name: string;
+    transform?: (id: string, type: 'old' | 'new') => string | null;
+  }>;
+  itemMappings?: Record<string, Record<string, string>>;
 }
 
 export function HistoryTimeline({ 
@@ -29,7 +34,9 @@ export function HistoryTimeline({
   isLoading, 
   isError, 
   error,
-  onRefetchResources
+  onRefetchResources,
+  fieldMappings = {},
+  itemMappings = {}
 }: HistoryTimelineProps) {
 
   if (isLoading) {
@@ -72,6 +79,61 @@ export function HistoryTimeline({
     );
   }
 
+  // Helper function to transform field names to human-readable format
+  const getReadableFieldName = (field: string): string => {
+    const fieldMap: Record<string, string> = {
+      'title': 'Título',
+      'description': 'Descrição',
+      'scheduled_date': 'Data Agendada',
+      'client_id': 'Cliente',
+      'service_id': 'Serviço',
+      'status_id': 'Status',
+      'collaborator_id': 'Colaborador',
+      'editorial_line_id': 'Linha Editorial',
+      'product_id': 'Produto',
+      'execution_phase': 'Fase de Execução',
+      'creators': 'Criadores',
+      'capture_date': 'Data de Captura',
+      'capture_end_date': 'Data Final de Captura',
+      'is_all_day': 'Dia Inteiro',
+      'location': 'Localização'
+    };
+    
+    return fieldMap[field] || field;
+  };
+
+  // Helper function to get readable value based on field name and mappings
+  const getReadableValue = (field: string, value: string | null, type: 'old' | 'new'): string => {
+    if (value === null) return 'Não definido';
+
+    // If we have a transform function for this field, use it
+    if (fieldMappings[field]?.transform) {
+      const transformed = fieldMappings[field].transform!(value, type);
+      return transformed !== null ? transformed : 'Não definido';
+    }
+
+    // If we have a mapping for this field's values, use it
+    if (itemMappings[field] && itemMappings[field][value]) {
+      return itemMappings[field][value];
+    }
+
+    // Special handling for dates
+    if (field === 'scheduled_date' || field === 'capture_date' || field === 'capture_end_date') {
+      try {
+        return format(new Date(value), 'dd/MM/yyyy', { locale: ptBR });
+      } catch (e) {
+        return value;
+      }
+    }
+
+    // Special handling for boolean values
+    if (field === 'is_all_day') {
+      return value === 'true' ? 'Sim' : 'Não';
+    }
+
+    return value;
+  };
+
   // Filter to get only description changes
   const descriptionEntries = historyData.filter(entry => entry.field_name === "description");
   const otherEntries = historyData.filter(entry => entry.field_name !== "description");
@@ -113,19 +175,23 @@ export function HistoryTimeline({
             </div>
             
             <p>
-              <span className="font-medium">Campo alterado:</span> {entry.field_name}
+              <span className="font-medium">Campo alterado:</span> {getReadableFieldName(entry.field_name)}
             </p>
             
             {entry.old_value && (
               <p className="text-muted-foreground">
-                <span className="font-medium">De:</span> 
-                <span dangerouslySetInnerHTML={{ __html: linkifyText(entry.old_value) }} />
+                <span className="font-medium">De:</span> {" "}
+                <span dangerouslySetInnerHTML={{ 
+                  __html: linkifyText(getReadableValue(entry.field_name, entry.old_value, 'old')) 
+                }} />
               </p>
             )}
             
             <p className="text-primary">
-              <span className="font-medium">Para:</span> 
-              <span dangerouslySetInnerHTML={{ __html: linkifyText(entry.new_value || '') }} />
+              <span className="font-medium">Para:</span> {" "}
+              <span dangerouslySetInnerHTML={{ 
+                __html: linkifyText(getReadableValue(entry.field_name, entry.new_value, 'new')) 
+              }} />
             </p>
           </div>
         ))}
