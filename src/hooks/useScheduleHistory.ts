@@ -122,6 +122,7 @@ export function useScheduleHistory(scheduleId: string) {
     enabled: !!scheduleId, // Only run the query if scheduleId is provided
     refetchOnWindowFocus: false, // We don't want to refetch when window focus changes
     refetchOnMount: true, // Refetch when component mounts
-    staleTime: 0, // Set staleTime to 0 to ensure fresh data on each request
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 0, // Don't cache the results
   });
 }

@@ -114,7 +114,7 @@ export function StatusUpdateForm({
     
     console.log("Extracting comments from description:", desc);
     
-    // Pattern more flexible to catch different formats
+    // More robust pattern to match different comment formats
     const commentPattern = /\[(.*?) em (\d{2}\/\d{2}\/\d{4}, \d{2}:\d{2})\]:\s*([\s\S]*?)(?=\n\[|$)/g;
     const comments = [];
     let match;
@@ -132,17 +132,14 @@ export function StatusUpdateForm({
     return comments.reverse(); // Show newest first
   };
 
-  // Combine all comments from description and history
-  const descriptionComments = extractCommentsFromDescription(description || "");
-  console.log("Description comments:", descriptionComments);
-  console.log("Current description:", description);
-  console.log("History data:", history);
+  // Get comments from current description
+  const currentDescriptionComments = extractCommentsFromDescription(description || "");
+  console.log("Current description comments:", currentDescriptionComments);
   
-  // Add history entries that are description changes
+  // Get comments from history entries
   const historyComments = history
     .filter(entry => entry.field_name === 'description' && entry.new_value)
     .map(entry => {
-      // Extract comments from the history entry's new_value
       const entryComments = extractCommentsFromDescription(entry.new_value);
       return entryComments.map(comment => ({
         author: comment.author || entry.changed_by_name || 'Sistema',
@@ -154,8 +151,8 @@ export function StatusUpdateForm({
 
   console.log("History comments:", historyComments);
 
-  // Combine and deduplicate comments
-  const allComments = [...descriptionComments, ...historyComments]
+  // Combine and deduplicate all comments
+  const allComments = [...currentDescriptionComments, ...historyComments]
     .filter((comment, index, self) => 
       index === self.findIndex(c => 
         c.author === comment.author && 
@@ -170,7 +167,8 @@ export function StatusUpdateForm({
       return dateB.getTime() - dateA.getTime();
     });
 
-  console.log("All comments final:", allComments);
+  console.log("Final combined comments:", allComments);
+  console.log("Description content:", description);
   
   return (
     <div className="space-y-4">
@@ -198,14 +196,14 @@ export function StatusUpdateForm({
         />
       </div>
 
-      {/* Comentários do Agendamento - sempre mostrar */}
+      {/* Comentários do Agendamento */}
       <div className="space-y-2">
         <Label className="text-base font-medium">
           Comentários do Agendamento
         </Label>
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Todos os Comentários</CardTitle>
+            <CardTitle className="text-sm">Histórico de Comentários</CardTitle>
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-40 w-full">
@@ -214,7 +212,7 @@ export function StatusUpdateForm({
               ) : allComments.length > 0 ? (
                 <div className="space-y-3">
                   {allComments.map((comment, index) => (
-                    <div key={index} className="border-b border-gray-100 pb-2 last:border-b-0">
+                    <div key={`${comment.author}-${comment.date}-${index}`} className="border-b border-gray-100 pb-2 last:border-b-0">
                       <div className="flex justify-between items-start mb-1">
                         <span className="text-sm font-medium text-gray-700">
                           {comment.author}
@@ -232,13 +230,6 @@ export function StatusUpdateForm({
               ) : (
                 <div className="text-sm text-gray-500">
                   Nenhum comentário encontrado
-                  {/* Debug info */}
-                  <div className="text-xs mt-2">
-                    <div>Description: {description ? 'Presente' : 'Ausente'}</div>
-                    <div>History entries: {history.length}</div>
-                    <div>Description comments: {descriptionComments.length}</div>
-                    <div>History comments: {historyComments.length}</div>
-                  </div>
                 </div>
               )}
             </ScrollArea>
